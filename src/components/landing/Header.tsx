@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Building2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   const navLinks = [
     { label: "Funcionalidades", href: "#features" },
@@ -41,10 +44,26 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost">Entrar</Button>
-            <Button variant="accent">
-              Experimentar Grátis
-            </Button>
+            {!loading && (
+              user ? (
+                <Link to="/dashboard">
+                  <Button variant="accent">
+                    Ir para Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="ghost">Entrar</Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="accent">
+                      Experimentar Grátis
+                    </Button>
+                  </Link>
+                </>
+              )
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -72,10 +91,26 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-3 pt-4 border-t border-border">
-                <Button variant="outline" className="w-full">Entrar</Button>
-                <Button variant="accent" className="w-full">
-                  Experimentar Grátis
-                </Button>
+                {!loading && (
+                  user ? (
+                    <Link to="/dashboard">
+                      <Button variant="accent" className="w-full">
+                        Ir para Dashboard
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link to="/auth">
+                        <Button variant="outline" className="w-full">Entrar</Button>
+                      </Link>
+                      <Link to="/auth">
+                        <Button variant="accent" className="w-full">
+                          Experimentar Grátis
+                        </Button>
+                      </Link>
+                    </>
+                  )
+                )}
               </div>
             </nav>
           </div>
