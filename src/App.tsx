@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import OrcamentosPage from "./pages/orcamentos/Index";
+import CriarOrcamentoPage from "./pages/orcamentos/Criar";
+import EditarOrcamentoPage from "./pages/orcamentos/Editar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +27,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/orcamentos" element={<OrcamentosPage />} />
+            <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
+            <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

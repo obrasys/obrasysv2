@@ -14,6 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
+      artigos_orcamento: {
+        Row: {
+          capitulo_id: string
+          codigo: string | null
+          created_at: string
+          descricao: string
+          id: string
+          ordem: number
+          preco_unitario: number
+          quantidade: number
+          unidade: string
+          updated_at: string
+          valor_total: number | null
+        }
+        Insert: {
+          capitulo_id: string
+          codigo?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          ordem?: number
+          preco_unitario?: number
+          quantidade?: number
+          unidade: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Update: {
+          capitulo_id?: string
+          codigo?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          ordem?: number
+          preco_unitario?: number
+          quantidade?: number
+          unidade?: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artigos_orcamento_capitulo_id_fkey"
+            columns: ["capitulo_id"]
+            isOneToOne: false
+            referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artigos_trabalho: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          preco_unitario: number
+          unidade: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          preco_unitario?: number
+          unidade: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      base_precos_personalizada: {
+        Row: {
+          categoria: string
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          preco_unitario: number
+          unidade: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          preco_unitario?: number
+          unidade: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      capitulos_orcamento: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          numero: number
+          orcamento_id: string
+          ordem: number
+          titulo: string
+          updated_at: string
+          valor_total: number | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          numero: number
+          orcamento_id: string
+          ordem?: number
+          titulo: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          numero?: number
+          orcamento_id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capitulos_orcamento_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      default_articles: {
+        Row: {
+          categoria: string
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          preco_unitario: number
+          unidade: string
+        }
+        Insert: {
+          categoria: string
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          preco_unitario?: number
+          unidade: string
+        }
+        Update: {
+          categoria?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          preco_unitario?: number
+          unidade?: string
+        }
+        Relationships: []
+      }
       failed_login_attempts: {
         Row: {
           attempted_at: string
@@ -37,6 +236,101 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      obras: {
+        Row: {
+          cliente: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          status: string
+          updated_at: string
+          user_id: string
+          valor_previsto: number | null
+        }
+        Insert: {
+          cliente?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor_previsto?: number | null
+        }
+        Update: {
+          cliente?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_previsto?: number | null
+        }
+        Relationships: []
+      }
+      orcamentos: {
+        Row: {
+          created_at: string
+          custos_indiretos: Json | null
+          data_criacao: string
+          data_envio: string | null
+          id: string
+          margem_lucro: number | null
+          obra_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          valor_total: number | null
+        }
+        Insert: {
+          created_at?: string
+          custos_indiretos?: Json | null
+          data_criacao?: string
+          data_envio?: string | null
+          id?: string
+          margem_lucro?: number | null
+          obra_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+          valor_total?: number | null
+        }
+        Update: {
+          created_at?: string
+          custos_indiretos?: Json | null
+          data_criacao?: string
+          data_envio?: string | null
+          id?: string
+          margem_lucro?: number | null
+          obra_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -86,6 +380,39 @@ export type Database = {
           trial_start?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      templates_capitulos: {
+        Row: {
+          artigos: Json | null
+          created_at: string
+          descricao: string | null
+          id: string
+          is_system: boolean
+          titulo: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          artigos?: Json | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_system?: boolean
+          titulo: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          artigos?: Json | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_system?: boolean
+          titulo?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

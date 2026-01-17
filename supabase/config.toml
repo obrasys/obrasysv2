@@ -1,1 +1,7 @@
 project_id = "rwpgswjvrotshybwevog"
+
+[functions.validate-budget-ai]
+verify_jwt = false
+
+[functions.optimize-with-ai]
+verify_jwt = false
