@@ -11,6 +11,10 @@ import Dashboard from "./pages/Dashboard";
 import OrcamentosPage from "./pages/orcamentos/Index";
 import CriarOrcamentoPage from "./pages/orcamentos/Criar";
 import EditarOrcamentoPage from "./pages/orcamentos/Editar";
+import ObrasPage from "./pages/obras/Index";
+import CriarObraPage from "./pages/obras/Criar";
+import EditarObraPage from "./pages/obras/Editar";
+import VerObraPage from "./pages/obras/Ver";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/orcamentos" element={<OrcamentosPage />} />
             <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
             <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
+            <Route path="/obras" element={<ObrasPage />} />
+            <Route path="/obras/criar" element={<CriarObraPage />} />
+            <Route path="/obras/:id" element={<VerObraPage />} />
+            <Route path="/obras/:id/editar" element={<EditarObraPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
