@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
     /* ObraSys Design System - Professional Construction Management */
-    --background: 210 20% 98%;
+    --background: 199 15% 98%;
     --foreground: 199 100% 15%;
 
     --card: 0 0% 100%;
@@ -20,16 +20,16 @@
     --primary: 199 100% 31%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Light Gray */
-    --secondary: 199 20% 96%;
-    --secondary-foreground: 199 100% 15%;
+    /* Secondary - Light Blue tint */
+    --secondary: 199 30% 95%;
+    --secondary-foreground: 199 100% 25%;
 
     /* Muted */
     --muted: 199 20% 96%;
-    --muted-foreground: 199 20% 46%;
+    --muted-foreground: 199 30% 40%;
 
-    /* Accent - Amber/Orange for CTAs */
-    --accent: 32 95% 44%;
+    /* Accent - Lighter Blue for highlights */
+    --accent: 199 100% 45%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
@@ -37,29 +37,29 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Utility */
-    --border: 199 20% 91%;
-    --input: 199 20% 91%;
+    --border: 199 20% 90%;
+    --input: 199 20% 90%;
     --ring: 199 100% 31%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(199 100% 20%) 0%, hsl(199 100% 31%) 50%, hsl(32 60% 30%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(32 95% 44%) 0%, hsl(25 95% 53%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(199 100% 15%) 0%, hsl(199 100% 25%) 50%, hsl(199 80% 35%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(199 100% 35%) 0%, hsl(199 100% 50%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(199 20% 98%) 100%);
     --shadow-card: 0 4px 6px -1px hsl(199 100% 15% / 0.05), 0 2px 4px -2px hsl(199 100% 15% / 0.05);
     --shadow-card-hover: 0 20px 25px -5px hsl(199 100% 15% / 0.1), 0 8px 10px -6px hsl(199 100% 15% / 0.1);
     --shadow-hero: 0 25px 50px -12px hsl(199 100% 15% / 0.25);
 
     /* Sidebar */
-    --sidebar-background: 199 100% 25%;
+    --sidebar-background: 199 100% 22%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 32 95% 44%;
+    --sidebar-primary: 199 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 199 100% 35%;
+    --sidebar-accent: 199 100% 30%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 199 100% 35%;
-    --sidebar-ring: 32 95% 44%;
+    --sidebar-border: 199 100% 30%;
+    --sidebar-ring: 199 100% 50%;
   }
 
   .dark {
@@ -79,9 +79,9 @@
     --secondary-foreground: 0 0% 98%;
 
     --muted: 199 100% 12%;
-    --muted-foreground: 199 20% 65%;
+    --muted-foreground: 199 30% 65%;
 
-    --accent: 32 95% 50%;
+    --accent: 199 100% 55%;
     --accent-foreground: 199 100% 10%;
 
     --destructive: 0 62% 30%;
@@ -91,7 +91,7 @@
     --input: 199 100% 15%;
     --ring: 199 100% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(199 100% 5%) 0%, hsl(199 100% 12%) 50%, hsl(32 40% 15%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(199 100% 5%) 0%, hsl(199 100% 12%) 50%, hsl(199 80% 20%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(199 100% 10%) 0%, hsl(199 100% 7%) 100%);
 
     --sidebar-background: 199 100% 10%;
@@ -116,11 +116,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Red Hat Display', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    font-family: 'Red Hat Display', system-ui, sans-serif;
   }
 }
 
