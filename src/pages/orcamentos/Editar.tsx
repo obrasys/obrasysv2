@@ -38,6 +38,7 @@ import {
   Loader2,
   Sparkles,
   Settings,
+  CheckCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -172,6 +173,13 @@ export default function EditarOrcamentoPage() {
     toast({ title: 'Sucesso', description: 'Orçamento enviado ao cliente' });
   };
 
+  const handleAdjudicar = async () => {
+    await updateStatus.mutateAsync({
+      id: orcamento.id,
+      status: 'adjudicado',
+    });
+  };
+
   const getArtigoDefaults = (): Partial<ArtigoFormData> | undefined => {
     if (editingArtigo) {
       const cap = orcamento.capitulos?.find((c) => c.id === editingArtigo.capituloId);
@@ -208,6 +216,12 @@ export default function EditarOrcamentoPage() {
         <Button onClick={handleFinalizar}>
           <Send className="mr-2 h-4 w-4" />
           Finalizar
+        </Button>
+      )}
+      {(orcamento.status === 'enviado' || orcamento.status === 'aprovado') && (
+        <Button onClick={handleAdjudicar} className="bg-green-600 hover:bg-green-700">
+          <CheckCircle className="mr-2 h-4 w-4" />
+          Adjudicar
         </Button>
       )}
     </>
