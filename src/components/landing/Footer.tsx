@@ -1,4 +1,5 @@
-import { Building2, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
   const footerLinks = {
@@ -28,13 +29,12 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <a href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <span className="font-display text-xl font-bold">
-                Obra<span className="text-accent">Sys</span>
-              </span>
+            <a href="/" className="flex items-center mb-4">
+              <img 
+                src={logo} 
+                alt="ObraSys" 
+                className="h-10 w-auto brightness-0 invert" 
+              />
             </a>
             <p className="text-primary-foreground/70 mb-6 max-w-xs">
               A plataforma de gestão de obras mais completa de Portugal. 

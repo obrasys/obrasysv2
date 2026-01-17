@@ -16,9 +16,10 @@ import {
   Users,
   BarChart3,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Dashboard = () => {
   const { user, profile, loading, signOut, trialDaysRemaining } = useAuth();
@@ -64,13 +65,12 @@ const Dashboard = () => {
       <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-sidebar-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-sidebar-foreground">
-              Obra<span className="text-sidebar-primary">Sys</span>
-            </span>
+          <a href="/" className="flex items-center">
+            <img 
+              src={logo} 
+              alt="ObraSys" 
+              className="h-10 w-auto brightness-0 invert" 
+            />
           </a>
         </div>
 
@@ -110,9 +110,11 @@ const Dashboard = () => {
         <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="lg:hidden">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src={logo} 
+                alt="ObraSys" 
+                className="h-8 w-auto" 
+              />
             </div>
             <h1 className="font-display text-xl font-bold text-foreground">Dashboard</h1>
           </div>
