@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { AppLayout } from '@/components/layout';
 import { useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoCard } from '@/components/orcamentos/OrcamentoCard';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
@@ -23,23 +23,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { STATUS_CONFIG, type OrcamentoStatus as Status } from '@/types/orcamentos';
+import { STATUS_CONFIG } from '@/types/orcamentos';
 import {
   Plus,
   Search,
   FileText,
   Loader2,
-  ArrowLeft,
   LayoutGrid,
   List,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { useEffect } from 'react';
 
 export default function OrcamentosPage() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const {
     orcamentos,
     isLoading,
@@ -52,21 +49,15 @@ export default function OrcamentosPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <AppLayout title="Orçamentos" subtitle="Gerir e criar orçamentos de obra">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
     );
   }
-
-  if (!user) return null;
 
   const filteredOrcamentos = (orcamentos || []).filter((orc) => {
     const matchesSearch =
@@ -104,32 +95,18 @@ export default function OrcamentosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Orçamentos</h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerir e criar orçamentos de obra
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => navigate('/orcamentos/criar')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Orçamento
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Filters */}
-      <div className="container mx-auto px-4 py-6">
+    <AppLayout
+      title="Orçamentos"
+      subtitle="Gerir e criar orçamentos de obra"
+      actions={
+        <Button onClick={() => navigate('/orcamentos/criar')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Orçamento
+        </Button>
+      }
+    >
+      <div className="p-6">
+        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -213,7 +190,7 @@ export default function OrcamentosPage() {
                         {formatCurrency(orcamento.valor_total)}
                       </td>
                       <td className="px-4 py-3 text-right text-muted-foreground">
-                        {format(new Date(orcamento.data_criacao), "d MMM yyyy", { locale: pt })}
+                        {format(new Date(orcamento.data_criacao), 'd MMM yyyy', { locale: pt })}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Button
@@ -269,6 +246,6 @@ export default function OrcamentosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppLayout>
   );
 }
