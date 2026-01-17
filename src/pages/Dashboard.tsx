@@ -49,14 +49,14 @@ const Dashboard = () => {
   }
 
   const navItems = [
-    { icon: Home, label: "Dashboard", active: true },
-    { icon: Building2, label: "Obras", active: false },
-    { icon: FileText, label: "Orçamentos", active: false },
-    { icon: ClipboardList, label: "RDOs", active: false },
-    { icon: Calendar, label: "Tarefas", active: false },
-    { icon: Wallet, label: "Financeiro", active: false },
-    { icon: Users, label: "Clientes", active: false },
-    { icon: BarChart3, label: "Relatórios", active: false },
+    { icon: Home, label: "Dashboard", href: "/dashboard", active: true },
+    { icon: Building2, label: "Obras", href: "/obras", active: false },
+    { icon: FileText, label: "Orçamentos", href: "/orcamentos", active: false },
+    { icon: ClipboardList, label: "RDOs", href: "/rdos", active: false },
+    { icon: Calendar, label: "Tarefas", href: "/tarefas", active: false },
+    { icon: Wallet, label: "Financeiro", href: "/financeiro", active: false },
+    { icon: Users, label: "Clientes", href: "/clientes", active: false },
+    { icon: BarChart3, label: "Relatórios", href: "/relatorios", active: false },
   ];
 
   return (
@@ -79,6 +79,7 @@ const Dashboard = () => {
           {navItems.map((item, i) => (
             <button
               key={i}
+              onClick={() => navigate(item.href)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 item.active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
