@@ -237,47 +237,118 @@ export type Database = {
         }
         Relationships: []
       }
+      obra_progress_tracking: {
+        Row: {
+          capitulo_id: string | null
+          created_at: string
+          descricao: string
+          id: string
+          obra_id: string
+          percentagem: number
+          quantidade_executada: number
+          quantidade_prevista: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          capitulo_id?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          obra_id: string
+          percentagem?: number
+          quantidade_executada?: number
+          quantidade_prevista?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          capitulo_id?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          obra_id?: string
+          percentagem?: number
+          quantidade_executada?: number
+          quantidade_prevista?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_progress_tracking_capitulo_id_fkey"
+            columns: ["capitulo_id"]
+            isOneToOne: false
+            referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_progress_tracking_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
+          arquivada: boolean
           cliente: string | null
           created_at: string
           data_fim: string | null
           data_inicio: string | null
           endereco: string | null
+          gestor_id: string | null
           id: string
           nome: string
+          progresso: number
           status: string
           updated_at: string
           user_id: string
           valor_previsto: number | null
         }
         Insert: {
+          arquivada?: boolean
           cliente?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           endereco?: string | null
+          gestor_id?: string | null
           id?: string
           nome: string
+          progresso?: number
           status?: string
           updated_at?: string
           user_id: string
           valor_previsto?: number | null
         }
         Update: {
+          arquivada?: boolean
           cliente?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
           endereco?: string | null
+          gestor_id?: string | null
           id?: string
           nome?: string
+          progresso?: number
           status?: string
           updated_at?: string
           user_id?: string
           valor_previsto?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "obras_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orcamentos: {
         Row: {
