@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
