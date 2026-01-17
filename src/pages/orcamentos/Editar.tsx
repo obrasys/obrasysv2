@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
@@ -28,13 +28,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import type { CapituloFormData, ArtigoFormData } from '@/types/orcamentos';
 import {
-  ArrowLeft,
   Plus,
-  Save,
   Send,
   FileText,
   Loader2,
@@ -45,8 +43,6 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { updateStatus } = useOrcamentos();
   const {
@@ -79,21 +75,15 @@ export default function EditarOrcamentoPage() {
   });
   const [editingCapitulo, setEditingCapitulo] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading || isLoading) {
+  if (isLoading || !orcamento) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <AppLayout title="Carregar Orçamento...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
     );
   }
-
-  if (!user || !orcamento) return null;
 
   const isReadOnly = orcamento.status === 'adjudicado';
 
@@ -199,54 +189,42 @@ export default function EditarOrcamentoPage() {
     return undefined;
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/orcamentos')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-bold">{orcamento.titulo}</h1>
-                  <OrcamentoStatus status={orcamento.status} />
-                </div>
-                {orcamento.obra && (
-                  <p className="text-sm text-muted-foreground">
-                    Obra: {orcamento.obra.nome}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowSettingsModal(true)}>
-                <Settings className="mr-2 h-4 w-4" />
-                Configurações
-              </Button>
-              <Button variant="outline" size="sm">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Validar com IA
-              </Button>
-              <Button variant="outline" size="sm">
-                <FileText className="mr-2 h-4 w-4" />
-                PDF
-              </Button>
-              {orcamento.status === 'rascunho' && (
-                <Button onClick={handleFinalizar}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Finalizar
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+  // Header actions
+  const headerActions = (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setShowSettingsModal(true)}>
+        <Settings className="mr-2 h-4 w-4" />
+        Configurações
+      </Button>
+      <Button variant="outline" size="sm">
+        <Sparkles className="mr-2 h-4 w-4" />
+        Validar com IA
+      </Button>
+      <Button variant="outline" size="sm">
+        <FileText className="mr-2 h-4 w-4" />
+        PDF
+      </Button>
+      {orcamento.status === 'rascunho' && (
+        <Button onClick={handleFinalizar}>
+          <Send className="mr-2 h-4 w-4" />
+          Finalizar
+        </Button>
+      )}
+    </>
+  );
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-6">
+  return (
+    <AppLayout
+      title={orcamento.titulo}
+      subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
+      actions={headerActions}
+    >
+      <div className="p-6">
+        {/* Status badge */}
+        <div className="mb-4">
+          <OrcamentoStatus status={orcamento.status} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-4">
@@ -474,6 +452,6 @@ export default function EditarOrcamentoPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppLayout>
   );
 }
