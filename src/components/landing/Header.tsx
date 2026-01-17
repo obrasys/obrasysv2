@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Building2 } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,13 +21,12 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">
-              Obra<span className="text-accent">Sys</span>
-            </span>
+          <a href="/" className="flex items-center group">
+            <img 
+              src={logo} 
+              alt="ObraSys" 
+              className="h-10 md:h-12 w-auto group-hover:scale-105 transition-transform" 
+            />
           </a>
 
           {/* Desktop Navigation */}
