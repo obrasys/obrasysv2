@@ -158,11 +158,42 @@ export function useOrcamentos() {
     },
   });
 
-  // Alterar status
+  // Alterar status (cria obra automaticamente se status = 'adjudicado')
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, data_envio }: { id: string; status: string; data_envio?: string }) => {
+      if (!user?.id) throw new Error('Utilizador não autenticado');
+
       const updateData: Record<string, unknown> = { status };
       if (data_envio) updateData.data_envio = data_envio;
+
+      // Buscar orçamento para verificar se já tem obra
+      const { data: orcamento, error: fetchError } = await supabase
+        .from('orcamentos')
+        .select('*, obra:obras(id)')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Se status é 'adjudicado' e não tem obra, criar automaticamente
+      if (status === 'adjudicado' && !orcamento.obra_id) {
+        // Criar nova obra com dados do orçamento
+        const { data: novaObra, error: obraError } = await supabase
+          .from('obras')
+          .insert({
+            user_id: user.id,
+            nome: orcamento.titulo,
+            status: 'planeamento',
+            valor_previsto: orcamento.valor_total || 0,
+          })
+          .select()
+          .single();
+
+        if (obraError) throw obraError;
+
+        // Linkar a obra ao orçamento
+        updateData.obra_id = novaObra.id;
+      }
 
       const { data, error } = await supabase
         .from('orcamentos')
@@ -172,10 +203,17 @@ export function useOrcamentos() {
         .single();
 
       if (error) throw error;
-      return data;
+      return { ...data, obraCriada: status === 'adjudicado' && !orcamento.obra_id };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      if (data.obraCriada) {
+        toast({
+          title: 'Obra criada automaticamente',
+          description: 'O orçamento foi adjudicado e uma nova obra foi criada',
+        });
+      }
     },
   });
 
