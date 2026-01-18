@@ -78,27 +78,23 @@ export default function ClientesPage() {
   };
 
   return (
-    <AppLayout title="Clientes">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
-            <p className="text-muted-foreground">
-              Gerir clientes e suas associações a obras e orçamentos
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowImportModal(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importar CSV
-            </Button>
-            <Button onClick={() => navigate('/clientes/criar')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </div>
+    <AppLayout 
+      title="Clientes"
+      subtitle="Gerir clientes e suas associações a obras e orçamentos"
+      actions={
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImportModal(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importar CSV
+          </Button>
+          <Button onClick={() => navigate('/clientes/criar')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
         </div>
+      }
+    >
+      <div className="p-6 space-y-6">
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
