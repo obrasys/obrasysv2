@@ -4,3 +4,6 @@ export { ContaStatusBadge } from './ContaStatusBadge';
 export { FinanceiroDashboard } from './FinanceiroDashboard';
 export { FornecedorCard } from './FornecedorCard';
 export { FornecedorForm } from './FornecedorForm';
+export { CategoriaForm } from './CategoriaForm';
+export { CategoriasManager } from './CategoriasManager';
+export { ImportFornecedoresModal } from './ImportFornecedoresModal';

@@ -287,6 +287,39 @@ export type Database = {
           },
         ]
       }
+      categorias_financeiras: {
+        Row: {
+          ativo: boolean | null
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          origem: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          origem: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          origem?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_conformidade: {
         Row: {
           created_at: string
@@ -506,6 +539,7 @@ export type Database = {
       }
       contas_financeiras: {
         Row: {
+          categoria_id: string | null
           cliente_id: string | null
           colaborador_id: string | null
           comprovante_url: string | null
@@ -525,6 +559,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          categoria_id?: string | null
           cliente_id?: string | null
           colaborador_id?: string | null
           comprovante_url?: string | null
@@ -544,6 +579,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          categoria_id?: string | null
           cliente_id?: string | null
           colaborador_id?: string | null
           comprovante_url?: string | null
@@ -563,6 +599,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contas_financeiras_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contas_financeiras_cliente_id_fkey"
             columns: ["cliente_id"]

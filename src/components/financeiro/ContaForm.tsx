@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -27,9 +27,10 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TIPO_CONTA_OPTIONS, ORIGEM_CONTA_OPTIONS } from '@/types/financeiro';
-import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
+import type { ContaFinanceira, ContaFinanceiraFormData, OrigemConta } from '@/types/financeiro';
 import type { Obra } from '@/types/obras';
 import type { Fornecedor } from '@/types/financeiro';
+import type { CategoriaFinanceira } from '@/types/categorias';
 
 const contaSchema = z.object({
   tipo: z.enum(['pagar', 'receber']),
@@ -42,6 +43,7 @@ const contaSchema = z.object({
   obra_id: z.string().optional(),
   fornecedor_id: z.string().optional(),
   cliente_id: z.string().optional(),
+  categoria_id: z.string().optional(),
 });
 
 interface ContaFormProps {
@@ -51,6 +53,7 @@ interface ContaFormProps {
   obras?: Obra[];
   fornecedores?: Fornecedor[];
   clientes?: Array<{ id: string; nome: string }>;
+  categorias?: CategoriaFinanceira[];
   onSubmit: (data: ContaFinanceiraFormData) => void;
   isLoading?: boolean;
 }
@@ -62,6 +65,7 @@ export function ContaForm({
   obras = [],
   fornecedores = [],
   clientes = [],
+  categorias = [],
   onSubmit,
   isLoading,
 }: ContaFormProps) {
@@ -78,8 +82,13 @@ export function ContaForm({
       obra_id: conta?.obra_id || '',
       fornecedor_id: conta?.fornecedor_id || '',
       cliente_id: conta?.cliente_id || '',
+      categoria_id: (conta as unknown as { categoria_id?: string })?.categoria_id || '',
     },
   });
+
+  // Watch origem to filter categorias
+  const selectedOrigem = useWatch({ control: form.control, name: 'origem' });
+  const filteredCategorias = categorias.filter((cat) => cat.origem === selectedOrigem);
 
   const handleSubmit = (data: ContaFinanceiraFormData) => {
     onSubmit({
@@ -87,6 +96,7 @@ export function ContaForm({
       obra_id: data.obra_id || undefined,
       fornecedor_id: data.fornecedor_id || undefined,
       cliente_id: data.cliente_id || undefined,
+      categoria_id: data.categoria_id || undefined,
     });
     form.reset();
     onOpenChange(false);
@@ -152,6 +162,41 @@ export function ContaForm({
                 )}
               />
             </div>
+
+            {/* Categoria (subcategoria da origem) */}
+            {filteredCategorias.length > 0 && (
+              <FormField
+                control={form.control}
+                name="categoria_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subcategoria</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione (opcional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Nenhuma</SelectItem>
+                        {filteredCategorias.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: cat.cor }}
+                              />
+                              {cat.nome}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

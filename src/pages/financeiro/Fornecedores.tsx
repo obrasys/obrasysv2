@@ -19,11 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFornecedores } from '@/hooks/useFinanceiro';
 import { FornecedorCard } from '@/components/financeiro/FornecedorCard';
 import { FornecedorForm } from '@/components/financeiro/FornecedorForm';
+import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
 import type { Fornecedor, FornecedorFormData } from '@/types/financeiro';
 
 const FornecedoresPage = () => {
@@ -33,6 +34,7 @@ const FornecedoresPage = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { 
     fornecedores, 
@@ -65,6 +67,31 @@ const FornecedoresPage = () => {
       deleteFornecedor.mutate(deleteId);
       setDeleteId(null);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (!fornecedores || fornecedores.length === 0) return;
+    
+    const headers = ['nome', 'email', 'telefone', 'endereco', 'nif', 'ativo'];
+    const rows = fornecedores.map((f) => [
+      f.nome,
+      f.email || '',
+      f.telefone || '',
+      f.endereco || '',
+      f.nif || '',
+      f.ativo ? 'Sim' : 'Não',
+    ]);
+    
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map((row) => row.map(cell => `"${cell}"`).join(';')),
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `fornecedores_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
   // Filtrar fornecedores
@@ -134,10 +161,24 @@ const FornecedoresPage = () => {
             </Select>
           </div>
 
-          <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Fornecedor
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Importar
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExportCSV}
+              disabled={!fornecedores || fornecedores.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+            <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Fornecedor
+            </Button>
+          </div>
         </div>
 
         {/* Fornecedores List */}
@@ -197,6 +238,12 @@ const FornecedoresPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Import Modal */}
+        <ImportFornecedoresModal
+          open={importOpen}
+          onOpenChange={setImportOpen}
+        />
       </div>
     </AppLayout>
   );
