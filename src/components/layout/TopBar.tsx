@@ -1,14 +1,22 @@
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useObraAlerts } from '@/hooks/useObraAlerts';
 import { Button } from '@/components/ui/button';
-import { Clock, LogOut, User, Menu } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Clock, LogOut, User, Menu, Bell } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
 import { Sidebar } from './Sidebar';
 
 interface TopBarProps {
@@ -20,6 +28,7 @@ interface TopBarProps {
 export function TopBar({ title, subtitle, actions }: TopBarProps) {
   const navigate = useNavigate();
   const { profile, signOut, trialDaysRemaining } = useAuth();
+  const { totalAlerts, errorCount, hasAlerts } = useObraAlerts();
 
   const handleSignOut = async () => {
     await signOut();
@@ -77,6 +86,30 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
             <span>{trialDaysRemaining} dias de trial restantes</span>
           </div>
         )}
+
+        {/* Notifications bell */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="w-5 h-5" />
+              {hasAlerts && (
+                <span className={`absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                  errorCount > 0 ? 'bg-red-500' : 'bg-yellow-500'
+                }`}>
+                  {totalAlerts > 9 ? '9+' : totalAlerts}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0" align="end">
+            <div className="p-3 border-b">
+              <h3 className="font-semibold">Alertas de Acompanhamento</h3>
+            </div>
+            <div className="p-3 max-h-96 overflow-y-auto">
+              <ObraAlertsPanel maxAlerts={5} showHeader={false} compact />
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* User menu */}
         <div className="flex items-center gap-3">
