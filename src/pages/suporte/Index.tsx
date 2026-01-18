@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AppLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,9 +20,11 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { toast } from "sonner";
 
 // Types
 interface Message {
@@ -47,6 +49,111 @@ interface FAQItem {
   pergunta: string;
   resposta: string;
   categoria: string;
+}
+
+// Streaming chat function
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/support-chat`;
+
+type Msg = { role: "user" | "assistant"; content: string };
+
+async function streamChat({
+  messages,
+  onDelta,
+  onDone,
+  onError,
+}: {
+  messages: Msg[];
+  onDelta: (deltaText: string) => void;
+  onDone: () => void;
+  onError: (error: string) => void;
+}) {
+  try {
+    const resp = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages }),
+    });
+
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      if (resp.status === 429) {
+        onError("Limite de pedidos excedido. Tente novamente mais tarde.");
+        return;
+      }
+      if (resp.status === 402) {
+        onError("Créditos esgotados. Contacte o suporte.");
+        return;
+      }
+      onError(errorData.error || "Erro ao comunicar com a IA.");
+      return;
+    }
+
+    if (!resp.body) {
+      onError("Resposta vazia do servidor.");
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let streamDone = false;
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") {
+          streamDone = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) onDelta(content);
+        } catch {
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Final flush
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split("\n")) {
+        if (!raw) continue;
+        if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+        if (raw.startsWith(":") || raw.trim() === "") continue;
+        if (!raw.startsWith("data: ")) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) onDelta(content);
+        } catch { /* ignore */ }
+      }
+    }
+
+    onDone();
+  } catch (error) {
+    console.error("Stream error:", error);
+    onError("Erro de conexão. Verifique a sua internet.");
+  }
 }
 
 // Mock data
@@ -115,12 +222,21 @@ export default function SuportePage() {
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [newTicket, setNewTicket] = useState({ titulo: "", descricao: "", prioridade: "media" as const });
+  
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -131,28 +247,64 @@ export default function SuportePage() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Entendo a sua questão. Pode dar-me mais detalhes para eu poder ajudá-lo melhor?",
-        "Claro! Para resolver isso, siga estes passos: 1) Aceda ao menu principal, 2) Selecione a opção desejada, 3) Confirme a ação.",
-        "Essa funcionalidade está disponível no menu lateral. Posso guiá-lo passo a passo se preferir.",
-        "Vou verificar essa informação. Enquanto isso, pode consultar a nossa secção de FAQ para dúvidas frequentes.",
-      ];
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: responses[Math.floor(Math.random() * responses.length)],
-        sender: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    // Convert to API format
+    const apiMessages: Msg[] = messages
+      .filter((m) => m.id !== "1") // Skip initial greeting
+      .map((m) => ({
+        role: m.sender as "user" | "assistant",
+        content: m.content,
+      }));
+    apiMessages.push({ role: "user", content: inputMessage });
+
+    let assistantContent = "";
+
+    await streamChat({
+      messages: apiMessages,
+      onDelta: (chunk) => {
+        assistantContent += chunk;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.sender === "assistant" && last.id.startsWith("streaming-")) {
+            return prev.map((m, i) =>
+              i === prev.length - 1 ? { ...m, content: assistantContent } : m
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: `streaming-${Date.now()}`,
+              content: assistantContent,
+              sender: "assistant",
+              timestamp: new Date(),
+            },
+          ];
+        });
+      },
+      onDone: () => {
+        setIsLoading(false);
+        // Finalize the message ID
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id.startsWith("streaming-")
+              ? { ...m, id: `msg-${Date.now()}` }
+              : m
+          )
+        );
+      },
+      onError: (error) => {
+        setIsLoading(false);
+        toast.error(error);
+        // Remove the user message if there was an error
+        setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+      },
+    });
   };
 
   const handleCreateTicket = () => {
     if (!newTicket.titulo.trim() || !newTicket.descricao.trim()) return;
-    // In real app, this would save to database
+    toast.success("Ticket criado com sucesso!");
     setIsCreatingTicket(false);
     setNewTicket({ titulo: "", descricao: "", prioridade: "media" });
   };
@@ -288,12 +440,15 @@ export default function SuportePage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">Assistente ObraSys</h3>
-                    <p className="text-xs text-muted-foreground">IA Powered • Disponível 24/7</p>
+                    <p className="text-xs text-muted-foreground">
+                      IA Powered • Disponível 24/7
+                      {isLoading && <span className="ml-2 text-primary">• A escrever...</span>}
+                    </p>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="h-[400px] p-4">
+                <ScrollArea className="h-[400px] p-4" ref={scrollAreaRef}>
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -313,7 +468,7 @@ export default function SuportePage() {
                                 : "bg-muted"
                             }`}
                           >
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                             <p className={`text-xs mt-1 ${message.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                               {format(message.timestamp, "HH:mm", { locale: pt })}
                             </p>
@@ -321,6 +476,19 @@ export default function SuportePage() {
                         </div>
                       </div>
                     ))}
+                    {isLoading && messages[messages.length - 1]?.sender === "user" && (
+                      <div className="flex justify-start">
+                        <div className="flex items-start gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <Bot className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="rounded-lg p-3 bg-muted">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
 
@@ -330,11 +498,16 @@ export default function SuportePage() {
                     placeholder="Escreva a sua mensagem..."
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     className="flex-1"
+                    disabled={isLoading}
                   />
-                  <Button onClick={handleSendMessage}>
-                    <Send className="h-4 w-4" />
+                  <Button onClick={handleSendMessage} disabled={isLoading || !inputMessage.trim()}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </CardContent>
