@@ -30,6 +30,7 @@ import BasePrecosInserirPage from "./pages/base-precos/Inserir";
 import BasePrecosAuditoriaPage from "./pages/base-precos/Auditoria";
 import SuportePage from "./pages/suporte/Index";
 import FinanceiroPage from "./pages/financeiro/Index";
+import FornecedoresPage from "./pages/financeiro/Fornecedores";
 import PerfilPage from "./pages/Perfil";
 import DefinicoesPage from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
             <Route path="/suporte" element={<SuportePage />} />
             <Route path="/financeiro" element={<FinanceiroPage />} />
+            <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/definicoes" element={<DefinicoesPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
