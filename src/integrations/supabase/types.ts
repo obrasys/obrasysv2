@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      aprovacoes: {
+        Row: {
+          aprovador_id: string | null
+          comentarios: string | null
+          created_at: string
+          data_aprovacao: string | null
+          data_solicitacao: string
+          id: string
+          referencia_id: string
+          solicitante_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aprovador_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          data_aprovacao?: string | null
+          data_solicitacao?: string
+          id?: string
+          referencia_id: string
+          solicitante_id?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aprovador_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          data_aprovacao?: string | null
+          data_solicitacao?: string
+          id?: string
+          referencia_id?: string
+          solicitante_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aprovacoes_aprovador_id_fkey"
+            columns: ["aprovador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacoes_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artigos_orcamento: {
         Row: {
           capitulo_id: string
@@ -223,6 +283,66 @@ export type Database = {
             columns: ["orcamento_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_conformidade: {
+        Row: {
+          created_at: string
+          data_verificacao: string | null
+          descricao: string | null
+          id: string
+          itens: Json
+          obra_id: string
+          observacoes: string | null
+          responsavel_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_verificacao?: string | null
+          descricao?: string | null
+          id?: string
+          itens?: Json
+          obra_id: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_verificacao?: string | null
+          descricao?: string | null
+          id?: string
+          itens?: Json
+          obra_id?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_conformidade_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_conformidade_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -446,6 +566,72 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos: {
+        Row: {
+          aprovado: boolean | null
+          categoria: string | null
+          created_at: string
+          data_validade: string | null
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          nome: string
+          obra_id: string
+          tipo: string
+          updated_at: string
+          uploaded_by: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          aprovado?: boolean | null
+          categoria?: string | null
+          created_at?: string
+          data_validade?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          nome: string
+          obra_id: string
+          tipo: string
+          updated_at?: string
+          uploaded_by?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          aprovado?: boolean | null
+          categoria?: string | null
+          created_at?: string
+          data_validade?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          nome?: string
+          obra_id?: string
+          tipo?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       element_openings: {
         Row: {
           created_at: string | null
@@ -507,6 +693,79 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      livro_obra: {
+        Row: {
+          created_at: string
+          data_aprovacao: string | null
+          data_submissao: string | null
+          descricao: string | null
+          fiscal_id: string | null
+          gestor_id: string | null
+          id: string
+          obra_id: string
+          observacoes_fiscal: string | null
+          rdos_incluidos: string[] | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_aprovacao?: string | null
+          data_submissao?: string | null
+          descricao?: string | null
+          fiscal_id?: string | null
+          gestor_id?: string | null
+          id?: string
+          obra_id: string
+          observacoes_fiscal?: string | null
+          rdos_incluidos?: string[] | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_aprovacao?: string | null
+          data_submissao?: string | null
+          descricao?: string | null
+          fiscal_id?: string | null
+          gestor_id?: string | null
+          id?: string
+          obra_id?: string
+          observacoes_fiscal?: string | null
+          rdos_incluidos?: string[] | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livro_obra_fiscal_id_fkey"
+            columns: ["fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "livro_obra_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "livro_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       obra_progress_tracking: {
         Row: {
