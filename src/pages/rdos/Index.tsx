@@ -106,21 +106,17 @@ export default function RDOsPage() {
   };
 
   return (
-    <AppLayout title="RDOs">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Relatórios Diários</h1>
-            <p className="text-muted-foreground">
-              Gestão de RDOs das suas obras
-            </p>
-          </div>
-          <Button onClick={() => navigate('/rdos/criar')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo RDO
-          </Button>
-        </div>
+    <AppLayout 
+      title="Relatórios Diários"
+      subtitle="Gestão de RDOs das suas obras"
+      actions={
+        <Button onClick={() => navigate('/rdos/criar')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo RDO
+        </Button>
+      }
+    >
+      <div className="p-6 space-y-6">
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-4">
