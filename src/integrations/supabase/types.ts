@@ -853,6 +853,71 @@ export type Database = {
         }
         Relationships: []
       }
+      relatorios_diarios: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          condicoes_meteorologicas: string | null
+          created_at: string
+          criado_por: string | null
+          data: string
+          id: string
+          mao_de_obra_presente: number | null
+          obra_id: string
+          observacoes: string | null
+          ocorrencias: string | null
+          status: string
+          trabalhos_executados: string | null
+          trabalhos_quantificados: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          condicoes_meteorologicas?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data: string
+          id?: string
+          mao_de_obra_presente?: number | null
+          obra_id: string
+          observacoes?: string | null
+          ocorrencias?: string | null
+          status?: string
+          trabalhos_executados?: string | null
+          trabalhos_quantificados?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          condicoes_meteorologicas?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data?: string
+          id?: string
+          mao_de_obra_presente?: number | null
+          obra_id?: string
+          observacoes?: string | null
+          ocorrencias?: string | null
+          status?: string
+          trabalhos_executados?: string | null
+          trabalhos_quantificados?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relatorios_diarios_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates_capitulos: {
         Row: {
           artigos: Json | null

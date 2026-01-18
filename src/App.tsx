@@ -19,6 +19,10 @@ import ClientesPage from "./pages/clientes/Index";
 import CriarClientePage from "./pages/clientes/Criar";
 import EditarClientePage from "./pages/clientes/Editar";
 import VerClientePage from "./pages/clientes/Ver";
+import RDOsPage from "./pages/rdos/Index";
+import CriarRDOPage from "./pages/rdos/Criar";
+import EditarRDOPage from "./pages/rdos/Editar";
+import VerRDOPage from "./pages/rdos/Ver";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +50,10 @@ const App = () => (
             <Route path="/clientes/criar" element={<CriarClientePage />} />
             <Route path="/clientes/:id" element={<VerClientePage />} />
             <Route path="/clientes/:id/editar" element={<EditarClientePage />} />
+            <Route path="/rdos" element={<RDOsPage />} />
+            <Route path="/rdos/criar" element={<CriarRDOPage />} />
+            <Route path="/rdos/:id" element={<VerRDOPage />} />
+            <Route path="/rdos/:id/editar" element={<EditarRDOPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
