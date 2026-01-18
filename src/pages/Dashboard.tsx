@@ -28,6 +28,7 @@ import { useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { RDOStatusBadge } from '@/components/rdos';
+import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import type { ObraStatus } from '@/types/obras';
 
@@ -212,6 +213,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Alerts Section */}
+        <ObraAlertsPanel maxAlerts={4} />
 
         {hasData ? (
           <div className="grid lg:grid-cols-2 gap-6">
