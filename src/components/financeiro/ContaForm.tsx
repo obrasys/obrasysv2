@@ -171,14 +171,17 @@ export function ContaForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Subcategoria</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select 
+                      onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
+                      value={field.value || 'none'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione (opcional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma</SelectItem>
+                        <SelectItem value="none">Nenhuma</SelectItem>
                         {filteredCategorias.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             <div className="flex items-center gap-2">
@@ -262,14 +265,17 @@ export function ContaForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Obra</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select 
+                    onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
+                    value={field.value || 'none'}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma obra (opcional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhuma</SelectItem>
+                      <SelectItem value="none">Nenhuma</SelectItem>
                       {obras.map((obra) => (
                         <SelectItem key={obra.id} value={obra.id}>
                           {obra.nome}
@@ -288,14 +294,17 @@ export function ContaForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Fornecedor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select 
+                    onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} 
+                    value={field.value || 'none'}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione (opcional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {fornecedores.map((f) => (
                         <SelectItem key={f.id} value={f.id}>
                           {f.nome}
