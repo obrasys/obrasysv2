@@ -116,8 +116,7 @@ export function ElementForm({
   // Preencher dados iniciais
   useEffect(() => {
     if (initialData) {
-      const params = initialData.parameters as unknown as Record<string, unknown>;
-      const params = initialData.parameters as Record<string, unknown>;
+      const params = initialData.parameters as unknown as Record<string, number | string>;
       form.reset({
         name: initialData.name,
         element_type: initialData.element_type,

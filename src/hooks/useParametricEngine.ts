@@ -77,17 +77,17 @@ export function useParametricEngine(orcamentoId: string) {
 
       const { data, error } = await supabase
         .from('constructive_elements')
-        .insert({
+        .insert([{
           orcamento_id: orcamentoId,
           element_type: formData.element_type,
           name: formData.name,
           construction_method: formData.construction_method,
           functional_type: formData.functional_type,
           configuration_type: formData.configuration_type,
-          parameters: parameters as unknown as Record<string, unknown>,
+          parameters: JSON.parse(JSON.stringify(parameters)),
           insulation_type: formData.insulation_type || null,
           insulation_thickness_cm: formData.insulation_thickness_cm || null,
-        })
+        }])
         .select()
         .single();
 
@@ -138,7 +138,7 @@ export function useParametricEngine(orcamentoId: string) {
           construction_method: formData.construction_method,
           functional_type: formData.functional_type,
           configuration_type: formData.configuration_type,
-          parameters: parameters as unknown as Record<string, unknown>,
+          parameters: JSON.parse(JSON.stringify(parameters)),
           insulation_type: formData.insulation_type || null,
           insulation_thickness_cm: formData.insulation_thickness_cm || null,
         })
