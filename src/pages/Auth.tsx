@@ -149,15 +149,12 @@ const Auth = () => {
         <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent/5 rounded-full blur-2xl" />
         
         <div className="relative z-10 flex flex-col justify-center px-12 lg:px-16">
-          <a href="/" className="flex items-center gap-3 mb-12">
+          <a href="/" className="flex items-center mb-12">
             <img 
               src={logoWhite} 
               alt="ObraSys Logo" 
               className="h-12 w-auto brightness-0 invert"
             />
-            <span className="font-display text-2xl font-bold text-primary-foreground">
-              Obra<span className="text-accent">Sys</span>
-            </span>
           </a>
           
           <h1 className="font-display text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
@@ -185,15 +182,12 @@ const Auth = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <a href="/" className="flex lg:hidden items-center gap-3 mb-8 justify-center">
+          <a href="/" className="flex lg:hidden items-center justify-center mb-8">
             <img 
               src={logoWhite} 
               alt="ObraSys Logo" 
               className="h-10 w-auto"
             />
-            <span className="font-display text-xl font-bold text-foreground">
-              Obra<span className="text-accent">Sys</span>
-            </span>
           </a>
 
           {/* Login Form */}
