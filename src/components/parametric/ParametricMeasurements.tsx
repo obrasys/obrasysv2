@@ -6,7 +6,7 @@ import { OpeningsManager } from './OpeningsManager';
 import { CalculatedParamsCard } from './CalculatedParamsCard';
 import { RulesSelector } from './RulesSelector';
 import { LinkedArtigosCard } from './LinkedArtigosCard';
-import type { ConstructiveElement, ElementFormData } from '@/types/parametric';
+import type { ConstructiveElement, ElementFormData, ParametricRule } from '@/types/parametric';
 
 interface ParametricMeasurementsProps {
   orcamentoId: string;
@@ -15,6 +15,7 @@ interface ParametricMeasurementsProps {
 
 export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMeasurementsProps) {
   const [selectedElement, setSelectedElement] = useState<ConstructiveElement | null>(null);
+  const [selectedRule, setSelectedRule] = useState<ParametricRule | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<ConstructiveElement | null>(null);
 
@@ -27,6 +28,9 @@ export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMe
     rules,
     isLoadingRules,
     unlinkArtigoFromElement,
+    coefficients,
+    upsertCoefficient,
+    deleteCoefficient,
   } = useParametricEngine(orcamentoId);
 
   // Hooks para o elemento selecionado
@@ -67,7 +71,17 @@ export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMe
     deleteElement.mutate(id);
     if (selectedElement?.id === id) {
       setSelectedElement(null);
+      setSelectedRule(null);
     }
+  };
+
+  const handleSelectElement = (element: ConstructiveElement | null) => {
+    setSelectedElement(element);
+    setSelectedRule(null); // Reset rule selection when element changes
+  };
+
+  const handleSelectRule = (rule: ParametricRule) => {
+    setSelectedRule(rule);
   };
 
   const handleCreateOpening = (data: Parameters<typeof createOpening.mutate>[0]) => {
@@ -80,6 +94,14 @@ export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMe
 
   const handleUnlinkArtigo = (artigoId: string) => {
     unlinkArtigoFromElement.mutate(artigoId);
+  };
+
+  const handleSaveCoefficient = (key: string, value: number) => {
+    upsertCoefficient.mutate({ key, value });
+  };
+
+  const handleResetCoefficient = (id: string) => {
+    deleteCoefficient.mutate(id);
   };
 
   // Filtrar regras para o elemento selecionado
@@ -109,7 +131,7 @@ export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMe
           <ElementsList
             elements={elements}
             selectedElementId={selectedElement?.id || null}
-            onSelectElement={setSelectedElement}
+            onSelectElement={handleSelectElement}
             onCreateElement={handleCreateElement}
             onEditElement={handleEditElement}
             onDeleteElement={handleDeleteElement}
@@ -138,8 +160,12 @@ export function ParametricMeasurements({ orcamentoId, isReadOnly }: ParametricMe
           <RulesSelector
             rules={compatibleRules}
             element={selectedElement}
+            selectedRuleId={selectedRule?.id}
             isLoading={isLoadingRules}
-            onSelectRule={() => {}}
+            onSelectRule={handleSelectRule}
+            coefficients={coefficients}
+            onSaveCoefficient={handleSaveCoefficient}
+            onResetCoefficient={handleResetCoefficient}
           />
 
           <LinkedArtigosCard

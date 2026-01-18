@@ -5,3 +5,4 @@ export { OpeningsManager } from './OpeningsManager';
 export { RulesSelector } from './RulesSelector';
 export { LinkedArtigosCard } from './LinkedArtigosCard';
 export { ParametricMeasurements } from './ParametricMeasurements';
+export { CoefficientsEditor } from './CoefficientsEditor';

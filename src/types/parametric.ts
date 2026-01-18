@@ -104,17 +104,35 @@ export interface CalculatedParameter {
 export interface ParametricRule {
   id: string;
   user_id: string | null;
+  rule_key: string | null;
+  market: string[];
   element_type: ElementType;
   construction_method: ConstructionMethod;
   functional_type?: FunctionalType | null;
   configuration_type?: ConfigurationType | null;
+  trade: string | null;
   rule_name: string;
+  output_unit: string | null;
   base_parameter: string;
+  defaults: Record<string, number>;
   formula: string;
   unit: string;
   coefficient: number;
+  notes: string | null;
   is_system: boolean;
   locked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Coeficiente paramétrico por empresa/obra
+export interface CompanyParametricCoefficient {
+  id: string;
+  user_id: string;
+  orcamento_id: string | null;
+  coefficient_key: string;
+  value: number;
+  description: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -211,6 +229,44 @@ export const OPENING_TYPES: Record<OpeningType, string> = {
   door: 'Porta',
   window: 'Janela',
   technical: 'Vão Técnico',
+};
+
+// Categorias de ofício (trade)
+export const TRADES: Record<string, string> = {
+  alvenaria_assentamento: 'Alvenaria - Assentamento',
+  alvenaria_blocos_assentamento: 'Alvenaria - Blocos',
+  alvenaria_pedra_assentamento: 'Alvenaria - Pedra',
+  argamassa_assentamento: 'Argamassa de Assentamento',
+  reboco_estuque: 'Reboco / Estuque',
+  pintura: 'Pintura',
+  placas_gesso: 'Placas de Gesso (Pladur)',
+  perfis_montantes_guias: 'Perfis / Montantes',
+  parafusos: 'Parafusos',
+  isolamento: 'Isolamento',
+  betao: 'Betão',
+  cofragem: 'Cofragem',
+  painelamento: 'Painelamento',
+};
+
+// Coeficientes padrão PT/ES
+export const DEFAULT_COEFFICIENTS: Record<string, { value: number; unit: string; description: string }> = {
+  // Pintura
+  paint_coverage_m2_per_l_per_coat: { value: 10, unit: 'm²/L', description: 'Cobertura por litro por demão' },
+  coats: { value: 2, unit: 'un', description: 'Número de demãos' },
+  
+  // Reboco
+  render_kg_per_m2_per_cm: { value: 18, unit: 'kg/m²/cm', description: 'Consumo de reboco por cm' },
+  render_thickness_cm: { value: 1.5, unit: 'cm', description: 'Espessura de reboco' },
+  
+  // Argamassa
+  mortar_m3_per_m2: { value: 0.015, unit: 'm³/m²', description: 'Consumo de argamassa por m²' },
+  
+  // Drywall
+  stud_spacing_m: { value: 0.60, unit: 'm', description: 'Espaçamento entre montantes' },
+  screw_per_m2: { value: 25, unit: 'un/m²', description: 'Parafusos por m²' },
+  
+  // Perdas
+  loss_factor: { value: 1.05, unit: '%', description: 'Fator de perda padrão (5%)' },
 };
 
 export const CALCULATED_PARAM_LABELS: Record<CalculatedParameterKey, { label: string; unit: string }> = {

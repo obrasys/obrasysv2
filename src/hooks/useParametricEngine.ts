@@ -13,6 +13,7 @@ import type {
   WallParameters,
   FloorParameters,
   RoofParameters,
+  CompanyParametricCoefficient,
 } from '@/types/parametric';
 
 // =====================================================
@@ -319,6 +320,98 @@ export function useParametricEngine(orcamentoId: string) {
         rule.construction_method === element.construction_method
     );
   };
+  // =====================================================
+  // COEFICIENTES POR EMPRESA/OBRA
+  // =====================================================
+
+  const { data: coefficients = [], isLoading: isLoadingCoefficients } = useQuery({
+    queryKey: ['company-coefficients', orcamentoId, user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('company_parametric_coefficients')
+        .select('*')
+        .eq('user_id', user.id)
+        .or(`orcamento_id.eq.${orcamentoId},orcamento_id.is.null`)
+        .order('orcamento_id', { ascending: false, nullsFirst: false });
+
+      if (error) throw error;
+      return data as CompanyParametricCoefficient[];
+    },
+    enabled: !!user,
+  });
+
+  const getEffectiveCoefficient = (key: string, ruleDefaults: Record<string, number> = {}): number => {
+    // Prioridade: coeficiente específico do orçamento > global do utilizador > default da regra
+    const projectCoeff = coefficients.find(c => c.coefficient_key === key && c.orcamento_id === orcamentoId);
+    if (projectCoeff) return projectCoeff.value;
+    
+    const globalCoeff = coefficients.find(c => c.coefficient_key === key && !c.orcamento_id);
+    if (globalCoeff) return globalCoeff.value;
+    
+    return ruleDefaults[key] ?? 1;
+  };
+
+  const upsertCoefficient = useMutation({
+    mutationFn: async ({ 
+      key, 
+      value, 
+      description,
+      isGlobal = false 
+    }: { 
+      key: string; 
+      value: number; 
+      description?: string;
+      isGlobal?: boolean;
+    }) => {
+      if (!user) throw new Error('Utilizador não autenticado');
+
+      const { data, error } = await supabase
+        .from('company_parametric_coefficients')
+        .upsert({
+          user_id: user.id,
+          orcamento_id: isGlobal ? null : orcamentoId,
+          coefficient_key: key,
+          value,
+          description: description || null,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,orcamento_id,coefficient_key',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as CompanyParametricCoefficient;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-coefficients'] });
+      toast({ title: 'Coeficiente atualizado' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteCoefficient = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('company_parametric_coefficients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-coefficients'] });
+      toast({ title: 'Coeficiente removido (usando valor padrão)' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    },
+  });
+
 
   // =====================================================
   // LINKAR ARTIGO A ELEMENTO
@@ -329,17 +422,20 @@ export function useParametricEngine(orcamentoId: string) {
       artigoId,
       elementId,
       ruleId,
+      coefficientOverrides = {},
     }: {
       artigoId: string;
       elementId: string;
       ruleId: string;
+      coefficientOverrides?: Record<string, number>;
     }) => {
-      // Executar regra para obter quantidade
+      // Executar regra v2 com overrides de coeficientes
       const { data: quantityResult, error: rpcError } = await supabase.rpc(
-        'execute_parametric_rule',
+        'execute_parametric_rule_v2',
         {
           p_rule_id: ruleId,
           p_element_id: elementId,
+          p_coefficient_overrides: coefficientOverrides,
         }
       );
 
@@ -466,6 +562,13 @@ export function useParametricEngine(orcamentoId: string) {
     rules,
     isLoadingRules,
     getRulesForElement,
+
+    // Coeficientes
+    coefficients,
+    isLoadingCoefficients,
+    getEffectiveCoefficient,
+    upsertCoefficient,
+    deleteCoefficient,
 
     // Linking
     linkArtigoToElement,
