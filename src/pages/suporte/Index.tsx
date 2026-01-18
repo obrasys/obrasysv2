@@ -337,8 +337,11 @@ export default function SuportePage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Centro de Suporte</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Bot className="h-6 w-6" />
+              Centro de Suporte
+            </h1>
+            <p className="text-muted-foreground mt-1">
               Ajuda, documentação e contacto direto
             </p>
           </div>
