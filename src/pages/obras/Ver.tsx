@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { 
   ArrowLeft, 
@@ -9,7 +9,11 @@ import {
   Building2, 
   FileText,
   Plus,
-  Loader2 
+  Loader2,
+  ClipboardList,
+  Cloud,
+  Users,
+  ExternalLink,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -18,8 +22,11 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
+import { RDOStatusBadge } from '@/components/rdos';
 import { useObra } from '@/hooks/useObras';
+import { useRDOs } from '@/hooks/useRDOs';
 import type { ObraStatus } from '@/types/obras';
+import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 
 export default function VerObraPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,12 +39,27 @@ export default function VerObraPage() {
     updateProgressItem, 
     deleteProgressItem 
   } = useObra(id);
+  
+  const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
       style: 'currency',
       currency: 'EUR',
     }).format(value);
+  };
+
+  const formatRDODate = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    if (isToday(date)) return 'Hoje';
+    if (isYesterday(date)) return 'Ontem';
+    return format(date, "d 'de' MMM", { locale: pt });
+  };
+
+  const getCondLabel = (value: string | null) => {
+    if (!value) return null;
+    const cond = CONDICOES_METEOROLOGICAS.find(c => c.value === value);
+    return cond?.label || value;
   };
 
   if (isLoading) {
@@ -64,6 +86,8 @@ export default function VerObraPage() {
   }
 
   const valorOrcamentos = obra.orcamentos?.reduce((sum, orc) => sum + (orc.valor_total || 0), 0) || 0;
+  const recentRDOs = obrasRDOs?.slice(0, 5) || [];
+  const totalRDOs = obrasRDOs?.length || 0;
 
   return (
     <AppLayout
@@ -149,6 +173,97 @@ export default function VerObraPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* RDOs Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Relatórios Diários (RDOs)
+              {totalRDOs > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {totalRDOs}
+                </Badge>
+              )}
+            </CardTitle>
+            <Button 
+              size="sm" 
+              onClick={() => navigate(`/rdos/criar?obra=${id}`)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo RDO
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loadingRDOs ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentRDOs.length > 0 ? (
+              <div className="space-y-3">
+                {recentRDOs.map((rdo) => (
+                  <div 
+                    key={rdo.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/rdos/${rdo.id}`)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{formatRDODate(rdo.data)}</span>
+                        <RDOStatusBadge status={rdo.status} />
+                      </div>
+                      {rdo.trabalhos_executados && (
+                        <p className="text-sm text-muted-foreground truncate mt-1">
+                          {rdo.trabalhos_executados.slice(0, 80)}
+                          {rdo.trabalhos_executados.length > 80 ? '...' : ''}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                        {rdo.condicoes_meteorologicas && (
+                          <span className="flex items-center gap-1">
+                            <Cloud className="h-3 w-3" />
+                            {getCondLabel(rdo.condicoes_meteorologicas)}
+                          </span>
+                        )}
+                        {rdo.mao_de_obra_presente > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {rdo.mao_de_obra_presente}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
+                  </div>
+                ))}
+                
+                {totalRDOs > 5 && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => navigate(`/rdos?obra=${id}`)}
+                  >
+                    Ver todos os {totalRDOs} RDOs
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum relatório diário registado.</p>
+                <p className="text-sm mt-1">Comece a registar os trabalhos diários desta obra.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate(`/rdos/criar?obra=${id}`)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Primeiro RDO
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Progress Tracker */}
         <ObraProgressTracker
