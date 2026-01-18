@@ -21,11 +21,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users } from 'lucide-react';
+import { Plus, Search, Loader2, Users, Tags } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
-import { ContaCard, ContaForm, FinanceiroDashboard } from '@/components/financeiro';
+import { useCategorias } from '@/hooks/useCategorias';
+import { ContaCard, ContaForm, FinanceiroDashboard, CategoriasManager } from '@/components/financeiro';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
 
 const FinanceiroIndex = () => {
@@ -37,6 +38,7 @@ const FinanceiroIndex = () => {
   const [editingConta, setEditingConta] = useState<ContaFinanceira | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
+  const [categoriasOpen, setCategoriasOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { 
@@ -54,6 +56,7 @@ const FinanceiroIndex = () => {
 
   const { obras } = useObras();
   const { clientes } = useClientes();
+  const { categorias } = useCategorias();
 
   const handleSubmit = (data: ContaFinanceiraFormData) => {
     if (editingConta) {
@@ -170,6 +173,10 @@ const FinanceiroIndex = () => {
           </div>
 
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setCategoriasOpen(true)}>
+              <Tags className="w-4 h-4 mr-2" />
+              Categorias
+            </Button>
             <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')}>
               <Users className="w-4 h-4 mr-2" />
               Fornecedores
@@ -261,8 +268,15 @@ const FinanceiroIndex = () => {
           obras={obras}
           fornecedores={fornecedores}
           clientes={clientes?.map(c => ({ id: c.id, nome: c.nome })) || []}
+          categorias={categorias}
           onSubmit={handleSubmit}
           isLoading={createConta.isPending || updateConta.isPending}
+        />
+
+        {/* Categorias Manager */}
+        <CategoriasManager
+          open={categoriasOpen}
+          onOpenChange={setCategoriasOpen}
         />
 
         {/* Delete Confirmation */}

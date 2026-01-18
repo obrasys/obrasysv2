@@ -80,6 +80,7 @@ export interface ContaFinanceiraFormData {
   colaborador_id?: string;
   fornecedor_id?: string;
   cliente_id?: string;
+  categoria_id?: string;
 }
 
 export interface FornecedorFormData {
