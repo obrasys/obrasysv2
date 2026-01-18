@@ -10,6 +10,7 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
@@ -19,6 +20,7 @@ const navItems = [
   { icon: FileText, label: 'Orçamentos', href: '/orcamentos' },
   { icon: ClipboardList, label: 'RDOs', href: '/rdos' },
   { icon: Calendar, label: 'Tarefas', href: '/tarefas' },
+  { icon: ShieldCheck, label: 'Conformidade', href: '/conformidade' },
   { icon: Wallet, label: 'Financeiro', href: '/financeiro' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
   { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
