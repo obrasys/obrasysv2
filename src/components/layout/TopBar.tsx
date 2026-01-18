@@ -16,6 +16,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
 import { Sidebar } from './Sidebar';
 
@@ -112,26 +119,38 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         </Popover>
 
         {/* User menu */}
-        <div className="flex items-center gap-3">
-          <div className="hidden md:block text-right">
-            <p className="text-sm font-medium text-foreground">{profile?.nome}</p>
-            <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt=""
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <User className="w-5 h-5 text-accent" />
-            )}
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium text-foreground">{profile?.nome}</p>
+                <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt=""
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-accent" />
+                )}
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => navigate('/perfil')}>
+              <User className="w-4 h-4 mr-2" />
+              O Meu Perfil
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
