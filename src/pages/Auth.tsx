@@ -153,7 +153,7 @@ const Auth = () => {
             <img 
               src={logoWhite} 
               alt="ObraSys Logo" 
-              className="h-12 w-auto brightness-0 invert"
+              className="h-16 w-auto brightness-0 invert"
             />
           </a>
           
@@ -186,7 +186,7 @@ const Auth = () => {
             <img 
               src={logoWhite} 
               alt="ObraSys Logo" 
-              className="h-10 w-auto"
+              className="h-14 w-auto"
             />
           </a>
 
