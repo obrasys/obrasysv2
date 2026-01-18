@@ -25,6 +25,9 @@ import EditarRDOPage from "./pages/rdos/Editar";
 import VerRDOPage from "./pages/rdos/Ver";
 import TarefasPage from "./pages/tarefas/Index";
 import ConformidadePage from "./pages/conformidade/Index";
+import BasePrecosPage from "./pages/base-precos/Index";
+import BasePrecosInserirPage from "./pages/base-precos/Inserir";
+import BasePrecosAuditoriaPage from "./pages/base-precos/Auditoria";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +61,9 @@ const App = () => (
             <Route path="/rdos/:id/editar" element={<EditarRDOPage />} />
             <Route path="/tarefas" element={<TarefasPage />} />
             <Route path="/conformidade" element={<ConformidadePage />} />
+            <Route path="/base-precos" element={<BasePrecosPage />} />
+            <Route path="/base-precos/inserir" element={<BasePrecosInserirPage />} />
+            <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

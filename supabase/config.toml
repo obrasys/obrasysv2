@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.calculate-obra-progress]
 verify_jwt = false
+
+[functions.recalculate-prices]
+verify_jwt = false
