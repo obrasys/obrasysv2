@@ -767,6 +767,219 @@ export type Database = {
           },
         ]
       }
+      material_categories: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      material_price_raw: {
+        Row: {
+          created_at: string
+          data_referencia: string
+          id: string
+          material_id: string
+          motivo_rejeicao: string | null
+          observacoes: string | null
+          preco: number
+          preco_normalizado: number | null
+          region_id: string
+          source_id: string
+          status: string
+          unidade_original: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_referencia?: string
+          id?: string
+          material_id: string
+          motivo_rejeicao?: string | null
+          observacoes?: string | null
+          preco: number
+          preco_normalizado?: number | null
+          region_id: string
+          source_id: string
+          status?: string
+          unidade_original: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_referencia?: string
+          id?: string
+          material_id?: string
+          motivo_rejeicao?: string | null
+          observacoes?: string | null
+          preco?: number
+          preco_normalizado?: number | null
+          region_id?: string
+          source_id?: string
+          status?: string
+          unidade_original?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_price_raw_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_price_raw_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_price_raw_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "price_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_price_reference: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          id: string
+          material_id: string
+          preco_medio: number
+          preco_p10: number | null
+          preco_p50: number | null
+          preco_p90: number | null
+          region_id: string
+          sample_size: number
+          ultima_atualizacao: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          material_id: string
+          preco_medio: number
+          preco_p10?: number | null
+          preco_p50?: number | null
+          preco_p90?: number | null
+          region_id: string
+          sample_size?: number
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          material_id?: string
+          preco_medio?: number
+          preco_p10?: number | null
+          preco_p50?: number | null
+          preco_p90?: number | null
+          region_id?: string
+          sample_size?: number
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_price_reference_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_price_reference_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          ativo: boolean
+          category_id: string
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          unidade_base: string
+          unidades_alternativas: Json | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          category_id: string
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          unidade_base: string
+          unidades_alternativas?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          category_id?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          unidade_base?: string
+          unidades_alternativas?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "material_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_progress_tracking: {
         Row: {
           capitulo_id: string | null
@@ -1061,6 +1274,81 @@ export type Database = {
         }
         Relationships: []
       }
+      price_audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          detalhes: Json | null
+          executado_por: string
+          id: string
+          material_id: string | null
+          region_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          detalhes?: Json | null
+          executado_por?: string
+          id?: string
+          material_id?: string | null
+          region_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          detalhes?: Json | null
+          executado_por?: string
+          id?: string
+          material_id?: string | null
+          region_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_audit_log_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_audit_log_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_sources: {
+        Row: {
+          ativa: boolean
+          base_weight: number
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          base_weight?: number
+          created_at?: string
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          base_weight?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1109,6 +1397,33 @@ export type Database = {
           trial_start?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      regions: {
+        Row: {
+          ativa: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
         }
         Relationships: []
       }
