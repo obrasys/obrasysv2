@@ -1,23 +1,25 @@
-import Header from "@/components/landing/Header";
-import Hero from "@/components/landing/Hero";
-import Features from "@/components/landing/Features";
-import Pricing from "@/components/landing/Pricing";
-import FAQ from "@/components/landing/FAQ";
-import Contact from "@/components/landing/Contact";
-import Footer from "@/components/landing/Footer";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/auth", { replace: true });
+      }
+    }
+  }, [user, loading, navigate]);
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main>
-        <Hero />
-        <Features />
-        <Pricing />
-        <FAQ />
-        <Contact />
-      </main>
-      <Footer />
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-accent" />
     </div>
   );
 };
