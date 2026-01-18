@@ -30,6 +30,7 @@ import BasePrecosInserirPage from "./pages/base-precos/Inserir";
 import BasePrecosAuditoriaPage from "./pages/base-precos/Auditoria";
 import SuportePage from "./pages/suporte/Index";
 import PerfilPage from "./pages/Perfil";
+import DefinicoesPage from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
             <Route path="/suporte" element={<SuportePage />} />
             <Route path="/perfil" element={<PerfilPage />} />
+            <Route path="/definicoes" element={<DefinicoesPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
