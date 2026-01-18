@@ -65,7 +65,14 @@ export function useTarefas(obraId?: string) {
       const { data, error } = await supabase
         .from('tarefas')
         .insert({
-          ...formData,
+          obra_id: formData.obra_id,
+          titulo: formData.titulo,
+          descricao: formData.descricao || null,
+          status: formData.status,
+          prioridade: formData.prioridade,
+          categoria: formData.categoria || null,
+          data_agendada: formData.data_agendada || null,
+          responsavel_id: formData.responsavel_id || null,
           user_id: user?.id,
           dependencias: formData.dependencias || [],
         })
@@ -86,7 +93,16 @@ export function useTarefas(obraId?: string) {
   // Update tarefa
   const updateTarefa = useMutation({
     mutationFn: async ({ id, ...formData }: TarefaFormData & { id: string }) => {
-      const updateData: Record<string, unknown> = { ...formData };
+      const updateData: Record<string, unknown> = {
+        obra_id: formData.obra_id,
+        titulo: formData.titulo,
+        descricao: formData.descricao || null,
+        status: formData.status,
+        prioridade: formData.prioridade,
+        categoria: formData.categoria || null,
+        data_agendada: formData.data_agendada || null,
+        responsavel_id: formData.responsavel_id || null,
+      };
       
       // If completing task, set data_conclusao
       if (formData.status === 'concluida') {
