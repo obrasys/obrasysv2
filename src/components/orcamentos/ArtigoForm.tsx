@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,10 +9,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -20,7 +25,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UNIDADES, type ArtigoFormData } from '@/types/orcamentos';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Link2, Unlink, Ruler, Calculator } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { ConstructiveElement, ParametricRule } from '@/types/parametric';
+import { ELEMENT_TYPES, CONSTRUCTION_METHODS, TRADES } from '@/types/parametric';
 
 const formSchema = z.object({
   codigo: z.string().optional(),
@@ -28,6 +36,9 @@ const formSchema = z.object({
   unidade: z.string().min(1, 'Unidade é obrigatória'),
   quantidade: z.number().min(0, 'Quantidade deve ser positiva'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
+  quantity_source: z.enum(['manual', 'parametric']).optional(),
+  linked_element_id: z.string().nullable().optional(),
+  linked_rule_id: z.string().nullable().optional(),
 });
 
 interface ArtigoFormProps {
@@ -36,6 +47,7 @@ interface ArtigoFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   submitLabel?: string;
+  orcamentoId?: string;
 }
 
 export function ArtigoForm({
@@ -44,7 +56,22 @@ export function ArtigoForm({
   onCancel,
   isLoading,
   submitLabel = 'Adicionar',
+  orcamentoId,
 }: ArtigoFormProps) {
+  const [useParametric, setUseParametric] = useState(
+    defaultValues?.quantity_source === 'parametric'
+  );
+  const [elements, setElements] = useState<ConstructiveElement[]>([]);
+  const [rules, setRules] = useState<ParametricRule[]>([]);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(
+    defaultValues?.linked_element_id || null
+  );
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(
+    defaultValues?.linked_rule_id || null
+  );
+  const [calculatedQuantity, setCalculatedQuantity] = useState<number | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
   const form = useForm<ArtigoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,12 +80,120 @@ export function ArtigoForm({
       unidade: 'un',
       quantidade: 1,
       preco_unitario: 0,
+      quantity_source: 'manual',
+      linked_element_id: null,
+      linked_rule_id: null,
       ...defaultValues,
     },
   });
 
+  // Carregar elementos do orçamento
+  useEffect(() => {
+    if (orcamentoId && useParametric) {
+      const fetchElements = async () => {
+        const { data } = await supabase
+          .from('constructive_elements')
+          .select('*')
+          .eq('orcamento_id', orcamentoId)
+          .order('created_at');
+        
+        if (data) {
+          setElements(data as unknown as ConstructiveElement[]);
+        }
+      };
+      fetchElements();
+    }
+  }, [orcamentoId, useParametric]);
+
+  // Carregar regras quando elemento é selecionado
+  useEffect(() => {
+    if (selectedElementId && useParametric) {
+      const element = elements.find(e => e.id === selectedElementId);
+      if (element) {
+        const fetchRules = async () => {
+          const { data } = await supabase
+            .from('parametric_rules')
+            .select('*')
+            .eq('element_type', element.element_type)
+            .eq('construction_method', element.construction_method)
+            .order('trade', { ascending: true });
+          
+          if (data) {
+            setRules(data as ParametricRule[]);
+          }
+        };
+        fetchRules();
+      }
+    } else {
+      setRules([]);
+      setSelectedRuleId(null);
+    }
+  }, [selectedElementId, elements, useParametric]);
+
+  // Calcular quantidade quando regra é selecionada
+  useEffect(() => {
+    if (selectedElementId && selectedRuleId && useParametric) {
+      const calculateQuantity = async () => {
+        setIsCalculating(true);
+        try {
+          const { data, error } = await supabase.rpc('execute_parametric_rule_v2', {
+            p_rule_id: selectedRuleId,
+            p_element_id: selectedElementId,
+            p_coefficient_overrides: {},
+          });
+
+          if (!error && data !== null) {
+            setCalculatedQuantity(data as number);
+            form.setValue('quantidade', data as number);
+            
+            // Atualizar unidade baseada na regra
+            const rule = rules.find(r => r.id === selectedRuleId);
+            if (rule?.output_unit || rule?.unit) {
+              const unitValue = rule.output_unit || rule.unit;
+              // Mapear unidades da regra para unidades do formulário
+              const unitMap: Record<string, string> = {
+                'm2': 'm2',
+                'm²': 'm2',
+                'm3': 'm3',
+                'm³': 'm3',
+                'lm': 'm',
+                'm': 'm',
+                'kg': 'kg',
+                'l': 'un',
+                'un': 'un',
+              };
+              const mappedUnit = unitMap[unitValue.toLowerCase()] || 'un';
+              form.setValue('unidade', mappedUnit);
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao calcular quantidade:', err);
+        } finally {
+          setIsCalculating(false);
+        }
+      };
+      calculateQuantity();
+    } else {
+      setCalculatedQuantity(null);
+    }
+  }, [selectedElementId, selectedRuleId, useParametric, rules, form]);
+
   const handleSubmit = (data: ArtigoFormData) => {
-    onSubmit(data);
+    onSubmit({
+      ...data,
+      quantity_source: useParametric ? 'parametric' : 'manual',
+      linked_element_id: useParametric ? selectedElementId : null,
+      linked_rule_id: useParametric ? selectedRuleId : null,
+    });
+  };
+
+  const handleToggleParametric = (enabled: boolean) => {
+    setUseParametric(enabled);
+    if (!enabled) {
+      setSelectedElementId(null);
+      setSelectedRuleId(null);
+      setCalculatedQuantity(null);
+    }
   };
 
   const valorTotal = form.watch('quantidade') * form.watch('preco_unitario');
@@ -69,6 +204,17 @@ export function ArtigoForm({
       currency: 'EUR',
     }).format(value);
   };
+
+  const selectedElement = elements.find(e => e.id === selectedElementId);
+  const selectedRule = rules.find(r => r.id === selectedRuleId);
+
+  // Agrupar regras por trade
+  const rulesByTrade = rules.reduce((acc, rule) => {
+    const trade = rule.trade || 'outros';
+    if (!acc[trade]) acc[trade] = [];
+    acc[trade].push(rule);
+    return acc;
+  }, {} as Record<string, ParametricRule[]>);
 
   return (
     <Form {...form}>
@@ -94,7 +240,11 @@ export function ArtigoForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Unidade</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value}
+                  disabled={useParametric && !!selectedRuleId}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue />
@@ -118,7 +268,15 @@ export function ArtigoForm({
             name="quantidade"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantidade</FormLabel>
+                <FormLabel className="flex items-center gap-2">
+                  Quantidade
+                  {useParametric && calculatedQuantity !== null && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Calculator className="h-3 w-3 mr-1" />
+                      Auto
+                    </Badge>
+                  )}
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -126,6 +284,8 @@ export function ArtigoForm({
                     step={0.001}
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    disabled={useParametric && calculatedQuantity !== null}
+                    className={useParametric && calculatedQuantity !== null ? 'bg-muted' : ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -171,6 +331,147 @@ export function ArtigoForm({
             </FormItem>
           )}
         />
+
+        {/* Secção de Medição Paramétrica */}
+        {orcamentoId && (
+          <Card className="border-dashed">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">Medição Paramétrica</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {useParametric ? 'Ativo' : 'Inativo'}
+                  </span>
+                  <Switch
+                    checked={useParametric}
+                    onCheckedChange={handleToggleParametric}
+                  />
+                </div>
+              </div>
+
+              {useParametric && (
+                <div className="space-y-4">
+                  {elements.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum elemento construtivo criado neste orçamento.
+                      Vá à tab "Medições Paramétricas" para criar elementos.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Seleção de Elemento */}
+                      <div className="space-y-2">
+                        <FormLabel className="text-xs">Elemento Construtivo</FormLabel>
+                        <Select
+                          value={selectedElementId || ''}
+                          onValueChange={(val) => setSelectedElementId(val || null)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um elemento..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover">
+                            {elements.map((element) => (
+                              <SelectItem key={element.id} value={element.id}>
+                                <div className="flex items-center gap-2">
+                                  <span>{element.name}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {ELEMENT_TYPES[element.element_type]}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Info do elemento selecionado */}
+                      {selectedElement && (
+                        <div className="rounded-lg bg-muted/50 p-3 text-xs space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Tipo:</span>
+                            <span>{ELEMENT_TYPES[selectedElement.element_type]}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Método:</span>
+                            <span>{CONSTRUCTION_METHODS[selectedElement.construction_method].label}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Seleção de Regra */}
+                      {selectedElementId && rules.length > 0 && (
+                        <div className="space-y-2">
+                          <FormLabel className="text-xs">Regra de Cálculo</FormLabel>
+                          <Select
+                            value={selectedRuleId || ''}
+                            onValueChange={(val) => setSelectedRuleId(val || null)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma regra..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover max-h-[300px]">
+                              {Object.entries(rulesByTrade).map(([trade, tradeRules]) => (
+                                <div key={trade}>
+                                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                    {TRADES[trade] || trade}
+                                  </div>
+                                  {tradeRules.map((rule) => (
+                                    <SelectItem key={rule.id} value={rule.id}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{rule.rule_name}</span>
+                                        <Badge variant="secondary" className="text-xs">
+                                          {rule.output_unit || rule.unit}
+                                        </Badge>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Resultado do cálculo */}
+                      {selectedRule && calculatedQuantity !== null && (
+                        <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Link2 className="h-4 w-4 text-primary" />
+                              <span className="text-sm font-medium">Quantidade Calculada</span>
+                            </div>
+                            <div className="text-right">
+                              {isCalculating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <span className="text-lg font-bold text-primary">
+                                  {calculatedQuantity.toFixed(3)} {selectedRule.output_unit || selectedRule.unit}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {selectedRule.notes && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {selectedRule.notes}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {selectedElementId && rules.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-2">
+                          Nenhuma regra disponível para este tipo de elemento.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-sm">

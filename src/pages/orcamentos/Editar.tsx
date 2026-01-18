@@ -390,6 +390,7 @@ export default function EditarOrcamentoPage() {
             onCancel={() => setShowArtigoModal(false)}
             isLoading={createArtigo.isPending || updateArtigo.isPending}
             submitLabel={editingArtigo ? 'Guardar' : 'Adicionar'}
+            orcamentoId={orcamento.id}
           />
         </DialogContent>
       </Dialog>
