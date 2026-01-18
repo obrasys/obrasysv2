@@ -8,11 +8,14 @@ export interface CustosIndiretos {
   licenciamento: number;
 }
 
-export interface Obra {
+export interface ObraPartial {
   id: string;
-  user_id: string;
   nome: string;
-  cliente: string | null;
+  cliente?: string | null;
+}
+
+export interface Obra extends ObraPartial {
+  user_id: string;
   endereco: string | null;
   status: string;
   data_inicio: string | null;
@@ -25,6 +28,7 @@ export interface Obra {
 export interface Orcamento {
   id: string;
   obra_id: string | null;
+  cliente_id?: string | null;
   user_id: string;
   titulo: string;
   status: OrcamentoStatus;
@@ -35,7 +39,7 @@ export interface Orcamento {
   data_envio: string | null;
   created_at: string;
   updated_at: string;
-  obra?: Obra;
+  obra?: ObraPartial;
   capitulos?: Capitulo[];
 }
 

@@ -227,6 +227,69 @@ export type Database = {
           },
         ]
       }
+      clientes: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          codigo_postal: string | null
+          created_at: string
+          criado_por: string | null
+          email: string | null
+          empresa: string | null
+          endereco: string | null
+          id: string
+          nif: string | null
+          nivel_acesso: string
+          nome: string
+          observacoes: string | null
+          pais: string | null
+          telefone: string | null
+          telemovel: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          codigo_postal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          empresa?: string | null
+          endereco?: string | null
+          id?: string
+          nif?: string | null
+          nivel_acesso?: string
+          nome: string
+          observacoes?: string | null
+          pais?: string | null
+          telefone?: string | null
+          telemovel?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          codigo_postal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          empresa?: string | null
+          endereco?: string | null
+          id?: string
+          nif?: string | null
+          nivel_acesso?: string
+          nome?: string
+          observacoes?: string | null
+          pais?: string | null
+          telefone?: string | null
+          telemovel?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_parametric_coefficients: {
         Row: {
           coefficient_key: string
@@ -317,6 +380,38 @@ export type Database = {
             columns: ["orcamento_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          assigned_user_id: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          assigned_user_id: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          assigned_user_id?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
         ]
@@ -471,6 +566,7 @@ export type Database = {
         Row: {
           arquivada: boolean
           cliente: string | null
+          cliente_id: string | null
           created_at: string
           data_fim: string | null
           data_inicio: string | null
@@ -487,6 +583,7 @@ export type Database = {
         Insert: {
           arquivada?: boolean
           cliente?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
@@ -503,6 +600,7 @@ export type Database = {
         Update: {
           arquivada?: boolean
           cliente?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
@@ -518,6 +616,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_gestor_id_fkey"
             columns: ["gestor_id"]
             isOneToOne: false
@@ -528,6 +633,7 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          cliente_id: string | null
           created_at: string
           custos_indiretos: Json | null
           data_criacao: string
@@ -542,6 +648,7 @@ export type Database = {
           valor_total: number | null
         }
         Insert: {
+          cliente_id?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -556,6 +663,7 @@ export type Database = {
           valor_total?: number | null
         }
         Update: {
+          cliente_id?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -570,6 +678,13 @@ export type Database = {
           valor_total?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orcamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orcamentos_obra_id_fkey"
             columns: ["obra_id"]
