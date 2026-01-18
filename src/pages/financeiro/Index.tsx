@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, Users } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
@@ -28,6 +29,7 @@ import { ContaCard, ContaForm, FinanceiroDashboard } from '@/components/financei
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
 
 const FinanceiroIndex = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterTipo, setFilterTipo] = useState<string>('all');
   const [filterPago, setFilterPago] = useState<string>('all');
@@ -167,10 +169,16 @@ const FinanceiroIndex = () => {
             </Select>
           </div>
 
-          <Button onClick={() => { setEditingConta(null); setFormOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Conta
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')}>
+              <Users className="w-4 h-4 mr-2" />
+              Fornecedores
+            </Button>
+            <Button onClick={() => { setEditingConta(null); setFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Conta
+            </Button>
+          </div>
         </div>
 
         {/* Contas List */}
