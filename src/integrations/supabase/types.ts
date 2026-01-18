@@ -21,9 +21,12 @@ export type Database = {
           created_at: string
           descricao: string
           id: string
+          linked_element_id: string | null
+          linked_rule_id: string | null
           ordem: number
           preco_unitario: number
           quantidade: number
+          quantity_source: string
           unidade: string
           updated_at: string
           valor_total: number | null
@@ -34,9 +37,12 @@ export type Database = {
           created_at?: string
           descricao: string
           id?: string
+          linked_element_id?: string | null
+          linked_rule_id?: string | null
           ordem?: number
           preco_unitario?: number
           quantidade?: number
+          quantity_source?: string
           unidade: string
           updated_at?: string
           valor_total?: number | null
@@ -47,9 +53,12 @@ export type Database = {
           created_at?: string
           descricao?: string
           id?: string
+          linked_element_id?: string | null
+          linked_rule_id?: string | null
           ordem?: number
           preco_unitario?: number
           quantidade?: number
+          quantity_source?: string
           unidade?: string
           updated_at?: string
           valor_total?: number | null
@@ -139,6 +148,41 @@ export type Database = {
         }
         Relationships: []
       }
+      calculated_parameters: {
+        Row: {
+          created_at: string | null
+          element_id: string
+          id: string
+          key: string
+          unit: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          element_id: string
+          id?: string
+          key: string
+          unit: string
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string
+          id?: string
+          key?: string
+          unit?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculated_parameters_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "constructive_elements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capitulos_orcamento: {
         Row: {
           created_at: string
@@ -183,6 +227,59 @@ export type Database = {
           },
         ]
       }
+      constructive_elements: {
+        Row: {
+          configuration_type: string
+          construction_method: string
+          created_at: string | null
+          element_type: string
+          functional_type: string
+          id: string
+          insulation_thickness_cm: number | null
+          insulation_type: string | null
+          name: string
+          orcamento_id: string
+          parameters: Json
+          updated_at: string | null
+        }
+        Insert: {
+          configuration_type: string
+          construction_method: string
+          created_at?: string | null
+          element_type: string
+          functional_type: string
+          id?: string
+          insulation_thickness_cm?: number | null
+          insulation_type?: string | null
+          name: string
+          orcamento_id: string
+          parameters?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          configuration_type?: string
+          construction_method?: string
+          created_at?: string | null
+          element_type?: string
+          functional_type?: string
+          id?: string
+          insulation_thickness_cm?: number | null
+          insulation_type?: string | null
+          name?: string
+          orcamento_id?: string
+          parameters?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constructive_elements_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       default_articles: {
         Row: {
           categoria: string
@@ -212,6 +309,44 @@ export type Database = {
           unidade?: string
         }
         Relationships: []
+      }
+      element_openings: {
+        Row: {
+          created_at: string | null
+          element_id: string
+          height_m: number
+          id: string
+          name: string | null
+          opening_type: string
+          width_m: number
+        }
+        Insert: {
+          created_at?: string | null
+          element_id: string
+          height_m: number
+          id?: string
+          name?: string | null
+          opening_type: string
+          width_m: number
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string
+          height_m?: number
+          id?: string
+          name?: string | null
+          opening_type?: string
+          width_m?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "element_openings_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "constructive_elements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       failed_login_attempts: {
         Row: {
@@ -403,6 +538,96 @@ export type Database = {
           },
         ]
       }
+      parametric_audit_logs: {
+        Row: {
+          action: string
+          budget_item_id: string | null
+          created_at: string | null
+          element_id: string | null
+          id: string
+          metadata: Json | null
+          new_value: number | null
+          old_value: number | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          budget_item_id?: string | null
+          created_at?: string | null
+          element_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: number | null
+          old_value?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          budget_item_id?: string | null
+          created_at?: string | null
+          element_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: number | null
+          old_value?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      parametric_rules: {
+        Row: {
+          base_parameter: string
+          coefficient: number | null
+          configuration_type: string | null
+          construction_method: string
+          created_at: string | null
+          element_type: string
+          formula: string
+          functional_type: string | null
+          id: string
+          is_system: boolean | null
+          locked: boolean | null
+          rule_name: string
+          unit: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          base_parameter: string
+          coefficient?: number | null
+          configuration_type?: string | null
+          construction_method: string
+          created_at?: string | null
+          element_type: string
+          formula: string
+          functional_type?: string | null
+          id?: string
+          is_system?: boolean | null
+          locked?: boolean | null
+          rule_name: string
+          unit: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          base_parameter?: string
+          coefficient?: number | null
+          configuration_type?: string | null
+          construction_method?: string
+          created_at?: string | null
+          element_type?: string
+          formula?: string
+          functional_type?: string | null
+          id?: string
+          is_system?: boolean | null
+          locked?: boolean | null
+          rule_name?: string
+          unit?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -492,7 +717,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_element_parameters: {
+        Args: { p_element_id: string }
+        Returns: undefined
+      }
+      execute_parametric_rule: {
+        Args: { p_element_id: string; p_rule_id: string }
+        Returns: number
+      }
+      sync_parametric_quantities: {
+        Args: { p_element_id: string }
+        Returns: undefined
+      }
+      validate_element_parameters: {
+        Args: { p_element_id: string }
+        Returns: {
+          field: string
+          level: string
+          message: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
