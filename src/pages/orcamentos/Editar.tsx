@@ -7,10 +7,12 @@ import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
 import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
 import { CatalogoModal } from '@/components/orcamentos/CatalogoModal';
 import { ResumoTotal } from '@/components/orcamentos/ResumoTotal';
+import { ParametricMeasurements } from '@/components/parametric';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,8 @@ import {
   Sparkles,
   Settings,
   CheckCircle,
+  FileStack,
+  Ruler,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -65,6 +69,7 @@ export default function EditarOrcamentoPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [deleteCapituloId, setDeleteCapituloId] = useState<string | null>(null);
   const [deleteArtigoId, setDeleteArtigoId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('artigos');
 
   // Form states
   const [selectedCapituloId, setSelectedCapituloId] = useState<string | null>(null);
@@ -239,48 +244,73 @@ export default function EditarOrcamentoPage() {
           <OrcamentoStatus status={orcamento.status} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Capítulos */}
-            {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
-              orcamento.capitulos.map((capitulo) => (
-                <CapituloAccordion
-                  key={capitulo.id}
-                  capitulo={capitulo}
-                  onEdit={() => handleEditCapitulo(capitulo.id)}
-                  onDelete={() => setDeleteCapituloId(capitulo.id)}
-                  onAddArtigo={() => handleAddArtigo(capitulo.id)}
-                  onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
-                  onDeleteArtigo={setDeleteArtigoId}
-                  onOpenCatalog={handleOpenCatalog}
-                  isReadOnly={isReadOnly}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Nenhum capítulo criado. Adicione o primeiro capítulo para começar.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="artigos" className="flex items-center gap-2">
+              <FileStack className="h-4 w-4" />
+              Artigos
+            </TabsTrigger>
+            <TabsTrigger value="medicoes" className="flex items-center gap-2">
+              <Ruler className="h-4 w-4" />
+              Medições Paramétricas
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Add Chapter Button */}
-            {!isReadOnly && (
-              <Button variant="outline" className="w-full" onClick={handleAddCapitulo}>
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Capítulo
-              </Button>
-            )}
-          </div>
+          {/* Tab: Artigos */}
+          <TabsContent value="artigos" className="space-y-0">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Main Content */}
+              <div className="lg:col-span-3 space-y-4">
+                {/* Capítulos */}
+                {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
+                  orcamento.capitulos.map((capitulo) => (
+                    <CapituloAccordion
+                      key={capitulo.id}
+                      capitulo={capitulo}
+                      onEdit={() => handleEditCapitulo(capitulo.id)}
+                      onDelete={() => setDeleteCapituloId(capitulo.id)}
+                      onAddArtigo={() => handleAddArtigo(capitulo.id)}
+                      onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
+                      onDeleteArtigo={setDeleteArtigoId}
+                      onOpenCatalog={handleOpenCatalog}
+                      isReadOnly={isReadOnly}
+                    />
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <p className="text-muted-foreground mb-4">
+                        Nenhum capítulo criado. Adicione o primeiro capítulo para começar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <ResumoTotal orcamento={orcamento} />
-          </div>
-        </div>
+                {/* Add Chapter Button */}
+                {!isReadOnly && (
+                  <Button variant="outline" className="w-full" onClick={handleAddCapitulo}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Adicionar Capítulo
+                  </Button>
+                )}
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-4">
+                <ResumoTotal orcamento={orcamento} />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Medições Paramétricas */}
+          <TabsContent value="medicoes" className="space-y-0">
+            <ParametricMeasurements 
+              orcamentoId={orcamento.id} 
+              isReadOnly={isReadOnly}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Capítulo Modal */}
