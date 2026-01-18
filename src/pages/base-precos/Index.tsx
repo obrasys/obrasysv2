@@ -74,26 +74,19 @@ export default function BasePrecosIndex() {
   };
 
   return (
-    <AppLayout title="Base de Preços">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Database className="h-6 w-6" />
-              Base de Preços
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Preços de referência para materiais de construção
-            </p>
-          </div>
-          <Link to="/base-precos/inserir">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Inserir Preço
-            </Button>
-          </Link>
-        </div>
+    <AppLayout 
+      title="Base de Preços"
+      subtitle="Preços de referência para materiais de construção"
+      actions={
+        <Link to="/base-precos/inserir">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Inserir Preço
+          </Button>
+        </Link>
+      }
+    >
+      <div className="p-6 space-y-6">
 
         {/* Filtros */}
         <Card>
