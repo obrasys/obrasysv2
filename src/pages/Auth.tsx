@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import logoWhite from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import {
   loginSchema,
@@ -148,10 +149,12 @@ const Auth = () => {
         <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent/5 rounded-full blur-2xl" />
         
         <div className="relative z-10 flex flex-col justify-center px-12 lg:px-16">
-          <a href="/" className="flex items-center gap-2 mb-12">
-            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-              <Building2 className="w-7 h-7 text-accent-foreground" />
-            </div>
+          <a href="/" className="flex items-center gap-3 mb-12">
+            <img 
+              src={logoWhite} 
+              alt="ObraSys Logo" 
+              className="h-12 w-auto brightness-0 invert"
+            />
             <span className="font-display text-2xl font-bold text-primary-foreground">
               Obra<span className="text-accent">Sys</span>
             </span>
@@ -182,10 +185,12 @@ const Auth = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <a href="/" className="flex lg:hidden items-center gap-2 mb-8 justify-center">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
+          <a href="/" className="flex lg:hidden items-center gap-3 mb-8 justify-center">
+            <img 
+              src={logoWhite} 
+              alt="ObraSys Logo" 
+              className="h-10 w-auto"
+            />
             <span className="font-display text-xl font-bold text-foreground">
               Obra<span className="text-accent">Sys</span>
             </span>
