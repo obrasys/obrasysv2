@@ -918,6 +918,137 @@ export type Database = {
           },
         ]
       }
+      tarefas: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_agendada: string | null
+          data_conclusao: string | null
+          dependencias: string[] | null
+          descricao: string | null
+          id: string
+          obra_id: string
+          ordem: number | null
+          prioridade: string
+          responsavel_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          dependencias?: string[] | null
+          descricao?: string | null
+          id?: string
+          obra_id: string
+          ordem?: number | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_agendada?: string | null
+          data_conclusao?: string | null
+          dependencias?: string[] | null
+          descricao?: string | null
+          id?: string
+          obra_id?: string
+          ordem?: number | null
+          prioridade?: string
+          responsavel_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_cronograma: {
+        Row: {
+          categoria: string | null
+          cor: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          obra_id: string
+          progresso: number | null
+          recursos: string | null
+          responsavel: string | null
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          cor?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio: string
+          id?: string
+          obra_id: string
+          progresso?: number | null
+          recursos?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          cor?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          obra_id?: string
+          progresso?: number | null
+          recursos?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_cronograma_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates_capitulos: {
         Row: {
           artigos: Json | null
