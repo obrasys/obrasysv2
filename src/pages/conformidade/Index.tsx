@@ -180,7 +180,7 @@ export default function ConformidadeIndex() {
     updateChecklist.mutate({ id, itens, status });
   };
 
-  const obrasOptions = obras.map((o) => ({ id: o.id, nome: o.nome }));
+  const obrasOptions = (obras || []).map((o) => ({ id: o.id, nome: o.nome }));
 
   if (loading) {
     return (
