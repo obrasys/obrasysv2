@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ClienteCard } from '@/components/clientes';
+import { ClienteCard, ImportCSVModal } from '@/components/clientes';
 import { useClientes } from '@/hooks/useClientes';
 import type { Cliente, NivelAcesso } from '@/types/clientes';
 import { 
@@ -31,6 +31,7 @@ import {
   UserCheck, 
   UserX,
   Loader2,
+  Upload,
 } from 'lucide-react';
 
 export default function ClientesPage() {
@@ -41,6 +42,7 @@ export default function ClientesPage() {
   const [filterNivel, setFilterNivel] = useState<string>('all');
   const [filterAtivo, setFilterAtivo] = useState<string>('all');
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const filteredClientes = clientes?.filter((cliente) => {
     const matchesSearch = 
@@ -86,10 +88,16 @@ export default function ClientesPage() {
               Gerir clientes e suas associações a obras e orçamentos
             </p>
           </div>
-          <Button onClick={() => navigate('/clientes/criar')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImportModal(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Importar CSV
+            </Button>
+            <Button onClick={() => navigate('/clientes/criar')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Cliente
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -226,6 +234,12 @@ export default function ClientesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import CSV Modal */}
+      <ImportCSVModal 
+        open={showImportModal} 
+        onOpenChange={setShowImportModal}
+      />
     </AppLayout>
   );
 }
