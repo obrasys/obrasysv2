@@ -6,10 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { newPasswordSchema, NewPasswordFormData } from "@/lib/validations/auth";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -81,13 +82,12 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-8">
         <div className="w-full max-w-md text-center space-y-6">
-          <a href="/" className="flex items-center gap-2 justify-center mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">
-              Obra<span className="text-accent">Sys</span>
-            </span>
+          <a href="/" className="flex items-center justify-center mb-8">
+            <img
+              src={logo}
+              alt="ObraSys Logo"
+              className="h-12 w-auto"
+            />
           </a>
 
           <div>
@@ -116,13 +116,12 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-8">
       <div className="w-full max-w-md">
-        <a href="/" className="flex items-center gap-2 justify-center mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Obra<span className="text-accent">Sys</span>
-          </span>
+        <a href="/" className="flex items-center justify-center mb-8">
+          <img
+            src={logo}
+            alt="ObraSys Logo"
+            className="h-12 w-auto"
+          />
         </a>
 
         {!isSuccess ? (
