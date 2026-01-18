@@ -504,6 +504,102 @@ export type Database = {
           },
         ]
       }
+      contas_financeiras: {
+        Row: {
+          cliente_id: string | null
+          colaborador_id: string | null
+          comprovante_url: string | null
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string | null
+          fornecedor_id: string | null
+          id: string
+          obra_id: string | null
+          orcamento_id: string | null
+          origem: string
+          pago: boolean
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          colaborador_id?: string | null
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          obra_id?: string | null
+          orcamento_id?: string | null
+          origem: string
+          pago?: boolean
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          cliente_id?: string | null
+          colaborador_id?: string | null
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          obra_id?: string | null
+          orcamento_id?: string | null
+          origem?: string
+          pago?: boolean
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_financeiras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_assignments: {
         Row: {
           assigned_at: string
@@ -691,6 +787,153 @@ export type Database = {
           id?: string
           ip_address?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      financeiro_obras: {
+        Row: {
+          created_at: string
+          id: string
+          obra_id: string
+          updated_at: string
+          valor_contrato: number
+          valor_faturado: number
+          valor_recebido: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          obra_id: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_faturado?: number
+          valor_recebido?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          obra_id?: string
+          updated_at?: string
+          valor_contrato?: number
+          valor_faturado?: number
+          valor_recebido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeiro_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: true
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_access_audit: {
+        Row: {
+          action_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          obra_id: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          obra_id?: string | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          obra_id?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_access_audit_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_project_assignments: {
+        Row: {
+          created_at: string
+          granted_by: string
+          id: string
+          obra_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by: string
+          id?: string
+          obra_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string
+          id?: string
+          obra_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_project_assignments_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string | null
+          endereco: string | null
+          id: string
+          nif: string | null
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nif?: string | null
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nif?: string | null
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
