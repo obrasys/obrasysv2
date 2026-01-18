@@ -227,6 +227,47 @@ export type Database = {
           },
         ]
       }
+      company_parametric_coefficients: {
+        Row: {
+          coefficient_key: string
+          created_at: string | null
+          description: string | null
+          id: string
+          orcamento_id: string | null
+          updated_at: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          coefficient_key: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          orcamento_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          coefficient_key?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          orcamento_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_parametric_coefficients_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       constructive_elements: {
         Row: {
           configuration_type: string
@@ -581,13 +622,19 @@ export type Database = {
           configuration_type: string | null
           construction_method: string
           created_at: string | null
+          defaults: Json | null
           element_type: string
           formula: string
           functional_type: string | null
           id: string
           is_system: boolean | null
           locked: boolean | null
+          market: string[] | null
+          notes: string | null
+          output_unit: string | null
+          rule_key: string | null
           rule_name: string
+          trade: string | null
           unit: string
           updated_at: string | null
           user_id: string | null
@@ -598,13 +645,19 @@ export type Database = {
           configuration_type?: string | null
           construction_method: string
           created_at?: string | null
+          defaults?: Json | null
           element_type: string
           formula: string
           functional_type?: string | null
           id?: string
           is_system?: boolean | null
           locked?: boolean | null
+          market?: string[] | null
+          notes?: string | null
+          output_unit?: string | null
+          rule_key?: string | null
           rule_name: string
+          trade?: string | null
           unit: string
           updated_at?: string | null
           user_id?: string | null
@@ -615,13 +668,19 @@ export type Database = {
           configuration_type?: string | null
           construction_method?: string
           created_at?: string | null
+          defaults?: Json | null
           element_type?: string
           formula?: string
           functional_type?: string | null
           id?: string
           is_system?: boolean | null
           locked?: boolean | null
+          market?: string[] | null
+          notes?: string | null
+          output_unit?: string | null
+          rule_key?: string | null
           rule_name?: string
+          trade?: string | null
           unit?: string
           updated_at?: string | null
           user_id?: string | null
@@ -723,6 +782,14 @@ export type Database = {
       }
       execute_parametric_rule: {
         Args: { p_element_id: string; p_rule_id: string }
+        Returns: number
+      }
+      execute_parametric_rule_v2: {
+        Args: {
+          p_coefficient_overrides?: Json
+          p_element_id: string
+          p_rule_id: string
+        }
         Returns: number
       }
       sync_parametric_quantities: {
