@@ -14,6 +14,7 @@ import {
   Database,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { APP_VERSION } from '@/config/version';
 
 const navItems = [
   { icon: Home, label: 'Dashboard', href: '/dashboard' },
@@ -50,6 +51,9 @@ export function Sidebar() {
             className="h-10 w-auto brightness-0 invert"
           />
         </a>
+        <p className="text-[10px] text-sidebar-foreground/50 mt-1">
+          Versão {APP_VERSION}
+        </p>
       </div>
 
       {/* Navigation */}
