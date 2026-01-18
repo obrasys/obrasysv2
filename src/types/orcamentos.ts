@@ -139,6 +139,10 @@ export interface ArtigoFormData {
   unidade: string;
   quantidade: number;
   preco_unitario: number;
+  // Campos paramétricos opcionais
+  quantity_source?: 'manual' | 'parametric';
+  linked_element_id?: string | null;
+  linked_rule_id?: string | null;
 }
 
 // AI Validation types
