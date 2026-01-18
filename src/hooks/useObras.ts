@@ -200,7 +200,7 @@ export function useObra(id: string | undefined) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: obra, isLoading } = useQuery({
+  const { data: obra, isLoading, refetch } = useQuery({
     queryKey: ['obra', id],
     queryFn: async () => {
       if (!id) return null;
@@ -330,6 +330,7 @@ export function useObra(id: string | undefined) {
     progressTracking,
     isLoading,
     isLoadingProgress,
+    refetch,
     createProgressItem,
     updateProgressItem,
     deleteProgressItem,
