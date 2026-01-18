@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { History, FileText, Loader2, ShieldAlert } from "lucide-react";
+import { History, FileText, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import {
@@ -44,18 +44,11 @@ export default function BasePrecosAuditoria() {
       : rawPrices?.filter((p) => p.status === statusFilter);
 
   return (
-    <AppLayout title="Auditoria de Preços">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6" />
-            Auditoria de Preços
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Histórico completo e log de ações (apenas administradores)
-          </p>
-        </div>
+    <AppLayout 
+      title="Auditoria de Preços"
+      subtitle="Histórico completo e log de ações (apenas administradores)"
+    >
+      <div className="p-6 space-y-6">
 
         <Tabs defaultValue="history">
           <TabsList>

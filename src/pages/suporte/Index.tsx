@@ -332,26 +332,19 @@ export default function SuportePage() {
   };
 
   return (
-    <AppLayout title="Centro de Suporte">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Bot className="h-6 w-6" />
-              Centro de Suporte
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Ajuda, documentação e contacto direto
-            </p>
-          </div>
-          <Button variant="outline" asChild>
-            <a href="mailto:suporte@obrasys.pt" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              suporte@obrasys.pt
-            </a>
-          </Button>
-        </div>
+    <AppLayout 
+      title="Centro de Suporte"
+      subtitle="Ajuda, documentação e contacto direto"
+      actions={
+        <Button variant="outline" asChild>
+          <a href="mailto:suporte@obrasys.pt" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            suporte@obrasys.pt
+          </a>
+        </Button>
+      }
+    >
+      <div className="p-6 space-y-6">
 
         {/* Quick Access Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
