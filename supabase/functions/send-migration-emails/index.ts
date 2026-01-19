@@ -14,26 +14,25 @@ interface MigrationEmailRequest {
   testEmail?: string;
 }
 
-const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string) => `
+const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string, logoUrl: string) => `
 <!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ObraSys 2.0 - Crie a sua palavra-passe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+<body style="margin: 0; padding: 0; font-family: 'Red Hat Display', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 103, 157, 0.12);">
+          <!-- Header with Logo -->
           <tr>
-            <td style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">
-                🚀 ObraSys 2.0
-              </h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px;">
+            <td style="background: linear-gradient(135deg, #002d44 0%, #00679d 50%, #0088cc 100%); padding: 40px 30px; text-align: center;">
+              <img src="${logoUrl}" alt="ObraSys" style="height: 48px; margin-bottom: 16px;" />
+              <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 18px; font-weight: 500; letter-spacing: 0.5px;">
                 A nova geração de gestão de obras
               </p>
             </td>
@@ -42,31 +41,31 @@ const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string) =
           <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
-              <h2 style="color: #18181b; margin: 0 0 20px; font-size: 24px;">
+              <h2 style="color: #002d44; margin: 0 0 24px; font-size: 26px; font-weight: 700;">
                 Olá${nome ? ` ${nome}` : ''}! 👋
               </h2>
               
-              <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                Temos o prazer de anunciar o lançamento do <strong>ObraSys 2.0</strong>! Esta nova versão foi completamente redesenhada para oferecer uma experiência mais poderosa e intuitiva.
+              <p style="color: #475569; font-size: 16px; line-height: 1.7; margin: 0 0 24px;">
+                Temos o prazer de anunciar o lançamento do <strong style="color: #00679d;">ObraSys 2.0</strong>! Esta nova versão foi completamente redesenhada para oferecer uma experiência mais poderosa e intuitiva.
               </p>
               
-              <div style="background-color: #fef3c7; border-left: 4px solid #f97316; padding: 20px; border-radius: 8px; margin: 25px 0;">
-                <h3 style="color: #92400e; margin: 0 0 15px; font-size: 18px;">
+              <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #00679d; padding: 24px; border-radius: 12px; margin: 28px 0;">
+                <h3 style="color: #00679d; margin: 0 0 16px; font-size: 18px; font-weight: 600;">
                   ✨ Novidades da Versão 2.0
                 </h3>
-                <ul style="color: #78350f; margin: 0; padding-left: 20px; line-height: 1.8;">
-                  <li><strong>Base de Preços Colaborativa</strong> - Preços atualizados com auditoria completa</li>
-                  <li><strong>Cadernos de Encargos com IA</strong> - Importação inteligente de PDF/DOCX</li>
-                  <li><strong>Módulo Financeiro</strong> - Gestão de contas e fornecedores</li>
-                  <li><strong>Conformidade Digital</strong> - Livro de Obra e documentação</li>
-                  <li><strong>Orçamentos Paramétricos</strong> - Cálculos automáticos por medições</li>
+                <ul style="color: #0369a1; margin: 0; padding-left: 20px; line-height: 2;">
+                  <li><strong>Base de Preços Colaborativa</strong> – Preços atualizados com auditoria completa</li>
+                  <li><strong>Cadernos de Encargos com IA</strong> – Importação inteligente de PDF/DOCX</li>
+                  <li><strong>Módulo Financeiro</strong> – Gestão de contas e fornecedores</li>
+                  <li><strong>Conformidade Digital</strong> – Livro de Obra e documentação</li>
+                  <li><strong>Orçamentos Paramétricos</strong> – Cálculos automáticos por medições</li>
                 </ul>
               </div>
               
-              <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 10px;">
+              <p style="color: #002d44; font-size: 16px; line-height: 1.7; margin: 0 0 8px;">
                 <strong>Como ativar a sua conta:</strong>
               </p>
-              <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+              <p style="color: #475569; font-size: 16px; line-height: 1.7; margin: 0 0 28px;">
                 Clique no botão abaixo para criar a sua nova palavra-passe e começar a utilizar o ObraSys 2.0. O seu email já está pré-registado no sistema.
               </p>
               
@@ -74,21 +73,21 @@ const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string) =
               <table role="presentation" style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td align="center">
-                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">
+                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #00679d 0%, #0088cc 100%); color: #ffffff; text-decoration: none; padding: 18px 48px; border-radius: 10px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 103, 157, 0.35); letter-spacing: 0.3px;">
                       Criar Palavra-passe
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="color: #a1a1aa; font-size: 14px; text-align: center; margin: 25px 0 0;">
+              <p style="color: #94a3b8; font-size: 14px; text-align: center; margin: 28px 0 0;">
                 Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-                <a href="${resetUrl}" style="color: #f97316;">${resetUrl}</a>
+                <a href="${resetUrl}" style="color: #00679d; text-decoration: underline;">${resetUrl}</a>
               </p>
               
-              <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: 8px; margin: 25px 0 0;">
-                <p style="color: #0369a1; font-size: 14px; margin: 0;">
-                  💡 <strong>Dica:</strong> Depois de criar a palavra-passe, pode aceder ao ObraSys em qualquer momento através de <a href="${appUrl}" style="color: #0369a1;">${appUrl}</a>
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 10px; margin: 28px 0 0;">
+                <p style="color: #475569; font-size: 14px; margin: 0;">
+                  💡 <strong style="color: #00679d;">Dica:</strong> Depois de criar a palavra-passe, pode aceder ao ObraSys em qualquer momento através de <a href="${appUrl}" style="color: #00679d; text-decoration: underline;">${appUrl}</a>
                 </p>
               </div>
             </td>
@@ -96,11 +95,11 @@ const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string) =
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f4f4f5; padding: 25px 30px; text-align: center; border-top: 1px solid #e4e4e7;">
-              <p style="color: #71717a; font-size: 14px; margin: 0 0 10px;">
+            <td style="background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); padding: 28px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="color: #64748b; font-size: 14px; margin: 0 0 12px;">
                 Tem dúvidas? Responda a este email que teremos todo o gosto em ajudar.
               </p>
-              <p style="color: #a1a1aa; font-size: 12px; margin: 0;">
+              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
                 © ${new Date().getFullYear()} ObraSys. Todos os direitos reservados.
               </p>
             </td>
@@ -135,6 +134,7 @@ serve(async (req: Request) => {
     // URLs
     const appUrl = "https://obrasysv2.lovable.app";
     const resetUrl = `${appUrl}/reset-password`;
+    const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
 
     // In test mode, just send to the test email
     if (testMode && testEmail) {
@@ -150,7 +150,7 @@ serve(async (req: Request) => {
           from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
           subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-          html: getMigrationEmailHtml("Utilizador Teste", resetUrl, appUrl),
+          html: getMigrationEmailHtml("Utilizador Teste", resetUrl, appUrl, logoUrl),
         }),
       });
 
@@ -221,7 +221,7 @@ serve(async (req: Request) => {
             from: "ObraSys <noreply@obrasys.pt>",
             to: [user.email],
             subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-            html: getMigrationEmailHtml(user.nome || "", resetUrl, appUrl),
+            html: getMigrationEmailHtml(user.nome || "", resetUrl, appUrl, logoUrl),
           }),
         });
 
