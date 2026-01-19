@@ -208,6 +208,249 @@ export type Database = {
         }
         Relationships: []
       }
+      caderno_item_match: {
+        Row: {
+          artigo_base_id: string | null
+          caderno_item_id: string
+          created_at: string
+          id: string
+          material_id: string | null
+          metodo_construtivo: string | null
+          nivel_confianca: number
+          observacoes: string | null
+          preco_estimado: number | null
+          unidade_sugerida: string | null
+          updated_at: string
+          validado: boolean
+          validado_em: string | null
+          validado_por: string | null
+        }
+        Insert: {
+          artigo_base_id?: string | null
+          caderno_item_id: string
+          created_at?: string
+          id?: string
+          material_id?: string | null
+          metodo_construtivo?: string | null
+          nivel_confianca?: number
+          observacoes?: string | null
+          preco_estimado?: number | null
+          unidade_sugerida?: string | null
+          updated_at?: string
+          validado?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Update: {
+          artigo_base_id?: string | null
+          caderno_item_id?: string
+          created_at?: string
+          id?: string
+          material_id?: string | null
+          metodo_construtivo?: string | null
+          nivel_confianca?: number
+          observacoes?: string | null
+          preco_estimado?: number | null
+          unidade_sugerida?: string | null
+          updated_at?: string
+          validado?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caderno_item_match_artigo_base_id_fkey"
+            columns: ["artigo_base_id"]
+            isOneToOne: false
+            referencedRelation: "default_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caderno_item_match_caderno_item_id_fkey"
+            columns: ["caderno_item_id"]
+            isOneToOne: false
+            referencedRelation: "caderno_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caderno_item_match_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caderno_itens: {
+        Row: {
+          classificacao: Json | null
+          created_at: string
+          descricao_original: string
+          id: string
+          ordem: number
+          quantidade_detectada: number | null
+          secao_id: string
+          status: string
+          texto_original: string | null
+          unidade_detectada: string | null
+        }
+        Insert: {
+          classificacao?: Json | null
+          created_at?: string
+          descricao_original: string
+          id?: string
+          ordem?: number
+          quantidade_detectada?: number | null
+          secao_id: string
+          status?: string
+          texto_original?: string | null
+          unidade_detectada?: string | null
+        }
+        Update: {
+          classificacao?: Json | null
+          created_at?: string
+          descricao_original?: string
+          id?: string
+          ordem?: number
+          quantidade_detectada?: number | null
+          secao_id?: string
+          status?: string
+          texto_original?: string | null
+          unidade_detectada?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caderno_itens_secao_id_fkey"
+            columns: ["secao_id"]
+            isOneToOne: false
+            referencedRelation: "caderno_secoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caderno_secoes: {
+        Row: {
+          caderno_id: string
+          codigo: string
+          created_at: string
+          id: string
+          nivel: number
+          nome: string
+          ordem: number
+          parent_id: string | null
+        }
+        Insert: {
+          caderno_id: string
+          codigo: string
+          created_at?: string
+          id?: string
+          nivel?: number
+          nome: string
+          ordem?: number
+          parent_id?: string | null
+        }
+        Update: {
+          caderno_id?: string
+          codigo?: string
+          created_at?: string
+          id?: string
+          nivel?: number
+          nome?: string
+          ordem?: number
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caderno_secoes_caderno_id_fkey"
+            columns: ["caderno_id"]
+            isOneToOne: false
+            referencedRelation: "cadernos_encargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caderno_secoes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "caderno_secoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cadernos_encargos: {
+        Row: {
+          created_at: string
+          ficheiro_nome: string | null
+          ficheiro_tipo: string | null
+          ficheiro_url: string | null
+          id: string
+          itens_validados: number | null
+          metadados: Json | null
+          nome: string
+          obra_id: string
+          orcamento_id: string | null
+          origem: string
+          perfil_preco: string | null
+          status: string
+          total_itens: number | null
+          updated_at: string
+          user_id: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string
+          ficheiro_nome?: string | null
+          ficheiro_tipo?: string | null
+          ficheiro_url?: string | null
+          id?: string
+          itens_validados?: number | null
+          metadados?: Json | null
+          nome: string
+          obra_id: string
+          orcamento_id?: string | null
+          origem: string
+          perfil_preco?: string | null
+          status?: string
+          total_itens?: number | null
+          updated_at?: string
+          user_id: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string
+          ficheiro_nome?: string | null
+          ficheiro_tipo?: string | null
+          ficheiro_url?: string | null
+          id?: string
+          itens_validados?: number | null
+          metadados?: Json | null
+          nome?: string
+          obra_id?: string
+          orcamento_id?: string | null
+          origem?: string
+          perfil_preco?: string | null
+          status?: string
+          total_itens?: number | null
+          updated_at?: string
+          user_id?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cadernos_encargos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cadernos_encargos_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculated_parameters: {
         Row: {
           created_at: string | null
