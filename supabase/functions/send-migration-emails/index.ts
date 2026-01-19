@@ -14,13 +14,13 @@ interface MigrationEmailRequest {
   testEmail?: string;
 }
 
-const getMigrationEmailHtml = (nome: string, appUrl: string) => `
+const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string) => `
 <!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ObraSys 2.0 está aqui!</title>
+  <title>ObraSys 2.0 - Crie a sua palavra-passe</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -63,16 +63,19 @@ const getMigrationEmailHtml = (nome: string, appUrl: string) => `
                 </ul>
               </div>
               
+              <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 10px;">
+                <strong>Como ativar a sua conta:</strong>
+              </p>
               <p style="color: #52525b; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
-                Para continuar a usar o ObraSys, basta criar a sua conta na nova plataforma. É rápido e simples!
+                Clique no botão abaixo para criar a sua nova palavra-passe e começar a utilizar o ObraSys 2.0. O seu email já está pré-registado no sistema.
               </p>
               
               <!-- CTA Button -->
               <table role="presentation" style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td align="center">
-                    <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">
-                      Aceder ao ObraSys 2.0
+                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">
+                      Criar Palavra-passe
                     </a>
                   </td>
                 </tr>
@@ -80,8 +83,14 @@ const getMigrationEmailHtml = (nome: string, appUrl: string) => `
               
               <p style="color: #a1a1aa; font-size: 14px; text-align: center; margin: 25px 0 0;">
                 Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-                <a href="${appUrl}" style="color: #f97316;">${appUrl}</a>
+                <a href="${resetUrl}" style="color: #f97316;">${resetUrl}</a>
               </p>
+              
+              <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: 8px; margin: 25px 0 0;">
+                <p style="color: #0369a1; font-size: 14px; margin: 0;">
+                  💡 <strong>Dica:</strong> Depois de criar a palavra-passe, pode aceder ao ObraSys em qualquer momento através de <a href="${appUrl}" style="color: #0369a1;">${appUrl}</a>
+                </p>
+              </div>
             </td>
           </tr>
           
@@ -123,8 +132,9 @@ serve(async (req: Request) => {
 
     const { limit = 50, testMode = false, testEmail } = await req.json() as MigrationEmailRequest;
 
-    // App URL for the CTA button
+    // URLs
     const appUrl = "https://obrasysv2.lovable.app";
+    const resetUrl = `${appUrl}/reset-password`;
 
     // In test mode, just send to the test email
     if (testMode && testEmail) {
@@ -139,8 +149,8 @@ serve(async (req: Request) => {
         body: JSON.stringify({
           from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
-          subject: "🚀 ObraSys 2.0 está aqui! Conheça a nova versão",
-          html: getMigrationEmailHtml("Utilizador Teste", appUrl),
+          subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
+          html: getMigrationEmailHtml("Utilizador Teste", resetUrl, appUrl),
         }),
       });
 
@@ -210,8 +220,8 @@ serve(async (req: Request) => {
           body: JSON.stringify({
             from: "ObraSys <noreply@obrasys.pt>",
             to: [user.email],
-            subject: "🚀 ObraSys 2.0 está aqui! Conheça a nova versão",
-            html: getMigrationEmailHtml(user.nome || "", appUrl),
+            subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
+            html: getMigrationEmailHtml(user.nome || "", resetUrl, appUrl),
           }),
         });
 
