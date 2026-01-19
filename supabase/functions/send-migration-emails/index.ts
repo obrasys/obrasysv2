@@ -14,7 +14,7 @@ interface MigrationEmailRequest {
   testEmail?: string;
 }
 
-const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string, logoUrl: string) => `
+const getMigrationEmailHtml = (nome: string, signupUrl: string, appUrl: string, logoUrl: string) => `
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -73,8 +73,8 @@ const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string, l
               <table role="presentation" style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td align="center">
-                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #00679d 0%, #0088cc 100%); color: #ffffff; text-decoration: none; padding: 18px 48px; border-radius: 10px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 103, 157, 0.35); letter-spacing: 0.3px;">
-                      Criar Palavra-passe
+                    <a href="${signupUrl}" style="display: inline-block; background: linear-gradient(135deg, #00679d 0%, #0088cc 100%); color: #ffffff; text-decoration: none; padding: 18px 48px; border-radius: 10px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 103, 157, 0.35); letter-spacing: 0.3px;">
+                      Criar Conta
                     </a>
                   </td>
                 </tr>
@@ -82,7 +82,7 @@ const getMigrationEmailHtml = (nome: string, resetUrl: string, appUrl: string, l
               
               <p style="color: #94a3b8; font-size: 14px; text-align: center; margin: 28px 0 0;">
                 Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-                <a href="${resetUrl}" style="color: #00679d; text-decoration: underline;">${resetUrl}</a>
+                <a href="${signupUrl}" style="color: #00679d; text-decoration: underline;">${signupUrl}</a>
               </p>
               
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 10px; margin: 28px 0 0;">
@@ -133,7 +133,7 @@ serve(async (req: Request) => {
 
     // URLs
     const appUrl = "https://obrasysv2.lovable.app";
-    const resetUrl = `${appUrl}/auth/reset-password`;
+    const signupUrl = `${appUrl}/auth`; // Users need to sign up, not reset password
     const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
 
     // In test mode, just send to the test email
@@ -150,7 +150,7 @@ serve(async (req: Request) => {
           from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
           subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-          html: getMigrationEmailHtml("Utilizador Teste", resetUrl, appUrl, logoUrl),
+          html: getMigrationEmailHtml("Utilizador Teste", signupUrl, appUrl, logoUrl),
         }),
       });
 
@@ -221,7 +221,7 @@ serve(async (req: Request) => {
             from: "ObraSys <noreply@obrasys.pt>",
             to: [user.email],
             subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-            html: getMigrationEmailHtml(user.nome || "", resetUrl, appUrl, logoUrl),
+            html: getMigrationEmailHtml(user.nome || "", signupUrl, appUrl, logoUrl),
           }),
         });
 
