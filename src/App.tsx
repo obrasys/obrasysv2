@@ -41,6 +41,11 @@ import ValidarCadernoPage from "./pages/cadernos/Validar";
 import ResumoCadernoPage from "./pages/cadernos/Resumo";
 // Admin
 import MigracaoPage from "./pages/admin/Migracao";
+import AdminDashboard from "./pages/admin/Index";
+import AdminUtilizadores from "./pages/admin/Utilizadores";
+import AdminFinanceiroGlobal from "./pages/admin/FinanceiroGlobal";
+import AdminAuditoria from "./pages/admin/Auditoria";
+import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -87,8 +92,12 @@ const App = () => (
             <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/definicoes" element={<DefinicoesPage />} />
-            {/* Admin */}
-            <Route path="/admin/migracao" element={<MigracaoPage />} />
+            {/* Admin - Super Admin Only */}
+            <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
+            <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
+            <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
+            <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
+            <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
