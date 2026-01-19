@@ -137,7 +137,7 @@ serve(async (req: Request) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "ObraSys <onboarding@resend.dev>",
+          from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
           subject: "🚀 ObraSys 2.0 está aqui! Conheça a nova versão",
           html: getMigrationEmailHtml("Utilizador Teste", appUrl),
@@ -208,7 +208,7 @@ serve(async (req: Request) => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "ObraSys <onboarding@resend.dev>",
+            from: "ObraSys <noreply@obrasys.pt>",
             to: [user.email],
             subject: "🚀 ObraSys 2.0 está aqui! Conheça a nova versão",
             html: getMigrationEmailHtml(user.nome || "", appUrl),
