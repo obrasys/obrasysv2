@@ -110,7 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ObraSys <onboarding@resend.dev>",
+        from: "ObraSys <noreply@obrasys.pt>",
         to: [email],
         subject: "Bem-vindo(a) ao ObraSys 👷‍♂️📊",
         html: htmlContent,
