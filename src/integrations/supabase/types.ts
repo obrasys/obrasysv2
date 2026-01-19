@@ -376,6 +376,75 @@ export type Database = {
           },
         ]
       }
+      caderno_validacao_historico: {
+        Row: {
+          artigo_id: string | null
+          confianca_original: number | null
+          created_at: string
+          descricao_normalizada: string
+          descricao_original: string
+          foi_correcao: boolean
+          id: string
+          material_id: string | null
+          metodo_construtivo: string | null
+          tipo_trabalho: string | null
+          unidade_correta: string | null
+          unidade_original: string | null
+          updated_at: string
+          user_id: string
+          vezes_usado: number
+        }
+        Insert: {
+          artigo_id?: string | null
+          confianca_original?: number | null
+          created_at?: string
+          descricao_normalizada: string
+          descricao_original: string
+          foi_correcao?: boolean
+          id?: string
+          material_id?: string | null
+          metodo_construtivo?: string | null
+          tipo_trabalho?: string | null
+          unidade_correta?: string | null
+          unidade_original?: string | null
+          updated_at?: string
+          user_id: string
+          vezes_usado?: number
+        }
+        Update: {
+          artigo_id?: string | null
+          confianca_original?: number | null
+          created_at?: string
+          descricao_normalizada?: string
+          descricao_original?: string
+          foi_correcao?: boolean
+          id?: string
+          material_id?: string | null
+          metodo_construtivo?: string | null
+          tipo_trabalho?: string | null
+          unidade_correta?: string | null
+          unidade_original?: string | null
+          updated_at?: string
+          user_id?: string
+          vezes_usado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caderno_validacao_historico_artigo_id_fkey"
+            columns: ["artigo_id"]
+            isOneToOne: false
+            referencedRelation: "default_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caderno_validacao_historico_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cadernos_encargos: {
         Row: {
           created_at: string
@@ -2190,6 +2259,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buscar_historico_match: {
+        Args: { p_descricao: string; p_limite?: number; p_user_id: string }
+        Returns: {
+          artigo_id: string
+          material_id: string
+          metodo_construtivo: string
+          similaridade: number
+          unidade_correta: string
+          vezes_usado: number
+        }[]
+      }
       calculate_element_parameters: {
         Args: { p_element_id: string }
         Returns: undefined
@@ -2206,6 +2286,9 @@ export type Database = {
         }
         Returns: number
       }
+      normalizar_descricao: { Args: { texto: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       sync_parametric_quantities: {
         Args: { p_element_id: string }
         Returns: undefined

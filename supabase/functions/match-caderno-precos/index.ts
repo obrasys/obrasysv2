@@ -33,7 +33,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Esta função não precisa de LOVABLE_API_KEY - apenas faz matching local
+    // Buscar user_id do caderno para usar histórico de validações
+    const { data: cadernoData } = await supabase
+      .from("cadernos_encargos")
+      .select("user_id")
+      .eq("id", caderno_id)
+      .single();
+
+    const userId = cadernoData?.user_id;
 
     // Buscar todos os itens do caderno
     const { data: itens, error: itensError } = await supabase
@@ -88,6 +95,7 @@ serve(async (req) => {
 
     let matchedCount = 0;
     let valorEstimado = 0;
+    let historicoMatches = 0;
 
     // Processar cada item
     for (const item of itens) {
@@ -96,17 +104,66 @@ serve(async (req) => {
       const classificacao = item.classificacao as Record<string, string> || {};
 
       let melhorMatch: {
-        tipo: "artigo" | "material";
+        tipo: "artigo" | "material" | "historico";
         id: string;
         codigo: string;
         descricao: string;
         unidade: string;
         preco: number;
         confianca: number;
+        metodoConstrutivo?: string;
       } | null = null;
 
-      // Primeiro, tentar match com artigos default
-      if (artigos) {
+      // PRIMEIRO: Tentar match pelo histórico de validações do utilizador (aprendizagem)
+      if (userId) {
+        const { data: historicoMatches } = await supabase.rpc("buscar_historico_match", {
+          p_user_id: userId,
+          p_descricao: item.descricao_original,
+          p_limite: 1,
+        });
+
+        if (historicoMatches && historicoMatches.length > 0) {
+          const hist = historicoMatches[0];
+          // Boost de confiança baseado em similaridade e vezes usado
+          const confiancaHistorico = Math.min(100, Math.round(hist.similaridade * 100) + Math.min(20, hist.vezes_usado * 5));
+          
+          if (confiancaHistorico > 60) {
+            if (hist.artigo_id && artigos) {
+              const artigo = artigos.find(a => a.id === hist.artigo_id);
+              if (artigo) {
+                melhorMatch = {
+                  tipo: "historico",
+                  id: artigo.id,
+                  codigo: artigo.codigo,
+                  descricao: artigo.descricao,
+                  unidade: hist.unidade_correta || artigo.unidade,
+                  preco: artigo.preco_unitario,
+                  confianca: confiancaHistorico,
+                  metodoConstrutivo: hist.metodo_construtivo,
+                };
+              }
+            } else if (hist.material_id && materialsData) {
+              const material = materialsData.find(m => m.id === hist.material_id);
+              if (material) {
+                const preco = priceRefs[material.id]?.preco_p50 || 0;
+                melhorMatch = {
+                  tipo: "historico",
+                  id: material.id,
+                  codigo: material.codigo,
+                  descricao: material.nome,
+                  unidade: hist.unidade_correta || material.unidade_base,
+                  preco,
+                  confianca: confiancaHistorico,
+                  metodoConstrutivo: hist.metodo_construtivo,
+                };
+              }
+            }
+          }
+        }
+      }
+
+      // SEGUNDO: Se não encontrou no histórico, tentar match com artigos default
+      if (!melhorMatch && artigos) {
         for (const artigo of artigos) {
           const confianca = calcularConfianca(
             descricao,
@@ -131,7 +188,7 @@ serve(async (req) => {
         }
       }
 
-      // Se não houver bom match com artigos, tentar materiais
+      // TERCEIRO: Se não houver bom match com artigos, tentar materiais
       if ((!melhorMatch || melhorMatch.confianca < 60) && materialsData) {
         for (const material of materialsData) {
           const categoryName = Array.isArray(material.category) 
@@ -162,15 +219,22 @@ serve(async (req) => {
         }
       }
 
+      // Contar matches do histórico
+      if (melhorMatch?.tipo === "historico") {
+        historicoMatches++;
+      }
+
       // Se encontrou match, criar entrada
       if (melhorMatch) {
         const { error: matchError } = await supabase
           .from("caderno_item_match")
           .insert({
             caderno_item_id: item.id,
-            material_id: melhorMatch.tipo === "material" ? melhorMatch.id : null,
-            artigo_base_id: melhorMatch.tipo === "artigo" ? melhorMatch.id : null,
-            metodo_construtivo: classificacao.metodo_construtivo || null,
+            material_id: melhorMatch.tipo === "material" || (melhorMatch.tipo === "historico" && !artigos?.find(a => a.id === melhorMatch!.id)) 
+              ? melhorMatch.id : null,
+            artigo_base_id: melhorMatch.tipo === "artigo" || (melhorMatch.tipo === "historico" && artigos?.find(a => a.id === melhorMatch!.id)) 
+              ? melhorMatch.id : null,
+            metodo_construtivo: melhorMatch.metodoConstrutivo || classificacao.metodo_construtivo || null,
             unidade_sugerida: melhorMatch.unidade,
             preco_estimado: melhorMatch.preco,
             nivel_confianca: Math.round(melhorMatch.confianca),
@@ -200,7 +264,12 @@ serve(async (req) => {
       .eq("id", caderno_id);
 
     return new Response(
-      JSON.stringify({ success: true, matched: matchedCount, valor_estimado: valorEstimado }),
+      JSON.stringify({ 
+        success: true, 
+        matched: matchedCount, 
+        valor_estimado: valorEstimado,
+        matches_historico: historicoMatches,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

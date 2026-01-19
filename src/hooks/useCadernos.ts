@@ -219,14 +219,27 @@ export function useCaderno(cadernoId?: string) {
     },
   });
 
-  // Mutation para validar item
+  // Mutation para validar item (com registo no histórico para aprendizagem)
   const validarItem = useMutation({
-    mutationFn: async ({ itemId, validado, matchData }: { 
+    mutationFn: async ({ itemId, validado, matchData, foiCorrecao }: { 
       itemId: string; 
       validado: boolean; 
       matchData?: Partial<CadernoItemMatch>;
+      foiCorrecao?: boolean;
     }) => {
       if (!user) throw new Error("Utilizador não autenticado");
+
+      // Buscar dados do item para o histórico
+      const { data: itemData } = await supabase
+        .from("caderno_itens")
+        .select(`
+          descricao_original,
+          unidade_detectada,
+          classificacao,
+          match:caderno_item_match(nivel_confianca, material_id, artigo_base_id, unidade_sugerida, metodo_construtivo)
+        `)
+        .eq("id", itemId)
+        .single();
 
       // Atualizar status do item
       const novoStatus = validado ? "validado" : "pendente";
@@ -246,6 +259,57 @@ export function useCaderno(cadernoId?: string) {
             validado_em: new Date().toISOString(),
           })
           .eq("caderno_item_id", itemId);
+      }
+
+      // Registar no histórico para aprendizagem (apenas se validado)
+      if (validado && itemData) {
+        const matchOriginal = Array.isArray(itemData.match) ? itemData.match[0] : itemData.match;
+        const classificacao = itemData.classificacao as Record<string, string> || {};
+        
+        // Normalizar descrição para busca futura
+        const { data: normalizado } = await supabase.rpc("normalizar_descricao", {
+          texto: itemData.descricao_original,
+        });
+
+        // Verificar se já existe entrada semelhante
+        const { data: existente } = await supabase
+          .from("caderno_validacao_historico")
+          .select("id, vezes_usado")
+          .eq("user_id", user.id)
+          .eq("descricao_normalizada", normalizado || itemData.descricao_original.toLowerCase())
+          .maybeSingle();
+
+        if (existente) {
+          // Incrementar contador de uso
+          await supabase
+            .from("caderno_validacao_historico")
+            .update({ 
+              vezes_usado: existente.vezes_usado + 1,
+              material_id: matchData?.material_id || matchOriginal?.material_id,
+              artigo_id: matchData?.artigo_base_id || matchOriginal?.artigo_base_id,
+              unidade_correta: matchData?.unidade_sugerida || matchOriginal?.unidade_sugerida,
+              metodo_construtivo: matchData?.metodo_construtivo || matchOriginal?.metodo_construtivo,
+              foi_correcao: foiCorrecao || false,
+            })
+            .eq("id", existente.id);
+        } else {
+          // Criar nova entrada
+          await supabase
+            .from("caderno_validacao_historico")
+            .insert({
+              user_id: user.id,
+              descricao_original: itemData.descricao_original,
+              descricao_normalizada: normalizado || itemData.descricao_original.toLowerCase(),
+              material_id: matchData?.material_id || matchOriginal?.material_id,
+              artigo_id: matchData?.artigo_base_id || matchOriginal?.artigo_base_id,
+              unidade_original: itemData.unidade_detectada,
+              unidade_correta: matchData?.unidade_sugerida || matchOriginal?.unidade_sugerida,
+              metodo_construtivo: matchData?.metodo_construtivo || matchOriginal?.metodo_construtivo || classificacao.metodo_construtivo,
+              tipo_trabalho: classificacao.tipo_trabalho,
+              foi_correcao: foiCorrecao || false,
+              confianca_original: matchOriginal?.nivel_confianca || 0,
+            });
+        }
       }
     },
     onSuccess: () => {
