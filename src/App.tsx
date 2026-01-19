@@ -34,6 +34,11 @@ import FornecedoresPage from "./pages/financeiro/Fornecedores";
 import PerfilPage from "./pages/Perfil";
 import DefinicoesPage from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
+// Cadernos de Encargos
+import CadernosPage from "./pages/cadernos/Index";
+import ImportarCadernoPage from "./pages/cadernos/Importar";
+import ValidarCadernoPage from "./pages/cadernos/Validar";
+import ResumoCadernoPage from "./pages/cadernos/Resumo";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +61,12 @@ const App = () => (
             <Route path="/obras/criar" element={<CriarObraPage />} />
             <Route path="/obras/:id" element={<VerObraPage />} />
             <Route path="/obras/:id/editar" element={<EditarObraPage />} />
+            {/* Cadernos de Encargos */}
+            <Route path="/obras/:id/cadernos" element={<CadernosPage />} />
+            <Route path="/obras/:id/cadernos/importar" element={<ImportarCadernoPage />} />
+            <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ImportarCadernoPage />} />
+            <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ValidarCadernoPage />} />
+            <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ResumoCadernoPage />} />
             <Route path="/clientes" element={<ClientesPage />} />
             <Route path="/clientes/criar" element={<CriarClientePage />} />
             <Route path="/clientes/:id" element={<VerClientePage />} />
