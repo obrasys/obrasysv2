@@ -17,6 +17,7 @@ import {
   SignUpFormData,
   ResetPasswordFormData,
 } from "@/lib/validations/auth";
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
@@ -331,6 +332,7 @@ const Auth = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthIndicator password={signUpForm.watch("password")} />
                   {signUpForm.formState.errors.password && (
                     <p className="text-sm text-destructive">
                       {signUpForm.formState.errors.password.message}
