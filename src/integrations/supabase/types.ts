@@ -2334,6 +2334,7 @@ export type Database = {
         }
         Returns: number
       }
+      is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
