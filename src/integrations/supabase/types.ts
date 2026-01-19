@@ -1121,6 +1121,45 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          assunto: string
+          ativo: boolean
+          created_at: string
+          html_content: string
+          id: string
+          nome: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+          variaveis: Json
+        }
+        Insert: {
+          assunto: string
+          ativo?: boolean
+          created_at?: string
+          html_content: string
+          id?: string
+          nome: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+          variaveis?: Json
+        }
+        Update: {
+          assunto?: string
+          ativo?: boolean
+          created_at?: string
+          html_content?: string
+          id?: string
+          nome?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+          variaveis?: Json
+        }
+        Relationships: []
+      }
       failed_login_attempts: {
         Row: {
           attempted_at: string

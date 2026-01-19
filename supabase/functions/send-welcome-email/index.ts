@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -13,22 +14,8 @@ interface WelcomeEmailRequest {
   nome: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const { email, nome }: WelcomeEmailRequest = await req.json();
-
-    console.log("Sending welcome email to:", email, "Name:", nome);
-
-    if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY is not configured");
-    }
-
-    const htmlContent = `
+// Fallback template if not found in database
+const getFallbackHtmlContent = (nome: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -76,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   <div class="next-steps">
     <h3>👉 Próximo passo</h3>
-    <p>Acede à plataforma e começa por:</p>
+    <p>Aceda à plataforma e comece por:</p>
     <ul>
       <li>Explorar a Base de Preços</li>
       <li>Criar o teu primeiro orçamento</li>
@@ -101,7 +88,67 @@ const handler = async (req: Request): Promise<Response> => {
   </div>
 </body>
 </html>
-    `;
+`;
+
+// Replace template variables with actual values
+const replaceVariables = (html: string, variables: Record<string, string>) => {
+  let result = html;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+  }
+  return result;
+};
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { email, nome }: WelcomeEmailRequest = await req.json();
+
+    console.log("Sending welcome email to:", email, "Name:", nome);
+
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+
+    // Setup Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // URLs for template
+    const appUrl = "https://obrasysv2.lovable.app";
+    const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
+    const ano = new Date().getFullYear().toString();
+
+    // Try to fetch template from database
+    let htmlContent: string;
+    let subject = "Bem-vindo(a) ao ObraSys 👷‍♂️📊";
+
+    const { data: template, error: templateError } = await supabase
+      .from("email_templates")
+      .select("assunto, html_content")
+      .eq("slug", "welcome")
+      .eq("ativo", true)
+      .single();
+
+    if (templateError || !template) {
+      console.log("Using fallback template, error:", templateError?.message);
+      htmlContent = getFallbackHtmlContent(nome || "");
+    } else {
+      console.log("Using database template for welcome email");
+      subject = template.assunto;
+      htmlContent = replaceVariables(template.html_content, {
+        "{{nome}}": nome || "",
+        "{{email}}": email,
+        "{{appUrl}}": appUrl,
+        "{{logoUrl}}": logoUrl,
+        "{{ano}}": ano,
+      });
+    }
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -112,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "ObraSys <noreply@obrasys.pt>",
         to: [email],
-        subject: "Bem-vindo(a) ao ObraSys 👷‍♂️📊",
+        subject: subject,
         html: htmlContent,
       }),
     });
