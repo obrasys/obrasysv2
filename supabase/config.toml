@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.support-chat]
 verify_jwt = false
+
+[functions.analyze-caderno]
+verify_jwt = false
+
+[functions.match-caderno-precos]
+verify_jwt = false
