@@ -14,7 +14,8 @@ interface MigrationEmailRequest {
   testEmail?: string;
 }
 
-const getMigrationEmailHtml = (nome: string, signupUrl: string, appUrl: string, logoUrl: string) => `
+// Fallback template if not found in database
+const getFallbackMigrationEmailHtml = (nome: string, signupUrl: string, appUrl: string, logoUrl: string) => `
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -112,6 +113,15 @@ const getMigrationEmailHtml = (nome: string, signupUrl: string, appUrl: string, 
 </html>
 `;
 
+// Replace template variables with actual values
+const replaceVariables = (html: string, variables: Record<string, string>) => {
+  let result = html;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+  }
+  return result;
+};
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -133,8 +143,42 @@ serve(async (req: Request) => {
 
     // URLs
     const appUrl = "https://obrasysv2.lovable.app";
-    const signupUrl = `${appUrl}/auth`; // Users need to sign up, not reset password
+    const signupUrl = `${appUrl}/auth`;
     const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
+    const ano = new Date().getFullYear().toString();
+
+    // Try to fetch template from database
+    let emailSubject = "🚀 ObraSys 2.0 - Crie a sua palavra-passe";
+    let templateHtml: string | null = null;
+
+    const { data: template, error: templateError } = await supabase
+      .from("email_templates")
+      .select("assunto, html_content")
+      .eq("slug", "migration")
+      .eq("ativo", true)
+      .single();
+
+    if (!templateError && template) {
+      console.log("Using database template for migration email");
+      emailSubject = template.assunto;
+      templateHtml = template.html_content;
+    } else {
+      console.log("Using fallback template, error:", templateError?.message);
+    }
+
+    // Function to get email HTML for a user
+    const getEmailHtml = (nome: string) => {
+      if (templateHtml) {
+        return replaceVariables(templateHtml, {
+          "{{nome}}": nome,
+          "{{signupUrl}}": signupUrl,
+          "{{appUrl}}": appUrl,
+          "{{logoUrl}}": logoUrl,
+          "{{ano}}": ano,
+        });
+      }
+      return getFallbackMigrationEmailHtml(nome, signupUrl, appUrl, logoUrl);
+    };
 
     // In test mode, just send to the test email
     if (testMode && testEmail) {
@@ -149,8 +193,8 @@ serve(async (req: Request) => {
         body: JSON.stringify({
           from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
-          subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-          html: getMigrationEmailHtml("Utilizador Teste", signupUrl, appUrl, logoUrl),
+          subject: emailSubject,
+          html: getEmailHtml("Utilizador Teste"),
         }),
       });
 
@@ -220,8 +264,8 @@ serve(async (req: Request) => {
           body: JSON.stringify({
             from: "ObraSys <noreply@obrasys.pt>",
             to: [user.email],
-            subject: "🚀 ObraSys 2.0 - Crie a sua palavra-passe",
-            html: getMigrationEmailHtml(user.nome || "", signupUrl, appUrl, logoUrl),
+            subject: emailSubject,
+            html: getEmailHtml(user.nome || ""),
           }),
         });
 

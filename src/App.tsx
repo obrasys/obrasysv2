@@ -45,6 +45,7 @@ import AdminDashboard from "./pages/admin/Index";
 import AdminUtilizadores from "./pages/admin/Utilizadores";
 import AdminFinanceiroGlobal from "./pages/admin/FinanceiroGlobal";
 import AdminAuditoria from "./pages/admin/Auditoria";
+import AdminTemplates from "./pages/admin/Templates";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
             <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
             <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
+            <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
             <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
