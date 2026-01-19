@@ -39,6 +39,8 @@ import CadernosPage from "./pages/cadernos/Index";
 import ImportarCadernoPage from "./pages/cadernos/Importar";
 import ValidarCadernoPage from "./pages/cadernos/Validar";
 import ResumoCadernoPage from "./pages/cadernos/Resumo";
+// Admin
+import MigracaoPage from "./pages/admin/Migracao";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +87,8 @@ const App = () => (
             <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/definicoes" element={<DefinicoesPage />} />
+            {/* Admin */}
+            <Route path="/admin/migracao" element={<MigracaoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
