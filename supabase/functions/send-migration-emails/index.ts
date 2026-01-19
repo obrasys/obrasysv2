@@ -133,7 +133,7 @@ serve(async (req: Request) => {
 
     // URLs
     const appUrl = "https://obrasysv2.lovable.app";
-    const resetUrl = `${appUrl}/reset-password`;
+    const resetUrl = `${appUrl}/auth/reset-password`;
     const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
 
     // In test mode, just send to the test email
