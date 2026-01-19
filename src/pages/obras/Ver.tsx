@@ -19,6 +19,8 @@ import {
   AlertCircle,
   Lightbulb,
   CheckCircle,
+  Upload,
+  BookOpen,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -29,8 +31,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
 import { RDOStatusBadge } from '@/components/rdos';
+import { CadernoStatusBadge } from '@/components/cadernos';
 import { useObra } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
+import { useCadernos } from '@/hooks/useCadernos';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
@@ -68,6 +72,7 @@ export default function VerObraPage() {
   } = useObra(id);
   
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
+  const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
 
   const calculateProgressWithAI = async () => {
     if (!id) return;
@@ -152,6 +157,8 @@ export default function VerObraPage() {
   const valorOrcamentos = obra.orcamentos?.reduce((sum, orc) => sum + (orc.valor_total || 0), 0) || 0;
   const recentRDOs = obrasRDOs?.slice(0, 5) || [];
   const totalRDOs = obrasRDOs?.length || 0;
+  const totalCadernos = cadernos?.length || 0;
+  const recentCadernos = cadernos?.slice(0, 3) || [];
 
   return (
     <AppLayout
@@ -345,6 +352,95 @@ export default function VerObraPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Cadernos de Encargos Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Cadernos de Encargos
+              {totalCadernos > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {totalCadernos}
+                </Badge>
+              )}
+            </CardTitle>
+            <Button 
+              size="sm" 
+              onClick={() => navigate(`/obras/${id}/cadernos/importar`)}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Importar Caderno
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loadingCadernos ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentCadernos.length > 0 ? (
+              <div className="space-y-3">
+                {recentCadernos.map((caderno) => (
+                  <div 
+                    key={caderno.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      if (caderno.status === 'importado') {
+                        navigate(`/obras/${id}/cadernos/${caderno.id}/importar`);
+                      } else if (caderno.status === 'analisado') {
+                        navigate(`/obras/${id}/cadernos/${caderno.id}/validar`);
+                      } else if (caderno.status === 'validado') {
+                        navigate(`/obras/${id}/cadernos/${caderno.id}/resumo`);
+                      } else if (caderno.status === 'orcamentado' && caderno.orcamento_id) {
+                        navigate(`/orcamentos/${caderno.orcamento_id}/editar`);
+                      } else {
+                        navigate(`/obras/${id}/cadernos`);
+                      }
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{caderno.nome}</span>
+                        <CadernoStatusBadge status={caderno.status} />
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                        <span>{caderno.total_itens} itens</span>
+                        {caderno.itens_validados > 0 && (
+                          <span>{Math.round((caderno.itens_validados / caderno.total_itens) * 100)}% validados</span>
+                        )}
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
+                  </div>
+                ))}
+                
+                {totalCadernos > 3 && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => navigate(`/obras/${id}/cadernos`)}
+                  >
+                    Ver todos os {totalCadernos} cadernos
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum caderno de encargos importado.</p>
+                <p className="text-sm mt-1">Importe um caderno para criar orçamentos automaticamente.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate(`/obras/${id}/cadernos/importar`)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Primeiro Caderno
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* RDOs Section */}
         <Card>
