@@ -1578,6 +1578,54 @@ export type Database = {
           },
         ]
       }
+      migrated_users: {
+        Row: {
+          created_at: string
+          email: string
+          email_sent_at: string | null
+          empresa: string | null
+          error_message: string | null
+          id: string
+          migrated_at: string | null
+          nif: string | null
+          nome: string | null
+          status: string
+          telefone: string | null
+          updated_at: string
+          v1_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          email_sent_at?: string | null
+          empresa?: string | null
+          error_message?: string | null
+          id?: string
+          migrated_at?: string | null
+          nif?: string | null
+          nome?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          v1_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          email_sent_at?: string | null
+          empresa?: string | null
+          error_message?: string | null
+          id?: string
+          migrated_at?: string | null
+          nif?: string | null
+          nome?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          v1_user_id?: string | null
+        }
+        Relationships: []
+      }
       obra_progress_tracking: {
         Row: {
           capitulo_id: string | null
