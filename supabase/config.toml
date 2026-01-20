@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.stripe-webhooks]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.get-payment-history]
+verify_jwt = false
