@@ -39,8 +39,8 @@ const plans: Plan[] = [
       "RDOs diários",
       "Suporte por email",
     ],
-    priceIdMonthly: "price_1RUcjOEzzoMZl18B2jjA0Stb",
-    priceIdYearly: "price_starter_yearly",
+    priceIdMonthly: "price_1SrmWY1h8hjJdYcBTwJLUzOl",
+    priceIdYearly: "", // Não existe ainda no Stripe
     icon: <Zap className="h-5 w-5" />,
   },
   {
@@ -57,8 +57,8 @@ const plans: Plan[] = [
       "Controlo de conformidade",
       "Suporte prioritário",
     ],
-    priceIdMonthly: "price_1RUckQEzzoMZl18BQPJ5qf6K",
-    priceIdYearly: "price_professional_yearly",
+    priceIdMonthly: "price_1SrmZg1h8hjJdYcBXUN4G89G",
+    priceIdYearly: "", // Não existe ainda no Stripe
     icon: <Building2 className="h-5 w-5" />,
     popular: true,
   },
@@ -77,8 +77,8 @@ const plans: Plan[] = [
       "Gestor de conta dedicado",
       "SLA garantido",
     ],
-    priceIdMonthly: "price_enterprise_monthly",
-    priceIdYearly: "price_enterprise_yearly",
+    priceIdMonthly: "",
+    priceIdYearly: "",
     icon: <Rocket className="h-5 w-5" />,
   },
 ];
@@ -184,15 +184,24 @@ export function PlanComparisonCard({
               <Button
                 className="w-full"
                 variant={plan.popular ? "default" : "outline"}
-                disabled={loading || isCurrentPlan(plan.tier) || plan.tier === "enterprise"}
-                onClick={() =>
-                  onSelectPlan(
-                    isYearly ? plan.priceIdYearly : plan.priceIdMonthly,
-                    plan.name
-                  )
+                disabled={
+                  loading || 
+                  isCurrentPlan(plan.tier) || 
+                  plan.tier === "enterprise" ||
+                  (isYearly && !plan.priceIdYearly)
                 }
+                onClick={() => {
+                  const priceId = isYearly ? plan.priceIdYearly : plan.priceIdMonthly;
+                  if (priceId) {
+                    onSelectPlan(priceId, plan.name);
+                  }
+                }}
               >
-                {plan.tier === "enterprise" ? "Contactar Vendas" : getButtonText(plan.tier)}
+                {plan.tier === "enterprise" 
+                  ? "Contactar Vendas" 
+                  : (isYearly && !plan.priceIdYearly) 
+                    ? "Apenas Mensal" 
+                    : getButtonText(plan.tier)}
               </Button>
             </div>
           ))}
