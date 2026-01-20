@@ -40,7 +40,7 @@ const plans: Plan[] = [
       "Suporte por email",
     ],
     priceIdMonthly: "price_1SrmWY1h8hjJdYcBTwJLUzOl",
-    priceIdYearly: "", // Não existe ainda no Stripe
+    priceIdYearly: "price_1SrohF1h8hjJdYcBto17nBYQ",
     icon: <Zap className="h-5 w-5" />,
   },
   {
@@ -58,7 +58,7 @@ const plans: Plan[] = [
       "Suporte prioritário",
     ],
     priceIdMonthly: "price_1SrmZg1h8hjJdYcBXUN4G89G",
-    priceIdYearly: "", // Não existe ainda no Stripe
+    priceIdYearly: "price_1Sroez1h8hjJdYcBVZbK5mzc",
     icon: <Building2 className="h-5 w-5" />,
     popular: true,
   },
