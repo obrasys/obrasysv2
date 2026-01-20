@@ -56,7 +56,7 @@ serve(async (req) => {
       logStep("No existing customer, will create new");
     }
 
-    const origin = req.headers.get("origin") || "https://obrasysv2.lovable.app";
+    const origin = req.headers.get("origin") || "https://app.obrasys.pt";
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
