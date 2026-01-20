@@ -72,6 +72,27 @@ serve(async (req) => {
         });
       }
 
+      // Fallback: Check profiles table for trial_end
+      logStep("No subscriber record found, checking profiles table");
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("trial_end, trial_expired")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.trial_end) {
+        logStep("Found trial info in profiles", { trial_end: profile.trial_end });
+        return new Response(JSON.stringify({
+          subscribed: false,
+          subscription_tier: "trial",
+          subscription_status: profile.trial_expired ? "canceled" : "trialing",
+          subscription_end: profile.trial_end,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
