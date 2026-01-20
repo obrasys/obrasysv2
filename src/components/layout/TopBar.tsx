@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useObraAlerts } from '@/hooks/useObraAlerts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, LogOut, User, Menu, Bell, Settings } from 'lucide-react';
+import { Clock, LogOut, User, Menu, Bell, Settings, CreditCard } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import {
   Sheet,
@@ -143,6 +143,10 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
             <DropdownMenuItem onClick={() => navigate('/perfil')}>
               <User className="w-4 h-4 mr-2" />
               O Meu Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/subscricao')}>
+              <CreditCard className="w-4 h-4 mr-2" />
+              Subscrição
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/definicoes')}>
               <Settings className="w-4 h-4 mr-2" />
