@@ -2430,7 +2430,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_subscription: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          subscribed: boolean | null
+          subscription_end: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          subscribed?: boolean | null
+          subscription_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          subscribed?: boolean | null
+          subscription_end?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       buscar_historico_match: {
