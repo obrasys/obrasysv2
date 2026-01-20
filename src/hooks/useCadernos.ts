@@ -463,11 +463,8 @@ export function useCadernoUpload() {
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("cadernos-encargos")
-      .getPublicUrl(filePath);
-
-    return { url: publicUrl, path: filePath };
+    // Return the file path - signed URLs will be generated on demand when needed
+    return { url: filePath, path: filePath };
   };
 
   return { uploadFicheiro };
