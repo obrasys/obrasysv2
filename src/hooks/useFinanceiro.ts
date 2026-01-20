@@ -230,18 +230,15 @@ export function useFinanceiro(obraId?: string) {
       
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('comprovantes')
-        .getPublicUrl(filePath);
-
+      // Store the file path instead of URL - signed URLs will be generated on demand
       const { error: updateError } = await supabase
         .from('contas_financeiras')
-        .update({ comprovante_url: publicUrl })
+        .update({ comprovante_url: filePath })
         .eq('id', contaId);
 
       if (updateError) throw updateError;
 
-      return publicUrl;
+      return filePath;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contas-financeiras'] });

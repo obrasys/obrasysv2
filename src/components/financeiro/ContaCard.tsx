@@ -22,10 +22,12 @@ import {
   Building2,
   AlertTriangle,
   Calendar,
+  Loader2,
 } from 'lucide-react';
 import { ContaStatusBadge } from './ContaStatusBadge';
 import { ORIGEM_CONTA_CONFIG } from '@/types/financeiro';
 import type { ContaFinanceira } from '@/types/financeiro';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 
 interface ContaCardProps {
   conta: ContaFinanceira;
@@ -50,6 +52,12 @@ export function ContaCard({ conta, onEdit, onDelete, onTogglePago, onUploadCompr
   const vencimento = parseISO(conta.data_vencimento);
   const isVencida = !conta.pago && isPast(vencimento) && !isToday(vencimento);
   const isHoje = isToday(vencimento);
+  
+  // Generate signed URL for comprovante on demand
+  const { signedUrl: comprovanteUrl, isLoading: loadingUrl } = useSignedUrl(
+    'comprovantes',
+    conta.comprovante_url
+  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -122,15 +130,22 @@ export function ContaCard({ conta, onEdit, onDelete, onTogglePago, onUploadCompr
               )}
 
               {conta.comprovante_url && (
-                <a 
-                  href={conta.comprovante_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-primary hover:underline"
-                >
-                  <FileText className="h-3 w-3" />
-                  Comprovante
-                </a>
+                loadingUrl ? (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    A carregar...
+                  </span>
+                ) : comprovanteUrl ? (
+                  <a 
+                    href={comprovanteUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Comprovante
+                  </a>
+                ) : null
               )}
             </div>
           </div>
