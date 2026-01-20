@@ -15,7 +15,8 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   const checkSubscription = useCallback(async () => {
-    if (!session?.access_token) {
+    // Guard: Don't call edge function if no valid session
+    if (!session?.access_token || !user) {
       setSubscription(null);
       setLoading(false);
       return;

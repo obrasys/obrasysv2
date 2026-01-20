@@ -1,0 +1,131 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[GET-PAYMENT-HISTORY] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+    logStep("Authorization header found");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    const user = userData.user;
+    if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    
+    // Find customer by email
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    if (customers.data.length === 0) {
+      logStep("No Stripe customer found");
+      return new Response(JSON.stringify({ invoices: [], payments: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
+
+    // Get invoices
+    const invoices = await stripe.invoices.list({
+      customer: customerId,
+      limit: 20,
+    });
+    logStep("Fetched invoices", { count: invoices.data.length });
+
+    // Get payment intents for more details
+    const paymentIntents = await stripe.paymentIntents.list({
+      customer: customerId,
+      limit: 20,
+    });
+    logStep("Fetched payment intents", { count: paymentIntents.data.length });
+
+    // Format invoices for frontend
+    const formattedInvoices = invoices.data.map((invoice: {
+      id: string;
+      number: string | null;
+      created: number | null;
+      amount_paid: number;
+      currency: string | null;
+      status: string | null;
+      lines?: { data?: Array<{ description?: string }> };
+      hosted_invoice_url: string | null;
+      invoice_pdf: string | null;
+    }) => ({
+      id: invoice.id,
+      number: invoice.number,
+      date: invoice.created ? new Date(invoice.created * 1000).toISOString() : null,
+      amount: invoice.amount_paid / 100, // Convert from cents
+      currency: invoice.currency?.toUpperCase() || "EUR",
+      status: invoice.status,
+      description: invoice.lines?.data?.[0]?.description || "Subscrição ObraSys",
+      invoice_url: invoice.hosted_invoice_url,
+      invoice_pdf: invoice.invoice_pdf,
+    }));
+
+    // Format payments for frontend
+    const formattedPayments = paymentIntents.data.map((payment: {
+      id: string;
+      created: number | null;
+      amount: number;
+      currency: string | null;
+      status: string;
+      payment_method_types?: string[];
+    }) => ({
+      id: payment.id,
+      date: payment.created ? new Date(payment.created * 1000).toISOString() : null,
+      amount: payment.amount / 100, // Convert from cents
+      currency: payment.currency?.toUpperCase() || "EUR",
+      status: payment.status,
+      payment_method: payment.payment_method_types?.[0] || "card",
+    }));
+
+    logStep("Returning formatted data");
+
+    return new Response(JSON.stringify({
+      invoices: formattedInvoices,
+      payments: formattedPayments,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR in get-payment-history", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
