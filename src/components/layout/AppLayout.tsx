@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { TrialBanner, TrialExpiredModal } from '@/components/subscription';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -46,19 +46,10 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
         <TopBar title={title} subtitle={subtitle} actions={actions} />
 
         {/* Trial warning banner */}
-        {profile?.trial_expired && (
-          <div className="bg-destructive/10 border-b border-destructive/20 px-6 py-3 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-medium">
-                O seu período de trial expirou. Atualize para continuar a usar o ObraSys.
-              </span>
-            </div>
-            <Button variant="accent" size="sm">
-              Ver planos
-            </Button>
-          </div>
-        )}
+        <TrialBanner />
+
+        {/* Trial expired modal */}
+        <TrialExpiredModal />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto">{children}</main>

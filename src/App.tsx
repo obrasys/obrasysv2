@@ -46,6 +46,7 @@ import AdminUtilizadores from "./pages/admin/Utilizadores";
 import AdminFinanceiroGlobal from "./pages/admin/FinanceiroGlobal";
 import AdminAuditoria from "./pages/admin/Auditoria";
 import AdminTemplates from "./pages/admin/Templates";
+import PlanosPage from "./pages/Planos";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 
 const queryClient = new QueryClient();
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
             <Route path="/perfil" element={<PerfilPage />} />
             <Route path="/definicoes" element={<DefinicoesPage />} />
+            <Route path="/planos" element={<PlanosPage />} />
             {/* Admin - Super Admin Only */}
             <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
             <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
