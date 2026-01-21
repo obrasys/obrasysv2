@@ -1,3 +1,3 @@
 // Versão do sistema ObraSys
 // Atualizar o último dígito a cada alteração
-export const APP_VERSION = '2.0004';
+export const APP_VERSION = '2.0005';
