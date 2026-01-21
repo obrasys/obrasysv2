@@ -21,7 +21,8 @@ import {
   Clock, 
   Mail,
   FileJson,
-  RefreshCw
+  RefreshCw,
+  RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -170,6 +171,36 @@ export default function MigracaoPage() {
 
   const handleSendEmails = () => {
     sendEmailsMutation.mutate({ limit: emailLimit });
+  };
+
+  // Resend single email mutation
+  const resendEmailMutation = useMutation({
+    mutationFn: async ({ email, nome }: { email: string; nome: string | null }) => {
+      const { data, error } = await supabase.functions.invoke("send-migration-emails", {
+        body: { testMode: true, testEmail: email, userName: nome },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Email reenviado",
+        description: `Email de migração reenviado para ${variables.email}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["migrated-users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao reenviar email",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleResendEmail = (user: MigratedUser) => {
+    resendEmailMutation.mutate({ email: user.email, nome: user.nome });
   };
 
   return (
@@ -463,6 +494,7 @@ export default function MigracaoPage() {
                           <TableHead>Empresa</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Data</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -486,6 +518,23 @@ export default function MigracaoPage() {
                                   ? format(new Date(user.email_sent_at), "dd/MM/yyyy HH:mm", { locale: pt })
                                   : format(new Date(user.created_at), "dd/MM/yyyy HH:mm", { locale: pt })
                                 }
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {user.status !== "migrado" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleResendEmail(user)}
+                                    disabled={resendEmailMutation.isPending}
+                                    title="Reenviar email de migração"
+                                  >
+                                    {resendEmailMutation.isPending ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <RotateCcw className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
                           );
