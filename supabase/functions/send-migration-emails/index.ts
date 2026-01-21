@@ -12,6 +12,7 @@ interface MigrationEmailRequest {
   limit?: number;
   testMode?: boolean;
   testEmail?: string;
+  userName?: string;
 }
 
 // Fallback template if not found in database
@@ -139,7 +140,7 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { limit = 50, testMode = false, testEmail } = await req.json() as MigrationEmailRequest;
+    const { limit = 50, testMode = false, testEmail, userName } = await req.json() as MigrationEmailRequest;
 
     // URLs
     const appUrl = "https://obrasysv2.lovable.app";
@@ -194,7 +195,7 @@ serve(async (req: Request) => {
           from: "ObraSys <noreply@obrasys.pt>",
           to: [testEmail],
           subject: emailSubject,
-          html: getEmailHtml("Utilizador Teste"),
+          html: getEmailHtml(userName || "Utilizador"),
         }),
       });
 
