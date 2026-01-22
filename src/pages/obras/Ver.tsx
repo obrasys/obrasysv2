@@ -21,6 +21,7 @@ import {
   CheckCircle,
   Upload,
   BookOpen,
+  Flag,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -30,11 +31,13 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
+import { FinalizarObraModal } from '@/components/obras/FinalizarObraModal';
 import { RDOStatusBadge } from '@/components/rdos';
 import { CadernoStatusBadge } from '@/components/cadernos';
-import { useObra } from '@/hooks/useObras';
+import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useCadernos } from '@/hooks/useCadernos';
+import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
@@ -60,6 +63,8 @@ export default function VerObraPage() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
   const [aiResult, setAiResult] = useState<AIProgressResult | null>(null);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [isFinalizando, setIsFinalizando] = useState(false);
   
   const { 
     obra, 
@@ -71,6 +76,8 @@ export default function VerObraPage() {
     deleteProgressItem 
   } = useObra(id);
   
+  const { updateStatus } = useObras();
+  const { createConta } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
 
@@ -108,6 +115,47 @@ export default function VerObraPage() {
       });
     } finally {
       setIsCalculating(false);
+    }
+  };
+
+  const handleFinalizarObra = async (data: {
+    valor_adjudicacao: number;
+    valor_adicional?: number;
+    data_vencimento: string;
+    descricao?: string;
+    observacoes?: string;
+  }) => {
+    if (!id || !obra) return;
+    
+    setIsFinalizando(true);
+    try {
+      const valorTotal = data.valor_adjudicacao + (data.valor_adicional || 0);
+      
+      // Criar conta a receber no financeiro
+      await createConta.mutateAsync({
+        obra_id: id,
+        tipo: 'receber',
+        origem: 'outros',
+        valor: valorTotal,
+        descricao: data.descricao || `Fecho de obra: ${obra.nome}`,
+        data_vencimento: data.data_vencimento,
+        pago: false,
+      });
+      
+      // Atualizar status da obra para concluída
+      await updateStatus.mutateAsync({ id, status: 'concluida' });
+      
+      await refetch();
+      
+      toast({
+        title: 'Obra finalizada',
+        description: `Conta a receber de ${formatCurrency(valorTotal)} criada no financeiro.`,
+      });
+    } catch (error) {
+      console.error('Error finalizing obra:', error);
+      throw error;
+    } finally {
+      setIsFinalizando(false);
     }
   };
 
@@ -170,6 +218,15 @@ export default function VerObraPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
+            <Button 
+              variant="outline"
+              onClick={() => setShowFinalizarModal(true)}
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Finalizar
+            </Button>
+          )}
           <Button onClick={() => navigate(`/obras/${id}/editar`)}>
             <Edit className="w-4 h-4 mr-2" />
             Editar
@@ -592,6 +649,15 @@ export default function VerObraPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Finalização */}
+      <FinalizarObraModal
+        open={showFinalizarModal}
+        onOpenChange={setShowFinalizarModal}
+        obra={obra}
+        onConfirm={handleFinalizarObra}
+        isLoading={isFinalizando}
+      />
     </AppLayout>
   );
 }
