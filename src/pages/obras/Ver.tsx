@@ -22,6 +22,10 @@ import {
   Upload,
   BookOpen,
   Flag,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  CircleDollarSign,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -77,7 +81,7 @@ export default function VerObraPage() {
   } = useObra(id);
   
   const { updateStatus } = useObras();
-  const { createConta } = useFinanceiro(id);
+  const { contas, createConta, isLoading: loadingContas } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
 
@@ -644,6 +648,127 @@ export default function VerObraPage() {
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Orçamento
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Histórico Financeiro */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              Histórico Financeiro
+              {contas && contas.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {contas.length}
+                </Badge>
+              )}
+            </CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => navigate(`/financeiro?obra=${id}`)}
+            >
+              <CircleDollarSign className="w-4 h-4 mr-2" />
+              Ver Financeiro
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loadingContas ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : contas && contas.length > 0 ? (
+              <div className="space-y-3">
+                {/* Resumo */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg mb-4">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">A Receber</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {formatCurrency(
+                        contas.filter(c => c.tipo === 'receber').reduce((sum, c) => sum + Number(c.valor), 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">A Pagar</p>
+                    <p className="text-lg font-semibold text-red-600">
+                      {formatCurrency(
+                        contas.filter(c => c.tipo === 'pagar').reduce((sum, c) => sum + Number(c.valor), 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Recebido</p>
+                    <p className="text-lg font-semibold">
+                      {formatCurrency(
+                        contas.filter(c => c.tipo === 'receber' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Pago</p>
+                    <p className="text-lg font-semibold">
+                      {formatCurrency(
+                        contas.filter(c => c.tipo === 'pagar' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0)
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Lista de Contas */}
+                {contas.slice(0, 5).map((conta) => (
+                  <div 
+                    key={conta.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      {conta.tipo === 'receber' ? (
+                        <div className="p-2 rounded-full bg-green-100">
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        </div>
+                      ) : (
+                        <div className="p-2 rounded-full bg-red-100">
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">
+                          {conta.descricao || (conta.tipo === 'receber' ? 'A Receber' : 'A Pagar')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Venc: {format(new Date(conta.data_vencimento), "dd/MM/yyyy")}
+                          {conta.fornecedor && ` • ${conta.fornecedor.nome}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-semibold ${conta.tipo === 'receber' ? 'text-green-600' : 'text-red-600'}`}>
+                        {conta.tipo === 'receber' ? '+' : '-'} {formatCurrency(Number(conta.valor))}
+                      </p>
+                      <Badge variant={conta.pago ? 'default' : 'outline'} className="text-xs">
+                        {conta.pago ? 'Pago' : 'Pendente'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+
+                {contas.length > 5 && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => navigate(`/financeiro?obra=${id}`)}
+                  >
+                    Ver todas as {contas.length} contas
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma conta financeira registada.</p>
+                <p className="text-sm mt-1">As contas desta obra aparecerão aqui.</p>
               </div>
             )}
           </CardContent>
