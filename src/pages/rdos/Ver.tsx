@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { RDOStatusBadge, RDOImageGallery } from '@/components/rdos';
+import { RDOStatusBadge, RDOImageGallery, RDOPdfExport } from '@/components/rdos';
 import { useRDO, useRDOs } from '@/hooks/useRDOs';
 import { 
   ArrowLeft, 
@@ -105,6 +105,7 @@ export default function VerRDOPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <RDOPdfExport rdo={rdo} />
             {rdo.status === 'rascunho' && (
               <>
                 <Button variant="outline" onClick={() => navigate(`/rdos/${id}/editar`)}>
