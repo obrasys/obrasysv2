@@ -25,6 +25,7 @@ export interface RelatorioDiario {
   criado_por: string | null;
   aprovado_por: string | null;
   aprovado_em: string | null;
+  fotos: string[];
   created_at: string;
   updated_at: string;
   // Relações
@@ -45,6 +46,7 @@ export interface RDOFormData {
   condicoes_meteorologicas?: string;
   mao_de_obra_presente?: number;
   status?: RDOStatus;
+  fotos?: string[];
 }
 
 // Helper to parse trabalhos_quantificados from JSON
