@@ -25,6 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import type { RelatorioDiario, RDOFormData, TrabalhoQuantificado } from '@/types/rdos';
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import { useObras } from '@/hooks/useObras';
+import { RDOImageUpload } from './RDOImageUpload';
 import { 
   Calendar, 
   Cloud, 
@@ -36,6 +37,7 @@ import {
   Trash2,
   Loader2,
   HardHat,
+  Camera,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -70,6 +72,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
   const [trabalhos, setTrabalhos] = useState<TrabalhoQuantificado[]>(
     rdo?.trabalhos_quantificados || []
   );
+  const [fotos, setFotos] = useState<string[]>(rdo?.fotos || []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -119,6 +122,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
       condicoes_meteorologicas: data.condicoes_meteorologicas,
       mao_de_obra_presente: data.mao_de_obra_presente,
       trabalhos_quantificados: validTrabalhos,
+      fotos: fotos,
     });
   };
 
@@ -400,6 +404,24 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
                   <FormMessage />
                 </FormItem>
               )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Fotos da Obra */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              Fotos da Obra
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RDOImageUpload
+              rdoId={rdo?.id}
+              existingPhotos={fotos}
+              onPhotosChange={setFotos}
+              disabled={isLoading}
             />
           </CardContent>
         </Card>

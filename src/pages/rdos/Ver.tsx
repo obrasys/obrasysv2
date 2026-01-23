@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { RDOStatusBadge } from '@/components/rdos';
+import { RDOStatusBadge, RDOImageGallery } from '@/components/rdos';
 import { useRDO, useRDOs } from '@/hooks/useRDOs';
 import { 
   ArrowLeft, 
@@ -21,6 +21,7 @@ import {
   MessageSquare,
   AlertCircle,
   Ruler,
+  Camera,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -240,6 +241,21 @@ export default function VerRDOPage() {
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap">{rdo.observacoes}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fotos */}
+        {rdo.fotos && rdo.fotos.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Fotos da Obra ({rdo.fotos.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RDOImageGallery photos={rdo.fotos} />
             </CardContent>
           </Card>
         )}

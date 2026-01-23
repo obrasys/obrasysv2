@@ -10,6 +10,7 @@ function transformRDO(row: any): RelatorioDiario {
   return {
     ...row,
     trabalhos_quantificados: parseTrabalhos(row.trabalhos_quantificados),
+    fotos: row.fotos || [],
   };
 }
 
@@ -123,6 +124,7 @@ export function useRDOs(obraId?: string) {
           user_id: user.id,
           criado_por: user.id,
           trabalhos_quantificados: JSON.parse(JSON.stringify(data.trabalhos_quantificados || [])),
+          fotos: data.fotos || [],
         })
         .select()
         .single();
