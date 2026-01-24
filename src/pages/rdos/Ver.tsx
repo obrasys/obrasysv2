@@ -81,26 +81,26 @@ export default function VerRDOPage() {
 
   return (
     <AppLayout title={`RDO - ${rdo.obra?.nome}`}>
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/rdos')}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/rdos')}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg md:text-2xl font-bold tracking-tight">
                   {format(new Date(rdo.data), "d 'de' MMMM 'de' yyyy", { locale: pt })}
                 </h1>
                 <RDOStatusBadge status={rdo.status} />
               </div>
               <p 
-                className="text-muted-foreground flex items-center gap-1 cursor-pointer hover:text-foreground"
+                className="text-sm md:text-base text-muted-foreground flex items-center gap-1 cursor-pointer hover:text-foreground truncate"
                 onClick={() => navigate(`/obras/${rdo.obra_id}`)}
               >
-                <HardHat className="h-4 w-4" />
-                {rdo.obra?.nome}
+                <HardHat className="h-4 w-4 shrink-0" />
+                <span className="truncate">{rdo.obra?.nome}</span>
               </p>
             </div>
           </div>

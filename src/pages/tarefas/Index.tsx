@@ -161,9 +161,9 @@ export default function TarefasPage() {
       title="Tarefas e Cronograma"
       subtitle="Gestão de tarefas e acompanhamento do cronograma das obras"
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">

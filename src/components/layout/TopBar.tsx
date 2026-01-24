@@ -43,12 +43,12 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-4">
+    <header className="h-14 md:h-16 border-b border-border bg-card px-3 md:px-6 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
         {/* Mobile menu */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
@@ -70,25 +70,25 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
           </SheetContent>
         </Sheet>
 
-        <div className="lg:hidden">
-          <img src={logo} alt="ObraSys" className="h-8 w-auto" />
+        <div className="lg:hidden shrink-0">
+          <img src={logo} alt="ObraSys" className="h-7 md:h-8 w-auto" />
         </div>
 
-        <div>
-          <h1 className="font-display text-xl font-bold text-foreground">{title}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-base md:text-xl font-bold text-foreground truncate">{title}</h1>
           {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+            <p className="text-xs md:text-sm text-muted-foreground truncate hidden sm:block">{subtitle}</p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Actions */}
-        {actions && <div className="hidden sm:flex items-center gap-2">{actions}</div>}
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        {/* Actions - hidden on mobile, shown in dropdown or main view */}
+        {actions && <div className="hidden md:flex items-center gap-2">{actions}</div>}
 
-        {/* Trial badge */}
+        {/* Trial badge - hidden on mobile */}
         {trialDaysRemaining > 0 && trialDaysRemaining <= 7 && (
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
             <Clock className="w-4 h-4" />
             <span>{trialDaysRemaining} dias de trial restantes</span>
           </div>

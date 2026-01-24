@@ -16,8 +16,8 @@ export default function CriarOrcamentoPage() {
 
   return (
     <AppLayout title="Criar Orçamento" subtitle="Preencha as informações do novo orçamento">
-      <div className="p-6">
-        <div className="max-w-2xl mx-auto">
+      <div className="p-4 md:p-6">
+        <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Informações do Orçamento</CardTitle>

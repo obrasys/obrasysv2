@@ -208,9 +208,9 @@ export default function MigracaoPage() {
       title="Migração V1 → V2" 
       subtitle="Importar utilizadores do ObraSys V1 e enviar comunicação"
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">

@@ -238,9 +238,9 @@ export default function VerObraPage() {
         </div>
       }
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header Info */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
           {/* Main Info Card */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-start justify-between">

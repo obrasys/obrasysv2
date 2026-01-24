@@ -76,9 +76,9 @@ export default function ObrasPage() {
         </Button>
       }
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* KPIs */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="bg-card border rounded-lg p-4">
             <p className="text-sm text-muted-foreground">Total de Obras</p>
             <p className="text-2xl font-bold">{totalObras}</p>

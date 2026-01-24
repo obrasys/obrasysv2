@@ -14,18 +14,18 @@ export default function BasePrecosInserir() {
 
   return (
     <AppLayout title="Inserir Preço">
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Plus className="h-6 w-6" />
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <Plus className="h-5 w-5 md:h-6 md:w-6" />
               Inserir Preço
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm md:text-base text-muted-foreground mt-1">
               Adicione um novo preço à base de dados
             </p>
           </div>
