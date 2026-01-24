@@ -132,12 +132,12 @@ const FinanceiroIndex = () => {
 
   return (
     <AppLayout title="Financeiro">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Dashboard */}
         <FinanceiroDashboard data={dashboard} isLoading={loadingDashboard} />
 
         {/* Filters and Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-center justify-between">
           <div className="flex flex-1 gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

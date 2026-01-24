@@ -18,15 +18,15 @@ export default function CriarClientePage() {
 
   return (
     <AppLayout title="Novo Cliente">
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/clientes')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Novo Cliente</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Novo Cliente</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Preencha os dados para criar um novo cliente
             </p>
           </div>

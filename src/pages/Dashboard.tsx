@@ -113,33 +113,33 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Dashboard">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Welcome message */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-foreground">
+            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
               Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}! 👋
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm md:text-base text-muted-foreground">
               {hasData 
                 ? 'Aqui está o resumo do acompanhamento das suas obras.'
                 : 'Bem-vindo ao ObraSys. Comece criando a sua primeira obra.'}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/rdos/criar')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo RDO
+            <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/rdos/criar')}>
+              <Plus className="w-4 h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Novo </span>RDO
             </Button>
-            <Button onClick={() => navigate('/obras/criar')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Obra
+            <Button size="sm" className="md:size-default" onClick={() => navigate('/obras/criar')}>
+              <Plus className="w-4 h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Nova </span>Obra
             </Button>
           </div>
         </div>
 
         {/* Main KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/obras?status=em_curso')}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-2">

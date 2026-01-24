@@ -116,10 +116,10 @@ export default function ValidarCadernoPage() {
         </div>
       }
     >
-      <div className="p-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Barra de progresso */}
         {estatisticas && (
-          <Card className="mb-6">
+          <Card className="mb-4 md:mb-6">
             <CardContent className="py-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-4">

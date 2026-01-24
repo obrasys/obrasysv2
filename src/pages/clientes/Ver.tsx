@@ -76,30 +76,30 @@ export default function VerClientePage() {
 
   return (
     <AppLayout title={cliente.nome}>
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/clientes')}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/clientes')}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">{cliente.nome}</h1>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg md:text-2xl font-bold tracking-tight truncate">{cliente.nome}</h1>
                 <ClienteStatusBadge nivel={cliente.nivel_acesso} />
                 {!cliente.ativo && <Badge variant="secondary">Inativo</Badge>}
               </div>
               {cliente.empresa && (
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <Building2 className="h-4 w-4" />
-                  {cliente.empresa}
+                <p className="text-sm md:text-base text-muted-foreground flex items-center gap-1 truncate">
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{cliente.empresa}</span>
                 </p>
               )}
             </div>
           </div>
-          <Button onClick={() => navigate(`/clientes/${id}/editar`)}>
+          <Button size="sm" className="md:size-default shrink-0" onClick={() => navigate(`/clientes/${id}/editar`)}>
             <Edit className="mr-2 h-4 w-4" />
-            Editar
+            <span className="hidden sm:inline">Editar</span>
           </Button>
         </div>
 

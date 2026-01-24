@@ -48,9 +48,9 @@ export default function BasePrecosAuditoria() {
       title="Auditoria de Preços"
       subtitle="Histórico completo e log de ações (apenas administradores)"
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-        <Tabs defaultValue="history">
+        <Tabs defaultValue="history" className="space-y-4">
           <TabsList>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />

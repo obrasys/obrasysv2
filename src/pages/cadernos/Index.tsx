@@ -86,9 +86,9 @@ export default function CadernosPage() {
         </div>
       }
     >
-      <div className="p-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {cadernos && cadernos.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cadernos.map((caderno) => (
               <Card key={caderno.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">

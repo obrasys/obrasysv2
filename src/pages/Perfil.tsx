@@ -168,8 +168,8 @@ export default function PerfilPage() {
         </Button>
       }
     >
-      <div className="p-6 space-y-6">
-        <div className="grid gap-6 lg:grid-cols-3">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
           {/* Avatar & Quick Info */}
           <Card className="lg:col-span-1">
             <CardHeader className="text-center">

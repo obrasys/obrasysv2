@@ -238,9 +238,9 @@ export default function EditarOrcamentoPage() {
       subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
       actions={headerActions}
     >
-      <div className="p-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Status badge */}
-        <div className="mb-4">
+        <div className="mb-3 md:mb-4">
           <OrcamentoStatus status={orcamento.status} />
         </div>
 

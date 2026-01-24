@@ -116,8 +116,8 @@ export default function DefinicoesPage() {
         </Button>
       }
     >
-      <div className="p-6 space-y-6">
-        <div className="grid gap-6 lg:grid-cols-2">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
           {/* Notificações por Email */}
           <Card>
             <CardHeader>
