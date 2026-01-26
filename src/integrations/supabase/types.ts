@@ -1160,6 +1160,133 @@ export type Database = {
         }
         Relationships: []
       }
+      equipa_membros: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          data_admissao: string | null
+          email: string | null
+          id: string
+          nif: string | null
+          nome: string
+          observacoes: string | null
+          salario_base: number | null
+          subempreiteiro_id: string | null
+          telefone: string | null
+          tipo_contrato: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          email?: string | null
+          id?: string
+          nif?: string | null
+          nome: string
+          observacoes?: string | null
+          salario_base?: number | null
+          subempreiteiro_id?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          email?: string | null
+          id?: string
+          nif?: string | null
+          nome?: string
+          observacoes?: string | null
+          salario_base?: number | null
+          subempreiteiro_id?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipa_membros_subempreiteiro_id_fkey"
+            columns: ["subempreiteiro_id"]
+            isOneToOne: false
+            referencedRelation: "subempreiteiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipamentos: {
+        Row: {
+          categoria: string | null
+          codigo: string | null
+          created_at: string
+          data_aquisicao: string | null
+          estado: string
+          id: string
+          localizacao: string | null
+          marca: string | null
+          modelo: string | null
+          nome: string
+          numero_serie: string | null
+          obra_id: string | null
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+          valor_aquisicao: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string
+          data_aquisicao?: string | null
+          estado?: string
+          id?: string
+          localizacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nome: string
+          numero_serie?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+          valor_aquisicao?: number | null
+        }
+        Update: {
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string
+          data_aquisicao?: string | null
+          estado?: string
+          id?: string
+          localizacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nome?: string
+          numero_serie?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_aquisicao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipamentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       failed_login_attempts: {
         Row: {
           attempted_at: string
@@ -2179,6 +2306,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subempreiteiros: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string | null
+          endereco: string | null
+          especialidade: string | null
+          id: string
+          nif: string | null
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          especialidade?: string | null
+          id?: string
+          nif?: string | null
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          especialidade?: string | null
+          id?: string
+          nif?: string | null
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       subscribers: {
         Row: {

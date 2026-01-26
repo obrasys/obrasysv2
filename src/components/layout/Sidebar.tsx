@@ -15,6 +15,7 @@ import {
   Shield,
   Mail,
   CreditCard,
+  HardHat,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { APP_VERSION } from '@/config/version';
@@ -29,6 +30,7 @@ const navItems = [
   { icon: Calendar, label: 'Tarefas', href: '/tarefas' },
   { icon: ShieldCheck, label: 'Conformidade', href: '/conformidade' },
   { icon: Wallet, label: 'Financeiro', href: '/financeiro' },
+  { icon: HardHat, label: 'Recursos', href: '/recursos' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
   { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
 ];
