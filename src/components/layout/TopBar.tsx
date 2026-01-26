@@ -180,15 +180,21 @@ function MobileNav() {
     BarChart3,
     Settings,
     HelpCircle,
+    Database,
+    ShieldCheck,
+    HardHat,
   } = require('lucide-react');
 
   const navItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
     { icon: Building2, label: 'Obras', href: '/obras' },
     { icon: FileText, label: 'Orçamentos', href: '/orcamentos' },
+    { icon: Database, label: 'Base de Preços', href: '/base-precos' },
     { icon: ClipboardList, label: 'RDOs', href: '/rdos' },
     { icon: Calendar, label: 'Tarefas', href: '/tarefas' },
+    { icon: ShieldCheck, label: 'Conformidade', href: '/conformidade' },
     { icon: Wallet, label: 'Financeiro', href: '/financeiro' },
+    { icon: HardHat, label: 'Recursos', href: '/recursos' },
     { icon: Users, label: 'Clientes', href: '/clientes' },
     { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
   ];
