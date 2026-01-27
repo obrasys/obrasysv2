@@ -1,48 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  Home,
-  Building2,
-  FileText,
-  ClipboardList,
-  Calendar,
-  Wallet,
-  Users,
-  BarChart3,
-  Settings,
-  HelpCircle,
-  ShieldCheck,
-  Database,
-  Shield,
-  Mail,
-  CreditCard,
-  HardHat,
-} from 'lucide-react';
+import { CreditCard, HelpCircle, Settings } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { APP_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-
-const navItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: Building2, label: 'Obras', href: '/obras' },
-  { icon: FileText, label: 'Orçamentos', href: '/orcamentos' },
-  { icon: Database, label: 'Base de Preços', href: '/base-precos' },
-  { icon: ClipboardList, label: 'RDOs', href: '/rdos' },
-  { icon: Calendar, label: 'Tarefas', href: '/tarefas' },
-  { icon: ShieldCheck, label: 'Conformidade', href: '/conformidade' },
-  { icon: Wallet, label: 'Financeiro', href: '/financeiro' },
-  { icon: HardHat, label: 'Recursos', href: '/recursos' },
-  { icon: Users, label: 'Clientes', href: '/clientes' },
-  { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
-];
-
-const adminNavItems = [
-  { icon: Shield, label: 'Dashboard Admin', href: '/admin' },
-  { icon: Users, label: 'Utilizadores', href: '/admin/utilizadores' },
-  { icon: Wallet, label: 'Financeiro Global', href: '/admin/financeiro' },
-  { icon: ClipboardList, label: 'Auditoria', href: '/admin/auditoria' },
-  { icon: Mail, label: 'Templates Email', href: '/admin/templates' },
-  { icon: BarChart3, label: 'Migração V1→V2', href: '/admin/migracao' },
-];
+import { ADMIN_NAV_ITEMS, MAIN_NAV_ITEMS } from '@/config/navigation';
 
 export function Sidebar() {
   const location = useLocation();
@@ -76,8 +37,8 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+      <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
+        {MAIN_NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           return (
             <button
@@ -103,7 +64,7 @@ export function Sidebar() {
                 Administração
               </p>
             </div>
-            {adminNavItems.map((item) => {
+            {ADMIN_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (
                 <button

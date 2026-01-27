@@ -8,9 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Save, Eye, Code, Copy, Check } from "lucide-react";
+import { ArrowLeft, Save, Eye, Code, Copy, Check, Send } from "lucide-react";
 import { EmailTemplate, TEMPLATE_VARIABLES } from "@/types/email-templates";
 import { useEmailTemplates } from "@/hooks/useEmailTemplates";
+import { EmailTemplateSendDialog } from "@/components/admin/EmailTemplateSendDialog";
 
 interface EmailTemplateEditorProps {
   template: EmailTemplate;
@@ -28,6 +29,7 @@ export function EmailTemplateEditor({ template, onBack }: EmailTemplateEditorPro
   });
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("editor");
+  const [isSendOpen, setIsSendOpen] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -84,11 +86,28 @@ export function EmailTemplateEditor({ template, onBack }: EmailTemplateEditorPro
             <p className="text-sm text-muted-foreground font-mono">{template.slug}</p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={isUpdating}>
-          <Save className="h-4 w-4 mr-2" />
-          {isUpdating ? "A guardar..." : "Guardar alterações"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsSendOpen(true)}
+            disabled={isUpdating}
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Enviar
+          </Button>
+          <Button onClick={handleSave} disabled={isUpdating}>
+            <Save className="h-4 w-4 mr-2" />
+            {isUpdating ? "A guardar..." : "Guardar alterações"}
+          </Button>
+        </div>
       </div>
+
+      <EmailTemplateSendDialog
+        open={isSendOpen}
+        onOpenChange={setIsSendOpen}
+        defaultSubject={formData.assunto}
+        defaultHtml={formData.html_content}
+      />
 
       <div className="grid lg:grid-cols-4 gap-6">
         {/* Main Editor */}
