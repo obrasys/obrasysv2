@@ -1,10 +1,30 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObraAlerts } from '@/hooks/useObraAlerts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, LogOut, User, Menu, Bell, Settings, CreditCard } from 'lucide-react';
+import {
+  Clock,
+  LogOut,
+  User,
+  Menu,
+  Bell,
+  Settings,
+  CreditCard,
+  Home,
+  Building2,
+  FileText,
+  ClipboardList,
+  Calendar,
+  Wallet,
+  Users,
+  BarChart3,
+  HelpCircle,
+  Database,
+  ShieldCheck,
+  HardHat,
+} from 'lucide-react';
 import logo from '@/assets/logo.png';
 import {
   Sheet,
@@ -166,24 +186,8 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
 
 // Mobile navigation component (inline)
 function MobileNav() {
-  const { useLocation, useNavigate } = require('react-router-dom');
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    Home,
-    Building2,
-    FileText,
-    ClipboardList,
-    Calendar,
-    Wallet,
-    Users,
-    BarChart3,
-    Settings,
-    HelpCircle,
-    Database,
-    ShieldCheck,
-    HardHat,
-  } = require('lucide-react');
 
   const navItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
@@ -206,8 +210,8 @@ function MobileNav() {
 
   return (
     <>
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item: any) => {
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <button
@@ -226,11 +230,17 @@ function MobileNav() {
         })}
       </nav>
       <div className="p-4 border-t border-sidebar-border space-y-1">
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors">
+        <button
+          onClick={() => navigate('/definicoes')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+        >
           <Settings className="w-5 h-5" />
           <span className="font-medium">Definições</span>
         </button>
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors">
+        <button
+          onClick={() => navigate('/suporte')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+        >
           <HelpCircle className="w-5 h-5" />
           <span className="font-medium">Suporte</span>
         </button>
