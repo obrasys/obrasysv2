@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Users, Loader2 } from "lucide-react";
 
 function parseEmails(input: string): string[] {
   return input
@@ -38,6 +39,7 @@ export function EmailTemplateSendDialog({
   const [recipientsRaw, setRecipientsRaw] = useState("");
   const [subject, setSubject] = useState(defaultSubject);
   const [isSending, setIsSending] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const recipients = useMemo(() => parseEmails(recipientsRaw), [recipientsRaw]);
 
@@ -48,6 +50,37 @@ export function EmailTemplateSendDialog({
     if (next) {
       setSubject(defaultSubject);
       setRecipientsRaw("");
+    }
+  };
+
+  const handleLoadAllUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-all-user-emails");
+
+      if (error) throw error;
+
+      if (data?.emails && data.emails.length > 0) {
+        setRecipientsRaw(data.emails.join("\n"));
+        toast({
+          title: "Utilizadores carregados",
+          description: `Foram carregados ${data.total} email(s) da base de dados.`,
+        });
+      } else {
+        toast({
+          title: "Sem utilizadores",
+          description: "Não foram encontrados utilizadores na base de dados.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Erro ao carregar",
+        description: err?.message ?? "Não foi possível carregar os utilizadores.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingUsers(false);
     }
   };
 
@@ -112,7 +145,24 @@ export function EmailTemplateSendDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="broadcast-to">Destinatários</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="broadcast-to">Destinatários</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleLoadAllUsers}
+                disabled={isLoadingUsers || isSending}
+                className="gap-2"
+              >
+                {isLoadingUsers ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Users className="h-4 w-4" />
+                )}
+                Carregar todos os utilizadores
+              </Button>
+            </div>
             <Textarea
               id="broadcast-to"
               value={recipientsRaw}
