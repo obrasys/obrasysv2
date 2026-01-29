@@ -37,7 +37,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation - scrollable area */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 lg:overflow-visible overflow-y-auto">
         {MAIN_NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           return (
