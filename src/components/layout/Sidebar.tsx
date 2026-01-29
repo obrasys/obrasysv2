@@ -21,7 +21,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen overflow-hidden">
       {/* Logo */}
       <div className="flex-shrink-0 p-6 border-b border-sidebar-border">
         <a href="/" className="flex items-center">
@@ -36,8 +36,8 @@ export function Sidebar() {
         </p>
       </div>
 
-      {/* Navigation - scrollable area */}
-      <nav className="flex-1 p-4 space-y-1 lg:overflow-visible overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1">
         {MAIN_NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           return (
