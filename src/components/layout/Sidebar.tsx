@@ -21,9 +21,9 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen overflow-hidden">
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="flex-shrink-0 p-6 border-b border-sidebar-border">
         <a href="/" className="flex items-center">
           <img
             src={logo}
@@ -36,8 +36,8 @@ export function Sidebar() {
         </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
+      {/* Navigation - scrollable area */}
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {MAIN_NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           return (
@@ -86,7 +86,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom section */}
-      <div className="p-4 border-t border-sidebar-border space-y-1">
+      <div className="flex-shrink-0 p-4 border-t border-sidebar-border space-y-1">
         <button
           onClick={() => navigate('/subscricao')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
