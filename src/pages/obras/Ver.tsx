@@ -222,6 +222,10 @@ export default function VerObraPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          <Button variant="outline" onClick={() => navigate(`/obras/${id}/financeiro`)}>
+            <Wallet className="w-4 h-4 mr-2" />
+            Financeiro
+          </Button>
           {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
             <Button 
               variant="outline"

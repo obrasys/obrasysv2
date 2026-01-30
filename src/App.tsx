@@ -15,6 +15,7 @@ import ObrasPage from "./pages/obras/Index";
 import CriarObraPage from "./pages/obras/Criar";
 import EditarObraPage from "./pages/obras/Editar";
 import VerObraPage from "./pages/obras/Ver";
+import ObraFinanceiroPage from "./pages/obras/Financeiro";
 import ClientesPage from "./pages/clientes/Index";
 import CriarClientePage from "./pages/clientes/Criar";
 import EditarClientePage from "./pages/clientes/Editar";
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/obras/criar" element={<CriarObraPage />} />
             <Route path="/obras/:id" element={<VerObraPage />} />
             <Route path="/obras/:id/editar" element={<EditarObraPage />} />
+            <Route path="/obras/:id/financeiro" element={<ObraFinanceiroPage />} />
             {/* Cadernos de Encargos */}
             <Route path="/obras/:id/cadernos" element={<CadernosPage />} />
             <Route path="/obras/:id/cadernos/importar" element={<ImportarCadernoPage />} />
