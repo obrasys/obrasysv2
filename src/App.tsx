@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import OrcamentosPage from "./pages/orcamentos/Index";
 import CriarOrcamentoPage from "./pages/orcamentos/Criar";
 import EditarOrcamentoPage from "./pages/orcamentos/Editar";
+import VerOrcamentoPage from "./pages/orcamentos/Ver";
 import ObrasPage from "./pages/obras/Index";
 import CriarObraPage from "./pages/obras/Criar";
 import EditarObraPage from "./pages/obras/Editar";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/orcamentos" element={<OrcamentosPage />} />
             <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
+            <Route path="/orcamentos/:id" element={<VerOrcamentoPage />} />
             <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
             <Route path="/obras" element={<ObrasPage />} />
             <Route path="/obras/criar" element={<CriarObraPage />} />
