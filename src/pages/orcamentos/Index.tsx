@@ -67,6 +67,10 @@ export default function OrcamentosPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const handleView = (id: string) => {
+    navigate(`/orcamentos/${id}`);
+  };
+
   const handleEdit = (id: string) => {
     navigate(`/orcamentos/${id}/editar`);
   };
@@ -156,6 +160,7 @@ export default function OrcamentosPage() {
                 <OrcamentoCard
                   key={orcamento.id}
                   orcamento={orcamento}
+                  onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}
                   onDelete={setDeleteId}

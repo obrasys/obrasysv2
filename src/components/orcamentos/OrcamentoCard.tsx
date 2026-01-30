@@ -24,6 +24,7 @@ import { pt } from 'date-fns/locale';
 
 interface OrcamentoCardProps {
   orcamento: Orcamento;
+  onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
@@ -32,6 +33,7 @@ interface OrcamentoCardProps {
 
 export function OrcamentoCard({
   orcamento,
+  onView,
   onEdit,
   onDuplicate,
   onDelete,
@@ -55,7 +57,7 @@ export function OrcamentoCard({
   const valorFinal = subtotal + margemValor;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onView(orcamento.id)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -70,27 +72,31 @@ export function OrcamentoCard({
             )}
           </div>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={() => onEdit(orcamento.id)}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(orcamento.id); }}>
+                <FileText className="mr-2 h-4 w-4" />
+                Ver
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(orcamento.id); }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate(orcamento.id)}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(orcamento.id); }}>
                 <Copy className="mr-2 h-4 w-4" />
                 Duplicar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onGeneratePDF(orcamento.id)}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onGeneratePDF(orcamento.id); }}>
                 <FileText className="mr-2 h-4 w-4" />
                 Gerar PDF
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => onDelete(orcamento.id)}
+                onClick={(e) => { e.stopPropagation(); onDelete(orcamento.id); }}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
