@@ -361,7 +361,7 @@ export default function VerOrcamentoPage() {
 
           <Separator />
 
-          {/* Summary - NO margin or internal costs shown, only final prices */}
+          {/* Summary - Shows all costs breakdown except internal margin */}
           <Card className="border-2 border-primary/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -371,12 +371,43 @@ export default function VerOrcamentoPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
+                {/* Subtotal dos artigos (com margem aplicada) */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatCurrency(valorBase)}</span>
+                  <span className="text-muted-foreground">Subtotal Artigos</span>
+                  <span>{formatCurrency(subtotalArtigos * (1 + margemDecimal))}</span>
                 </div>
 
+                {/* Custos Indiretos - mostrar individualmente se existirem */}
+                {custosIndiretosTotal > 0 && (
+                  <>
+                    {(orcamento.custos_indiretos?.estaleiro || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground pl-4">Estaleiro</span>
+                        <span>{formatCurrency((orcamento.custos_indiretos?.estaleiro || 0) * (1 + margemDecimal))}</span>
+                      </div>
+                    )}
+                    {(orcamento.custos_indiretos?.seguros || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground pl-4">Seguros</span>
+                        <span>{formatCurrency((orcamento.custos_indiretos?.seguros || 0) * (1 + margemDecimal))}</span>
+                      </div>
+                    )}
+                    {(orcamento.custos_indiretos?.licenciamento || 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground pl-4">Licenciamento</span>
+                        <span>{formatCurrency((orcamento.custos_indiretos?.licenciamento || 0) * (1 + margemDecimal))}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <Separator className="my-2" />
+
+                {/* Subtotal antes do IVA */}
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-muted-foreground">Subtotal (s/ IVA)</span>
+                  <span>{formatCurrency(valorBase)}</span>
+                </div>
 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">IVA ({(IVA_RATE * 100).toFixed(0)}%)</span>
