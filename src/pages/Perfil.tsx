@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export default function PerfilPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
@@ -229,6 +231,16 @@ export default function PerfilPage() {
                     </Badge>
                   </div>
                 )}
+                
+                {/* Company Button */}
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2" 
+                  onClick={() => setEmpresaModalOpen(true)}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Dados da Empresa
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -352,6 +364,12 @@ export default function PerfilPage() {
           </Card>
         </div>
       </div>
+
+      {/* Empresa Modal */}
+      <EmpresaModal 
+        open={empresaModalOpen} 
+        onOpenChange={setEmpresaModalOpen} 
+      />
     </AppLayout>
   );
 }

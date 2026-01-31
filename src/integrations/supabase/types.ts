@@ -2167,6 +2167,15 @@ export type Database = {
           created_at: string
           email: string
           empresa: string | null
+          empresa_cidade: string | null
+          empresa_codigo_postal: string | null
+          empresa_email: string | null
+          empresa_logo_url: string | null
+          empresa_morada: string | null
+          empresa_nif: string | null
+          empresa_nome: string | null
+          empresa_pais: string | null
+          empresa_telefone: string | null
           id: string
           nif: string | null
           nome: string
@@ -2183,6 +2192,15 @@ export type Database = {
           created_at?: string
           email: string
           empresa?: string | null
+          empresa_cidade?: string | null
+          empresa_codigo_postal?: string | null
+          empresa_email?: string | null
+          empresa_logo_url?: string | null
+          empresa_morada?: string | null
+          empresa_nif?: string | null
+          empresa_nome?: string | null
+          empresa_pais?: string | null
+          empresa_telefone?: string | null
           id?: string
           nif?: string | null
           nome: string
@@ -2199,6 +2217,15 @@ export type Database = {
           created_at?: string
           email?: string
           empresa?: string | null
+          empresa_cidade?: string | null
+          empresa_codigo_postal?: string | null
+          empresa_email?: string | null
+          empresa_logo_url?: string | null
+          empresa_morada?: string | null
+          empresa_nif?: string | null
+          empresa_nome?: string | null
+          empresa_pais?: string | null
+          empresa_telefone?: string | null
           id?: string
           nif?: string | null
           nome?: string

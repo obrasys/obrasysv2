@@ -23,18 +23,26 @@ import {
   Euro,
   Edit,
   Loader2,
+  Phone,
+  Mail,
+  MapPin,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+
+// IVA rate (can be configured)
+const IVA_RATE = 0.23; // 23%
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { orcamento, isLoading } = useOrcamento(id);
+  const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => {
@@ -121,22 +129,35 @@ export default function VerOrcamentoPage() {
     );
   }
 
-  // Calculate totals
+  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
+  // The final prices already include the margin (price of sale)
   const custosIndiretosTotal =
     (orcamento.custos_indiretos?.estaleiro || 0) +
     (orcamento.custos_indiretos?.seguros || 0) +
     (orcamento.custos_indiretos?.licenciamento || 0);
 
-  const subtotal = orcamento.valor_total + custosIndiretosTotal;
-  const margemValor = subtotal * (orcamento.margem_lucro / 100);
-  const valorFinal = subtotal + margemValor;
+  const subtotalArtigos = orcamento.valor_total;
+  const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
+  
+  // Apply margin to get final price (not shown on print)
+  const margemDecimal = orcamento.margem_lucro / 100;
+  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
+  
+  // Calculate IVA
+  const valorIVA = valorBase * IVA_RATE;
+  const valorFinal = valorBase + valorIVA;
+
+  // Company info
+  const hasCompanyInfo = profile?.empresa_nome || profile?.empresa_logo_url;
+  const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
+  const companyNif = profile?.empresa_nif || profile?.nif;
 
   return (
     <AppLayout
       title={orcamento.titulo}
       subtitle="Visualização do Orçamento"
       actions={
-        <div className="flex gap-2">
+        <div className="flex gap-2 no-print">
           <Button variant="outline" onClick={() => navigate('/orcamentos')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
@@ -184,46 +205,84 @@ export default function VerOrcamentoPage() {
           id="print-content"
           className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-sm space-y-6"
         >
-          {/* Header */}
-          <div className="text-center border-b pb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              ORÇAMENTO
-            </h1>
-            <p className="text-lg text-muted-foreground">{orcamento.titulo}</p>
+          {/* Company Header */}
+          <div className="flex justify-between items-start border-b pb-6">
+            <div className="flex items-start gap-4">
+              {profile?.empresa_logo_url && (
+                <img
+                  src={profile.empresa_logo_url}
+                  alt="Logo da empresa"
+                  className="h-16 w-auto object-contain"
+                  crossOrigin="anonymous"
+                />
+              )}
+              <div>
+                <h2 className="text-lg font-bold text-foreground">
+                  {companyName}
+                </h2>
+                {companyNif && (
+                  <p className="text-sm text-muted-foreground">NIF: {companyNif}</p>
+                )}
+                {profile?.empresa_morada && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {profile.empresa_morada}
+                    {profile.empresa_codigo_postal && `, ${profile.empresa_codigo_postal}`}
+                    {profile.empresa_cidade && ` ${profile.empresa_cidade}`}
+                  </p>
+                )}
+                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                  {(profile?.empresa_telefone || profile?.telefone) && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {profile.empresa_telefone || profile.telefone}
+                    </span>
+                  )}
+                  {(profile?.empresa_email || profile?.email) && (
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      {profile.empresa_email || profile.email}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <h1 className="text-2xl font-bold text-primary">ORÇAMENTO</h1>
+              <p className="text-sm text-muted-foreground">
+                Data: {format(new Date(orcamento.data_criacao), "d 'de' MMMM 'de' yyyy", { locale: pt })}
+              </p>
+            </div>
           </div>
 
-          {/* Info Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
+          {/* Budget Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/30 p-4 rounded-lg">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground">{orcamento.titulo}</h3>
               {orcamento.obra && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Obra:</span>
+                  <span className="text-muted-foreground">Obra:</span>
                   <span>{orcamento.obra.nome}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Data:</span>
-                <span>
-                  {format(new Date(orcamento.data_criacao), "d 'de' MMMM 'de' yyyy", {
-                    locale: pt,
-                  })}
-                </span>
-              </div>
+              {orcamento.obra?.cliente && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Cliente:</span>
+                  <span>{orcamento.obra.cliente}</span>
+                </div>
+              )}
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end items-start">
               <OrcamentoStatus status={orcamento.status} />
             </div>
           </div>
-
-          <Separator />
 
           {/* Chapters and Articles */}
           <div className="space-y-6">
             {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
               orcamento.capitulos.map((capitulo) => (
-                <Card key={capitulo.id} className="border shadow-none">
+                <Card key={capitulo.id} className="border shadow-none print:break-inside-avoid">
                   <CardHeader className="bg-muted/50 py-3">
                     <CardTitle className="text-base font-semibold">
                       {capitulo.numero}. {capitulo.titulo}
@@ -246,26 +305,32 @@ export default function VerOrcamentoPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {capitulo.artigos.map((artigo) => (
-                            <TableRow key={artigo.id}>
-                              <TableCell className="font-mono text-xs">
-                                {artigo.codigo || '-'}
-                              </TableCell>
-                              <TableCell className="text-sm">{artigo.descricao}</TableCell>
-                              <TableCell className="text-center text-sm">
-                                {artigo.unidade}
-                              </TableCell>
-                              <TableCell className="text-right text-sm">
-                                {artigo.quantidade.toFixed(2)}
-                              </TableCell>
-                              <TableCell className="text-right text-sm">
-                                {formatCurrency(artigo.preco_unitario)}
-                              </TableCell>
-                              <TableCell className="text-right font-medium text-sm">
-                                {formatCurrency(artigo.valor_total || artigo.quantidade * artigo.preco_unitario)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {capitulo.artigos.map((artigo) => {
+                            // Apply margin to unit price for display (hidden margin)
+                            const precoComMargem = artigo.preco_unitario * (1 + margemDecimal);
+                            const totalComMargem = artigo.quantidade * precoComMargem;
+                            
+                            return (
+                              <TableRow key={artigo.id}>
+                                <TableCell className="font-mono text-xs">
+                                  {artigo.codigo || '-'}
+                                </TableCell>
+                                <TableCell className="text-sm">{artigo.descricao}</TableCell>
+                                <TableCell className="text-center text-sm">
+                                  {artigo.unidade}
+                                </TableCell>
+                                <TableCell className="text-right text-sm">
+                                  {artigo.quantidade.toFixed(2)}
+                                </TableCell>
+                                <TableCell className="text-right text-sm">
+                                  {formatCurrency(precoComMargem)}
+                                </TableCell>
+                                <TableCell className="text-right font-medium text-sm">
+                                  {formatCurrency(totalComMargem)}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     ) : (
@@ -273,11 +338,13 @@ export default function VerOrcamentoPage() {
                         Sem artigos neste capítulo
                       </p>
                     )}
-                    {/* Chapter Total */}
+                    {/* Chapter Total - with margin applied */}
                     <div className="flex justify-end p-3 bg-muted/30 border-t">
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium">Subtotal Capítulo:</span>
-                        <span className="font-semibold">{formatCurrency(capitulo.valor_total || 0)}</span>
+                        <span className="font-semibold">
+                          {formatCurrency((capitulo.valor_total || 0) * (1 + margemDecimal))}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -294,7 +361,7 @@ export default function VerOrcamentoPage() {
 
           <Separator />
 
-          {/* Summary */}
+          {/* Summary - NO margin or internal costs shown, only final prices */}
           <Card className="border-2 border-primary/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -305,48 +372,15 @@ export default function VerOrcamentoPage() {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal Artigos</span>
-                  <span>{formatCurrency(orcamento.valor_total)}</span>
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>{formatCurrency(valorBase)}</span>
                 </div>
-
-                {custosIndiretosTotal > 0 && (
-                  <>
-                    <Separator className="my-2" />
-                    <div className="text-sm font-medium text-muted-foreground mb-1">
-                      Custos Indiretos
-                    </div>
-                    {orcamento.custos_indiretos?.estaleiro > 0 && (
-                      <div className="flex justify-between text-sm pl-4">
-                        <span className="text-muted-foreground">Estaleiro</span>
-                        <span>{formatCurrency(orcamento.custos_indiretos.estaleiro)}</span>
-                      </div>
-                    )}
-                    {orcamento.custos_indiretos?.seguros > 0 && (
-                      <div className="flex justify-between text-sm pl-4">
-                        <span className="text-muted-foreground">Seguros</span>
-                        <span>{formatCurrency(orcamento.custos_indiretos.seguros)}</span>
-                      </div>
-                    )}
-                    {orcamento.custos_indiretos?.licenciamento > 0 && (
-                      <div className="flex justify-between text-sm pl-4">
-                        <span className="text-muted-foreground">Licenciamento</span>
-                        <span>{formatCurrency(orcamento.custos_indiretos.licenciamento)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-medium pt-1">
-                      <span>Total Custos Indiretos</span>
-                      <span>{formatCurrency(custosIndiretosTotal)}</span>
-                    </div>
-                  </>
-                )}
 
                 <Separator className="my-2" />
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Margem de Lucro ({orcamento.margem_lucro}%)
-                  </span>
-                  <span>{formatCurrency(margemValor)}</span>
+                  <span className="text-muted-foreground">IVA ({(IVA_RATE * 100).toFixed(0)}%)</span>
+                  <span>{formatCurrency(valorIVA)}</span>
                 </div>
 
                 <Separator className="my-2" />
@@ -359,9 +393,21 @@ export default function VerOrcamentoPage() {
             </CardContent>
           </Card>
 
+          {/* Observations */}
+          <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-2">
+            <h4 className="font-semibold">Observações:</h4>
+            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+              <li>Este orçamento é válido por 30 dias a contar da data de emissão.</li>
+              <li>Os preços apresentados incluem todos os materiais e mão de obra necessários.</li>
+              <li>Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.</li>
+              <li>Condições de pagamento a acordar.</li>
+            </ul>
+          </div>
+
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground pt-4 border-t">
             <p>Documento gerado em {format(new Date(), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}</p>
+            {companyName && <p className="mt-1">{companyName} {companyNif && `• NIF: ${companyNif}`}</p>}
           </div>
         </div>
       </div>
