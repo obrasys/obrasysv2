@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -58,63 +59,65 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/orcamentos" element={<OrcamentosPage />} />
-            <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
-            <Route path="/orcamentos/:id" element={<VerOrcamentoPage />} />
-            <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
-            <Route path="/obras" element={<ObrasPage />} />
-            <Route path="/obras/criar" element={<CriarObraPage />} />
-            <Route path="/obras/:id" element={<VerObraPage />} />
-            <Route path="/obras/:id/editar" element={<EditarObraPage />} />
-            <Route path="/obras/:id/financeiro" element={<ObraFinanceiroPage />} />
-            {/* Cadernos de Encargos */}
-            <Route path="/obras/:id/cadernos" element={<CadernosPage />} />
-            <Route path="/obras/:id/cadernos/importar" element={<ImportarCadernoPage />} />
-            <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ImportarCadernoPage />} />
-            <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ValidarCadernoPage />} />
-            <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ResumoCadernoPage />} />
-            <Route path="/clientes" element={<ClientesPage />} />
-            <Route path="/clientes/criar" element={<CriarClientePage />} />
-            <Route path="/clientes/:id" element={<VerClientePage />} />
-            <Route path="/clientes/:id/editar" element={<EditarClientePage />} />
-            <Route path="/rdos" element={<RDOsPage />} />
-            <Route path="/rdos/criar" element={<CriarRDOPage />} />
-            <Route path="/rdos/:id" element={<VerRDOPage />} />
-            <Route path="/rdos/:id/editar" element={<EditarRDOPage />} />
-            <Route path="/tarefas" element={<TarefasPage />} />
-            <Route path="/conformidade" element={<ConformidadePage />} />
-            <Route path="/base-precos" element={<BasePrecosPage />} />
-            <Route path="/base-precos/inserir" element={<BasePrecosInserirPage />} />
-            <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
-            <Route path="/suporte" element={<SuportePage />} />
-            <Route path="/financeiro" element={<FinanceiroPage />} />
-            <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
-            <Route path="/perfil" element={<PerfilPage />} />
-            <Route path="/definicoes" element={<DefinicoesPage />} />
-            <Route path="/planos" element={<PlanosPage />} />
-            <Route path="/subscricao" element={<SubscricaoPage />} />
-            <Route path="/recursos" element={<RecursosPage />} />
-            {/* Admin - Super Admin Only */}
-            <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
-            <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
-            <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
-            <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
-            <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
-            <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <PreferencesProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/orcamentos" element={<OrcamentosPage />} />
+              <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
+              <Route path="/orcamentos/:id" element={<VerOrcamentoPage />} />
+              <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
+              <Route path="/obras" element={<ObrasPage />} />
+              <Route path="/obras/criar" element={<CriarObraPage />} />
+              <Route path="/obras/:id" element={<VerObraPage />} />
+              <Route path="/obras/:id/editar" element={<EditarObraPage />} />
+              <Route path="/obras/:id/financeiro" element={<ObraFinanceiroPage />} />
+              {/* Cadernos de Encargos */}
+              <Route path="/obras/:id/cadernos" element={<CadernosPage />} />
+              <Route path="/obras/:id/cadernos/importar" element={<ImportarCadernoPage />} />
+              <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ImportarCadernoPage />} />
+              <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ValidarCadernoPage />} />
+              <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ResumoCadernoPage />} />
+              <Route path="/clientes" element={<ClientesPage />} />
+              <Route path="/clientes/criar" element={<CriarClientePage />} />
+              <Route path="/clientes/:id" element={<VerClientePage />} />
+              <Route path="/clientes/:id/editar" element={<EditarClientePage />} />
+              <Route path="/rdos" element={<RDOsPage />} />
+              <Route path="/rdos/criar" element={<CriarRDOPage />} />
+              <Route path="/rdos/:id" element={<VerRDOPage />} />
+              <Route path="/rdos/:id/editar" element={<EditarRDOPage />} />
+              <Route path="/tarefas" element={<TarefasPage />} />
+              <Route path="/conformidade" element={<ConformidadePage />} />
+              <Route path="/base-precos" element={<BasePrecosPage />} />
+              <Route path="/base-precos/inserir" element={<BasePrecosInserirPage />} />
+              <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
+              <Route path="/suporte" element={<SuportePage />} />
+              <Route path="/financeiro" element={<FinanceiroPage />} />
+              <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
+              <Route path="/perfil" element={<PerfilPage />} />
+              <Route path="/definicoes" element={<DefinicoesPage />} />
+              <Route path="/planos" element={<PlanosPage />} />
+              <Route path="/subscricao" element={<SubscricaoPage />} />
+              <Route path="/recursos" element={<RecursosPage />} />
+              {/* Admin - Super Admin Only */}
+              <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
+              <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
+              <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
+              <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
+              <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
+              <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </PreferencesProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
