@@ -172,6 +172,436 @@ export type Database = {
         }
         Relationships: []
       }
+      autos_medicao: {
+        Row: {
+          codigo_referencia: string | null
+          condicoes_execucao: string | null
+          contrato_referencia: string | null
+          created_at: string
+          data_emissao: string
+          data_fim: string
+          data_inicio: string
+          estado: string
+          fase_obra: string | null
+          fiscal_entidade: string | null
+          fiscal_obra: string | null
+          id: string
+          idioma: string | null
+          localizacao_obra: string | null
+          nao_conformidades: string | null
+          normas_aplicaveis: string[] | null
+          numero_auto: number
+          obra_id: string
+          observacoes_tecnicas: string | null
+          orcamento_id: string | null
+          percentagem_global: number | null
+          responsavel_cargo: string | null
+          responsavel_medicao: string
+          responsavel_ordem: string | null
+          subempreiteiro_id: string | null
+          taxa_iva: number | null
+          tipo_contrato: string | null
+          updated_at: string
+          user_id: string
+          validado_em: string | null
+          validado_por: string | null
+          valor_anterior_acumulado: number | null
+          valor_iva: number | null
+          valor_medido_acumulado: number | null
+          valor_medido_atual: number | null
+          valor_previsto: number | null
+          valor_total_com_iva: number | null
+          zona_medicao: string | null
+        }
+        Insert: {
+          codigo_referencia?: string | null
+          condicoes_execucao?: string | null
+          contrato_referencia?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_fim: string
+          data_inicio: string
+          estado?: string
+          fase_obra?: string | null
+          fiscal_entidade?: string | null
+          fiscal_obra?: string | null
+          id?: string
+          idioma?: string | null
+          localizacao_obra?: string | null
+          nao_conformidades?: string | null
+          normas_aplicaveis?: string[] | null
+          numero_auto: number
+          obra_id: string
+          observacoes_tecnicas?: string | null
+          orcamento_id?: string | null
+          percentagem_global?: number | null
+          responsavel_cargo?: string | null
+          responsavel_medicao: string
+          responsavel_ordem?: string | null
+          subempreiteiro_id?: string | null
+          taxa_iva?: number | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          user_id: string
+          validado_em?: string | null
+          validado_por?: string | null
+          valor_anterior_acumulado?: number | null
+          valor_iva?: number | null
+          valor_medido_acumulado?: number | null
+          valor_medido_atual?: number | null
+          valor_previsto?: number | null
+          valor_total_com_iva?: number | null
+          zona_medicao?: string | null
+        }
+        Update: {
+          codigo_referencia?: string | null
+          condicoes_execucao?: string | null
+          contrato_referencia?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_fim?: string
+          data_inicio?: string
+          estado?: string
+          fase_obra?: string | null
+          fiscal_entidade?: string | null
+          fiscal_obra?: string | null
+          id?: string
+          idioma?: string | null
+          localizacao_obra?: string | null
+          nao_conformidades?: string | null
+          normas_aplicaveis?: string[] | null
+          numero_auto?: number
+          obra_id?: string
+          observacoes_tecnicas?: string | null
+          orcamento_id?: string | null
+          percentagem_global?: number | null
+          responsavel_cargo?: string | null
+          responsavel_medicao?: string
+          responsavel_ordem?: string | null
+          subempreiteiro_id?: string | null
+          taxa_iva?: number | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          user_id?: string
+          validado_em?: string | null
+          validado_por?: string | null
+          valor_anterior_acumulado?: number | null
+          valor_iva?: number | null
+          valor_medido_acumulado?: number | null
+          valor_medido_atual?: number | null
+          valor_previsto?: number | null
+          valor_total_com_iva?: number | null
+          zona_medicao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autos_medicao_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_subempreiteiro_id_fkey"
+            columns: ["subempreiteiro_id"]
+            isOneToOne: false
+            referencedRelation: "subempreiteiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_validado_por_fkey"
+            columns: ["validado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autos_medicao_anexos: {
+        Row: {
+          auto_id: string
+          created_at: string
+          data_captura: string | null
+          descricao: string | null
+          file_size: number | null
+          geolocalizacao: Json | null
+          id: string
+          item_id: string | null
+          mime_type: string | null
+          nome: string
+          tipo: string
+          url: string
+        }
+        Insert: {
+          auto_id: string
+          created_at?: string
+          data_captura?: string | null
+          descricao?: string | null
+          file_size?: number | null
+          geolocalizacao?: Json | null
+          id?: string
+          item_id?: string | null
+          mime_type?: string | null
+          nome: string
+          tipo: string
+          url: string
+        }
+        Update: {
+          auto_id?: string
+          created_at?: string
+          data_captura?: string | null
+          descricao?: string | null
+          file_size?: number | null
+          geolocalizacao?: Json | null
+          id?: string
+          item_id?: string | null
+          mime_type?: string | null
+          nome?: string
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autos_medicao_anexos_auto_id_fkey"
+            columns: ["auto_id"]
+            isOneToOne: false
+            referencedRelation: "autos_medicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_anexos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "autos_medicao_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autos_medicao_assinaturas: {
+        Row: {
+          assinatura_data: string | null
+          assinatura_url: string | null
+          auto_id: string
+          cargo: string | null
+          codigo_validacao: string | null
+          created_at: string
+          data_assinatura: string | null
+          email: string | null
+          entidade: string | null
+          estado: string | null
+          id: string
+          ip_address: string | null
+          nome: string
+          observacoes: string | null
+          qr_code_url: string | null
+          tipo: string
+        }
+        Insert: {
+          assinatura_data?: string | null
+          assinatura_url?: string | null
+          auto_id: string
+          cargo?: string | null
+          codigo_validacao?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          email?: string | null
+          entidade?: string | null
+          estado?: string | null
+          id?: string
+          ip_address?: string | null
+          nome: string
+          observacoes?: string | null
+          qr_code_url?: string | null
+          tipo: string
+        }
+        Update: {
+          assinatura_data?: string | null
+          assinatura_url?: string | null
+          auto_id?: string
+          cargo?: string | null
+          codigo_validacao?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          email?: string | null
+          entidade?: string | null
+          estado?: string | null
+          id?: string
+          ip_address?: string | null
+          nome?: string
+          observacoes?: string | null
+          qr_code_url?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autos_medicao_assinaturas_auto_id_fkey"
+            columns: ["auto_id"]
+            isOneToOne: false
+            referencedRelation: "autos_medicao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autos_medicao_historico: {
+        Row: {
+          alterado_por: string | null
+          auto_id: string
+          created_at: string
+          dados_snapshot: Json
+          descricao_alteracao: string | null
+          id: string
+          tipo_alteracao: string | null
+          versao: number
+        }
+        Insert: {
+          alterado_por?: string | null
+          auto_id: string
+          created_at?: string
+          dados_snapshot: Json
+          descricao_alteracao?: string | null
+          id?: string
+          tipo_alteracao?: string | null
+          versao: number
+        }
+        Update: {
+          alterado_por?: string | null
+          auto_id?: string
+          created_at?: string
+          dados_snapshot?: Json
+          descricao_alteracao?: string | null
+          id?: string
+          tipo_alteracao?: string | null
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autos_medicao_historico_alterado_por_fkey"
+            columns: ["alterado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_historico_auto_id_fkey"
+            columns: ["auto_id"]
+            isOneToOne: false
+            referencedRelation: "autos_medicao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autos_medicao_itens: {
+        Row: {
+          artigo_orcamento_id: string | null
+          auto_id: string
+          capitulo: string | null
+          codigo: string
+          created_at: string
+          dentro_tolerancia: boolean | null
+          descricao: string
+          desvio_percentual: number | null
+          id: string
+          justificacao_desvio: string | null
+          localizacao: string | null
+          observacoes: string | null
+          ordem: number | null
+          piso: string | null
+          preco_unitario: number | null
+          quantidade_acumulada: number | null
+          quantidade_anterior: number | null
+          quantidade_atual: number | null
+          quantidade_prevista: number | null
+          tolerancia_maxima: number | null
+          unidade: string
+          updated_at: string
+          valor_acumulado: number | null
+          valor_anterior: number | null
+          valor_atual: number | null
+          valor_previsto: number | null
+          zona: string | null
+        }
+        Insert: {
+          artigo_orcamento_id?: string | null
+          auto_id: string
+          capitulo?: string | null
+          codigo: string
+          created_at?: string
+          dentro_tolerancia?: boolean | null
+          descricao: string
+          desvio_percentual?: number | null
+          id?: string
+          justificacao_desvio?: string | null
+          localizacao?: string | null
+          observacoes?: string | null
+          ordem?: number | null
+          piso?: string | null
+          preco_unitario?: number | null
+          quantidade_acumulada?: number | null
+          quantidade_anterior?: number | null
+          quantidade_atual?: number | null
+          quantidade_prevista?: number | null
+          tolerancia_maxima?: number | null
+          unidade: string
+          updated_at?: string
+          valor_acumulado?: number | null
+          valor_anterior?: number | null
+          valor_atual?: number | null
+          valor_previsto?: number | null
+          zona?: string | null
+        }
+        Update: {
+          artigo_orcamento_id?: string | null
+          auto_id?: string
+          capitulo?: string | null
+          codigo?: string
+          created_at?: string
+          dentro_tolerancia?: boolean | null
+          descricao?: string
+          desvio_percentual?: number | null
+          id?: string
+          justificacao_desvio?: string | null
+          localizacao?: string | null
+          observacoes?: string | null
+          ordem?: number | null
+          piso?: string | null
+          preco_unitario?: number | null
+          quantidade_acumulada?: number | null
+          quantidade_anterior?: number | null
+          quantidade_atual?: number | null
+          quantidade_prevista?: number | null
+          tolerancia_maxima?: number | null
+          unidade?: string
+          updated_at?: string
+          valor_acumulado?: number | null
+          valor_anterior?: number | null
+          valor_atual?: number | null
+          valor_previsto?: number | null
+          zona?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autos_medicao_itens_artigo_orcamento_id_fkey"
+            columns: ["artigo_orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "artigos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_itens_auto_id_fkey"
+            columns: ["auto_id"]
+            isOneToOne: false
+            referencedRelation: "autos_medicao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       base_precos_personalizada: {
         Row: {
           categoria: string
@@ -2697,6 +3127,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
