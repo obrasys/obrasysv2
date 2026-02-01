@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle,
+  Clock,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -41,6 +42,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { usePreferences } from '@/contexts/PreferencesContext';
+import { useFormatting } from '@/hooks/useFormatting';
 
 interface NotificationSettings {
   emailRDOs: boolean;
@@ -52,16 +55,11 @@ interface NotificationSettings {
   pushTarefas: boolean;
 }
 
-interface PreferencesSettings {
-  language: string;
-  dateFormat: string;
-  currency: string;
-  timezone: string;
-}
-
 export default function DefinicoesPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { preferences, updatePreferences } = usePreferences();
+  const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay } = useFormatting();
   
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailRDOs: true,
@@ -73,19 +71,18 @@ export default function DefinicoesPage() {
     pushTarefas: true,
   });
 
-  const [preferences, setPreferences] = useState<PreferencesSettings>({
-    language: 'pt-PT',
-    dateFormat: 'dd/MM/yyyy',
-    currency: 'EUR',
-    timezone: 'Europe/Lisbon',
-  });
+  // Live clock for timezone preview
+  const [currentTime, setCurrentTime] = useState(getCurrentTimeFormatted(true));
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(getCurrentTimeFormatted(true));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [getCurrentTimeFormatted]);
 
   const handleNotificationChange = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handlePreferenceChange = (key: keyof PreferencesSettings, value: string) => {
-    setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -98,12 +95,15 @@ export default function DefinicoesPage() {
 
   const handleExportData = () => {
     toast.info('A exportação de dados será iniciada em breve...');
-    // In a real app, this would trigger a data export
   };
 
   const handleDeleteAccount = () => {
     toast.error('Esta funcionalidade requer confirmação adicional via email.');
   };
+
+  // Example values for preview
+  const exampleAmount = 12500.75;
+  const exampleDate = new Date();
 
   return (
     <AppLayout 
@@ -272,7 +272,7 @@ export default function DefinicoesPage() {
                 <Label>Idioma</Label>
                 <Select 
                   value={preferences.language} 
-                  onValueChange={(v) => handlePreferenceChange('language', v)}
+                  onValueChange={(v) => updatePreferences({ language: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -290,7 +290,7 @@ export default function DefinicoesPage() {
                 <Label>Formato de Data</Label>
                 <Select 
                   value={preferences.dateFormat} 
-                  onValueChange={(v) => handlePreferenceChange('dateFormat', v)}
+                  onValueChange={(v) => updatePreferences({ dateFormat: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -301,13 +301,16 @@ export default function DefinicoesPage() {
                     <SelectItem value="yyyy-MM-dd">AAAA-MM-DD (2026-01-18)</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Exemplo: {formatDate(exampleDate)}
+                </p>
               </div>
               
               <div className="space-y-2">
                 <Label>Moeda</Label>
                 <Select 
                   value={preferences.currency} 
-                  onValueChange={(v) => handlePreferenceChange('currency', v)}
+                  onValueChange={(v) => updatePreferences({ currency: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -319,13 +322,16 @@ export default function DefinicoesPage() {
                     <SelectItem value="BRL">Real Brasileiro (R$)</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Exemplo: {formatCurrency(exampleAmount)}
+                </p>
               </div>
               
               <div className="space-y-2">
                 <Label>Fuso Horário</Label>
                 <Select 
                   value={preferences.timezone} 
-                  onValueChange={(v) => handlePreferenceChange('timezone', v)}
+                  onValueChange={(v) => updatePreferences({ timezone: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -337,6 +343,15 @@ export default function DefinicoesPage() {
                     <SelectItem value="America/Sao_Paulo">São Paulo (BRT)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Live clock preview */}
+              <div className="pt-2">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Hora atual em {timezoneDisplay}:</span>
+                  <span className="font-mono font-medium text-primary">{currentTime}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
