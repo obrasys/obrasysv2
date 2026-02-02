@@ -52,6 +52,11 @@ import AdminTemplates from "./pages/admin/Templates";
 import PlanosPage from "./pages/Planos";
 import SubscricaoPage from "./pages/Subscricao";
 import RecursosPage from "./pages/recursos/Index";
+// Autos de Medição
+import AutosMedicaoPage from "./pages/autos-medicao/Index";
+import CriarAutoMedicaoPage from "./pages/autos-medicao/Criar";
+import EditarAutoMedicaoPage from "./pages/autos-medicao/Editar";
+import VerAutoMedicaoPage from "./pages/autos-medicao/Ver";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 
 const queryClient = new QueryClient();
@@ -105,6 +110,11 @@ const App = () => (
               <Route path="/planos" element={<PlanosPage />} />
               <Route path="/subscricao" element={<SubscricaoPage />} />
               <Route path="/recursos" element={<RecursosPage />} />
+              {/* Autos de Medição */}
+              <Route path="/autos-medicao" element={<AutosMedicaoPage />} />
+              <Route path="/autos-medicao/criar" element={<CriarAutoMedicaoPage />} />
+              <Route path="/autos-medicao/:id" element={<VerAutoMedicaoPage />} />
+              <Route path="/autos-medicao/:id/editar" element={<EditarAutoMedicaoPage />} />
               {/* Admin - Super Admin Only */}
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
