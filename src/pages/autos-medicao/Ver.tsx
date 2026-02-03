@@ -37,7 +37,7 @@ export default function VerAutoMedicaoPage() {
   if (isLoading) {
     return (
       <AppLayout title="A carregar..." subtitle="">
-        <div className="flex items-center justify-center py-12">
+        <div className="p-4 md:p-6 flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
@@ -47,7 +47,7 @@ export default function VerAutoMedicaoPage() {
   if (!auto) {
     return (
       <AppLayout title="Não encontrado" subtitle="">
-        <div className="text-center py-12">
+        <div className="p-4 md:p-6 text-center py-12">
           <p className="text-muted-foreground">Auto de medição não encontrado</p>
           <Button className="mt-4" onClick={() => navigate('/autos-medicao')}>
             Voltar à lista
@@ -80,7 +80,7 @@ export default function VerAutoMedicaoPage() {
 
   return (
     <AppLayout title={`Auto de Medição nº ${auto.numero_auto}`} subtitle={auto.obra?.nome || ''}>
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-4">
