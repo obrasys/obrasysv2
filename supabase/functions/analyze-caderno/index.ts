@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface SecaoAnalise {
@@ -41,8 +41,9 @@ serve(async (req) => {
       );
     }
 
+    // Validate authorization header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Não autorizado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -50,8 +51,42 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Create Supabase client with user's auth token to respect RLS
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate JWT token using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Token validation error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
+
+    // Verify user owns the caderno (RLS will enforce this)
+    const { data: cadernoCheck, error: cadernoCheckError } = await supabaseClient
+      .from("cadernos_encargos")
+      .select("id, user_id")
+      .eq("id", caderno_id)
+      .single();
+
+    if (cadernoCheckError || !cadernoCheck) {
+      console.error("Caderno not found or access denied:", cadernoCheckError);
+      return new Response(
+        JSON.stringify({ error: "Caderno não encontrado ou acesso negado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -62,7 +97,7 @@ serve(async (req) => {
     }
 
     // Atualizar status para "a_analisar"
-    await supabase
+    await supabaseClient
       .from("cadernos_encargos")
       .update({ status: "a_analisar" })
       .eq("id", caderno_id);
@@ -75,7 +110,7 @@ serve(async (req) => {
       // BC3 é estruturado - podemos fazer parsing direto
       const resultadoBC3 = await parseBC3(textoParaAnalise);
       if (resultadoBC3) {
-        await salvarResultado(supabase, caderno_id, resultadoBC3);
+        await salvarResultado(supabaseClient, caderno_id, resultadoBC3);
         return new Response(
           JSON.stringify({ success: true, resultado: resultadoBC3 }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -215,8 +250,8 @@ ${textoParaAnalise?.substring(0, 50000) || "Texto não disponível"}`;
       }
     }
 
-    // Salvar resultado na base de dados
-    await salvarResultado(supabase, caderno_id, resultado);
+    // Salvar resultado na base de dados (using authenticated client)
+    await salvarResultado(supabaseClient, caderno_id, resultado);
 
     return new Response(
       JSON.stringify({ success: true, resultado }),

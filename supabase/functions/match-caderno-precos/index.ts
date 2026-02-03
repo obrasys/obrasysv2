@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -21,8 +21,9 @@ serve(async (req) => {
       );
     }
 
+    // Validate authorization header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Não autorizado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -30,20 +31,45 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Buscar user_id do caderno para usar histórico de validações
-    const { data: cadernoData } = await supabase
+    // Create Supabase client with user's auth token to respect RLS
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate JWT token using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Token validation error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+    console.log("Authenticated user:", userId);
+
+    // Verify user owns the caderno (RLS will enforce this)
+    const { data: cadernoData, error: cadernoError } = await supabaseClient
       .from("cadernos_encargos")
-      .select("user_id")
+      .select("id, user_id")
       .eq("id", caderno_id)
       .single();
 
-    const userId = cadernoData?.user_id;
+    if (cadernoError || !cadernoData) {
+      console.error("Caderno not found or access denied:", cadernoError);
+      return new Response(
+        JSON.stringify({ error: "Caderno não encontrado ou acesso negado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Buscar todos os itens do caderno
-    const { data: itens, error: itensError } = await supabase
+    // Buscar todos os itens do caderno (RLS applies through caderno ownership)
+    const { data: itens, error: itensError } = await supabaseClient
       .from("caderno_itens")
       .select(`
         id,
@@ -68,19 +94,20 @@ serve(async (req) => {
       );
     }
 
-    // Buscar artigos default e materiais para matching
-    const { data: artigos } = await supabase
+    // Buscar artigos default (public data - no RLS needed)
+    const { data: artigos } = await supabaseClient
       .from("default_articles")
       .select("id, codigo, descricao, unidade, preco_unitario, categoria");
 
-    const { data: materialsData } = await supabase
+    // Buscar materiais (requires auth)
+    const { data: materialsData } = await supabaseClient
       .from("materials")
       .select("id, codigo, nome, unidade_base, category:material_categories(nome)");
 
     // Buscar preços de referência se region_id fornecido
     let priceRefs: Record<string, { preco_p10: number; preco_p50: number; preco_p90: number }> = {};
     if (region_id) {
-      const { data: prices } = await supabase
+      const { data: prices } = await supabaseClient
         .from("material_price_reference")
         .select("material_id, preco_p10, preco_p50, preco_p90")
         .eq("region_id", region_id);
@@ -95,7 +122,7 @@ serve(async (req) => {
 
     let matchedCount = 0;
     let valorEstimado = 0;
-    let historicoMatches = 0;
+    let historicoMatchesCount = 0;
 
     // Processar cada item
     for (const item of itens) {
@@ -115,48 +142,46 @@ serve(async (req) => {
       } | null = null;
 
       // PRIMEIRO: Tentar match pelo histórico de validações do utilizador (aprendizagem)
-      if (userId) {
-        const { data: historicoMatches } = await supabase.rpc("buscar_historico_match", {
-          p_user_id: userId,
-          p_descricao: item.descricao_original,
-          p_limite: 1,
-        });
+      const { data: historicoMatches } = await supabaseClient.rpc("buscar_historico_match", {
+        p_user_id: userId,
+        p_descricao: item.descricao_original,
+        p_limite: 1,
+      });
 
-        if (historicoMatches && historicoMatches.length > 0) {
-          const hist = historicoMatches[0];
-          // Boost de confiança baseado em similaridade e vezes usado
-          const confiancaHistorico = Math.min(100, Math.round(hist.similaridade * 100) + Math.min(20, hist.vezes_usado * 5));
-          
-          if (confiancaHistorico > 60) {
-            if (hist.artigo_id && artigos) {
-              const artigo = artigos.find(a => a.id === hist.artigo_id);
-              if (artigo) {
-                melhorMatch = {
-                  tipo: "historico",
-                  id: artigo.id,
-                  codigo: artigo.codigo,
-                  descricao: artigo.descricao,
-                  unidade: hist.unidade_correta || artigo.unidade,
-                  preco: artigo.preco_unitario,
-                  confianca: confiancaHistorico,
-                  metodoConstrutivo: hist.metodo_construtivo,
-                };
-              }
-            } else if (hist.material_id && materialsData) {
-              const material = materialsData.find(m => m.id === hist.material_id);
-              if (material) {
-                const preco = priceRefs[material.id]?.preco_p50 || 0;
-                melhorMatch = {
-                  tipo: "historico",
-                  id: material.id,
-                  codigo: material.codigo,
-                  descricao: material.nome,
-                  unidade: hist.unidade_correta || material.unidade_base,
-                  preco,
-                  confianca: confiancaHistorico,
-                  metodoConstrutivo: hist.metodo_construtivo,
-                };
-              }
+      if (historicoMatches && historicoMatches.length > 0) {
+        const hist = historicoMatches[0];
+        // Boost de confiança baseado em similaridade e vezes usado
+        const confiancaHistorico = Math.min(100, Math.round(hist.similaridade * 100) + Math.min(20, hist.vezes_usado * 5));
+        
+        if (confiancaHistorico > 60) {
+          if (hist.artigo_id && artigos) {
+            const artigo = artigos.find(a => a.id === hist.artigo_id);
+            if (artigo) {
+              melhorMatch = {
+                tipo: "historico",
+                id: artigo.id,
+                codigo: artigo.codigo,
+                descricao: artigo.descricao,
+                unidade: hist.unidade_correta || artigo.unidade,
+                preco: artigo.preco_unitario,
+                confianca: confiancaHistorico,
+                metodoConstrutivo: hist.metodo_construtivo,
+              };
+            }
+          } else if (hist.material_id && materialsData) {
+            const material = materialsData.find(m => m.id === hist.material_id);
+            if (material) {
+              const preco = priceRefs[material.id]?.preco_p50 || 0;
+              melhorMatch = {
+                tipo: "historico",
+                id: material.id,
+                codigo: material.codigo,
+                descricao: material.nome,
+                unidade: hist.unidade_correta || material.unidade_base,
+                preco,
+                confianca: confiancaHistorico,
+                metodoConstrutivo: hist.metodo_construtivo,
+              };
             }
           }
         }
@@ -221,12 +246,12 @@ serve(async (req) => {
 
       // Contar matches do histórico
       if (melhorMatch?.tipo === "historico") {
-        historicoMatches++;
+        historicoMatchesCount++;
       }
 
-      // Se encontrou match, criar entrada
+      // Se encontrou match, criar entrada (RLS applies)
       if (melhorMatch) {
-        const { error: matchError } = await supabase
+        const { error: matchError } = await supabaseClient
           .from("caderno_item_match")
           .insert({
             caderno_item_id: item.id,
@@ -247,7 +272,7 @@ serve(async (req) => {
         }
       } else {
         // Criar match vazio para itens sem correspondência
-        await supabase
+        await supabaseClient
           .from("caderno_item_match")
           .insert({
             caderno_item_id: item.id,
@@ -257,8 +282,8 @@ serve(async (req) => {
       }
     }
 
-    // Atualizar valor estimado do caderno
-    await supabase
+    // Atualizar valor estimado do caderno (RLS applies)
+    await supabaseClient
       .from("cadernos_encargos")
       .update({ valor_estimado: valorEstimado })
       .eq("id", caderno_id);
@@ -268,7 +293,7 @@ serve(async (req) => {
         success: true, 
         matched: matchedCount, 
         valor_estimado: valorEstimado,
-        matches_historico: historicoMatches,
+        matches_historico: historicoMatchesCount,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface TrabalhoQuantificado {
@@ -47,9 +47,10 @@ serve(async (req) => {
       );
     }
 
+    // Validate authorization header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("Missing authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("Missing or invalid authorization header");
       return new Response(
         JSON.stringify({ error: "Autorização necessária" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -65,13 +66,31 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Fetch obra details
-    const { data: obra, error: obraError } = await supabase
+    // Create Supabase client with user's auth token to respect RLS
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate JWT token using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Token validation error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
+
+    // Fetch obra details (RLS will enforce ownership)
+    const { data: obra, error: obraError } = await supabaseClient
       .from("obras")
       .select("id, nome, status, progresso, valor_previsto")
       .eq("id", obra_id)
@@ -80,15 +99,15 @@ serve(async (req) => {
     if (obraError || !obra) {
       console.error("Error fetching obra:", obraError);
       return new Response(
-        JSON.stringify({ error: "Obra não encontrada" }),
+        JSON.stringify({ error: "Obra não encontrada ou acesso negado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log("Obra found:", obra.nome);
 
-    // Fetch all RDOs for this obra
-    const { data: rdos, error: rdosError } = await supabase
+    // Fetch all RDOs for this obra (RLS applies)
+    const { data: rdos, error: rdosError } = await supabaseClient
       .from("relatorios_diarios")
       .select("id, data, trabalhos_executados, trabalhos_quantificados, ocorrencias, status")
       .eq("obra_id", obra_id)
@@ -105,8 +124,8 @@ serve(async (req) => {
 
     console.log(`Found ${rdos?.length || 0} approved RDOs`);
 
-    // Fetch progress tracking items
-    const { data: progressItems, error: progressError } = await supabase
+    // Fetch progress tracking items (RLS applies)
+    const { data: progressItems, error: progressError } = await supabaseClient
       .from("obra_progress_tracking")
       .select("id, descricao, quantidade_prevista, quantidade_executada, unidade")
       .eq("obra_id", obra_id);
@@ -277,8 +296,8 @@ Calcule o progresso geral da obra considerando:
 
     console.log("Calculated progress:", result.progresso);
 
-    // Update obra progress in database
-    const { error: updateError } = await supabase
+    // Update obra progress in database (RLS applies)
+    const { error: updateError } = await supabaseClient
       .from("obras")
       .update({ 
         progresso: Math.min(100, Math.max(0, result.progresso)),
