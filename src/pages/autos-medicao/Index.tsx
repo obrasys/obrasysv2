@@ -51,23 +51,19 @@ export default function AutosMedicaoPage() {
   };
 
   return (
-    <AppLayout title="Autos de Medição" subtitle="Gestão de certificados de medição">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Autos de Medição</h1>
-            <p className="text-muted-foreground">
-              Gestão de certificados de medição de obra
-            </p>
-          </div>
-          <Button asChild>
-            <Link to="/autos-medicao/criar">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Auto
-            </Link>
-          </Button>
-        </div>
+    <AppLayout 
+      title="Autos de Medição" 
+      subtitle="Gestão de certificados de medição"
+      actions={
+        <Button asChild>
+          <Link to="/autos-medicao/criar">
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Auto
+          </Link>
+        </Button>
+      }
+    >
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
         {/* Dashboard */}
         {autos && autos.length > 0 && (
