@@ -25,7 +25,7 @@ export default function EditarAutoMedicaoPage() {
   if (isLoading) {
     return (
       <AppLayout title="A carregar..." subtitle="">
-        <div className="flex items-center justify-center py-12">
+        <div className="p-4 md:p-6 flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
@@ -35,7 +35,7 @@ export default function EditarAutoMedicaoPage() {
   if (!auto) {
     return (
       <AppLayout title="Não encontrado" subtitle="">
-        <div className="text-center py-12">
+        <div className="p-4 md:p-6 text-center py-12">
           <p className="text-muted-foreground">Auto de medição não encontrado</p>
           <Button className="mt-4" onClick={() => navigate('/autos-medicao')}>
             Voltar à lista
@@ -47,14 +47,14 @@ export default function EditarAutoMedicaoPage() {
 
   return (
     <AppLayout title={`Editar Auto nº ${auto.numero_auto}`} subtitle={auto.obra?.nome || ''}>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex items-center gap-3 md:gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Editar Auto nº {auto.numero_auto}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Editar Auto nº {auto.numero_auto}</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               {auto.obra?.nome}
             </p>
           </div>
