@@ -45,6 +45,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
         {/* Top bar */}
         <TopBar title={title} subtitle={subtitle} actions={actions} />
 
+        {/* Mobile actions bar - visible only on mobile */}
+        {actions && (
+          <div className="md:hidden px-4 py-3 border-b border-border bg-card">
+            <div className="flex gap-2">{actions}</div>
+          </div>
+        )}
+
         {/* Trial warning banner */}
         <TrialBanner />
 
