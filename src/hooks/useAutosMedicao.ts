@@ -101,10 +101,20 @@ export function useAutosMedicao(obraId?: string) {
 
       const numeroAuto = await getNextAutoNumber(formData.obra_id);
 
+      // Convert empty strings to null for optional UUID fields
+      const sanitizedData = {
+        ...formData,
+        orcamento_id: formData.orcamento_id || null,
+        subempreiteiro_id: formData.subempreiteiro_id || null,
+        tipo_contrato: formData.tipo_contrato || null,
+        fase_obra: formData.fase_obra || null,
+        idioma: formData.idioma || 'pt',
+      };
+
       const { data, error } = await supabase
         .from('autos_medicao')
         .insert({
-          ...formData,
+          ...sanitizedData,
           user_id: user.id,
           numero_auto: numeroAuto,
           estado: 'rascunho',
@@ -135,9 +145,18 @@ export function useAutosMedicao(obraId?: string) {
   // Update auto de medição
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AutoMedicaoFormData> }) => {
+      // Convert empty strings to null for optional UUID fields
+      const sanitizedData = {
+        ...data,
+        orcamento_id: data.orcamento_id || null,
+        subempreiteiro_id: data.subempreiteiro_id || null,
+        tipo_contrato: data.tipo_contrato || null,
+        fase_obra: data.fase_obra || null,
+      };
+
       const { error } = await supabase
         .from('autos_medicao')
-        .update(data)
+        .update(sanitizedData)
         .eq('id', id);
 
       if (error) throw error;
