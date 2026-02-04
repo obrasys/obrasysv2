@@ -104,8 +104,8 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
-        {/* Actions - visible on all screen sizes */}
-        {actions && <div className="flex items-center gap-1 md:gap-2">{actions}</div>}
+        {/* Actions - hidden on mobile, shown in topbar on desktop */}
+        {actions && <div className="hidden md:flex items-center gap-2">{actions}</div>}
 
         {/* Trial badge - hidden on mobile */}
         {trialDaysRemaining > 0 && trialDaysRemaining <= 7 && (
