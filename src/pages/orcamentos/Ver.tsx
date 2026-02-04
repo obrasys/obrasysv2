@@ -66,12 +66,21 @@ export default function VerOrcamentoPage() {
 
     try {
       const element = printRef.current;
+      
+      // Add temporary CSS class for PDF generation to handle page breaks
+      element.classList.add('generating-pdf');
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
+      
+      // Remove temporary class
+      element.classList.remove('generating-pdf');
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -82,26 +91,48 @@ export default function VerOrcamentoPage() {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      // Handle multi-page if content is too long
-      const pageHeight = pdfHeight;
-      const scaledHeight = (imgHeight * pdfWidth) / imgWidth;
-      let heightLeft = scaledHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - scaledHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight);
-        heightLeft -= pageHeight;
+      
+      // Calculate scaled dimensions
+      const scaledWidth = pdfWidth;
+      const scaledHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Margins for better appearance
+      const marginX = 0;
+      const marginY = 0;
+      const usableHeight = pdfHeight - (marginY * 2);
+      
+      // Calculate how many pages we need
+      const totalPages = Math.ceil(scaledHeight / usableHeight);
+      
+      // Use a slice-based approach to avoid content cutting
+      const sliceHeight = (canvas.height / scaledHeight) * usableHeight;
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Create a temporary canvas for each page slice
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = Math.min(sliceHeight, canvas.height - (page * sliceHeight));
+        
+        const ctx = pageCanvas.getContext('2d');
+        if (ctx) {
+          // Draw the slice from the main canvas
+          ctx.drawImage(
+            canvas,
+            0, page * sliceHeight, // Source x, y
+            canvas.width, pageCanvas.height, // Source width, height
+            0, 0, // Destination x, y
+            canvas.width, pageCanvas.height // Destination width, height
+          );
+          
+          const pageImgData = pageCanvas.toDataURL('image/png');
+          const pageScaledHeight = (pageCanvas.height * scaledWidth) / canvas.width;
+          
+          pdf.addImage(pageImgData, 'PNG', marginX, marginY, scaledWidth, pageScaledHeight);
+        }
       }
 
       pdf.save(`orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`);
@@ -111,6 +142,7 @@ export default function VerOrcamentoPage() {
         description: 'O ficheiro foi descarregado',
       });
     } catch (error) {
+      console.error('Error generating PDF:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível gerar o PDF',
@@ -196,6 +228,17 @@ export default function VerOrcamentoPage() {
           .no-print {
             display: none !important;
           }
+          /* Prevent page breaks inside important elements */
+          .print\\:break-inside-avoid {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+        }
+        
+        /* PDF generation styles - keep elements together */
+        .generating-pdf .pdf-keep-together {
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
       `}</style>
 
@@ -362,7 +405,7 @@ export default function VerOrcamentoPage() {
           <Separator />
 
           {/* Summary - Shows all costs breakdown except internal margin */}
-          <Card className="border-2 border-primary/20">
+          <Card className="border-2 border-primary/20 pdf-keep-together print:break-inside-avoid">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Euro className="h-5 w-5" />
@@ -425,7 +468,7 @@ export default function VerOrcamentoPage() {
           </Card>
 
           {/* Observations */}
-          <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-2">
+          <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-2 pdf-keep-together print:break-inside-avoid">
             <h4 className="font-semibold">Observações:</h4>
             <ul className="list-disc list-inside text-muted-foreground space-y-1">
               <li>Este orçamento é válido por 30 dias a contar da data de emissão.</li>
@@ -436,7 +479,7 @@ export default function VerOrcamentoPage() {
           </div>
 
           {/* Footer */}
-          <div className="text-center text-xs text-muted-foreground pt-4 border-t">
+          <div className="text-center text-xs text-muted-foreground pt-4 border-t pdf-keep-together print:break-inside-avoid">
             <p>Documento gerado em {format(new Date(), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}</p>
             {companyName && <p className="mt-1">{companyName} {companyNif && `• NIF: ${companyNif}`}</p>}
           </div>
