@@ -1,12 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Orcamento } from '@/types/orcamentos';
 import { Euro, TrendingUp, Package, Calculator } from 'lucide-react';
+ import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
 interface ResumoTotalProps {
   orcamento: Orcamento;
 }
 
 export function ResumoTotal({ orcamento }: ResumoTotalProps) {
+   const { useOrcamentoContextoFiscal } = useFiscalEngine();
+   const { data: contextoFiscal } = useOrcamentoContextoFiscal(orcamento.id);
+ 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
       style: 'currency',
@@ -22,6 +26,11 @@ export function ResumoTotal({ orcamento }: ResumoTotalProps) {
   const subtotal = orcamento.valor_total + custosIndiretosTotal;
   const margemValor = subtotal * (orcamento.margem_lucro / 100);
   const valorFinal = subtotal + margemValor;
+ 
+   // Calculate IVA using fiscal engine
+   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
+   const valorIVA = valorFinal * (taxaIVA / 100);
+   const valorComIVA = valorFinal + valorIVA;
 
   // Contar artigos
   const totalArtigos = (orcamento.capitulos || []).reduce(
@@ -95,6 +104,17 @@ export function ResumoTotal({ orcamento }: ResumoTotalProps) {
           <span className="font-semibold text-lg">Total Final</span>
           <span className="font-bold text-xl text-primary">{formatCurrency(valorFinal)}</span>
         </div>
+         
+         {/* IVA Information */}
+         <div className="flex items-center justify-between text-sm pt-2">
+           <span className="text-muted-foreground">IVA ({taxaIVA}%)</span>
+           <span className="font-medium">{formatCurrency(valorIVA)}</span>
+         </div>
+         
+         <div className="flex items-center justify-between pt-2 border-t">
+           <span className="font-semibold">Total c/ IVA</span>
+           <span className="font-bold text-primary">{formatCurrency(valorComIVA)}</span>
+         </div>
       </CardContent>
     </Card>
   );

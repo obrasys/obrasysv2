@@ -172,6 +172,72 @@ export type Database = {
         }
         Relationships: []
       }
+      auditoria_fiscal: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          entidade_id: string
+          entidade_tipo: string
+          id: string
+          ip_address: unknown
+          justificacao: string | null
+          regime_anterior_id: string | null
+          regime_novo_id: string | null
+          taxa_anterior: number | null
+          taxa_nova: number | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          entidade_id: string
+          entidade_tipo: string
+          id?: string
+          ip_address?: unknown
+          justificacao?: string | null
+          regime_anterior_id?: string | null
+          regime_novo_id?: string | null
+          taxa_anterior?: number | null
+          taxa_nova?: number | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          entidade_id?: string
+          entidade_tipo?: string
+          id?: string
+          ip_address?: unknown
+          justificacao?: string | null
+          regime_anterior_id?: string | null
+          regime_novo_id?: string | null
+          taxa_anterior?: number | null
+          taxa_nova?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_fiscal_regime_anterior_id_fkey"
+            columns: ["regime_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditoria_fiscal_regime_novo_id_fkey"
+            columns: ["regime_novo_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autos_medicao: {
         Row: {
           codigo_referencia: string | null
@@ -2222,6 +2288,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notas_legais_fiscais: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          obrigatoria: boolean
+          ordem: number
+          referencia_legal: string | null
+          regime_id: string
+          texto: string
+          texto_curto: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          obrigatoria?: boolean
+          ordem?: number
+          referencia_legal?: string | null
+          regime_id: string
+          texto: string
+          texto_curto?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          obrigatoria?: boolean
+          ordem?: number
+          referencia_legal?: string | null
+          regime_id?: string
+          texto?: string
+          texto_curto?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_legais_fiscais_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_progress_tracking: {
         Row: {
           capitulo_id: string | null
@@ -2341,6 +2457,94 @@ export type Database = {
             columns: ["gestor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamento_contexto_fiscal: {
+        Row: {
+          created_at: string
+          id: string
+          orcamento_id: string
+          override_em: string | null
+          override_justificacao: string | null
+          override_manual: boolean
+          override_por: string | null
+          regime_id: string | null
+          regra_aplicada_id: string | null
+          taxa_iva: number
+          tipo_cliente:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orcamento_id: string
+          override_em?: string | null
+          override_justificacao?: string | null
+          override_manual?: boolean
+          override_por?: string | null
+          regime_id?: string | null
+          regra_aplicada_id?: string | null
+          taxa_iva?: number
+          tipo_cliente?:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra?: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao?:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orcamento_id?: string
+          override_em?: string | null
+          override_justificacao?: string | null
+          override_manual?: boolean
+          override_por?: string | null
+          regime_id?: string | null
+          regra_aplicada_id?: string | null
+          taxa_iva?: number
+          tipo_cliente?:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra?: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao?:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_contexto_fiscal_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: true
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_contexto_fiscal_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_contexto_fiscal_regra_aplicada_id_fkey"
+            columns: ["regra_aplicada_id"]
+            isOneToOne: false
+            referencedRelation: "regras_fiscais"
             referencedColumns: ["id"]
           },
         ]
@@ -2669,6 +2873,39 @@ export type Database = {
         }
         Relationships: []
       }
+      regimes_fiscais: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: Database["public"]["Enums"]["regime_fiscal_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo: Database["public"]["Enums"]["regime_fiscal_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: Database["public"]["Enums"]["regime_fiscal_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       regions: {
         Row: {
           ativa: boolean
@@ -2695,6 +2932,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      regras_fiscais: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          descricao: string | null
+          id: string
+          nome: string
+          prioridade: number
+          referencia_legal: string | null
+          regime_id: string
+          tipo_cliente:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          prioridade?: number
+          referencia_legal?: string | null
+          regime_id: string
+          tipo_cliente?:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra?: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao?:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          prioridade?: number
+          referencia_legal?: string | null
+          regime_id?: string
+          tipo_cliente?:
+            | Database["public"]["Enums"]["tipo_cliente_fiscal"]
+            | null
+          tipo_obra?: Database["public"]["Enums"]["tipo_obra_fiscal"] | null
+          tipo_operacao?:
+            | Database["public"]["Enums"]["tipo_operacao_fiscal"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regras_fiscais_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       relatorios_diarios: {
         Row: {
@@ -3027,6 +3338,47 @@ export type Database = {
           },
         ]
       }
+      taxas_iva: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          percentagem: number
+          regime_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio: string
+          id?: string
+          percentagem: number
+          regime_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          percentagem?: number
+          regime_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxas_iva_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates_capitulos: {
         Row: {
           artigos: Json | null
@@ -3115,6 +3467,23 @@ export type Database = {
         Args: { p_element_id: string }
         Returns: undefined
       }
+      determinar_regime_fiscal: {
+        Args: {
+          p_data_referencia?: string
+          p_tipo_cliente?: Database["public"]["Enums"]["tipo_cliente_fiscal"]
+          p_tipo_obra?: Database["public"]["Enums"]["tipo_obra_fiscal"]
+          p_tipo_operacao?: Database["public"]["Enums"]["tipo_operacao_fiscal"]
+        }
+        Returns: {
+          nota_legal: string
+          regime_codigo: string
+          regime_id: string
+          regime_nome: string
+          regra_codigo: string
+          regra_id: string
+          taxa_iva: number
+        }[]
+      }
       execute_parametric_rule: {
         Args: { p_element_id: string; p_rule_id: string }
         Returns: number
@@ -3146,7 +3515,24 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      regime_fiscal_tipo: "normal" | "reduzido" | "autoliquidacao" | "isento"
+      tipo_cliente_fiscal:
+        | "particular"
+        | "empresa"
+        | "construtor"
+        | "entidade_publica"
+      tipo_obra_fiscal:
+        | "construcao_nova"
+        | "reabilitacao_urbana"
+        | "renovacao_habitacao"
+        | "manutencao"
+        | "obra_publica"
+      tipo_operacao_fiscal:
+        | "empreitada"
+        | "subempreitada"
+        | "servicos"
+        | "materiais"
+        | "mao_obra"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3273,6 +3659,28 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      regime_fiscal_tipo: ["normal", "reduzido", "autoliquidacao", "isento"],
+      tipo_cliente_fiscal: [
+        "particular",
+        "empresa",
+        "construtor",
+        "entidade_publica",
+      ],
+      tipo_obra_fiscal: [
+        "construcao_nova",
+        "reabilitacao_urbana",
+        "renovacao_habitacao",
+        "manutencao",
+        "obra_publica",
+      ],
+      tipo_operacao_fiscal: [
+        "empreitada",
+        "subempreitada",
+        "servicos",
+        "materiais",
+        "mao_obra",
+      ],
+    },
   },
 } as const

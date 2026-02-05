@@ -33,9 +33,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-
-// IVA rate (can be configured)
-const IVA_RATE = 0.23; // 23%
+ import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +42,8 @@ export default function VerOrcamentoPage() {
   const { orcamento, isLoading } = useOrcamento(id);
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
+   const { useOrcamentoContextoFiscal, calcularIVA, getNotaLegalPorRegime, regimes } = useFiscalEngine();
+   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -175,9 +175,18 @@ export default function VerOrcamentoPage() {
   const margemDecimal = orcamento.margem_lucro / 100;
   const valorBase = subtotalComIndiretos * (1 + margemDecimal);
   
-  // Calculate IVA
-  const valorIVA = valorBase * IVA_RATE;
-  const valorFinal = valorBase + valorIVA;
+   // Calculate IVA using fiscal engine
+   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
+   const valorIVA = valorBase * (taxaIVA / 100);
+   const valorFinal = valorBase + valorIVA;
+   
+   // Get legal note for PDF/print
+   const notaLegal = contextoFiscal?.regime_id 
+     ? getNotaLegalPorRegime(contextoFiscal.regime_id) 
+     : null;
+   const regimeNome = contextoFiscal?.regime_id 
+     ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome 
+     : 'IVA Normal';
 
   // Company info
   const hasCompanyInfo = profile?.empresa_nome || profile?.empresa_logo_url;
@@ -453,7 +462,7 @@ export default function VerOrcamentoPage() {
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">IVA ({(IVA_RATE * 100).toFixed(0)}%)</span>
+                   <span className="text-muted-foreground">IVA ({taxaIVA}%)</span>
                   <span>{formatCurrency(valorIVA)}</span>
                 </div>
 
@@ -476,6 +485,14 @@ export default function VerOrcamentoPage() {
               <li>Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.</li>
               <li>Condições de pagamento a acordar.</li>
             </ul>
+             {/* Legal note for fiscal compliance */}
+             {notaLegal && (
+               <div className="mt-3 pt-3 border-t border-border">
+                 <p className="text-xs text-muted-foreground italic">
+                   <strong>Nota Fiscal:</strong> {notaLegal}
+                 </p>
+               </div>
+             )}
           </div>
 
           {/* Footer */}

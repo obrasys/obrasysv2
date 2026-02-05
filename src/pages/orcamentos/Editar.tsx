@@ -13,6 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+ import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+ } from '@/components/ui/select';
+ import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +41,12 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import type { CapituloFormData, ArtigoFormData } from '@/types/orcamentos';
+ import type { TipoObraFiscal, TipoClienteFiscal, TipoOperacaoFiscal } from '@/types/fiscal';
+ import {
+   TIPO_OBRA_FISCAL_CONFIG,
+   TIPO_CLIENTE_FISCAL_CONFIG,
+   TIPO_OPERACAO_FISCAL_CONFIG,
+ } from '@/types/fiscal';
 import {
   Plus,
   Send,
@@ -45,6 +59,7 @@ import {
   Ruler,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+ import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -62,6 +77,19 @@ export default function EditarOrcamentoPage() {
     addArtigosFromCatalog,
   } = useOrcamento(id);
 
+   // Fiscal engine
+   const { 
+     useOrcamentoContextoFiscal, 
+     saveContextoFiscal, 
+     determinarRegimeFiscal,
+   } = useFiscalEngine();
+   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
+ 
+   // Fiscal form state
+   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
+   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
+   const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+ 
   // Modal states
   const [showCapituloModal, setShowCapituloModal] = useState(false);
   const [showArtigoModal, setShowArtigoModal] = useState(false);
@@ -81,6 +109,32 @@ export default function EditarOrcamentoPage() {
   });
   const [editingCapitulo, setEditingCapitulo] = useState<string | null>(null);
 
+   // Fiscal context helpers
+   const handleOpenSettings = () => {
+     if (contextoFiscal) {
+       setTipoObra(contextoFiscal.tipo_obra as TipoObraFiscal | undefined);
+       setTipoCliente(contextoFiscal.tipo_cliente as TipoClienteFiscal | undefined);
+       setTipoOperacao(contextoFiscal.tipo_operacao as TipoOperacaoFiscal | undefined);
+     }
+     setShowSettingsModal(true);
+   };
+ 
+   const fiscalPreview = determinarRegimeFiscal({
+     tipo_obra: tipoObra || null,
+     tipo_cliente: tipoCliente || null,
+     tipo_operacao: tipoOperacao || null,
+   });
+ 
+   const handleSaveFiscalContext = async () => {
+     if (!id) return;
+     await saveContextoFiscal.mutateAsync({
+       orcamentoId: id,
+       tipoObra: tipoObra || null,
+       tipoCliente: tipoCliente || null,
+       tipoOperacao: tipoOperacao || null,
+     });
+   };
+ 
   if (isLoading || !orcamento) {
     return (
       <AppLayout title="Carregar Orçamento...">
@@ -205,7 +259,7 @@ export default function EditarOrcamentoPage() {
   // Header actions
   const headerActions = (
     <>
-      <Button variant="outline" size="sm" onClick={() => setShowSettingsModal(true)}>
+       <Button variant="outline" size="sm" onClick={handleOpenSettings}>
         <Settings className="mr-2 h-4 w-4" />
         Configurações
       </Button>
@@ -404,14 +458,102 @@ export default function EditarOrcamentoPage() {
 
       {/* Settings Modal */}
       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-        <DialogContent>
+         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Configurações do Orçamento</DialogTitle>
             <DialogDescription>
-              Ajuste a margem de lucro e custos indiretos
+               Configure o contexto fiscal, margem de lucro e custos indiretos
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
+             {/* Contexto Fiscal */}
+             <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+               <div className="flex items-center justify-between">
+                 <Label className="text-base font-semibold">Contexto Fiscal</Label>
+                 {fiscalPreview && (
+                   <Badge variant="outline" className="text-xs">
+                     {fiscalPreview.regime_nome} ({fiscalPreview.taxa_iva}%)
+                   </Badge>
+                 )}
+               </div>
+               <div className="grid grid-cols-1 gap-3">
+                 <div>
+                   <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
+                   <Select
+                     value={tipoObra || '_none_'}
+                     onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
+                     disabled={isReadOnly}
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Selecionar tipo de obra..." />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="_none_">Não especificado</SelectItem>
+                       {Object.entries(TIPO_OBRA_FISCAL_CONFIG).map(([key, config]) => (
+                         <SelectItem key={key} value={key}>
+                           {config.label}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+                 <div>
+                   <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
+                   <Select
+                     value={tipoCliente || '_none_'}
+                     onValueChange={(v) => setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal)}
+                     disabled={isReadOnly}
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Selecionar tipo de cliente..." />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="_none_">Não especificado</SelectItem>
+                       {Object.entries(TIPO_CLIENTE_FISCAL_CONFIG).map(([key, config]) => (
+                         <SelectItem key={key} value={key}>
+                           {config.label}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+                 <div>
+                   <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
+                   <Select
+                     value={tipoOperacao || '_none_'}
+                     onValueChange={(v) => setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal)}
+                     disabled={isReadOnly}
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Selecionar tipo de operação..." />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="_none_">Não especificado</SelectItem>
+                       {Object.entries(TIPO_OPERACAO_FISCAL_CONFIG).map(([key, config]) => (
+                         <SelectItem key={key} value={key}>
+                           {config.label}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+               </div>
+               {!isReadOnly && (
+                 <Button 
+                   variant="outline" 
+                   size="sm" 
+                   className="w-full mt-2"
+                   onClick={handleSaveFiscalContext}
+                   disabled={saveContextoFiscal.isPending}
+                 >
+                   {saveContextoFiscal.isPending && (
+                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                   )}
+                   Aplicar Contexto Fiscal
+                 </Button>
+               )}
+             </div>
+ 
             <div>
               <Label>Margem de Lucro: {orcamento.margem_lucro}%</Label>
               <Slider
