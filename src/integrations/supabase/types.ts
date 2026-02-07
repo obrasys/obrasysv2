@@ -83,7 +83,9 @@ export type Database = {
           id: string
           linked_element_id: string | null
           linked_rule_id: string | null
+          margem_lucro_artigo: number | null
           ordem: number
+          preco_base: number | null
           preco_unitario: number
           quantidade: number
           quantity_source: string
@@ -99,7 +101,9 @@ export type Database = {
           id?: string
           linked_element_id?: string | null
           linked_rule_id?: string | null
+          margem_lucro_artigo?: number | null
           ordem?: number
+          preco_base?: number | null
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string
@@ -115,7 +119,9 @@ export type Database = {
           id?: string
           linked_element_id?: string | null
           linked_rule_id?: string | null
+          margem_lucro_artigo?: number | null
           ordem?: number
+          preco_base?: number | null
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string

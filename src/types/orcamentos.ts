@@ -78,6 +78,8 @@ export interface ArtigoOrcamento {
   unidade: string;
   quantidade: number;
   preco_unitario: number;
+  preco_base: number;
+  margem_lucro_artigo: number;
   valor_total: number;
   ordem: number;
   created_at: string;
@@ -158,6 +160,9 @@ export interface ArtigoFormData {
   unidade: string;
   quantidade: number;
   preco_unitario: number;
+  // Campo de margem de lucro por artigo (não visível ao cliente)
+  preco_base?: number;
+  margem_lucro_artigo?: number;
   // Campos paramétricos opcionais
   quantity_source?: 'manual' | 'parametric';
   linked_element_id?: string | null;

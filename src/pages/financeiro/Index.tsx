@@ -26,7 +26,7 @@ import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
-import { ContaCard, ContaForm, FinanceiroDashboard, CategoriasManager } from '@/components/financeiro';
+import { ContaCard, ContaForm, FinanceiroDashboard, CategoriasManager, MargensLucroCard } from '@/components/financeiro';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
 
 const FinanceiroIndex = () => {
@@ -135,6 +135,9 @@ const FinanceiroIndex = () => {
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Dashboard */}
         <FinanceiroDashboard data={dashboard} isLoading={loadingDashboard} />
+
+        {/* Margens de Lucro dos Artigos */}
+        <MargensLucroCard />
 
         {/* Filters and Actions */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-center justify-between">

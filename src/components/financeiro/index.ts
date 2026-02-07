@@ -7,3 +7,4 @@ export { FornecedorForm } from './FornecedorForm';
 export { CategoriaForm } from './CategoriaForm';
 export { CategoriasManager } from './CategoriasManager';
 export { ImportFornecedoresModal } from './ImportFornecedoresModal';
+export { MargensLucroCard } from './MargensLucroCard';

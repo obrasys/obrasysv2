@@ -279,6 +279,8 @@ export function useOrcamentos() {
             descricao: art.descricao,
             unidade: art.unidade,
             quantidade: art.quantidade,
+            preco_base: art.preco_base || art.preco_unitario,
+            margem_lucro_artigo: art.margem_lucro_artigo || 0,
             preco_unitario: art.preco_unitario,
             ordem: art.ordem,
           }));
@@ -456,6 +458,8 @@ export function useOrcamento(id: string | undefined) {
           descricao: formData.descricao,
           unidade: formData.unidade,
           quantidade: formData.quantidade,
+          preco_base: formData.preco_base || formData.preco_unitario,
+          margem_lucro_artigo: formData.margem_lucro_artigo || 0,
           preco_unitario: formData.preco_unitario,
           ordem: nextOrdem,
         })
@@ -473,9 +477,17 @@ export function useOrcamento(id: string | undefined) {
   // Atualizar artigo
   const updateArtigo = useMutation({
     mutationFn: async ({ artigoId, ...formData }: Partial<ArtigoFormData> & { artigoId: string }) => {
+      const updateData: Record<string, unknown> = { ...formData };
+      
+      // Se tem preco_base, calcular o preco_unitario com margem
+      if (formData.preco_base !== undefined) {
+        const margem = formData.margem_lucro_artigo || 0;
+        updateData.preco_unitario = formData.preco_base * (1 + margem / 100);
+      }
+      
       const { data, error } = await supabase
         .from('artigos_orcamento')
-        .update(formData)
+        .update(updateData)
         .eq('id', artigoId)
         .select()
         .single();
