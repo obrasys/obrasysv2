@@ -26,6 +26,7 @@ import {
   Phone,
   Mail,
   MapPin,
+  User,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -307,7 +308,7 @@ export default function VerOrcamentoPage() {
             </div>
           </div>
 
-          {/* Budget Info */}
+          {/* Budget Info + Client Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/30 p-4 rounded-lg">
             <div className="space-y-2">
               <h3 className="font-semibold text-foreground">{orcamento.titulo}</h3>
@@ -318,14 +319,61 @@ export default function VerOrcamentoPage() {
                   <span>{orcamento.obra.nome}</span>
                 </div>
               )}
-              {orcamento.obra?.cliente && (
+            </div>
+            
+            {/* Client Info Section */}
+            {orcamento.cliente && (
+              <div className="space-y-2 border-l pl-4 md:border-l-0 md:pl-0 md:border-t-0 pt-4 md:pt-0">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-foreground">Cliente</h4>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium">{orcamento.cliente.nome}</p>
+                  {orcamento.cliente.empresa && (
+                    <p className="text-muted-foreground">{orcamento.cliente.empresa}</p>
+                  )}
+                  {orcamento.cliente.nif && (
+                    <p className="text-muted-foreground">NIF: {orcamento.cliente.nif}</p>
+                  )}
+                  {orcamento.cliente.endereco && (
+                    <p className="flex items-center gap-1 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {orcamento.cliente.endereco}
+                      {orcamento.cliente.codigo_postal && `, ${orcamento.cliente.codigo_postal}`}
+                      {orcamento.cliente.cidade && ` ${orcamento.cliente.cidade}`}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {(orcamento.cliente.telefone || orcamento.cliente.telemovel) && (
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {orcamento.cliente.telemovel || orcamento.cliente.telefone}
+                      </span>
+                    )}
+                    {orcamento.cliente.email && (
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Mail className="h-3 w-3" />
+                        {orcamento.cliente.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback to obra.cliente if no direct client */}
+            {!orcamento.cliente && orcamento.obra?.cliente && (
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Cliente:</span>
                   <span>{orcamento.obra.cliente}</span>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-end items-start">
+              </div>
+            )}
+            
+            <div className="flex justify-end items-start md:col-span-2 md:mt-2">
               <OrcamentoStatus status={orcamento.status} />
             </div>
           </div>

@@ -25,6 +25,19 @@ export interface Obra extends ObraPartial {
   updated_at: string;
 }
 
+export interface ClientePartial {
+  id: string;
+  nome: string;
+  email?: string | null;
+  telefone?: string | null;
+  telemovel?: string | null;
+  empresa?: string | null;
+  nif?: string | null;
+  endereco?: string | null;
+  codigo_postal?: string | null;
+  cidade?: string | null;
+}
+
 export interface Orcamento {
   id: string;
   obra_id: string | null;
@@ -40,6 +53,7 @@ export interface Orcamento {
   created_at: string;
   updated_at: string;
   obra?: ObraPartial;
+  cliente?: ClientePartial;
   capitulos?: Capitulo[];
 }
 
@@ -127,6 +141,7 @@ export interface ArtigoTemplate {
 export interface OrcamentoFormData {
   titulo: string;
   obra_id?: string;
+  cliente_id?: string;
   margem_lucro: number;
   custos_indiretos: CustosIndiretos;
 }
