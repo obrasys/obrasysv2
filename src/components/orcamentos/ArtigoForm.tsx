@@ -35,6 +35,8 @@ const formSchema = z.object({
   descricao: z.string().min(1, 'Descrição é obrigatória'),
   unidade: z.string().min(1, 'Unidade é obrigatória'),
   quantidade: z.number().min(0, 'Quantidade deve ser positiva'),
+  preco_base: z.number().min(0, 'Preço base deve ser positivo'),
+  margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(100, 'Margem máxima é 100%'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
   quantity_source: z.enum(['manual', 'parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
@@ -79,13 +81,26 @@ export function ArtigoForm({
       descricao: '',
       unidade: 'un',
       quantidade: 1,
-      preco_unitario: 0,
+      preco_base: defaultValues?.preco_base || defaultValues?.preco_unitario || 0,
+      margem_lucro_artigo: defaultValues?.margem_lucro_artigo || 0,
+      preco_unitario: defaultValues?.preco_unitario || 0,
       quantity_source: 'manual',
       linked_element_id: null,
       linked_rule_id: null,
       ...defaultValues,
     },
   });
+
+  // Calcular preço unitário quando preço base ou margem mudam
+  const precoBase = form.watch('preco_base');
+  const margemLucro = form.watch('margem_lucro_artigo');
+
+  useEffect(() => {
+    if (precoBase !== undefined && margemLucro !== undefined) {
+      const precoComMargem = precoBase * (1 + margemLucro / 100);
+      form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
+    }
+  }, [precoBase, margemLucro, form]);
 
   // Carregar elementos do orçamento
   useEffect(() => {
@@ -219,7 +234,7 @@ export function ArtigoForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <FormField
             control={form.control}
             name="codigo"
@@ -295,10 +310,10 @@ export function ArtigoForm({
 
           <FormField
             control={form.control}
-            name="preco_unitario"
+            name="preco_base"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Preço Unitário (€)</FormLabel>
+                <FormLabel>Preço Base (€)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -308,6 +323,55 @@ export function ArtigoForm({
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="margem_lucro_artigo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Margem (%)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">
+                  Lucro interno
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="preco_unitario"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preço Final (€)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    {...field}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">
+                  Base + margem
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
