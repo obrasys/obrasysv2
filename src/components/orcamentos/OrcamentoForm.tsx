@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useObras } from '@/hooks/useOrcamentos';
+import { useClientes } from '@/hooks/useClientes';
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
-import { Loader2, Building2 } from 'lucide-react';
+import { Loader2, Building2, User } from 'lucide-react';
 
 const formSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
   obra_id: z.string().optional(),
+  cliente_id: z.string().optional(),
   margem_lucro: z.number().min(0).max(100),
   custos_indiretos: z.object({
     estaleiro: z.number().min(0),
@@ -48,12 +50,14 @@ export function OrcamentoForm({
   submitLabel = 'Criar Orçamento',
 }: OrcamentoFormProps) {
   const { obras, isLoading: loadingObras } = useObras();
+  const { clientesAtivos, isLoading: loadingClientes } = useClientes();
 
   const form = useForm<OrcamentoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       titulo: '',
       obra_id: undefined,
+      cliente_id: undefined,
       margem_lucro: 15,
       custos_indiretos: {
         estaleiro: 0,
@@ -80,6 +84,47 @@ export function OrcamentoForm({
               <FormControl>
                 <Input placeholder="Ex: Remodelação Apartamento T3" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="cliente_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cliente</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar cliente..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="bg-popover">
+                  {loadingClientes ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : clientesAtivos && clientesAtivos.length > 0 ? (
+                    clientesAtivos.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {cliente.nome}
+                          {cliente.empresa && (
+                            <span className="text-muted-foreground">({cliente.empresa})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="py-4 text-center text-sm text-muted-foreground">
+                      Nenhum cliente encontrado
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

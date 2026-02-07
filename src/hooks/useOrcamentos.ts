@@ -73,6 +73,7 @@ export function useOrcamentos() {
           user_id: user.id,
           titulo: formData.titulo,
           obra_id: formData.obra_id || null,
+          cliente_id: formData.cliente_id || null,
           margem_lucro: formData.margem_lucro,
           custos_indiretos: formData.custos_indiretos as unknown as Json,
         })
@@ -341,6 +342,7 @@ export function useOrcamento(id: string | undefined) {
         .select(`
           *,
           obra:obras(id, nome, cliente),
+          cliente:clientes(id, nome, email, telefone, telemovel, empresa, nif, endereco, codigo_postal, cidade),
           capitulos:capitulos_orcamento(
             *,
             artigos:artigos_orcamento(*)
