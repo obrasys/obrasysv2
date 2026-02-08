@@ -42,6 +42,7 @@ export default function OrcamentosPage() {
     isLoading,
     deleteOrcamento,
     duplicateOrcamento,
+    createRevisao,
   } = useOrcamentos();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +63,8 @@ export default function OrcamentosPage() {
   const filteredOrcamentos = (orcamentos || []).filter((orc) => {
     const matchesSearch =
       orc.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      orc.obra?.nome?.toLowerCase().includes(searchQuery.toLowerCase());
+      orc.obra?.nome?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      orc.codigo?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || orc.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -77,6 +79,11 @@ export default function OrcamentosPage() {
 
   const handleDuplicate = async (id: string) => {
     await duplicateOrcamento.mutateAsync(id);
+  };
+
+  const handleRevision = async (id: string) => {
+    const result = await createRevisao.mutateAsync(id);
+    navigate(`/orcamentos/${result.id}/editar`);
   };
 
   const handleDelete = async () => {
@@ -163,6 +170,7 @@ export default function OrcamentosPage() {
                   onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}
+                  onRevision={handleRevision}
                   onDelete={setDeleteId}
                   onGeneratePDF={handleGeneratePDF}
                 />
@@ -173,6 +181,7 @@ export default function OrcamentosPage() {
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium">Código</th>
                     <th className="text-left px-4 py-3 text-sm font-medium">Título</th>
                     <th className="text-left px-4 py-3 text-sm font-medium">Obra</th>
                     <th className="text-left px-4 py-3 text-sm font-medium">Estado</th>
@@ -184,6 +193,9 @@ export default function OrcamentosPage() {
                 <tbody className="divide-y">
                   {filteredOrcamentos.map((orcamento) => (
                     <tr key={orcamento.id} className="hover:bg-muted/50">
+                      <td className="px-4 py-3 font-mono text-sm text-muted-foreground">
+                        {orcamento.codigo || '-'}
+                      </td>
                       <td className="px-4 py-3 font-medium">{orcamento.titulo}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {orcamento.obra?.nome || '-'}

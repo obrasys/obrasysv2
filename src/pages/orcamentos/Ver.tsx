@@ -302,6 +302,11 @@ export default function VerOrcamentoPage() {
             </div>
             <div className="text-right">
               <h1 className="text-2xl font-bold text-primary">ORÇAMENTO</h1>
+              {orcamento.codigo && (
+                <p className="text-sm font-mono text-muted-foreground mt-1">
+                  {orcamento.codigo}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">
                 Data: {format(new Date(orcamento.data_criacao), "d 'de' MMMM 'de' yyyy", { locale: pt })}
               </p>
