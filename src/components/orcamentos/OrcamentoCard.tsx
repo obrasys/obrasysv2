@@ -17,7 +17,9 @@ import {
   Trash2, 
   Building2,
   Calendar,
-  Euro
+  Euro,
+  GitBranch,
+  Hash
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -27,6 +29,7 @@ interface OrcamentoCardProps {
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onRevision: (id: string) => void;
   onDelete: (id: string) => void;
   onGeneratePDF: (id: string) => void;
 }
@@ -36,6 +39,7 @@ export function OrcamentoCard({
   onView,
   onEdit,
   onDuplicate,
+  onRevision,
   onDelete,
   onGeneratePDF,
 }: OrcamentoCardProps) {
@@ -61,6 +65,12 @@ export function OrcamentoCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
+            {orcamento.codigo && (
+              <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
+                <Hash className="h-3 w-3" />
+                <span>{orcamento.codigo}</span>
+              </div>
+            )}
             <CardTitle className="text-lg font-semibold line-clamp-1">
               {orcamento.titulo}
             </CardTitle>
@@ -89,6 +99,10 @@ export function OrcamentoCard({
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(orcamento.id); }}>
                 <Copy className="mr-2 h-4 w-4" />
                 Duplicar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onRevision(orcamento.id); }}>
+                <GitBranch className="mr-2 h-4 w-4" />
+                Criar Revisão
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onGeneratePDF(orcamento.id); }}>
                 <FileText className="mr-2 h-4 w-4" />

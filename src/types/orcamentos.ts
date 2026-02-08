@@ -44,6 +44,7 @@ export interface Orcamento {
   cliente_id?: string | null;
   user_id: string;
   titulo: string;
+  codigo: string | null;
   status: OrcamentoStatus;
   valor_total: number;
   margem_lucro: number;
@@ -52,6 +53,8 @@ export interface Orcamento {
   data_envio: string | null;
   created_at: string;
   updated_at: string;
+  revisao_de?: string | null;
+  numero_revisao?: number;
   obra?: ObraPartial;
   cliente?: ClientePartial;
   capitulos?: Capitulo[];

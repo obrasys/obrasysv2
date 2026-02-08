@@ -67,11 +67,18 @@ export function useOrcamentos() {
     mutationFn: async (formData: OrcamentoFormData) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
+      // Gerar código do orçamento
+      const { data: codigoResult, error: codigoError } = await supabase
+        .rpc('generate_orcamento_codigo', { p_user_id: user.id });
+
+      if (codigoError) throw codigoError;
+
       const { data, error } = await supabase
         .from('orcamentos')
         .insert({
           user_id: user.id,
           titulo: formData.titulo,
+          codigo: codigoResult,
           obra_id: formData.obra_id || null,
           cliente_id: formData.cliente_id || null,
           margem_lucro: formData.margem_lucro,
@@ -311,6 +318,119 @@ export function useOrcamentos() {
     },
   });
 
+  // Criar revisão de orçamento
+  const createRevisao = useMutation({
+    mutationFn: async (orcamentoId: string) => {
+      if (!user?.id) throw new Error('Utilizador não autenticado');
+
+      // Buscar orçamento original com capítulos e artigos
+      const { data: original, error: fetchError } = await supabase
+        .from('orcamentos')
+        .select(`
+          *,
+          capitulos:capitulos_orcamento(
+            *,
+            artigos:artigos_orcamento(*)
+          )
+        `)
+        .eq('id', orcamentoId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calcular próximo número de revisão
+      const { data: revisoes } = await supabase
+        .from('orcamentos')
+        .select('numero_revisao')
+        .eq('revisao_de', orcamentoId)
+        .order('numero_revisao', { ascending: false })
+        .limit(1);
+
+      const nextNumeroRevisao = revisoes && revisoes.length > 0 
+        ? (revisoes[0].numero_revisao || 0) + 1 
+        : 1;
+
+      // Código da revisão: (ORC-2026-0001)-01
+      const codigoOriginal = original.codigo || 'ORC-0000-0000';
+      const codigoRevisao = `(${codigoOriginal})-${String(nextNumeroRevisao).padStart(2, '0')}`;
+
+      // Criar novo orçamento como revisão
+      const { data: novoOrcamento, error: createError } = await supabase
+        .from('orcamentos')
+        .insert({
+          user_id: user.id,
+          titulo: `${original.titulo} - Revisão ${nextNumeroRevisao}`,
+          codigo: codigoRevisao,
+          obra_id: original.obra_id,
+          cliente_id: original.cliente_id,
+          margem_lucro: original.margem_lucro,
+          custos_indiretos: original.custos_indiretos as Json,
+          status: 'rascunho',
+          revisao_de: orcamentoId,
+          numero_revisao: nextNumeroRevisao,
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // Duplicar capítulos e artigos
+      const capitulos = original.capitulos || [];
+      for (const cap of capitulos) {
+        const { data: novoCapitulo, error: capError } = await supabase
+          .from('capitulos_orcamento')
+          .insert({
+            orcamento_id: novoOrcamento.id,
+            numero: cap.numero,
+            titulo: cap.titulo,
+            descricao: cap.descricao,
+            ordem: cap.ordem,
+          })
+          .select()
+          .single();
+
+        if (capError) throw capError;
+
+        const artigos = cap.artigos || [];
+        if (artigos.length > 0) {
+          const artigosInsert = artigos.map((art: ArtigoOrcamento) => ({
+            capitulo_id: novoCapitulo.id,
+            codigo: art.codigo,
+            descricao: art.descricao,
+            unidade: art.unidade,
+            quantidade: art.quantidade,
+            preco_base: art.preco_base || art.preco_unitario,
+            margem_lucro_artigo: art.margem_lucro_artigo || 0,
+            preco_unitario: art.preco_unitario,
+            ordem: art.ordem,
+          }));
+
+          const { error: artError } = await supabase
+            .from('artigos_orcamento')
+            .insert(artigosInsert);
+
+          if (artError) throw artError;
+        }
+      }
+
+      return novoOrcamento;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      toast({
+        title: 'Sucesso',
+        description: 'Revisão do orçamento criada com sucesso',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     orcamentos,
     isLoading,
@@ -321,6 +441,7 @@ export function useOrcamentos() {
     deleteOrcamento,
     updateStatus,
     duplicateOrcamento,
+    createRevisao,
   };
 }
 
