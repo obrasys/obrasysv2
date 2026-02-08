@@ -2558,13 +2558,16 @@ export type Database = {
       orcamentos: {
         Row: {
           cliente_id: string | null
+          codigo: string | null
           created_at: string
           custos_indiretos: Json | null
           data_criacao: string
           data_envio: string | null
           id: string
           margem_lucro: number | null
+          numero_revisao: number | null
           obra_id: string | null
+          revisao_de: string | null
           status: string
           titulo: string
           updated_at: string
@@ -2573,13 +2576,16 @@ export type Database = {
         }
         Insert: {
           cliente_id?: string | null
+          codigo?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
           data_envio?: string | null
           id?: string
           margem_lucro?: number | null
+          numero_revisao?: number | null
           obra_id?: string | null
+          revisao_de?: string | null
           status?: string
           titulo: string
           updated_at?: string
@@ -2588,13 +2594,16 @@ export type Database = {
         }
         Update: {
           cliente_id?: string | null
+          codigo?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
           data_envio?: string | null
           id?: string
           margem_lucro?: number | null
+          numero_revisao?: number | null
           obra_id?: string | null
+          revisao_de?: string | null
           status?: string
           titulo?: string
           updated_at?: string
@@ -2614,6 +2623,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_revisao_de_fkey"
+            columns: ["revisao_de"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -3501,6 +3517,10 @@ export type Database = {
           p_rule_id: string
         }
         Returns: number
+      }
+      generate_orcamento_codigo: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       is_super_admin: { Args: never; Returns: boolean }
