@@ -234,16 +234,17 @@ export function ArtigoForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-start">
           <FormField
             control={form.control}
             name="codigo"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel>Código</FormLabel>
                 <FormControl>
                   <Input placeholder="Ex: ALV.001" {...field} />
                 </FormControl>
+                <div className="h-4" />
                 <FormMessage />
               </FormItem>
             )}
@@ -253,7 +254,7 @@ export function ArtigoForm({
             control={form.control}
             name="unidade"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel>Unidade</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
@@ -273,6 +274,7 @@ export function ArtigoForm({
                     ))}
                   </SelectContent>
                 </Select>
+                <div className="h-4" />
                 <FormMessage />
               </FormItem>
             )}
@@ -282,7 +284,7 @@ export function ArtigoForm({
             control={form.control}
             name="quantidade"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel className="flex items-center gap-2">
                   Quantidade
                   {useParametric && calculatedQuantity !== null && (
@@ -303,6 +305,7 @@ export function ArtigoForm({
                     className={useParametric && calculatedQuantity !== null ? 'bg-muted' : ''}
                   />
                 </FormControl>
+                <div className="h-4" />
                 <FormMessage />
               </FormItem>
             )}
@@ -312,7 +315,7 @@ export function ArtigoForm({
             control={form.control}
             name="preco_base"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel>Preço Base (€)</FormLabel>
                 <FormControl>
                   <Input
@@ -323,6 +326,9 @@ export function ArtigoForm({
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
+                <FormDescription className="text-xs h-4">
+                  Custo unitário
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -332,7 +338,7 @@ export function ArtigoForm({
             control={form.control}
             name="margem_lucro_artigo"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel>Margem (%)</FormLabel>
                 <FormControl>
                   <Input
@@ -345,7 +351,7 @@ export function ArtigoForm({
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
+                <FormDescription className="text-xs h-4">
                   Lucro interno
                 </FormDescription>
                 <FormMessage />
@@ -357,7 +363,7 @@ export function ArtigoForm({
             control={form.control}
             name="preco_unitario"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-2">
                 <FormLabel>Preço Final (€)</FormLabel>
                 <FormControl>
                   <Input
@@ -369,7 +375,7 @@ export function ArtigoForm({
                     className="bg-muted"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">
+                <FormDescription className="text-xs h-4">
                   Base + margem
                 </FormDescription>
                 <FormMessage />
