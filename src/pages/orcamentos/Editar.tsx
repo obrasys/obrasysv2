@@ -429,7 +429,7 @@ export default function EditarOrcamentoPage() {
 
       {/* Artigo Modal */}
       <Dialog open={showArtigoModal} onOpenChange={setShowArtigoModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {editingArtigo ? 'Editar Artigo' : 'Novo Artigo'}
