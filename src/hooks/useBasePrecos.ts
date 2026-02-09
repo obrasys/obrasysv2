@@ -230,7 +230,13 @@ export function useInsertPriceRaw() {
 
   return useMutation({
     mutationFn: async (formData: PriceInputFormData) => {
-      if (!user) throw new Error("Utilizador não autenticado");
+      // Buscar sessão atual diretamente do Supabase para garantir que temos user
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUser = sessionData?.session?.user;
+      
+      if (!currentUser) {
+        throw new Error("Utilizador não autenticado. Por favor, faça login novamente.");
+      }
 
       const { data, error } = await supabase
         .from("material_price_raw")
@@ -238,7 +244,7 @@ export function useInsertPriceRaw() {
           material_id: formData.material_id,
           region_id: formData.region_id,
           source_id: formData.source_id,
-          user_id: user.id,
+          user_id: currentUser.id,
           preco: formData.preco,
           unidade_original: formData.unidade_original,
           preco_normalizado: formData.preco, // Por simplicidade, assume mesma unidade
@@ -249,16 +255,24 @@ export function useInsertPriceRaw() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["material_price_raw"] });
+      queryClient.invalidateQueries({ queryKey: ["material_price_raw_all"] });
       toast.success("Preço inserido com sucesso!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Erro ao inserir preço:", error);
-      toast.error("Erro ao inserir preço. Tente novamente.");
+      if (error.message.includes("row-level security")) {
+        toast.error("Erro de permissão. Por favor, faça login novamente.");
+      } else {
+        toast.error(`Erro ao inserir preço: ${error.message}`);
+      }
     },
   });
 }
