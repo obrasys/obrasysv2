@@ -23,7 +23,7 @@ export function useAutosMedicao(obraId?: string) {
         .from('autos_medicao')
         .select(`
           *,
-          obra:obras(id, nome, localizacao, cliente_id),
+          obra:obras(id, nome, endereco, cliente_id),
           orcamento:orcamentos(id, nome, valor_total),
           subempreiteiro:subempreiteiros(id, nome, nif)
         `)
@@ -46,7 +46,7 @@ export function useAutosMedicao(obraId?: string) {
       .from('autos_medicao')
       .select(`
         *,
-        obra:obras(id, nome, localizacao, cliente_id),
+        obra:obras(id, nome, endereco, cliente_id),
         orcamento:orcamentos(id, nome, valor_total),
         subempreiteiro:subempreiteiros(id, nome, nif)
       `)
@@ -451,7 +451,7 @@ export function useAutoMedicao(id: string | undefined) {
         .from('autos_medicao')
         .select(`
           *,
-          obra:obras(id, nome, localizacao, cliente_id),
+          obra:obras(id, nome, endereco, cliente_id),
           orcamento:orcamentos(id, nome, valor_total),
           subempreiteiro:subempreiteiros(id, nome, nif)
         `)
