@@ -43,12 +43,12 @@ export interface AutoMedicao {
   obra?: {
     id: string;
     nome: string;
-    localizacao?: string | null;
+    endereco?: string | null;
     cliente_id?: string | null;
   };
   orcamento?: {
     id: string;
-    nome: string;
+    titulo: string;
     valor_total?: number | null;
   };
   subempreiteiro?: {

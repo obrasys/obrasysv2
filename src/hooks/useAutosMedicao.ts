@@ -24,7 +24,7 @@ export function useAutosMedicao(obraId?: string) {
         .select(`
           *,
           obra:obras(id, nome, endereco, cliente_id),
-          orcamento:orcamentos(id, nome, valor_total),
+          orcamento:orcamentos(id, titulo, valor_total),
           subempreiteiro:subempreiteiros(id, nome, nif)
         `)
         .order('numero_auto', { ascending: false });
@@ -47,7 +47,7 @@ export function useAutosMedicao(obraId?: string) {
       .select(`
         *,
         obra:obras(id, nome, endereco, cliente_id),
-        orcamento:orcamentos(id, nome, valor_total),
+        orcamento:orcamentos(id, titulo, valor_total),
         subempreiteiro:subempreiteiros(id, nome, nif)
       `)
       .eq('id', id)
@@ -452,7 +452,7 @@ export function useAutoMedicao(id: string | undefined) {
         .select(`
           *,
           obra:obras(id, nome, endereco, cliente_id),
-          orcamento:orcamentos(id, nome, valor_total),
+          orcamento:orcamentos(id, titulo, valor_total),
           subempreiteiro:subempreiteiros(id, nome, nif)
         `)
         .eq('id', id)

@@ -242,7 +242,7 @@ export function AutoMedicaoPdfExport({ auto }: AutoMedicaoPdfExportProps) {
       // Project Info
       drawSectionTitle(t.projectInfo);
       drawKeyValue(t.project, auto.obra?.nome || '-');
-      drawKeyValue(t.location, auto.localizacao_obra || auto.obra?.localizacao || '-');
+      drawKeyValue(t.location, auto.localizacao_obra || auto.obra?.endereco || '-');
       drawKeyValue(t.period, `${format(new Date(auto.data_inicio), 'dd/MM/yyyy', { locale })} ${t.to} ${format(new Date(auto.data_fim), 'dd/MM/yyyy', { locale })}`);
       yPos += 5;
 
