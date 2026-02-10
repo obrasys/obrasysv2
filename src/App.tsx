@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import CriarConta from "./pages/CriarConta";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import OrcamentosPage from "./pages/orcamentos/Index";
@@ -72,6 +73,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/criar-conta" element={<CriarConta />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/orcamentos" element={<OrcamentosPage />} />
