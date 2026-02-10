@@ -122,13 +122,24 @@ const CriarConta = () => {
           {!signUpSuccess ? (
             <div className="space-y-6">
               {/* Mobile headline */}
-              <div className="lg:hidden text-center mb-2">
-                <h1 className="font-display text-xl font-bold text-foreground mb-2">
-                  Pare de perder dinheiro na obra.
+              <div className="lg:hidden text-center mb-4">
+                <h1 className="font-display text-2xl font-bold text-foreground mb-3 leading-tight">
+                  Pare de perder dinheiro na obra.{" "}
+                  <span className="text-accent">Controle custos, prazos e orçamentos num só lugar.</span>
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Controle custos, prazos e orçamentos num só lugar.
+                <p className="text-base text-muted-foreground">
+                  O Obra Sys ajuda construtores, arquitetos e gestores de obra a organizar tudo — sem Excel e sem dor de cabeça.
                 </p>
+              </div>
+
+              {/* Mobile benefits */}
+              <div className="lg:hidden flex flex-wrap justify-center gap-2 mb-4">
+                {["30 dias grátis", "Sem cartão", "Setup em 2 min"].map((item, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 text-xs font-medium bg-accent/10 text-accent px-3 py-1.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {item}
+                  </span>
+                ))}
               </div>
 
               <div className="text-center lg:text-left">
