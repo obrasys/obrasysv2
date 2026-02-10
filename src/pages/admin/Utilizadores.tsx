@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Download, Edit2, Check, X } from "lucide-react";
+import { Search, RefreshCw, Download, Edit2, Check, X, KeyRound, CalendarPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type UserRole = "admin" | "gestor" | "fiscal" | "cliente" | "financeiro" | "sales";
 
@@ -26,11 +37,18 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
 
 export default function AdminUtilizadores() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [trialFilter, setTrialFilter] = useState<string>("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "password_reset" | "renew_trial";
+    userId: string;
+    email: string;
+    nome: string;
+  } | null>(null);
 
   // Fetch all profiles
   const { data: profiles, isLoading, refetch } = useQuery({
@@ -62,6 +80,30 @@ export default function AdminUtilizadores() {
     },
     onError: (error) => {
       toast.error("Erro ao atualizar role: " + error.message);
+    },
+  });
+
+  // Admin action mutation (password reset / renew trial)
+  const adminActionMutation = useMutation({
+    mutationFn: async (params: { action: string; userId?: string; email?: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-user-actions", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: params,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Ação executada com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-profiles"] });
+      setConfirmAction(null);
+    },
+    onError: (error) => {
+      toast.error("Erro: " + error.message);
+      setConfirmAction(null);
     },
   });
 
@@ -116,6 +158,21 @@ export default function AdminUtilizadores() {
   const handleCancelEdit = () => {
     setEditingUserId(null);
     setEditingRole(null);
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === "password_reset") {
+      adminActionMutation.mutate({
+        action: "send_password_reset",
+        email: confirmAction.email,
+      });
+    } else {
+      adminActionMutation.mutate({
+        action: "renew_trial",
+        userId: confirmAction.userId,
+      });
+    }
   };
 
   return (
@@ -184,82 +241,151 @@ export default function AdminUtilizadores() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Trial</TableHead>
-                    <TableHead>Data Registo</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProfiles?.map((profile) => (
-                    <TableRow key={profile.id}>
-                      <TableCell className="font-medium">{profile.nome || "-"}</TableCell>
-                      <TableCell>{profile.email}</TableCell>
-                      <TableCell>{profile.empresa || "-"}</TableCell>
-                      <TableCell>
-                        {editingUserId === profile.id ? (
-                          <Select value={editingRole || profile.role} onValueChange={(v) => setEditingRole(v as UserRole)}>
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ROLE_OPTIONS.map((role) => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge variant="outline" className="capitalize">
-                            {profile.role}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={profile.trial_expired ? "destructive" : "secondary"}>
-                          {profile.trial_expired ? "Expirado" : "Ativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {profile.created_at
-                          ? format(new Date(profile.created_at), "dd/MM/yyyy", { locale: pt })
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {editingUserId === profile.id ? (
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => handleSaveRole(profile.id)}>
-                              <Check className="h-4 w-4 text-green-600" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
-                              <X className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            onClick={() => handleEditRole(profile.id, profile.role as UserRole)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Trial</TableHead>
+                      <TableHead>Trial Expira</TableHead>
+                      <TableHead>Data Registo</TableHead>
+                      <TableHead className="w-[160px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProfiles?.map((profile) => (
+                      <TableRow key={profile.id}>
+                        <TableCell className="font-medium">{profile.nome || "-"}</TableCell>
+                        <TableCell>{profile.email}</TableCell>
+                        <TableCell>{profile.empresa || "-"}</TableCell>
+                        <TableCell>
+                          {editingUserId === profile.id ? (
+                            <Select value={editingRole || profile.role} onValueChange={(v) => setEditingRole(v as UserRole)}>
+                              <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ROLE_OPTIONS.map((role) => (
+                                  <SelectItem key={role.value} value={role.value}>
+                                    {role.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant="outline" className="capitalize">
+                              {profile.role}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={profile.trial_expired ? "destructive" : "secondary"}>
+                            {profile.trial_expired ? "Expirado" : "Ativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {profile.trial_end
+                            ? format(new Date(profile.trial_end), "dd/MM/yyyy", { locale: pt })
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {profile.created_at
+                            ? format(new Date(profile.created_at), "dd/MM/yyyy", { locale: pt })
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {editingUserId === profile.id ? (
+                              <>
+                                <Button size="icon" variant="ghost" onClick={() => handleSaveRole(profile.id)}>
+                                  <Check className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
+                                  <X className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  title="Editar role"
+                                  onClick={() => handleEditRole(profile.id, profile.role as UserRole)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  title="Enviar reset de password"
+                                  onClick={() => setConfirmAction({
+                                    type: "password_reset",
+                                    userId: profile.user_id,
+                                    email: profile.email,
+                                    nome: profile.nome,
+                                  })}
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  title="Renovar trial"
+                                  onClick={() => setConfirmAction({
+                                    type: "renew_trial",
+                                    userId: profile.user_id,
+                                    email: profile.email,
+                                    nome: profile.nome,
+                                  })}
+                                >
+                                  <CalendarPlus className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === "password_reset"
+                ? "Enviar Reset de Password"
+                : "Renovar Trial"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "password_reset"
+                ? `Será enviado um email de redefinição de password para ${confirmAction?.email} (${confirmAction?.nome}).`
+                : `O trial de ${confirmAction?.nome} (${confirmAction?.email}) será renovado por mais 30 dias.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={adminActionMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmAction} 
+              disabled={adminActionMutation.isPending}
+            >
+              {adminActionMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

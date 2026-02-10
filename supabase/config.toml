@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.get-payment-history]
 verify_jwt = false
+
+[functions.admin-user-actions]
+verify_jwt = false
