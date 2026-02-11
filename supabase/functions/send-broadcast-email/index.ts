@@ -90,13 +90,37 @@ const handler = async (req: Request): Promise<Response> => {
     const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
     const ano = new Date().getFullYear().toString();
 
+    // Pre-fetch profiles for personalization (nome + user_id for survey tokens)
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: profiles } = await adminClient
+      .from("profiles")
+      .select("user_id, email, nome")
+      .in("email", to);
+
+    const profileMap = new Map<string, { user_id: string; nome: string }>();
+    if (profiles) {
+      for (const p of profiles) {
+        profileMap.set(p.email.toLowerCase(), { user_id: p.user_id, nome: p.nome });
+      }
+    }
+
     const results = await Promise.all(
       to.map(async (email) => {
+        const profile = profileMap.get(email.toLowerCase());
+        const nome = profile?.nome || email.split("@")[0];
+        const userId = profile?.user_id || "";
+
+        // Generate survey token: base64(userId:email)
+        const surveyToken = btoa(`${userId}:${email}`);
+        const pesquisaUrl = `${appUrl}/pesquisa?token=${encodeURIComponent(surveyToken)}`;
+
         const htmlContent = replaceVariables(html, {
           "{{email}}": email,
+          "{{nome}}": nome,
           "{{appUrl}}": appUrl,
           "{{logoUrl}}": logoUrl,
           "{{ano}}": ano,
+          "{{pesquisaUrl}}": pesquisaUrl,
         });
 
         const res = await fetch("https://api.resend.com/emails", {
