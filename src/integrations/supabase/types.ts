@@ -1813,6 +1813,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_pesquisa: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          email: string
+          id: string
+          nome: string | null
+          nota: number
+          token: string
+          trial_extendido: boolean
+          user_id: string | null
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          nome?: string | null
+          nota: number
+          token: string
+          trial_extendido?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string | null
+          nota?: number
+          token?: string
+          trial_extendido?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       financeiro_obras: {
         Row: {
           created_at: string

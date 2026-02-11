@@ -52,6 +52,7 @@ import AdminAuditoria from "./pages/admin/Auditoria";
 import AdminTemplates from "./pages/admin/Templates";
 import PlanosPage from "./pages/Planos";
 import SubscricaoPage from "./pages/Subscricao";
+import PesquisaPage from "./pages/Pesquisa";
 import RecursosPage from "./pages/recursos/Index";
 // Autos de Medição
 import AutosMedicaoPage from "./pages/autos-medicao/Index";
@@ -112,6 +113,7 @@ const App = () => (
               <Route path="/planos" element={<PlanosPage />} />
               <Route path="/subscricao" element={<SubscricaoPage />} />
               <Route path="/recursos" element={<RecursosPage />} />
+              <Route path="/pesquisa" element={<PesquisaPage />} />
               {/* Autos de Medição */}
               <Route path="/autos-medicao" element={<AutosMedicaoPage />} />
               <Route path="/autos-medicao/criar" element={<CriarAutoMedicaoPage />} />
