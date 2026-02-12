@@ -62,6 +62,9 @@ import CriarAutoMedicaoPage from "./pages/autos-medicao/Criar";
 import EditarAutoMedicaoPage from "./pages/autos-medicao/Editar";
 import VerAutoMedicaoPage from "./pages/autos-medicao/Ver";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
+import { ClientRoute } from "./components/portal/ClientRoute";
+import PortalIndex from "./pages/portal/Index";
+import PortalObra from "./pages/portal/Obra";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +133,9 @@ const App = () => (
               <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
               <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
               <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
+              {/* Portal do Cliente */}
+              <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
+              <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
