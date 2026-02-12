@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 function generatePassword(length = 12): string {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { orcamento_id, obra_id } = await req.json();
+    const { orcamento_id, obra_id, client_email, client_name } = await req.json();
 
     if (!orcamento_id && !obra_id) {
       return new Response(
@@ -59,8 +59,8 @@ Deno.serve(async (req) => {
     }
 
     // Get the orcamento with cliente info
-    let clienteEmail: string | null = null;
-    let clienteNome: string | null = null;
+    let clienteEmail: string | null = client_email || null;
+    let clienteNome: string | null = client_name || null;
     let obraIdFinal: string | null = obra_id || null;
     let obraNome: string | null = null;
 
@@ -93,6 +93,13 @@ Deno.serve(async (req) => {
     if (!obraIdFinal) {
       return new Response(
         JSON.stringify({ error: "Obra não encontrada para este orçamento" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!clienteEmail) {
+      return new Response(
+        JSON.stringify({ error: "Email do cliente é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
