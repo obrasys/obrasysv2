@@ -1,29 +1,34 @@
 
 
-## Fix: Erro ao Convidar Cliente no Portal
+## Correção: Email de Convite Não Enviado
 
-### Problema Identificado
+### Problema
 
-Existem dois problemas na Edge Function `create-client-portal-access`:
+A Edge Function `create-client-portal-access` só envia email quando cria um utilizador novo (linha 182: `if (resendApiKey && isNewUser && tempPassword)`). Se o cliente já tem conta no sistema, o email de convite nunca é enviado.
 
-1. **Parametros nao tratados**: O componente `ObraPortalClienteTab` envia `client_email` e `client_name` no body do pedido, mas a Edge Function so le `orcamento_id` e `obra_id`. Quando so o `obra_id` e fornecido (sem `orcamento_id`), o `clienteEmail` fica `null`, causando falha.
+Adicionalmente, a resposta da API do Resend não é verificada, pelo que erros de envio são silenciados.
 
-2. **CORS incompletos**: Faltam headers do Supabase client (`x-supabase-client-platform`, etc.), o que pode causar falhas no preflight.
+### Solução
 
-### Solucao
+Alterar a lógica de envio para cobrir dois cenários:
 
-Atualizar a Edge Function para:
-- Ler `client_email` e `client_name` do body do pedido
-- Usar esses valores quando fornecidos (cenario de convite manual)
-- Manter o fluxo existente via `orcamento_id` para o cenario de adjudicacao
-- Corrigir os CORS headers
+1. **Utilizador novo**: Enviar email com credenciais (email + senha temporária)
+2. **Utilizador existente**: Enviar email a informar que tem acesso a uma nova obra (sem senha)
 
-### Alteracoes Tecnicas
+E adicionar logging da resposta do Resend para diagnóstico.
+
+### Alterações Técnicas
 
 **Ficheiro**: `supabase/functions/create-client-portal-access/index.ts`
 
-1. Atualizar `corsHeaders` para incluir todos os headers necessarios do Supabase client
-2. Ao ler o body JSON, tambem extrair `client_email` e `client_name`
-3. Quando `obra_id` e fornecido com `client_email` (convite manual), usar esses valores diretamente em vez de tentar obter do orcamento
-4. Validar que existe email antes de prosseguir
+1. Mover o bloco de envio de email para fora da condição `isNewUser` (linha 182)
+2. Criar dois templates de email:
+   - Novo utilizador: inclui email + senha temporária
+   - Utilizador existente: inclui apenas link de acesso e nome da obra
+3. Capturar e registar a resposta da API do Resend (status + body) para diagnóstico
+4. Usar o template fallback adequado para cada cenário
 
+### Resultado Esperado
+
+- Convites enviados tanto para utilizadores novos como existentes
+- Erros do Resend visíveis nos logs para diagnóstico futuro
