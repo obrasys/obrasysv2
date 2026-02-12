@@ -178,26 +178,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send invitation email via Resend
-    if (resendApiKey && isNewUser && tempPassword) {
+    // Send invitation email via Resend (for both new and existing users)
+    if (resendApiKey) {
       try {
         const loginUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/auth`;
         const logoUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/logo.png`;
+
+        const templateSlug = isNewUser ? "convite-portal-cliente" : "convite-portal-cliente-existente";
 
         // Get the email template
         const { data: template } = await supabaseAdmin
           .from("email_templates")
           .select("html_content, assunto")
-          .eq("slug", "convite-portal-cliente")
+          .eq("slug", templateSlug)
           .eq("ativo", true)
           .single();
 
-        let htmlContent = template?.html_content || `
+        // Fallback templates
+        const fallbackNew = `
           <p>Olá ${clienteNome},</p>
           <p>A sua obra <strong>${obraNome}</strong> já está no ObraSys.</p>
           <p>Email: ${clienteEmail}<br>Senha: ${tempPassword}</p>
           <p><a href="${loginUrl}">Aceder ao Portal</a></p>
         `;
+        const fallbackExisting = `
+          <p>Olá ${clienteNome},</p>
+          <p>Tem agora acesso à obra <strong>${obraNome}</strong> no ObraSys.</p>
+          <p><a href="${loginUrl}">Aceder ao Portal</a></p>
+        `;
+
+        let htmlContent = template?.html_content || (isNewUser ? fallbackNew : fallbackExisting);
 
         // Replace variables
         htmlContent = htmlContent
@@ -205,16 +215,16 @@ Deno.serve(async (req) => {
           .replace(/\{\{obraName\}\}/g, obraNome || "")
           .replace(/\{\{loginUrl\}\}/g, loginUrl)
           .replace(/\{\{email\}\}/g, clienteEmail || "")
-          .replace(/\{\{senha\}\}/g, tempPassword)
+          .replace(/\{\{senha\}\}/g, tempPassword || "")
           .replace(/\{\{logoUrl\}\}/g, logoUrl)
           .replace(/\{\{ano\}\}/g, new Date().getFullYear().toString());
 
-        const assunto = (template?.assunto || "A sua obra já está no ObraSys")
+        const assunto = (template?.assunto || (isNewUser ? "A sua obra já está no ObraSys" : `Novo acesso: ${obraNome}`))
           .replace(/\{\{obraName\}\}/g, obraNome || "");
 
         const fromEmail = Deno.env.get("RESEND_FROM") || "ObraSys <noreply@obrasys.pt>";
 
-        await fetch("https://api.resend.com/emails", {
+        const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -227,9 +237,18 @@ Deno.serve(async (req) => {
             html: htmlContent,
           }),
         });
+
+        const emailBody = await emailResponse.text();
+        console.log(`Resend response: status=${emailResponse.status} body=${emailBody}`);
+
+        if (!emailResponse.ok) {
+          console.error(`Resend error: ${emailResponse.status} - ${emailBody}`);
+        }
       } catch (emailError) {
         console.error("Error sending email:", emailError);
       }
+    } else {
+      console.warn("RESEND_API_KEY not configured, skipping email");
     }
 
     return new Response(
