@@ -169,6 +169,8 @@ Deno.serve(async (req) => {
           client_user_id: clientUserId,
           obra_id: obraIdFinal,
           granted_by: caller.id,
+          client_email: clienteEmail,
+          client_name: clienteNome,
         });
 
       if (accessError) {

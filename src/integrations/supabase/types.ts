@@ -1257,6 +1257,50 @@ export type Database = {
           },
         ]
       }
+      client_obra_access: {
+        Row: {
+          ativo: boolean
+          client_email: string | null
+          client_name: string | null
+          client_user_id: string
+          created_at: string
+          granted_by: string | null
+          id: string
+          obra_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          client_email?: string | null
+          client_name?: string | null
+          client_user_id: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          obra_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          client_email?: string | null
+          client_name?: string | null
+          client_user_id?: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          obra_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_obra_access_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           ativo: boolean
