@@ -3644,8 +3644,6 @@ export type Database = {
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       sync_parametric_quantities: {
         Args: { p_element_id: string }
         Returns: undefined
