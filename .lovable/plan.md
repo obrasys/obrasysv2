@@ -1,133 +1,113 @@
 
-
-# Modulo de Gestao de Pessoal / Recursos Humanos
+# Modulo de Relatorios
 
 ## Resumo
 
-Expandir o modulo de Recursos existente para incluir gestao completa de pessoal por obra, com alocacao de trabalhadores a obras e tarefas, historico de deslocacoes entre obras, e integracao financeira completa (custos do trabalhador visiveis no financeiro da obra e no financeiro global).
+Criar uma nova pagina de Relatorios (/relatorios) que agrega e apresenta dados de todos os modulos da plataforma num unico local, permitindo ao utilizador ter uma visao completa da sua atividade. A pagina ja esta prevista na navegacao (MAIN_NAV_ITEMS em navigation.ts) mas ainda nao tem implementacao.
 
 ## O que muda para o utilizador
 
-1. **Ficha completa do trabalhador** -- ao clicar num membro da equipa, abre uma pagina de detalhe com dados pessoais, documentos, historico de obras e resumo financeiro individual.
-2. **Alocacao por obra** -- cada trabalhador pode ser alocado a uma ou mais obras com datas de inicio/fim, funcao e custo/hora ou custo/dia. Pode ser deslocado para outra obra a qualquer momento.
-3. **Visao por obra** -- na pagina da obra aparece um separador "Equipa" listando todos os trabalhadores alocados, com os respetivos custos.
-4. **Integracao financeira** -- os custos salariais dos trabalhadores alocados sao contabilizados automaticamente no financeiro da obra e no financeiro global como despesas de "mao de obra".
-5. **Alocacao a tarefas** -- possibilidade de associar membros da equipa a tarefas do cronograma.
+Uma nova pagina acessivel pelo menu lateral "Relatorios" que apresenta:
+
+1. **Resumo Geral** -- KPIs globais (total de obras, orcamentos, clientes, valor total, etc.)
+2. **Orcamentos** -- contagem por status (rascunho, enviado, adjudicado, recusado), valor total por status
+3. **Obras** -- resumo por status, valor total, progresso medio, contagem de RDOs e Autos de Medicao por obra
+4. **Financeiro** -- dashboard global (total a pagar, total a receber, saldo), custos de pessoal, distribuicao por origem (mao de obra, material, outros)
+5. **Margens de Lucro** -- lucro total, margem media percentual
+6. **Tarefas** -- contagem por status (pendente, em progresso, concluida), tarefas atrasadas e urgentes
+7. **Clientes** -- total de clientes, ativos vs inativos, distribuicao por nivel de acesso
+8. **Recursos Humanos** -- total de membros da equipa, alocacoes ativas, custos totais de pessoal
+
+A pagina usa Tabs para organizar as seccoes e Cards com graficos (recharts) para visualizacao intuitiva.
 
 ---
 
 ## Plano Tecnico
 
-### Fase 1 -- Base de Dados (Migracao)
+### Fase 1 -- Hook de Relatorios
 
-Criar nova tabela `alocacoes_obra` para registar a alocacao de membros da equipa a obras:
+**Novo ficheiro** `src/hooks/useRelatorios.ts`:
+- Agrega dados de todos os hooks existentes (useOrcamentos, useObras, useClientes, useTarefas, useFinanceiro, useAutosMedicao, useRDOs, useRecursos, useAlocacoes)
+- Calcula KPIs e estatisticas para cada seccao
+- Retorna dados prontos para renderizacao
 
-```text
-alocacoes_obra
-- id (uuid, PK)
-- user_id (uuid, NOT NULL)
-- membro_id (uuid, FK -> equipa_membros.id)
-- obra_id (uuid, FK -> obras.id)
-- data_inicio (date, NOT NULL)
-- data_fim (date, nullable)
-- funcao (varchar, nullable) -- funcao especifica nesta obra
-- custo_hora (numeric, nullable)
-- custo_dia (numeric, nullable)
-- ativo (boolean, default true)
-- observacoes (text, nullable)
-- created_at, updated_at (timestamps)
-```
+### Fase 2 -- Pagina de Relatorios
 
-Politicas RLS:
-- SELECT/INSERT/UPDATE/DELETE restritas a `auth.uid() = user_id`
-- Super admins podem ver todas
+**Novo ficheiro** `src/pages/relatorios/Index.tsx`:
+- Layout com AppLayout (title="Relatorios")
+- Tabs: Resumo | Orcamentos | Obras | Financeiro | Tarefas | Clientes | Recursos
+- Cada tab contem Cards com:
+  - KPIs numericos (Card com icone + valor + label)
+  - Graficos de distribuicao (PieChart do recharts para status)
+  - Graficos de barras (BarChart para valores financeiros)
+  - Listas resumidas com links para navegacao rapida
 
-Adicionar coluna `obra_atual_id` (uuid, nullable) na tabela `equipa_membros` para referencia rapida da obra onde o trabalhador esta atualmente.
+### Fase 3 -- Componentes de Graficos
 
-Adicionar coluna `membro_id` (uuid, nullable) na tabela `tarefas_cronograma` para permitir associar um membro da equipa a uma tarefa.
+**Novo ficheiro** `src/components/relatorios/ReportChart.tsx`:
+- Componente reutilizavel de grafico (Pie e Bar) usando recharts (ja instalado)
+- Cores consistentes com o tema da aplicacao
 
-### Fase 2 -- Types e Hook
+**Novo ficheiro** `src/components/relatorios/KpiCard.tsx`:
+- Card padrao para KPI com icone, valor, label e variacao opcional
 
-**Novo ficheiro** `src/types/alocacoes.ts`:
-- Interface `AlocacaoObra` com joins para `equipa_membros` e `obras`
-- Interface `AlocacaoObraFormData`
+**Novo ficheiro** `src/components/relatorios/index.ts`:
+- Barrel exports
 
-**Novo hook** `src/hooks/useAlocacoes.ts`:
-- `useAlocacoesByObra(obraId)` -- listar trabalhadores de uma obra
-- `useAlocacoesByMembro(membroId)` -- historico de obras de um trabalhador
-- `createAlocacao`, `updateAlocacao`, `deleteAlocacao`
-- `transferirMembro(membroId, novaObraId)` -- deslocar trabalhador, encerrando a alocacao anterior e criando nova
+### Fase 4 -- Rotas e Navegacao
 
-**Atualizar** `src/hooks/useRecursos.ts`:
-- Adicionar campo `obra_atual_id` ao `createMembro` / `updateMembro`
-- Fetch com join na obra atual
+**Atualizar** `src/App.tsx`:
+- Adicionar rota `/relatorios` -> `RelatoriosPage`
+- A rota `/relatorios` ja esta no navigation.ts (MAIN_NAV_ITEMS), por isso a navegacao lateral ja funciona
 
-### Fase 3 -- UI do Modulo de Recursos (Expandido)
+---
 
-**Pagina de detalhe do membro** `src/pages/recursos/VerMembro.tsx`:
-- Dados pessoais e contratuais
-- Historico de alocacoes (obras onde trabalhou com datas)
-- Resumo financeiro individual (total de custos gerados)
-- Botao "Alocar a Obra" / "Transferir"
+## Estrutura das Tabs
 
-**Formulario de alocacao** `src/components/recursos/AlocacaoForm.tsx`:
-- Dialog para selecionar obra, funcao, custo/hora ou custo/dia, data inicio
+### Tab "Resumo"
+- Grid de KPI cards: Total Obras, Total Orcamentos, Total Clientes, Valor Total Obras, Saldo Financeiro, Total Tarefas
+- Grafico de barras com receitas vs despesas
 
-**Atualizar** `src/pages/recursos/Index.tsx`:
-- Na tab "Equipa", mostrar coluna "Obra Atual"
-- Link para pagina de detalhe do membro
-- Filtro por obra
+### Tab "Orcamentos"
+- KPIs: Total, Em Rascunho, Enviados, Adjudicados, Recusados
+- PieChart por status
+- Valor total por status (BarChart)
+- Lista dos 5 orcamentos mais recentes com link
 
-### Fase 4 -- Integracao com Obras
+### Tab "Obras"
+- KPIs: Total, Em Curso, Planeamento, Concluidas, Pausadas
+- PieChart por status
+- Progresso medio das obras ativas
+- Contagem de RDOs e Autos de Medicao total
 
-**Atualizar** `src/pages/obras/Ver.tsx`:
-- Adicionar separador/seccao "Equipa" mostrando os membros alocados a esta obra
-- Card resumo com total de custos de mao de obra
+### Tab "Financeiro"
+- KPIs: Total a Pagar, Total a Receber, Saldo, Contas Vencidas
+- PieChart de distribuicao por origem (mao de obra, material, outros)
+- Margens de lucro globais (valor base, com margem, lucro total, margem media)
 
-**Novo componente** `src/components/obras/ObraEquipaTab.tsx`:
-- Lista de membros alocados com funcao e custo
-- Botoes para alocar novo membro ou transferir
+### Tab "Tarefas"
+- KPIs: Total, Pendentes, Em Progresso, Concluidas, Atrasadas, Urgentes
+- PieChart por status
 
-### Fase 5 -- Integracao Financeira
+### Tab "Clientes"
+- KPIs: Total, Ativos, Inativos
+- PieChart por nivel de acesso
 
-**Atualizar** `src/pages/obras/Financeiro.tsx`:
-- Adicionar card "Custos de Pessoal" que soma os custos das alocacoes ativas para esta obra
-- Estes valores aparecem na categoria "mao_de_obra" do dashboard
-
-**Atualizar** `src/hooks/useFinanceiro.ts`:
-- No calculo do dashboard, incluir custos de alocacoes da tabela `alocacoes_obra` na secao `contasPorOrigem.mao_de_obra`
-
-**Atualizar** financeiro global (`src/pages/financeiro/Index.tsx`):
-- Incluir custos de pessoal agregados por obra
-
-### Fase 6 -- Integracao com Tarefas
-
-**Atualizar** `src/components/tarefas/TarefaForm.tsx` e `CronogramaForm.tsx`:
-- Adicionar campo opcional para selecionar membro da equipa (filtrado pela obra da tarefa)
-
-### Fase 7 -- Rotas
-
-Adicionar em `src/App.tsx`:
-- `/recursos/:id` -> `VerMembro` (pagina de detalhe)
+### Tab "Recursos"
+- KPIs: Total Membros Equipa, Alocacoes Ativas, Custo Total Pessoal
+- Lista de membros com obra atual
 
 ---
 
 ## Ficheiros a criar
-- `src/types/alocacoes.ts`
-- `src/hooks/useAlocacoes.ts`
-- `src/pages/recursos/VerMembro.tsx`
-- `src/components/recursos/AlocacaoForm.tsx`
-- `src/components/obras/ObraEquipaTab.tsx`
+- `src/hooks/useRelatorios.ts`
+- `src/pages/relatorios/Index.tsx`
+- `src/components/relatorios/ReportChart.tsx`
+- `src/components/relatorios/KpiCard.tsx`
+- `src/components/relatorios/index.ts`
 
 ## Ficheiros a modificar
-- `src/types/recursos.ts` (campo obra_atual_id)
-- `src/hooks/useRecursos.ts` (join obra atual)
-- `src/pages/recursos/Index.tsx` (coluna obra, link detalhe)
-- `src/pages/obras/Ver.tsx` (tab equipa)
-- `src/pages/obras/Financeiro.tsx` (card custos pessoal)
-- `src/hooks/useFinanceiro.ts` (incluir custos alocacoes)
-- `src/pages/financeiro/Index.tsx` (custos pessoal global)
-- `src/components/tarefas/TarefaForm.tsx` (campo membro)
-- `src/App.tsx` (rota /recursos/:id)
-- Migracao SQL (nova tabela + colunas)
+- `src/App.tsx` (adicionar rota /relatorios)
 
+## Sem alteracoes na base de dados
+Este modulo e apenas de leitura -- consome dados ja existentes nas tabelas atuais sem necessidade de nova migracao.
