@@ -89,6 +89,28 @@ export function useFinanceiro(obraId?: string) {
       const { data: todasContas, error } = await query;
       if (error) throw error;
 
+      // Buscar custos de pessoal (alocações)
+      let alocQuery = supabase
+        .from('alocacoes_obra')
+        .select('custo_dia, custo_hora, data_inicio, data_fim, ativo');
+
+      if (obraId) {
+        alocQuery = alocQuery.eq('obra_id', obraId);
+      }
+
+      const { data: alocacoes } = await alocQuery;
+
+      // Calcular custos de pessoal baseados em custo_dia * dias trabalhados
+      const custosPessoal = (alocacoes || []).reduce((sum, a) => {
+        if (a.custo_dia) {
+          const inicio = new Date(a.data_inicio);
+          const fim = a.data_fim ? new Date(a.data_fim) : new Date();
+          const dias = Math.max(0, Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)));
+          return sum + a.custo_dia * dias;
+        }
+        return sum;
+      }, 0);
+
       const contasPagar = todasContas?.filter(c => c.tipo === 'pagar') || [];
       const contasReceber = todasContas?.filter(c => c.tipo === 'receber') || [];
 
@@ -110,19 +132,21 @@ export function useFinanceiro(obraId?: string) {
         return vencimento >= new Date(today) && vencimento <= em7Dias;
       }) || [];
 
+      const maoDeObraContas = contasPagar.filter(c => c.origem === 'mao_de_obra').reduce((sum, c) => sum + Number(c.valor), 0);
+
       return {
-        totalPagar,
+        totalPagar: totalPagar + custosPessoal,
         totalReceber,
         pagoPagar,
         pagoReceber,
-        saldo: totalReceber - totalPagar,
+        saldo: totalReceber - totalPagar - custosPessoal,
         saldoRealizado: pagoReceber - pagoPagar,
         vencidas: vencidas.length,
         valorVencido: vencidas.reduce((sum, c) => sum + Number(c.valor), 0),
         aVencer7Dias: aVencer7Dias.length,
         valorAVencer: aVencer7Dias.reduce((sum, c) => sum + Number(c.valor), 0),
         contasPorOrigem: {
-          mao_de_obra: contasPagar.filter(c => c.origem === 'mao_de_obra').reduce((sum, c) => sum + Number(c.valor), 0),
+          mao_de_obra: maoDeObraContas + custosPessoal,
           material: contasPagar.filter(c => c.origem === 'material').reduce((sum, c) => sum + Number(c.valor), 0),
           outros: contasPagar.filter(c => c.origem === 'outros').reduce((sum, c) => sum + Number(c.valor), 0),
         },

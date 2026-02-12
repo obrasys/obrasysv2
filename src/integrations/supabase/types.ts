@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      alocacoes_obra: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_dia: number | null
+          custo_hora: number | null
+          data_fim: string | null
+          data_inicio: string
+          funcao: string | null
+          id: string
+          membro_id: string
+          obra_id: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_dia?: number | null
+          custo_hora?: number | null
+          data_fim?: string | null
+          data_inicio?: string
+          funcao?: string | null
+          id?: string
+          membro_id: string
+          obra_id: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_dia?: number | null
+          custo_hora?: number | null
+          data_fim?: string | null
+          data_inicio?: string
+          funcao?: string | null
+          id?: string
+          membro_id?: string
+          obra_id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_obra_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aprovacoes: {
         Row: {
           aprovador_id: string | null
@@ -1672,6 +1735,7 @@ export type Database = {
           id: string
           nif: string | null
           nome: string
+          obra_atual_id: string | null
           observacoes: string | null
           salario_base: number | null
           subempreiteiro_id: string | null
@@ -1689,6 +1753,7 @@ export type Database = {
           id?: string
           nif?: string | null
           nome: string
+          obra_atual_id?: string | null
           observacoes?: string | null
           salario_base?: number | null
           subempreiteiro_id?: string | null
@@ -1706,6 +1771,7 @@ export type Database = {
           id?: string
           nif?: string | null
           nome?: string
+          obra_atual_id?: string | null
           observacoes?: string | null
           salario_base?: number | null
           subempreiteiro_id?: string | null
@@ -1715,6 +1781,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "equipa_membros_obra_atual_id_fkey"
+            columns: ["obra_atual_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "equipa_membros_subempreiteiro_id_fkey"
             columns: ["subempreiteiro_id"]
@@ -3342,6 +3415,7 @@ export type Database = {
           data_fim: string | null
           data_inicio: string
           id: string
+          membro_id: string | null
           obra_id: string
           progresso: number | null
           recursos: string | null
@@ -3359,6 +3433,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio: string
           id?: string
+          membro_id?: string | null
           obra_id: string
           progresso?: number | null
           recursos?: string | null
@@ -3376,6 +3451,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string
           id?: string
+          membro_id?: string | null
           obra_id?: string
           progresso?: number | null
           recursos?: string | null
@@ -3387,6 +3463,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tarefas_cronograma_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarefas_cronograma_obra_id_fkey"
             columns: ["obra_id"]
