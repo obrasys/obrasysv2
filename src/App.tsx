@@ -54,6 +54,7 @@ import PlanosPage from "./pages/Planos";
 import SubscricaoPage from "./pages/Subscricao";
 import PesquisaPage from "./pages/Pesquisa";
 import RecursosPage from "./pages/recursos/Index";
+import VerMembroPage from "./pages/recursos/VerMembro";
 // Autos de Medição
 import AutosMedicaoPage from "./pages/autos-medicao/Index";
 import CriarAutoMedicaoPage from "./pages/autos-medicao/Criar";
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/planos" element={<PlanosPage />} />
               <Route path="/subscricao" element={<SubscricaoPage />} />
               <Route path="/recursos" element={<RecursosPage />} />
+              <Route path="/recursos/:id" element={<VerMembroPage />} />
               <Route path="/pesquisa" element={<PesquisaPage />} />
               {/* Autos de Medição */}
               <Route path="/autos-medicao" element={<AutosMedicaoPage />} />

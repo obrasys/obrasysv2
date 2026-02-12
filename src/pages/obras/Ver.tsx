@@ -38,6 +38,7 @@ import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
 import { FinalizarObraModal } from '@/components/obras/FinalizarObraModal';
 import { RDOStatusBadge } from '@/components/rdos';
 import { CadernoStatusBadge } from '@/components/cadernos';
+import { ObraEquipaTab } from '@/components/obras/ObraEquipaTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useCadernos } from '@/hooks/useCadernos';
@@ -597,6 +598,9 @@ export default function VerObraPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Equipa Alocada */}
+        <ObraEquipaTab obraId={id!} />
 
         {/* Progress Tracker */}
         <ObraProgressTracker

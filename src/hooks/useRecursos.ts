@@ -244,7 +244,8 @@ export function useEquipaMembros() {
       .from('equipa_membros')
       .select(`
         *,
-        subempreiteiro:subempreiteiros(nome)
+        subempreiteiro:subempreiteiros(nome),
+        obra_atual:obras!equipa_membros_obra_atual_id_fkey(nome)
       `)
       .order('nome');
 

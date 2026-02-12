@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ import {
   Building2,
   Phone,
   Mail,
+  User,
 } from 'lucide-react';
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
@@ -53,6 +55,7 @@ import {
 } from '@/types/recursos';
 
 export default function RecursosPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('subempreiteiros');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -403,10 +406,10 @@ export default function RecursosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nome</TableHead>
+                         <TableHead>Nome</TableHead>
                         <TableHead className="hidden md:table-cell">Cargo</TableHead>
+                        <TableHead className="hidden md:table-cell">Obra Atual</TableHead>
                         <TableHead className="hidden md:table-cell">Contrato</TableHead>
-                        <TableHead className="hidden md:table-cell">Subempreiteiro</TableHead>
                         <TableHead>Estado</TableHead>
                         <TableHead className="w-12"></TableHead>
                       </TableRow>
@@ -426,7 +429,11 @@ export default function RecursosPage() {
                         </TableRow>
                       ) : (
                         filteredMembros.map((membro) => (
-                          <TableRow key={membro.id}>
+                          <TableRow 
+                            key={membro.id} 
+                            className="cursor-pointer"
+                            onClick={() => navigate(`/recursos/${membro.id}`)}
+                          >
                             <TableCell>
                               <div className="font-medium">{membro.nome}</div>
                               {membro.email && (
@@ -437,14 +444,19 @@ export default function RecursosPage() {
                               {membro.cargo || '-'}
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
+                              {membro.obra_atual?.nome ? (
+                                <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                                  <Building2 className="h-3 w-3" />
+                                  {membro.obra_atual.nome}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
                               {membro.tipo_contrato
                                 ? TIPO_CONTRATO_CONFIG[membro.tipo_contrato]?.label
                                 : '-'}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {membro.subempreiteiro?.nome || (
-                                <Badge variant="outline">Interno</Badge>
-                              )}
                             </TableCell>
                             <TableCell>
                               <Badge variant={membro.ativo ? 'default' : 'secondary'}>
@@ -454,17 +466,21 @@ export default function RecursosPage() {
                             <TableCell>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
+                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="bg-background">
-                                  <DropdownMenuItem onClick={() => handleOpenMembroForm(membro)}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/recursos/${membro.id}`); }}>
+                                    <User className="mr-2 h-4 w-4" />
+                                    Ver Ficha
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenMembroForm(membro); }}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Editar
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() => setDeletingMembro(membro)}
+                                    onClick={(e) => { e.stopPropagation(); setDeletingMembro(membro); }}
                                     className="text-destructive"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />

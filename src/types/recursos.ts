@@ -79,12 +79,14 @@ export interface EquipaMembro {
   salario_base?: number | null;
   tipo_contrato?: TipoContrato | null;
   subempreiteiro_id?: string | null;
+  obra_atual_id?: string | null;
   ativo: boolean;
   observacoes?: string | null;
   created_at: string;
   updated_at: string;
   // Joined fields
   subempreiteiro?: { nome: string } | null;
+  obra_atual?: { nome: string } | null;
 }
 
 export interface EquipaMembroFormData {
