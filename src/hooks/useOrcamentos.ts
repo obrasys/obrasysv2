@@ -211,6 +211,22 @@ export function useOrcamentos() {
         .single();
 
       if (error) throw error;
+
+      // If adjudicado, trigger client portal access creation
+      if (status === 'adjudicado') {
+        try {
+          const { data: session } = await supabase.auth.getSession();
+          await supabase.functions.invoke('create-client-portal-access', {
+            body: { orcamento_id: id, obra_id: data.obra_id },
+            headers: session?.session?.access_token
+              ? { Authorization: `Bearer ${session.session.access_token}` }
+              : undefined,
+          });
+        } catch (portalError) {
+          console.error('Error creating client portal access:', portalError);
+        }
+      }
+
       return { ...data, obraCriada: status === 'adjudicado' && !orcamento.obra_id };
     },
     onSuccess: (data) => {
@@ -219,7 +235,7 @@ export function useOrcamentos() {
       if (data.obraCriada) {
         toast({
           title: 'Obra criada automaticamente',
-          description: 'O orçamento foi adjudicado e uma nova obra foi criada',
+          description: 'O orçamento foi adjudicado e uma nova obra foi criada. O cliente receberá acesso ao portal.',
         });
       }
     },
