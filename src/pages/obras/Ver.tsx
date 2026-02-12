@@ -39,6 +39,7 @@ import { FinalizarObraModal } from '@/components/obras/FinalizarObraModal';
 import { RDOStatusBadge } from '@/components/rdos';
 import { CadernoStatusBadge } from '@/components/cadernos';
 import { ObraEquipaTab } from '@/components/obras/ObraEquipaTab';
+import { ObraPortalClienteTab } from '@/components/obras/ObraPortalClienteTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useCadernos } from '@/hooks/useCadernos';
@@ -598,6 +599,15 @@ export default function VerObraPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Portal do Cliente */}
+        <ObraPortalClienteTab
+          obraId={id!}
+          obraNome={obra.nome}
+          clienteNome={obra.cliente}
+          clienteEmail={null}
+          clienteId={null}
+        />
 
         {/* Equipa Alocada */}
         <ObraEquipaTab obraId={id!} />
