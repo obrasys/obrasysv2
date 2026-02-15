@@ -63,6 +63,7 @@ import EditarAutoMedicaoPage from "./pages/autos-medicao/Editar";
 import VerAutoMedicaoPage from "./pages/autos-medicao/Ver";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import { ClientRoute } from "./components/portal/ClientRoute";
+import { ManagerRoute } from "./components/portal/ManagerRoute";
 import PortalIndex from "./pages/portal/Index";
 import PortalObra from "./pages/portal/Obra";
 
@@ -81,51 +82,51 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/criar-conta" element={<CriarConta />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/orcamentos" element={<OrcamentosPage />} />
-              <Route path="/orcamentos/criar" element={<CriarOrcamentoPage />} />
-              <Route path="/orcamentos/:id" element={<VerOrcamentoPage />} />
-              <Route path="/orcamentos/:id/editar" element={<EditarOrcamentoPage />} />
-              <Route path="/obras" element={<ObrasPage />} />
-              <Route path="/obras/criar" element={<CriarObraPage />} />
-              <Route path="/obras/:id" element={<VerObraPage />} />
-              <Route path="/obras/:id/editar" element={<EditarObraPage />} />
-              <Route path="/obras/:id/financeiro" element={<ObraFinanceiroPage />} />
+              <Route path="/dashboard" element={<ManagerRoute><Dashboard /></ManagerRoute>} />
+              <Route path="/orcamentos" element={<ManagerRoute><OrcamentosPage /></ManagerRoute>} />
+              <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />
+              <Route path="/orcamentos/:id" element={<ManagerRoute><VerOrcamentoPage /></ManagerRoute>} />
+              <Route path="/orcamentos/:id/editar" element={<ManagerRoute><EditarOrcamentoPage /></ManagerRoute>} />
+              <Route path="/obras" element={<ManagerRoute><ObrasPage /></ManagerRoute>} />
+              <Route path="/obras/criar" element={<ManagerRoute><CriarObraPage /></ManagerRoute>} />
+              <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />
+              <Route path="/obras/:id/editar" element={<ManagerRoute><EditarObraPage /></ManagerRoute>} />
+              <Route path="/obras/:id/financeiro" element={<ManagerRoute><ObraFinanceiroPage /></ManagerRoute>} />
               {/* Cadernos de Encargos */}
-              <Route path="/obras/:id/cadernos" element={<CadernosPage />} />
-              <Route path="/obras/:id/cadernos/importar" element={<ImportarCadernoPage />} />
-              <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ImportarCadernoPage />} />
-              <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ValidarCadernoPage />} />
-              <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ResumoCadernoPage />} />
-              <Route path="/clientes" element={<ClientesPage />} />
-              <Route path="/clientes/criar" element={<CriarClientePage />} />
-              <Route path="/clientes/:id" element={<VerClientePage />} />
-              <Route path="/clientes/:id/editar" element={<EditarClientePage />} />
-              <Route path="/rdos" element={<RDOsPage />} />
-              <Route path="/rdos/criar" element={<CriarRDOPage />} />
-              <Route path="/rdos/:id" element={<VerRDOPage />} />
-              <Route path="/rdos/:id/editar" element={<EditarRDOPage />} />
-              <Route path="/tarefas" element={<TarefasPage />} />
-              <Route path="/conformidade" element={<ConformidadePage />} />
-              <Route path="/base-precos" element={<BasePrecosPage />} />
-              <Route path="/base-precos/inserir" element={<BasePrecosInserirPage />} />
-              <Route path="/base-precos/auditoria" element={<BasePrecosAuditoriaPage />} />
-              <Route path="/suporte" element={<SuportePage />} />
-              <Route path="/financeiro" element={<FinanceiroPage />} />
-              <Route path="/financeiro/fornecedores" element={<FornecedoresPage />} />
-              <Route path="/perfil" element={<PerfilPage />} />
-              <Route path="/definicoes" element={<DefinicoesPage />} />
-              <Route path="/planos" element={<PlanosPage />} />
-              <Route path="/subscricao" element={<SubscricaoPage />} />
-              <Route path="/recursos" element={<RecursosPage />} />
-              <Route path="/recursos/:id" element={<VerMembroPage />} />
-              <Route path="/pesquisa" element={<PesquisaPage />} />
-              <Route path="/relatorios" element={<RelatoriosPage />} />
+              <Route path="/obras/:id/cadernos" element={<ManagerRoute><CadernosPage /></ManagerRoute>} />
+              <Route path="/obras/:id/cadernos/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
+              <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
+              <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ManagerRoute><ValidarCadernoPage /></ManagerRoute>} />
+              <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ManagerRoute><ResumoCadernoPage /></ManagerRoute>} />
+              <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />
+              <Route path="/clientes/criar" element={<ManagerRoute><CriarClientePage /></ManagerRoute>} />
+              <Route path="/clientes/:id" element={<ManagerRoute><VerClientePage /></ManagerRoute>} />
+              <Route path="/clientes/:id/editar" element={<ManagerRoute><EditarClientePage /></ManagerRoute>} />
+              <Route path="/rdos" element={<ManagerRoute><RDOsPage /></ManagerRoute>} />
+              <Route path="/rdos/criar" element={<ManagerRoute><CriarRDOPage /></ManagerRoute>} />
+              <Route path="/rdos/:id" element={<ManagerRoute><VerRDOPage /></ManagerRoute>} />
+              <Route path="/rdos/:id/editar" element={<ManagerRoute><EditarRDOPage /></ManagerRoute>} />
+              <Route path="/tarefas" element={<ManagerRoute><TarefasPage /></ManagerRoute>} />
+              <Route path="/conformidade" element={<ManagerRoute><ConformidadePage /></ManagerRoute>} />
+              <Route path="/base-precos" element={<ManagerRoute><BasePrecosPage /></ManagerRoute>} />
+              <Route path="/base-precos/inserir" element={<ManagerRoute><BasePrecosInserirPage /></ManagerRoute>} />
+              <Route path="/base-precos/auditoria" element={<ManagerRoute><BasePrecosAuditoriaPage /></ManagerRoute>} />
+              <Route path="/suporte" element={<ManagerRoute><SuportePage /></ManagerRoute>} />
+              <Route path="/financeiro" element={<ManagerRoute><FinanceiroPage /></ManagerRoute>} />
+              <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
+              <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
+              <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+              <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
+              <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />
+              <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
+              <Route path="/recursos/:id" element={<ManagerRoute><VerMembroPage /></ManagerRoute>} />
+              <Route path="/pesquisa" element={<ManagerRoute><PesquisaPage /></ManagerRoute>} />
+              <Route path="/relatorios" element={<ManagerRoute><RelatoriosPage /></ManagerRoute>} />
               {/* Autos de Medição */}
-              <Route path="/autos-medicao" element={<AutosMedicaoPage />} />
-              <Route path="/autos-medicao/criar" element={<CriarAutoMedicaoPage />} />
-              <Route path="/autos-medicao/:id" element={<VerAutoMedicaoPage />} />
-              <Route path="/autos-medicao/:id/editar" element={<EditarAutoMedicaoPage />} />
+              <Route path="/autos-medicao" element={<ManagerRoute><AutosMedicaoPage /></ManagerRoute>} />
+              <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
+              <Route path="/autos-medicao/:id" element={<ManagerRoute><VerAutoMedicaoPage /></ManagerRoute>} />
+              <Route path="/autos-medicao/:id/editar" element={<ManagerRoute><EditarAutoMedicaoPage /></ManagerRoute>} />
               {/* Admin - Super Admin Only */}
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
