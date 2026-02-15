@@ -31,16 +31,20 @@ const Auth = () => {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, resetPassword, user, loading } = useAuth();
+  const { signIn, signUp, resetPassword, user, loading, profile } = useAuth();
   const { toast } = useToast();
 
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      const redirectTo = searchParams.get("redirect") || "/dashboard";
-      navigate(redirectTo, { replace: true });
+      if (profile?.role === "cliente") {
+        navigate("/portal", { replace: true });
+      } else {
+        const redirectTo = searchParams.get("redirect") || "/dashboard";
+        navigate(redirectTo, { replace: true });
+      }
     }
-  }, [user, loading, navigate, searchParams]);
+  }, [user, loading, profile, navigate, searchParams]);
 
   // Login form
   const loginForm = useForm<LoginFormData>({

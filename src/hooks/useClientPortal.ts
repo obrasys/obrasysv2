@@ -11,22 +11,10 @@ export function useClientPortal() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Use raw query since types may not include the new table yet
-      const { data: accessData, error: accessError } = await (supabase as any)
-        .from('client_obra_access')
-        .select('obra_id')
-        .eq('client_user_id', user.id)
-        .eq('ativo', true);
-
-      if (accessError) throw accessError;
-      if (!accessData || accessData.length === 0) return [];
-
-      const obraIds = accessData.map((a: any) => a.obra_id);
-
+      // With RLS policies, clients can only see obras they have access to
       const { data, error } = await supabase
         .from('obras')
-        .select('id, nome, endereco, status, progresso, data_inicio, data_fim, updated_at')
-        .in('id', obraIds);
+        .select('id, nome, endereco, status, progresso, data_inicio, data_fim, updated_at');
 
       if (error) throw error;
       return data || [];
@@ -74,9 +62,10 @@ export function useClientObraDetail(obraId: string | undefined) {
     queryKey: ['client-rdos', obraId],
     queryFn: async () => {
       if (!obraId) return [];
+      // RLS already filters to submetido/aprovado for clients
       const { data, error } = await supabase
         .from('relatorios_diarios')
-        .select('*')
+        .select('id, obra_id, data, status, descricao_geral, condicoes_meteorologicas, created_at, updated_at')
         .eq('obra_id', obraId)
         .in('status', ['submetido', 'aprovado'])
         .order('data', { ascending: false });
@@ -92,7 +81,7 @@ export function useClientObraDetail(obraId: string | undefined) {
       if (!obraId || !user?.id) return [];
       const { data, error } = await (supabase as any)
         .from('client_access_logs')
-        .select('*')
+        .select('id, event_type, entity_type, entity_id, occurred_at')
         .eq('client_user_id', user.id)
         .eq('obra_id', obraId)
         .order('occurred_at', { ascending: false })
