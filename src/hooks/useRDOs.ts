@@ -91,7 +91,7 @@ export function useRDOs(obraId?: string) {
             .eq('obra_id', obra.id)
             .order('data', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           return {
             ...obra,

@@ -54,7 +54,7 @@ export function useObraAlerts() {
             .eq('obra_id', obra.id)
             .order('data', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           // Count pending RDOs (submetido status)
           const { count: pendingCount } = await supabase
