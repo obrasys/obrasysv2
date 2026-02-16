@@ -1,44 +1,29 @@
 
 
-## Corrigir Recursao Infinita nas Politicas de Seguranca da Tabela "Obras"
+## Corrigir Erros 406 no Console
 
-### Problema
-Os seus dados estao seguros, mas o sistema nao consegue mostra-los devido a um erro de configuracao nas regras de seguranca da base de dados. Existe uma referencia circular entre duas tabelas:
+### Problema Identificado
 
-1. A tabela **obras** tem uma regra que consulta a tabela **client_obra_access**
-2. A tabela **client_obra_access** tem uma regra que consulta a tabela **obras**
+Os erros **406 (Not Acceptable)** nos pedidos a `relatorios_diarios` acontecem porque o codigo usa `.single()` para buscar o ultimo relatorio diario de cada obra. Quando uma obra nao tem nenhum relatorio, o servidor retorna erro 406 em vez de resultado vazio.
 
-Isto cria um ciclo infinito que bloqueia todas as consultas a tabela de obras, impedindo o carregamento de orcamentos, obras, relatorios e outros modulos.
+Adicionalmente, existe uma referencia a uma coluna inexistente (`descricao_geral`) numa consulta do portal do cliente.
 
-### Solucao
+O erro `Cannot use 'import.meta' outside a module` vem de uma extensao do browser (frame_ant.js) e nao do codigo da aplicacao.
 
-Criar uma funcao auxiliar segura que verifica se o utilizador e dono de uma obra sem passar pelas regras de seguranca (evitando o ciclo). Depois, atualizar a politica da tabela `client_obra_access` para usar essa funcao.
+### Correcoes
 
-### Detalhes Tecnicos
+**1. Ficheiro `src/hooks/useRDOs.ts` (linha 94)**
+- Substituir `.single()` por `.maybeSingle()` na consulta do ultimo RDO por obra
+- `.maybeSingle()` retorna `null` quando nao ha resultados em vez de lancar erro 406
 
-**1. Criar funcao `is_obra_owner`** (SECURITY DEFINER - bypassa RLS):
+**2. Ficheiro `src/hooks/useObraAlerts.ts` (linha 57)**
+- Mesmo problema: substituir `.single()` por `.maybeSingle()`
 
-```sql
-CREATE OR REPLACE FUNCTION public.is_obra_owner(_obra_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.obras
-    WHERE id = _obra_id AND user_id = auth.uid()
-  );
-$$;
-```
+**3. Ficheiro `src/hooks/useClientPortal.ts` (linha 68)**
+- Remover `descricao_geral` da lista de colunas selecionadas (esta coluna nao existe na tabela `relatorios_diarios`)
+- Substituir por `observacoes` que e a coluna correta
 
-**2. Substituir a politica problematica em `client_obra_access`**:
-
-- Eliminar: "Obra owners can manage client access" (que faz SELECT em `obras` causando o ciclo)
-- Criar nova politica usando a funcao `is_obra_owner()` em vez de consulta direta
-
-**Ficheiros alterados**: Apenas migracoes SQL na base de dados. Nenhum ficheiro de codigo precisa ser modificado.
-
-**Resultado**: Todas as consultas a tabela `obras` voltarao a funcionar imediatamente, restaurando o acesso a orcamentos, obras, relatorios e demais modulos.
-
+### Resultado
+- Os erros 406 desaparecem do console
+- Obras sem relatorios diarios deixam de causar erros
+- O portal do cliente passa a carregar os relatorios corretamente
