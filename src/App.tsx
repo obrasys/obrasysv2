@@ -65,6 +65,11 @@ import EditarAutoMedicaoPage from "./pages/autos-medicao/Editar";
 import VerAutoMedicaoPage from "./pages/autos-medicao/Ver";
 import PortalIndex from "./pages/portal/Index";
 import PortalObra from "./pages/portal/Obra";
+import InstalacoesIndex from "./pages/instalacoes/Index";
+import EletricaPage from "./pages/instalacoes/Eletrica";
+import CanalizacaoPage from "./pages/instalacoes/Canalizacao";
+import TelecomPage from "./pages/instalacoes/Telecom";
+import ConfigurarInstalacoesPage from "./pages/instalacoes/Configurar";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +131,12 @@ const App = () => (
               <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
               <Route path="/autos-medicao/:id" element={<ManagerRoute><VerAutoMedicaoPage /></ManagerRoute>} />
               <Route path="/autos-medicao/:id/editar" element={<ManagerRoute><EditarAutoMedicaoPage /></ManagerRoute>} />
+              {/* Instalações */}
+              <Route path="/instalacoes" element={<ManagerRoute><InstalacoesIndex /></ManagerRoute>} />
+              <Route path="/instalacoes/eletrica" element={<ManagerRoute><EletricaPage /></ManagerRoute>} />
+              <Route path="/instalacoes/canalizacao" element={<ManagerRoute><CanalizacaoPage /></ManagerRoute>} />
+              <Route path="/instalacoes/telecom" element={<ManagerRoute><TelecomPage /></ManagerRoute>} />
+              <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
               {/* Admin - Super Admin Only */}
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
