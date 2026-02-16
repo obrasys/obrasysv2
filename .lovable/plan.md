@@ -1,31 +1,44 @@
 
-## Optimizar Login com Pre-carregamento do Dashboard
+
+## Corrigir Recursao Infinita nas Politicas de Seguranca da Tabela "Obras"
 
 ### Problema
-Apos o login, o utilizador ve um loading extra porque o Dashboard precisa ser descarregado (lazy loading). Antes, o Dashboard ja estava incluido no bundle inicial.
+Os seus dados estao seguros, mas o sistema nao consegue mostra-los devido a um erro de configuracao nas regras de seguranca da base de dados. Existe uma referencia circular entre duas tabelas:
+
+1. A tabela **obras** tem uma regra que consulta a tabela **client_obra_access**
+2. A tabela **client_obra_access** tem uma regra que consulta a tabela **obras**
+
+Isto cria um ciclo infinito que bloqueia todas as consultas a tabela de obras, impedindo o carregamento de orcamentos, obras, relatorios e outros modulos.
 
 ### Solucao
-Em vez de reverter o lazy loading (que beneficia quem ja esta logado), vamos **pre-carregar o Dashboard enquanto o utilizador esta na pagina de login**. Assim, quando o login for bem-sucedido, o chunk do Dashboard ja esta pronto.
 
-Tambem vamos pre-carregar a pagina do Portal para utilizadores do tipo cliente.
+Criar uma funcao auxiliar segura que verifica se o utilizador e dono de uma obra sem passar pelas regras de seguranca (evitando o ciclo). Depois, atualizar a politica da tabela `client_obra_access` para usar essa funcao.
 
-### Tecnica
-- Na pagina `Auth.tsx`, adicionar um `useEffect` que faz `import()` das paginas de destino (Dashboard e Portal) assim que a pagina de login carrega
-- O browser descarrega esses chunks em segundo plano enquanto o utilizador preenche o formulario
-- Quando o login e feito, a navegacao e instantanea
+### Detalhes Tecnicos
 
-### Detalhe Tecnico
+**1. Criar funcao `is_obra_owner`** (SECURITY DEFINER - bypassa RLS):
 
-**Ficheiro: `src/pages/Auth.tsx`**
-
-Adicionar no topo do componente um `useEffect` para pre-carregar os chunks:
-
-```typescript
-useEffect(() => {
-  // Prefetch destinos pos-login enquanto o utilizador preenche o formulario
-  import("./Dashboard");
-  import("./portal/Index");
-}, []);
+```sql
+CREATE OR REPLACE FUNCTION public.is_obra_owner(_obra_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.obras
+    WHERE id = _obra_id AND user_id = auth.uid()
+  );
+$$;
 ```
 
-Esta abordagem mantem todos os beneficios do lazy loading (bundle inicial menor, carregamento mais rapido da primeira pagina) mas elimina o atraso apos o login.
+**2. Substituir a politica problematica em `client_obra_access`**:
+
+- Eliminar: "Obra owners can manage client access" (que faz SELECT em `obras` causando o ciclo)
+- Criar nova politica usando a funcao `is_obra_owner()` em vez de consulta direta
+
+**Ficheiros alterados**: Apenas migracoes SQL na base de dados. Nenhum ficheiro de codigo precisa ser modificado.
+
+**Resultado**: Todas as consultas a tabela `obras` voltarao a funcionar imediatamente, restaurando o acesso a orcamentos, obras, relatorios e demais modulos.
+
