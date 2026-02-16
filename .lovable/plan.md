@@ -1,29 +1,26 @@
 
 
-## Corrigir Erros 406 no Console
+## Corrigir Redirecionamento ao Sair
 
-### Problema Identificado
+### Problema
 
-Os erros **406 (Not Acceptable)** nos pedidos a `relatorios_diarios` acontecem porque o codigo usa `.single()` para buscar o ultimo relatorio diario de cada obra. Quando uma obra nao tem nenhum relatorio, o servidor retorna erro 406 em vez de resultado vazio.
+Ao clicar em "Sair", a aplicacao navega para `/auth`, mas como o estado `user` so e limpo de forma assincrona (pelo listener `onAuthStateChange`), a pagina Auth.tsx ainda ve o utilizador como autenticado e redireciona de volta para `/dashboard`.
 
-Adicionalmente, existe uma referencia a uma coluna inexistente (`descricao_geral`) numa consulta do portal do cliente.
+### Correcao
 
-O erro `Cannot use 'import.meta' outside a module` vem de uma extensao do browser (frame_ant.js) e nao do codigo da aplicacao.
+**Ficheiro `src/contexts/AuthContext.tsx`** - Na funcao `signOut`, limpar imediatamente os estados `user` e `session` antes de chamar `supabase.auth.signOut()`:
 
-### Correcoes
+```typescript
+const signOut = async () => {
+  setUser(null);
+  setSession(null);
+  setProfile(null);
+  await supabase.auth.signOut();
+};
+```
 
-**1. Ficheiro `src/hooks/useRDOs.ts` (linha 94)**
-- Substituir `.single()` por `.maybeSingle()` na consulta do ultimo RDO por obra
-- `.maybeSingle()` retorna `null` quando nao ha resultados em vez de lancar erro 406
+Isto garante que quando o `navigate('/auth')` executa logo a seguir (no TopBar), o estado `user` ja esta `null` e a pagina Auth.tsx nao redireciona de volta para o dashboard.
 
-**2. Ficheiro `src/hooks/useObraAlerts.ts` (linha 57)**
-- Mesmo problema: substituir `.single()` por `.maybeSingle()`
+### Ficheiros alterados
+- `src/contexts/AuthContext.tsx` (1 alteracao na funcao signOut)
 
-**3. Ficheiro `src/hooks/useClientPortal.ts` (linha 68)**
-- Remover `descricao_geral` da lista de colunas selecionadas (esta coluna nao existe na tabela `relatorios_diarios`)
-- Substituir por `observacoes` que e a coluna correta
-
-### Resultado
-- Os erros 406 desaparecem do console
-- Obras sem relatorios diarios deixam de causar erros
-- O portal do cliente passa a carregar os relatorios corretamente
