@@ -41,7 +41,7 @@ export function CoefficientsEditor() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {(Object.entries(grouped) as [Specialty, typeof coefficients][]).map(([spec, items]) => (
         <Card key={spec}>
           <CardHeader>
