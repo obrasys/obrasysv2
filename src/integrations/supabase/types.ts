@@ -3686,6 +3686,7 @@ export type Database = {
         Returns: string
       }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
+      is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       sync_parametric_quantities: {
