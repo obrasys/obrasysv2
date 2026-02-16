@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isToday, isYesterday, parseISO, startOfWeek, isWithinInterval } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -26,9 +26,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
+import { useEngagement } from '@/hooks/useEngagement';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { RDOStatusBadge } from '@/components/rdos';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
+import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import type { ObraStatus } from '@/types/obras';
 
@@ -37,6 +39,12 @@ const Dashboard = () => {
   const { profile } = useAuth();
   const { obras, isLoading: loadingObras } = useObras();
   const { rdos, recentRDOs, obrasComRDO, isLoading: loadingRDOs } = useRDOs();
+  const { activeState, dismissMessage, markShown } = useEngagement();
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+
+  useEffect(() => {
+    if (activeState === 'B') setShowBudgetModal(true);
+  }, [activeState]);
 
   // Calculate KPIs
   const kpis = useMemo(() => {
@@ -116,15 +124,18 @@ const Dashboard = () => {
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Welcome message */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
-          <div>
-            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
-              Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}! 👋
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground">
-              {hasData 
-                ? 'Aqui está o resumo do acompanhamento das suas obras.'
-                : 'Bem-vindo ao ObraSys. Comece criando a sua primeira obra.'}
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
+                Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}! 👋
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground">
+                {hasData 
+                  ? 'Aqui está o resumo do acompanhamento das suas obras.'
+                  : 'Bem-vindo ao ObraSys. Comece criando a sua primeira obra.'}
+              </p>
+            </div>
+            {activeState === 'D' && <EngagementActiveBadge />}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/rdos/criar')}>
@@ -137,6 +148,21 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Engagement: State A - Banner to create first project */}
+        {activeState === 'A' && <EngagementBanner onDismiss={dismissMessage} />}
+
+        {/* Engagement: State B - Modal to create budget */}
+        <EngagementBudgetModal
+          open={showBudgetModal}
+          onClose={() => {
+            setShowBudgetModal(false);
+            dismissMessage();
+          }}
+        />
+
+        {/* Engagement: State C - Notification toast */}
+        {activeState === 'C' && <EngagementNotification onDismiss={dismissMessage} />}
 
         {/* Main KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
