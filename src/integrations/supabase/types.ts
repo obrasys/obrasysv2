@@ -3910,6 +3910,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_engagement_status: {
+        Row: {
+          created_at: string
+          has_created_budget: boolean
+          has_created_project: boolean
+          id: string
+          last_action_date: string | null
+          last_login_date: string | null
+          message_dismissed_until: string | null
+          message_last_shown: string | null
+          total_records_created: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          has_created_budget?: boolean
+          has_created_project?: boolean
+          id?: string
+          last_action_date?: string | null
+          last_login_date?: string | null
+          message_dismissed_until?: string | null
+          message_last_shown?: string | null
+          total_records_created?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          has_created_budget?: boolean
+          has_created_project?: boolean
+          id?: string
+          last_action_date?: string | null
+          last_login_date?: string | null
+          message_dismissed_until?: string | null
+          message_last_shown?: string | null
+          total_records_created?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_subscription: {
@@ -4002,6 +4044,10 @@ export type Database = {
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
+      refresh_engagement_status: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       sync_parametric_quantities: {
         Args: { p_element_id: string }
         Returns: undefined
