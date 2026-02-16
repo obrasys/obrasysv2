@@ -21,7 +21,7 @@ export function SpecialtyPage({ specialty }: Props) {
   const filtered = packages.filter(p => p.specialty === specialty);
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <PackageForm
         specialty={specialty}
         defaultObraId={defaultObraId}
