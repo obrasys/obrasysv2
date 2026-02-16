@@ -30,6 +30,12 @@ const Auth = () => {
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
   const navigate = useNavigate();
+
+  // Prefetch destinos pós-login enquanto o utilizador preenche o formulário
+  useEffect(() => {
+    import("./Dashboard");
+    import("./portal/Index");
+  }, []);
   const [searchParams] = useSearchParams();
   const { signIn, signUp, resetPassword, user, loading, profile } = useAuth();
   const { toast } = useToast();
