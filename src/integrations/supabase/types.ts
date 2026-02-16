@@ -2113,6 +2113,319 @@ export type Database = {
         }
         Relationships: []
       }
+      installations_catalog_items: {
+        Row: {
+          base_qty_type: string
+          cost_labor: number
+          cost_material: number
+          created_at: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          margin_percent: number
+          name: string
+          profile: string
+          specialty: string
+          unit: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          base_qty_type?: string
+          cost_labor?: number
+          cost_material?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          margin_percent?: number
+          name: string
+          profile?: string
+          specialty: string
+          unit?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          base_qty_type?: string
+          cost_labor?: number
+          cost_material?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          margin_percent?: number
+          name?: string
+          profile?: string
+          specialty?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      installations_coefficients: {
+        Row: {
+          coefficient_key: string
+          created_at: string
+          description: string | null
+          id: string
+          specialty: string
+          updated_at: string
+          user_id: string
+          value_numeric: number
+        }
+        Insert: {
+          coefficient_key: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          specialty: string
+          updated_at?: string
+          user_id: string
+          value_numeric: number
+        }
+        Update: {
+          coefficient_key?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          specialty?: string
+          updated_at?: string
+          user_id?: string
+          value_numeric?: number
+        }
+        Relationships: []
+      }
+      installations_links: {
+        Row: {
+          budget_id: string | null
+          budget_item_ids: Json | null
+          created_at: string
+          id: string
+          package_id: string
+          schedule_task_ids: Json | null
+          user_id: string
+        }
+        Insert: {
+          budget_id?: string | null
+          budget_item_ids?: Json | null
+          created_at?: string
+          id?: string
+          package_id: string
+          schedule_task_ids?: Json | null
+          user_id: string
+        }
+        Update: {
+          budget_id?: string | null
+          budget_item_ids?: Json | null
+          created_at?: string
+          id?: string
+          package_id?: string
+          schedule_task_ids?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installations_links_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installations_links_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "installations_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installations_logs: {
+        Row: {
+          action: string
+          created_at: string
+          field_changed: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          package_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          package_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          package_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installations_logs_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "installations_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installations_package_items: {
+        Row: {
+          catalog_item_id: string | null
+          created_at: string
+          id: string
+          manually_adjusted: boolean
+          margin_percent: number
+          name: string
+          package_id: string
+          qty: number
+          total_cost: number
+          unit: string
+          unit_cost_labor: number
+          unit_cost_material: number
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          manually_adjusted?: boolean
+          margin_percent?: number
+          name: string
+          package_id: string
+          qty?: number
+          total_cost?: number
+          unit?: string
+          unit_cost_labor?: number
+          unit_cost_material?: number
+        }
+        Update: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          manually_adjusted?: boolean
+          margin_percent?: number
+          name?: string
+          package_id?: string
+          qty?: number
+          total_cost?: number
+          unit?: string
+          unit_cost_labor?: number
+          unit_cost_material?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installations_package_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "installations_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installations_package_items_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "installations_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installations_packages: {
+        Row: {
+          area_m2: number
+          bathrooms: number
+          bedrooms: number
+          complexity: string
+          created_at: string
+          extra_rooms: number
+          has_laundry: boolean
+          id: string
+          kitchen_count: number
+          linear_m_estimated: number
+          linear_m_final: number | null
+          obra_id: string
+          points_estimated: number
+          points_final: number | null
+          profile: string
+          progress_percent: number
+          specialty: string
+          status: string
+          total_cost_estimated: number
+          typology: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area_m2?: number
+          bathrooms?: number
+          bedrooms?: number
+          complexity?: string
+          created_at?: string
+          extra_rooms?: number
+          has_laundry?: boolean
+          id?: string
+          kitchen_count?: number
+          linear_m_estimated?: number
+          linear_m_final?: number | null
+          obra_id: string
+          points_estimated?: number
+          points_final?: number | null
+          profile?: string
+          progress_percent?: number
+          specialty: string
+          status?: string
+          total_cost_estimated?: number
+          typology?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area_m2?: number
+          bathrooms?: number
+          bedrooms?: number
+          complexity?: string
+          created_at?: string
+          extra_rooms?: number
+          has_laundry?: boolean
+          id?: string
+          kitchen_count?: number
+          linear_m_estimated?: number
+          linear_m_final?: number | null
+          obra_id?: string
+          points_estimated?: number
+          points_final?: number | null
+          profile?: string
+          progress_percent?: number
+          specialty?: string
+          status?: string
+          total_cost_estimated?: number
+          typology?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installations_packages_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       livro_obra: {
         Row: {
           created_at: string
