@@ -27,6 +27,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useEngagement } from '@/hooks/useEngagement';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { OnboardingWelcomeModal, OnboardingChecklist, OnboardingCompletionModal, OnboardingInactiveReminder } from '@/components/onboarding';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { RDOStatusBadge } from '@/components/rdos';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
@@ -40,6 +42,11 @@ const Dashboard = () => {
   const { obras, isLoading: loadingObras } = useObras();
   const { rdos, recentRDOs, obrasComRDO, isLoading: loadingRDOs } = useRDOs();
   const { activeState, dismissMessage, markShown } = useEngagement();
+  const { 
+    progress: onboardingProgress, showWelcomeModal, showChecklist, 
+    showCompletionModal, setShowCompletionModal, showInactiveReminder,
+    dismissWelcome, dismissOnboarding, percentage: onboardingPercentage 
+  } = useOnboarding();
   const [showBudgetModal, setShowBudgetModal] = useState(false);
 
   useEffect(() => {
@@ -163,6 +170,34 @@ const Dashboard = () => {
 
         {/* Engagement: State C - Notification toast */}
         {activeState === 'C' && <EngagementNotification onDismiss={dismissMessage} />}
+
+        {/* Onboarding: Welcome Modal */}
+        <OnboardingWelcomeModal
+          open={showWelcomeModal}
+          onStart={() => dismissWelcome(false)}
+          onExplore={() => dismissWelcome(true)}
+        />
+
+        {/* Onboarding: Completion Modal */}
+        <OnboardingCompletionModal
+          open={showCompletionModal}
+          onClose={() => setShowCompletionModal(false)}
+        />
+
+        {/* Onboarding: Checklist */}
+        {showChecklist && onboardingProgress && (
+          <OnboardingChecklist
+            step1={onboardingProgress.step_1_completed}
+            step2={onboardingProgress.step_2_completed}
+            step3={onboardingProgress.step_3_completed}
+            step4={onboardingProgress.step_4_completed}
+            percentage={onboardingPercentage}
+            onDismiss={dismissOnboarding}
+          />
+        )}
+
+        {/* Onboarding: Inactive Reminder */}
+        {showInactiveReminder && <OnboardingInactiveReminder onDismiss={dismissOnboarding} />}
 
         {/* Main KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

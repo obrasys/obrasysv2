@@ -3952,6 +3952,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          first_login_done: boolean | null
+          id: string
+          onboarding_dismissed: boolean | null
+          step_1_completed: boolean | null
+          step_2_completed: boolean | null
+          step_3_completed: boolean | null
+          step_4_completed: boolean | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          first_login_done?: boolean | null
+          id?: string
+          onboarding_dismissed?: boolean | null
+          step_1_completed?: boolean | null
+          step_2_completed?: boolean | null
+          step_3_completed?: boolean | null
+          step_4_completed?: boolean | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          first_login_done?: boolean | null
+          id?: string
+          onboarding_dismissed?: boolean | null
+          step_1_completed?: boolean | null
+          step_2_completed?: boolean | null
+          step_3_completed?: boolean | null
+          step_4_completed?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_subscription: {
@@ -4045,6 +4084,10 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       refresh_engagement_status: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      sync_onboarding_progress: {
         Args: { p_user_id: string }
         Returns: undefined
       }
