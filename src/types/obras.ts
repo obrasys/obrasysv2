@@ -46,6 +46,7 @@ export interface ObraProgressTracking {
 export interface ObraFormData {
   nome: string;
   cliente?: string;
+  cliente_id?: string;
   endereco?: string;
   status?: ObraStatus;
   data_inicio?: string;

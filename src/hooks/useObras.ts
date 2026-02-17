@@ -58,6 +58,7 @@ export function useObras() {
           user_id: user.id,
           nome: formData.nome,
           cliente: formData.cliente || null,
+          cliente_id: formData.cliente_id || null,
           endereco: formData.endereco || null,
           status: formData.status || 'planeamento',
           data_inicio: formData.data_inicio || null,
@@ -94,6 +95,7 @@ export function useObras() {
         .update({
           nome: formData.nome,
           cliente: formData.cliente || null,
+          cliente_id: formData.cliente_id || null,
           endereco: formData.endereco || null,
           status: formData.status,
           data_inicio: formData.data_inicio || null,
