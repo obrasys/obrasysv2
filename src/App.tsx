@@ -53,6 +53,7 @@ import AdminUtilizadores from "./pages/admin/Utilizadores";
 import AdminFinanceiroGlobal from "./pages/admin/FinanceiroGlobal";
 import AdminAuditoria from "./pages/admin/Auditoria";
 import AdminTemplates from "./pages/admin/Templates";
+import AdminAnalytics from "./pages/admin/Analytics";
 import PlanosPage from "./pages/Planos";
 import SubscricaoPage from "./pages/Subscricao";
 import PesquisaPage from "./pages/Pesquisa";
@@ -143,6 +144,7 @@ const App = () => (
               <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
               <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
               <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
+              <Route path="/admin/analytics" element={<SuperAdminRoute><AdminAnalytics /></SuperAdminRoute>} />
               <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
               {/* Portal do Cliente */}
               <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
