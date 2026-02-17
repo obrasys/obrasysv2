@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
 import { Phone, Mail, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import type { Obra, ObraFormData } from '@/types/obras';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
 import { useClientes } from '@/hooks/useClientes';
@@ -45,10 +52,14 @@ interface ObraFormProps {
 }
 
 export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps) {
-  const { clientesAtivos } = useClientes();
+  const { clientesAtivos, createCliente } = useClientes();
   const [selectedClienteId, setSelectedClienteId] = useState<string | undefined>(
     (obra as any)?.cliente_id || undefined
   );
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
 
   const selectedCliente = clientesAtivos?.find(c => c.id === selectedClienteId);
 
@@ -75,11 +86,31 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
     }
   };
 
+  const handleCreateCliente = async () => {
+    if (!newClientName.trim()) return;
+    try {
+      const result = await createCliente.mutateAsync({
+        nome: newClientName.trim(),
+        email: newClientEmail.trim() || undefined,
+        telefone: newClientPhone.trim() || undefined,
+      } as any);
+      // Auto-select the newly created client
+      if (result?.id) {
+        handleClienteChange(result.id);
+      }
+      setShowNewClientDialog(false);
+      setNewClientName('');
+      setNewClientEmail('');
+      setNewClientPhone('');
+    } catch {}
+  };
+
   const handleSubmit = (data: ObraFormData) => {
     onSubmit(data);
   };
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
@@ -104,29 +135,46 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
               <FormItem>
                 <FormLabel>Cliente</FormLabel>
                 {clientesAtivos && clientesAtivos.length > 0 ? (
-                  <Select onValueChange={handleClienteChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar cliente" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="bg-background">
-                      {clientesAtivos.map((cliente) => (
-                        <SelectItem key={cliente.id} value={cliente.id}>
-                          {cliente.nome}{cliente.empresa ? ` (${cliente.empresa})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Select onValueChange={handleClienteChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-background">
+                          {clientesAtivos.map((cliente) => (
+                            <SelectItem key={cliente.id} value={cliente.id}>
+                              {cliente.nome}{cliente.empresa ? ` (${cliente.empresa})` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => setShowNewClientDialog(true)}
+                      title="Criar novo cliente"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2 pt-2">
-                    <Link
-                      to="/clientes/criar"
-                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowNewClientDialog(true)}
+                      className="gap-1.5"
                     >
                       <UserPlus className="h-4 w-4" />
                       Criar novo cliente
-                    </Link>
+                    </Button>
                   </div>
                 )}
                 <FormMessage />
@@ -258,5 +306,57 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
         </div>
       </form>
     </Form>
+
+    <Dialog open={showNewClientDialog} onOpenChange={setShowNewClientDialog}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Criar Novo Cliente</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="new-client-name">Nome *</Label>
+            <Input
+              id="new-client-name"
+              placeholder="Nome do cliente"
+              value={newClientName}
+              onChange={(e) => setNewClientName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-client-email">Email</Label>
+            <Input
+              id="new-client-email"
+              type="email"
+              placeholder="email@exemplo.com"
+              value={newClientEmail}
+              onChange={(e) => setNewClientEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-client-phone">Telefone</Label>
+            <Input
+              id="new-client-phone"
+              type="tel"
+              placeholder="+351 000 000 000"
+              value={newClientPhone}
+              onChange={(e) => setNewClientPhone(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setShowNewClientDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateCliente}
+              disabled={!newClientName.trim() || createCliente.isPending}
+            >
+              {createCliente.isPending ? 'A criar...' : 'Criar Cliente'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
