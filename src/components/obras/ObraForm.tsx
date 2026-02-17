@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
+import { Phone, Mail, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,9 +24,11 @@ import {
 } from '@/components/ui/select';
 import type { Obra, ObraFormData } from '@/types/obras';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
+import { useClientes } from '@/hooks/useClientes';
 
 const formSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
+  cliente_id: z.string().optional(),
   cliente: z.string().optional(),
   endereco: z.string().optional(),
   status: z.string().optional(),
@@ -40,10 +45,18 @@ interface ObraFormProps {
 }
 
 export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps) {
+  const { clientesAtivos } = useClientes();
+  const [selectedClienteId, setSelectedClienteId] = useState<string | undefined>(
+    (obra as any)?.cliente_id || undefined
+  );
+
+  const selectedCliente = clientesAtivos?.find(c => c.id === selectedClienteId);
+
   const form = useForm<ObraFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: obra?.nome || '',
+      cliente_id: (obra as any)?.cliente_id || '',
       cliente: obra?.cliente || '',
       endereco: obra?.endereco || '',
       status: obra?.status || 'planeamento',
@@ -52,6 +65,15 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
       valor_previsto: obra?.valor_previsto || 0,
     },
   });
+
+  const handleClienteChange = (clienteId: string) => {
+    setSelectedClienteId(clienteId);
+    const cliente = clientesAtivos?.find(c => c.id === clienteId);
+    if (cliente) {
+      form.setValue('cliente_id', clienteId);
+      form.setValue('cliente', cliente.nome);
+    }
+  };
 
   const handleSubmit = (data: ObraFormData) => {
     onSubmit(data);
@@ -77,13 +99,36 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
-            name="cliente"
+            name="cliente_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cliente</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome do cliente" {...field} />
-                </FormControl>
+                {clientesAtivos && clientesAtivos.length > 0 ? (
+                  <Select onValueChange={handleClienteChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar cliente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-background">
+                      {clientesAtivos.map((cliente) => (
+                        <SelectItem key={cliente.id} value={cliente.id}>
+                          {cliente.nome}{cliente.empresa ? ` (${cliente.empresa})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center gap-2 pt-2">
+                    <Link
+                      to="/clientes/criar"
+                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Criar novo cliente
+                    </Link>
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -114,6 +159,25 @@ export function ObraForm({ obra, onSubmit, onCancel, isLoading }: ObraFormProps)
             )}
           />
         </div>
+
+        {selectedCliente && (
+          <div className="grid gap-4 sm:grid-cols-2 rounded-lg border border-border bg-muted/50 p-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Telefone:</span>
+              <span className="font-medium">
+                {selectedCliente.telefone || selectedCliente.telemovel || '—'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Email:</span>
+              <span className="font-medium">
+                {selectedCliente.email || '—'}
+              </span>
+            </div>
+          </div>
+        )}
 
         <FormField
           control={form.control}
