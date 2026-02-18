@@ -15,8 +15,9 @@ serve(async (req) => {
   try {
     const { token, nota, comentario } = await req.json();
 
-    // Input validation
-    if (!token || typeof token !== "string" || token.length > 500) {
+    // Input validation - token must be a valid UUID
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!token || typeof token !== "string" || !UUID_REGEX.test(token)) {
       return new Response(
         JSON.stringify({ error: "Token inválido." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -37,61 +38,53 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check if token already used
-    const { data: existing } = await supabaseAdmin
-      .from("feedback_pesquisa")
-      .select("id, trial_extendido")
-      .eq("token", token)
+    // SECURITY: Validate the token against the survey_tokens table (UUID-based, not base64 encoded)
+    // This prevents token forgery since tokens are generated server-side and stored securely.
+    const { data: surveyToken, error: tokenError } = await supabaseAdmin
+      .from("survey_tokens")
+      .select("id, user_id, email, used, expires_at")
+      .eq("id", token)
       .maybeSingle();
 
-    if (existing) {
+    if (tokenError || !surveyToken) {
+      return new Response(
+        JSON.stringify({ error: "Token inválido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check token not already used
+    if (surveyToken.used) {
       return new Response(
         JSON.stringify({ error: "Esta pesquisa já foi respondida.", already_submitted: true }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Decode token to get user info (token = base64(userId:email))
-    let userId: string | null = null;
-    let email = "";
-    let nome: string | null = null;
-
-    try {
-      const decoded = atob(token);
-      const parts = decoded.split(":");
-      userId = parts[0] || null;
-      email = parts[1] || "";
-    } catch {
+    // Check token not expired
+    if (new Date(surveyToken.expires_at) < new Date()) {
       return new Response(
-        JSON.stringify({ error: "Token inválido." }),
+        JSON.stringify({ error: "Token expirado." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // SECURITY: Verify that the userId actually exists and email matches
-    if (userId) {
-      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(userId);
-      
-      if (authError || !authUser?.user) {
-        return new Response(
-          JSON.stringify({ error: "Token inválido." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    // Check if feedback already submitted for this user/token
+    const { data: existingFeedback } = await supabaseAdmin
+      .from("feedback_pesquisa")
+      .select("id")
+      .eq("token", token)
+      .maybeSingle();
 
-      // Verify email matches the token
-      if (authUser.user.email !== email) {
-        return new Response(
-          JSON.stringify({ error: "Token inválido." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else {
+    if (existingFeedback) {
       return new Response(
-        JSON.stringify({ error: "Token inválido." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Esta pesquisa já foi respondida.", already_submitted: true }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const userId = surveyToken.user_id;
+    const email = surveyToken.email;
 
     // Get user name from profile
     const { data: profile } = await supabaseAdmin
@@ -99,7 +92,22 @@ serve(async (req) => {
       .select("nome")
       .eq("user_id", userId)
       .maybeSingle();
-    nome = profile?.nome || null;
+    const nome = profile?.nome || null;
+
+    // Mark token as used atomically before inserting feedback
+    const { error: markUsedError } = await supabaseAdmin
+      .from("survey_tokens")
+      .update({ used: true })
+      .eq("id", token)
+      .eq("used", false); // Only update if still unused (prevents race conditions)
+
+    if (markUsedError) {
+      console.error("Failed to mark token as used:", markUsedError);
+      return new Response(
+        JSON.stringify({ error: "Ocorreu um erro ao processar o pedido." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Insert feedback
     const { error: insertError } = await supabaseAdmin

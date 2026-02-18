@@ -28,11 +28,18 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    
+
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    
+
+    // SECURITY: Always require webhook signature verification.
+    // Never accept unsigned webhook events.
+    if (!webhookSecret) {
+      logStep("ERROR: STRIPE_WEBHOOK_SECRET is not configured - rejecting request");
+      throw new Error("STRIPE_WEBHOOK_SECRET must be configured. Unsigned webhook events are not accepted.");
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -42,34 +49,29 @@ serve(async (req) => {
     const body = await req.text();
     let event: Stripe.Event;
 
-    // Verify webhook signature if secret is set
-    if (webhookSecret) {
-      const signature = req.headers.get("stripe-signature");
-      if (!signature) throw new Error("No stripe-signature header");
-      
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      logStep("Webhook signature verified");
-    } else {
-      event = JSON.parse(body) as Stripe.Event;
-      logStep("Webhook received without signature verification (dev mode)");
-    }
+    // Always verify webhook signature
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) throw new Error("No stripe-signature header");
+
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    logStep("Webhook signature verified");
 
     logStep("Processing event", { type: event.type });
 
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        logStep("Checkout session completed", { 
-          sessionId: session.id, 
+        logStep("Checkout session completed", {
+          sessionId: session.id,
           customerId: session.customer,
-          email: session.customer_email 
+          email: session.customer_email
         });
 
         if (session.mode === "subscription" && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
           const customerId = session.customer as string;
           const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-          
+
           const productId = subscription.items.data[0].price.product as string;
           const tier = PRODUCT_TIERS[productId] || "starter";
           const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
@@ -102,14 +104,14 @@ serve(async (req) => {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        logStep("Subscription updated", { 
-          subscriptionId: subscription.id, 
-          status: subscription.status 
+        logStep("Subscription updated", {
+          subscriptionId: subscription.id,
+          status: subscription.status
         });
 
         const customerId = subscription.customer as string;
         const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-        
+
         const productId = subscription.items.data[0].price.product as string;
         const tier = PRODUCT_TIERS[productId] || "starter";
         const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
