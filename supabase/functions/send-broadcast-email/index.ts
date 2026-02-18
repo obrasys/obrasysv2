@@ -90,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const logoUrl = `${supabaseUrl}/storage/v1/object/public/brand-assets/logo.png`;
     const ano = new Date().getFullYear().toString();
 
-    // Pre-fetch profiles for personalization (nome + user_id for survey tokens)
+    // Pre-fetch profiles for personalization
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { data: profiles } = await adminClient
       .from("profiles")
@@ -104,15 +104,41 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // SECURITY: Generate cryptographically secure UUID tokens and store them in the DB
+    // instead of using predictable base64(userId:email) encoding.
+    // Tokens expire in 90 days and can only be used once.
+    const tokenInserts: Array<{ id: string; user_id: string; email: string }> = [];
+    const emailTokenMap = new Map<string, string>();
+
+    for (const email of to) {
+      const profile = profileMap.get(email.toLowerCase());
+      if (profile?.user_id) {
+        const tokenId = crypto.randomUUID();
+        tokenInserts.push({ id: tokenId, user_id: profile.user_id, email: email.toLowerCase() });
+        emailTokenMap.set(email.toLowerCase(), tokenId);
+      }
+    }
+
+    // Bulk insert tokens into survey_tokens table
+    if (tokenInserts.length > 0) {
+      const { error: tokenErr } = await adminClient
+        .from("survey_tokens")
+        .insert(tokenInserts);
+      if (tokenErr) {
+        console.error("Failed to insert survey tokens:", tokenErr);
+      }
+    }
+
     const results = await Promise.all(
       to.map(async (email) => {
         const profile = profileMap.get(email.toLowerCase());
         const nome = profile?.nome || email.split("@")[0];
-        const userId = profile?.user_id || "";
 
-        // Generate survey token: base64(userId:email)
-        const surveyToken = btoa(`${userId}:${email}`);
-        const pesquisaUrl = `${appUrl}/pesquisa?token=${encodeURIComponent(surveyToken)}`;
+        // Use the secure UUID token; fall back to no survey link if no token exists
+        const tokenId = emailTokenMap.get(email.toLowerCase());
+        const pesquisaUrl = tokenId
+          ? `${appUrl}/pesquisa?token=${encodeURIComponent(tokenId)}`
+          : `${appUrl}/pesquisa`;
 
         const htmlContent = replaceVariables(html, {
           "{{email}}": email,
