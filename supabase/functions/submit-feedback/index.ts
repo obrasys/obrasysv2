@@ -15,12 +15,22 @@ serve(async (req) => {
   try {
     const { token, nota, comentario } = await req.json();
 
-    if (!token || !nota || nota < 1 || nota > 5) {
+    // Input validation
+    if (!token || typeof token !== "string" || token.length > 500) {
+      return new Response(
+        JSON.stringify({ error: "Token inválido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!nota || typeof nota !== "number" || nota < 1 || nota > 5 || !Number.isInteger(nota)) {
       return new Response(
         JSON.stringify({ error: "Token e nota (1-5) são obrigatórios." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const sanitizedComentario = typeof comentario === "string" ? comentario.trim().slice(0, 2000) : null;
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -58,15 +68,38 @@ serve(async (req) => {
       );
     }
 
-    // Get user name from profile
+    // SECURITY: Verify that the userId actually exists and email matches
     if (userId) {
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("nome")
-        .eq("user_id", userId)
-        .maybeSingle();
-      nome = profile?.nome || null;
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      
+      if (authError || !authUser?.user) {
+        return new Response(
+          JSON.stringify({ error: "Token inválido." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify email matches the token
+      if (authUser.user.email !== email) {
+        return new Response(
+          JSON.stringify({ error: "Token inválido." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      return new Response(
+        JSON.stringify({ error: "Token inválido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    // Get user name from profile
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("nome")
+      .eq("user_id", userId)
+      .maybeSingle();
+    nome = profile?.nome || null;
 
     // Insert feedback
     const { error: insertError } = await supabaseAdmin
@@ -76,7 +109,7 @@ serve(async (req) => {
         email,
         nome,
         nota,
-        comentario: comentario?.trim() || null,
+        comentario: sanitizedComentario || null,
         token,
         trial_extendido: false,
       });
@@ -85,34 +118,31 @@ serve(async (req) => {
 
     // Extend trial by 30 days
     let trialExtended = false;
-    if (userId) {
-      const { data: profile } = await supabaseAdmin
+    const { data: userProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("trial_end")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (userProfile) {
+      const currentEnd = new Date(userProfile.trial_end);
+      const newEnd = new Date(currentEnd.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const { error: updateError } = await supabaseAdmin
         .from("profiles")
-        .select("trial_end")
-        .eq("user_id", userId)
-        .maybeSingle();
+        .update({
+          trial_end: newEnd.toISOString(),
+          trial_expired: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
 
-      if (profile) {
-        const currentEnd = new Date(profile.trial_end);
-        const newEnd = new Date(currentEnd.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-        const { error: updateError } = await supabaseAdmin
-          .from("profiles")
-          .update({
-            trial_end: newEnd.toISOString(),
-            trial_expired: false,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", userId);
-
-        if (!updateError) {
-          trialExtended = true;
-          // Mark feedback as trial extended
-          await supabaseAdmin
-            .from("feedback_pesquisa")
-            .update({ trial_extendido: true })
-            .eq("token", token);
-        }
+      if (!updateError) {
+        trialExtended = true;
+        await supabaseAdmin
+          .from("feedback_pesquisa")
+          .update({ trial_extendido: true })
+          .eq("token", token);
       }
     }
 
@@ -123,7 +153,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in submit-feedback:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Ocorreu um erro ao processar o pedido." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

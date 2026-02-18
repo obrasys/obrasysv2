@@ -3695,6 +3695,30 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tarefas: {
         Row: {
           categoria: string | null
@@ -4103,6 +4127,7 @@ export type Database = {
           message: string
         }[]
       }
+      validate_formula: { Args: { p_formula: string }; Returns: boolean }
     }
     Enums: {
       regime_fiscal_tipo: "normal" | "reduzido" | "autoliquidacao" | "isento"
