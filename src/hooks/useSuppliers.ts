@@ -509,6 +509,106 @@ export function useCreateQuoteResponse() {
   });
 }
 
+// ─── Supplier Reviews ─────────────────────────────────────────────────────────
+
+export interface SupplierReview {
+  id: string;
+  supplier_id: string;
+  reviewer_id: string;
+  quote_request_id: string | null;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Fetch all reviews for a given supplier (for the drawer). */
+export function useSupplierReviews(supplierId: string | undefined) {
+  return useQuery({
+    queryKey: ['supplier-reviews', supplierId],
+    queryFn: async () => {
+      if (!supplierId) return [];
+      const { data, error } = await supabase
+        .from('supplier_reviews')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as SupplierReview[];
+    },
+    enabled: !!supplierId,
+  });
+}
+
+/** Fetch the current user's review for a specific supplier (to allow editing). */
+export function useMySupplierReview(supplierId: string | undefined) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['my-supplier-review', supplierId, user?.id],
+    queryFn: async () => {
+      if (!supplierId || !user?.id) return null;
+      const { data } = await supabase
+        .from('supplier_reviews')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .eq('reviewer_id', user.id)
+        .maybeSingle();
+      return data as SupplierReview | null;
+    },
+    enabled: !!supplierId && !!user?.id,
+  });
+}
+
+/** Submit (insert or update) a review for a supplier. */
+export function useSubmitSupplierReview() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      supplierId,
+      quoteRequestId,
+      rating,
+      comment,
+    }: {
+      supplierId: string;
+      quoteRequestId?: string;
+      rating: number;
+      comment?: string;
+    }) => {
+      if (!user?.id) throw new Error('Não autenticado');
+
+      const payload = {
+        supplier_id: supplierId,
+        reviewer_id: user.id,
+        quote_request_id: quoteRequestId || null,
+        rating,
+        comment: comment?.trim() || null,
+      };
+
+      // Upsert: if builder already reviewed this supplier, update it
+      const { data, error } = await supabase
+        .from('supplier_reviews')
+        .upsert(payload, { onConflict: 'supplier_id,reviewer_id' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as SupplierReview;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['supplier-reviews', data.supplier_id] });
+      queryClient.invalidateQueries({ queryKey: ['my-supplier-review', data.supplier_id] });
+      queryClient.invalidateQueries({ queryKey: ['discover-suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['available-suppliers'] });
+      toast({ title: 'Avaliação submetida!', description: 'Obrigado pelo seu feedback.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao submeter avaliação', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 // ─── Supplier Discovery (for builders) ───────────────────────────────────────
 
 export interface DiscoverSuppliersFilters {

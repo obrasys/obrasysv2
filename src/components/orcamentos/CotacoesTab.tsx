@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuoteRequests, useCreateQuoteRequest, useAvailableSuppliers, useSupplierCategories } from '@/hooks/useSuppliers';
+import { SupplierReviewDialog } from '@/components/fornecedor/SupplierReviewDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck } from 'lucide-react';
+import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -44,6 +45,7 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
   const [message, setMessage] = useState('');
+  const [reviewTarget, setReviewTarget] = useState<{ supplierId: string; supplierName: string; quoteRequestId: string } | null>(null);
 
   const { data: availableSuppliers = [] } = useAvailableSuppliers(selectedCategories);
 
@@ -128,6 +130,7 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
                             <TableHead className="text-right">Total</TableHead>
                             <TableHead className="text-right">Prazo</TableHead>
                             <TableHead>Observações</TableHead>
+                            <TableHead></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -142,6 +145,21 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
                               <TableCell className="text-right font-semibold">€{Number(resp.total_amount).toFixed(2)}</TableCell>
                               <TableCell className="text-right">{resp.estimated_delivery_days ? `${resp.estimated_delivery_days}d` : '—'}</TableCell>
                               <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{resp.notes || '—'}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 text-xs"
+                                  onClick={() => setReviewTarget({
+                                    supplierId: resp.supplier_id,
+                                    supplierName: resp.supplier_profiles?.trade_name || resp.supplier_profiles?.legal_name || 'Fornecedor',
+                                    quoteRequestId: qr.id,
+                                  })}
+                                >
+                                  <Star className="h-3 w-3" />
+                                  Avaliar
+                                </Button>
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -221,6 +239,16 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {reviewTarget && (
+        <SupplierReviewDialog
+          open={!!reviewTarget}
+          onOpenChange={(v) => !v && setReviewTarget(null)}
+          supplierId={reviewTarget.supplierId}
+          supplierName={reviewTarget.supplierName}
+          quoteRequestId={reviewTarget.quoteRequestId}
+        />
+      )}
     </div>
   );
 }

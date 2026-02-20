@@ -4,7 +4,10 @@ import {
   useDiscoverSuppliers,
   useSupplierCategories,
   useCreateQuoteRequest,
+  useSupplierReviews,
+  useMySupplierReview,
 } from "@/hooks/useSuppliers";
+import { SupplierReviewDialog } from "@/components/fornecedor/SupplierReviewDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +50,8 @@ import {
   Phone,
   Building2,
   Send,
+  MessageSquare,
+  PenSquare,
 } from "lucide-react";
 import type { SupplierProfile } from "@/types/suppliers";
 
@@ -207,9 +212,41 @@ interface SupplierDrawerProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onRequestQuote: (s: SupplierProfile) => void;
+  onReview: (s: SupplierProfile) => void;
 }
 
-function SupplierDrawer({ supplier, open, onOpenChange, onRequestQuote }: SupplierDrawerProps) {
+function ReviewsSection({ supplierId }: { supplierId: string }) {
+  const { data: reviews = [], isLoading } = useSupplierReviews(supplierId);
+  if (isLoading) return <Skeleton className="h-16 w-full" />;
+  if (reviews.length === 0)
+    return <p className="text-sm text-muted-foreground italic">Ainda sem avaliações.</p>;
+
+  return (
+    <div className="space-y-3">
+      {reviews.map((r) => (
+        <div key={r.id} className="rounded-lg border bg-muted/30 p-3 space-y-1">
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star
+                key={i}
+                className={`w-3.5 h-3.5 ${i <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`}
+              />
+            ))}
+          </div>
+          {r.comment && (
+            <p className="text-sm text-foreground">{r.comment}</p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {new Date(r.created_at).toLocaleDateString("pt-PT")}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SupplierDrawer({ supplier, open, onOpenChange, onRequestQuote, onReview }: SupplierDrawerProps) {
+  const { data: myReview } = useMySupplierReview(supplier?.id);
   if (!supplier) return null;
   const catLinks = (supplier as any).supplier_category_link as Array<{ supplier_categories: { name: string } }> | undefined;
 
@@ -323,16 +360,41 @@ function SupplierDrawer({ supplier, open, onOpenChange, onRequestQuote }: Suppli
 
           <Separator />
 
-          <Button
-            className="w-full"
-            onClick={() => {
-              onOpenChange(false);
-              onRequestQuote(supplier);
-            }}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            Solicitar Cotação
-          </Button>
+          {/* Reviews */}
+          <div>
+            <p className="text-sm font-medium mb-3 flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4" />
+              Avaliações
+            </p>
+            <ReviewsSection supplierId={supplier.id} />
+          </div>
+
+          <Separator />
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2">
+            <Button
+              className="w-full"
+              onClick={() => {
+                onOpenChange(false);
+                onRequestQuote(supplier);
+              }}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Solicitar Cotação
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                onOpenChange(false);
+                onReview(supplier);
+              }}
+            >
+              <PenSquare className="w-4 h-4 mr-2" />
+              {myReview ? "Editar avaliação" : "Avaliar fornecedor"}
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -428,6 +490,7 @@ export default function RedeFornecedoresPage() {
   const [certifiedOnly, setCertifiedOnly] = useState(false);
   const [drawerSupplier, setDrawerSupplier] = useState<SupplierProfile | null>(null);
   const [quoteSupplier, setQuoteSupplier] = useState<SupplierProfile | null>(null);
+  const [reviewSupplier, setReviewSupplier] = useState<SupplierProfile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: categories = [] } = useSupplierCategories();
@@ -646,6 +709,7 @@ export default function RedeFornecedoresPage() {
         open={!!drawerSupplier}
         onOpenChange={(v) => !v && setDrawerSupplier(null)}
         onRequestQuote={setQuoteSupplier}
+        onReview={setReviewSupplier}
       />
 
       <QuoteDialog
@@ -653,6 +717,15 @@ export default function RedeFornecedoresPage() {
         open={!!quoteSupplier}
         onOpenChange={(v) => !v && setQuoteSupplier(null)}
       />
+
+      {reviewSupplier && (
+        <SupplierReviewDialog
+          open={!!reviewSupplier}
+          onOpenChange={(v) => !v && setReviewSupplier(null)}
+          supplierId={reviewSupplier.id}
+          supplierName={reviewSupplier.trade_name || reviewSupplier.legal_name}
+        />
+      )}
     </AppLayout>
   );
 }
