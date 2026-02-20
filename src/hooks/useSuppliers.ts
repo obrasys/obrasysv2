@@ -511,6 +511,60 @@ export function useCreateQuoteResponse() {
 
 // ─── Supplier Discovery (for builders) ───────────────────────────────────────
 
+export interface DiscoverSuppliersFilters {
+  search?: string;
+  district?: string;
+  categoryIds?: string[];
+  certifiedOnly?: boolean;
+}
+
+export function useDiscoverSuppliers(filters: DiscoverSuppliersFilters = {}) {
+  const { search = '', district = '', categoryIds = [], certifiedOnly = false } = filters;
+  return useQuery({
+    queryKey: ['discover-suppliers', search, district, categoryIds, certifiedOnly],
+    queryFn: async () => {
+      let supplierIds: string[] | null = null;
+
+      // Filter by category via join table
+      if (categoryIds.length > 0) {
+        const { data: links } = await supabase
+          .from('supplier_category_link')
+          .select('supplier_id')
+          .in('category_id', categoryIds);
+        supplierIds = [...new Set(links?.map((l) => l.supplier_id) || [])];
+        if (supplierIds.length === 0) return [];
+      }
+
+      let q = supabase
+        .from('supplier_profiles')
+        .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+        .eq('status', 'active')
+        .order('is_certified', { ascending: false })
+        .order('rating_avg', { ascending: false });
+
+      if (district) q = q.eq('location_district', district);
+      if (certifiedOnly) q = q.eq('is_certified', true);
+      if (supplierIds) q = q.in('id', supplierIds);
+
+      const { data, error } = await q;
+      if (error) throw error;
+
+      // Client-side search by name
+      let result = (data as SupplierProfile[]) || [];
+      if (search.trim()) {
+        const s = search.toLowerCase();
+        result = result.filter(
+          (p) =>
+            p.legal_name?.toLowerCase().includes(s) ||
+            p.trade_name?.toLowerCase().includes(s)
+        );
+      }
+      return result;
+    },
+    enabled: true,
+  });
+}
+
 export function useAvailableSuppliers(categoryIds: string[]) {
   return useQuery({
     queryKey: ['available-suppliers', categoryIds],
