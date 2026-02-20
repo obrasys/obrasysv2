@@ -1,263 +1,136 @@
 
-# Módulo "Rede de Fornecedores Certificados" — Plano de Implementação
+## Página de Descoberta de Fornecedores (`/rede-fornecedores`)
 
-## Avaliação de Escopo
-
-Este é um dos módulos mais complexos e extensos possíveis num SaaS. A especificação completa representa facilmente 4–8 semanas de desenvolvimento. O plano abaixo organiza o trabalho num **MVP robusto e funcional**, implementado em fases claras, sem quebrar o sistema existente.
-
-**Restrição técnica importante:** O Lovable é uma aplicação React single-page (SPA) num único domínio. Subdomínios diferentes (`fornecedores.obrasys.pt`) não são roteáveis internamente — a solução é criar rotas dedicadas em `/fornecedor/*` dentro da mesma aplicação, que é o padrão correto para SPAs. O redirecionamento por role ao login garante a separação da experiência.
+### Objetivo
+Criar uma página completa acessível a construtores (ManagerRoute) em `/rede-fornecedores` onde podem pesquisar, filtrar e explorar o diretório de fornecedores certificados por categoria, distrito e nome.
 
 ---
 
-## Arquitetura Geral
+### O que já existe (reutilizar)
+
+- **Hook `useAvailableSuppliers(categoryIds)`** em `src/hooks/useSuppliers.ts` — faz query de `supplier_profiles` com join de categorias, filtrando por `status = 'active'`. Requer extensão para filtro por distrito.
+- **Hook `useSupplierCategories()`** — retorna as 15 categorias seed.
+- **RLS policy `supplier_profiles_builders_select`** — já permite que utilizadores autenticados vejam perfis com `status = 'active'`. Nenhuma alteração de base de dados necessária.
+- **Tipo `SupplierProfile`** em `src/types/suppliers.ts` — inclui `location_district`, `rating_avg`, `is_certified`, `sla_response_hours`, etc.
+- **Navegação**: `src/config/navigation.ts` tem `MAIN_NAV_ITEMS` onde será adicionada a entrada.
+- **Routing**: `src/App.tsx` receberá a nova rota.
+
+---
+
+### Arquitetura das Alterações
 
 ```text
-Mesma App (obrasys.pt)
-├── /auth                    → login construtor (existente)
-├── /fornecedor/auth         → login fornecedor (novo)
-├── /fornecedor/dashboard    → portal fornecedor (novo)
-├── /fornecedor/pedidos      → lista de pedidos de cotação
-├── /fornecedor/pedidos/:id  → detalhe + resposta
-├── /fornecedor/precos       → base de preços (pricebooks)
-├── /fornecedor/perfil       → perfil do fornecedor
-├── /dashboard               → construtor (existente)
-├── /orcamentos/:id          → Ver Orçamento (com aba Cotações adicionada)
-└── /admin                   → admin (existente, + gestão de convites)
-```
-
-Auth Único (mesmo Supabase). O redirecionamento por role no login determina o destino.
-
----
-
-## Base de Dados — Tabelas Novas
-
-### 1. Enums e Categorias
-
-```sql
-CREATE TYPE supplier_status AS ENUM ('pending', 'active', 'suspended');
-CREATE TYPE quote_request_status AS ENUM ('open', 'sent', 'in_review', 'closed', 'cancelled');
-CREATE TYPE quote_supplier_status AS ENUM ('invited', 'viewed', 'responded', 'declined', 'expired');
-CREATE TYPE quote_response_status AS ENUM ('sent', 'accepted', 'rejected', 'withdrawn');
-CREATE TYPE pricebook_status AS ENUM ('draft', 'published', 'archived');
-```
-
-### 2. Tabelas (11 novas)
-
-| Tabela | Propósito |
-|---|---|
-| `supplier_categories` | Catálogo de categorias (seed incluído) |
-| `supplier_profiles` | Perfil estendido do fornecedor |
-| `supplier_category_link` | Relação N:N fornecedor ↔ categoria |
-| `supplier_pricebooks` | Tabelas de preços do fornecedor |
-| `supplier_pricebook_items` | Itens individuais de cada tabela |
-| `quote_requests` | Pedido de cotação criado pelo construtor |
-| `quote_request_categories` | Categorias de cada pedido |
-| `quote_request_suppliers` | Fornecedores convidados por pedido |
-| `quote_responses` | Resposta do fornecedor ao pedido |
-| `quote_response_items` | Itens linha da resposta |
-| `supplier_invites` | Convites controlados pelo admin |
-
-### 3. Extensão da tabela `profiles` existente
-
-Adicionar colunas: `supplier_role` (separado do `role` existente para não quebrar o sistema), usando um campo booleano `is_supplier` + status. **O campo `role` existente não é alterado** — apenas adicionamos lógica para o novo role `supplier` no enum.
-
-**Decisão de segurança:** O `role` atual já suporta 'admin', 'gestor', 'fiscal', 'cliente', 'financeiro', 'sales'. Adicionaremos `'supplier'` ao enum da coluna `role` da tabela `profiles`.
-
----
-
-## RLS — Políticas de Segurança
-
-### Por tabela:
-
-**`supplier_profiles`**
-- SELECT: próprio fornecedor (`user_id = auth.uid()`) + construtores (authenticated, campos limitados via view)
-- INSERT/UPDATE/DELETE: apenas próprio (`user_id = auth.uid()`)
-
-**`supplier_pricebooks` + `supplier_pricebook_items`**
-- CRUD: apenas próprio fornecedor
-
-**`quote_requests`**
-- INSERT/UPDATE/SELECT: apenas o builder que criou (`builder_user_id = auth.uid()`)
-
-**`quote_request_suppliers`**
-- SELECT builder: `quote_request_id` pertence ao seu `quote_request`
-- SELECT supplier: `supplier_id` = o seu `supplier_profile.id`
-- UPDATE supplier: apenas o seu registo (viewed_at, responded_at, status)
-
-**`quote_responses` + `quote_response_items`**
-- INSERT/UPDATE supplier: apenas responses onde `supplier_id` é o seu
-- SELECT builder: apenas responses de `quote_request_id` que pertence a ele
-- SELECT supplier: apenas as próprias
-
-**`supplier_invites`**
-- INSERT: super_admin apenas
-- SELECT: super_admin ou o próprio email
-
----
-
-## Componentes Frontend — O Que Será Criado
-
-### A) Novos tipos TypeScript
-- `src/types/suppliers.ts` — todos os tipos do módulo
-
-### B) Novo hook
-- `src/hooks/useSuppliers.ts` — queries e mutations para o módulo
-
-### C) Componentes do Portal Fornecedor (`src/components/fornecedor/`)
-- `SupplierLayout.tsx` — layout tipo `ClientPortalLayout` mas para fornecedores
-- `SupplierRoute.tsx` — guard de rota para role `supplier`
-- `SupplierDashboard.tsx` — visão geral com KPIs
-- `SupplierPedidoCard.tsx` — card de pedido recebido
-- `SupplierPricebookTable.tsx` — tabela editável de preços
-- `SupplierPerfilForm.tsx` — formulário de perfil
-
-### D) Páginas do Portal Fornecedor (`src/pages/fornecedor/`)
-- `Auth.tsx` — login com marca ObraSys + label "Fornecedor"
-- `Dashboard.tsx` — dashboard
-- `Pedidos.tsx` — lista de pedidos
-- `PedidoDetalhe.tsx` — detalhe + resposta
-- `Precos.tsx` — base de preços
-- `Perfil.tsx` — perfil
-- `PendingApproval.tsx` — ecrã "conta em validação"
-
-### E) Integração no Orçamento Existente (`src/pages/orcamentos/Ver.tsx`)
-- Adição de uma aba "Cotações" no orçamento (não altera o layout existente)
-- `src/components/orcamentos/CotacoesTab.tsx` — nova componente com:
-  - Botão "Solicitar Cotação"
-  - Dialog de criação de pedido (categorias, prazo, mensagem)
-  - Status dos pedidos enviados
-  - Tabela comparativa de respostas
-  - Botão "Aplicar ao Orçamento" (mapeamento de itens)
-
-### F) Integração no Admin (`src/pages/admin/`)
-- Adição de menu "Fornecedores" no painel admin
-- `src/pages/admin/Fornecedores.tsx` — gestão de convites + certificação
-
-### G) Edge Function
-- `supabase/functions/notify-supplier/index.ts` — email ao fornecedor quando recebe pedido (via Resend, já configurado)
-
----
-
-## Seed de Categorias
-
-```sql
-INSERT INTO supplier_categories (name, slug) VALUES
-  ('Cerâmica e Pavimentos', 'ceramica-pavimentos'),
-  ('Materiais de Construção', 'materiais-construcao'),
-  ('Aço e Ferro', 'aco-ferro'),
-  ('Betão e Pré-fabricados', 'betao-prefabricados'),
-  ('Canalização e Águas', 'canalizacao-aguas'),
-  ('Elétrica e Energias', 'eletrica-energias'),
-  ('Pintura e Acabamentos', 'pintura-acabamentos'),
-  ('Carpintaria e Madeiras', 'carpintaria-madeiras'),
-  ('Alumínios e Vidros', 'aluminios-vidros'),
-  ('Gesso Cartonado', 'gesso-cartonado'),
-  ('Telecomunicações / ITED', 'telecom-ited'),
-  ('Isolamentos e Impermeabilizações', 'isolamentos'),
-  ('Equipamentos e Ferramentas', 'equipamentos-ferramentas'),
-  ('Serralharia', 'serralharia'),
-  ('Pré-fabricados e Módulos', 'prefabricados-modulos');
+src/
+├── hooks/useSuppliers.ts
+│   └── Novo hook: useDiscoverSuppliers(filters)
+│       - Filtra por: categoryIds[], district, search, certifiedOnly
+│       - Ordenação: certificados primeiro, depois por rating
+│
+├── pages/
+│   └── rede-fornecedores/
+│       └── Index.tsx  (nova página)
+│           - AppLayout + ManagerRoute
+│           - Painel de filtros (sidebar esquerda)
+│           - Grid de cards de fornecedores
+│           - Drawer/modal de detalhe do fornecedor
+│
+├── config/navigation.ts
+│   └── Adicionar item "Rede de Fornecedores" (ícone Store)
+│       na posição após "Clientes" em MAIN_NAV_ITEMS
+│
+└── App.tsx
+    └── Rota: /rede-fornecedores → ManagerRoute → RedeFornecedoresPage
 ```
 
 ---
 
-## Fluxo End-to-End
+### Detalhes de Implementação
 
-```text
-CONSTRUTOR (no orçamento)
-    │
-    ├─ Abre aba "Cotações"
-    ├─ Clica "Solicitar Cotação"
-    ├─ Preenche: categorias + prazo + mensagem
-    ├─ Sistema mostra fornecedores disponíveis (matching por categoria)
-    ├─ Seleciona fornecedores → Envia
-    │      └─ Cria: quote_request + quote_request_suppliers
-    │      └─ Dispara email (Edge Function notify-supplier)
-    │
-    └─ Vê painel de status: "3 enviados | 1 visualizou | 1 respondeu"
-         └─ Tabela comparativa de respostas
-              └─ "Aplicar ao orçamento" → import de itens
+#### 1. `useDiscoverSuppliers` (novo hook em `useSuppliers.ts`)
 
-FORNECEDOR (portal /fornecedor/*)
-    ├─ Recebe email com notificação
-    ├─ Login em /fornecedor/auth
-    ├─ Dashboard: badge "1 Novo Pedido"
-    ├─ Abre pedido: vê distrito/categoria/prazo/mensagem
-    ├─ Clica "Responder"
-    │      ├─ Preenche itens manualmente
-    │      OU └─ Importa do pricebook
-    └─ Submete resposta → status muda para "responded"
+Evolução de `useAvailableSuppliers` com parâmetros adicionais:
+- `search: string` — filtra por `legal_name` ou `trade_name` (client-side após fetch, para simplicidade)
+- `district: string` — filtro por `location_district` (query-side com `.eq()`)
+- `certifiedOnly: boolean` — `.eq('is_certified', true)` quando ativo
+- `categoryIds: string[]` — lógica existente via join em `supplier_category_link`
+
+A query principal:
+```typescript
+supabase
+  .from('supplier_profiles')
+  .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+  .eq('status', 'active')
+  .order('is_certified', { ascending: false })
+  .order('rating_avg', { ascending: false })
 ```
 
----
+#### 2. Página `src/pages/rede-fornecedores/Index.tsx`
 
-## Rotas Novas no App.tsx
+Layout em duas colunas (desktop): filtros à esquerda, resultados à direita.
+
+**Painel de filtros (esquerda, colapsável em mobile):**
+- Campo de pesquisa por nome
+- Select de distrito (lista dos 18 distritos de Portugal)
+- Checkboxes de categorias (usando dados de `useSupplierCategories`)
+- Switch "Apenas certificados"
+- Botão "Limpar filtros"
+
+**Grid de resultados (direita):**
+- Cards de fornecedor com:
+  - Nome comercial e nome legal
+  - Badge "Certificado" com ícone ShieldCheck (se `is_certified`)
+  - Distrito e município
+  - Categorias como badges
+  - Rating stars (se `rating_count > 0`)
+  - SLA de resposta em horas
+  - Botão "Ver perfil" — abre drawer lateral com detalhes completos
+
+**Drawer de detalhe do fornecedor:**
+- Informações completas: nome, NIF, telefone, áreas de serviço, prazo de entrega
+- Tabela de preços publicada (se existir, via query a `supplier_pricebooks`)
+- Botão "Solicitar Cotação" — abre dialog de pedido de cotação direto
+
+**Estados vazios e loading:**
+- Skeleton loader enquanto carrega
+- Empty state com ilustração quando sem resultados para os filtros aplicados
+
+#### 3. Navegação (`src/config/navigation.ts`)
+
+Adicionar à `MAIN_NAV_ITEMS` após `{ icon: Users, label: "Clientes", href: "/clientes" }`:
+```typescript
+{ icon: Store, label: "Rede de Fornecedores", href: "/rede-fornecedores" }
+```
+
+Importar `Store` de `lucide-react`.
+
+#### 4. Rota (`src/App.tsx`)
 
 ```tsx
-{/* Portal Fornecedor */}
-<Route path="/fornecedor/auth" element={<FornecedorAuth />} />
-<Route path="/fornecedor/pending" element={<FornecedorPending />} />
-<Route path="/fornecedor/dashboard" element={<SupplierRoute><FornecedorDashboard /></SupplierRoute>} />
-<Route path="/fornecedor/pedidos" element={<SupplierRoute><FornecedorPedidos /></SupplierRoute>} />
-<Route path="/fornecedor/pedidos/:id" element={<SupplierRoute><FornecedorPedidoDetalhe /></SupplierRoute>} />
-<Route path="/fornecedor/precos" element={<SupplierRoute><FornecedorPrecos /></SupplierRoute>} />
-<Route path="/fornecedor/perfil" element={<SupplierRoute><FornecedorPerfil /></SupplierRoute>} />
-
-{/* Admin Fornecedores */}
-<Route path="/admin/fornecedores" element={<SuperAdminRoute><AdminFornecedores /></SuperAdminRoute>} />
+import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
+// ...
+<Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
 ```
 
 ---
 
-## Sequência de Implementação
+### Lista de distritos de Portugal
 
-### Fase 1 — Base de Dados + RLS (1 migração)
-- Criar enums, 11 tabelas, políticas RLS completas, seed de categorias
-- Estender `profiles.role` com o valor `supplier`
-
-### Fase 2 — Tipos + Hook Base
-- `src/types/suppliers.ts`
-- `src/hooks/useSuppliers.ts`
-
-### Fase 3 — Auth do Fornecedor + Route Guard
-- `src/pages/fornecedor/Auth.tsx`
-- `src/components/fornecedor/SupplierRoute.tsx`
-- Atualizar `Index.tsx` para redirecionar `supplier` para `/fornecedor/dashboard`
-- Atualizar `Auth.tsx` para redirecionar `supplier` após login
-
-### Fase 4 — Portal do Fornecedor (5 páginas)
-- Layout, Dashboard, Pedidos, Detalhe+Resposta, Preços, Perfil
-
-### Fase 5 — Integração no Orçamento
-- Aba "Cotações" em `Ver.tsx` (sem tocar no layout existente)
-- `CotacoesTab.tsx` com seleção de fornecedores, envio, comparativo e import
-
-### Fase 6 — Admin Fornecedores
-- Página de convites + certificação no painel admin
-
-### Fase 7 — Edge Function de Notificação
-- `supabase/functions/notify-supplier/index.ts`
-
-### Fase 8 — Navegação + Polimento Final
-- Adicionar "Rede de Fornecedores" na sidebar principal (ícone de `Store`)
-- Página de discovery para construtores: `/rede-fornecedores`
+Incluída como constante na página:
+```
+Aveiro, Beja, Braga, Bragança, Castelo Branco, Coimbra, Évora,
+Faro, Guarda, Leiria, Lisboa, Portalegre, Porto, Santarém,
+Setúbal, Viana do Castelo, Vila Real, Viseu
+```
 
 ---
 
-## Detalhes Técnicos
+### Ficheiros a criar/editar
 
-- **Sem subdomínio técnico:** a app React é SPA, os "domínios" separados são geridos por DNS/proxy (Lovable Publish) apontando para a mesma app. As rotas `/fornecedor/*` isolam a experiência.
-- **Auth único:** mesmo Supabase Auth. O campo `role = 'supplier'` nos profiles determina o destino após login.
-- **Onboarding por convite:** admin cria `supplier_invites` com token UUID, fornecedor acede a `/fornecedor/auth?invite=TOKEN`, que pré-preenche email e força criação de conta com role supplier.
-- **Dados sensíveis:** queries de cotação para fornecedores nunca retornam nome/morada do cliente final — apenas distrito, categoria, itens/quantidades.
-- **Emails:** a Edge Function `notify-supplier` usa o `RESEND_API_KEY` já configurado.
+| Ficheiro | Ação |
+|---|---|
+| `src/hooks/useSuppliers.ts` | Adicionar `useDiscoverSuppliers` |
+| `src/pages/rede-fornecedores/Index.tsx` | Criar (página principal) |
+| `src/config/navigation.ts` | Adicionar item de navegação |
+| `src/App.tsx` | Adicionar rota |
 
----
-
-## O que NÃO está no MVP (mas pode ser adicionado depois)
-- Sistema de rating/avaliação de fornecedores
-- Importação CSV de pricebook
-- Notificações in-app em tempo real (Supabase Realtime)
-- Analytics avançados de cotações
-- Filtro por raio_km (requer PostGIS — complexidade extra)
-- Configurações de notificações de email por fornecedor
+Nenhuma alteração de base de dados é necessária — a infraestrutura está completa.
