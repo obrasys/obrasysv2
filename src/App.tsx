@@ -67,6 +67,15 @@ import VerAutoMedicaoPage from "./pages/autos-medicao/Ver";
 import PortalIndex from "./pages/portal/Index";
 import PortalObra from "./pages/portal/Obra";
 import InstalacoesIndex from "./pages/instalacoes/Index";
+import FornecedorAuth from "./pages/fornecedor/Auth";
+import FornecedorPendingApproval from "./pages/fornecedor/PendingApproval";
+import FornecedorDashboard from "./pages/fornecedor/Dashboard";
+import FornecedorPedidos from "./pages/fornecedor/Pedidos";
+import FornecedorPedidoDetalhe from "./pages/fornecedor/PedidoDetalhe";
+import FornecedorPrecos from "./pages/fornecedor/Precos";
+import FornecedorPerfil from "./pages/fornecedor/Perfil";
+import AdminFornecedores from "./pages/admin/Fornecedores";
+import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
 import EletricaPage from "./pages/instalacoes/Eletrica";
 import CanalizacaoPage from "./pages/instalacoes/Canalizacao";
 import TelecomPage from "./pages/instalacoes/Telecom";
@@ -149,6 +158,16 @@ const App = () => (
               {/* Portal do Cliente */}
               <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
               <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
+              {/* Portal do Fornecedor */}
+              <Route path="/fornecedor/auth" element={<FornecedorAuth />} />
+              <Route path="/fornecedor/pending" element={<FornecedorPendingApproval />} />
+              <Route path="/fornecedor/dashboard" element={<SupplierRoute><FornecedorDashboard /></SupplierRoute>} />
+              <Route path="/fornecedor/pedidos" element={<SupplierRoute><FornecedorPedidos /></SupplierRoute>} />
+              <Route path="/fornecedor/pedidos/:id" element={<SupplierRoute><FornecedorPedidoDetalhe /></SupplierRoute>} />
+              <Route path="/fornecedor/precos" element={<SupplierRoute><FornecedorPrecos /></SupplierRoute>} />
+              <Route path="/fornecedor/perfil" element={<SupplierRoute><FornecedorPerfil /></SupplierRoute>} />
+              {/* Admin Fornecedores */}
+              <Route path="/admin/fornecedores" element={<SuperAdminRoute><AdminFornecedores /></SuperAdminRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

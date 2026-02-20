@@ -39,6 +39,8 @@ const Auth = () => {
     if (!loading && user) {
       if (profile?.role === "cliente") {
         navigate("/portal", { replace: true });
+      } else if (profile?.role === "supplier") {
+        navigate("/fornecedor/dashboard", { replace: true });
       } else {
         const redirectTo = searchParams.get("redirect") || "/dashboard";
         navigate(redirectTo, { replace: true });

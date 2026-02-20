@@ -11,7 +11,7 @@ interface Profile {
   empresa: string | null;
   nif: string | null;
   avatar_url: string | null;
-  role: "admin" | "gestor" | "fiscal" | "cliente" | "financeiro" | "sales";
+  role: "admin" | "gestor" | "fiscal" | "cliente" | "financeiro" | "sales" | "supplier";
   trial_start: string;
   trial_end: string;
   trial_expired: boolean;

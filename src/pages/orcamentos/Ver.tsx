@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento } from '@/hooks/useOrcamentos';
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ArrowLeft,
   Printer,
@@ -34,7 +35,8 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
- import { useFiscalEngine } from '@/hooks/useFiscalEngine';
+import { useFiscalEngine } from '@/hooks/useFiscalEngine';
+import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -253,6 +255,17 @@ export default function VerOrcamentoPage() {
       `}</style>
 
       <div className="p-4 md:p-6">
+        <Tabs defaultValue="orcamento">
+          <TabsList className="mb-4 no-print">
+            <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+            <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="cotacoes">
+            <CotacoesTab orcamentoId={id!} />
+          </TabsContent>
+
+          <TabsContent value="orcamento">
         <div
           ref={printRef}
           id="print-content"
@@ -554,6 +567,8 @@ export default function VerOrcamentoPage() {
             {companyName && <p className="mt-1">{companyName} {companyNif && `• NIF: ${companyNif}`}</p>}
           </div>
         </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
