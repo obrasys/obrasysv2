@@ -3361,6 +3361,258 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_request_categories: {
+        Row: {
+          category_id: string
+          id: string
+          quote_request_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          quote_request_id: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          quote_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_request_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_request_categories_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_request_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          quote_request_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["quote_supplier_status_enum"]
+          supplier_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quote_request_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["quote_supplier_status_enum"]
+          supplier_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quote_request_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["quote_supplier_status_enum"]
+          supplier_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_request_suppliers_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_request_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_requests: {
+        Row: {
+          budget_id: string | null
+          builder_user_id: string
+          created_at: string
+          id: string
+          location_district: string | null
+          location_municipality: string | null
+          message_to_suppliers: string | null
+          project_id: string | null
+          requested_deadline: string | null
+          status: Database["public"]["Enums"]["quote_request_status_enum"]
+          updated_at: string
+        }
+        Insert: {
+          budget_id?: string | null
+          builder_user_id: string
+          created_at?: string
+          id?: string
+          location_district?: string | null
+          location_municipality?: string | null
+          message_to_suppliers?: string | null
+          project_id?: string | null
+          requested_deadline?: string | null
+          status?: Database["public"]["Enums"]["quote_request_status_enum"]
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string | null
+          builder_user_id?: string
+          created_at?: string
+          id?: string
+          location_district?: string | null
+          location_municipality?: string | null
+          message_to_suppliers?: string | null
+          project_id?: string | null
+          requested_deadline?: string | null
+          status?: Database["public"]["Enums"]["quote_request_status_enum"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_requests_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_response_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string
+          lead_time_days: number | null
+          line_total: number | null
+          notes: string | null
+          qty: number | null
+          quote_response_id: string
+          source_pricebook_item_id: string | null
+          unit: string
+          unit_price: number
+          vat_rate: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name: string
+          lead_time_days?: number | null
+          line_total?: number | null
+          notes?: string | null
+          qty?: number | null
+          quote_response_id: string
+          source_pricebook_item_id?: string | null
+          unit?: string
+          unit_price?: number
+          vat_rate?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string
+          lead_time_days?: number | null
+          line_total?: number | null
+          notes?: string | null
+          qty?: number | null
+          quote_response_id?: string
+          source_pricebook_item_id?: string | null
+          unit?: string
+          unit_price?: number
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_response_items_quote_response_id_fkey"
+            columns: ["quote_response_id"]
+            isOneToOne: false
+            referencedRelation: "quote_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_response_items_source_pricebook_item_id_fkey"
+            columns: ["source_pricebook_item_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_pricebook_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_responses: {
+        Row: {
+          attachment_urls: string[] | null
+          created_at: string
+          currency: string
+          estimated_delivery_days: number | null
+          id: string
+          notes: string | null
+          quote_request_id: string
+          status: Database["public"]["Enums"]["quote_response_status_enum"]
+          supplier_id: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          attachment_urls?: string[] | null
+          created_at?: string
+          currency?: string
+          estimated_delivery_days?: number | null
+          id?: string
+          notes?: string | null
+          quote_request_id: string
+          status?: Database["public"]["Enums"]["quote_response_status_enum"]
+          supplier_id: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          attachment_urls?: string[] | null
+          created_at?: string
+          currency?: string
+          estimated_delivery_days?: number | null
+          id?: string
+          notes?: string | null
+          quote_request_id?: string
+          status?: Database["public"]["Enums"]["quote_response_status_enum"]
+          supplier_id?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_responses_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_responses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regimes_fiscais: {
         Row: {
           ativo: boolean
@@ -3715,6 +3967,275 @@ export type Database = {
           created_by?: string | null
           email?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      supplier_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      supplier_category_link: {
+        Row: {
+          category_id: string
+          id: string
+          supplier_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          supplier_id: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_category_link_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_category_link_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by_admin_user_id: string | null
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by_admin_user_id?: string | null
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by_admin_user_id?: string | null
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      supplier_pricebook_items: {
+        Row: {
+          base_price: number
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          item_code: string | null
+          item_name: string
+          lead_time_days: number | null
+          min_qty: number | null
+          notes: string | null
+          pricebook_id: string
+          unit: string
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          base_price?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          item_code?: string | null
+          item_name: string
+          lead_time_days?: number | null
+          min_qty?: number | null
+          notes?: string | null
+          pricebook_id: string
+          unit?: string
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          base_price?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          item_code?: string | null
+          item_name?: string
+          lead_time_days?: number | null
+          min_qty?: number | null
+          notes?: string | null
+          pricebook_id?: string
+          unit?: string
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_pricebook_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_pricebook_items_pricebook_id_fkey"
+            columns: ["pricebook_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_pricebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_pricebooks: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["pricebook_status_enum"]
+          supplier_id: string
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["pricebook_status_enum"]
+          supplier_id: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["pricebook_status_enum"]
+          supplier_id?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_pricebooks_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_profiles: {
+        Row: {
+          created_at: string
+          delivery_capability: string | null
+          id: string
+          is_certified: boolean
+          legal_name: string
+          location_district: string | null
+          location_municipality: string | null
+          logo_url: string | null
+          min_order_value: number | null
+          nif: string | null
+          payment_terms: string | null
+          phone: string | null
+          rating_avg: number | null
+          rating_count: number | null
+          service_areas: string | null
+          sla_response_hours: number | null
+          status: Database["public"]["Enums"]["supplier_status_enum"]
+          trade_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_capability?: string | null
+          id?: string
+          is_certified?: boolean
+          legal_name?: string
+          location_district?: string | null
+          location_municipality?: string | null
+          logo_url?: string | null
+          min_order_value?: number | null
+          nif?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating_avg?: number | null
+          rating_count?: number | null
+          service_areas?: string | null
+          sla_response_hours?: number | null
+          status?: Database["public"]["Enums"]["supplier_status_enum"]
+          trade_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_capability?: string | null
+          id?: string
+          is_certified?: boolean
+          legal_name?: string
+          location_district?: string | null
+          location_municipality?: string | null
+          logo_url?: string | null
+          min_order_value?: number | null
+          nif?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating_avg?: number | null
+          rating_count?: number | null
+          service_areas?: string | null
+          sla_response_hours?: number | null
+          status?: Database["public"]["Enums"]["supplier_status_enum"]
+          trade_name?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -4133,6 +4654,7 @@ export type Database = {
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      is_supplier: { Args: { _user_id?: string }; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       refresh_engagement_status: {
         Args: { p_user_id: string }
@@ -4157,7 +4679,22 @@ export type Database = {
       validate_formula: { Args: { p_formula: string }; Returns: boolean }
     }
     Enums: {
+      pricebook_status_enum: "draft" | "published" | "archived"
+      quote_request_status_enum:
+        | "open"
+        | "sent"
+        | "in_review"
+        | "closed"
+        | "cancelled"
+      quote_response_status_enum: "sent" | "accepted" | "rejected" | "withdrawn"
+      quote_supplier_status_enum:
+        | "invited"
+        | "viewed"
+        | "responded"
+        | "declined"
+        | "expired"
       regime_fiscal_tipo: "normal" | "reduzido" | "autoliquidacao" | "isento"
+      supplier_status_enum: "pending" | "active" | "suspended"
       tipo_cliente_fiscal:
         | "particular"
         | "empresa"
@@ -4302,7 +4839,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      pricebook_status_enum: ["draft", "published", "archived"],
+      quote_request_status_enum: [
+        "open",
+        "sent",
+        "in_review",
+        "closed",
+        "cancelled",
+      ],
+      quote_response_status_enum: ["sent", "accepted", "rejected", "withdrawn"],
+      quote_supplier_status_enum: [
+        "invited",
+        "viewed",
+        "responded",
+        "declined",
+        "expired",
+      ],
       regime_fiscal_tipo: ["normal", "reduzido", "autoliquidacao", "isento"],
+      supplier_status_enum: ["pending", "active", "suspended"],
       tipo_cliente_fiscal: [
         "particular",
         "empresa",
