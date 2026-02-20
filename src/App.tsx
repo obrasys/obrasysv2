@@ -80,6 +80,7 @@ import EletricaPage from "./pages/instalacoes/Eletrica";
 import CanalizacaoPage from "./pages/instalacoes/Canalizacao";
 import TelecomPage from "./pages/instalacoes/Telecom";
 import ConfigurarInstalacoesPage from "./pages/instalacoes/Configurar";
+import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
 
 const queryClient = new QueryClient();
 
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="/instalacoes/canalizacao" element={<ManagerRoute><CanalizacaoPage /></ManagerRoute>} />
               <Route path="/instalacoes/telecom" element={<ManagerRoute><TelecomPage /></ManagerRoute>} />
               <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
+              <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
               {/* Admin - Super Admin Only */}
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />

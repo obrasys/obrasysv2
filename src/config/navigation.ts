@@ -10,6 +10,7 @@ import {
   HardHat,
   Home,
   Mail,
+  Network,
   Plug,
   Shield,
   ShieldCheck,
@@ -37,6 +38,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: Wallet, label: "Financeiro", href: "/financeiro" },
   { icon: HardHat, label: "Recursos", href: "/recursos" },
   { icon: Users, label: "Clientes", href: "/clientes" },
+  { icon: Network, label: "Rede de Fornecedores", href: "/rede-fornecedores" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
 ];
 
