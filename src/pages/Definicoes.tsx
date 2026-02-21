@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -44,6 +45,8 @@ import {
 import { toast } from 'sonner';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useFormatting } from '@/hooks/useFormatting';
+import { AxiaIcon } from '@/components/axia/AxiaIcon';
+import { useCompanyAISettings } from '@/hooks/useAIBudgetInsights';
 
 interface NotificationSettings {
   emailRDOs: boolean;
@@ -60,6 +63,23 @@ export default function DefinicoesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { preferences, updatePreferences } = usePreferences();
   const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay } = useFormatting();
+  const { settings: axiaSettings, isLoading: axiaLoading, updateSettings: updateAxiaSettings } = useCompanyAISettings();
+  
+  const [axiaEnabled, setAxiaEnabled] = useState(true);
+  const [axiaLlm, setAxiaLlm] = useState(false);
+  const [axiaPredictive, setAxiaPredictive] = useState(false);
+  const [axiaMargin, setAxiaMargin] = useState('15');
+  const [axiaSensitivity, setAxiaSensitivity] = useState('2.5');
+
+  // Sync Axia settings when loaded
+  useEffect(() => {
+    if (axiaSettings) {
+      setAxiaEnabled(axiaSettings.enabled);
+      setAxiaLlm(axiaSettings.llm_enabled);
+      setAxiaMargin(String(axiaSettings.min_margin_percent));
+      setAxiaSensitivity(String(axiaSettings.outlier_zscore));
+    }
+  }, [axiaSettings]);
   
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailRDOs: true,
@@ -394,6 +414,111 @@ export default function DefinicoesPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Axia Settings */}
+        <Card className="border-[#7C3AED]/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AxiaIcon size={20} className="text-[#7C3AED]" />
+              Axia
+            </CardTitle>
+            <CardDescription>
+              Motor de inteligência ativa para orçamentos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Ativar Axia</Label>
+                <p className="text-sm text-muted-foreground">
+                  Análise automática de orçamentos com sugestões inteligentes
+                </p>
+              </div>
+              <Switch
+                checked={axiaEnabled}
+                onCheckedChange={(v) => {
+                  setAxiaEnabled(v);
+                  updateAxiaSettings.mutate({ enabled: v });
+                }}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Permitir recomendações automáticas</Label>
+                <p className="text-sm text-muted-foreground">
+                  Usar IA generativa para sugestões avançadas
+                </p>
+              </div>
+              <Switch
+                checked={axiaLlm}
+                onCheckedChange={(v) => {
+                  setAxiaLlm(v);
+                  updateAxiaSettings.mutate({ llm_enabled: v });
+                }}
+                disabled={!axiaEnabled}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Ativar modo preditivo</Label>
+                <p className="text-sm text-muted-foreground">
+                  Previsões baseadas no histórico de obras (beta)
+                </p>
+              </div>
+              <Switch
+                checked={axiaPredictive}
+                onCheckedChange={setAxiaPredictive}
+                disabled={!axiaEnabled}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Margem mínima (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={axiaMargin}
+                  onChange={(e) => setAxiaMargin(e.target.value)}
+                  onBlur={() => {
+                    const val = parseFloat(axiaMargin);
+                    if (!isNaN(val)) updateAxiaSettings.mutate({ min_margin_percent: val });
+                  }}
+                  disabled={!axiaEnabled}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Sensibilidade de alerta</Label>
+                <Select
+                  value={axiaSensitivity}
+                  onValueChange={(v) => {
+                    setAxiaSensitivity(v);
+                    updateAxiaSettings.mutate({ outlier_zscore: parseFloat(v) });
+                  }}
+                  disabled={!axiaEnabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3.5">Baixa</SelectItem>
+                    <SelectItem value="2.5">Média</SelectItem>
+                    <SelectItem value="1.5">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Dados e Privacidade */}
         <Card>
