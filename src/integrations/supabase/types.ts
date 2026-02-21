@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_budget_actions_log: {
+        Row: {
+          action: string
+          actor_user_id: string
+          after_snapshot: Json | null
+          before_snapshot: Json | null
+          budget_id: string
+          created_at: string
+          id: string
+          insight_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          budget_id: string
+          created_at?: string
+          id?: string
+          insight_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          budget_id?: string
+          created_at?: string
+          id?: string
+          insight_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_budget_actions_log_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_budget_actions_log_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "ai_budget_insights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_budget_insights: {
+        Row: {
+          budget_id: string
+          content_hash: string | null
+          created_at: string
+          id: string
+          impact_percent: number | null
+          impact_value: number | null
+          message: string
+          payload: Json
+          severity: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_id: string
+          content_hash?: string | null
+          created_at?: string
+          id?: string
+          impact_percent?: number | null
+          impact_value?: number | null
+          message: string
+          payload?: Json
+          severity?: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_id?: string
+          content_hash?: string | null
+          created_at?: string
+          id?: string
+          impact_percent?: number | null
+          impact_value?: number | null
+          message?: string
+          payload?: Json
+          severity?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_budget_insights_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alocacoes_obra: {
         Row: {
           ativo: boolean
@@ -1359,6 +1469,48 @@ export type Database = {
           pais?: string | null
           telefone?: string | null
           telemovel?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      company_ai_settings: {
+        Row: {
+          country: string
+          created_at: string
+          enabled: boolean
+          id: string
+          llm_enabled: boolean
+          min_margin_percent: number
+          outlier_zscore: number
+          param_profile_default: string
+          ruleset: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          llm_enabled?: boolean
+          min_margin_percent?: number
+          outlier_zscore?: number
+          param_profile_default?: string
+          ruleset?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          llm_enabled?: boolean
+          min_margin_percent?: number
+          outlier_zscore?: number
+          param_profile_default?: string
+          ruleset?: Json
           updated_at?: string
           user_id?: string
         }
@@ -4700,6 +4852,17 @@ export type Database = {
         Returns: string
       }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
+      get_price_stats: {
+        Args: { p_months?: number; p_user_id: string }
+        Returns: {
+          avg_price: number
+          categoria: string
+          median_price: number
+          sample_count: number
+          stddev_price: number
+          unidade: string
+        }[]
+      }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
