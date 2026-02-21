@@ -8,6 +8,7 @@ import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
 import { CatalogoModal } from '@/components/orcamentos/CatalogoModal';
 import { ResumoTotal } from '@/components/orcamentos/ResumoTotal';
 import { ParametricMeasurements } from '@/components/parametric';
+import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -353,6 +354,7 @@ export default function EditarOrcamentoPage() {
               {/* Sidebar */}
               <div className="space-y-4">
                 <ResumoTotal orcamento={orcamento} />
+                <SmartInsightsPanel budgetId={orcamento.id} />
               </div>
             </div>
           </TabsContent>
