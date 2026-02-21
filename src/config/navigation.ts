@@ -39,7 +39,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: Wallet, label: "Financeiro", href: "/financeiro" },
   { icon: HardHat, label: "Recursos", href: "/recursos" },
   { icon: Users, label: "Clientes", href: "/clientes" },
-  { icon: Network, label: "Rede de Fornecedores", href: "/rede-fornecedores" },
+  { icon: Network, label: "Fornecedores", href: "/rede-fornecedores" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
   { icon: BrainCircuit, label: "Axia", href: "/axia" },
 ];
