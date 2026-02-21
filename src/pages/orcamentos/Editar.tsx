@@ -9,6 +9,8 @@ import { CatalogoModal } from '@/components/orcamentos/CatalogoModal';
 import { ResumoTotal } from '@/components/orcamentos/ResumoTotal';
 import { ParametricMeasurements } from '@/components/parametric';
 import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
+import { AxiaStatusBadge } from '@/components/axia/AxiaStatusBadge';
+import { useAIBudgetInsights } from '@/hooks/useAIBudgetInsights';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -85,6 +87,9 @@ export default function EditarOrcamentoPage() {
      determinarRegimeFiscal,
    } = useFiscalEngine();
    const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
+
+   // Axia insights for status badge
+   const { counts: axiaCounts, isLoading: axiaLoading } = useAIBudgetInsights(id);
  
    // Fiscal form state
    const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
@@ -294,9 +299,15 @@ export default function EditarOrcamentoPage() {
       actions={headerActions}
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Status badge */}
-        <div className="mb-3 md:mb-4">
+        {/* Status badge + Axia */}
+        <div className="mb-3 md:mb-4 flex items-center gap-3 flex-wrap">
           <OrcamentoStatus status={orcamento.status} />
+          <AxiaStatusBadge
+            criticalCount={axiaCounts.margin}
+            warnCount={axiaCounts.outlier + axiaCounts.missing}
+            total={axiaCounts.total}
+            isLoading={axiaLoading}
+          />
         </div>
 
         {/* Tabs */}

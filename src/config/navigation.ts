@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  BrainCircuit,
   Building2,
   Calendar,
   ClipboardCheck,
@@ -40,6 +41,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: Users, label: "Clientes", href: "/clientes" },
   { icon: Network, label: "Rede de Fornecedores", href: "/rede-fornecedores" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
+  { icon: BrainCircuit, label: "Axia", href: "/axia" },
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
