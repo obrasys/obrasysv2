@@ -1,136 +1,118 @@
 
-## Página de Descoberta de Fornecedores (`/rede-fornecedores`)
+# Axia -- Identidade e Integração UI
 
-### Objetivo
-Criar uma página completa acessível a construtores (ManagerRoute) em `/rede-fornecedores` onde podem pesquisar, filtrar e explorar o diretório de fornecedores certificados por categoria, distrito e nome.
+## Resumo
 
----
-
-### O que já existe (reutilizar)
-
-- **Hook `useAvailableSuppliers(categoryIds)`** em `src/hooks/useSuppliers.ts` — faz query de `supplier_profiles` com join de categorias, filtrando por `status = 'active'`. Requer extensão para filtro por distrito.
-- **Hook `useSupplierCategories()`** — retorna as 15 categorias seed.
-- **RLS policy `supplier_profiles_builders_select`** — já permite que utilizadores autenticados vejam perfis com `status = 'active'`. Nenhuma alteração de base de dados necessária.
-- **Tipo `SupplierProfile`** em `src/types/suppliers.ts` — inclui `location_district`, `rating_avg`, `is_certified`, `sla_response_hours`, etc.
-- **Navegação**: `src/config/navigation.ts` tem `MAIN_NAV_ITEMS` onde será adicionada a entrada.
-- **Routing**: `src/App.tsx` receberá a nova rota.
+Transformar a camada "IA Invisível" existente na marca **Axia**, adicionando identidade visual premium, badge de status dinâmico, painel lateral melhorado, pagina dedicada com dashboard e secção de configuração. Todo o backend ja esta implementado -- este plano e 100% frontend.
 
 ---
 
-### Arquitetura das Alterações
+## 1. Identidade Visual Axia (Componente partilhado)
 
-```text
-src/
-├── hooks/useSuppliers.ts
-│   └── Novo hook: useDiscoverSuppliers(filters)
-│       - Filtra por: categoryIds[], district, search, certifiedOnly
-│       - Ordenação: certificados primeiro, depois por rating
-│
-├── pages/
-│   └── rede-fornecedores/
-│       └── Index.tsx  (nova página)
-│           - AppLayout + ManagerRoute
-│           - Painel de filtros (sidebar esquerda)
-│           - Grid de cards de fornecedores
-│           - Drawer/modal de detalhe do fornecedor
-│
-├── config/navigation.ts
-│   └── Adicionar item "Rede de Fornecedores" (ícone Store)
-│       na posição após "Clientes" em MAIN_NAV_ITEMS
-│
-└── App.tsx
-    └── Rota: /rede-fornecedores → ManagerRoute → RedeFornecedoresPage
-```
+Criar `src/components/axia/AxiaIcon.tsx`:
+- Icone SVG minimalista (circulo com nucleo central, estilo "eixo")
+- Cor primaria: `#7C3AED` (roxo tecnologico) com variante `#2563EB` (azul)
+- Componente reutilizavel com props de tamanho
+
+Criar `src/components/axia/AxiaBranding.tsx`:
+- Nome "Axia" + subtitulo "Inteligencia ativa"
+- Classes Tailwind com a cor roxa como accent
 
 ---
 
-### Detalhes de Implementação
+## 2. Badge de Status Dinamico no Orcamento
 
-#### 1. `useDiscoverSuppliers` (novo hook em `useSuppliers.ts`)
-
-Evolução de `useAvailableSuppliers` com parâmetros adicionais:
-- `search: string` — filtra por `legal_name` ou `trade_name` (client-side após fetch, para simplicidade)
-- `district: string` — filtro por `location_district` (query-side com `.eq()`)
-- `certifiedOnly: boolean` — `.eq('is_certified', true)` quando ativo
-- `categoryIds: string[]` — lógica existente via join em `supplier_category_link`
-
-A query principal:
-```typescript
-supabase
-  .from('supplier_profiles')
-  .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
-  .eq('status', 'active')
-  .order('is_certified', { ascending: false })
-  .order('rating_avg', { ascending: false })
-```
-
-#### 2. Página `src/pages/rede-fornecedores/Index.tsx`
-
-Layout em duas colunas (desktop): filtros à esquerda, resultados à direita.
-
-**Painel de filtros (esquerda, colapsável em mobile):**
-- Campo de pesquisa por nome
-- Select de distrito (lista dos 18 distritos de Portugal)
-- Checkboxes de categorias (usando dados de `useSupplierCategories`)
-- Switch "Apenas certificados"
-- Botão "Limpar filtros"
-
-**Grid de resultados (direita):**
-- Cards de fornecedor com:
-  - Nome comercial e nome legal
-  - Badge "Certificado" com ícone ShieldCheck (se `is_certified`)
-  - Distrito e município
-  - Categorias como badges
-  - Rating stars (se `rating_count > 0`)
-  - SLA de resposta em horas
-  - Botão "Ver perfil" — abre drawer lateral com detalhes completos
-
-**Drawer de detalhe do fornecedor:**
-- Informações completas: nome, NIF, telefone, áreas de serviço, prazo de entrega
-- Tabela de preços publicada (se existir, via query a `supplier_pricebooks`)
-- Botão "Solicitar Cotação" — abre dialog de pedido de cotação direto
-
-**Estados vazios e loading:**
-- Skeleton loader enquanto carrega
-- Empty state com ilustração quando sem resultados para os filtros aplicados
-
-#### 3. Navegação (`src/config/navigation.ts`)
-
-Adicionar à `MAIN_NAV_ITEMS` após `{ icon: Users, label: "Clientes", href: "/clientes" }`:
-```typescript
-{ icon: Store, label: "Rede de Fornecedores", href: "/rede-fornecedores" }
-```
-
-Importar `Store` de `lucide-react`.
-
-#### 4. Rota (`src/App.tsx`)
-
-```tsx
-import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
-// ...
-<Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
-```
+Criar `src/components/axia/AxiaStatusBadge.tsx`:
+- Tres estados baseados nos insights ativos do hook `useAIBudgetInsights`:
+  - Verde: "Axia: Configuracao equilibrada" (0 insights criticos e 0 warn)
+  - Amarelo: "Axia: Atencao a margem" (tem warns mas 0 criticos)
+  - Vermelho: "Axia: Risco de desvio identificado" (tem criticos)
+- Tooltip no hover com explicacao do motivo
+- Animacao sutil (pulse) quando novos insights surgem
+- Posicionado ao lado do `ResumoTotal` na pagina `Editar.tsx`
 
 ---
 
-### Lista de distritos de Portugal
+## 3. Painel Lateral Axia Insights (Refactor do SmartInsightsPanel)
 
-Incluída como constante na página:
-```
-Aveiro, Beja, Braga, Bragança, Castelo Branco, Coimbra, Évora,
-Faro, Guarda, Leiria, Lisboa, Portalegre, Porto, Santarém,
-Setúbal, Viana do Castelo, Vila Real, Viseu
-```
+Refactorizar `src/components/orcamentos/SmartInsightsPanel.tsx`:
+- Titulo: "Axia Insights" com subtitulo "Analise estrategica do orcamento"
+- Usar `AxiaIcon` no lugar do icone Sparkles
+- Cor accent roxa (#7C3AED) no border e headers
+- Maximo 5 insights visiveis (ordenados por severidade: critical > warn > info)
+- Se 0 insights open, nao mostrar o painel (esconder completamente)
+- Botao "Reanalisar" mantido
+- Modal de confirmacao ao clicar "Aplicar":
+  - Texto: "Axia ira adicionar X itens ao orcamento."
+  - Botoes: Confirmar / Cancelar
+- Toast apos aplicar: "Atualizacao aplicada com sucesso por Axia"
 
 ---
 
-### Ficheiros a criar/editar
+## 4. Pagina Dedicada `/axia`
 
-| Ficheiro | Ação |
+Criar `src/pages/axia/Index.tsx`:
+- Dashboard com:
+  - **Axia Score (0-100)**: Indicador circular visual
+    - Calculo: baseado em margem (peso 40%), desvios/outliers (peso 30%), itens em falta (peso 30%)
+    - Dados vem do hook `useAIBudgetInsights` agregado
+  - **Indicadores**: Margem projetada, risco de desvio, itens criticos
+  - **Historico de decisoes**: Lista das acoes aplicadas (query a `ai_budget_actions_log`)
+  - Texto institucional: "Axia e o motor inteligente do Obra Sys. Analisa orcamentos, identifica riscos e ajuda a proteger a sua margem."
+  - Texto: "Axia aprende com cada obra."
+
+Criar hook `src/hooks/useAxiaDashboard.ts`:
+- Query a `ai_budget_insights` agrupado por budget
+- Query a `ai_budget_actions_log` para historico
+- Calculo do Axia Score
+
+Adicionar rota em `App.tsx`:
+```
+/axia -> ManagerRoute -> AxiaPage
+```
+
+Adicionar item no `MAIN_NAV_ITEMS` em `navigation.ts`:
+- Posicao: apos "Relatorios"
+- Label: "Axia"
+- Icone: lucide `BrainCircuit` (mais proximo do conceito, sem emoji)
+
+---
+
+## 5. Configuracao Axia (em Definicoes)
+
+Adicionar nova secção card em `src/pages/Definicoes.tsx`:
+- Titulo: "Axia" com icone
+- Opcoes (usando `Switch`):
+  - Ativar Axia (maps to `company_ai_settings.enabled`)
+  - Permitir recomendacoes automaticas (maps to `llm_enabled`)
+  - Ativar modo preditivo (beta) -- toggle visual, sem funcionalidade real por agora
+- Inputs:
+  - Margem minima (%) -- `min_margin_percent`
+  - Sensibilidade de alerta (Select: Baixa=3.5 / Media=2.5 / Alta=1.5) -- maps to `outlier_zscore`
+- Usa `useCompanyAISettings` hook existente para carregar/salvar
+
+---
+
+## 6. Microinteracoes
+
+- Badge Axia: animacao `animate-pulse` quando `counts.total` muda de 0 para >0
+- Badge verde com transicao `transition-all duration-500`
+- Sem exagero -- apenas transicoes CSS suaves
+
+---
+
+## 7. Ficheiros a criar/editar
+
+| Ficheiro | Acao |
 |---|---|
-| `src/hooks/useSuppliers.ts` | Adicionar `useDiscoverSuppliers` |
-| `src/pages/rede-fornecedores/Index.tsx` | Criar (página principal) |
-| `src/config/navigation.ts` | Adicionar item de navegação |
-| `src/App.tsx` | Adicionar rota |
+| `src/components/axia/AxiaIcon.tsx` | Criar -- icone SVG |
+| `src/components/axia/AxiaStatusBadge.tsx` | Criar -- badge dinamico |
+| `src/components/orcamentos/SmartInsightsPanel.tsx` | Editar -- rebrand para Axia |
+| `src/pages/axia/Index.tsx` | Criar -- dashboard |
+| `src/hooks/useAxiaDashboard.ts` | Criar -- dados do dashboard |
+| `src/pages/orcamentos/Editar.tsx` | Editar -- adicionar AxiaStatusBadge |
+| `src/config/navigation.ts` | Editar -- adicionar item Axia |
+| `src/App.tsx` | Editar -- adicionar rota /axia |
+| `src/pages/Definicoes.tsx` | Editar -- secção de configuração Axia |
 
-Nenhuma alteração de base de dados é necessária — a infraestrutura está completa.
+Nenhuma alteracao de base de dados necessaria -- toda a infraestrutura backend ja esta implementada.
