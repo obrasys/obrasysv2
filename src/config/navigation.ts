@@ -51,6 +51,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { icon: ClipboardList, label: "Auditoria", href: "/admin/auditoria" },
   { icon: Mail, label: "Templates Email", href: "/admin/templates" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
-  { icon: BarChart3, label: "Migração V1→V2", href: "/admin/migracao" },
+  
   { icon: Store, label: "Fornecedores", href: "/admin/fornecedores" },
 ];
