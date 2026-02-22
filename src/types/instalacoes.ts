@@ -35,6 +35,12 @@ export const COMPLEXITY_MULTIPLIERS: Record<Complexity, number> = {
 
 export const TYPOLOGY_OPTIONS = ['T0', 'T1', 'T2', 'T3', 'T4+', 'Moradia', 'Apartamento', 'Loja'] as const;
 
+export interface EquipamentoExtra {
+  nome: string;
+  quantidade: number;
+  custo_unitario: number;
+}
+
 export interface InstallationPackage {
   id: string;
   user_id: string;
@@ -49,6 +55,11 @@ export interface InstallationPackage {
   kitchen_count: number;
   extra_rooms: number;
   has_laundry: boolean;
+  has_bomba_calor: boolean;
+  has_termoacumulador: boolean;
+  has_piso_radiante: boolean;
+  has_paineis_solares: boolean;
+  equipamentos_extra: EquipamentoExtra[];
   points_estimated: number;
   points_final: number | null;
   linear_m_estimated: number;
@@ -111,6 +122,11 @@ export interface PackageFormData {
   kitchen_count: number;
   extra_rooms: number;
   has_laundry: boolean;
+  has_bomba_calor: boolean;
+  has_termoacumulador: boolean;
+  has_piso_radiante: boolean;
+  has_paineis_solares: boolean;
+  equipamentos_extra: EquipamentoExtra[];
 }
 
 export interface EstimationResult {
@@ -130,6 +146,14 @@ export interface GeneratedItem {
   marginPercent: number;
   totalCost: number;
 }
+
+// Plumbing equipment cost defaults
+export const PLUMBING_EQUIPMENT_COSTS: Record<string, { label: string; cost_eco: number; cost_med: number; cost_premium: number }> = {
+  bomba_calor: { label: 'Bomba de Calor', cost_eco: 1500, cost_med: 2500, cost_premium: 4000 },
+  termoacumulador: { label: 'Termoacumulador', cost_eco: 300, cost_med: 500, cost_premium: 900 },
+  piso_radiante: { label: 'Piso Radiante (por m²)', cost_eco: 25, cost_med: 40, cost_premium: 65 },
+  paineis_solares: { label: 'Painéis Solares Térmicos', cost_eco: 1200, cost_med: 2000, cost_premium: 3500 },
+};
 
 // Default coefficient keys
 export const DEFAULT_COEFFICIENTS: Record<Specialty, { key: string; value: number; description: string }[]> = {
