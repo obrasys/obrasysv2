@@ -22,7 +22,7 @@ import { Slider } from '@/components/ui/slider';
 import { useObras } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
-import { Loader2, Building2, User } from 'lucide-react';
+import { Loader2, Building2, User, Save } from 'lucide-react';
 
 const formSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
@@ -39,14 +39,18 @@ const formSchema = z.object({
 interface OrcamentoFormProps {
   defaultValues?: Partial<OrcamentoFormData>;
   onSubmit: (data: OrcamentoFormData) => void;
+  onSaveDraft?: (data: OrcamentoFormData) => void;
   isLoading?: boolean;
+  isSavingDraft?: boolean;
   submitLabel?: string;
 }
 
 export function OrcamentoForm({
   defaultValues,
   onSubmit,
+  onSaveDraft,
   isLoading,
+  isSavingDraft,
   submitLabel = 'Criar Orçamento',
 }: OrcamentoFormProps) {
   const { obras, isLoading: loadingObras } = useObras();
@@ -258,10 +262,31 @@ export function OrcamentoForm({
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {submitLabel}
-        </Button>
+        <div className="flex gap-3">
+          {onSaveDraft && (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              disabled={isSavingDraft || isLoading}
+              onClick={() => {
+                const values = form.getValues();
+                if (values.titulo) {
+                  onSaveDraft(values);
+                } else {
+                  form.setError('titulo', { message: 'Título é obrigatório' });
+                }
+              }}
+            >
+              {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              Guardar Rascunho
+            </Button>
+          )}
+          <Button type="submit" className="flex-1" disabled={isLoading || isSavingDraft}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {submitLabel}
+          </Button>
+        </div>
       </form>
     </Form>
   );

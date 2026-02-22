@@ -1,17 +1,33 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoForm } from '@/components/orcamentos/OrcamentoForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 import type { OrcamentoFormData } from '@/types/orcamentos';
 
 export default function CriarOrcamentoPage() {
   const navigate = useNavigate();
   const { createOrcamento } = useOrcamentos();
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const handleSubmit = async (data: OrcamentoFormData) => {
     const result = await createOrcamento.mutateAsync(data);
     navigate(`/orcamentos/${result.id}/editar`);
+  };
+
+  const handleSaveDraft = async (data: OrcamentoFormData) => {
+    setIsSavingDraft(true);
+    try {
+      await createOrcamento.mutateAsync(data);
+      toast.success('Rascunho guardado com sucesso!');
+      navigate('/orcamentos');
+    } catch {
+      toast.error('Erro ao guardar rascunho.');
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   return (
@@ -28,7 +44,9 @@ export default function CriarOrcamentoPage() {
             <CardContent>
               <OrcamentoForm
                 onSubmit={handleSubmit}
+                onSaveDraft={handleSaveDraft}
                 isLoading={createOrcamento.isPending}
+                isSavingDraft={isSavingDraft}
                 submitLabel="Criar e Continuar"
               />
             </CardContent>
