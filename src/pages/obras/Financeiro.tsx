@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -60,7 +60,6 @@ export default function ObraFinanceiroPage() {
   const [editingConta, setEditingConta] = useState<ContaFinanceira | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { obra, isLoading: loadingObra } = useObra(id);
   const { 
@@ -117,20 +116,11 @@ export default function ObraFinanceiroPage() {
     marcarPago.mutate({ id: contaId, pago });
   };
 
-  const handleUploadComprovante = (conta: ContaFinanceira) => {
-    setUploadConta(conta);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && uploadConta) {
-      uploadComprovante.mutate({ contaId: uploadConta.id, file });
-      setUploadConta(null);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleUploadComprovante = async (conta: ContaFinanceira) => {
+    const { generateComprovantePdf } = await import('@/lib/comprovante-pdf');
+    const blob = generateComprovantePdf(conta);
+    const file = new File([blob], `comprovante-${conta.id}.pdf`, { type: 'application/pdf' });
+    uploadComprovante.mutate({ contaId: conta.id, file });
   };
 
   // Calcular valor do orçamento como receita
@@ -486,14 +476,6 @@ export default function ObraFinanceiroPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Hidden file input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*,.pdf"
-          className="hidden"
-        />
       </div>
     </AppLayout>
   );

@@ -171,8 +171,8 @@ export function ContaCard({ conta, onEdit, onDelete, onTogglePago, onUploadCompr
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onUploadComprovante(conta)}>
-                <Upload className="mr-2 h-4 w-4" />
-                Enviar Comprovante
+                <FileText className="mr-2 h-4 w-4" />
+                Gerar Comprovante PDF
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(conta)}>
                 <Edit className="mr-2 h-4 w-4" />
