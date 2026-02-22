@@ -341,10 +341,17 @@ export function useCreateQuoteRequest() {
         );
       }
 
-      // Trigger notification edge function (fire-and-forget)
-      supabase.functions.invoke('notify-supplier', {
-        body: { quote_request_id: qr.id, supplier_ids: form.supplier_ids },
-      }).catch(console.warn);
+      // Trigger notification edge function
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-supplier', {
+          body: { quote_request_id: qr.id, supplier_ids: form.supplier_ids },
+        });
+        if (notifyError) {
+          console.error('notify-supplier error:', notifyError);
+        }
+      } catch (notifyErr) {
+        console.error('notify-supplier exception:', notifyErr);
+      }
 
       return qr;
     },
@@ -733,11 +740,20 @@ export function useCreateSupplierInvite() {
         .select()
         .single();
       if (error) throw error;
+
+      // Send invite email
+      const { error: emailError } = await supabase.functions.invoke('send-supplier-invite', {
+        body: { invite_id: data.id },
+      });
+      if (emailError) {
+        console.error('Error sending invite email:', emailError);
+      }
+
       return data as SupplierInvite;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-invites'] });
-      toast({ title: 'Convite criado com sucesso' });
+      toast({ title: 'Convite enviado com sucesso', description: 'O fornecedor receberá um email com o link de acesso.' });
     },
     onError: (err: Error) => {
       toast({ title: 'Erro ao criar convite', description: err.message, variant: 'destructive' });
