@@ -55,7 +55,7 @@ export function SpecialtyPage({ specialty }: Props) {
                 </CardHeader>
               </Card>
               <EstimativasCard pkg={pkg} />
-              <PreviaOrcamentoCard packageId={pkg.id} />
+              <PreviaOrcamentoCard packageId={pkg.id} obraId={pkg.obra_id} />
             </div>
           ))}
         </div>

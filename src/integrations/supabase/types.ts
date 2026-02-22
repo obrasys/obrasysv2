@@ -2502,8 +2502,13 @@ export type Database = {
           bedrooms: number
           complexity: string
           created_at: string
+          equipamentos_extra: Json | null
           extra_rooms: number
+          has_bomba_calor: boolean
           has_laundry: boolean
+          has_paineis_solares: boolean
+          has_piso_radiante: boolean
+          has_termoacumulador: boolean
           id: string
           kitchen_count: number
           linear_m_estimated: number
@@ -2526,8 +2531,13 @@ export type Database = {
           bedrooms?: number
           complexity?: string
           created_at?: string
+          equipamentos_extra?: Json | null
           extra_rooms?: number
+          has_bomba_calor?: boolean
           has_laundry?: boolean
+          has_paineis_solares?: boolean
+          has_piso_radiante?: boolean
+          has_termoacumulador?: boolean
           id?: string
           kitchen_count?: number
           linear_m_estimated?: number
@@ -2550,8 +2560,13 @@ export type Database = {
           bedrooms?: number
           complexity?: string
           created_at?: string
+          equipamentos_extra?: Json | null
           extra_rooms?: number
+          has_bomba_calor?: boolean
           has_laundry?: boolean
+          has_paineis_solares?: boolean
+          has_piso_radiante?: boolean
+          has_termoacumulador?: boolean
           id?: string
           kitchen_count?: number
           linear_m_estimated?: number

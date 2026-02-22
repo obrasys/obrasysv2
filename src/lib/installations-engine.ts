@@ -9,6 +9,7 @@ import {
   PROFILE_MULTIPLIERS,
   COMPLEXITY_MULTIPLIERS,
   DEFAULT_COEFFICIENTS,
+  PLUMBING_EQUIPMENT_COSTS,
 } from '@/types/instalacoes';
 
 type CoeffMap = Record<string, number>;
@@ -116,6 +117,44 @@ export function calculateEstimation(
       totalCost,
     };
   });
+
+  // Add plumbing equipment items
+  if (data.specialty === 'plumbing') {
+    const profileKey = data.profile === 'eco' ? 'cost_eco' : data.profile === 'premium' ? 'cost_premium' : 'cost_med';
+
+    if (data.has_bomba_calor) {
+      const cost = PLUMBING_EQUIPMENT_COSTS.bomba_calor[profileKey];
+      items.push({ name: 'Bomba de Calor', unit: 'un', qty: 1, unitCostMaterial: cost, unitCostLabor: cost * 0.15, marginPercent: 10, totalCost: Math.round(cost * 1.15 * 1.1 * 100) / 100 });
+    }
+    if (data.has_termoacumulador) {
+      const cost = PLUMBING_EQUIPMENT_COSTS.termoacumulador[profileKey];
+      items.push({ name: 'Termoacumulador', unit: 'un', qty: 1, unitCostMaterial: cost, unitCostLabor: cost * 0.1, marginPercent: 10, totalCost: Math.round(cost * 1.1 * 1.1 * 100) / 100 });
+    }
+    if (data.has_piso_radiante) {
+      const cost = PLUMBING_EQUIPMENT_COSTS.piso_radiante[profileKey];
+      const area = data.area_m2;
+      items.push({ name: 'Piso Radiante', unit: 'm²', qty: area, unitCostMaterial: cost, unitCostLabor: cost * 0.3, marginPercent: 10, totalCost: Math.round(area * cost * 1.3 * 1.1 * 100) / 100 });
+    }
+    if (data.has_paineis_solares) {
+      const cost = PLUMBING_EQUIPMENT_COSTS.paineis_solares[profileKey];
+      items.push({ name: 'Painéis Solares Térmicos', unit: 'un', qty: 1, unitCostMaterial: cost, unitCostLabor: cost * 0.2, marginPercent: 10, totalCost: Math.round(cost * 1.2 * 1.1 * 100) / 100 });
+    }
+
+    // Custom equipment
+    for (const eq of data.equipamentos_extra) {
+      if (eq.nome && eq.custo_unitario > 0) {
+        items.push({
+          name: eq.nome,
+          unit: 'un',
+          qty: eq.quantidade,
+          unitCostMaterial: eq.custo_unitario,
+          unitCostLabor: 0,
+          marginPercent: 0,
+          totalCost: Math.round(eq.quantidade * eq.custo_unitario * 100) / 100,
+        });
+      }
+    }
+  }
 
   const totalCost = Math.round(items.reduce((sum, i) => sum + i.totalCost, 0) * 100) / 100;
 
