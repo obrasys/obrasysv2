@@ -63,7 +63,6 @@ export function PreviaOrcamentoCard({ packageId, obraId }: Props) {
         unidade: item.unit,
         quantidade: Number(item.qty),
         preco_unitario: Number(item.unit_cost_material) + Number(item.unit_cost_labor),
-        valor_total: Number(item.total_cost),
         ordem: idx + 1,
       }));
 
