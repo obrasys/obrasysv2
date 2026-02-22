@@ -93,10 +93,12 @@ export function ContaForm({
   const handleSubmit = (data: ContaFinanceiraFormData) => {
     onSubmit({
       ...data,
+      data_pagamento: data.data_pagamento || undefined,
       obra_id: data.obra_id || undefined,
       fornecedor_id: data.fornecedor_id || undefined,
       cliente_id: data.cliente_id || undefined,
       categoria_id: data.categoria_id || undefined,
+      descricao: data.descricao || undefined,
     });
     form.reset();
     onOpenChange(false);
