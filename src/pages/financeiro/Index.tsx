@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,6 @@ const FinanceiroIndex = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
   const [categoriasOpen, setCategoriasOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { 
     contas, 
@@ -87,20 +86,11 @@ const FinanceiroIndex = () => {
     marcarPago.mutate({ id, pago });
   };
 
-  const handleUploadComprovante = (conta: ContaFinanceira) => {
-    setUploadConta(conta);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && uploadConta) {
-      uploadComprovante.mutate({ contaId: uploadConta.id, file });
-      setUploadConta(null);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleUploadComprovante = async (conta: ContaFinanceira) => {
+    const { generateComprovantePdf } = await import('@/lib/comprovante-pdf');
+    const blob = generateComprovantePdf(conta);
+    const file = new File([blob], `comprovante-${conta.id}.pdf`, { type: 'application/pdf' });
+    uploadComprovante.mutate({ contaId: conta.id, file });
   };
 
   // Filtrar contas
@@ -300,14 +290,6 @@ const FinanceiroIndex = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Hidden file input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*,.pdf"
-          className="hidden"
-        />
       </div>
     </AppLayout>
   );
