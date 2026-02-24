@@ -20,22 +20,61 @@ export interface SupplierProfile {
   user_id: string;
   legal_name: string;
   trade_name: string | null;
+  responsavel_nome: string | null;
+  telemovel: string | null;
+  telefone_fixo: string | null;
+  phone: string | null; // Deprecated, use telemovel/telefone_fixo
+  email_comercial: string | null;
+  website: string | null;
+  nif: string | null;
+  morada_completa: string | null;
+  codigo_postal: string | null;
+  localidade: string | null;
+  location_district: string | null;
+  location_municipality: string | null;
+  pais: string;
+  
+  cae_principal: string | null;
+  cae_secundario: string | null;
+  ano_fundacao: number | null;
+  num_colaboradores: string | null;
+  certificacoes: string[] | null;
+  logo_url: string | null;
+
+  categoria_principal: string | null;
+  subcategorias: string[] | null;
+  zona_atuacao: string; // 'nacional' | 'distrito' | 'raio'
+  distritos_atuacao: string[] | null;
+  raio_atuacao_km: number | null;
+  
+  tipo_fornecimento: string[] | null;
+  prazo_medio_entrega: string | null;
+  min_order_value: number;
+  
+  trabalha_credito: boolean;
+  prazo_pagamento_padrao: string | null;
+  desconto_volume: boolean;
+  
+  aceita_pedidos_plataforma: boolean;
+  permite_api: boolean;
+  atualizacao_precos: string;
+  frequencia_atualizacao: string | null;
+
   service_areas: string | null;
   delivery_capability: string | null;
   sla_response_hours: number;
-  min_order_value: number;
   payment_terms: string | null;
   rating_avg: number;
   rating_count: number;
   is_certified: boolean;
-  logo_url: string | null;
   status: SupplierStatus;
-  location_district: string | null;
-  location_municipality: string | null;
-  phone: string | null;
-  nif: string | null;
+  
+  aceita_termos: boolean;
+  aceita_comunicacoes: boolean;
+  
   created_at: string;
   updated_at: string;
+  
   // Joined
   categories?: SupplierCategory[];
 }
