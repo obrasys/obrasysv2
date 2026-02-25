@@ -2058,6 +2058,50 @@ export type Database = {
           },
         ]
       }
+      essencial_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          modelo_utilizado: boolean | null
+          orcamento_id: string | null
+          quantidade_itens: number | null
+          tempo_total_segundos: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          modelo_utilizado?: boolean | null
+          orcamento_id?: string | null
+          quantidade_itens?: number | null
+          tempo_total_segundos?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          modelo_utilizado?: boolean | null
+          orcamento_id?: string | null
+          quantidade_itens?: number | null
+          tempo_total_segundos?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "essencial_events_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       failed_login_attempts: {
         Row: {
           attempted_at: string
@@ -3187,6 +3231,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      orcamento_templates_essencial: {
+        Row: {
+          created_at: string | null
+          id: string
+          itens_json: Json
+          nome: string
+          tipo_obra: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          itens_json?: Json
+          nome: string
+          tipo_obra: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          itens_json?: Json
+          nome?: string
+          tipo_obra?: string
+        }
+        Relationships: []
       }
       orcamentos: {
         Row: {
