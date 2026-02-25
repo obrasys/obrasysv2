@@ -192,7 +192,6 @@ export function useOrcamentoEssencial() {
         preco_unitario: item.valor,
         preco_base: item.valor,
         margem_lucro_artigo: 0,
-        valor_total: item.valor,
         ordem: idx + 1,
       }));
 
