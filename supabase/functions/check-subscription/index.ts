@@ -45,7 +45,11 @@ serve(async (req) => {
     // Use getClaims for JWT validation with signing keys
     const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      throw new Error(`Authentication error: ${claimsError?.message || 'Invalid token'}`);
+      logStep("Authentication failed", { message: claimsError?.message });
+      return new Response(JSON.stringify({ error: claimsError?.message || 'Invalid token' }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
     
     const userId = claimsData.claims.sub as string;
