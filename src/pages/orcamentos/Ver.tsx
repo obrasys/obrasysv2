@@ -224,26 +224,139 @@ export default function VerOrcamentoPage() {
       {/* Print Styles */}
       <style>{`
         @media print {
+          /* Reset everything */
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            min-height: 297mm !important;
+            font-size: 11px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background: white !important;
+          }
+          
           body * {
             visibility: hidden;
           }
+          
           #print-content, #print-content * {
             visibility: visible;
           }
+          
           #print-content {
             position: absolute;
             left: 0;
             top: 0;
-            width: 100%;
-            padding: 20px;
+            width: 210mm !important;
+            max-width: 210mm !important;
+            padding: 10mm 12mm !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
           }
+          
           .no-print {
             display: none !important;
           }
+          
+          /* Scale down content to fit A4 */
+          #print-content {
+            font-size: 10px !important;
+          }
+          
+          #print-content h1 {
+            font-size: 18px !important;
+          }
+          
+          #print-content h2 {
+            font-size: 14px !important;
+          }
+          
+          #print-content h3, #print-content h4 {
+            font-size: 12px !important;
+          }
+          
+          /* Tables - compact for A4 */
+          #print-content table {
+            font-size: 9px !important;
+            width: 100% !important;
+          }
+          
+          #print-content th, #print-content td {
+            padding: 3px 6px !important;
+          }
+          
+          /* Cards - remove shadows and reduce spacing */
+          #print-content .rounded-lg,
+          #print-content [class*="Card"] {
+            box-shadow: none !important;
+            border-radius: 4px !important;
+          }
+          
+          /* Reduce spacing between sections */
+          #print-content .space-y-6 > * + * {
+            margin-top: 12px !important;
+          }
+          
+          #print-content .space-y-2 > * + * {
+            margin-top: 4px !important;
+          }
+          
           /* Prevent page breaks inside important elements */
-          .print\\:break-inside-avoid {
+          #print-content .print\\:break-inside-avoid,
+          #print-content .pdf-keep-together {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+          }
+          
+          /* Keep chapter cards together when possible */
+          #print-content table {
+            break-inside: auto !important;
+          }
+          
+          #print-content tr {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          
+          #print-content thead {
+            display: table-header-group !important;
+          }
+          
+          /* Avoid orphaned headers */
+          #print-content [class*="CardHeader"] {
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+          }
+          
+          /* Summary section - always together */
+          #print-content .border-2 {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          
+          /* Footer and observations */
+          #print-content .bg-muted\\/30 {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          
+          /* Remove unnecessary padding */
+          #print-content .p-6, #print-content .md\\:p-8 {
+            padding: 0 !important;
+          }
+          
+          #print-content .p-4 {
+            padding: 8px !important;
+          }
+          
+          /* Page margins */
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
           }
         }
         
