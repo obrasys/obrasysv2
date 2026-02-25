@@ -229,11 +229,11 @@ export default function VerOrcamentoPage() {
             margin: 0 !important;
             padding: 0 !important;
             width: 210mm !important;
-            min-height: 297mm !important;
             font-size: 11px !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             background: white !important;
+            overflow: visible !important;
           }
           
           body * {
@@ -245,17 +245,18 @@ export default function VerOrcamentoPage() {
           }
           
           #print-content {
-            position: absolute;
+            position: relative !important;
             left: 0;
             top: 0;
-            width: 210mm !important;
-            max-width: 210mm !important;
-            padding: 10mm 12mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
             margin: 0 !important;
             box-sizing: border-box !important;
             background: white !important;
             box-shadow: none !important;
             border-radius: 0 !important;
+            overflow: visible !important;
           }
           
           .no-print {
@@ -356,7 +357,7 @@ export default function VerOrcamentoPage() {
           /* Page margins */
           @page {
             size: A4 portrait;
-            margin: 15mm 12mm 20mm 12mm;
+            margin: 15mm 15mm 20mm 15mm;
           }
         }
         
