@@ -148,11 +148,16 @@ export function useOrcamentoEssencial() {
         const tipoLabel = step1.tipo_obra.replace(/_/g, ' ');
         const titulo = `Orçamento ${tipoLabel.charAt(0).toUpperCase() + tipoLabel.slice(1)} - ${step1.nome_cliente}`;
 
+        // Generate budget code
+        const { data: codigo } = await supabase
+          .rpc('generate_orcamento_codigo', { p_user_id: user.id });
+
         const { data: orc, error: orcError } = await supabase
           .from('orcamentos')
           .insert({
             user_id: user.id,
             titulo,
+            codigo: codigo || null,
             cliente_id: cId,
             status: 'rascunho',
             margem_lucro: margemLucro,
