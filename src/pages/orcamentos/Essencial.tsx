@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout';
 import { EssencialWizardProgress } from '@/components/orcamentos/essencial/EssencialWizardProgress';
 import { EssencialStep1Cliente } from '@/components/orcamentos/essencial/EssencialStep1Cliente';
 import { EssencialStep2Trabalhos } from '@/components/orcamentos/essencial/EssencialStep2Trabalhos';
 import { EssencialStep3LucroEnvio } from '@/components/orcamentos/essencial/EssencialStep3LucroEnvio';
+import { AxiaSuggestionsPanel } from '@/components/orcamentos/essencial/AxiaSuggestionsPanel';
 import { useOrcamentoEssencial } from '@/hooks/useOrcamentoEssencial';
+import { useAxiaEssencial, AxiaSuggestion } from '@/hooks/useAxiaEssencial';
 
 export default function EssencialPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -22,6 +24,16 @@ export default function EssencialPage() {
     finalize,
   } = useOrcamentoEssencial();
 
+  const {
+    suggestions,
+    loading: axiaLoading,
+    fetchSuggestions,
+    acceptSuggestion,
+    dismissSuggestion,
+    clearSuggestions,
+    trackAxiaEvent,
+  } = useAxiaEssencial();
+
   const subtotal = items.reduce((s, i) => s + (i.valor || 0), 0);
 
   const handleStep1Next = async () => {
@@ -37,6 +49,45 @@ export default function EssencialPage() {
   const handleFinalize = () => {
     finalize(incluirIva);
   };
+
+  // Fetch Axia suggestions when entering step 2 or 3
+  useEffect(() => {
+    if (currentStep === 2 && step1.tipo_obra && items.length >= 0) {
+      clearSuggestions();
+      // Small delay to let the step render first
+      const timer = setTimeout(() => {
+        fetchSuggestions(2, step1.tipo_obra, items);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    if (currentStep === 3) {
+      clearSuggestions();
+      const timer = setTimeout(() => {
+        fetchSuggestions(3, step1.tipo_obra, items, margemLucro);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
+
+  // Handle accept of Axia suggestions
+  const handleAcceptSuggestion = useCallback((suggestion: AxiaSuggestion) => {
+    acceptSuggestion(suggestion);
+
+    if (suggestion.type === 'add_item' && suggestion.payload.canonical_label) {
+      setItems(prev => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          descricao: suggestion.payload.canonical_label,
+          valor: suggestion.payload.suggested_value || 0,
+        },
+      ]);
+    }
+
+    if (suggestion.type === 'adjust_profit' && suggestion.payload.suggested_margin != null) {
+      setMargemLucro(suggestion.payload.suggested_margin);
+    }
+  }, [acceptSuggestion, setItems, setMargemLucro]);
 
   return (
     <AppLayout
@@ -66,30 +117,50 @@ export default function EssencialPage() {
           )}
 
           {currentStep === 2 && (
-            <EssencialStep2Trabalhos
-              items={items}
-              onChange={setItems}
-              margemLucro={margemLucro}
-              templates={templates}
-              isLoadingTemplates={isLoadingTemplates}
-              onNext={handleStep2Next}
-              onBack={() => setCurrentStep(1)}
-            />
+            <div className="space-y-4">
+              <EssencialStep2Trabalhos
+                items={items}
+                onChange={setItems}
+                margemLucro={margemLucro}
+                templates={templates}
+                isLoadingTemplates={isLoadingTemplates}
+                onNext={handleStep2Next}
+                onBack={() => setCurrentStep(1)}
+              />
+              <div className="lg:ml-0 lg:max-w-[66%]">
+                <AxiaSuggestionsPanel
+                  suggestions={suggestions}
+                  loading={axiaLoading}
+                  onAccept={handleAcceptSuggestion}
+                  onDismiss={dismissSuggestion}
+                />
+              </div>
+            </div>
           )}
 
           {currentStep === 3 && (
-            <EssencialStep3LucroEnvio
-              subtotal={subtotal}
-              margemLucro={margemLucro}
-              onMargemChange={setMargemLucro}
-              incluirIva={incluirIva}
-              onIncluirIvaChange={setIncluirIva}
-              enviarEmail={enviarEmail}
-              onEnviarEmailChange={setEnviarEmail}
-              onBack={() => setCurrentStep(2)}
-              onFinalize={handleFinalize}
-              isLoading={isLoading}
-            />
+            <div className="space-y-4">
+              <EssencialStep3LucroEnvio
+                subtotal={subtotal}
+                margemLucro={margemLucro}
+                onMargemChange={setMargemLucro}
+                incluirIva={incluirIva}
+                onIncluirIvaChange={setIncluirIva}
+                enviarEmail={enviarEmail}
+                onEnviarEmailChange={setEnviarEmail}
+                onBack={() => setCurrentStep(2)}
+                onFinalize={handleFinalize}
+                isLoading={isLoading}
+              />
+              <div className="max-w-lg mx-auto">
+                <AxiaSuggestionsPanel
+                  suggestions={suggestions}
+                  loading={axiaLoading}
+                  onAccept={handleAcceptSuggestion}
+                  onDismiss={dismissSuggestion}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

@@ -65,9 +65,24 @@ export function useOrcamentoEssencial() {
     saveDraft({ step1, items, margemLucro, orcamentoId, clienteId, capituloId, startTime });
   }, [step1, items, margemLucro, orcamentoId, clienteId, capituloId, startTime]);
 
-  // Track event
+  // Track event — now uses axia_events table
   const trackEvent = useCallback(async (eventType: string, extra?: Record<string, any>) => {
     if (!user) return;
+    try {
+      await supabase.from('axia_events' as any).insert({
+        user_id: user.id,
+        event_name: eventType,
+        entity_type: 'orcamento',
+        entity_id: orcamentoId || null,
+        metadata: {
+          tempo_total_segundos: Math.round((Date.now() - startTime) / 1000),
+          quantidade_itens: items.length,
+          tipo_obra: step1.tipo_obra,
+          ...extra,
+        },
+      });
+    } catch { /* silent */ }
+    // Keep old table as fallback
     try {
       await supabase.from('essencial_events').insert({
         user_id: user.id,
@@ -79,7 +94,7 @@ export function useOrcamentoEssencial() {
         metadata: extra || {},
       } as any);
     } catch { /* silent */ }
-  }, [user, orcamentoId, startTime, items.length]);
+  }, [user, orcamentoId, startTime, items.length, step1.tipo_obra]);
 
   // Load templates for tipo_obra
   const loadTemplates = useCallback(async (tipoObra: string) => {
