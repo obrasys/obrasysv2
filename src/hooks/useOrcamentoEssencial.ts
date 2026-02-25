@@ -211,26 +211,49 @@ export function useOrcamentoEssencial() {
 
   // Finalize
   const finalize = useCallback(async (incluirIva: boolean) => {
-    if (!orcamentoId) return;
+    if (!orcamentoId || !capituloId) return;
     setIsLoading(true);
     try {
+      // Re-save artigos as safety measure
+      await supabase
+        .from('artigos_orcamento')
+        .delete()
+        .eq('capitulo_id', capituloId);
+
+      const artigos = items.map((item, idx) => ({
+        capitulo_id: capituloId,
+        descricao: item.descricao,
+        unidade: 'vg',
+        quantidade: 1,
+        preco_unitario: item.valor,
+        preco_base: item.valor,
+        margem_lucro_artigo: 0,
+        ordem: idx + 1,
+      }));
+
+      if (artigos.length > 0) {
+        const { error: artError } = await supabase
+          .from('artigos_orcamento')
+          .insert(artigos);
+        if (artError) throw artError;
+      }
+
+      // Update orcamento
       const subtotal = items.reduce((s, i) => s + i.valor, 0);
-      const lucro = subtotal * (margemLucro / 100);
-      const totalSemIva = subtotal + lucro;
 
       await supabase
         .from('orcamentos')
         .update({
           status: 'enviado',
           margem_lucro: margemLucro,
-          valor_total: totalSemIva,
+          valor_total: subtotal,
           data_envio: new Date().toISOString(),
         })
         .eq('id', orcamentoId);
 
       await trackEvent('essencial_completed', {
         incluir_iva: incluirIva,
-        valor_total: totalSemIva,
+        valor_total: subtotal,
         margem_lucro: margemLucro,
       });
 
@@ -241,7 +264,7 @@ export function useOrcamentoEssencial() {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
     setIsLoading(false);
-  }, [orcamentoId, items, margemLucro, trackEvent, toast, navigate]);
+  }, [orcamentoId, capituloId, items, margemLucro, trackEvent, toast, navigate]);
 
   // Start tracking
   useEffect(() => {
