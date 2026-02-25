@@ -82,6 +82,7 @@ import TelecomPage from "./pages/instalacoes/Telecom";
 import ConfigurarInstalacoesPage from "./pages/instalacoes/Configurar";
 import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
 import AxiaPage from "./pages/axia/Index";
+import ImportarPage from "./pages/importar/Index";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
               <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
               <Route path="/axia" element={<ManagerRoute><AxiaPage /></ManagerRoute>} />
+              <Route path="/importar" element={<ManagerRoute><ImportarPage /></ManagerRoute>} />
               {/* Admin - Super Admin Only */}
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />

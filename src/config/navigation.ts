@@ -16,6 +16,7 @@ import {
   Shield,
   ShieldCheck,
   Store,
+  Upload,
   Users,
   Wallet,
 } from "lucide-react";
@@ -42,6 +43,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: Network, label: "Fornecedores", href: "/rede-fornecedores" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
   { icon: BrainCircuit, label: "Axia", href: "/axia" },
+  { icon: Upload, label: "Importar Dados", href: "/importar" },
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
