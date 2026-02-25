@@ -70,8 +70,16 @@ export default function VerOrcamentoPage() {
     try {
       const element = printRef.current;
       
-      // Add temporary CSS class for PDF generation to handle page breaks
+      // Force light mode for PDF generation
       element.classList.add('generating-pdf');
+      const root = document.documentElement;
+      const prevClass = root.className;
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.style.colorScheme = 'light';
+      
+      // Wait a tick for styles to apply
+      await new Promise(r => setTimeout(r, 100));
       
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -82,8 +90,10 @@ export default function VerOrcamentoPage() {
         windowHeight: element.scrollHeight,
       });
       
-      // Remove temporary class
+      // Restore original theme
       element.classList.remove('generating-pdf');
+      root.className = prevClass;
+      root.style.colorScheme = '';
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
