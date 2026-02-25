@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS idx_axia_dict_raw_unique ON public.axia_item_dictionary(raw_text);

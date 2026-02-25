@@ -64,7 +64,7 @@ export function AxiaSuggestionsPanel({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-green-600 hover:bg-green-100 hover:text-green-700"
+                className="h-7 w-7 text-primary hover:bg-primary/10 hover:text-primary"
                 onClick={() => onAccept(suggestion)}
                 title="Aceitar"
               >
@@ -84,7 +84,7 @@ export function AxiaSuggestionsPanel({
         ))}
 
         {suggestions.some(s => s.accepted === true) && (
-          <p className="text-xs text-green-600 flex items-center gap-1">
+          <p className="text-xs text-primary flex items-center gap-1">
             <Check className="h-3 w-3" />
             {suggestions.filter(s => s.accepted).length} sugestão(ões) aplicada(s)
           </p>
