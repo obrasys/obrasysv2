@@ -168,11 +168,12 @@ export function useOrcamentos() {
 
   // Alterar status (cria obra automaticamente se status = 'adjudicado')
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status, data_envio }: { id: string; status: string; data_envio?: string }) => {
+    mutationFn: async ({ id, status, data_envio, valor_adjudicado }: { id: string; status: string; data_envio?: string; valor_adjudicado?: number }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
       const updateData: Record<string, unknown> = { status };
       if (data_envio) updateData.data_envio = data_envio;
+      if (valor_adjudicado != null) updateData.valor_adjudicado = valor_adjudicado;
 
       // Buscar orçamento para verificar se já tem obra
       const { data: orcamento, error: fetchError } = await supabase

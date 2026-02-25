@@ -3393,6 +3393,7 @@ export type Database = {
           titulo: string
           updated_at: string
           user_id: string
+          valor_adjudicado: number | null
           valor_total: number | null
         }
         Insert: {
@@ -3411,6 +3412,7 @@ export type Database = {
           titulo: string
           updated_at?: string
           user_id: string
+          valor_adjudicado?: number | null
           valor_total?: number | null
         }
         Update: {
@@ -3429,6 +3431,7 @@ export type Database = {
           titulo?: string
           updated_at?: string
           user_id?: string
+          valor_adjudicado?: number | null
           valor_total?: number | null
         }
         Relationships: [

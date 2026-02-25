@@ -1,0 +1,1 @@
+ALTER TABLE public.orcamentos ADD COLUMN valor_adjudicado numeric DEFAULT NULL;
