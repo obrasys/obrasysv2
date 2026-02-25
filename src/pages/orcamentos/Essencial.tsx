@@ -7,6 +7,7 @@ import { EssencialStep3LucroEnvio } from '@/components/orcamentos/essencial/Esse
 import { AxiaSuggestionsPanel } from '@/components/orcamentos/essencial/AxiaSuggestionsPanel';
 import { useOrcamentoEssencial } from '@/hooks/useOrcamentoEssencial';
 import { useAxiaEssencial, AxiaSuggestion } from '@/hooks/useAxiaEssencial';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function EssencialPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -54,7 +55,6 @@ export default function EssencialPage() {
   useEffect(() => {
     if (currentStep === 2 && step1.tipo_obra && items.length >= 0) {
       clearSuggestions();
-      // Small delay to let the step render first
       const timer = setTimeout(() => {
         fetchSuggestions(2, step1.tipo_obra, items);
       }, 500);
@@ -89,79 +89,107 @@ export default function EssencialPage() {
     }
   }, [acceptSuggestion, setItems, setMargemLucro]);
 
+  const stepVariants = {
+    enter: { opacity: 0, x: 40 },
+    center: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -40 },
+  };
+
   return (
     <AppLayout
       title="Orçamento Essencial"
       subtitle="Crie um orçamento profissional em menos de 5 minutos"
     >
-      <div className="p-4 md:p-6 space-y-8 max-w-5xl mx-auto">
-        {/* Microcopy */}
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">
-            ✨ Crie um orçamento profissional em menos de 5 minutos.
-          </p>
-        </div>
-
+      <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
         {/* Progress */}
         <EssencialWizardProgress currentStep={currentStep} />
 
-        {/* Steps */}
-        <div className="pt-4">
-          {currentStep === 1 && (
-            <EssencialStep1Cliente
-              data={step1}
-              onChange={setStep1}
-              onNext={handleStep1Next}
-              isLoading={isLoading}
-            />
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <EssencialStep2Trabalhos
-                items={items}
-                onChange={setItems}
-                margemLucro={margemLucro}
-                templates={templates}
-                isLoadingTemplates={isLoadingTemplates}
-                onNext={handleStep2Next}
-                onBack={() => setCurrentStep(1)}
-              />
-              <div className="lg:ml-0 lg:max-w-[66%]">
-                <AxiaSuggestionsPanel
-                  suggestions={suggestions}
-                  loading={axiaLoading}
-                  onAccept={handleAcceptSuggestion}
-                  onDismiss={dismissSuggestion}
+        {/* Steps with animation */}
+        <div className="pt-2 min-h-[400px]">
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+              >
+                <EssencialStep1Cliente
+                  data={step1}
+                  onChange={setStep1}
+                  onNext={handleStep1Next}
+                  isLoading={isLoading}
                 />
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
 
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <EssencialStep3LucroEnvio
-                subtotal={subtotal}
-                margemLucro={margemLucro}
-                onMargemChange={setMargemLucro}
-                incluirIva={incluirIva}
-                onIncluirIvaChange={setIncluirIva}
-                enviarEmail={enviarEmail}
-                onEnviarEmailChange={setEnviarEmail}
-                onBack={() => setCurrentStep(2)}
-                onFinalize={handleFinalize}
-                isLoading={isLoading}
-              />
-              <div className="max-w-lg mx-auto">
-                <AxiaSuggestionsPanel
-                  suggestions={suggestions}
-                  loading={axiaLoading}
-                  onAccept={handleAcceptSuggestion}
-                  onDismiss={dismissSuggestion}
-                />
-              </div>
-            </div>
-          )}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+              >
+                <div className="space-y-4">
+                  <EssencialStep2Trabalhos
+                    items={items}
+                    onChange={setItems}
+                    margemLucro={margemLucro}
+                    templates={templates}
+                    isLoadingTemplates={isLoadingTemplates}
+                    onNext={handleStep2Next}
+                    onBack={() => setCurrentStep(1)}
+                  />
+                  <div className="lg:ml-0 lg:max-w-[66%]">
+                    <AxiaSuggestionsPanel
+                      suggestions={suggestions}
+                      loading={axiaLoading}
+                      onAccept={handleAcceptSuggestion}
+                      onDismiss={dismissSuggestion}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+              >
+                <div className="space-y-4">
+                  <EssencialStep3LucroEnvio
+                    subtotal={subtotal}
+                    margemLucro={margemLucro}
+                    onMargemChange={setMargemLucro}
+                    incluirIva={incluirIva}
+                    onIncluirIvaChange={setIncluirIva}
+                    enviarEmail={enviarEmail}
+                    onEnviarEmailChange={setEnviarEmail}
+                    onBack={() => setCurrentStep(2)}
+                    onFinalize={handleFinalize}
+                    isLoading={isLoading}
+                  />
+                  <div className="max-w-lg mx-auto">
+                    <AxiaSuggestionsPanel
+                      suggestions={suggestions}
+                      loading={axiaLoading}
+                      onAccept={handleAcceptSuggestion}
+                      onDismiss={dismissSuggestion}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </AppLayout>
