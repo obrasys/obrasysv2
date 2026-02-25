@@ -21,6 +21,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { useObras } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
+import { FiscalContextSection } from '@/components/orcamentos/FiscalContextSection';
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
 import { Loader2, Building2, User, Save } from 'lucide-react';
 
@@ -34,6 +35,9 @@ const formSchema = z.object({
     seguros: z.number().min(0),
     licenciamento: z.number().min(0),
   }),
+  tipo_obra: z.string().optional(),
+  tipo_cliente: z.string().optional(),
+  tipo_operacao: z.string().optional(),
 });
 
 interface OrcamentoFormProps {
@@ -68,6 +72,9 @@ export function OrcamentoForm({
         seguros: 0,
         licenciamento: 0,
       },
+      tipo_obra: undefined,
+      tipo_cliente: undefined,
+      tipo_operacao: undefined,
       ...defaultValues,
     },
   });
@@ -192,6 +199,8 @@ export function OrcamentoForm({
             </FormItem>
           )}
         />
+
+        <FiscalContextSection form={form} />
 
         <div className="space-y-4">
           <h4 className="font-medium text-sm">Custos Indiretos</h4>

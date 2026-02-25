@@ -149,6 +149,9 @@ export interface OrcamentoFormData {
   cliente_id?: string;
   margem_lucro: number;
   custos_indiretos: CustosIndiretos;
+  tipo_obra?: string;
+  tipo_cliente?: string;
+  tipo_operacao?: string;
 }
 
 export interface CapituloFormData {
