@@ -196,8 +196,9 @@ function ImportCategoryCard({ category, file, isSelected, onSelect, onDrop, onRe
           <div className="space-y-3 pt-2">
             {!file ? (
               <div
-                {...getRootProps()}
-                onClick={(e) => e.stopPropagation()}
+                {...getRootProps({
+                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                })}
                 className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                   isDragActive 
                     ? 'border-primary bg-primary/5' 
