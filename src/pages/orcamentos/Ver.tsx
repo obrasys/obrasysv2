@@ -356,7 +356,7 @@ export default function VerOrcamentoPage() {
           /* Page margins */
           @page {
             size: A4 portrait;
-            margin: 8mm 10mm;
+            margin: 15mm 12mm 20mm 12mm;
           }
         }
         
