@@ -847,6 +847,126 @@ export type Database = {
           },
         ]
       }
+      axia_budget_stats: {
+        Row: {
+          canonical_label: string
+          id: string
+          median_value: number
+          p25: number
+          p75: number
+          sample_size: number
+          tipo_obra: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_label: string
+          id?: string
+          median_value?: number
+          p25?: number
+          p75?: number
+          sample_size?: number
+          tipo_obra: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_label?: string
+          id?: string
+          median_value?: number
+          p25?: number
+          p75?: number
+          sample_size?: number
+          tipo_obra?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      axia_events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          event_name: string
+          id: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          event_name: string
+          id?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          event_name?: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      axia_item_dictionary: {
+        Row: {
+          canonical_label: string
+          confidence: number
+          created_at: string
+          id: string
+          locale: string
+          raw_text: string
+        }
+        Insert: {
+          canonical_label: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          locale?: string
+          raw_text: string
+        }
+        Update: {
+          canonical_label?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          locale?: string
+          raw_text?: string
+        }
+        Relationships: []
+      }
+      axia_suggestions_log: {
+        Row: {
+          accepted: boolean | null
+          created_at: string
+          id: string
+          orcamento_id: string | null
+          suggestion_payload: Json
+          suggestion_type: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          orcamento_id?: string | null
+          suggestion_payload?: Json
+          suggestion_type: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          orcamento_id?: string | null
+          suggestion_payload?: Json
+          suggestion_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       base_precos_personalizada: {
         Row: {
           categoria: string
