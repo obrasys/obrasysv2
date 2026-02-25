@@ -31,6 +31,7 @@ import {
   Loader2,
   LayoutGrid,
   List,
+  Sparkles,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -110,10 +111,16 @@ export default function OrcamentosPage() {
       title="Orçamentos"
       subtitle="Gerir e criar orçamentos de obra"
       actions={
-        <Button onClick={() => navigate('/orcamentos/criar')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Orçamento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/orcamentos/essencial/novo')}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Essencial
+          </Button>
+          <Button onClick={() => navigate('/orcamentos/criar')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Orçamento
+          </Button>
+        </div>
       }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">

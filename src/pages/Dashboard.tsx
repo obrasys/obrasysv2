@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
@@ -198,6 +199,25 @@ const Dashboard = () => {
 
         {/* Onboarding: Inactive Reminder */}
         {showInactiveReminder && <OnboardingInactiveReminder onDismiss={dismissOnboarding} />}
+
+        {/* Quick Actions - Orçamento Essencial */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-lg">Criar Orçamento em 3 Passos</h3>
+              <p className="text-sm text-muted-foreground">Demora menos de 5 minutos</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/orcamentos/essencial/novo')}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Criar Agora
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/orcamentos/criar')}>
+                Orçamento Avançado
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
