@@ -83,6 +83,7 @@ import ConfigurarInstalacoesPage from "./pages/instalacoes/Configurar";
 import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
 import AxiaPage from "./pages/axia/Index";
 import ImportarPage from "./pages/importar/Index";
+import EssencialPage from "./pages/orcamentos/Essencial";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />
               <Route path="/orcamentos/:id" element={<ManagerRoute><VerOrcamentoPage /></ManagerRoute>} />
               <Route path="/orcamentos/:id/editar" element={<ManagerRoute><EditarOrcamentoPage /></ManagerRoute>} />
+              <Route path="/orcamentos/essencial/novo" element={<ManagerRoute><EssencialPage /></ManagerRoute>} />
               <Route path="/obras" element={<ManagerRoute><ObrasPage /></ManagerRoute>} />
               <Route path="/obras/criar" element={<ManagerRoute><CriarObraPage /></ManagerRoute>} />
               <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />
