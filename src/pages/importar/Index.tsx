@@ -146,7 +146,7 @@ interface ImportCategoryCardProps {
 }
 
 function ImportCategoryCard({ category, file, isSelected, onSelect, onDrop, onRemoveFile, onNavigate }: ImportCategoryCardProps) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -155,6 +155,7 @@ function ImportCategoryCard({ category, file, isSelected, onSelect, onDrop, onRe
     },
     maxFiles: 1,
     multiple: false,
+    noClick: true,
   });
 
   return (
@@ -196,9 +197,11 @@ function ImportCategoryCard({ category, file, isSelected, onSelect, onDrop, onRe
           <div className="space-y-3 pt-2">
             {!file ? (
               <div
-                {...getRootProps({
-                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
-                })}
+                {...getRootProps()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  open();
+                }}
                 className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                   isDragActive 
                     ? 'border-primary bg-primary/5' 
