@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,6 +18,7 @@ interface OnboardingProgress {
 
 export function useOnboarding() {
   const { user } = useAuth();
+  const location = useLocation();
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -50,8 +52,22 @@ export function useOnboarding() {
     }
   }, [user?.id]);
 
+  // Re-sync on mount and on route change (e.g. after adding a team member in /recursos)
   useEffect(() => {
     syncAndFetch();
+  }, [syncAndFetch, location.pathname]);
+
+  // Re-sync when window regains focus (e.g. after navigating to /recursos and back)
+  useEffect(() => {
+    const handleFocus = () => { syncAndFetch(); };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncAndFetch();
+    });
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [syncAndFetch]);
 
   // Detect completion transition (was <100%, now 100%)
