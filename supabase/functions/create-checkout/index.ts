@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -56,7 +56,7 @@ serve(async (req) => {
       logStep("No existing customer, will create new");
     }
 
-    const origin = req.headers.get("origin") || "https://app.obrasys.pt";
+    const origin = req.headers.get("origin") || "https://obrasysv2.lovable.app";
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

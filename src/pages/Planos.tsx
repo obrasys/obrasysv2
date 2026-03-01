@@ -13,7 +13,7 @@ const PLANS = [
     name: "Starter",
     description: "Para profissionais independentes",
     priceMonthly: 49,
-    priceYearly: 470,
+    priceYearly: 490,
     features: [
       "Até 5 obras ativas",
       "1 utilizador",
@@ -22,13 +22,13 @@ const PLANS = [
       "Suporte por email",
     ],
     stripePriceIdMonthly: "price_1SrmWY1h8hjJdYcBTwJLUzOl",
-    stripePriceIdYearly: null, // TODO: Create yearly price
+    stripePriceIdYearly: "price_1T5zA41h8hjJdYcBe5hqn49O",
   },
   {
     name: "Professional",
     description: "Para equipas pequenas",
     priceMonthly: 99,
-    priceYearly: 950,
+    priceYearly: 990,
     features: [
       "Obras ilimitadas",
       "Até 5 utilizadores",
@@ -38,7 +38,7 @@ const PLANS = [
       "Suporte prioritário",
     ],
     stripePriceIdMonthly: "price_1SrmZg1h8hjJdYcBXUN4G89G",
-    stripePriceIdYearly: null, // TODO: Create yearly price
+    stripePriceIdYearly: "price_1Sroez1h8hjJdYcBVZbK5mzc",
     isPopular: true,
   },
   {
@@ -138,7 +138,7 @@ export default function PlanosPage() {
               stripePriceId={
                 billingPeriod === "monthly" 
                   ? plan.stripePriceIdMonthly 
-                  : plan.stripePriceIdYearly || plan.stripePriceIdMonthly
+                  : plan.stripePriceIdYearly
               }
               isPopular={plan.isPopular}
               isEnterprise={plan.isEnterprise}
