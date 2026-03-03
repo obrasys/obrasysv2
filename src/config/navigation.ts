@@ -16,6 +16,7 @@ import {
   Shield,
   ShieldCheck,
   Store,
+  TicketCheck,
   Upload,
   Users,
   Wallet,
@@ -55,4 +56,5 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   
   { icon: Store, label: "Fornecedores", href: "/admin/fornecedores" },
+  { icon: TicketCheck, label: "Tickets Suporte", href: "/admin/tickets" },
 ];

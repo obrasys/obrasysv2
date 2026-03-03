@@ -75,6 +75,7 @@ import FornecedorPedidoDetalhe from "./pages/fornecedor/PedidoDetalhe";
 import FornecedorPrecos from "./pages/fornecedor/Precos";
 import FornecedorPerfil from "./pages/fornecedor/Perfil";
 import AdminFornecedores from "./pages/admin/Fornecedores";
+import AdminTickets from "./pages/admin/Tickets";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
 import EletricaPage from "./pages/instalacoes/Eletrica";
 import CanalizacaoPage from "./pages/instalacoes/Canalizacao";
@@ -163,6 +164,7 @@ const App = () => (
               <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
               <Route path="/admin/analytics" element={<SuperAdminRoute><AdminAnalytics /></SuperAdminRoute>} />
               <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
+              <Route path="/admin/tickets" element={<SuperAdminRoute><AdminTickets /></SuperAdminRoute>} />
               {/* Portal do Cliente */}
               <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
               <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
