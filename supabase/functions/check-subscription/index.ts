@@ -125,6 +125,7 @@ serve(async (req) => {
     const hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = "trial";
     let subscriptionEnd = null;
+    let subscriptionStatus = "trialing";
     let productId = null;
 
     if (hasActiveSub) {
@@ -132,6 +133,7 @@ serve(async (req) => {
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       productId = subscription.items.data[0].price.product as string;
       subscriptionTier = PRODUCT_TIERS[productId] || "starter";
+      subscriptionStatus = "active";
       logStep("Active subscription found", { 
         subscriptionId: subscription.id, 
         endDate: subscriptionEnd,
@@ -154,12 +156,37 @@ serve(async (req) => {
 
       logStep("Subscriber record updated");
     } else {
-      logStep("No active subscription found");
+      logStep("No active subscription found, checking local records");
+      
+      // Fallback to local subscriber/profile data for trial info
+      const { data: subscriber } = await supabaseClient
+        .from("subscribers")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (subscriber) {
+        subscriptionTier = subscriber.subscription_tier || "trial";
+        subscriptionEnd = subscriber.subscription_end;
+        subscriptionStatus = subscriber.subscription_status || "trialing";
+      } else {
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("trial_end, trial_expired")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profile?.trial_end) {
+          subscriptionEnd = profile.trial_end;
+          subscriptionStatus = profile.trial_expired ? "canceled" : "trialing";
+        }
+      }
     }
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
+      subscription_status: subscriptionStatus,
       subscription_end: subscriptionEnd,
       product_id: productId,
     }), {
