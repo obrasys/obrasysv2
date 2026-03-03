@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Bot,
   TicketCheck,
@@ -21,7 +22,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  User,
+  ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
+import { useSupportTickets, useTicketMessages } from "@/hooks/useSupportTickets";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { toast } from "sonner";
@@ -32,16 +37,6 @@ interface Message {
   content: string;
   sender: "user" | "assistant";
   timestamp: Date;
-}
-
-interface Ticket {
-  id: string;
-  titulo: string;
-  descricao: string;
-  status: "aberto" | "em_progresso" | "resolvido";
-  prioridade: "baixa" | "media" | "alta";
-  created_at: Date;
-  updated_at: Date;
 }
 
 interface FAQItem {
@@ -190,29 +185,10 @@ const mockFAQs: FAQItem[] = [
   },
 ];
 
-const mockTickets: Ticket[] = [
-  {
-    id: "TK-001",
-    titulo: "Erro ao exportar orçamento",
-    descricao: "Quando tento exportar o orçamento para PDF, aparece erro.",
-    status: "em_progresso",
-    prioridade: "alta",
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "TK-002",
-    titulo: "Dúvida sobre licenciamento",
-    descricao: "Gostaria de saber como funciona o plano empresarial.",
-    status: "resolvido",
-    prioridade: "baixa",
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-];
 
 export default function SuportePage() {
   const [activeTab, setActiveTab] = useState("chat");
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -225,7 +201,13 @@ export default function SuportePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
-  const [newTicket, setNewTicket] = useState({ titulo: "", descricao: "", prioridade: "media" as const });
+  const [newTicket, setNewTicket] = useState({ titulo: "", descricao: "", prioridade: "media" });
+  const [replyContent, setReplyContent] = useState("");
+  
+  const { ticketsQuery, createTicket } = useSupportTickets();
+  const { messagesQuery, sendMessage } = useTicketMessages(selectedTicketId);
+  const tickets = ticketsQuery.data || [];
+  const selectedTicket = tickets.find((t) => t.id === selectedTicketId);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -302,14 +284,19 @@ export default function SuportePage() {
     });
   };
 
-  const handleCreateTicket = () => {
+  const handleCreateTicket = async () => {
     if (!newTicket.titulo.trim() || !newTicket.descricao.trim()) return;
-    toast.success("Ticket criado com sucesso!");
-    setIsCreatingTicket(false);
-    setNewTicket({ titulo: "", descricao: "", prioridade: "media" });
+    try {
+      await createTicket.mutateAsync(newTicket);
+      toast.success("Ticket criado com sucesso!");
+      setIsCreatingTicket(false);
+      setNewTicket({ titulo: "", descricao: "", prioridade: "media" });
+    } catch {
+      toast.error("Erro ao criar ticket");
+    }
   };
 
-  const getStatusBadge = (status: Ticket["status"]) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "aberto":
         return <Badge className="bg-blue-100 text-blue-800">Aberto</Badge>;
@@ -317,10 +304,12 @@ export default function SuportePage() {
         return <Badge className="bg-yellow-100 text-yellow-800">Em Progresso</Badge>;
       case "resolvido":
         return <Badge className="bg-green-100 text-green-800">Resolvido</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getPriorityBadge = (prioridade: Ticket["prioridade"]) => {
+  const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
       case "baixa":
         return <Badge variant="outline">Baixa</Badge>;
@@ -328,6 +317,8 @@ export default function SuportePage() {
         return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Média</Badge>;
       case "alta":
         return <Badge variant="outline" className="border-red-500 text-red-700">Alta</Badge>;
+      default:
+        return <Badge variant="outline">{prioridade}</Badge>;
     }
   };
 
@@ -512,74 +503,153 @@ export default function SuportePage() {
 
           {/* Tickets Tab */}
           <TabsContent value="tickets">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Os Meus Tickets</h3>
-                  <Button onClick={() => setIsCreatingTicket(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Ticket
+            {selectedTicket ? (
+              <Card>
+                <CardContent className="p-4">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTicketId(null)} className="mb-3">
+                    <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                   </Button>
-                </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {getStatusBadge(selectedTicket.status)}
+                    {getPriorityBadge(selectedTicket.prioridade)}
+                  </div>
+                  <h3 className="font-semibold text-lg">{selectedTicket.titulo}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 mb-4">{selectedTicket.descricao}</p>
 
-                {isCreatingTicket && (
-                  <Card className="mb-4 border-primary">
-                    <CardContent className="p-4 space-y-4">
-                      <Input
-                        placeholder="Título do ticket"
-                        value={newTicket.titulo}
-                        onChange={(e) => setNewTicket({ ...newTicket, titulo: e.target.value })}
-                      />
-                      <Textarea
-                        placeholder="Descreva o seu problema ou dúvida..."
-                        value={newTicket.descricao}
-                        onChange={(e) => setNewTicket({ ...newTicket, descricao: e.target.value })}
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={handleCreateTicket}>Criar Ticket</Button>
-                        <Button variant="outline" onClick={() => setIsCreatingTicket(false)}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <div className="space-y-3">
-                  {mockTickets.map((ticket) => (
-                    <Card key={ticket.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-mono text-muted-foreground">{ticket.id}</span>
-                              {getStatusBadge(ticket.status)}
-                              {getPriorityBadge(ticket.prioridade)}
-                            </div>
-                            <h4 className="font-medium">{ticket.titulo}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{ticket.descricao}</p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                Criado: {format(ticket.created_at, "dd/MM/yyyy", { locale: pt })}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                Atualizado: {format(ticket.updated_at, "dd/MM/yyyy", { locale: pt })}
-                              </span>
+                  <ScrollArea className="h-[300px] border rounded-lg p-4 mb-4">
+                    {messagesQuery.isLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                    ) : (messagesQuery.data || []).length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8 text-sm">Sem mensagens. Aguarde uma resposta da equipa.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {(messagesQuery.data || []).map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.sender_role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div className="flex items-start gap-2 max-w-[80%]">
+                              {msg.sender_role !== "user" && (
+                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                                </div>
+                              )}
+                              <div className={`rounded-lg p-3 text-sm ${msg.sender_role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                                <p className={`text-xs mt-1 ${msg.sender_role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                  {format(new Date(msg.created_at), "dd/MM HH:mm", { locale: pt })}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                          {ticket.status === "resolvido" ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <AlertCircle className="h-5 w-5 text-yellow-500" />
-                          )}
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Escreva uma mensagem..."
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      className="flex-1"
+                      rows={2}
+                    />
+                    <Button
+                      onClick={async () => {
+                        if (!replyContent.trim()) return;
+                        try {
+                          await sendMessage.mutateAsync({ content: replyContent, senderRole: "user" });
+                          setReplyContent("");
+                        } catch { toast.error("Erro ao enviar"); }
+                      }}
+                      disabled={!replyContent.trim() || sendMessage.isPending}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Os Meus Tickets</h3>
+                    <Button onClick={() => setIsCreatingTicket(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Novo Ticket
+                    </Button>
+                  </div>
+
+                  {isCreatingTicket && (
+                    <Card className="mb-4 border-primary">
+                      <CardContent className="p-4 space-y-4">
+                        <Input
+                          placeholder="Título do ticket"
+                          value={newTicket.titulo}
+                          onChange={(e) => setNewTicket({ ...newTicket, titulo: e.target.value })}
+                        />
+                        <Textarea
+                          placeholder="Descreva o seu problema ou dúvida..."
+                          value={newTicket.descricao}
+                          onChange={(e) => setNewTicket({ ...newTicket, descricao: e.target.value })}
+                        />
+                        <Select value={newTicket.prioridade} onValueChange={(v) => setNewTicket({ ...newTicket, prioridade: v })}>
+                          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="baixa">Baixa</SelectItem>
+                            <SelectItem value="media">Média</SelectItem>
+                            <SelectItem value="alta">Alta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex gap-2">
+                          <Button onClick={handleCreateTicket} disabled={createTicket.isPending}>
+                            {createTicket.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            Criar Ticket
+                          </Button>
+                          <Button variant="outline" onClick={() => setIsCreatingTicket(false)}>
+                            Cancelar
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  )}
+
+                  {ticketsQuery.isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : tickets.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">Ainda não criou nenhum ticket.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {tickets.map((ticket) => (
+                        <Card key={ticket.id} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelectedTicketId(ticket.id)}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {getStatusBadge(ticket.status)}
+                                  {getPriorityBadge(ticket.prioridade)}
+                                </div>
+                                <h4 className="font-medium">{ticket.titulo}</h4>
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{ticket.descricao}</p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {format(new Date(ticket.created_at), "dd/MM/yyyy", { locale: pt })}
+                                  </span>
+                                </div>
+                              </div>
+                              {ticket.status === "resolvido" ? (
+                                <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0" />
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* FAQ Tab */}

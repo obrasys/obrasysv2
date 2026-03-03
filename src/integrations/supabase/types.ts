@@ -4736,6 +4736,80 @@ export type Database = {
           },
         ]
       }
+      support_ticket_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_role: string
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_role?: string
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_role?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          prioridade: string
+          status: string
+          titulo: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          prioridade?: string
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          prioridade?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_nome?: string | null
+        }
+        Relationships: []
+      }
       survey_tokens: {
         Row: {
           created_at: string
