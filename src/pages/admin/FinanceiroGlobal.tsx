@@ -16,10 +16,9 @@ const mockUsers = [
 const totalMRR = mockUsers.reduce((sum, u) => sum + u.valor, 0);
 
 const chartData = [
-  { month: "Out 2025", receita: 0 },
-  { month: "Nov 2025", receita: 49 },
-  { month: "Dez 2025", receita: 148 },
-  { month: "Jan 2026", receita: 247 },
+  { month: "Nov 2025", receita: 0 },
+  { month: "Dez 2025", receita: 0 },
+  { month: "Jan 2026", receita: 0 },
   { month: "Fev 2026", receita: 247 },
   { month: "Mar 2026", receita: 247 },
 ];
