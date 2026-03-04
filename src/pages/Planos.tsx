@@ -21,8 +21,8 @@ const PLANS = [
       "RDOs básicos",
       "Suporte por email",
     ],
-    stripePriceIdMonthly: "price_1SrmWY1h8hjJdYcBTwJLUzOl",
-    stripePriceIdYearly: "price_1T5zA41h8hjJdYcBe5hqn49O",
+    stripePriceIdMonthly: "price_1T6YkuP3LW226r1jyUAL0kOF",
+    stripePriceIdYearly: "",
   },
   {
     name: "Professional",
@@ -37,8 +37,8 @@ const PLANS = [
       "Base de preços personalizada",
       "Suporte prioritário",
     ],
-    stripePriceIdMonthly: "price_1SrmZg1h8hjJdYcBXUN4G89G",
-    stripePriceIdYearly: "price_1Sroez1h8hjJdYcBVZbK5mzc",
+    stripePriceIdMonthly: "price_1T6YkuP3LW226r1jYq5OMNbU",
+    stripePriceIdYearly: "",
     isPopular: true,
   },
   {
