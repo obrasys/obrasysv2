@@ -20,7 +20,7 @@ const chartData = [
   { month: "Dez 2025", receita: 0 },
   { month: "Jan 2026", receita: 0 },
   { month: "Fev 2026", receita: 247 },
-  { month: "Mar 2026", receita: 247 },
+  { month: "Mar 2026", receita: 0 },
 ];
 
 const chartConfig = {
