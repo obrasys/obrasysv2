@@ -120,9 +120,13 @@ export default function AdminAnalytics() {
     return { name: label, novos: count };
   });
 
-  // Trial status
-  const trialActive = profiles?.filter((p) => !p.trial_expired).length || 0;
-  const trialExpired = profiles?.filter((p) => p.trial_expired).length || 0;
+  // Trial status — compute from trial_end date instead of unreliable boolean
+  const isTrialExpiredByDate = (p: any) => {
+    if (!p.trial_end) return false;
+    return new Date(p.trial_end) < now;
+  };
+  const trialExpired = profiles?.filter((p) => isTrialExpiredByDate(p)).length || 0;
+  const trialActive = (totalUsers - trialExpired);
 
   // Top users by records
   const topUsers = [...(engagementData || [])]
