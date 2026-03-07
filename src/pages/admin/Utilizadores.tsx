@@ -107,6 +107,12 @@ export default function AdminUtilizadores() {
     },
   });
 
+  // Compute trial expiration from date
+  const isTrialExpiredByDate = (profile: any) => {
+    if (!profile.trial_end) return false;
+    return new Date(profile.trial_end) < new Date();
+  };
+
   // Filter profiles
   const filteredProfiles = profiles?.filter((profile) => {
     const matchesSearch = 
@@ -115,9 +121,10 @@ export default function AdminUtilizadores() {
       profile.empresa?.toLowerCase().includes(search.toLowerCase());
     
     const matchesRole = roleFilter === "all" || profile.role === roleFilter;
+    const expired = isTrialExpiredByDate(profile);
     const matchesTrial = trialFilter === "all" || 
-      (trialFilter === "active" && !profile.trial_expired) ||
-      (trialFilter === "expired" && profile.trial_expired);
+      (trialFilter === "active" && !expired) ||
+      (trialFilter === "expired" && expired);
     
     return matchesSearch && matchesRole && matchesTrial;
   });
