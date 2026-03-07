@@ -289,9 +289,14 @@ export default function AdminUtilizadores() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={profile.trial_expired ? "destructive" : "secondary"}>
-                            {profile.trial_expired ? "Expirado" : "Ativo"}
-                          </Badge>
+                          {(() => {
+                            const expired = isTrialExpiredByDate(profile);
+                            return (
+                              <Badge variant={expired ? "destructive" : "secondary"}>
+                                {expired ? "Expirado" : "Ativo"}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           {profile.trial_end
