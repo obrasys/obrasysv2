@@ -37,9 +37,105 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { action, userId, email } = await req.json();
+    const body = await req.json();
+    const { action, userId, email, nome, role } = body;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ─── CREATE USER ───
+    if (action === "create_user") {
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email é obrigatório" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // Generate a temporary random password
+      const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
+
+      // Create user via Supabase Auth Admin
+      const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          nome: nome || email.split("@")[0],
+          role: role || "gestor",
+        },
+      });
+
+      if (createError) {
+        console.error("Create user error:", createError);
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // Update profile role if needed
+      if (newUser?.user?.id && role) {
+        await serviceClient
+          .from("profiles")
+          .update({ role, nome: nome || email.split("@")[0] })
+          .eq("user_id", newUser.user.id);
+      }
+
+      // Generate password reset link so user can set their own password
+      const { data: resetData, error: resetError } = await serviceClient.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: {
+          redirectTo: "https://obrasysv2.lovable.app/reset-password",
+        },
+      });
+
+      // Send welcome/access email via Resend
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey && resetData?.properties?.action_link) {
+        try {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${resendApiKey}`,
+            },
+            body: JSON.stringify({
+              from: "ObraSys <noreply@obrasys.pt>",
+              to: [email],
+              subject: "Bem-vindo ao ObraSys - Instruções de Acesso",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2>Bem-vindo ao ObraSys!</h2>
+                  <p>Olá${nome ? ` ${nome}` : ""},</p>
+                  <p>A sua conta foi criada no ObraSys. Para começar a usar a plataforma, defina a sua password clicando no botão abaixo:</p>
+                  <p style="margin: 24px 0;">
+                    <a href="${resetData.properties.action_link}" 
+                       style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                      Definir Password e Aceder
+                    </a>
+                  </p>
+                  <p style="color: #666; font-size: 14px;">Após definir a sua password, poderá aceder ao ObraSys em <a href="https://app.obrasys.pt">app.obrasys.pt</a></p>
+                  <p style="color: #666; font-size: 14px;">Se não esperava receber este email, pode ignorá-lo.</p>
+                </div>
+              `,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send welcome email via Resend:", emailErr);
+        }
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Utilizador ${email} criado com sucesso. Email de acesso enviado.`,
+        userId: newUser?.user?.id,
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // ─── SEND PASSWORD RESET ───
     if (action === "send_password_reset") {
       if (!email) {
         return new Response(JSON.stringify({ error: "Email is required" }), {
@@ -48,7 +144,6 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Use Supabase Auth admin to generate a password reset link
       const { data, error } = await serviceClient.auth.admin.generateLink({
         type: "recovery",
         email,
@@ -65,7 +160,6 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Send the reset email via Resend
       const resendApiKey = Deno.env.get("RESEND_API_KEY");
       if (resendApiKey && data?.properties?.action_link) {
         try {
@@ -108,25 +202,7 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    if (action === "create_user") {
-      if (!email) {
-        return new Response(JSON.stringify({ error: "Email é obrigatório" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-
-      const { nome, role } = await req.json().catch(() => ({ nome: "", role: "gestor" }));
-      const userNome = (await req.json().catch(() => null))?.nome || nome;
-      const userRole = (await req.json().catch(() => null))?.role || role;
-
-      // Parse body again since we already consumed it above
-      // Actually the body was already parsed at line 40, so use those + extra fields
-    }
-
-    // Re-parse: the body was already parsed at line 40
-    // We need to refactor - let me handle this properly
-
+    // ─── RENEW TRIAL ───
     if (action === "renew_trial") {
       if (!userId) {
         return new Response(JSON.stringify({ error: "userId is required" }), {
@@ -135,7 +211,6 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Renew trial: set trial_end to 30 days from now, trial_expired = false
       const newTrialEnd = new Date();
       newTrialEnd.setDate(newTrialEnd.getDate() + 30);
 
@@ -155,7 +230,6 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Also update subscribers table if exists
       await serviceClient
         .from("subscribers")
         .update({
