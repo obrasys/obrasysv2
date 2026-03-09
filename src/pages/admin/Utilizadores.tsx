@@ -233,6 +233,10 @@ export default function AdminUtilizadores() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar CSV
               </Button>
+              <Button onClick={() => setShowAddUser(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Adicionar Utilizador
+              </Button>
             </div>
           </CardContent>
         </Card>
