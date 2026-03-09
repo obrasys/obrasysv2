@@ -381,6 +381,10 @@ export default function PerfilPage() {
         open={empresaModalOpen} 
         onOpenChange={setEmpresaModalOpen} 
       />
+      <AddUserDialog 
+        open={addUserOpen} 
+        onOpenChange={setAddUserOpen} 
+      />
     </AppLayout>
   );
 }
