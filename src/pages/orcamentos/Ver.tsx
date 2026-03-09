@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
+import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,6 +29,7 @@ import {
   Mail,
   MapPin,
   User,
+  Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
