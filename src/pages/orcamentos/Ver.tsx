@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
+import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,6 +29,7 @@ import {
   Mail,
   MapPin,
   User,
+  Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -45,6 +47,7 @@ export default function VerOrcamentoPage() {
   const { orcamento, isLoading } = useOrcamento(id);
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
+  const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
    const { useOrcamentoContextoFiscal, calcularIVA, getNotaLegalPorRegime, regimes } = useFiscalEngine();
    const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
 
@@ -252,9 +255,22 @@ export default function VerOrcamentoPage() {
             <FileText className="mr-2 h-4 w-4" />
             Gerar PDF
           </Button>
+          <Button onClick={() => setEnviarDialogOpen(true)} className="bg-accent hover:bg-accent/90">
+            <Send className="mr-2 h-4 w-4" />
+            Enviar Orçamento
+          </Button>
         </div>
       }
     >
+      {/* Enviar Dialog */}
+      <EnviarOrcamentoDialog
+        open={enviarDialogOpen}
+        onOpenChange={setEnviarDialogOpen}
+        orcamentoId={orcamento.id}
+        orcamentoTitulo={orcamento.titulo}
+        clienteEmail={orcamento.cliente?.email}
+        clienteNome={orcamento.cliente?.nome}
+      />
       {/* Print Styles */}
       <style>{`
         @media print {
