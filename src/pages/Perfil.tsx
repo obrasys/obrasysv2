@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Calendar,
   Shield,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
+import { AddUserDialog } from '@/components/admin/AddUserDialog';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ export default function PerfilPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
+  const [addUserOpen, setAddUserOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
@@ -241,6 +244,14 @@ export default function PerfilPage() {
                   <Building2 className="w-4 h-4 mr-2" />
                   Dados da Empresa
                 </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2" 
+                  onClick={() => setAddUserOpen(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Adicionar Utilizador
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -369,6 +380,10 @@ export default function PerfilPage() {
       <EmpresaModal 
         open={empresaModalOpen} 
         onOpenChange={setEmpresaModalOpen} 
+      />
+      <AddUserDialog 
+        open={addUserOpen} 
+        onOpenChange={setAddUserOpen} 
       />
     </AppLayout>
   );
