@@ -63,6 +63,20 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      // Check if caller is super admin
+      const { data: callerIsSuperAdmin } = await userClient.rpc("is_super_admin");
+      
+      // Non-super-admin users can only assign limited roles
+      const allowedRolesForRegularUsers = ["gestor", "fiscal", "cliente", "financeiro", "sales"];
+      const requestedRole = role || "gestor";
+      
+      if (!callerIsSuperAdmin && !allowedRolesForRegularUsers.includes(requestedRole)) {
+        return new Response(JSON.stringify({ error: "Sem permissão para atribuir esta role" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       // Generate a temporary random password
       const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
 
@@ -73,7 +87,8 @@ serve(async (req: Request): Promise<Response> => {
         email_confirm: true,
         user_metadata: {
           nome: nome || email.split("@")[0],
-          role: role || "gestor",
+          role: requestedRole,
+          created_by: callingUser.id,
         },
       });
 
@@ -85,11 +100,14 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Update profile role if needed
-      if (newUser?.user?.id && role) {
+      // Update profile role and link to creator
+      if (newUser?.user?.id) {
         await serviceClient
           .from("profiles")
-          .update({ role, nome: nome || email.split("@")[0] })
+          .update({ 
+            role: requestedRole, 
+            nome: nome || email.split("@")[0],
+          })
           .eq("user_id", newUser.user.id);
       }
 
