@@ -47,6 +47,7 @@ export default function VerOrcamentoPage() {
   const { orcamento, isLoading } = useOrcamento(id);
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
+  const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
    const { useOrcamentoContextoFiscal, calcularIVA, getNotaLegalPorRegime, regimes } = useFiscalEngine();
    const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
 
