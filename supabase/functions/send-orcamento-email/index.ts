@@ -149,6 +149,17 @@ serve(async (req) => {
       );
     }
 
+    // Determine sender email - use verified domain if available
+    const fromDomain = Deno.env.get("RESEND_FROM_DOMAIN"); // e.g. "notify.obrasys.pt"
+    const fromEmail = fromDomain 
+      ? `${senderName} <noreply@${fromDomain}>`
+      : `${senderName} <onboarding@resend.dev>`;
+
+    // If using onboarding@resend.dev, can only send to the account owner email
+    if (!fromDomain) {
+      console.warn("RESEND_FROM_DOMAIN not set. Using onboarding@resend.dev (testing mode - can only send to account owner email).");
+    }
+
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -156,7 +167,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `${senderName} <onboarding@resend.dev>`,
+        from: fromEmail,
         to: [email],
         subject: `Orçamento - ${orcamento.titulo}`,
         html: htmlBody,
@@ -166,7 +177,12 @@ serve(async (req) => {
     if (!resendRes.ok) {
       const errBody = await resendRes.text();
       console.error("Resend error:", errBody);
-      throw new Error("Erro ao enviar email via Resend");
+      
+      // Provide helpful error message
+      if (errBody.includes("verify a domain")) {
+        throw new Error("Para enviar emails a clientes, é necessário verificar um domínio no Resend. Contacte o suporte para configuração.");
+      }
+      throw new Error("Erro ao enviar email");
     }
 
     return new Response(
