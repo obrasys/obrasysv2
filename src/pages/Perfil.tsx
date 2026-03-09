@@ -244,6 +244,14 @@ export default function PerfilPage() {
                   <Building2 className="w-4 h-4 mr-2" />
                   Dados da Empresa
                 </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2" 
+                  onClick={() => setAddUserOpen(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Adicionar Utilizador
+                </Button>
               </div>
             </CardContent>
           </Card>
