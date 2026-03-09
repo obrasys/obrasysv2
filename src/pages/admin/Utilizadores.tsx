@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Download, Edit2, Check, X, KeyRound, CalendarPlus, Loader2 } from "lucide-react";
+import { Search, RefreshCw, Download, Edit2, Check, X, KeyRound, CalendarPlus, Loader2, UserPlus } from "lucide-react";
+import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -43,6 +44,7 @@ export default function AdminUtilizadores() {
   const [trialFilter, setTrialFilter] = useState<string>("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole | null>(null);
+  const [showAddUser, setShowAddUser] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: "password_reset" | "renew_trial";
     userId: string;
@@ -231,6 +233,10 @@ export default function AdminUtilizadores() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar CSV
               </Button>
+              <Button onClick={() => setShowAddUser(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Adicionar Utilizador
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -398,6 +404,7 @@ export default function AdminUtilizadores() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AddUserDialog open={showAddUser} onOpenChange={setShowAddUser} />
     </AppLayout>
   );
 }
