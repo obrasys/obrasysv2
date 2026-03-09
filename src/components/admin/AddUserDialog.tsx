@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import { toast } from "sonner";
 
 type UserRole = "admin" | "gestor" | "fiscal" | "cliente" | "financeiro" | "sales";
 
-const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
+const ALL_ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
   { value: "admin", label: "Admin", description: "Acesso total ao sistema" },
   { value: "gestor", label: "Gestor", description: "Gestão de obras e orçamentos" },
   { value: "fiscal", label: "Fiscal", description: "Fiscalização de obras" },
@@ -28,6 +29,9 @@ const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = 
   { value: "cliente", label: "Cliente", description: "Acesso ao portal de cliente" },
 ];
 
+// Regular users cannot assign admin role
+const REGULAR_ROLE_OPTIONS = ALL_ROLE_OPTIONS.filter(r => r.value !== "admin");
+
 interface AddUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,10 +39,13 @@ interface AddUserDialogProps {
 
 export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { session } = useAuth();
+  const { isSuperAdmin } = useSuperAdmin();
   const queryClient = useQueryClient();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("gestor");
+
+  const roleOptions = isSuperAdmin ? ALL_ROLE_OPTIONS : REGULAR_ROLE_OPTIONS;
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
@@ -112,7 +119,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ROLE_OPTIONS.map((r) => (
+                {roleOptions.map((r) => (
                   <SelectItem key={r.value} value={r.value}>
                     <div className="flex flex-col">
                       <span>{r.label}</span>
