@@ -37,6 +37,7 @@ export default function PerfilPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
+  const [addUserOpen, setAddUserOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
