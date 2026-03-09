@@ -44,6 +44,7 @@ export default function AdminUtilizadores() {
   const [trialFilter, setTrialFilter] = useState<string>("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole | null>(null);
+  const [showAddUser, setShowAddUser] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: "password_reset" | "renew_trial";
     userId: string;
