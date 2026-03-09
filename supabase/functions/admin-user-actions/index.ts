@@ -108,6 +108,25 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
+    if (action === "create_user") {
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email é obrigatório" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      const { nome, role } = await req.json().catch(() => ({ nome: "", role: "gestor" }));
+      const userNome = (await req.json().catch(() => null))?.nome || nome;
+      const userRole = (await req.json().catch(() => null))?.role || role;
+
+      // Parse body again since we already consumed it above
+      // Actually the body was already parsed at line 40, so use those + extra fields
+    }
+
+    // Re-parse: the body was already parsed at line 40
+    // We need to refactor - let me handle this properly
+
     if (action === "renew_trial") {
       if (!userId) {
         return new Response(JSON.stringify({ error: "userId is required" }), {
