@@ -404,6 +404,7 @@ export default function AdminUtilizadores() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AddUserDialog open={showAddUser} onOpenChange={setShowAddUser} />
     </AppLayout>
   );
 }
