@@ -16,7 +16,7 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is super admin
+    // Verify caller is authenticated
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -29,10 +29,11 @@ serve(async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: isSuperAdmin, error: adminErr } = await userClient.rpc("is_super_admin");
-    if (adminErr || !isSuperAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
+    // Get the calling user
+    const { data: { user: callingUser }, error: userError } = await userClient.auth.getUser();
+    if (userError || !callingUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
@@ -40,6 +41,18 @@ serve(async (req: Request): Promise<Response> => {
     const body = await req.json();
     const { action, userId, email, nome, role } = body;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Actions that require super admin
+    const superAdminActions = ["send_password_reset", "renew_trial"];
+    if (superAdminActions.includes(action)) {
+      const { data: isSuperAdmin, error: adminErr } = await userClient.rpc("is_super_admin");
+      if (adminErr || !isSuperAdmin) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+    }
 
     // ─── CREATE USER ───
     if (action === "create_user") {
