@@ -149,16 +149,8 @@ serve(async (req) => {
       );
     }
 
-    // Determine sender email - use verified domain if available
-    const fromDomain = Deno.env.get("RESEND_FROM_DOMAIN"); // e.g. "notify.obrasys.pt"
-    const fromEmail = fromDomain 
-      ? `${senderName} <noreply@${fromDomain}>`
-      : `${senderName} <onboarding@resend.dev>`;
-
-    // If using onboarding@resend.dev, can only send to the account owner email
-    if (!fromDomain) {
-      console.warn("RESEND_FROM_DOMAIN not set. Using onboarding@resend.dev (testing mode - can only send to account owner email).");
-    }
+    // Use verified domain obrasys.pt
+    const fromEmail = `${senderName} <noreply@obrasys.pt>`;
 
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
