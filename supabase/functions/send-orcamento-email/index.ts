@@ -158,9 +158,7 @@ serve(async (req) => {
             <tbody>${itemsHtml}</tbody>
           </table>
           
-          <div style="text-align:right;border-top:2px solid #1a56db;padding-top:16px">
-            <p style="font-size:18px;font-weight:bold;color:#1a56db">Total: ${fmt(valorComMargem)}</p>
-          </div>
+          ${resumoHtml}
           
           <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb"/>
           <p style="font-size:12px;color:#6b7280">
