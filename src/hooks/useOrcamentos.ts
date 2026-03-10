@@ -735,7 +735,6 @@ export function useCatalogo() {
       const { data, error } = await supabase
         .from('artigos_trabalho')
         .select('*')
-        .eq('user_id', user.id)
         .eq('ativo', true)
         .order('categoria', { ascending: true })
         .order('codigo', { ascending: true });
