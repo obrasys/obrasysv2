@@ -62,6 +62,7 @@ interface NotificationSettings {
 export default function DefinicoesPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { preferences, updatePreferences } = usePreferences();
   const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay } = useFormatting();
   const { settings: axiaSettings, isLoading: axiaLoading, updateSettings: updateAxiaSettings } = useCompanyAISettings();
