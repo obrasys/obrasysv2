@@ -25,7 +25,6 @@ export function useSubempreiteiros() {
     const { data, error } = await supabase
       .from('subempreiteiros')
       .select('*')
-      .eq('user_id', user.id)
       .order('nome');
 
     if (error) {
