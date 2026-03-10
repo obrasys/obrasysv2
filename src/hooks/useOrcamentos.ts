@@ -754,7 +754,6 @@ export function useCatalogo() {
       const { data, error } = await supabase
         .from('base_precos_personalizada')
         .select('*')
-        .eq('user_id', user.id)
         .order('categoria', { ascending: true })
         .order('codigo', { ascending: true });
 
