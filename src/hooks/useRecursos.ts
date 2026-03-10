@@ -25,7 +25,6 @@ export function useSubempreiteiros() {
     const { data, error } = await supabase
       .from('subempreiteiros')
       .select('*')
-      .eq('user_id', user.id)
       .order('nome');
 
     if (error) {
@@ -131,7 +130,6 @@ export function useEquipamentos() {
         *,
         obra:obras(nome)
       `)
-      .eq('user_id', user.id)
       .order('nome');
 
     if (error) {
@@ -249,7 +247,6 @@ export function useEquipaMembros() {
         subempreiteiro:subempreiteiros(nome),
         obra_atual:obras!equipa_membros_obra_atual_id_fkey(nome)
       `)
-      .eq('user_id', user.id)
       .order('nome');
 
     if (error) {

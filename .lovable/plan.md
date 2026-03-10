@@ -1,78 +1,154 @@
 
 
-## Sistema Multi-Utilizador por Empresa (Organizações)
+# Orcamento Essencial - Plano de Implementacao
 
-### Problema Atual
-Todos os dados (obras, orçamentos, RDOs, clientes, tarefas, etc.) estão isolados por `user_id`. Quando um utilizador convida um colega, o novo utilizador entra numa conta vazia sem acesso aos dados da empresa. Não existe conceito de "equipa" ou "organização".
+## Resumo
 
-### Solução: Introduzir `organization_id`
+Criar um novo fluxo simplificado de criacao de orcamentos em 3 passos (wizard), utilizando as tabelas existentes (`orcamentos`, `capitulos_orcamento`, `artigos_orcamento`, `clientes`). O objetivo e reduzir a friccao para utilizadores em trial, permitindo criar um orcamento profissional em menos de 5 minutos.
 
-Criar uma tabela `organizations` que agrupa utilizadores da mesma empresa. Todos os dados passam a ser filtrados por `organization_id` em vez de `user_id`, permitindo que todos os membros da equipa vejam e trabalhem nos mesmos dados.
+---
 
-```text
-┌─────────────────┐
-│  organizations  │
-│  ─────────────  │
-│  id (uuid)      │
-│  nome           │
-│  nif            │
-│  owner_id (fk)  │
-└────────┬────────┘
-         │ 1:N
-┌────────┴────────┐
-│ organization_   │
-│ members         │
-│ ─────────────   │
-│ user_id (fk)    │
-│ organization_id │
-│ role (enum)     │
-└─────────────────┘
+## 1. Base de Dados
+
+### 1.1 Nova tabela: `orcamento_templates_essencial`
+
+```sql
+CREATE TABLE orcamento_templates_essencial (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome TEXT NOT NULL,
+  tipo_obra TEXT NOT NULL,
+  itens_json JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS: leitura publica (templates do sistema)
+ALTER TABLE orcamento_templates_essencial ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Templates essenciais sao publicos" ON orcamento_templates_essencial
+  FOR SELECT USING (true);
 ```
 
-### Alterações na Base de Dados
+### 1.2 Nova tabela: `essencial_events` (tracking de conversao)
 
-1. **Nova tabela `organizations`** com id, nome, nif, logo, owner_id
-2. **Nova tabela `organization_members`** com user_id, organization_id, role (admin/gestor/fiscal/financeiro/sales)
-3. **Adicionar coluna `organization_id`** a todas as tabelas de dados: obras, orcamentos, clientes, relatorios_diarios, tarefas, cronogramas, equipa_membros, subempreiteiros, equipamentos, contas_financeiras, autos_medicao, base_precos_personalizada, artigos_trabalho, etc.
-4. **Migração de dados existentes**: Para cada utilizador existente, criar automaticamente uma organização e associar os seus dados
-5. **Atualizar RLS policies**: Mudar de `user_id = auth.uid()` para `organization_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())`
-6. **Função helper `get_user_org_id()`**: Security definer que retorna o organization_id do utilizador atual
+```sql
+CREATE TABLE essencial_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  event_type TEXT NOT NULL,
+  orcamento_id UUID REFERENCES orcamentos(id) ON DELETE SET NULL,
+  tempo_total_segundos INTEGER,
+  quantidade_itens INTEGER,
+  modelo_utilizado BOOLEAN DEFAULT false,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-### Alterações no Frontend
+ALTER TABLE essencial_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can insert own events" ON essencial_events
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can read own events" ON essencial_events
+  FOR SELECT USING (auth.uid() = user_id);
+```
 
-1. **AuthContext**: Incluir `organization_id` no profile/contexto
-2. **13+ hooks** (useObras, useOrcamentos, useRDOs, useClientes, useTarefas, useRecursos, useFinanceiro, useBasePrecos, useCadernos, useAutosMedicao, useConformidade, useObraAlerts, useParametricEngine): Substituir `.eq('user_id', user.id)` por `.eq('organization_id', orgId)` nas queries e inserts
-3. **Edge Function `admin-user-actions`**: Ao criar utilizador, associá-lo à organização de quem convidou (via `created_by` metadata)
-4. **Página de Perfil/Equipa**: Mostrar membros da organização e permitir gestão
+### 1.3 Seed de templates iniciais
 
-### Fluxo do Convite (Corrigido)
+Inserir dados de templates para os tipos de obra mais comuns (moradia_nova, remodelacao, etc.) com itens pre-definidos via a ferramenta de insert.
 
-1. Admin/Gestor convida novo utilizador com email e role
-2. Edge function cria o utilizador, cria o profile, e adiciona-o à mesma `organization_id` do convidador
-3. Novo utilizador define password via email
-4. Ao entrar, vê todos os dados da organização (obras, orçamentos, etc.) de acordo com a sua role
+---
 
-### Faseamento
+## 2. Novos Ficheiros Frontend
 
-Dada a dimensão desta alteração (afeta toda a base de dados e 13+ ficheiros de código), proponho implementar em **2 fases**:
+### 2.1 Pagina principal do wizard
+**`src/pages/orcamentos/Essencial.tsx`**
 
-**Fase 1 - Base de dados e migração**
-- Criar tabelas organizations e organization_members
-- Adicionar organization_id às tabelas existentes
-- Migrar dados existentes
-- Atualizar RLS policies
-- Atualizar edge function de convite
+- Wizard com 3 passos e barra de progresso horizontal
+- Gestao de estado local com `useState` + autosave via `useEffect`
+- Microcopy motivacional no topo
 
-**Fase 2 - Frontend**
-- Atualizar AuthContext com org_id
-- Atualizar todos os hooks para usar organization_id
-- UI de gestão de equipa
+### 2.2 Componentes do wizard (na pasta `src/components/orcamentos/essencial/`)
 
-### Ficheiros Afetados
-- 1 migração SQL (tabelas + dados + RLS)
-- `supabase/functions/admin-user-actions/index.ts`
-- `src/contexts/AuthContext.tsx`
-- 13+ hooks em `src/hooks/`
-- `src/components/admin/AddUserDialog.tsx`
-- Página de perfil/equipa
+- **`EssencialWizardProgress.tsx`** - Barra de progresso com 3 etapas visuais
+- **`EssencialStep1Cliente.tsx`** - Formulario do cliente (nome, email, telefone, tipo_obra)
+- **`EssencialStep2Trabalhos.tsx`** - Toggle modelo/manual, tabela simplificada de itens, resumo lateral
+- **`EssencialStep3LucroEnvio.tsx`** - Slider de lucro (0-40%), opcoes de IVA/email/PDF, botao final
+
+### 2.3 Hook dedicado
+**`src/hooks/useOrcamentoEssencial.ts`**
+
+- Logica de criar/encontrar cliente
+- Criar orcamento com status `rascunho` (reutiliza schema existente)
+- Criar capitulo unico "Trabalhos" e artigos simplificados
+- Carregar templates
+- Autosave parcial em localStorage
+- Tracking de eventos
+
+---
+
+## 3. Alteracoes em Ficheiros Existentes
+
+### 3.1 `src/App.tsx`
+- Importar `EssencialPage` 
+- Adicionar rota: `/orcamentos/essencial/novo`
+
+### 3.2 `src/pages/Dashboard.tsx`
+- Adicionar secao com dois botoes antes dos KPIs:
+  - Botao primario: "Criar Orcamento em 3 Passos" (com subtexto "Demora menos de 5 minutos")
+  - Botao secundario: "Orcamento Avancado"
+
+### 3.3 `src/pages/orcamentos/Index.tsx`
+- Adicionar botao "Orcamento Essencial" junto ao botao "Novo Orcamento" existente
+
+---
+
+## 4. Fluxo Detalhado
+
+### Passo 1 - Cliente
+- 4 campos: nome, email, telefone, tipo_obra (select com 5 opcoes)
+- Ao continuar: verifica se cliente existe por email, cria se necessario
+- Cria registo em `orcamentos` com titulo auto-gerado, margem default 20%
+
+### Passo 2 - Trabalhos
+- Toggle "Usar Modelo" / "Criar do Zero"
+- Modelo: carrega `orcamento_templates_essencial` filtrado por tipo_obra, popula itens
+- Manual: tabela com colunas `descricao` e `valor`, botao "Adicionar Trabalho"
+- Cada item salva em `artigos_orcamento` (dentro de um capitulo unico criado automaticamente)
+- Resumo lateral: subtotal, lucro (default 20%), total estimado - calculado no frontend
+
+### Passo 3 - Lucro e Envio
+- Slider 0-40% para margem de lucro
+- Calculo em tempo real de valor_lucro e total_final
+- IVA aplicado automaticamente via motor fiscal existente (sem mostrar campos tecnicos)
+- Opcoes: incluir IVA, enviar por email, gerar PDF
+- Botao "Gerar Orcamento" finaliza, atualiza status, redireciona para visualizacao
+
+---
+
+## 5. Compatibilidade com Modo Avancado
+
+- Na pagina de visualizacao do orcamento (`/orcamentos/:id`), se o orcamento foi criado no modo essencial, mostrar botao "Editar em modo avancado" que redireciona para `/orcamentos/:id/editar`
+- Sem perda de dados - os dados estao nas mesmas tabelas
+
+---
+
+## 6. Mapeamento de Dados (Essencial para Tabelas Existentes)
+
+| Campo Essencial | Tabela/Campo Existente |
+|---|---|
+| nome_cliente, email, telefone | `clientes` (criar ou associar) |
+| tipo_obra | `orcamentos.custos_indiretos` metadata ou titulo |
+| descricao + valor (item) | `artigos_orcamento.descricao`, `preco_unitario`, quantidade=1, unidade='vg' |
+| lucro_percentual | `orcamentos.margem_lucro` |
+| Capitulo unico | `capitulos_orcamento` com titulo "Trabalhos" |
+
+---
+
+## 7. Sequencia de Implementacao
+
+1. Criar tabelas de base de dados (templates + eventos)
+2. Inserir templates seed
+3. Criar componentes do wizard (progress, step1, step2, step3)
+4. Criar hook `useOrcamentoEssencial`
+5. Criar pagina `Essencial.tsx`
+6. Atualizar rotas em `App.tsx`
+7. Atualizar Dashboard com botoes de acesso rapido
+8. Atualizar lista de orcamentos com botao essencial
 

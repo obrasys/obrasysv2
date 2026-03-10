@@ -27,10 +27,17 @@ interface Profile {
   empresa_logo_url: string | null;
 }
 
+interface OrganizationInfo {
+  id: string;
+  nome: string;
+  role: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  organization: OrganizationInfo | null;
   loading: boolean;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -55,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [organization, setOrganization] = useState<OrganizationInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -71,6 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setProfile(data as Profile);
+
+      // Fetch organization membership
+      const { data: orgData } = await supabase
+        .from("organization_members")
+        .select("organization_id, role, organizations(id, nome)")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (orgData && orgData.organizations) {
+        const org = orgData.organizations as any;
+        setOrganization({
+          id: org.id,
+          nome: org.nome,
+          role: orgData.role,
+        });
+      } else {
+        setOrganization(null);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
@@ -96,10 +123,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, 0);
         } else {
           setProfile(null);
+          setOrganization(null);
         }
 
         if (event === "SIGNED_OUT") {
           setProfile(null);
+          setOrganization(null);
         }
       }
     );
@@ -165,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
+    setOrganization(null);
     await supabase.auth.signOut();
   };
 
@@ -211,6 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         session,
         profile,
+        organization,
         loading,
         signUp,
         signIn,

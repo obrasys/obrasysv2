@@ -20,7 +20,6 @@ export function useObras() {
           *,
           orcamentos:orcamentos(id, titulo, valor_total, status)
         `)
-        .eq('user_id', user.id)
         .eq('arquivada', false)
         .order('created_at', { ascending: false });
 
@@ -38,7 +37,6 @@ export function useObras() {
       const { data, error } = await supabase
         .from('obras')
         .select('*')
-        .eq('user_id', user.id)
         .eq('arquivada', true)
         .order('updated_at', { ascending: false });
 

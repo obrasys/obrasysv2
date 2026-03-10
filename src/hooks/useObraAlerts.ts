@@ -38,7 +38,6 @@ export function useObraAlerts() {
       const { data: obras, error: obrasError } = await supabase
         .from('obras')
         .select('id, nome, cliente, status')
-        .eq('user_id', user.id)
         .eq('arquivada', false)
         .eq('status', 'em_curso');
 

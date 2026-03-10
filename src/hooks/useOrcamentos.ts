@@ -49,7 +49,6 @@ export function useOrcamentos() {
           *,
           obra:obras(id, nome, cliente)
         `)
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -736,7 +735,6 @@ export function useCatalogo() {
       const { data, error } = await supabase
         .from('artigos_trabalho')
         .select('*')
-        .eq('user_id', user.id)
         .eq('ativo', true)
         .order('categoria', { ascending: true })
         .order('codigo', { ascending: true });
@@ -756,7 +754,6 @@ export function useCatalogo() {
       const { data, error } = await supabase
         .from('base_precos_personalizada')
         .select('*')
-        .eq('user_id', user.id)
         .order('categoria', { ascending: true })
         .order('codigo', { ascending: true });
 
@@ -849,7 +846,6 @@ export function useObras() {
       const { data, error } = await supabase
         .from('obras')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

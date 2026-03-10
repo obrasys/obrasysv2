@@ -18,7 +18,6 @@ export function useClientes() {
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .eq('user_id', user.id)
         .order('nome');
 
       if (error) throw error;
@@ -36,7 +35,6 @@ export function useClientes() {
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .eq('user_id', user.id)
         .eq('ativo', true)
         .order('nome');
 
@@ -54,8 +52,7 @@ export function useClientes() {
 
       const { data: allClientes, error } = await supabase
         .from('clientes')
-        .select('id, ativo, nivel_acesso')
-        .eq('user_id', user.id);
+        .select('id, ativo, nivel_acesso');
 
       if (error) throw error;
 
