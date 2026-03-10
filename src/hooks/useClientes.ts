@@ -35,7 +35,6 @@ export function useClientes() {
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .eq('user_id', user.id)
         .eq('ativo', true)
         .order('nome');
 
