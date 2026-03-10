@@ -19,7 +19,6 @@ export function useTarefas(obraId?: string) {
           obra:obras(id, nome),
           responsavel:profiles!tarefas_responsavel_id_fkey(id, nome)
         `)
-        .eq('user_id', user?.id)
         .order('data_agendada', { ascending: true, nullsFirst: false })
         .order('prioridade', { ascending: false })
         .order('created_at', { ascending: false });
