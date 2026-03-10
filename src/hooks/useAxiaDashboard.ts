@@ -47,8 +47,7 @@ export function useAxiaDashboard() {
       // Fetch all insights
       const { data: insights, error: insErr } = await supabase
         .from('ai_budget_insights')
-        .select('id, type, severity, status')
-        .eq('user_id', user!.id);
+        .select('id, type, severity, status');
 
       if (insErr) throw insErr;
 
