@@ -57,7 +57,8 @@ serve(async (req) => {
           *,
           artigos_orcamento (*)
         ),
-        clientes (nome, empresa)
+        clientes (nome, empresa),
+        orcamento_contexto_fiscal (taxa_iva)
       `)
       .eq("id", orcamento_id)
       .eq("user_id", user.id)
