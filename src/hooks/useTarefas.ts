@@ -44,7 +44,6 @@ export function useTarefas(obraId?: string) {
           *,
           obra:obras(id, nome)
         `)
-        .eq('user_id', user?.id)
         .order('data_inicio', { ascending: true });
 
       if (obraId) {

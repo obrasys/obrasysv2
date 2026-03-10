@@ -37,7 +37,6 @@ export function useObras() {
       const { data, error } = await supabase
         .from('obras')
         .select('*')
-        .eq('user_id', user.id)
         .eq('arquivada', true)
         .order('updated_at', { ascending: false });
 

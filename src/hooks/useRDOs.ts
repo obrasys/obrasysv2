@@ -31,7 +31,6 @@ export function useRDOs(obraId?: string) {
           *,
           obra:obras(id, nome, cliente)
         `)
-        .eq('user_id', user.id)
         .order('data', { ascending: false });
 
       if (obraId) {
