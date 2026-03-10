@@ -123,10 +123,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, 0);
         } else {
           setProfile(null);
+          setOrganization(null);
         }
 
         if (event === "SIGNED_OUT") {
           setProfile(null);
+          setOrganization(null);
         }
       }
     );
