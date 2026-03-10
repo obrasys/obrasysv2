@@ -91,101 +91,103 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <PreferencesProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/criar-conta" element={<CriarConta />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route path="/dashboard" element={<ManagerRoute><Dashboard /></ManagerRoute>} />
-              <Route path="/orcamentos" element={<ManagerRoute><OrcamentosPage /></ManagerRoute>} />
-              <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />
-              <Route path="/orcamentos/:id" element={<ManagerRoute><VerOrcamentoPage /></ManagerRoute>} />
-              <Route path="/orcamentos/:id/editar" element={<ManagerRoute><EditarOrcamentoPage /></ManagerRoute>} />
-              <Route path="/orcamentos/essencial/novo" element={<ManagerRoute><EssencialPage /></ManagerRoute>} />
-              <Route path="/obras" element={<ManagerRoute><ObrasPage /></ManagerRoute>} />
-              <Route path="/obras/criar" element={<ManagerRoute><CriarObraPage /></ManagerRoute>} />
-              <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />
-              <Route path="/obras/:id/editar" element={<ManagerRoute><EditarObraPage /></ManagerRoute>} />
-              <Route path="/obras/:id/financeiro" element={<ManagerRoute><ObraFinanceiroPage /></ManagerRoute>} />
-              {/* Cadernos de Encargos */}
-              <Route path="/obras/:id/cadernos" element={<ManagerRoute><CadernosPage /></ManagerRoute>} />
-              <Route path="/obras/:id/cadernos/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
-              <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
-              <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ManagerRoute><ValidarCadernoPage /></ManagerRoute>} />
-              <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ManagerRoute><ResumoCadernoPage /></ManagerRoute>} />
-              <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />
-              <Route path="/clientes/criar" element={<ManagerRoute><CriarClientePage /></ManagerRoute>} />
-              <Route path="/clientes/:id" element={<ManagerRoute><VerClientePage /></ManagerRoute>} />
-              <Route path="/clientes/:id/editar" element={<ManagerRoute><EditarClientePage /></ManagerRoute>} />
-              <Route path="/rdos" element={<ManagerRoute><RDOsPage /></ManagerRoute>} />
-              <Route path="/rdos/criar" element={<ManagerRoute><CriarRDOPage /></ManagerRoute>} />
-              <Route path="/rdos/:id" element={<ManagerRoute><VerRDOPage /></ManagerRoute>} />
-              <Route path="/rdos/:id/editar" element={<ManagerRoute><EditarRDOPage /></ManagerRoute>} />
-              <Route path="/tarefas" element={<ManagerRoute><TarefasPage /></ManagerRoute>} />
-              <Route path="/conformidade" element={<ManagerRoute><ConformidadePage /></ManagerRoute>} />
-              <Route path="/base-precos" element={<ManagerRoute><BasePrecosPage /></ManagerRoute>} />
-              <Route path="/base-precos/inserir" element={<ManagerRoute><BasePrecosInserirPage /></ManagerRoute>} />
-              <Route path="/base-precos/auditoria" element={<ManagerRoute><BasePrecosAuditoriaPage /></ManagerRoute>} />
-              <Route path="/suporte" element={<ManagerRoute><SuportePage /></ManagerRoute>} />
-              <Route path="/financeiro" element={<ManagerRoute><FinanceiroPage /></ManagerRoute>} />
-              <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
-              <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
-              <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
-              <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
-              <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />
-              <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
-              <Route path="/recursos/:id" element={<ManagerRoute><VerMembroPage /></ManagerRoute>} />
-              <Route path="/pesquisa" element={<ManagerRoute><PesquisaPage /></ManagerRoute>} />
-              <Route path="/relatorios" element={<ManagerRoute><RelatoriosPage /></ManagerRoute>} />
-              {/* Autos de Medição */}
-              <Route path="/autos-medicao" element={<ManagerRoute><AutosMedicaoPage /></ManagerRoute>} />
-              <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
-              <Route path="/autos-medicao/:id" element={<ManagerRoute><VerAutoMedicaoPage /></ManagerRoute>} />
-              <Route path="/autos-medicao/:id/editar" element={<ManagerRoute><EditarAutoMedicaoPage /></ManagerRoute>} />
-              {/* Instalações */}
-              <Route path="/instalacoes" element={<ManagerRoute><InstalacoesIndex /></ManagerRoute>} />
-              <Route path="/instalacoes/eletrica" element={<ManagerRoute><EletricaPage /></ManagerRoute>} />
-              <Route path="/instalacoes/canalizacao" element={<ManagerRoute><CanalizacaoPage /></ManagerRoute>} />
-              <Route path="/instalacoes/telecom" element={<ManagerRoute><TelecomPage /></ManagerRoute>} />
-              <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
-              <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
-              <Route path="/axia" element={<ManagerRoute><AxiaPage /></ManagerRoute>} />
-              <Route path="/importar" element={<ManagerRoute><ImportarPage /></ManagerRoute>} />
-              {/* Admin - Super Admin Only */}
-              <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
-              <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
-              <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
-              <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
-              <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
-              <Route path="/admin/analytics" element={<SuperAdminRoute><AdminAnalytics /></SuperAdminRoute>} />
-              <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
-              <Route path="/admin/tickets" element={<SuperAdminRoute><AdminTickets /></SuperAdminRoute>} />
-              {/* Portal do Cliente */}
-              <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
-              <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
-              {/* Portal do Fornecedor */}
-              <Route path="/fornecedor/auth" element={<FornecedorAuth />} />
-              <Route path="/fornecedor/pending" element={<FornecedorPendingApproval />} />
-              <Route path="/fornecedor/dashboard" element={<SupplierRoute><FornecedorDashboard /></SupplierRoute>} />
-              <Route path="/fornecedor/pedidos" element={<SupplierRoute><FornecedorPedidos /></SupplierRoute>} />
-              <Route path="/fornecedor/pedidos/:id" element={<SupplierRoute><FornecedorPedidoDetalhe /></SupplierRoute>} />
-              <Route path="/fornecedor/precos" element={<SupplierRoute><FornecedorPrecos /></SupplierRoute>} />
-              <Route path="/fornecedor/perfil" element={<SupplierRoute><FornecedorPerfil /></SupplierRoute>} />
-              {/* Admin Fornecedores */}
-              <Route path="/admin/fornecedores" element={<SuperAdminRoute><AdminFornecedores /></SuperAdminRoute>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </PreferencesProvider>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <TooltipProvider>
+        <PreferencesProvider>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/criar-conta" element={<CriarConta />} />
+                <Route path="/auth/reset-password" element={<ResetPassword />} />
+                <Route path="/dashboard" element={<ManagerRoute><Dashboard /></ManagerRoute>} />
+                <Route path="/orcamentos" element={<ManagerRoute><OrcamentosPage /></ManagerRoute>} />
+                <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />
+                <Route path="/orcamentos/:id" element={<ManagerRoute><VerOrcamentoPage /></ManagerRoute>} />
+                <Route path="/orcamentos/:id/editar" element={<ManagerRoute><EditarOrcamentoPage /></ManagerRoute>} />
+                <Route path="/orcamentos/essencial/novo" element={<ManagerRoute><EssencialPage /></ManagerRoute>} />
+                <Route path="/obras" element={<ManagerRoute><ObrasPage /></ManagerRoute>} />
+                <Route path="/obras/criar" element={<ManagerRoute><CriarObraPage /></ManagerRoute>} />
+                <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />
+                <Route path="/obras/:id/editar" element={<ManagerRoute><EditarObraPage /></ManagerRoute>} />
+                <Route path="/obras/:id/financeiro" element={<ManagerRoute><ObraFinanceiroPage /></ManagerRoute>} />
+                {/* Cadernos de Encargos */}
+                <Route path="/obras/:id/cadernos" element={<ManagerRoute><CadernosPage /></ManagerRoute>} />
+                <Route path="/obras/:id/cadernos/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
+                <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
+                <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ManagerRoute><ValidarCadernoPage /></ManagerRoute>} />
+                <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ManagerRoute><ResumoCadernoPage /></ManagerRoute>} />
+                <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />
+                <Route path="/clientes/criar" element={<ManagerRoute><CriarClientePage /></ManagerRoute>} />
+                <Route path="/clientes/:id" element={<ManagerRoute><VerClientePage /></ManagerRoute>} />
+                <Route path="/clientes/:id/editar" element={<ManagerRoute><EditarClientePage /></ManagerRoute>} />
+                <Route path="/rdos" element={<ManagerRoute><RDOsPage /></ManagerRoute>} />
+                <Route path="/rdos/criar" element={<ManagerRoute><CriarRDOPage /></ManagerRoute>} />
+                <Route path="/rdos/:id" element={<ManagerRoute><VerRDOPage /></ManagerRoute>} />
+                <Route path="/rdos/:id/editar" element={<ManagerRoute><EditarRDOPage /></ManagerRoute>} />
+                <Route path="/tarefas" element={<ManagerRoute><TarefasPage /></ManagerRoute>} />
+                <Route path="/conformidade" element={<ManagerRoute><ConformidadePage /></ManagerRoute>} />
+                <Route path="/base-precos" element={<ManagerRoute><BasePrecosPage /></ManagerRoute>} />
+                <Route path="/base-precos/inserir" element={<ManagerRoute><BasePrecosInserirPage /></ManagerRoute>} />
+                <Route path="/base-precos/auditoria" element={<ManagerRoute><BasePrecosAuditoriaPage /></ManagerRoute>} />
+                <Route path="/suporte" element={<ManagerRoute><SuportePage /></ManagerRoute>} />
+                <Route path="/financeiro" element={<ManagerRoute><FinanceiroPage /></ManagerRoute>} />
+                <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
+                <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
+                <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+                <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
+                <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />
+                <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
+                <Route path="/recursos/:id" element={<ManagerRoute><VerMembroPage /></ManagerRoute>} />
+                <Route path="/pesquisa" element={<ManagerRoute><PesquisaPage /></ManagerRoute>} />
+                <Route path="/relatorios" element={<ManagerRoute><RelatoriosPage /></ManagerRoute>} />
+                {/* Autos de Medição */}
+                <Route path="/autos-medicao" element={<ManagerRoute><AutosMedicaoPage /></ManagerRoute>} />
+                <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
+                <Route path="/autos-medicao/:id" element={<ManagerRoute><VerAutoMedicaoPage /></ManagerRoute>} />
+                <Route path="/autos-medicao/:id/editar" element={<ManagerRoute><EditarAutoMedicaoPage /></ManagerRoute>} />
+                {/* Instalações */}
+                <Route path="/instalacoes" element={<ManagerRoute><InstalacoesIndex /></ManagerRoute>} />
+                <Route path="/instalacoes/eletrica" element={<ManagerRoute><EletricaPage /></ManagerRoute>} />
+                <Route path="/instalacoes/canalizacao" element={<ManagerRoute><CanalizacaoPage /></ManagerRoute>} />
+                <Route path="/instalacoes/telecom" element={<ManagerRoute><TelecomPage /></ManagerRoute>} />
+                <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
+                <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
+                <Route path="/axia" element={<ManagerRoute><AxiaPage /></ManagerRoute>} />
+                <Route path="/importar" element={<ManagerRoute><ImportarPage /></ManagerRoute>} />
+                {/* Admin - Super Admin Only */}
+                <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
+                <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
+                <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
+                <Route path="/admin/auditoria" element={<SuperAdminRoute><AdminAuditoria /></SuperAdminRoute>} />
+                <Route path="/admin/templates" element={<SuperAdminRoute><AdminTemplates /></SuperAdminRoute>} />
+                <Route path="/admin/analytics" element={<SuperAdminRoute><AdminAnalytics /></SuperAdminRoute>} />
+                <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
+                <Route path="/admin/tickets" element={<SuperAdminRoute><AdminTickets /></SuperAdminRoute>} />
+                {/* Portal do Cliente */}
+                <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
+                <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
+                {/* Portal do Fornecedor */}
+                <Route path="/fornecedor/auth" element={<FornecedorAuth />} />
+                <Route path="/fornecedor/pending" element={<FornecedorPendingApproval />} />
+                <Route path="/fornecedor/dashboard" element={<SupplierRoute><FornecedorDashboard /></SupplierRoute>} />
+                <Route path="/fornecedor/pedidos" element={<SupplierRoute><FornecedorPedidos /></SupplierRoute>} />
+                <Route path="/fornecedor/pedidos/:id" element={<SupplierRoute><FornecedorPedidoDetalhe /></SupplierRoute>} />
+                <Route path="/fornecedor/precos" element={<SupplierRoute><FornecedorPrecos /></SupplierRoute>} />
+                <Route path="/fornecedor/perfil" element={<SupplierRoute><FornecedorPerfil /></SupplierRoute>} />
+                {/* Admin Fornecedores */}
+                <Route path="/admin/fornecedores" element={<SuperAdminRoute><AdminFornecedores /></SuperAdminRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </PreferencesProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

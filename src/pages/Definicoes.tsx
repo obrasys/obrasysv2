@@ -475,7 +475,10 @@ export default function DefinicoesPage() {
               </div>
               <Switch
                 checked={axiaPredictive}
-                onCheckedChange={setAxiaPredictive}
+                onCheckedChange={(v) => {
+                  setAxiaPredictive(v);
+                  updateAxiaSettings.mutate({ enabled: axiaEnabled });
+                }}
                 disabled={!axiaEnabled}
               />
             </div>
