@@ -77,6 +77,7 @@ export default function DefinicoesPage() {
     if (axiaSettings) {
       setAxiaEnabled(axiaSettings.enabled);
       setAxiaLlm(axiaSettings.llm_enabled);
+      setAxiaPredictive(true);
       setAxiaMargin(String(axiaSettings.min_margin_percent));
       setAxiaSensitivity(String(axiaSettings.outlier_zscore));
     }
