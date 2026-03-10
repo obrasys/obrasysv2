@@ -1,0 +1,1 @@
+DROP POLICY "Super admins can view all obras" ON public.obras;
