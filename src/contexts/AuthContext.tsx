@@ -79,6 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setProfile(data as Profile);
+
+      // Fetch organization membership
+      const { data: orgData } = await supabase
+        .from("organization_members")
+        .select("organization_id, role, organizations(id, nome)")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (orgData && orgData.organizations) {
+        const org = orgData.organizations as any;
+        setOrganization({
+          id: org.id,
+          nome: org.nome,
+          role: orgData.role,
+        });
+      } else {
+        setOrganization(null);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
