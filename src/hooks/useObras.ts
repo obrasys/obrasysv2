@@ -20,7 +20,6 @@ export function useObras() {
           *,
           orcamentos:orcamentos(id, titulo, valor_total, status)
         `)
-        .eq('user_id', user.id)
         .eq('arquivada', false)
         .order('created_at', { ascending: false });
 
