@@ -27,6 +27,12 @@ interface Profile {
   empresa_logo_url: string | null;
 }
 
+interface OrganizationInfo {
+  id: string;
+  nome: string;
+  role: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
