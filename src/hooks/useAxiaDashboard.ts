@@ -65,7 +65,6 @@ export function useAxiaDashboard() {
       const { data: actions, error: actErr } = await supabase
         .from('ai_budget_actions_log')
         .select('id, action, budget_id, insight_id, created_at, before_snapshot, after_snapshot')
-        .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(20);
 

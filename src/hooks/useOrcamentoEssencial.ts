@@ -120,7 +120,6 @@ export function useOrcamentoEssencial() {
         const { data: existing } = await supabase
           .from('clientes')
           .select('id')
-          .eq('user_id', user.id)
           .eq('email', step1.email)
           .maybeSingle();
 

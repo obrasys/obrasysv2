@@ -120,14 +120,15 @@ serve(async (req: Request): Promise<Response> => {
           .single();
 
         if (inviterOrg?.organization_id) {
-          // Add new user to the same organization
+          // Add new user to the same organization (ON CONFLICT handled by upsert)
+          // Note: handle_new_user trigger may also insert, so we use upsert to avoid conflicts
           await serviceClient
             .from("organization_members")
-            .insert({
+            .upsert({
               organization_id: inviterOrg.organization_id,
               user_id: newUser.user.id,
               role: requestedRole,
-            })
+            }, { onConflict: 'organization_id,user_id' })
             .select();
           
           console.log(`User ${newUser.user.id} added to organization ${inviterOrg.organization_id}`);
