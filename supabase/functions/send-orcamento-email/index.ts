@@ -57,7 +57,8 @@ serve(async (req) => {
           *,
           artigos_orcamento (*)
         ),
-        clientes (nome, empresa)
+        clientes (nome, empresa),
+        orcamento_contexto_fiscal (taxa_iva)
       `)
       .eq("id", orcamento_id)
       .eq("user_id", user.id)
@@ -83,12 +84,15 @@ serve(async (req) => {
     const fmt = (v: number) =>
       new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
 
-    // Build items HTML
-    const capitulos = orcamento.capitulos_orcamento || [];
+    // Sort chapters by numero, then sort articles by ordem within each chapter
+    const capitulos = (orcamento.capitulos_orcamento || [])
+      .sort((a: any, b: any) => a.numero - b.numero);
+
     let itemsHtml = "";
     for (const cap of capitulos) {
       itemsHtml += `<tr style="background:#f3f4f6"><td colspan="5" style="padding:8px;font-weight:bold">${cap.numero}. ${cap.titulo}</td></tr>`;
-      const artigos = cap.artigos_orcamento || [];
+      const artigos = (cap.artigos_orcamento || [])
+        .sort((a: any, b: any) => a.ordem - b.ordem);
       for (const art of artigos) {
         itemsHtml += `<tr>
           <td style="padding:6px 8px">${art.descricao}</td>
@@ -100,9 +104,37 @@ serve(async (req) => {
       }
     }
 
-    const valorTotal = orcamento.valor_total || 0;
-    const margem = orcamento.margem_lucro || 0;
-    const valorComMargem = valorTotal * (1 + margem / 100);
+    // Calculate full total matching the platform logic
+    const subtotalArtigos = orcamento.valor_total || 0;
+    const custosIndiretos = orcamento.custos_indiretos as any || {};
+    const estaleiro = custosIndiretos.estaleiro || 0;
+    const seguros = custosIndiretos.seguros || 0;
+    const licenciamento = custosIndiretos.licenciamento || 0;
+    const custosIndiretosTotal = estaleiro + seguros + licenciamento;
+    const subtotalSemIva = subtotalArtigos + custosIndiretosTotal;
+    const taxaIva = orcamento.orcamento_contexto_fiscal?.taxa_iva ?? 23;
+    const valorIva = subtotalSemIva * (taxaIva / 100);
+    const valorFinal = subtotalSemIva + valorIva;
+
+    // Build custos indiretos HTML
+    let custosHtml = "";
+    if (custosIndiretosTotal > 0) {
+      custosHtml += `<div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:12px">`;
+      custosHtml += `<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal Artigos</span><span>${fmt(subtotalArtigos)}</span></div>`;
+      if (estaleiro > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Estaleiro</span><span>${fmt(estaleiro)}</span></div>`;
+      if (seguros > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Seguros</span><span>${fmt(seguros)}</span></div>`;
+      if (licenciamento > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Licenciamento</span><span>${fmt(licenciamento)}</span></div>`;
+      custosHtml += `</div>`;
+    }
+
+    const resumoHtml = `
+      <div style="text-align:right;border-top:2px solid #1a56db;padding-top:16px">
+        ${custosHtml}
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px"><span>Subtotal (s/ IVA)</span><span>${fmt(subtotalSemIva)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>IVA (${taxaIva}%)</span><span>${fmt(valorIva)}</span></div>
+        <p style="font-size:18px;font-weight:bold;color:#1a56db;margin-top:8px">TOTAL: ${fmt(valorFinal)}</p>
+      </div>
+    `;
 
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;color:#333">
@@ -126,9 +158,7 @@ serve(async (req) => {
             <tbody>${itemsHtml}</tbody>
           </table>
           
-          <div style="text-align:right;border-top:2px solid #1a56db;padding-top:16px">
-            <p style="font-size:18px;font-weight:bold;color:#1a56db">Total: ${fmt(valorComMargem)}</p>
-          </div>
+          ${resumoHtml}
           
           <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb"/>
           <p style="font-size:12px;color:#6b7280">
