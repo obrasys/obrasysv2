@@ -332,7 +332,6 @@ export function useParametricEngine(orcamentoId: string) {
       const { data, error } = await supabase
         .from('company_parametric_coefficients')
         .select('*')
-        .eq('user_id', user.id)
         .or(`orcamento_id.eq.${orcamentoId},orcamento_id.is.null`)
         .order('orcamento_id', { ascending: false, nullsFirst: false });
 

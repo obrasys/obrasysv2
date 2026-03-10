@@ -76,7 +76,6 @@ export function useRDOs(obraId?: string) {
       const { data: obras, error: obrasError } = await supabase
         .from('obras')
         .select('id, nome, cliente, status, progresso')
-        .eq('user_id', user.id)
         .eq('arquivada', false)
         .in('status', ['em_curso', 'planeamento']);
 
