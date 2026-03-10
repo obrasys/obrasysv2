@@ -393,7 +393,7 @@ export default function DefinicoesPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Tema</Label>
-                <Select defaultValue="light">
+                <Select value={theme || 'light'} onValueChange={setTheme}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -403,16 +403,15 @@ export default function DefinicoesPage() {
                     <SelectItem value="system">Sistema</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  O tema escuro estará disponível em breve
-                </p>
               </div>
               
               <Separator />
               
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
-                <CheckCircle className="w-4 h-4" />
-                <span>Tema claro ativo</span>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span className="text-foreground">
+                  Tema {theme === 'dark' ? 'escuro' : theme === 'system' ? 'do sistema' : 'claro'} ativo
+                </span>
               </div>
             </CardContent>
           </Card>
