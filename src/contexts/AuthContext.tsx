@@ -194,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
+    setOrganization(null);
     await supabase.auth.signOut();
   };
 
