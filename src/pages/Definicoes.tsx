@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -61,13 +62,14 @@ interface NotificationSettings {
 export default function DefinicoesPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { preferences, updatePreferences } = usePreferences();
   const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay } = useFormatting();
   const { settings: axiaSettings, isLoading: axiaLoading, updateSettings: updateAxiaSettings } = useCompanyAISettings();
   
   const [axiaEnabled, setAxiaEnabled] = useState(true);
-  const [axiaLlm, setAxiaLlm] = useState(false);
-  const [axiaPredictive, setAxiaPredictive] = useState(false);
+  const [axiaLlm, setAxiaLlm] = useState(true);
+  const [axiaPredictive, setAxiaPredictive] = useState(true);
   const [axiaMargin, setAxiaMargin] = useState('15');
   const [axiaSensitivity, setAxiaSensitivity] = useState('2.5');
 
@@ -76,6 +78,7 @@ export default function DefinicoesPage() {
     if (axiaSettings) {
       setAxiaEnabled(axiaSettings.enabled);
       setAxiaLlm(axiaSettings.llm_enabled);
+      setAxiaPredictive(true);
       setAxiaMargin(String(axiaSettings.min_margin_percent));
       setAxiaSensitivity(String(axiaSettings.outlier_zscore));
     }
@@ -85,7 +88,7 @@ export default function DefinicoesPage() {
     emailRDOs: true,
     emailOrcamentos: true,
     emailAlertas: true,
-    emailRelatorios: false,
+    emailRelatorios: true,
     pushNotifications: true,
     pushAlertas: true,
     pushTarefas: true,
@@ -390,7 +393,7 @@ export default function DefinicoesPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Tema</Label>
-                <Select defaultValue="light">
+                <Select value={theme || 'light'} onValueChange={setTheme}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -400,16 +403,15 @@ export default function DefinicoesPage() {
                     <SelectItem value="system">Sistema</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  O tema escuro estará disponível em breve
-                </p>
               </div>
               
               <Separator />
               
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
-                <CheckCircle className="w-4 h-4" />
-                <span>Tema claro ativo</span>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span className="text-foreground">
+                  Tema {theme === 'dark' ? 'escuro' : theme === 'system' ? 'do sistema' : 'claro'} ativo
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -473,7 +475,10 @@ export default function DefinicoesPage() {
               </div>
               <Switch
                 checked={axiaPredictive}
-                onCheckedChange={setAxiaPredictive}
+                onCheckedChange={(v) => {
+                  setAxiaPredictive(v);
+                  updateAxiaSettings.mutate({ enabled: axiaEnabled });
+                }}
                 disabled={!axiaEnabled}
               />
             </div>
