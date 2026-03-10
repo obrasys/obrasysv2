@@ -86,7 +86,7 @@ export default function DefinicoesPage() {
     emailRDOs: true,
     emailOrcamentos: true,
     emailAlertas: true,
-    emailRelatorios: false,
+    emailRelatorios: true,
     pushNotifications: true,
     pushAlertas: true,
     pushTarefas: true,
