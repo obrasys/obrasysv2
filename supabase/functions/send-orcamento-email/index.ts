@@ -160,6 +160,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: fromEmail,
+        reply_to: [profile?.email || user.email],
         to: [email],
         subject: `Orçamento - ${orcamento.titulo}`,
         html: htmlBody,
