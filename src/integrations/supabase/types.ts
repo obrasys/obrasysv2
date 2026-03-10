@@ -3458,6 +3458,68 @@ export type Database = {
           },
         ]
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          nif: string | null
+          nome: string
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nif?: string | null
+          nome: string
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nif?: string | null
+          nome?: string
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parametric_audit_logs: {
         Row: {
           action: string
@@ -5222,6 +5284,7 @@ export type Database = {
         Returns: string
       }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
+      get_org_member_ids: { Args: never; Returns: string[] }
       get_price_stats: {
         Args: { p_months?: number; p_user_id: string }
         Returns: {
@@ -5233,6 +5296,7 @@ export type Database = {
           unidade: string
         }[]
       }
+      get_user_org_id: { Args: never; Returns: string }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
