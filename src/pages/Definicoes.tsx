@@ -64,7 +64,7 @@ export default function DefinicoesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const { preferences, updatePreferences } = usePreferences();
-  const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay } = useFormatting();
+  const { formatCurrency, formatDate, getCurrentTimeFormatted, timezoneDisplay, t } = useFormatting();
   const { settings: axiaSettings, isLoading: axiaLoading, updateSettings: updateAxiaSettings } = useCompanyAISettings();
   
   const [axiaEnabled, setAxiaEnabled] = useState(true);
@@ -110,54 +110,52 @@ export default function DefinicoesPage() {
 
   const handleSave = async () => {
     setIsLoading(true);
-    // Simulate save - in a real app this would save to the database
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsLoading(false);
-    toast.success('Definições guardadas com sucesso!');
+    toast.success(t('settings_saved'));
   };
 
   const handleExportData = () => {
-    toast.info('A exportação de dados será iniciada em breve...');
+    toast.info(t('export_started'));
   };
 
   const handleDeleteAccount = () => {
-    toast.error('Esta funcionalidade requer confirmação adicional via email.');
+    toast.error(t('delete_requires_email'));
   };
 
-  // Example values for preview
   const exampleAmount = 12500.75;
   const exampleDate = new Date();
 
   return (
     <AppLayout 
-      title="Definições"
-      subtitle="Personalize a sua experiência e preferências"
+      title={t('settings_title')}
+      subtitle={t('settings_subtitle')}
       actions={
         <Button variant="outline" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
+          {t('back')}
         </Button>
       }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          {/* Notificações por Email */}
+          {/* Email Notifications */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="w-5 h-5" />
-                Notificações por Email
+                {t('email_notifications')}
               </CardTitle>
               <CardDescription>
-                Configure quais emails deseja receber
+                {t('email_notifications_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Novos RDOs</Label>
+                  <Label>{t('new_rdos')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receber email quando um RDO é submetido para aprovação
+                    {t('new_rdos_desc')}
                   </p>
                 </div>
                 <Switch
@@ -170,9 +168,9 @@ export default function DefinicoesPage() {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Orçamentos</Label>
+                  <Label>{t('budgets')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Notificações sobre alterações em orçamentos
+                    {t('budgets_desc')}
                   </p>
                 </div>
                 <Switch
@@ -185,9 +183,9 @@ export default function DefinicoesPage() {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Alertas de Obra</Label>
+                  <Label>{t('project_alerts')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Alertas sobre atrasos e problemas nas obras
+                    {t('project_alerts_desc')}
                   </p>
                 </div>
                 <Switch
@@ -200,9 +198,9 @@ export default function DefinicoesPage() {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Relatórios Semanais</Label>
+                  <Label>{t('weekly_reports')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Resumo semanal das atividades das suas obras
+                    {t('weekly_reports_desc')}
                   </p>
                 </div>
                 <Switch
@@ -213,23 +211,23 @@ export default function DefinicoesPage() {
             </CardContent>
           </Card>
 
-          {/* Notificações Push */}
+          {/* Push Notifications */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5" />
-                Notificações Push
+                {t('push_notifications')}
               </CardTitle>
               <CardDescription>
-                Notificações no navegador e dispositivos móveis
+                {t('push_notifications_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Ativar Notificações Push</Label>
+                  <Label>{t('enable_push')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Permitir notificações no navegador
+                    {t('enable_push_desc')}
                   </p>
                 </div>
                 <Switch
@@ -242,9 +240,9 @@ export default function DefinicoesPage() {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Alertas Urgentes</Label>
+                  <Label>{t('urgent_alerts')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Notificações imediatas para problemas críticos
+                    {t('urgent_alerts_desc')}
                   </p>
                 </div>
                 <Switch
@@ -258,9 +256,9 @@ export default function DefinicoesPage() {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Lembretes de Tarefas</Label>
+                  <Label>{t('task_reminders')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receber lembretes de tarefas pendentes
+                    {t('task_reminders_desc')}
                   </p>
                 </div>
                 <Switch
@@ -273,26 +271,26 @@ export default function DefinicoesPage() {
               <div className="pt-4">
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
                   <Bell className="w-4 h-4" />
-                  <span>As notificações push requerem permissão do navegador</span>
+                  <span>{t('push_permission_note')}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Preferências Regionais */}
+          {/* Regional Preferences */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="w-5 h-5" />
-                Preferências Regionais
+                {t('regional_preferences')}
               </CardTitle>
               <CardDescription>
-                Idioma, formato de data e moeda
+                {t('regional_preferences_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Idioma</Label>
+                <Label>{t('language')}</Label>
                 <Select 
                   value={preferences.language} 
                   onValueChange={(v) => updatePreferences({ language: v })}
@@ -310,7 +308,7 @@ export default function DefinicoesPage() {
               </div>
               
               <div className="space-y-2">
-                <Label>Formato de Data</Label>
+                <Label>{t('date_format')}</Label>
                 <Select 
                   value={preferences.dateFormat} 
                   onValueChange={(v) => updatePreferences({ dateFormat: v })}
@@ -325,12 +323,12 @@ export default function DefinicoesPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Exemplo: {formatDate(exampleDate)}
+                  {t('example')}: {formatDate(exampleDate)}
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label>Moeda</Label>
+                <Label>{t('currency_label')}</Label>
                 <Select 
                   value={preferences.currency} 
                   onValueChange={(v) => updatePreferences({ currency: v })}
@@ -346,12 +344,12 @@ export default function DefinicoesPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Exemplo: {formatCurrency(exampleAmount)}
+                  {t('example')}: {formatCurrency(exampleAmount)}
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label>Fuso Horário</Label>
+                <Label>{t('timezone')}</Label>
                 <Select 
                   value={preferences.timezone} 
                   onValueChange={(v) => updatePreferences({ timezone: v })}
@@ -372,35 +370,35 @@ export default function DefinicoesPage() {
               <div className="pt-2">
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
                   <Clock className="w-4 h-4 text-primary" />
-                  <span className="text-muted-foreground">Hora atual em {timezoneDisplay}:</span>
+                  <span className="text-muted-foreground">{t('current_time_in')} {timezoneDisplay}:</span>
                   <span className="font-mono font-medium text-primary">{currentTime}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Aparência */}
+          {/* Appearance */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="w-5 h-5" />
-                Aparência
+                {t('appearance')}
               </CardTitle>
               <CardDescription>
-                Personalize a aparência da aplicação
+                {t('appearance_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Tema</Label>
+                <Label>{t('theme')}</Label>
                 <Select value={theme || 'light'} onValueChange={setTheme}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Claro</SelectItem>
-                    <SelectItem value="dark">Escuro</SelectItem>
-                    <SelectItem value="system">Sistema</SelectItem>
+                    <SelectItem value="light">{t('theme_light')}</SelectItem>
+                    <SelectItem value="dark">{t('theme_dark')}</SelectItem>
+                    <SelectItem value="system">{t('theme_system')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -410,7 +408,7 @@ export default function DefinicoesPage() {
               <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
                 <CheckCircle className="w-4 h-4 text-primary" />
                 <span className="text-foreground">
-                  Tema {theme === 'dark' ? 'escuro' : theme === 'system' ? 'do sistema' : 'claro'} ativo
+                  {theme === 'dark' ? t('theme_active_dark') : theme === 'system' ? t('theme_active_system') : t('theme_active_light')}
                 </span>
               </div>
             </CardContent>
@@ -425,15 +423,15 @@ export default function DefinicoesPage() {
               Axia
             </CardTitle>
             <CardDescription>
-              Motor de inteligência ativa para orçamentos
+              {t('axia_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Ativar Axia</Label>
+                <Label>{t('enable_axia')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Análise automática de orçamentos com sugestões inteligentes
+                  {t('enable_axia_desc')}
                 </p>
               </div>
               <Switch
@@ -449,9 +447,9 @@ export default function DefinicoesPage() {
             
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Permitir recomendações automáticas</Label>
+                <Label>{t('auto_recommendations')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Usar IA generativa para sugestões avançadas
+                  {t('auto_recommendations_desc')}
                 </p>
               </div>
               <Switch
@@ -468,9 +466,9 @@ export default function DefinicoesPage() {
             
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Ativar modo preditivo</Label>
+                <Label>{t('predictive_mode')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Previsões baseadas no histórico de obras (beta)
+                  {t('predictive_mode_desc')}
                 </p>
               </div>
               <Switch
@@ -487,7 +485,7 @@ export default function DefinicoesPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Margem mínima (%)</Label>
+                <Label>{t('min_margin')}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -502,7 +500,7 @@ export default function DefinicoesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Sensibilidade de alerta</Label>
+                <Label>{t('alert_sensitivity')}</Label>
                 <Select
                   value={axiaSensitivity}
                   onValueChange={(v) => {
@@ -515,9 +513,9 @@ export default function DefinicoesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3.5">Baixa</SelectItem>
-                    <SelectItem value="2.5">Média</SelectItem>
-                    <SelectItem value="1.5">Alta</SelectItem>
+                    <SelectItem value="3.5">{t('sensitivity_low')}</SelectItem>
+                    <SelectItem value="2.5">{t('sensitivity_medium')}</SelectItem>
+                    <SelectItem value="1.5">{t('sensitivity_high')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -525,15 +523,15 @@ export default function DefinicoesPage() {
           </CardContent>
         </Card>
 
-        {/* Dados e Privacidade */}
+        {/* Data & Privacy */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              Dados e Privacidade
+              {t('data_privacy')}
             </CardTitle>
             <CardDescription>
-              Gerir os seus dados e configurações de privacidade
+              {t('data_privacy_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -545,13 +543,13 @@ export default function DefinicoesPage() {
                       <Download className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h4 className="font-medium">Exportar Dados</h4>
-                      <p className="text-xs text-muted-foreground">Baixar uma cópia dos seus dados</p>
+                      <h4 className="font-medium">{t('export_data')}</h4>
+                      <p className="text-xs text-muted-foreground">{t('export_data_desc')}</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full" onClick={handleExportData}>
                     <Download className="w-4 h-4 mr-2" />
-                    Exportar
+                    {t('export')}
                   </Button>
                 </CardContent>
               </Card>
@@ -563,13 +561,13 @@ export default function DefinicoesPage() {
                       <Database className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <h4 className="font-medium">Histórico de Sessões</h4>
-                      <p className="text-xs text-muted-foreground">Ver dispositivos conectados</p>
+                      <h4 className="font-medium">{t('session_history')}</h4>
+                      <p className="text-xs text-muted-foreground">{t('session_history_desc')}</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
                     <Database className="w-4 h-4 mr-2" />
-                    Ver Sessões
+                    {t('view_sessions')}
                   </Button>
                 </CardContent>
               </Card>
@@ -581,34 +579,34 @@ export default function DefinicoesPage() {
                       <Trash2 className="w-5 h-5 text-red-600" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-destructive">Eliminar Conta</h4>
-                      <p className="text-xs text-muted-foreground">Remover permanentemente</p>
+                      <h4 className="font-medium text-destructive">{t('delete_account')}</h4>
+                      <p className="text-xs text-muted-foreground">{t('delete_account_short')}</p>
                     </div>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="outline" size="sm" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10">
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Eliminar
+                        {t('delete')}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2 text-destructive">
                           <AlertTriangle className="w-5 h-5" />
-                          Eliminar Conta Permanentemente
+                          {t('delete_account_title')}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta ação é irreversível. Todos os seus dados, incluindo obras, orçamentos, RDOs e clientes serão permanentemente eliminados.
+                          {t('delete_account_desc')}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteAccount}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          Confirmar Eliminação
+                          {t('confirm_deletion')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -625,12 +623,12 @@ export default function DefinicoesPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                A guardar...
+                {t('saving')}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Guardar Definições
+                {t('save_settings')}
               </>
             )}
           </Button>
