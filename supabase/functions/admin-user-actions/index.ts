@@ -176,11 +176,12 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      const siteOrigin2 = req.headers.get("origin") || "https://app.obrasys.pt";
       const { data, error } = await serviceClient.auth.admin.generateLink({
         type: "recovery",
         email,
         options: {
-          redirectTo: "https://obrasysv2.lovable.app/reset-password",
+          redirectTo: `${siteOrigin2}/reset-password`,
         },
       });
 
