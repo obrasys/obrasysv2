@@ -67,8 +67,8 @@ export default function DefinicoesPage() {
   const { settings: axiaSettings, isLoading: axiaLoading, updateSettings: updateAxiaSettings } = useCompanyAISettings();
   
   const [axiaEnabled, setAxiaEnabled] = useState(true);
-  const [axiaLlm, setAxiaLlm] = useState(false);
-  const [axiaPredictive, setAxiaPredictive] = useState(false);
+  const [axiaLlm, setAxiaLlm] = useState(true);
+  const [axiaPredictive, setAxiaPredictive] = useState(true);
   const [axiaMargin, setAxiaMargin] = useState('15');
   const [axiaSensitivity, setAxiaSensitivity] = useState('2.5');
 
