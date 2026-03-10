@@ -112,11 +112,12 @@ serve(async (req: Request): Promise<Response> => {
       }
 
       // Generate password reset link so user can set their own password
+      const siteOrigin = req.headers.get("origin") || "https://app.obrasys.pt";
       const { data: resetData, error: resetError } = await serviceClient.auth.admin.generateLink({
         type: "recovery",
         email,
         options: {
-          redirectTo: "https://obrasysv2.lovable.app/reset-password",
+          redirectTo: `${siteOrigin}/reset-password`,
         },
       });
 
