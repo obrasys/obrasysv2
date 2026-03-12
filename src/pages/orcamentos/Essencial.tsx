@@ -1,197 +1,394 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
-import { EssencialWizardProgress } from '@/components/orcamentos/essencial/EssencialWizardProgress';
-import { EssencialStep1Cliente } from '@/components/orcamentos/essencial/EssencialStep1Cliente';
-import { EssencialStep2Trabalhos } from '@/components/orcamentos/essencial/EssencialStep2Trabalhos';
-import { EssencialStep3LucroEnvio } from '@/components/orcamentos/essencial/EssencialStep3LucroEnvio';
-import { AxiaSuggestionsPanel } from '@/components/orcamentos/essencial/AxiaSuggestionsPanel';
-import { useOrcamentoEssencial } from '@/hooks/useOrcamentoEssencial';
-import { useAxiaEssencial, AxiaSuggestion } from '@/hooks/useAxiaEssencial';
-import { AnimatePresence, motion } from 'framer-motion';
+import { BudgetTypeSelector } from '@/components/orcamentos/essencial-v2/BudgetTypeSelector';
+import { AreasGrid } from '@/components/orcamentos/essencial-v2/AreasGrid';
+import { ItemSelectorModal } from '@/components/orcamentos/essencial-v2/ItemSelectorModal';
+import { SelectedItemsPreview } from '@/components/orcamentos/essencial-v2/SelectedItemsPreview';
+import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetSummaryTable';
+import { TotalsAdjustments } from '@/components/orcamentos/essencial-v2/TotalsAdjustments';
+import { ClientIdentification } from '@/components/orcamentos/essencial-v2/ClientIdentification';
+import {
+  type BudgetType,
+  type BudgetItem,
+  type AreaConfig,
+  type BudgetClientInfo,
+  getAreasForType,
+  computeItemTotals,
+  formatEUR,
+} from '@/types/orcamento-essencial';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+const DRAFT_KEY = 'essencial_v2_draft';
+
+interface DraftState {
+  budgetType: BudgetType | null;
+  items: BudgetItem[];
+  customAreas: AreaConfig[];
+  clientInfo: BudgetClientInfo;
+  contingencyPercent: number;
+  discountPercent: number;
+  vatPercent: number;
+}
+
+function getDefaultClientInfo(): BudgetClientInfo {
+  const today = new Date();
+  const valid = new Date(today);
+  valid.setDate(valid.getDate() + 30);
+  const start = new Date(today);
+  start.setMonth(start.getMonth() + 3);
+
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+  return {
+    budgetNumber: '',
+    clientName: '',
+    workLocation: '',
+    conditions: '',
+    date: fmt(today),
+    validUntil: fmt(valid),
+    expectedStart: fmt(start),
+  };
+}
+
+function loadDraft(): DraftState | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveDraft(state: DraftState) {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+}
 
 export default function EssencialPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [incluirIva, setIncluirIva] = useState(true);
-  const [enviarEmail, setEnviarEmail] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const {
-    step1, setStep1,
-    items, setItems,
-    margemLucro, setMargemLucro,
-    templates, isLoadingTemplates,
-    isLoading,
-    completeStep1,
-    completeStep2,
-    finalize,
-  } = useOrcamentoEssencial();
+  const draft = useRef(loadDraft()).current;
 
-  const {
-    suggestions,
-    loading: axiaLoading,
-    fetchSuggestions,
-    acceptSuggestion,
-    dismissSuggestion,
-    clearSuggestions,
-    trackAxiaEvent,
-  } = useAxiaEssencial();
+  const [budgetType, setBudgetType] = useState<BudgetType | null>(draft?.budgetType ?? null);
+  const [items, setItems] = useState<BudgetItem[]>(draft?.items ?? []);
+  const [customAreas, setCustomAreas] = useState<AreaConfig[]>(draft?.customAreas ?? []);
+  const [clientInfo, setClientInfo] = useState<BudgetClientInfo>(draft?.clientInfo ?? getDefaultClientInfo());
+  const [contingencyPercent, setContingencyPercent] = useState(draft?.contingencyPercent ?? 0);
+  const [discountPercent, setDiscountPercent] = useState(draft?.discountPercent ?? 0);
+  const [vatPercent, setVatPercent] = useState(draft?.vatPercent ?? 23);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
-  const subtotal = items.reduce((s, i) => s + (i.valor || 0), 0);
+  // Modal state
+  const [modalArea, setModalArea] = useState<AreaConfig | null>(null);
 
-  const handleStep1Next = async () => {
-    await completeStep1();
-    setCurrentStep(2);
-  };
-
-  const handleStep2Next = async () => {
-    await completeStep2();
-    setCurrentStep(3);
-  };
-
-  const handleFinalize = () => {
-    finalize(incluirIva);
-  };
-
-  // Fetch Axia suggestions when entering step 2 or 3
+  // Autosave
   useEffect(() => {
-    if (currentStep === 2 && step1.tipo_obra && items.length >= 0) {
-      clearSuggestions();
-      const timer = setTimeout(() => {
-        fetchSuggestions(2, step1.tipo_obra, items);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-    if (currentStep === 3) {
-      clearSuggestions();
-      const timer = setTimeout(() => {
-        fetchSuggestions(3, step1.tipo_obra, items, margemLucro);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep]);
+    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent };
+    saveDraft(state);
+  }, [budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent]);
 
-  // Handle accept of Axia suggestions
-  const handleAcceptSuggestion = useCallback((suggestion: AxiaSuggestion) => {
-    acceptSuggestion(suggestion);
+  // Computed
+  const systemAreas = budgetType ? getAreasForType(budgetType) : [];
+  const allAreas = [...systemAreas, ...customAreas];
 
-    if (suggestion.type === 'add_item' && suggestion.payload.canonical_label) {
-      setItems(prev => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          descricao: suggestion.payload.canonical_label,
-          valor: suggestion.payload.suggested_value || 0,
-        },
-      ]);
+  const itemCounts: Record<string, number> = {};
+  items.forEach((i) => { itemCounts[i.areaKey] = (itemCounts[i.areaKey] || 0) + 1; });
+
+  const subtotalBase = items.reduce((sum, item) => sum + computeItemTotals(item).subtotal, 0);
+
+  // Handlers
+  const handleTypeChange = (type: BudgetType) => {
+    setBudgetType(type);
+    // Don't clear items, user may switch back
+  };
+
+  const handleAddItems = useCallback((newItems: BudgetItem[]) => {
+    setItems((prev) => [...prev, ...newItems]);
+  }, []);
+
+  const handleUpdateQuantity = useCallback((id: string, qty: number) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i));
+  }, []);
+
+  const handleRemoveItem = useCallback((id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  const handleClear = () => {
+    setShowClearDialog(true);
+  };
+
+  const confirmClear = () => {
+    setItems([]);
+    setCustomAreas([]);
+    setBudgetType(null);
+    setContingencyPercent(0);
+    setDiscountPercent(0);
+    setVatPercent(23);
+    setClientInfo(getDefaultClientInfo());
+    localStorage.removeItem(DRAFT_KEY);
+    setShowClearDialog(false);
+    toast({ title: 'Orçamento limpo com sucesso.' });
+  };
+
+  const handleAddCustomArea = useCallback((area: AreaConfig) => {
+    setCustomAreas((prev) => [...prev, area]);
+  }, []);
+
+  const handleRemoveCustomArea = useCallback((key: string) => {
+    setCustomAreas((prev) => prev.filter((a) => a.key !== key));
+    setItems((prev) => prev.filter((i) => i.areaKey !== key));
+  }, []);
+
+  const handleEditCustomArea = useCallback((key: string, newLabel: string) => {
+    setCustomAreas((prev) => prev.map((a) => a.key === key ? { ...a, label: newLabel } : a));
+  }, []);
+
+  // Save & generate PDF
+  const handleSave = async () => {
+    if (!user) {
+      toast({ title: 'Erro', description: 'Precisa estar autenticado.', variant: 'destructive' });
+      return;
+    }
+    if (items.length === 0) {
+      toast({ title: 'Atenção', description: 'Adicione pelo menos um item ao orçamento.', variant: 'destructive' });
+      return;
     }
 
-    if (suggestion.type === 'adjust_profit' && suggestion.payload.suggested_margin != null) {
-      setMargemLucro(suggestion.payload.suggested_margin);
-    }
-  }, [acceptSuggestion, setItems, setMargemLucro]);
+    setIsLoading(true);
+    try {
+      // Find or create client
+      let clienteId: string | null = null;
+      if (clientInfo.clientName.trim()) {
+        const { data: existing } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('nome', clientInfo.clientName.trim())
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-  const stepVariants = {
-    enter: { opacity: 0, x: 40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
+        if (existing) {
+          clienteId = existing.id;
+        } else {
+          const { data: newClient } = await supabase
+            .from('clientes')
+            .insert({ user_id: user.id, nome: clientInfo.clientName.trim() })
+            .select('id')
+            .single();
+          clienteId = newClient?.id || null;
+        }
+      }
+
+      // Generate code
+      const { data: codigo } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
+
+      const tipoLabel = budgetType === 'remodelacao' ? 'Remodelação'
+        : budgetType === 'construcao_nova' ? 'Construção Nova' : 'LSF';
+
+      const titulo = `Orçamento ${tipoLabel} - ${clientInfo.clientName || 'Sem cliente'}`;
+
+      // Compute final values
+      const contingencyValue = subtotalBase * (contingencyPercent / 100);
+      const afterContingency = subtotalBase + contingencyValue;
+      const discountValue = afterContingency * (discountPercent / 100);
+      const subtotalBeforeVat = afterContingency - discountValue;
+      const vatValue = subtotalBeforeVat * (vatPercent / 100);
+      const totalFinal = subtotalBeforeVat + vatValue;
+
+      // Create orcamento
+      const { data: orc, error: orcError } = await supabase
+        .from('orcamentos')
+        .insert({
+          user_id: user.id,
+          titulo,
+          codigo: codigo || clientInfo.budgetNumber || null,
+          cliente_id: clienteId,
+          status: 'enviado',
+          margem_lucro: 0,
+          valor_total: totalFinal,
+          custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
+          data_envio: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (orcError) throw orcError;
+
+      // Group items by area, create chapters
+      const grouped: Record<string, BudgetItem[]> = {};
+      items.forEach((item) => {
+        (grouped[item.areaKey] ||= []).push(item);
+      });
+
+      let capOrder = 1;
+      for (const [areaKey, areaItems] of Object.entries(grouped)) {
+        const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
+
+        const { data: cap, error: capError } = await supabase
+          .from('capitulos_orcamento')
+          .insert({
+            orcamento_id: orc.id,
+            numero: capOrder,
+            titulo: areaLabel,
+            ordem: capOrder,
+          })
+          .select('id')
+          .single();
+
+        if (capError) throw capError;
+
+        const artigos = areaItems.map((item, idx) => {
+          const totals = computeItemTotals(item);
+          return {
+            capitulo_id: cap.id,
+            descricao: item.name,
+            unidade: item.unit,
+            quantidade: item.quantity,
+            preco_unitario: item.laborUnitPrice + item.materialTotalPrice,
+            preco_base: item.laborUnitPrice + item.materialTotalPrice,
+            margem_lucro_artigo: 0,
+            ordem: idx + 1,
+          };
+        });
+
+        if (artigos.length > 0) {
+          const { error } = await supabase.from('artigos_orcamento').insert(artigos);
+          if (error) throw error;
+        }
+
+        capOrder++;
+      }
+
+      // Track event
+      try {
+        await supabase.from('axia_events' as any).insert({
+          user_id: user.id,
+          event_name: 'essencial_v2_completed',
+          entity_type: 'orcamento',
+          entity_id: orc.id,
+          metadata: {
+            budget_type: budgetType,
+            item_count: items.length,
+            total_final: totalFinal,
+          },
+        });
+      } catch { /* silent */ }
+
+      localStorage.removeItem(DRAFT_KEY);
+      toast({ title: 'Orçamento criado com sucesso!' });
+      navigate(`/orcamentos/${orc.id}`);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    }
+    setIsLoading(false);
   };
 
   return (
     <AppLayout
       title="Orçamento Essencial"
-      subtitle="Crie um orçamento profissional em menos de 5 minutos"
+      subtitle="Cria um orçamento profissional de forma rápida e intuitiva"
     >
-      <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-        {/* Progress */}
-        <EssencialWizardProgress currentStep={currentStep} />
+      <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+        {/* A - Budget Type */}
+        <BudgetTypeSelector value={budgetType} onChange={handleTypeChange} />
 
-        {/* Steps with animation */}
-        <div className="pt-2 min-h-[400px]">
-          <AnimatePresence mode="wait">
-            {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3 }}
-              >
-                <EssencialStep1Cliente
-                  data={step1}
-                  onChange={setStep1}
-                  onNext={handleStep1Next}
-                  isLoading={isLoading}
-                />
-              </motion.div>
-            )}
+        {/* B - Areas */}
+        {budgetType && (
+          <AreasGrid
+            areas={systemAreas}
+            customAreas={customAreas}
+            onAddCustomArea={handleAddCustomArea}
+            onRemoveCustomArea={handleRemoveCustomArea}
+            onEditCustomArea={handleEditCustomArea}
+            onAreaClick={(area) => setModalArea(area)}
+            itemCounts={itemCounts}
+          />
+        )}
 
-            {currentStep === 2 && (
-              <motion.div
-                key="step2"
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3 }}
-              >
-                <div className="space-y-4">
-                  <EssencialStep2Trabalhos
-                    items={items}
-                    onChange={setItems}
-                    margemLucro={margemLucro}
-                    templates={templates}
-                    isLoadingTemplates={isLoadingTemplates}
-                    onNext={handleStep2Next}
-                    onBack={() => setCurrentStep(1)}
-                  />
-                  <div className="lg:ml-0 lg:max-w-[66%]">
-                    <AxiaSuggestionsPanel
-                      suggestions={suggestions}
-                      loading={axiaLoading}
-                      onAccept={handleAcceptSuggestion}
-                      onDismiss={dismissSuggestion}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
+        {/* C - Selected Items Preview */}
+        {budgetType && (
+          <SelectedItemsPreview
+            items={items}
+            allAreas={allAreas}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+          />
+        )}
 
-            {currentStep === 3 && (
-              <motion.div
-                key="step3"
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3 }}
-              >
-                <div className="space-y-4">
-                  <EssencialStep3LucroEnvio
-                    subtotal={subtotal}
-                    margemLucro={margemLucro}
-                    onMargemChange={setMargemLucro}
-                    incluirIva={incluirIva}
-                    onIncluirIvaChange={setIncluirIva}
-                    enviarEmail={enviarEmail}
-                    onEnviarEmailChange={setEnviarEmail}
-                    onBack={() => setCurrentStep(2)}
-                    onFinalize={handleFinalize}
-                    isLoading={isLoading}
-                  />
-                  <div className="max-w-lg mx-auto">
-                    <AxiaSuggestionsPanel
-                      suggestions={suggestions}
-                      loading={axiaLoading}
-                      onAccept={handleAcceptSuggestion}
-                      onDismiss={dismissSuggestion}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* D - Summary Table */}
+        {budgetType && (
+          <BudgetSummaryTable
+            items={items}
+            allAreas={allAreas}
+            onClear={handleClear}
+          />
+        )}
+
+        {/* E - Totals & Adjustments */}
+        {budgetType && (
+          <TotalsAdjustments
+            subtotalBase={subtotalBase}
+            contingencyPercent={contingencyPercent}
+            discountPercent={discountPercent}
+            vatPercent={vatPercent}
+            onContingencyChange={setContingencyPercent}
+            onDiscountChange={setDiscountPercent}
+            onVatChange={setVatPercent}
+          />
+        )}
+
+        {/* F - Client Identification */}
+        {budgetType && (
+          <ClientIdentification
+            data={clientInfo}
+            onChange={setClientInfo}
+            onSave={handleSave}
+            isLoading={isLoading}
+          />
+        )}
       </div>
+
+      {/* Item Selector Modal */}
+      {modalArea && (
+        <ItemSelectorModal
+          open={!!modalArea}
+          onClose={() => setModalArea(null)}
+          areaKey={modalArea.key}
+          areaLabel={modalArea.label}
+          onAddItems={handleAddItems}
+        />
+      )}
+
+      {/* Clear confirmation */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar orçamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os itens, áreas e dados serão removidos. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClear} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

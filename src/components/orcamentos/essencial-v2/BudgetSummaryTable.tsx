@@ -3,7 +3,6 @@ import { type BudgetItem, type AreaConfig, type SummaryColumn, SUMMARY_COLUMNS, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { X, TrendingUp } from 'lucide-react';
-import { X, TrendingUp } from 'lucide-react';
 
 const COL_STORAGE_KEY = 'essencial_summary_columns';
 
