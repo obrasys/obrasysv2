@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { type BudgetItem, type AreaConfig, type SummaryColumn, SUMMARY_COLUMNS, DEFAULT_VISIBLE_COLUMNS, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { X, TrendingUp } from 'lucide-react';
 import { X, TrendingUp } from 'lucide-react';
 
 const COL_STORAGE_KEY = 'essencial_summary_columns';
