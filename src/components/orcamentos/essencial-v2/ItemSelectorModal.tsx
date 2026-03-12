@@ -93,7 +93,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
