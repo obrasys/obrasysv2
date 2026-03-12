@@ -163,7 +163,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
         </div>
 
         {/* Catalog items */}
-        <ScrollArea className="flex-1 min-h-0 max-h-[350px]">
+        <ScrollArea className="flex-1 min-h-0">
           {filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1">
               {filtered.map((item) => {
