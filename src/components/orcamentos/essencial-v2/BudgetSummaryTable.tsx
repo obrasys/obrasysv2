@@ -98,7 +98,7 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
 
       {/* Table */}
       <div className="border rounded-xl overflow-hidden">
-        <ScrollArea className="w-full" orientation="horizontal">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/50">
