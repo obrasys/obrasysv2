@@ -135,7 +135,7 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
               )}
             </tbody>
           </table>
-        </ScrollArea>
+        </div>
 
         {/* Totals footer */}
         <div className="border-t bg-muted/20 px-4 py-4">
