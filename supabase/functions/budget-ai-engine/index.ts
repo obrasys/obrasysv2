@@ -727,12 +727,11 @@ serve(async (req) => {
 
       case "getInsights": {
         if (!budgetId) throw new Error("budgetId é obrigatório");
-        // Verify ownership
+        // Verify access (RLS handles org-level permissions)
         const { data: orc } = await client
           .from("orcamentos")
           .select("id")
           .eq("id", budgetId)
-          .eq("user_id", userId)
           .maybeSingle();
         if (!orc) throw new Error("Orçamento não encontrado");
 
