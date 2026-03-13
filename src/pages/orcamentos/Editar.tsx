@@ -61,8 +61,9 @@ import {
   FileStack,
   Ruler,
   Euro,
+  Scale,
+  Info,
 } from 'lucide-react';
-import { Scale, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
