@@ -68,7 +68,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const { updateStatus } = useOrcamentos();
+  const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
     orcamento,
     isLoading,
