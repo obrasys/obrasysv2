@@ -1,6 +1,25 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatEUR } from '@/types/orcamento-essencial';
+import { Scale, Info } from 'lucide-react';
+import {
+  TIPO_OBRA_FISCAL_CONFIG,
+  TIPO_CLIENTE_FISCAL_CONFIG,
+  TIPO_OPERACAO_FISCAL_CONFIG,
+  type TipoObraFiscal,
+  type TipoClienteFiscal,
+  type TipoOperacaoFiscal,
+} from '@/types/fiscal';
+import { useFiscalEngine } from '@/hooks/useFiscalEngine';
+import { useState, useEffect } from 'react';
 
 interface Props {
   subtotalBase: number;
@@ -21,6 +40,25 @@ export function TotalsAdjustments({
   onDiscountChange,
   onVatChange,
 }: Props) {
+  const { determinarRegimeFiscal } = useFiscalEngine();
+
+  const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
+  const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
+  const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+
+  const fiscalResult = determinarRegimeFiscal({
+    tipo_obra: tipoObra || null,
+    tipo_cliente: tipoCliente || null,
+    tipo_operacao: tipoOperacao || null,
+  });
+
+  // Auto-update VAT when fiscal context changes
+  useEffect(() => {
+    if (fiscalResult && (tipoObra || tipoCliente || tipoOperacao)) {
+      onVatChange(fiscalResult.taxa_iva);
+    }
+  }, [fiscalResult?.taxa_iva, tipoObra, tipoCliente, tipoOperacao]);
+
   const contingencyValue = subtotalBase * (contingencyPercent / 100);
   const afterContingency = subtotalBase + contingencyValue;
   const discountValue = afterContingency * (discountPercent / 100);
@@ -29,8 +67,88 @@ export function TotalsAdjustments({
   const totalFinal = subtotalBeforeVat + vatValue;
 
   return (
-    <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
-      <h2 className="text-lg md:text-xl font-bold text-foreground mb-6">Totais & Ajustes</h2>
+    <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm space-y-8">
+      <h2 className="text-lg md:text-xl font-bold text-foreground">Totais & Ajustes</h2>
+
+      {/* Fiscal Context - IVA Rules */}
+      <div className="rounded-xl bg-primary/5 border border-primary/15 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Scale className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-semibold text-foreground">Regime de IVA</h3>
+          {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
+            <Badge variant="outline" className="ml-auto text-xs font-medium">
+              {fiscalResult.regime_nome} — {fiscalResult.taxa_iva}%
+            </Badge>
+          )}
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Selecione o contexto fiscal para determinar automaticamente a taxa de IVA aplicável.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
+            <Select
+              value={tipoObra || '_none_'}
+              onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="_none_">Não especificado</SelectItem>
+                {Object.entries(TIPO_OBRA_FISCAL_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
+            <Select
+              value={tipoCliente || '_none_'}
+              onValueChange={(v) => setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="_none_">Não especificado</SelectItem>
+                {Object.entries(TIPO_CLIENTE_FISCAL_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
+            <Select
+              value={tipoOperacao || '_none_'}
+              onValueChange={(v) => setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="_none_">Não especificado</SelectItem>
+                {Object.entries(TIPO_OPERACAO_FISCAL_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {fiscalResult?.nota_legal && (tipoObra || tipoCliente || tipoOperacao) && (
+          <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
+            <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {fiscalResult.nota_legal}
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left - Inputs */}
@@ -62,7 +180,12 @@ export function TotalsAdjustments({
           </div>
 
           <div>
-            <Label className="text-sm text-muted-foreground">IVA %</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-muted-foreground">IVA %</Label>
+              {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
+                <Badge variant="secondary" className="text-[10px]">Auto</Badge>
+              )}
+            </div>
             <Input
               type="number"
               min={0}

@@ -61,6 +61,8 @@ import {
   FileStack,
   Ruler,
   Euro,
+  Scale,
+  Info,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
@@ -68,7 +70,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const { updateStatus } = useOrcamentos();
+  const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
     orcamento,
     isLoading,
@@ -97,7 +99,11 @@ export default function EditarOrcamentoPage() {
    const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
    const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
  
-  // Modal states
+   // Local editable margin state
+   const [localMargemLucro, setLocalMargemLucro] = useState<number | null>(null);
+   const activeMargemLucro = localMargemLucro ?? orcamento?.margem_lucro ?? 15;
+
+   // Modal states
   const [showCapituloModal, setShowCapituloModal] = useState(false);
   const [showArtigoModal, setShowArtigoModal] = useState(false);
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
@@ -327,73 +333,276 @@ export default function EditarOrcamentoPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="artigos" className="flex items-center gap-2">
-              <FileStack className="h-4 w-4" />
-              Artigos
-            </TabsTrigger>
-            <TabsTrigger value="medicoes" className="flex items-center gap-2">
-              <Ruler className="h-4 w-4" />
-              Medições Paramétricas
-            </TabsTrigger>
-          </TabsList>
+         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+           <TabsList className="grid w-full max-w-lg grid-cols-3">
+             <TabsTrigger value="artigos" className="flex items-center gap-2">
+               <FileStack className="h-4 w-4" />
+               Artigos
+             </TabsTrigger>
+             <TabsTrigger value="margem" className="flex items-center gap-2">
+               <Euro className="h-4 w-4" />
+               Margem & IVA
+             </TabsTrigger>
+             <TabsTrigger value="medicoes" className="flex items-center gap-2">
+               <Ruler className="h-4 w-4" />
+               Medições
+             </TabsTrigger>
+           </TabsList>
 
-          {/* Tab: Artigos */}
-          <TabsContent value="artigos" className="space-y-0">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-3 space-y-4">
-                {/* Capítulos */}
-                {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
-                  orcamento.capitulos.map((capitulo) => (
-                    <CapituloAccordion
-                      key={capitulo.id}
-                      capitulo={capitulo}
-                      onEdit={() => handleEditCapitulo(capitulo.id)}
-                      onDelete={() => setDeleteCapituloId(capitulo.id)}
-                      onAddArtigo={() => handleAddArtigo(capitulo.id)}
-                      onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
-                      onDeleteArtigo={setDeleteArtigoId}
-                      onOpenCatalog={handleOpenCatalog}
-                      isReadOnly={isReadOnly}
-                    />
-                  ))
-                ) : (
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <p className="text-muted-foreground mb-4">
-                        Nenhum capítulo criado. Adicione o primeiro capítulo para começar.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
+           {/* Tab: Artigos */}
+           <TabsContent value="artigos" className="space-y-0">
+             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+               {/* Main Content */}
+               <div className="lg:col-span-3 space-y-4">
+                 {/* Capítulos */}
+                 {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
+                   orcamento.capitulos.map((capitulo) => (
+                     <CapituloAccordion
+                       key={capitulo.id}
+                       capitulo={capitulo}
+                       onEdit={() => handleEditCapitulo(capitulo.id)}
+                       onDelete={() => setDeleteCapituloId(capitulo.id)}
+                       onAddArtigo={() => handleAddArtigo(capitulo.id)}
+                       onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
+                       onDeleteArtigo={setDeleteArtigoId}
+                       onOpenCatalog={handleOpenCatalog}
+                       isReadOnly={isReadOnly}
+                     />
+                   ))
+                 ) : (
+                   <Card>
+                     <CardContent className="py-12 text-center">
+                       <p className="text-muted-foreground mb-4">
+                         Nenhum capítulo criado. Adicione o primeiro capítulo para começar.
+                       </p>
+                     </CardContent>
+                   </Card>
+                 )}
 
-                {/* Add Chapter Button */}
-                {!isReadOnly && (
-                  <Button variant="outline" className="w-full" onClick={handleAddCapitulo}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar Capítulo
-                  </Button>
-                )}
-              </div>
+                 {/* Add Chapter Button */}
+                 {!isReadOnly && (
+                   <Button variant="outline" className="w-full" onClick={handleAddCapitulo}>
+                     <Plus className="mr-2 h-4 w-4" />
+                     Adicionar Capítulo
+                   </Button>
+                 )}
+               </div>
 
-              {/* Sidebar */}
-              <div className="space-y-4">
-                <ResumoTotal orcamento={orcamento} />
-                <SmartInsightsPanel budgetId={orcamento.id} />
-              </div>
-            </div>
-          </TabsContent>
+               {/* Sidebar */}
+               <div className="space-y-4">
+                 <ResumoTotal orcamento={{...orcamento, margem_lucro: activeMargemLucro}} />
+                 <SmartInsightsPanel budgetId={orcamento.id} />
+               </div>
+             </div>
+           </TabsContent>
 
-          {/* Tab: Medições Paramétricas */}
-          <TabsContent value="medicoes" className="space-y-0">
-            <ParametricMeasurements 
-              orcamentoId={orcamento.id} 
-              isReadOnly={isReadOnly}
-            />
-          </TabsContent>
-        </Tabs>
+           {/* Tab: Margem & IVA */}
+           <TabsContent value="margem" className="space-y-0">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               {/* Margem Global */}
+               <Card>
+                 <CardContent className="pt-6 space-y-6">
+                   <div className="flex items-center gap-2 mb-2">
+                     <Euro className="h-5 w-5 text-primary" />
+                     <h3 className="text-lg font-semibold text-foreground">Margem de Lucro Global</h3>
+                   </div>
+                   <div className="space-y-4">
+                     <div className="flex items-center justify-between">
+                       <Label className="text-base">Margem aplicada</Label>
+                       <span className="text-2xl font-bold text-primary tabular-nums">{activeMargemLucro}%</span>
+                     </div>
+                     <Slider
+                       min={0}
+                       max={50}
+                       step={1}
+                       value={[activeMargemLucro]}
+                       onValueChange={(value) => setLocalMargemLucro(value[0])}
+                       disabled={isReadOnly}
+                       className="py-2"
+                     />
+                     <div className="flex justify-between text-xs text-muted-foreground">
+                       <span>0%</span>
+                       <span>25%</span>
+                       <span>50%</span>
+                     </div>
+                     {localMargemLucro !== null && localMargemLucro !== orcamento.margem_lucro && (
+                       <Button
+                         onClick={async () => {
+                           await updateOrcamento.mutateAsync({ id: orcamento.id, margem_lucro: localMargemLucro });
+                           setLocalMargemLucro(null);
+                         }}
+                         disabled={updateOrcamento.isPending}
+                         className="w-full"
+                       >
+                         {updateOrcamento.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         Guardar Margem ({localMargemLucro}%)
+                       </Button>
+                     )}
+                   </div>
+                   <div className="space-y-4 pt-4 border-t border-border">
+                     <Label className="text-sm font-medium">Custos Indiretos</Label>
+                     <div className="grid grid-cols-3 gap-4">
+                       <div>
+                         <Label className="text-xs text-muted-foreground">Estaleiro (€)</Label>
+                         <Input
+                           type="number"
+                           value={orcamento.custos_indiretos?.estaleiro || 0}
+                           disabled={isReadOnly}
+                           onChange={(e) => {
+                             const val = parseFloat(e.target.value) || 0;
+                             updateOrcamento.mutateAsync({
+                               id: orcamento.id,
+                               custos_indiretos: { ...orcamento.custos_indiretos, estaleiro: val } as any,
+                             });
+                           }}
+                         />
+                       </div>
+                       <div>
+                         <Label className="text-xs text-muted-foreground">Seguros (€)</Label>
+                         <Input
+                           type="number"
+                           value={orcamento.custos_indiretos?.seguros || 0}
+                           disabled={isReadOnly}
+                           onChange={(e) => {
+                             const val = parseFloat(e.target.value) || 0;
+                             updateOrcamento.mutateAsync({
+                               id: orcamento.id,
+                               custos_indiretos: { ...orcamento.custos_indiretos, seguros: val } as any,
+                             });
+                           }}
+                         />
+                       </div>
+                       <div>
+                         <Label className="text-xs text-muted-foreground">Licenciamento (€)</Label>
+                         <Input
+                           type="number"
+                           value={orcamento.custos_indiretos?.licenciamento || 0}
+                           disabled={isReadOnly}
+                           onChange={(e) => {
+                             const val = parseFloat(e.target.value) || 0;
+                             updateOrcamento.mutateAsync({
+                               id: orcamento.id,
+                               custos_indiretos: { ...orcamento.custos_indiretos, licenciamento: val } as any,
+                             });
+                           }}
+                         />
+                       </div>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+
+               {/* IVA / Fiscal Context */}
+               <Card>
+                 <CardContent className="pt-6 space-y-6">
+                   <div className="flex items-center gap-2 mb-2">
+                     <Scale className="h-5 w-5 text-primary" />
+                     <h3 className="text-lg font-semibold text-foreground">Contexto Fiscal & IVA</h3>
+                   </div>
+                   
+                   {/* Current IVA highlight */}
+                   <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
+                     <div>
+                       <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
+                       <p className="text-sm font-medium text-foreground">
+                         {fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
+                       </p>
+                     </div>
+                     <span className="text-3xl font-black text-primary tabular-nums">
+                       {fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
+                     </span>
+                   </div>
+
+                   {fiscalPreview?.nota_legal && (
+                     <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
+                       <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                       <p className="text-xs text-muted-foreground leading-relaxed">
+                         {fiscalPreview.nota_legal}
+                       </p>
+                     </div>
+                   )}
+
+                   <div className="space-y-3">
+                     <div>
+                       <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
+                       <Select
+                         value={tipoObra || '_none_'}
+                         onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
+                         disabled={isReadOnly}
+                       >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Selecionar tipo de obra..." />
+                         </SelectTrigger>
+                         <SelectContent className="bg-popover">
+                           <SelectItem value="_none_">Não especificado</SelectItem>
+                           {Object.entries(TIPO_OBRA_FISCAL_CONFIG).map(([key, config]) => (
+                             <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     <div>
+                       <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
+                       <Select
+                         value={tipoCliente || '_none_'}
+                         onValueChange={(v) => setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal)}
+                         disabled={isReadOnly}
+                       >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Selecionar tipo de cliente..." />
+                         </SelectTrigger>
+                         <SelectContent className="bg-popover">
+                           <SelectItem value="_none_">Não especificado</SelectItem>
+                           {Object.entries(TIPO_CLIENTE_FISCAL_CONFIG).map(([key, config]) => (
+                             <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     <div>
+                       <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
+                       <Select
+                         value={tipoOperacao || '_none_'}
+                         onValueChange={(v) => setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal)}
+                         disabled={isReadOnly}
+                       >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Selecionar tipo de operação..." />
+                         </SelectTrigger>
+                         <SelectContent className="bg-popover">
+                           <SelectItem value="_none_">Não especificado</SelectItem>
+                           {Object.entries(TIPO_OPERACAO_FISCAL_CONFIG).map(([key, config]) => (
+                             <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   </div>
+
+                   {!isReadOnly && (
+                     <Button
+                       variant="outline"
+                       className="w-full"
+                       onClick={handleSaveFiscalContext}
+                       disabled={saveContextoFiscal.isPending}
+                     >
+                       {saveContextoFiscal.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                       Aplicar Contexto Fiscal
+                     </Button>
+                   )}
+                 </CardContent>
+               </Card>
+             </div>
+           </TabsContent>
+
+           {/* Tab: Medições Paramétricas */}
+           <TabsContent value="medicoes" className="space-y-0">
+             <ParametricMeasurements 
+               orcamentoId={orcamento.id} 
+               isReadOnly={isReadOnly}
+             />
+           </TabsContent>
+         </Tabs>
       </div>
 
       {/* Capítulo Modal */}
@@ -485,149 +694,30 @@ export default function EditarOrcamentoPage() {
         onAddArtigos={handleAddFromCatalog}
       />
 
-      {/* Settings Modal */}
-      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Configurações do Orçamento</DialogTitle>
-            <DialogDescription>
-               Configure o contexto fiscal, margem de lucro e custos indiretos
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-             {/* Contexto Fiscal */}
-             <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-               <div className="flex items-center justify-between">
-                 <Label className="text-base font-semibold">Contexto Fiscal</Label>
-                 {fiscalPreview && (
-                   <Badge variant="outline" className="text-xs">
-                     {fiscalPreview.regime_nome} ({fiscalPreview.taxa_iva}%)
-                   </Badge>
-                 )}
-               </div>
-               <div className="grid grid-cols-1 gap-3">
-                 <div>
-                   <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
-                   <Select
-                     value={tipoObra || '_none_'}
-                     onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
-                     disabled={isReadOnly}
-                   >
-                     <SelectTrigger>
-                       <SelectValue placeholder="Selecionar tipo de obra..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="_none_">Não especificado</SelectItem>
-                       {Object.entries(TIPO_OBRA_FISCAL_CONFIG).map(([key, config]) => (
-                         <SelectItem key={key} value={key}>
-                           {config.label}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <div>
-                   <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
-                   <Select
-                     value={tipoCliente || '_none_'}
-                     onValueChange={(v) => setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal)}
-                     disabled={isReadOnly}
-                   >
-                     <SelectTrigger>
-                       <SelectValue placeholder="Selecionar tipo de cliente..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="_none_">Não especificado</SelectItem>
-                       {Object.entries(TIPO_CLIENTE_FISCAL_CONFIG).map(([key, config]) => (
-                         <SelectItem key={key} value={key}>
-                           {config.label}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <div>
-                   <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
-                   <Select
-                     value={tipoOperacao || '_none_'}
-                     onValueChange={(v) => setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal)}
-                     disabled={isReadOnly}
-                   >
-                     <SelectTrigger>
-                       <SelectValue placeholder="Selecionar tipo de operação..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="_none_">Não especificado</SelectItem>
-                       {Object.entries(TIPO_OPERACAO_FISCAL_CONFIG).map(([key, config]) => (
-                         <SelectItem key={key} value={key}>
-                           {config.label}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-               </div>
-               {!isReadOnly && (
-                 <Button 
-                   variant="outline" 
-                   size="sm" 
-                   className="w-full mt-2"
-                   onClick={handleSaveFiscalContext}
-                   disabled={saveContextoFiscal.isPending}
-                 >
-                   {saveContextoFiscal.isPending && (
-                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                   )}
-                   Aplicar Contexto Fiscal
-                 </Button>
-               )}
-             </div>
- 
-            <div>
-              <Label>Margem de Lucro: {orcamento.margem_lucro}%</Label>
-              <Slider
-                min={0}
-                max={50}
-                step={1}
-                value={[orcamento.margem_lucro]}
-                className="mt-2"
-                disabled={isReadOnly}
-              />
-            </div>
-            <div className="space-y-4">
-              <Label>Custos Indiretos</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Estaleiro (€)</Label>
-                  <Input
-                    type="number"
-                    value={orcamento.custos_indiretos?.estaleiro || 0}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Seguros (€)</Label>
-                  <Input
-                    type="number"
-                    value={orcamento.custos_indiretos?.seguros || 0}
-                    disabled={isReadOnly}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Licenciamento (€)</Label>
-                  <Input
-                    type="number"
-                    value={orcamento.custos_indiretos?.licenciamento || 0}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Capítulo Dialog */}
+       {/* Settings Modal - simplified, main config is now in Margem & IVA tab */}
+       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+         <DialogContent className="max-w-md">
+           <DialogHeader>
+             <DialogTitle>Configurações do Orçamento</DialogTitle>
+             <DialogDescription>
+               Use a aba "Margem & IVA" para configurar margem de lucro, custos indiretos e contexto fiscal.
+             </DialogDescription>
+           </DialogHeader>
+           <div className="space-y-4">
+             <Button
+               variant="outline"
+               className="w-full"
+               onClick={() => {
+                 setShowSettingsModal(false);
+                 setActiveTab('margem');
+               }}
+             >
+               <Euro className="mr-2 h-4 w-4" />
+               Ir para Margem & IVA
+             </Button>
+           </div>
+         </DialogContent>
+       </Dialog>
       <AlertDialog open={!!deleteCapituloId} onOpenChange={() => setDeleteCapituloId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
