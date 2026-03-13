@@ -147,11 +147,10 @@ async function authenticateRequest(req: Request) {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await client.auth.getClaims(token);
-  if (error || !data?.claims) throw new Error("Invalid token");
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error || !user) throw new Error("Invalid token");
 
-  return { client, userId: data.claims.sub as string };
+  return { client, userId: user.id };
 }
 
 // ── Get or create AI settings ────────────────────────────────────────
