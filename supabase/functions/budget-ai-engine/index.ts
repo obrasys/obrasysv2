@@ -701,7 +701,6 @@ serve(async (req) => {
           .from("ai_budget_insights")
           .select("*")
           .eq("budget_id", budgetId)
-          .eq("user_id", userId)
           .order("severity", { ascending: true })
           .order("created_at", { ascending: false });
 
