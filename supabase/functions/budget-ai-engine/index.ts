@@ -147,11 +147,10 @@ async function authenticateRequest(req: Request) {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await client.auth.getClaims(token);
-  if (error || !data?.claims) throw new Error("Invalid token");
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error || !user) throw new Error("Invalid token");
 
-  return { client, userId: data.claims.sub as string };
+  return { client, userId: user.id };
 }
 
 // ── Get or create AI settings ────────────────────────────────────────
@@ -352,7 +351,7 @@ function checkOutlierPrices(orcamento: any, priceStats: any[], settings: any): a
 
 // ── runBudgetRules ───────────────────────────────────────────────────
 async function runBudgetRules(client: any, userId: string, budgetId: string) {
-  // Verify budget ownership
+  // Verify budget access (RLS handles org-level permissions)
   const { data: orcamento, error: orcError } = await client
     .from("orcamentos")
     .select(`
@@ -363,7 +362,6 @@ async function runBudgetRules(client: any, userId: string, budgetId: string) {
       )
     `)
     .eq("id", budgetId)
-    .eq("user_id", userId)
     .single();
 
   if (orcError || !orcamento) throw new Error("Orçamento não encontrado ou acesso negado");
@@ -702,7 +700,6 @@ serve(async (req) => {
           .from("ai_budget_insights")
           .select("*")
           .eq("budget_id", budgetId)
-          .eq("user_id", userId)
           .order("severity", { ascending: true })
           .order("created_at", { ascending: false });
 
@@ -728,12 +725,11 @@ serve(async (req) => {
 
       case "getInsights": {
         if (!budgetId) throw new Error("budgetId é obrigatório");
-        // Verify ownership
+        // Verify access (RLS handles org-level permissions)
         const { data: orc } = await client
           .from("orcamentos")
           .select("id")
           .eq("id", budgetId)
-          .eq("user_id", userId)
           .maybeSingle();
         if (!orc) throw new Error("Orçamento não encontrado");
 
@@ -741,7 +737,6 @@ serve(async (req) => {
           .from("ai_budget_insights")
           .select("*")
           .eq("budget_id", budgetId)
-          .eq("user_id", userId)
           .order("severity", { ascending: true })
           .order("created_at", { ascending: false });
 
