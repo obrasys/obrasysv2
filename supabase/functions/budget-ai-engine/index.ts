@@ -352,7 +352,7 @@ function checkOutlierPrices(orcamento: any, priceStats: any[], settings: any): a
 
 // ── runBudgetRules ───────────────────────────────────────────────────
 async function runBudgetRules(client: any, userId: string, budgetId: string) {
-  // Verify budget ownership
+  // Verify budget access (RLS handles org-level permissions)
   const { data: orcamento, error: orcError } = await client
     .from("orcamentos")
     .select(`
@@ -363,7 +363,6 @@ async function runBudgetRules(client: any, userId: string, budgetId: string) {
       )
     `)
     .eq("id", budgetId)
-    .eq("user_id", userId)
     .single();
 
   if (orcError || !orcamento) throw new Error("Orçamento não encontrado ou acesso negado");
