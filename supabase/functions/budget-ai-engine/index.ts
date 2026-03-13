@@ -727,12 +727,18 @@ serve(async (req) => {
       case "getInsights": {
         if (!budgetId) throw new Error("budgetId é obrigatório");
         // Verify access (RLS handles org-level permissions)
-        const { data: orc } = await client
+        const { data: orc, error: orcCheckError } = await client
           .from("orcamentos")
           .select("id")
           .eq("id", budgetId)
           .maybeSingle();
-        if (!orc) throw new Error("Orçamento não encontrado");
+        
+        console.log("getInsights check:", { budgetId, orc, orcCheckError });
+        
+        if (!orc) {
+          console.error("Budget not found for getInsights. budgetId:", budgetId, "userId:", userId, "error:", orcCheckError);
+          throw new Error("Orçamento não encontrado");
+        }
 
         const { data: insights } = await client
           .from("ai_budget_insights")
