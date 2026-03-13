@@ -733,11 +733,11 @@ serve(async (req) => {
           .eq("id", budgetId)
           .maybeSingle();
         
-        console.log("getInsights check:", { budgetId, orc, orcCheckError });
-        
+        // If budget not found (RLS filtered or doesn't exist), return empty instead of throwing
         if (!orc) {
-          console.error("Budget not found for getInsights. budgetId:", budgetId, "userId:", userId, "error:", orcCheckError);
-          throw new Error("Orçamento não encontrado");
+          console.log("getInsights: budget not accessible or not found:", budgetId, "error:", orcCheckError);
+          result = { insights: [] };
+          break;
         }
 
         const { data: insights } = await client
