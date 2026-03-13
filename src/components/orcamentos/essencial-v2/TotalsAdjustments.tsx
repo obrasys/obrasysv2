@@ -21,6 +21,13 @@ import {
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { useState, useEffect } from 'react';
 
+const IVA_REGIMES = [
+  { value: 23, label: 'IVA Normal', description: '23% — Regime geral' },
+  { value: 6, label: 'IVA Reduzido', description: '6% — Reabilitação/habitação' },
+  { value: 0, label: 'Autoliquidação', description: '0% — Subempreitada (art. 2º)' },
+  { value: 13, label: 'IVA Intermédio', description: '13% — Taxa intermédia' },
+];
+
 interface Props {
   subtotalBase: number;
   contingencyPercent: number;
