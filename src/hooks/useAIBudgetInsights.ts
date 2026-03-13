@@ -53,10 +53,16 @@ export function useAIBudgetInsights(budgetId: string | undefined) {
     queryKey: ['ai-budget-insights', budgetId],
     queryFn: async () => {
       if (!budgetId) return [];
-      const data = await callBudgetAI('getInsights', { budgetId });
-      return (data.insights || []) as AIBudgetInsight[];
+      try {
+        const data = await callBudgetAI('getInsights', { budgetId });
+        return (data.insights || []) as AIBudgetInsight[];
+      } catch (err) {
+        console.warn('AI insights fetch failed (non-critical):', err);
+        return [];
+      }
     },
     enabled: !!budgetId && !!user?.id,
+    retry: false,
   });
 
   const analyzebudget = useMutation({
