@@ -75,15 +75,38 @@ export function TotalsAdjustments({
         <div className="flex items-center gap-2">
           <Scale className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">Regime de IVA</h3>
-          {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
-            <Badge variant="outline" className="ml-auto text-xs font-medium">
-              {fiscalResult.regime_nome} — {fiscalResult.taxa_iva}%
-            </Badge>
-          )}
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          Selecione o contexto fiscal para determinar automaticamente a taxa de IVA aplicável.
+        {/* Quick IVA regime buttons */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {IVA_REGIMES.map((regime) => (
+              <button
+                key={regime.value}
+                type="button"
+                onClick={() => {
+                  onVatChange(regime.value);
+                  // Clear fiscal selectors when manually picking
+                  setTipoObra(undefined);
+                  setTipoCliente(undefined);
+                  setTipoOperacao(undefined);
+                }}
+                className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                  vatPercent === regime.value && !tipoObra && !tipoCliente && !tipoOperacao
+                    ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                    : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                }`}
+              >
+                <span className="block text-sm font-semibold text-foreground">{regime.label}</span>
+                <span className="block text-xs text-muted-foreground">{regime.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Ou selecione o contexto fiscal para determinação automática:
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -139,6 +162,16 @@ export function TotalsAdjustments({
             </Select>
           </div>
         </div>
+
+        {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
+          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Regime determinado</p>
+              <p className="text-sm font-medium text-foreground">{fiscalResult.regime_nome}</p>
+            </div>
+            <span className="text-2xl font-black text-primary tabular-nums">{fiscalResult.taxa_iva}%</span>
+          </div>
+        )}
 
         {fiscalResult?.nota_legal && (tipoObra || tipoCliente || tipoOperacao) && (
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
