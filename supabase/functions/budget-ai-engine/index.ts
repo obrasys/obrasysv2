@@ -147,10 +147,11 @@ async function authenticateRequest(req: Request) {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: { user }, error } = await client.auth.getUser();
-  if (error || !user) throw new Error("Invalid token");
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await client.auth.getClaims(token);
+  if (error || !data?.claims) throw new Error("Invalid token");
 
-  return { client, userId: user.id };
+  return { client, userId: data.claims.sub as string };
 }
 
 // ── Get or create AI settings ────────────────────────────────────────
@@ -364,6 +365,9 @@ async function runBudgetRules(client: any, userId: string, budgetId: string) {
     .eq("id", budgetId)
     .single();
 
+  if (orcError) {
+    console.error("runBudgetRules query error:", orcError, "budgetId:", budgetId, "userId:", userId);
+  }
   if (orcError || !orcamento) throw new Error("Orçamento não encontrado ou acesso negado");
 
   const settings = await getOrCreateSettings(client, userId);
@@ -726,12 +730,18 @@ serve(async (req) => {
       case "getInsights": {
         if (!budgetId) throw new Error("budgetId é obrigatório");
         // Verify access (RLS handles org-level permissions)
-        const { data: orc } = await client
+        const { data: orc, error: orcCheckError } = await client
           .from("orcamentos")
           .select("id")
           .eq("id", budgetId)
           .maybeSingle();
-        if (!orc) throw new Error("Orçamento não encontrado");
+        
+        // If budget not found (RLS filtered or doesn't exist), return empty instead of throwing
+        if (!orc) {
+          console.log("getInsights: budget not accessible or not found:", budgetId, "error:", orcCheckError);
+          result = { insights: [] };
+          break;
+        }
 
         const { data: insights } = await client
           .from("ai_budget_insights")
