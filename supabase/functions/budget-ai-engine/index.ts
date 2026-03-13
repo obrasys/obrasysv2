@@ -365,6 +365,9 @@ async function runBudgetRules(client: any, userId: string, budgetId: string) {
     .eq("id", budgetId)
     .single();
 
+  if (orcError) {
+    console.error("runBudgetRules query error:", orcError, "budgetId:", budgetId, "userId:", userId);
+  }
   if (orcError || !orcamento) throw new Error("Orçamento não encontrado ou acesso negado");
 
   const settings = await getOrCreateSettings(client, userId);
