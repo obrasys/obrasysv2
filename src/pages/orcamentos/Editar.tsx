@@ -97,7 +97,11 @@ export default function EditarOrcamentoPage() {
    const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
    const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
  
-  // Modal states
+   // Local editable margin state
+   const [localMargemLucro, setLocalMargemLucro] = useState<number | null>(null);
+   const activeMargemLucro = localMargemLucro ?? orcamento?.margem_lucro ?? 15;
+
+   // Modal states
   const [showCapituloModal, setShowCapituloModal] = useState(false);
   const [showArtigoModal, setShowArtigoModal] = useState(false);
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
