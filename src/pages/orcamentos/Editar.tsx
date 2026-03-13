@@ -500,6 +500,43 @@ export default function EditarOrcamentoPage() {
                      <h3 className="text-lg font-semibold text-foreground">Contexto Fiscal & IVA</h3>
                    </div>
                    
+                   {/* Quick IVA regime buttons */}
+                   <div>
+                     <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida de regime</Label>
+                     <div className="grid grid-cols-2 gap-2">
+                       {[
+                         { value: 23, label: 'IVA Normal', desc: '23% — Regime geral' },
+                         { value: 6, label: 'IVA Reduzido', desc: '6% — Reabilitação/habitação' },
+                         { value: 0, label: 'Autoliquidação', desc: '0% — Subempreitada (art. 2º)' },
+                         { value: 13, label: 'IVA Intermédio', desc: '13% — Taxa intermédia' },
+                       ].map((regime) => {
+                         const currentTaxa = fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
+                         const isActive = currentTaxa === regime.value;
+                         return (
+                           <button
+                             key={regime.value}
+                             type="button"
+                             disabled={isReadOnly}
+                             onClick={() => {
+                               // Reset fiscal selectors and manually set
+                               setTipoObra(undefined);
+                               setTipoCliente(undefined);
+                               setTipoOperacao(undefined);
+                             }}
+                             className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                               isActive
+                                 ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                                 : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                             } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                           >
+                             <span className="block text-sm font-semibold text-foreground">{regime.label}</span>
+                             <span className="block text-xs text-muted-foreground">{regime.desc}</span>
+                           </button>
+                         );
+                       })}
+                     </div>
+                   </div>
+
                    {/* Current IVA highlight */}
                    <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
                      <div>
