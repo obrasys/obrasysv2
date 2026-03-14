@@ -66,8 +66,8 @@ export function EmailTemplateEditor({ template, onBack }: EmailTemplateEditorPro
     let html = formData.html_content;
     html = html.replace(/\{\{nome\}\}/g, "João Silva");
     html = html.replace(/\{\{email\}\}/g, "joao@exemplo.pt");
-    html = html.replace(/\{\{appUrl\}\}/g, "https://obrasysv2.lovable.app");
-    html = html.replace(/\{\{signupUrl\}\}/g, "https://obrasysv2.lovable.app/auth");
+    html = html.replace(/\{\{appUrl\}\}/g, window.location.origin);
+    html = html.replace(/\{\{signupUrl\}\}/g, `${window.location.origin}/auth`);
     html = html.replace(/\{\{logoUrl\}\}/g, "https://rwpgswjvrotshybwevog.supabase.co/storage/v1/object/public/brand-assets/logo.png");
     html = html.replace(/\{\{ano\}\}/g, new Date().getFullYear().toString());
     return html;
