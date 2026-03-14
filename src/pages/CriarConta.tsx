@@ -240,7 +240,7 @@ const CriarConta = () => {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => window.open("https://obrasysv2.lovable.app", "_blank")}
+                  onClick={() => window.open("/", "_blank")}
                   className="inline-flex items-center gap-2 text-sm text-accent hover:underline font-medium"
                 >
                   <Play className="w-4 h-4" />
