@@ -72,6 +72,7 @@ const IMPORT_CATEGORIES: ImportCategory[] = [
 export default function ImportarPage() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [orcamentoModalOpen, setOrcamentoModalOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
 
   const handleFileDrop = (categoryId: string, acceptedFiles: File[]) => {
