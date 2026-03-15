@@ -155,6 +155,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
       }
 
       // Insert chapters and articles
+      let totalArtigosInseridos = 0;
       for (const cap of organized.capitulos) {
         const { data: capitulo, error: capErr } = await supabase
           .from('capitulos_orcamento')
@@ -169,32 +170,46 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
         if (capErr || !capitulo) {
           console.error('Cap error:', capErr);
+          toast.error(`Erro ao criar capítulo "${cap.titulo}": ${capErr?.message}`);
           continue;
         }
 
-        const artigosToInsert = cap.artigos.map((art, idx) => ({
+        const artigosValidos = cap.artigos.filter(art => 
+          art.descricao && art.unidade && 
+          typeof art.quantidade === 'number' && !isNaN(art.quantidade) &&
+          typeof art.preco_unitario === 'number' && !isNaN(art.preco_unitario)
+        );
+
+        if (artigosValidos.length === 0) continue;
+
+        const artigosToInsert = artigosValidos.map((art, idx) => ({
           capitulo_id: capitulo.id,
           codigo: art.codigo || `${cap.numero}.${idx + 1}`,
           descricao: art.descricao,
-          unidade: art.unidade,
-          quantidade: art.quantidade,
-          preco_unitario: art.preco_unitario,
-          preco_base: art.preco_unitario,
+          unidade: art.unidade || 'un',
+          quantidade: art.quantidade ?? 0,
+          preco_unitario: art.preco_unitario ?? 0,
+          preco_base: art.preco_unitario ?? 0,
           margem_lucro_artigo: 0,
-          valor_total: art.quantidade * art.preco_unitario,
+          valor_total: (art.quantidade ?? 0) * (art.preco_unitario ?? 0),
           ordem: idx + 1,
-          quantity_source: 'manual',
+          quantity_source: 'manual' as const,
         }));
 
-        if (artigosToInsert.length > 0) {
-          const { error: artErr } = await supabase
-            .from('artigos_orcamento')
-            .insert(artigosToInsert);
+        const { error: artErr } = await supabase
+          .from('artigos_orcamento')
+          .insert(artigosToInsert);
 
-          if (artErr) {
-            console.error('Artigos error:', artErr);
-          }
+        if (artErr) {
+          console.error('Artigos error for cap', cap.titulo, ':', artErr);
+          toast.error(`Erro ao inserir artigos do capítulo "${cap.titulo}": ${artErr.message}`);
+        } else {
+          totalArtigosInseridos += artigosToInsert.length;
         }
+      }
+
+      if (totalArtigosInseridos === 0) {
+        toast.warning('Orçamento criado mas sem artigos. Verifique o ficheiro Excel.');
       }
 
       toast.success('Orçamento importado com sucesso!');
