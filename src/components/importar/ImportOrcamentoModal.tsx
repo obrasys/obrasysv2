@@ -211,27 +211,34 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           continue;
         }
 
-        const artigosValidos = cap.artigos.filter(art => 
-          art.descricao && art.unidade && 
-          typeof art.quantidade === 'number' && !isNaN(art.quantidade) &&
-          typeof art.preco_unitario === 'number' && !isNaN(art.preco_unitario)
-        );
+        const artigosNormalizados = cap.artigos
+          .map((art, idx) => {
+            const descricao = String(art.descricao ?? '').trim();
+            if (!descricao) return null;
 
-        if (artigosValidos.length === 0) continue;
+            const quantidade = parseNumeric(art.quantidade, 1);
+            const precoUnitario = parseNumeric(art.preco_unitario, 0);
+            const unidade = normalizeUnit(art.unidade);
 
-        const artigosToInsert = artigosValidos.map((art, idx) => ({
-          capitulo_id: capitulo.id,
-          codigo: art.codigo || `${cap.numero}.${idx + 1}`,
-          descricao: art.descricao,
-          unidade: art.unidade || 'un',
-          quantidade: art.quantidade ?? 0,
-          preco_unitario: art.preco_unitario ?? 0,
-          preco_base: art.preco_unitario ?? 0,
-          margem_lucro_artigo: 0,
-          valor_total: (art.quantidade ?? 0) * (art.preco_unitario ?? 0),
-          ordem: idx + 1,
-          quantity_source: 'manual' as const,
-        }));
+            return {
+              capitulo_id: capitulo.id,
+              codigo: (art.codigo && String(art.codigo).trim()) || `${capNumero}.${idx + 1}`,
+              descricao,
+              unidade,
+              quantidade,
+              preco_unitario: precoUnitario,
+              preco_base: precoUnitario,
+              margem_lucro_artigo: 0,
+              valor_total: quantidade * precoUnitario,
+              ordem: idx + 1,
+              quantity_source: 'manual' as const,
+            };
+          })
+          .filter((art): art is NonNullable<typeof art> => art !== null);
+
+        if (artigosNormalizados.length === 0) continue;
+
+        const artigosToInsert = artigosNormalizados;
 
         const { error: artErr } = await supabase
           .from('artigos_orcamento')
