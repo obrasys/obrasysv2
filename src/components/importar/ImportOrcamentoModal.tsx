@@ -98,7 +98,13 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
         return;
       }
 
-      setOrganized(data as OrganizedBudget);
+      console.log('AI organized budget:', JSON.stringify(data, null, 2));
+      const budget = data as OrganizedBudget;
+      const artigosCount = budget.capitulos?.reduce((sum, c) => sum + (c.artigos?.length || 0), 0) ?? 0;
+      if (artigosCount === 0) {
+        toast.warning('A IA não encontrou artigos no ficheiro. Verifique se o Excel contém dados de orçamento.');
+      }
+      setOrganized(budget);
       setTitulo(data.titulo_sugerido || f.name.replace(/\.[^.]+$/, ''));
       setStep('preview');
     } catch (err) {
