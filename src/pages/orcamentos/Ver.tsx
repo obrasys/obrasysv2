@@ -534,7 +534,7 @@ export default function VerOrcamentoPage() {
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium">Subtotal Capítulo:</span>
                         <span className="font-semibold">
-                          {formatCurrency((capitulo.valor_total || 0) * (1 + margemDecimal))}
+                          {formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (capitulo.valor_total || 0) / (1 - margemDecimal) : (capitulo.valor_total || 0))}
                         </span>
                       </div>
                     </div>
