@@ -29,7 +29,7 @@ const formSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
   obra_id: z.string().optional(),
   cliente_id: z.string().optional(),
-  margem_lucro: z.number().min(0).max(100),
+  margem_lucro: z.number().min(0).max(99.99, 'Margem deve ser inferior a 100%'),
   custos_indiretos: z.object({
     estaleiro: z.number().min(0),
     seguros: z.number().min(0),
