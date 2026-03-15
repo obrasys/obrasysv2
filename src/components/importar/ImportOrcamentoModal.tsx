@@ -162,21 +162,23 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
       // Insert chapters and articles
       let totalArtigosInseridos = 0;
-      for (const cap of organized.capitulos) {
+      for (let i = 0; i < organized.capitulos.length; i++) {
+        const cap = organized.capitulos[i];
+        const capNumero = Math.round(Number(cap.numero) || (i + 1));
         const { data: capitulo, error: capErr } = await supabase
           .from('capitulos_orcamento')
           .insert({
             orcamento_id: orcamento.id,
-            numero: cap.numero,
-            titulo: cap.titulo,
-            ordem: cap.numero,
+            numero: capNumero,
+            titulo: String(cap.titulo || `Capítulo ${capNumero}`),
+            ordem: capNumero,
           })
           .select('id')
           .single();
 
         if (capErr || !capitulo) {
-          console.error('Cap error:', capErr);
-          toast.error(`Erro ao criar capítulo "${cap.titulo}": ${capErr?.message}`);
+          console.error('Cap error:', capErr?.message, capErr?.details, capErr?.hint, capErr?.code);
+          toast.error(`Erro ao criar capítulo "${cap.titulo}": ${capErr?.message || 'Erro desconhecido'}`);
           continue;
         }
 
