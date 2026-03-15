@@ -353,8 +353,8 @@ export function ArtigoForm({
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
-                <FormDescription className="text-xs h-4">
-                  Lucro interno
+                <FormDescription className="text-xs h-4" title="Margem é calculada sobre o preço de venda final. Ex: 30% de margem sobre custo de 100 € = preço de venda de 142,86 €.">
+                  Margem sobre preço de venda
                 </FormDescription>
                 <FormMessage />
               </FormItem>

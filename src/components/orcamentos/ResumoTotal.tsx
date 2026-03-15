@@ -24,8 +24,11 @@ export function ResumoTotal({ orcamento }: ResumoTotalProps) {
     (orcamento.custos_indiretos?.licenciamento || 0);
 
   const subtotal = orcamento.valor_total + custosIndiretosTotal;
-  const margemValor = subtotal * (orcamento.margem_lucro / 100);
-  const valorFinal = subtotal + margemValor;
+  const margemPct = orcamento.margem_lucro;
+  const valorFinal = margemPct > 0 && margemPct < 100
+    ? subtotal / (1 - margemPct / 100)
+    : subtotal;
+  const margemValor = valorFinal - subtotal;
  
    // Calculate IVA using fiscal engine
    const taxaIVA = contextoFiscal?.taxa_iva ?? 23;

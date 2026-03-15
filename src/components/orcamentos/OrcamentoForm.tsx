@@ -195,6 +195,9 @@ export function OrcamentoForm({
                   className="py-4"
                 />
               </FormControl>
+              <FormDescription className="text-xs" title="Margem é calculada sobre o preço de venda final. Ex: 30% de margem sobre custo de 100 € = preço de venda de 142,86 €.">
+                Margem sobre o preço de venda final. Não confundir com markup sobre o custo.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

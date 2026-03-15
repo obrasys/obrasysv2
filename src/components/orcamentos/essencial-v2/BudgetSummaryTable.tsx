@@ -44,10 +44,10 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
   });
   const totalBase = totalLabor + totalMaterial;
 
-  // Estimate profit (internal) — assume markup is ~15% of base
-  const estimatedCost = totalBase * 0.85;
-  const profit = totalBase - estimatedCost;
-  const margin = totalBase > 0 ? (profit / totalBase) * 100 : 0;
+  // Profit is already included in the base price via article margins
+  const estimatedCost = totalBase;
+  const profit = 0;
+  const margin = 0;
 
   const renderCell = (item: BudgetItem, col: SummaryColumn) => {
     const t = computeItemTotals(item);

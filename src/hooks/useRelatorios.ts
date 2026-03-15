@@ -87,7 +87,7 @@ export function useRelatorios() {
 
     const margemMedia = adjudicados.reduce((sum, o) => sum + (o.margem_lucro || 0), 0) / adjudicados.length;
     const valorComMargem = adjudicados.reduce((sum, o) => sum + (o.valor_total || 0), 0);
-    const valorBase = valorComMargem / (1 + margemMedia / 100);
+    const valorBase = valorComMargem * (1 - margemMedia / 100);
     const lucroTotal = valorComMargem - valorBase;
 
     return { valorBase, valorComMargem, lucroTotal, margemMedia };

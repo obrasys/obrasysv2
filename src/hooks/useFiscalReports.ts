@@ -81,7 +81,9 @@
              (custosIndiretos?.seguros || 0) +
              (custosIndiretos?.licenciamento || 0);
            const margemDecimal = (orc.margem_lucro || 0) / 100;
-           const baseTributavel = (orc.valor_total + custosIndiretosTotal) * (1 + margemDecimal);
+            const baseTributavel = margemDecimal > 0 && margemDecimal < 1
+              ? (orc.valor_total + custosIndiretosTotal) / (1 - margemDecimal)
+              : (orc.valor_total + custosIndiretosTotal);
            const valorIva = baseTributavel * (taxaIva / 100);
  
            const key = `${regimeCodigo}_${taxaIva}`;

@@ -432,13 +432,14 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     y += 5;
   };
 
-  addSummaryRow('Subtotal Artigos', fmt(subtotalArtigos * (1 + margemDecimal)));
+  const applyM = (v: number) => margemDecimal > 0 && margemDecimal < 1 ? v / (1 - margemDecimal) : v;
+  addSummaryRow('Subtotal Artigos', fmt(applyM(subtotalArtigos)));
 
   if (custosIndiretosTotal > 0) {
     const ci = orcamento.custos_indiretos;
-    if (ci?.estaleiro > 0) addSummaryRow('Estaleiro', fmt(ci.estaleiro * (1 + margemDecimal)), false, 4);
-    if (ci?.seguros > 0) addSummaryRow('Seguros', fmt(ci.seguros * (1 + margemDecimal)), false, 4);
-    if (ci?.licenciamento > 0) addSummaryRow('Licenciamento', fmt(ci.licenciamento * (1 + margemDecimal)), false, 4);
+    if (ci?.estaleiro > 0) addSummaryRow('Estaleiro', fmt(applyM(ci.estaleiro)), false, 4);
+    if (ci?.seguros > 0) addSummaryRow('Seguros', fmt(applyM(ci.seguros)), false, 4);
+    if (ci?.licenciamento > 0) addSummaryRow('Licenciamento', fmt(applyM(ci.licenciamento)), false, 4);
   }
 
   // Line
