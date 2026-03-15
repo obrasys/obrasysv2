@@ -279,7 +279,41 @@ Organize estes dados no formato JSON estruturado do ObraSys.`;
 
     const organized = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify(organized), {
+    const safeCatalog = compactPriceCatalog;
+
+    const normalized = {
+      titulo_sugerido: String(organized?.titulo_sugerido || "Orçamento Importado"),
+      capitulos: Array.isArray(organized?.capitulos)
+        ? organized.capitulos.map((cap: any, index: number) => ({
+            numero: Math.round(toNumber(cap?.numero, index + 1)),
+            titulo: String(cap?.titulo || `Capítulo ${index + 1}`),
+            artigos: Array.isArray(cap?.artigos)
+              ? cap.artigos
+                  .map((art: any, artIndex: number) => {
+                    const descricao = String(art?.descricao || "").trim();
+                    if (!descricao) return null;
+
+                    const matched = findCatalogMatch(art, safeCatalog);
+                    const precoOriginal = toNumber(art?.preco_unitario, 0);
+                    const precoFinal = precoOriginal > 0
+                      ? precoOriginal
+                      : Number(matched?.preco_unitario || 0);
+
+                    return {
+                      codigo: String(art?.codigo || `${index + 1}.${artIndex + 1}`),
+                      descricao,
+                      unidade: normalizeUnit(art?.unidade || matched?.unidade || "un"),
+                      quantidade: toNumber(art?.quantidade, 1),
+                      preco_unitario: precoFinal,
+                    };
+                  })
+                  .filter(Boolean)
+              : [],
+          }))
+        : [],
+    };
+
+    return new Response(JSON.stringify(normalized), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
