@@ -128,10 +128,10 @@ serve(async (req) => {
     let custosHtml = "";
     if (custosIndiretosTotal > 0) {
       custosHtml += `<div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:12px">`;
-      custosHtml += `<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal Artigos</span><span>${fmt(subtotalArtigos)}</span></div>`;
-      if (estaleiro > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Estaleiro</span><span>${fmt(estaleiro)}</span></div>`;
-      if (seguros > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Seguros</span><span>${fmt(seguros)}</span></div>`;
-      if (licenciamento > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Licenciamento</span><span>${fmt(licenciamento)}</span></div>`;
+      custosHtml += `<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal Artigos</span><span>${fmt(subtotalArtigos * margemMultiplier)}</span></div>`;
+      if (estaleiro > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Estaleiro</span><span>${fmt(estaleiro * margemMultiplier)}</span></div>`;
+      if (seguros > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Seguros</span><span>${fmt(seguros * margemMultiplier)}</span></div>`;
+      if (licenciamento > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Licenciamento</span><span>${fmt(licenciamento * margemMultiplier)}</span></div>`;
       custosHtml += `</div>`;
     }
 
