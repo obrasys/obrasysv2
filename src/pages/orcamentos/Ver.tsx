@@ -80,7 +80,9 @@ export default function VerOrcamentoPage() {
   const subtotalArtigos = orcamento.valor_total;
   const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
   const margemDecimal = orcamento.margem_lucro / 100;
-  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
+  const valorBase = margemDecimal > 0 && margemDecimal < 1
+    ? subtotalComIndiretos / (1 - margemDecimal)
+    : subtotalComIndiretos;
 
   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
   const valorIVA = valorBase * (taxaIVA / 100);
