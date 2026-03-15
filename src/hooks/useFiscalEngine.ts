@@ -197,38 +197,44 @@
    // =============================================
    // MUTATIONS: Contexto Fiscal
    // =============================================
-   const saveContextoFiscal = useMutation({
-     mutationFn: async ({
-       orcamentoId,
-       tipoObra,
-       tipoCliente,
-       tipoOperacao,
-     }: {
-       orcamentoId: string;
-       tipoObra?: TipoObraFiscal | null;
-       tipoCliente?: TipoClienteFiscal | null;
-       tipoOperacao?: TipoOperacaoFiscal | null;
-     }) => {
-       if (!user) throw new Error('Utilizador não autenticado');
- 
-       // Determinar regime fiscal automaticamente
-       const resultado = determinarRegimeFiscal({
-         tipo_obra: tipoObra,
-         tipo_cliente: tipoCliente,
-         tipo_operacao: tipoOperacao,
-       });
- 
-       const contextoData = {
-         orcamento_id: orcamentoId,
-         tipo_obra: tipoObra || null,
-         tipo_cliente: tipoCliente || null,
-         tipo_operacao: tipoOperacao || null,
-         regime_id: resultado?.regime_id || null,
-         regra_aplicada_id: resultado?.regra_id || null,
-         taxa_iva: resultado?.taxa_iva || 23,
-         override_manual: false,
-         user_id: user.id,
-       };
+    const saveContextoFiscal = useMutation({
+      mutationFn: async ({
+        orcamentoId,
+        tipoObra,
+        tipoCliente,
+        tipoOperacao,
+        manualTaxa,
+      }: {
+        orcamentoId: string;
+        tipoObra?: TipoObraFiscal | null;
+        tipoCliente?: TipoClienteFiscal | null;
+        tipoOperacao?: TipoOperacaoFiscal | null;
+        manualTaxa?: number | null;
+      }) => {
+        if (!user) throw new Error('Utilizador não autenticado');
+
+        // Determinar regime fiscal automaticamente
+        const resultado = determinarRegimeFiscal({
+          tipo_obra: tipoObra,
+          tipo_cliente: tipoCliente,
+          tipo_operacao: tipoOperacao,
+        });
+
+        // Se manualTaxa foi definida, usar essa taxa em vez da calculada
+        const taxaFinal = manualTaxa !== null && manualTaxa !== undefined ? manualTaxa : (resultado?.taxa_iva || 23);
+        const isManualOverride = manualTaxa !== null && manualTaxa !== undefined;
+
+        const contextoData = {
+          orcamento_id: orcamentoId,
+          tipo_obra: tipoObra || null,
+          tipo_cliente: tipoCliente || null,
+          tipo_operacao: tipoOperacao || null,
+          regime_id: resultado?.regime_id || null,
+          regra_aplicada_id: isManualOverride ? null : (resultado?.regra_id || null),
+          taxa_iva: taxaFinal,
+          override_manual: isManualOverride,
+          user_id: user.id,
+        };
  
        // Upsert
        const { data, error } = await supabase

@@ -141,15 +141,16 @@ export default function EditarOrcamentoPage() {
      tipo_operacao: tipoOperacao || null,
    });
  
-   const handleSaveFiscalContext = async () => {
-     if (!id) return;
-     await saveContextoFiscal.mutateAsync({
-       orcamentoId: id,
-       tipoObra: tipoObra || null,
-       tipoCliente: tipoCliente || null,
-       tipoOperacao: tipoOperacao || null,
-     });
-   };
+    const handleSaveFiscalContext = async () => {
+      if (!id) return;
+      await saveContextoFiscal.mutateAsync({
+        orcamentoId: id,
+        tipoObra: tipoObra || null,
+        tipoCliente: tipoCliente || null,
+        tipoOperacao: tipoOperacao || null,
+        manualTaxa: manualTaxa,
+      });
+    };
  
   if (isLoading || !orcamento) {
     return (
