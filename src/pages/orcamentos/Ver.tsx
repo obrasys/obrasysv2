@@ -80,7 +80,9 @@ export default function VerOrcamentoPage() {
   const subtotalArtigos = orcamento.valor_total;
   const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
   const margemDecimal = orcamento.margem_lucro / 100;
-  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
+  const valorBase = margemDecimal > 0 && margemDecimal < 1
+    ? subtotalComIndiretos / (1 - margemDecimal)
+    : subtotalComIndiretos;
 
   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
   const valorIVA = valorBase * (taxaIVA / 100);
@@ -494,7 +496,9 @@ export default function VerOrcamentoPage() {
                         <TableBody>
                           {capitulo.artigos.map((artigo) => {
                             // Apply margin to unit price for display (hidden margin)
-                            const precoComMargem = artigo.preco_unitario * (1 + margemDecimal);
+                            const precoComMargem = margemDecimal > 0 && margemDecimal < 1
+                              ? artigo.preco_unitario / (1 - margemDecimal)
+                              : artigo.preco_unitario;
                             const totalComMargem = artigo.quantidade * precoComMargem;
                             
                             return (
@@ -530,7 +534,7 @@ export default function VerOrcamentoPage() {
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium">Subtotal Capítulo:</span>
                         <span className="font-semibold">
-                          {formatCurrency((capitulo.valor_total || 0) * (1 + margemDecimal))}
+                          {formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (capitulo.valor_total || 0) / (1 - margemDecimal) : (capitulo.valor_total || 0))}
                         </span>
                       </div>
                     </div>
@@ -561,7 +565,7 @@ export default function VerOrcamentoPage() {
                 {/* Subtotal dos artigos (com margem aplicada) */}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal Artigos</span>
-                  <span>{formatCurrency(subtotalArtigos * (1 + margemDecimal))}</span>
+                  <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? subtotalArtigos / (1 - margemDecimal) : subtotalArtigos)}</span>
                 </div>
 
                 {/* Custos Indiretos - mostrar individualmente se existirem */}
@@ -570,19 +574,19 @@ export default function VerOrcamentoPage() {
                     {(orcamento.custos_indiretos?.estaleiro || 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground pl-4">Estaleiro</span>
-                        <span>{formatCurrency((orcamento.custos_indiretos?.estaleiro || 0) * (1 + margemDecimal))}</span>
+                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.estaleiro || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.estaleiro || 0))}</span>
                       </div>
                     )}
                     {(orcamento.custos_indiretos?.seguros || 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground pl-4">Seguros</span>
-                        <span>{formatCurrency((orcamento.custos_indiretos?.seguros || 0) * (1 + margemDecimal))}</span>
+                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.seguros || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.seguros || 0))}</span>
                       </div>
                     )}
                     {(orcamento.custos_indiretos?.licenciamento || 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground pl-4">Licenciamento</span>
-                        <span>{formatCurrency((orcamento.custos_indiretos?.licenciamento || 0) * (1 + margemDecimal))}</span>
+                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.licenciamento || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.licenciamento || 0))}</span>
                       </div>
                     )}
                   </>

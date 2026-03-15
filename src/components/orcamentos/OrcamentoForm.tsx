@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,7 +30,7 @@ const formSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
   obra_id: z.string().optional(),
   cliente_id: z.string().optional(),
-  margem_lucro: z.number().min(0).max(100),
+  margem_lucro: z.number().min(0).max(99.99, 'Margem deve ser inferior a 100%'),
   custos_indiretos: z.object({
     estaleiro: z.number().min(0),
     seguros: z.number().min(0),
@@ -195,6 +196,9 @@ export function OrcamentoForm({
                   className="py-4"
                 />
               </FormControl>
+              <FormDescription className="text-xs" title="Margem é calculada sobre o preço de venda final. Ex: 30% de margem sobre custo de 100 € = preço de venda de 142,86 €.">
+                Margem sobre o preço de venda final. Não confundir com markup sobre o custo.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

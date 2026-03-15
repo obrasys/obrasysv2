@@ -619,7 +619,9 @@ export function useOrcamento(id: string | undefined) {
       // Se tem preco_base, calcular o preco_unitario com margem
       if (formData.preco_base !== undefined) {
         const margem = formData.margem_lucro_artigo || 0;
-        updateData.preco_unitario = formData.preco_base * (1 + margem / 100);
+        updateData.preco_unitario = margem > 0 && margem < 100
+          ? formData.preco_base / (1 - margem / 100)
+          : formData.preco_base;
       }
       
       const { data, error } = await supabase

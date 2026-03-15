@@ -334,7 +334,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     const artigos = cap.artigos || [];
     if (artigos.length > 0) {
       const tableBody = artigos.map((art) => {
-        const precoComMargem = art.preco_unitario * (1 + margemDecimal);
+        const precoComMargem = margemDecimal > 0 && margemDecimal < 1 ? art.preco_unitario / (1 - margemDecimal) : art.preco_unitario;
         const totalComMargem = art.quantidade * precoComMargem;
         return [
           art.codigo || '-',
@@ -391,7 +391,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     }
 
     // Chapter subtotal bar
-    const capTotal = (cap.valor_total || 0) * (1 + margemDecimal);
+    const capTotal = margemDecimal > 0 && margemDecimal < 1 ? (cap.valor_total || 0) / (1 - margemDecimal) : (cap.valor_total || 0);
     doc.setFillColor(...COLORS.headerBg);
     doc.rect(PAGE.marginLeft, y, usableW, 6, 'F');
     doc.setDrawColor(...COLORS.border);
@@ -432,13 +432,14 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     y += 5;
   };
 
-  addSummaryRow('Subtotal Artigos', fmt(subtotalArtigos * (1 + margemDecimal)));
+  const applyM = (v: number) => margemDecimal > 0 && margemDecimal < 1 ? v / (1 - margemDecimal) : v;
+  addSummaryRow('Subtotal Artigos', fmt(applyM(subtotalArtigos)));
 
   if (custosIndiretosTotal > 0) {
     const ci = orcamento.custos_indiretos;
-    if (ci?.estaleiro > 0) addSummaryRow('Estaleiro', fmt(ci.estaleiro * (1 + margemDecimal)), false, 4);
-    if (ci?.seguros > 0) addSummaryRow('Seguros', fmt(ci.seguros * (1 + margemDecimal)), false, 4);
-    if (ci?.licenciamento > 0) addSummaryRow('Licenciamento', fmt(ci.licenciamento * (1 + margemDecimal)), false, 4);
+    if (ci?.estaleiro > 0) addSummaryRow('Estaleiro', fmt(applyM(ci.estaleiro)), false, 4);
+    if (ci?.seguros > 0) addSummaryRow('Seguros', fmt(applyM(ci.seguros)), false, 4);
+    if (ci?.licenciamento > 0) addSummaryRow('Licenciamento', fmt(applyM(ci.licenciamento)), false, 4);
   }
 
   // Line

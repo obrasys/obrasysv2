@@ -36,7 +36,7 @@ const formSchema = z.object({
   unidade: z.string().min(1, 'Unidade é obrigatória'),
   quantidade: z.number().min(0, 'Quantidade deve ser positiva'),
   preco_base: z.number().min(0, 'Preço base deve ser positivo'),
-  margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(100, 'Margem máxima é 100%'),
+  margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(99.99, 'Margem deve ser inferior a 100%'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
   quantity_source: z.enum(['manual', 'parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
@@ -97,7 +97,9 @@ export function ArtigoForm({
 
   useEffect(() => {
     if (precoBase !== undefined && margemLucro !== undefined) {
-      const precoComMargem = precoBase * (1 + margemLucro / 100);
+      const precoComMargem = margemLucro > 0 && margemLucro < 100
+        ? precoBase / (1 - margemLucro / 100)
+        : precoBase;
       form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
     }
   }, [precoBase, margemLucro, form]);
@@ -351,8 +353,8 @@ export function ArtigoForm({
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 </FormControl>
-                <FormDescription className="text-xs h-4">
-                  Lucro interno
+                <FormDescription className="text-xs h-4" title="Margem é calculada sobre o preço de venda final. Ex: 30% de margem sobre custo de 100 € = preço de venda de 142,86 €.">
+                  Margem sobre preço de venda
                 </FormDescription>
                 <FormMessage />
               </FormItem>
