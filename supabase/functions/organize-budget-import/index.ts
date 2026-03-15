@@ -7,6 +7,81 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const toNumber = (value: unknown, fallback = 0) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return fallback;
+
+  const cleaned = value
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/€|eur/gi, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeUnit = (value: unknown) => {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "un";
+  if (["un", "uni", "unid", "unidade", "unidades"].includes(raw)) return "un";
+  if (["m", "metro", "metros"].includes(raw)) return "m";
+  if (["m2", "m²", "mq"].includes(raw)) return "m2";
+  if (["m3", "m³"].includes(raw)) return "m3";
+  if (["ml", "m.l.", "metro linear", "metros lineares"].includes(raw)) return "ml";
+  if (["kg", "quilo", "quilos"].includes(raw)) return "kg";
+  if (["l", "lt", "litro", "litros"].includes(raw)) return "l";
+  if (["vg", "verba"].includes(raw)) return "vg";
+  return raw.slice(0, 12);
+};
+
+const tokenScore = (a: string, b: string) => {
+  const aa = new Set(normalizeText(a).split(" ").filter((t) => t.length > 2));
+  const bb = new Set(normalizeText(b).split(" ").filter((t) => t.length > 2));
+  if (!aa.size || !bb.size) return 0;
+  let intersection = 0;
+  aa.forEach((t) => {
+    if (bb.has(t)) intersection += 1;
+  });
+  return intersection / Math.max(aa.size, bb.size);
+};
+
+const findCatalogMatch = (
+  article: { codigo?: string | null; descricao?: string | null },
+  catalog: Array<{ codigo: string | null; descricao: string; unidade: string | null; preco_unitario: number }>
+) => {
+  const code = String(article.codigo ?? "").trim().toUpperCase();
+  if (code) {
+    const byCode = catalog.find((item) => String(item.codigo ?? "").trim().toUpperCase() === code);
+    if (byCode) return byCode;
+  }
+
+  const desc = String(article.descricao ?? "").trim();
+  if (!desc) return null;
+
+  let best: (typeof catalog)[number] | null = null;
+  let bestScore = 0;
+  for (const item of catalog) {
+    const score = tokenScore(desc, item.descricao);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  }
+
+  return bestScore >= 0.55 ? best : null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
