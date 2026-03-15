@@ -168,17 +168,26 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
 
   // ─── HEADER ────────────────────────────────────────────
   // Logo
+  let logoRendered = false;
   if (profile?.empresa_logo_url) {
-    const logoData = await loadImage(profile.empresa_logo_url);
-    if (logoData) {
+    const logoResult = await loadImage(profile.empresa_logo_url);
+    if (logoResult) {
       try {
-        doc.addImage(logoData, 'PNG', PAGE.marginLeft, y, 28, 12);
+        // Maintain aspect ratio, max height 14mm
+        const maxH = 14;
+        const maxW = 40;
+        const ratio = logoResult.width / logoResult.height;
+        let logoW = maxH * ratio;
+        let logoH = maxH;
+        if (logoW > maxW) { logoW = maxW; logoH = maxW / ratio; }
+        doc.addImage(logoResult.data, 'PNG', PAGE.marginLeft, y, logoW, logoH);
+        logoRendered = true;
       } catch { /* skip logo */ }
     }
   }
 
   // Company info (left)
-  const infoX = profile?.empresa_logo_url ? PAGE.marginLeft + 32 : PAGE.marginLeft;
+  const infoX = logoRendered ? PAGE.marginLeft + 44 : PAGE.marginLeft;
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.dark);
