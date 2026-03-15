@@ -98,6 +98,7 @@ export default function EditarOrcamentoPage() {
    const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
    const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
    const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+   const [manualTaxa, setManualTaxa] = useState<number | null>(null);
  
    // Local editable margin state
    const [localMargemLucro, setLocalMargemLucro] = useState<number | null>(null);
