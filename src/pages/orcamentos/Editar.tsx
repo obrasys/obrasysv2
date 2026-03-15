@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
@@ -55,20 +55,20 @@ import {
   Send,
   FileText,
   Loader2,
-  Sparkles,
-  Settings,
   CheckCircle,
   FileStack,
   Ruler,
   Euro,
   Scale,
   Info,
+  Eye,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
@@ -283,9 +283,9 @@ export default function EditarOrcamentoPage() {
   // Header actions
   const headerActions = (
     <>
-      <Button variant="outline" size="sm">
-        <FileText className="mr-2 h-4 w-4" />
-        PDF
+      <Button variant="outline" size="sm" onClick={() => navigate(`/orcamentos/${id}`)}>
+        <Eye className="mr-2 h-4 w-4" />
+        Ver Orçamento
       </Button>
       {orcamento.status === 'rascunho' && (
         <Button onClick={handleFinalizar}>
