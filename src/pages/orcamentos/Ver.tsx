@@ -33,8 +33,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
