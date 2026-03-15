@@ -334,7 +334,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     const artigos = cap.artigos || [];
     if (artigos.length > 0) {
       const tableBody = artigos.map((art) => {
-        const precoComMargem = art.preco_unitario * (1 + margemDecimal);
+        const precoComMargem = margemDecimal > 0 && margemDecimal < 1 ? art.preco_unitario / (1 - margemDecimal) : art.preco_unitario;
         const totalComMargem = art.quantidade * precoComMargem;
         return [
           art.codigo || '-',
