@@ -40,7 +40,7 @@ export default function ResumoCadernoPage() {
     setIsCreating(true);
 
     try {
-      // 1. Criar orçamento (valor_total será recalculado pelos triggers)
+      // 1. Criar orçamento
       const { data: orcamento, error: orcError } = await supabase
         .from("orcamentos")
         .insert({
@@ -57,30 +57,57 @@ export default function ResumoCadernoPage() {
 
       if (orcError) throw orcError;
 
-      // Helper: obter IDs de todas as sub-secções de uma secção pai
       const getChildSecaoIds = (parentId: string): string[] => {
-        const children = secoes.filter(s => s.parent_id === parentId);
+        const children = secoes.filter((s) => s.parent_id === parentId);
         const ids: string[] = [];
+
         for (const child of children) {
           ids.push(child.id);
           ids.push(...getChildSecaoIds(child.id));
         }
+
         return ids;
+      };
+
+      const criarArtigos = async (capituloId: string, itensSecao: typeof itens) => {
+        for (let i = 0; i < itensSecao.length; i++) {
+          const item = itensSecao[i];
+          const quantidade = item.quantidade_detectada || 1;
+          const precoUnitario = item.match?.preco_estimado || 0;
+
+          const { error: artigoError } = await supabase
+            .from("artigos_orcamento")
+            .insert({
+              capitulo_id: capituloId,
+              codigo: item.match?.artigo_base?.codigo || item.match?.material?.codigo || null,
+              descricao: item.descricao_original,
+              unidade: item.match?.unidade_sugerida || item.unidade_detectada || "un",
+              quantidade,
+              preco_unitario: precoUnitario,
+              quantity_source: "manual",
+              ordem: i,
+            });
+
+          if (artigoError) {
+            throw artigoError;
+          }
+        }
       };
 
       // 2. Criar capítulos a partir das secções de nível 1
       let capituloOrdem = 0;
-      for (const secao of secoes.filter(s => s.nivel === 1)) {
-        // Incluir itens da secção e de todas as sub-secções
+
+      for (const secao of secoes.filter((s) => s.nivel === 1)) {
         const secaoIds = [secao.id, ...getChildSecaoIds(secao.id)];
-        const itensSecao = itens.filter(i => 
-          secaoIds.includes(i.secao_id) && (i.status === "validado" || i.status === "pendente")
+        const itensSecao = itens.filter(
+          (i) => secaoIds.includes(i.secao_id) && (i.status === "validado" || i.status === "pendente")
         );
 
         if (itensSecao.length === 0) continue;
 
-        const valorCapitulo = itensSecao.reduce((sum, item) => 
-          sum + (item.match?.preco_estimado || 0) * (item.quantidade_detectada || 1), 0
+        const valorCapitulo = itensSecao.reduce(
+          (sum, item) => sum + (item.match?.preco_estimado || 0) * (item.quantidade_detectada || 1),
+          0
         );
 
         const { data: capitulo, error: capError } = await supabase
@@ -96,36 +123,43 @@ export default function ResumoCadernoPage() {
           .select()
           .single();
 
+        if (capError) throw capError;
+
+        await criarArtigos(capitulo.id, itensSecao);
         capituloOrdem++;
+      }
 
-        if (capError) {
-          console.error("Erro ao criar capítulo:", capError);
-          continue;
-        }
+      // 3. Fallback: se não existirem secções de nível 1, criar capítulos por secção
+      if (capituloOrdem === 0) {
+        for (const secao of secoes) {
+          const itensSecao = itens.filter(
+            (i) => i.secao_id === secao.id && (i.status === "validado" || i.status === "pendente")
+          );
 
-        // 3. Criar artigos a partir dos itens
-        for (let i = 0; i < itensSecao.length; i++) {
-          const item = itensSecao[i];
-          const quantidade = item.quantidade_detectada || 1;
-          const precoUnitario = item.match?.preco_estimado || 0;
+          if (itensSecao.length === 0) continue;
 
-          const { error: artigoError } = await supabase
-            .from("artigos_orcamento")
+          const valorCapitulo = itensSecao.reduce(
+            (sum, item) => sum + (item.match?.preco_estimado || 0) * (item.quantidade_detectada || 1),
+            0
+          );
+
+          const { data: capitulo, error: capError } = await supabase
+            .from("capitulos_orcamento")
             .insert({
-              capitulo_id: capitulo.id,
-              codigo: item.match?.artigo_base?.codigo || item.match?.material?.codigo || null,
-              descricao: item.descricao_original,
-              unidade: item.match?.unidade_sugerida || item.unidade_detectada || "un",
-              quantidade,
-              preco_unitario: precoUnitario,
-              quantity_source: "manual",
-              ordem: i,
-            });
+              orcamento_id: orcamento.id,
+              numero: capituloOrdem + 1,
+              titulo: secao.nome,
+              descricao: null,
+              valor_total: valorCapitulo,
+              ordem: capituloOrdem,
+            })
+            .select()
+            .single();
 
-          if (artigoError) {
-            console.error("Erro ao criar artigo:", artigoError);
-          }
-        }
+          if (capError) throw capError;
+
+          await criarArtigos(capitulo.id, itensSecao);
+          capituloOrdem++;
         }
       }
 
@@ -140,7 +174,6 @@ export default function ResumoCadernoPage() {
 
       toast.success("Orçamento criado com sucesso!");
       navigate(`/orcamentos/${orcamento.id}/editar`);
-
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);
       toast.error("Erro ao criar orçamento. Tente novamente.");
