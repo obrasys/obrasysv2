@@ -229,7 +229,6 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
               preco_unitario: precoUnitario,
               preco_base: precoUnitario,
               margem_lucro_artigo: 0,
-              valor_total: quantidade * precoUnitario,
               ordem: idx + 1,
               quantity_source: 'manual' as const,
             };
