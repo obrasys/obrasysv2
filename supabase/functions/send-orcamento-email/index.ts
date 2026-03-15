@@ -84,6 +84,10 @@ serve(async (req) => {
     const fmt = (v: number) =>
       new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
 
+    // Apply global profit margin (same logic as the platform UI)
+    const margemGlobal = orcamento.margem_lucro || 0;
+    const margemMultiplier = 1 + margemGlobal / 100;
+
     // Sort chapters by numero, then sort articles by ordem within each chapter
     const capitulos = (orcamento.capitulos_orcamento || [])
       .sort((a: any, b: any) => a.numero - b.numero);
@@ -94,43 +98,47 @@ serve(async (req) => {
       const artigos = (cap.artigos_orcamento || [])
         .sort((a: any, b: any) => a.ordem - b.ordem);
       for (const art of artigos) {
+        // Apply margin to unit price and total (margin is internal, client sees final price)
+        const precoComMargem = art.preco_unitario * margemMultiplier;
+        const totalComMargem = (art.valor_total || art.quantidade * art.preco_unitario) * margemMultiplier;
         itemsHtml += `<tr>
           <td style="padding:6px 8px">${art.descricao}</td>
           <td style="padding:6px 8px;text-align:center">${art.unidade}</td>
           <td style="padding:6px 8px;text-align:right">${art.quantidade}</td>
-          <td style="padding:6px 8px;text-align:right">${fmt(art.preco_unitario)}</td>
-          <td style="padding:6px 8px;text-align:right">${fmt(art.valor_total || art.quantidade * art.preco_unitario)}</td>
+          <td style="padding:6px 8px;text-align:right">${fmt(precoComMargem)}</td>
+          <td style="padding:6px 8px;text-align:right">${fmt(totalComMargem)}</td>
         </tr>`;
       }
     }
 
-    // Calculate full total matching the platform logic
+    // Calculate full total matching the platform logic (with margin applied)
     const subtotalArtigos = orcamento.valor_total || 0;
     const custosIndiretos = orcamento.custos_indiretos as any || {};
     const estaleiro = custosIndiretos.estaleiro || 0;
     const seguros = custosIndiretos.seguros || 0;
     const licenciamento = custosIndiretos.licenciamento || 0;
     const custosIndiretosTotal = estaleiro + seguros + licenciamento;
-    const subtotalSemIva = subtotalArtigos + custosIndiretosTotal;
+    const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
+    const valorBase = subtotalComIndiretos * margemMultiplier;
     const taxaIva = orcamento.orcamento_contexto_fiscal?.taxa_iva ?? 23;
-    const valorIva = subtotalSemIva * (taxaIva / 100);
-    const valorFinal = subtotalSemIva + valorIva;
+    const valorIva = valorBase * (taxaIva / 100);
+    const valorFinal = valorBase + valorIva;
 
     // Build custos indiretos HTML
     let custosHtml = "";
     if (custosIndiretosTotal > 0) {
       custosHtml += `<div style="border-top:1px solid #e5e7eb;padding-top:12px;margin-top:12px">`;
-      custosHtml += `<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal Artigos</span><span>${fmt(subtotalArtigos)}</span></div>`;
-      if (estaleiro > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Estaleiro</span><span>${fmt(estaleiro)}</span></div>`;
-      if (seguros > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Seguros</span><span>${fmt(seguros)}</span></div>`;
-      if (licenciamento > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Licenciamento</span><span>${fmt(licenciamento)}</span></div>`;
+      custosHtml += `<div style="display:flex;justify-content:space-between;font-size:14px"><span>Subtotal Artigos</span><span>${fmt(subtotalArtigos * margemMultiplier)}</span></div>`;
+      if (estaleiro > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Estaleiro</span><span>${fmt(estaleiro * margemMultiplier)}</span></div>`;
+      if (seguros > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Seguros</span><span>${fmt(seguros * margemMultiplier)}</span></div>`;
+      if (licenciamento > 0) custosHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;padding-left:16px;color:#6b7280"><span>Licenciamento</span><span>${fmt(licenciamento * margemMultiplier)}</span></div>`;
       custosHtml += `</div>`;
     }
 
     const resumoHtml = `
       <div style="text-align:right;border-top:2px solid #1a56db;padding-top:16px">
         ${custosHtml}
-        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px"><span>Subtotal (s/ IVA)</span><span>${fmt(subtotalSemIva)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px"><span>Subtotal (s/ IVA)</span><span>${fmt(valorBase)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>IVA (${taxaIva}%)</span><span>${fmt(valorIva)}</span></div>
         <p style="font-size:18px;font-weight:bold;color:#1a56db;margin-top:8px">TOTAL: ${fmt(valorFinal)}</p>
       </div>
