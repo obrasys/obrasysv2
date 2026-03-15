@@ -568,7 +568,10 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
                        <Select
                          value={tipoObra || '_none_'}
-                         onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
+                          onValueChange={(v) => {
+                            setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal);
+                            setManualTaxa(null);
+                          }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
