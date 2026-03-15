@@ -84,6 +84,10 @@ serve(async (req) => {
     const fmt = (v: number) =>
       new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
 
+    // Apply global profit margin (same logic as the platform UI)
+    const margemGlobal = orcamento.margem_lucro || 0;
+    const margemMultiplier = 1 + margemGlobal / 100;
+
     // Sort chapters by numero, then sort articles by ordem within each chapter
     const capitulos = (orcamento.capitulos_orcamento || [])
       .sort((a: any, b: any) => a.numero - b.numero);
@@ -94,27 +98,31 @@ serve(async (req) => {
       const artigos = (cap.artigos_orcamento || [])
         .sort((a: any, b: any) => a.ordem - b.ordem);
       for (const art of artigos) {
+        // Apply margin to unit price and total (margin is internal, client sees final price)
+        const precoComMargem = art.preco_unitario * margemMultiplier;
+        const totalComMargem = (art.valor_total || art.quantidade * art.preco_unitario) * margemMultiplier;
         itemsHtml += `<tr>
           <td style="padding:6px 8px">${art.descricao}</td>
           <td style="padding:6px 8px;text-align:center">${art.unidade}</td>
           <td style="padding:6px 8px;text-align:right">${art.quantidade}</td>
-          <td style="padding:6px 8px;text-align:right">${fmt(art.preco_unitario)}</td>
-          <td style="padding:6px 8px;text-align:right">${fmt(art.valor_total || art.quantidade * art.preco_unitario)}</td>
+          <td style="padding:6px 8px;text-align:right">${fmt(precoComMargem)}</td>
+          <td style="padding:6px 8px;text-align:right">${fmt(totalComMargem)}</td>
         </tr>`;
       }
     }
 
-    // Calculate full total matching the platform logic
+    // Calculate full total matching the platform logic (with margin applied)
     const subtotalArtigos = orcamento.valor_total || 0;
     const custosIndiretos = orcamento.custos_indiretos as any || {};
     const estaleiro = custosIndiretos.estaleiro || 0;
     const seguros = custosIndiretos.seguros || 0;
     const licenciamento = custosIndiretos.licenciamento || 0;
     const custosIndiretosTotal = estaleiro + seguros + licenciamento;
-    const subtotalSemIva = subtotalArtigos + custosIndiretosTotal;
+    const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
+    const valorBase = subtotalComIndiretos * margemMultiplier;
     const taxaIva = orcamento.orcamento_contexto_fiscal?.taxa_iva ?? 23;
-    const valorIva = subtotalSemIva * (taxaIva / 100);
-    const valorFinal = subtotalSemIva + valorIva;
+    const valorIva = valorBase * (taxaIva / 100);
+    const valorFinal = valorBase + valorIva;
 
     // Build custos indiretos HTML
     let custosHtml = "";
