@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.budget-ai-engine]
 verify_jwt = false
+
+[functions.organize-budget-import]
+verify_jwt = false
