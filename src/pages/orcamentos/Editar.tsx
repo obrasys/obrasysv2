@@ -55,14 +55,13 @@ import {
   Send,
   FileText,
   Loader2,
-  Sparkles,
-  Settings,
   CheckCircle,
   FileStack,
   Ruler,
   Euro,
   Scale,
   Info,
+  Eye,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
