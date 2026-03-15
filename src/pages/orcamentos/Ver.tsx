@@ -496,7 +496,9 @@ export default function VerOrcamentoPage() {
                         <TableBody>
                           {capitulo.artigos.map((artigo) => {
                             // Apply margin to unit price for display (hidden margin)
-                            const precoComMargem = artigo.preco_unitario * (1 + margemDecimal);
+                            const precoComMargem = margemDecimal > 0 && margemDecimal < 1
+                              ? artigo.preco_unitario / (1 - margemDecimal)
+                              : artigo.preco_unitario;
                             const totalComMargem = artigo.quantidade * precoComMargem;
                             
                             return (
