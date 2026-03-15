@@ -511,19 +511,20 @@ export default function EditarOrcamentoPage() {
                          { value: 0, label: 'Autoliquidação', desc: '0% — Subempreitada (art. 2º)' },
                          { value: 13, label: 'IVA Intermédio', desc: '13% — Taxa intermédia' },
                        ].map((regime) => {
-                         const currentTaxa = fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
-                         const isActive = currentTaxa === regime.value;
-                         return (
-                           <button
-                             key={regime.value}
-                             type="button"
-                             disabled={isReadOnly}
-                             onClick={() => {
-                               // Reset fiscal selectors and manually set
-                               setTipoObra(undefined);
-                               setTipoCliente(undefined);
-                               setTipoOperacao(undefined);
-                             }}
+                          const currentTaxa = manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
+                          const isActive = currentTaxa === regime.value;
+                          return (
+                            <button
+                              key={regime.value}
+                              type="button"
+                              disabled={isReadOnly}
+                              onClick={() => {
+                                // Set manual tax and clear fiscal selectors
+                                setManualTaxa(regime.value);
+                                setTipoObra(undefined);
+                                setTipoCliente(undefined);
+                                setTipoOperacao(undefined);
+                              }}
                              className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
                                isActive
                                  ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
