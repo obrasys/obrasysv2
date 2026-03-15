@@ -127,9 +127,38 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
   const totalArtigos = organized?.capitulos.reduce((sum, c) => sum + c.artigos.length, 0) ?? 0;
   const totalValor = organized?.capitulos.reduce(
-    (sum, c) => sum + c.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
+    (sum, c) => sum + c.artigos.reduce((s, a) => s + Number(a.quantidade || 0) * Number(a.preco_unitario || 0), 0),
     0,
   ) ?? 0;
+
+  const parseNumeric = (value: unknown, fallback = 0) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value !== 'string') return fallback;
+
+    const cleaned = value
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/€|eur/gi, '')
+      .replace(/\.(?=\d{3}(\D|$))/g, '')
+      .replace(',', '.');
+
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const normalizeUnit = (unit: unknown) => {
+    const raw = String(unit ?? '').trim().toLowerCase();
+    if (!raw) return 'un';
+    if (['un', 'uni', 'unid', 'unidade', 'unidades'].includes(raw)) return 'un';
+    if (['m', 'metro', 'metros'].includes(raw)) return 'm';
+    if (['m2', 'm²', 'mq'].includes(raw)) return 'm2';
+    if (['m3', 'm³'].includes(raw)) return 'm3';
+    if (['ml', 'm.l.', 'metro linear', 'metros lineares'].includes(raw)) return 'ml';
+    if (['kg', 'quilo', 'quilos'].includes(raw)) return 'kg';
+    if (['l', 'lt', 'litro', 'litros'].includes(raw)) return 'l';
+    if (['vg', 'verba'].includes(raw)) return 'vg';
+    return raw.slice(0, 12);
+  };
 
   const handleSave = async () => {
     if (!organized || !user) return;
@@ -182,27 +211,34 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           continue;
         }
 
-        const artigosValidos = cap.artigos.filter(art => 
-          art.descricao && art.unidade && 
-          typeof art.quantidade === 'number' && !isNaN(art.quantidade) &&
-          typeof art.preco_unitario === 'number' && !isNaN(art.preco_unitario)
-        );
+        const artigosNormalizados = cap.artigos
+          .map((art, idx) => {
+            const descricao = String(art.descricao ?? '').trim();
+            if (!descricao) return null;
 
-        if (artigosValidos.length === 0) continue;
+            const quantidade = parseNumeric(art.quantidade, 1);
+            const precoUnitario = parseNumeric(art.preco_unitario, 0);
+            const unidade = normalizeUnit(art.unidade);
 
-        const artigosToInsert = artigosValidos.map((art, idx) => ({
-          capitulo_id: capitulo.id,
-          codigo: art.codigo || `${cap.numero}.${idx + 1}`,
-          descricao: art.descricao,
-          unidade: art.unidade || 'un',
-          quantidade: art.quantidade ?? 0,
-          preco_unitario: art.preco_unitario ?? 0,
-          preco_base: art.preco_unitario ?? 0,
-          margem_lucro_artigo: 0,
-          valor_total: (art.quantidade ?? 0) * (art.preco_unitario ?? 0),
-          ordem: idx + 1,
-          quantity_source: 'manual' as const,
-        }));
+            return {
+              capitulo_id: capitulo.id,
+              codigo: (art.codigo && String(art.codigo).trim()) || `${capNumero}.${idx + 1}`,
+              descricao,
+              unidade,
+              quantidade,
+              preco_unitario: precoUnitario,
+              preco_base: precoUnitario,
+              margem_lucro_artigo: 0,
+              valor_total: quantidade * precoUnitario,
+              ordem: idx + 1,
+              quantity_source: 'manual' as const,
+            };
+          })
+          .filter((art): art is NonNullable<typeof art> => art !== null);
+
+        if (artigosNormalizados.length === 0) continue;
+
+        const artigosToInsert = artigosNormalizados;
 
         const { error: artErr } = await supabase
           .from('artigos_orcamento')

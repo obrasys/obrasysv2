@@ -7,6 +7,81 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const toNumber = (value: unknown, fallback = 0) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return fallback;
+
+  const cleaned = value
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/€|eur/gi, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeUnit = (value: unknown) => {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "un";
+  if (["un", "uni", "unid", "unidade", "unidades"].includes(raw)) return "un";
+  if (["m", "metro", "metros"].includes(raw)) return "m";
+  if (["m2", "m²", "mq"].includes(raw)) return "m2";
+  if (["m3", "m³"].includes(raw)) return "m3";
+  if (["ml", "m.l.", "metro linear", "metros lineares"].includes(raw)) return "ml";
+  if (["kg", "quilo", "quilos"].includes(raw)) return "kg";
+  if (["l", "lt", "litro", "litros"].includes(raw)) return "l";
+  if (["vg", "verba"].includes(raw)) return "vg";
+  return raw.slice(0, 12);
+};
+
+const tokenScore = (a: string, b: string) => {
+  const aa = new Set(normalizeText(a).split(" ").filter((t) => t.length > 2));
+  const bb = new Set(normalizeText(b).split(" ").filter((t) => t.length > 2));
+  if (!aa.size || !bb.size) return 0;
+  let intersection = 0;
+  aa.forEach((t) => {
+    if (bb.has(t)) intersection += 1;
+  });
+  return intersection / Math.max(aa.size, bb.size);
+};
+
+const findCatalogMatch = (
+  article: { codigo?: string | null; descricao?: string | null },
+  catalog: Array<{ codigo: string | null; descricao: string; unidade: string | null; preco_unitario: number }>
+) => {
+  const code = String(article.codigo ?? "").trim().toUpperCase();
+  if (code) {
+    const byCode = catalog.find((item) => String(item.codigo ?? "").trim().toUpperCase() === code);
+    if (byCode) return byCode;
+  }
+
+  const desc = String(article.descricao ?? "").trim();
+  if (!desc) return null;
+
+  let best: (typeof catalog)[number] | null = null;
+  let bestScore = 0;
+  for (const item of catalog) {
+    const score = tokenScore(desc, item.descricao);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  }
+
+  return bestScore >= 0.55 ? best : null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -60,6 +135,28 @@ serve(async (req) => {
       });
     }
 
+    const { data: userPriceRows } = await client
+      .from("artigos_trabalho")
+      .select("codigo, descricao, unidade, preco_unitario")
+      .eq("ativo", true)
+      .limit(1000);
+
+    const { data: defaultPriceRows } = await client
+      .from("default_articles")
+      .select("codigo, descricao, unidade, preco_unitario")
+      .limit(1000);
+
+    const priceCatalog = [...(userPriceRows ?? []), ...(defaultPriceRows ?? [])]
+      .filter((item) => Number(item?.preco_unitario) > 0)
+      .slice(0, 1200);
+
+    const compactPriceCatalog = priceCatalog.map((item) => ({
+      codigo: item.codigo,
+      descricao: item.descricao,
+      unidade: item.unidade,
+      preco_unitario: Number(item.preco_unitario),
+    }));
+
     const systemPrompt = `Você é um especialista em orçamentos de construção civil portuguesa. Recebe dados brutos extraídos de um ficheiro Excel de orçamento e deve organizá-los no formato padrão do ObraSys.
 
 REGRAS:
@@ -69,7 +166,7 @@ REGRAS:
 4. Se uma linha tiver apenas texto (sem valores numéricos relevantes), é provavelmente um capítulo.
 5. Se o código do artigo não existir, gere um código sequencial (ex: 1.1, 1.2, 2.1).
 6. Sugira um título para o orçamento baseado no conteúdo.
-7. Mantenha os preços originais sem alterar.
+7. Se o preço unitário vier vazio, nulo, 0 ou inválido, procure na BASE DE PREÇOS por código ou descrição semelhante e preencha o valor encontrado.
 8. Se existirem subtotais ou totais, IGNORE essas linhas.
 
 IMPORTANTE: Não invente dados. Se um campo não existir nos dados originais, use null.`;
@@ -80,6 +177,9 @@ Dados brutos (${rows.length} linhas):
 ${JSON.stringify(rows.slice(0, 200), null, 0)}
 
 ${rows.length > 200 ? `... e mais ${rows.length - 200} linhas adicionais.` : ''}
+
+BASE DE PREÇOS (${compactPriceCatalog.length} itens):
+${JSON.stringify(compactPriceCatalog.slice(0, 400), null, 0)}
 
 Organize estes dados no formato JSON estruturado do ObraSys.`;
 
@@ -179,7 +279,41 @@ Organize estes dados no formato JSON estruturado do ObraSys.`;
 
     const organized = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify(organized), {
+    const safeCatalog = compactPriceCatalog;
+
+    const normalized = {
+      titulo_sugerido: String(organized?.titulo_sugerido || "Orçamento Importado"),
+      capitulos: Array.isArray(organized?.capitulos)
+        ? organized.capitulos.map((cap: any, index: number) => ({
+            numero: Math.round(toNumber(cap?.numero, index + 1)),
+            titulo: String(cap?.titulo || `Capítulo ${index + 1}`),
+            artigos: Array.isArray(cap?.artigos)
+              ? cap.artigos
+                  .map((art: any, artIndex: number) => {
+                    const descricao = String(art?.descricao || "").trim();
+                    if (!descricao) return null;
+
+                    const matched = findCatalogMatch(art, safeCatalog);
+                    const precoOriginal = toNumber(art?.preco_unitario, 0);
+                    const precoFinal = precoOriginal > 0
+                      ? precoOriginal
+                      : Number(matched?.preco_unitario || 0);
+
+                    return {
+                      codigo: String(art?.codigo || `${index + 1}.${artIndex + 1}`),
+                      descricao,
+                      unidade: normalizeUnit(art?.unidade || matched?.unidade || "un"),
+                      quantidade: toNumber(art?.quantidade, 1),
+                      preco_unitario: precoFinal,
+                    };
+                  })
+                  .filter(Boolean)
+              : [],
+          }))
+        : [],
+    };
+
+    return new Response(JSON.stringify(normalized), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
