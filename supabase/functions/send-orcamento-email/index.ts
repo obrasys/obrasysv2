@@ -138,7 +138,7 @@ serve(async (req) => {
     const resumoHtml = `
       <div style="text-align:right;border-top:2px solid #1a56db;padding-top:16px">
         ${custosHtml}
-        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px"><span>Subtotal (s/ IVA)</span><span>${fmt(subtotalSemIva)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px"><span>Subtotal (s/ IVA)</span><span>${fmt(valorBase)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>IVA (${taxaIva}%)</span><span>${fmt(valorIva)}</span></div>
         <p style="font-size:18px;font-weight:bold;color:#1a56db;margin-top:8px">TOTAL: ${fmt(valorFinal)}</p>
       </div>
