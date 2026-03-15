@@ -568,10 +568,9 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
                        <Select
                          value={tipoObra || '_none_'}
-                          onValueChange={(v) => {
-                            setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal);
-                            setManualTaxa(null);
-                          }}
+                           onValueChange={(v) => {
+                             setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal);
+                           }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
@@ -589,10 +588,9 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
                        <Select
                          value={tipoCliente || '_none_'}
-                          onValueChange={(v) => {
-                            setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal);
-                            setManualTaxa(null);
-                          }}
+                           onValueChange={(v) => {
+                             setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal);
+                           }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
@@ -610,10 +608,9 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
                        <Select
                          value={tipoOperacao || '_none_'}
-                          onValueChange={(v) => {
-                            setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal);
-                            setManualTaxa(null);
-                          }}
+                           onValueChange={(v) => {
+                             setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal);
+                           }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
