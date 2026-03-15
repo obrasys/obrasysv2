@@ -391,7 +391,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     }
 
     // Chapter subtotal bar
-    const capTotal = (cap.valor_total || 0) * (1 + margemDecimal);
+    const capTotal = margemDecimal > 0 && margemDecimal < 1 ? (cap.valor_total || 0) / (1 - margemDecimal) : (cap.valor_total || 0);
     doc.setFillColor(...COLORS.headerBg);
     doc.rect(PAGE.marginLeft, y, usableW, 6, 'F');
     doc.setDrawColor(...COLORS.border);
