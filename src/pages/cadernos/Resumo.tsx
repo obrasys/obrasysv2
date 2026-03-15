@@ -40,7 +40,7 @@ export default function ResumoCadernoPage() {
     setIsCreating(true);
 
     try {
-      // 1. Criar orçamento
+      // 1. Criar orçamento (valor_total será recalculado pelos triggers)
       const { data: orcamento, error: orcError } = await supabase
         .from("orcamentos")
         .insert({
@@ -48,7 +48,7 @@ export default function ResumoCadernoPage() {
           obra_id: obraId,
           titulo: `Orçamento - ${caderno.nome}`,
           status: "rascunho",
-          valor_total: estatisticas?.valor_estimado || 0,
+          valor_total: 0,
           margem_lucro: 15,
           custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
         })
@@ -57,10 +57,24 @@ export default function ResumoCadernoPage() {
 
       if (orcError) throw orcError;
 
-      // 2. Criar capítulos a partir das secções
+      // Helper: obter IDs de todas as sub-secções de uma secção pai
+      const getChildSecaoIds = (parentId: string): string[] => {
+        const children = secoes.filter(s => s.parent_id === parentId);
+        const ids: string[] = [];
+        for (const child of children) {
+          ids.push(child.id);
+          ids.push(...getChildSecaoIds(child.id));
+        }
+        return ids;
+      };
+
+      // 2. Criar capítulos a partir das secções de nível 1
+      let capituloOrdem = 0;
       for (const secao of secoes.filter(s => s.nivel === 1)) {
+        // Incluir itens da secção e de todas as sub-secções
+        const secaoIds = [secao.id, ...getChildSecaoIds(secao.id)];
         const itensSecao = itens.filter(i => 
-          i.secao_id === secao.id && i.status === "validado"
+          secaoIds.includes(i.secao_id) && (i.status === "validado" || i.status === "pendente")
         );
 
         if (itensSecao.length === 0) continue;
@@ -73,21 +87,23 @@ export default function ResumoCadernoPage() {
           .from("capitulos_orcamento")
           .insert({
             orcamento_id: orcamento.id,
-            numero: parseInt(secao.codigo) || secao.ordem + 1,
+            numero: parseInt(secao.codigo) || capituloOrdem + 1,
             titulo: secao.nome,
             descricao: null,
             valor_total: valorCapitulo,
-            ordem: secao.ordem,
+            ordem: capituloOrdem,
           })
           .select()
           .single();
+
+        capituloOrdem++;
 
         if (capError) {
           console.error("Erro ao criar capítulo:", capError);
           continue;
         }
 
-        // 3. Criar artigos a partir dos itens validados
+        // 3. Criar artigos a partir dos itens
         for (let i = 0; i < itensSecao.length; i++) {
           const item = itensSecao[i];
           const quantidade = item.quantidade_detectada || 1;
@@ -105,6 +121,57 @@ export default function ResumoCadernoPage() {
               valor_total: quantidade * precoUnitario,
               ordem: i,
             });
+        }
+      }
+
+      // Se não foram criados capítulos de nível 1, criar a partir de TODAS as secções com itens
+      if (capituloOrdem === 0) {
+        for (const secao of secoes) {
+          const itensSecao = itens.filter(i => 
+            i.secao_id === secao.id && (i.status === "validado" || i.status === "pendente")
+          );
+
+          if (itensSecao.length === 0) continue;
+
+          const valorCapitulo = itensSecao.reduce((sum, item) => 
+            sum + (item.match?.preco_estimado || 0) * (item.quantidade_detectada || 1), 0
+          );
+
+          const { data: capitulo, error: capError } = await supabase
+            .from("capitulos_orcamento")
+            .insert({
+              orcamento_id: orcamento.id,
+              numero: capituloOrdem + 1,
+              titulo: secao.nome,
+              descricao: null,
+              valor_total: valorCapitulo,
+              ordem: capituloOrdem,
+            })
+            .select()
+            .single();
+
+          capituloOrdem++;
+
+          if (capError) continue;
+
+          for (let i = 0; i < itensSecao.length; i++) {
+            const item = itensSecao[i];
+            const quantidade = item.quantidade_detectada || 1;
+            const precoUnitario = item.match?.preco_estimado || 0;
+
+            await supabase
+              .from("artigos_orcamento")
+              .insert({
+                capitulo_id: capitulo.id,
+                codigo: item.match?.artigo_base?.codigo || item.match?.material?.codigo || null,
+                descricao: item.descricao_original,
+                unidade: item.match?.unidade_sugerida || item.unidade_detectada || "un",
+                quantidade,
+                preco_unitario: precoUnitario,
+                valor_total: quantidade * precoUnitario,
+                ordem: i,
+              });
+          }
         }
       }
 
