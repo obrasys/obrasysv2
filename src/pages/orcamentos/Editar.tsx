@@ -540,17 +540,19 @@ export default function EditarOrcamentoPage() {
                    </div>
 
                    {/* Current IVA highlight */}
-                   <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
-                     <div>
-                       <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
-                       <p className="text-sm font-medium text-foreground">
-                         {fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
-                       </p>
-                     </div>
-                     <span className="text-3xl font-black text-primary tabular-nums">
-                       {fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
-                     </span>
-                   </div>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {manualTaxa !== null
+                            ? [{ v: 23, n: 'IVA Normal' }, { v: 6, n: 'IVA Reduzido' }, { v: 0, n: 'Autoliquidação' }, { v: 13, n: 'IVA Intermédio' }].find(r => r.v === manualTaxa)?.n || 'Manual'
+                            : fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
+                        </p>
+                      </div>
+                      <span className="text-3xl font-black text-primary tabular-nums">
+                        {manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
+                      </span>
+                    </div>
 
                    {fiscalPreview?.nota_legal && (
                      <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
