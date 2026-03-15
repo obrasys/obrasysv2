@@ -162,8 +162,9 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
       // Insert chapters and articles
       let totalArtigosInseridos = 0;
-      for (const cap of organized.capitulos) {
-        const capNumero = Math.round(Number(cap.numero) || (ci + 1));
+      for (let i = 0; i < organized.capitulos.length; i++) {
+        const cap = organized.capitulos[i];
+        const capNumero = Math.round(Number(cap.numero) || (i + 1));
         const { data: capitulo, error: capErr } = await supabase
           .from('capitulos_orcamento')
           .insert({
