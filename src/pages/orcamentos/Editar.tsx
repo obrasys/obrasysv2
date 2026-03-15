@@ -734,30 +734,6 @@ export default function EditarOrcamentoPage() {
         onAddArtigos={handleAddFromCatalog}
       />
 
-       {/* Settings Modal - simplified, main config is now in Margem & IVA tab */}
-       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-         <DialogContent className="max-w-md">
-           <DialogHeader>
-             <DialogTitle>Configurações do Orçamento</DialogTitle>
-             <DialogDescription>
-               Use a aba "Margem & IVA" para configurar margem de lucro, custos indiretos e contexto fiscal.
-             </DialogDescription>
-           </DialogHeader>
-           <div className="space-y-4">
-             <Button
-               variant="outline"
-               className="w-full"
-               onClick={() => {
-                 setShowSettingsModal(false);
-                 setActiveTab('margem');
-               }}
-             >
-               <Euro className="mr-2 h-4 w-4" />
-               Ir para Margem & IVA
-             </Button>
-           </div>
-         </DialogContent>
-       </Dialog>
       <AlertDialog open={!!deleteCapituloId} onOpenChange={() => setDeleteCapituloId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
