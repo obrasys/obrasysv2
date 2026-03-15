@@ -19,9 +19,9 @@ import { useAuth } from '@/contexts/AuthContext';
 interface OrganizedArticle {
   codigo: string | null;
   descricao: string;
-  unidade: string;
-  quantidade: number;
-  preco_unitario: number;
+  unidade: string | null;
+  quantidade: number | string | null;
+  preco_unitario: number | string | null;
 }
 
 interface OrganizedChapter {
