@@ -61,9 +61,42 @@ export default function VerOrcamentoPage() {
     window.print();
   };
 
-  const handleGeneratePDF = async () => {
-    if (!orcamento) return;
+  if (isLoading || !orcamento) {
+    return (
+      <AppLayout title="Carregar Orçamento...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
+  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
+  const custosIndiretosTotal =
+    (orcamento.custos_indiretos?.estaleiro || 0) +
+    (orcamento.custos_indiretos?.seguros || 0) +
+    (orcamento.custos_indiretos?.licenciamento || 0);
+
+  const subtotalArtigos = orcamento.valor_total;
+  const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
+  const margemDecimal = orcamento.margem_lucro / 100;
+  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
+
+  const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
+  const valorIVA = valorBase * (taxaIVA / 100);
+  const valorFinal = valorBase + valorIVA;
+
+  const notaLegal = contextoFiscal?.regime_id
+    ? getNotaLegalPorRegime(contextoFiscal.regime_id)
+    : null;
+  const regimeNome = contextoFiscal?.regime_id
+    ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome
+    : 'IVA Normal';
+
+  const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
+  const companyNif = profile?.empresa_nif || profile?.nif;
+
+  const handleGeneratePDF = async () => {
     toast({
       title: 'A gerar PDF...',
       description: 'Por favor aguarde',
@@ -104,48 +137,6 @@ export default function VerOrcamentoPage() {
       });
     }
   };
-
-  if (isLoading || !orcamento) {
-    return (
-      <AppLayout title="Carregar Orçamento...">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
-  // The final prices already include the margin (price of sale)
-  const custosIndiretosTotal =
-    (orcamento.custos_indiretos?.estaleiro || 0) +
-    (orcamento.custos_indiretos?.seguros || 0) +
-    (orcamento.custos_indiretos?.licenciamento || 0);
-
-  const subtotalArtigos = orcamento.valor_total;
-  const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
-  
-  // Apply margin to get final price (not shown on print)
-  const margemDecimal = orcamento.margem_lucro / 100;
-  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
-  
-   // Calculate IVA using fiscal engine
-   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
-   const valorIVA = valorBase * (taxaIVA / 100);
-   const valorFinal = valorBase + valorIVA;
-   
-   // Get legal note for PDF/print
-   const notaLegal = contextoFiscal?.regime_id 
-     ? getNotaLegalPorRegime(contextoFiscal.regime_id) 
-     : null;
-   const regimeNome = contextoFiscal?.regime_id 
-     ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome 
-     : 'IVA Normal';
-
-  // Company info
-  const hasCompanyInfo = profile?.empresa_nome || profile?.empresa_logo_url;
-  const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
-  const companyNif = profile?.empresa_nif || profile?.nif;
 
   return (
     <AppLayout
