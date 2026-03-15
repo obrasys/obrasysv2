@@ -99,15 +99,44 @@ function ensureSpace(doc: jsPDF, needed: number, y: number): number {
   return y;
 }
 
-async function loadImage(url: string): Promise<string | null> {
+async function loadImage(url: string): Promise<{ data: string; width: number; height: number } | null> {
   try {
-    const resp = await fetch(url, { mode: 'cors' });
-    const blob = await resp.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+    // Try img element approach first (handles most CORS scenarios)
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(null); return; }
+          ctx.drawImage(img, 0, 0);
+          const data = canvas.toDataURL('image/png');
+          resolve({ data, width: img.naturalWidth, height: img.naturalHeight });
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => {
+        // Fallback: fetch as blob
+        fetch(url)
+          .then(r => r.blob())
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const tempImg = new Image();
+              tempImg.onload = () => resolve({ data: reader.result as string, width: tempImg.naturalWidth, height: tempImg.naturalHeight });
+              tempImg.onerror = () => resolve(null);
+              tempImg.src = reader.result as string;
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          })
+          .catch(() => resolve(null));
+      };
+      img.src = url;
     });
   } catch {
     return null;
