@@ -109,7 +109,7 @@ export default function ResumoCadernoPage() {
           const quantidade = item.quantidade_detectada || 1;
           const precoUnitario = item.match?.preco_estimado || 0;
 
-          await supabase
+          const { error: artigoError } = await supabase
             .from("artigos_orcamento")
             .insert({
               capitulo_id: capitulo.id,
@@ -118,60 +118,14 @@ export default function ResumoCadernoPage() {
               unidade: item.match?.unidade_sugerida || item.unidade_detectada || "un",
               quantidade,
               preco_unitario: precoUnitario,
-              valor_total: quantidade * precoUnitario,
+              quantity_source: "manual",
               ordem: i,
             });
-        }
-      }
 
-      // Se não foram criados capítulos de nível 1, criar a partir de TODAS as secções com itens
-      if (capituloOrdem === 0) {
-        for (const secao of secoes) {
-          const itensSecao = itens.filter(i => 
-            i.secao_id === secao.id && (i.status === "validado" || i.status === "pendente")
-          );
-
-          if (itensSecao.length === 0) continue;
-
-          const valorCapitulo = itensSecao.reduce((sum, item) => 
-            sum + (item.match?.preco_estimado || 0) * (item.quantidade_detectada || 1), 0
-          );
-
-          const { data: capitulo, error: capError } = await supabase
-            .from("capitulos_orcamento")
-            .insert({
-              orcamento_id: orcamento.id,
-              numero: capituloOrdem + 1,
-              titulo: secao.nome,
-              descricao: null,
-              valor_total: valorCapitulo,
-              ordem: capituloOrdem,
-            })
-            .select()
-            .single();
-
-          capituloOrdem++;
-
-          if (capError) continue;
-
-          for (let i = 0; i < itensSecao.length; i++) {
-            const item = itensSecao[i];
-            const quantidade = item.quantidade_detectada || 1;
-            const precoUnitario = item.match?.preco_estimado || 0;
-
-            await supabase
-              .from("artigos_orcamento")
-              .insert({
-                capitulo_id: capitulo.id,
-                codigo: item.match?.artigo_base?.codigo || item.match?.material?.codigo || null,
-                descricao: item.descricao_original,
-                unidade: item.match?.unidade_sugerida || item.unidade_detectada || "un",
-                quantidade,
-                preco_unitario: precoUnitario,
-                valor_total: quantidade * precoUnitario,
-                ordem: i,
-              });
+          if (artigoError) {
+            console.error("Erro ao criar artigo:", artigoError);
           }
+        }
         }
       }
 
