@@ -62,7 +62,7 @@ export default function VerOrcamentoPage() {
   };
 
   const handleGeneratePDF = async () => {
-    if (!printRef.current || !orcamento) return;
+    if (!orcamento) return;
 
     toast({
       title: 'A gerar PDF...',
@@ -70,111 +70,26 @@ export default function VerOrcamentoPage() {
     });
 
     try {
-      const element = printRef.current;
-      
-      // Force light mode for PDF generation
-      element.classList.add('generating-pdf');
-      const root = document.documentElement;
-      const prevClass = root.className;
-      root.classList.remove('dark');
-      root.classList.add('light');
-      root.style.colorScheme = 'light';
-      
-      // Wait for styles to apply
-      await new Promise(r => setTimeout(r, 150));
-      
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-      });
-      
-      // Restore original theme
-      element.classList.remove('generating-pdf');
-      root.className = prevClass;
-      root.style.colorScheme = '';
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
+      const blob = await generateOrcamentoPdf({
+        orcamento,
+        profile: profile as any,
+        margemDecimal,
+        taxaIVA,
+        valorBase,
+        valorIVA,
+        valorFinal,
+        custosIndiretosTotal,
+        subtotalArtigos,
+        notaLegal,
+        regimeNome,
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 5;
-      const usableWidth = pdfWidth - margin * 2;
-      const usableHeight = pdfHeight - margin * 2;
-      
-      // Scale factor from canvas pixels to PDF mm
-      const scale = usableWidth / canvas.width;
-      
-      // Find safe break points by looking at keep-together elements
-      const keepTogetherEls = element.querySelectorAll('.pdf-keep-together, .print\\:break-inside-avoid, .border-2');
-      const noBreakZones: Array<{top: number; bottom: number}> = [];
-      const elementRect = element.getBoundingClientRect();
-      
-      keepTogetherEls.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        // Convert to canvas pixel coordinates (html2canvas uses scale: 2)
-        const top = (rect.top - elementRect.top) * 2;
-        const bottom = (rect.bottom - elementRect.top) * 2;
-        noBreakZones.push({ top, bottom });
-      });
-      
-      // Calculate page break positions avoiding no-break zones
-      const sliceHeightPx = usableHeight / scale; // max canvas pixels per page
-      const breakPoints: number[] = [0];
-      let currentY = 0;
-      
-      while (currentY + sliceHeightPx < canvas.height) {
-        let idealBreak = currentY + sliceHeightPx;
-        
-        // Check if this break falls inside a no-break zone
-        const conflict = noBreakZones.find(z => idealBreak > z.top && idealBreak < z.bottom);
-        if (conflict) {
-          // Move break point to before this element
-          idealBreak = conflict.top - 10;
-          if (idealBreak <= currentY) {
-            idealBreak = currentY + sliceHeightPx;
-          }
-        }
-        
-        breakPoints.push(idealBreak);
-        currentY = idealBreak;
-      }
-      breakPoints.push(canvas.height);
-      
-      // Render each page slice
-      for (let i = 0; i < breakPoints.length - 1; i++) {
-        if (i > 0) pdf.addPage();
-        
-        const sliceTop = breakPoints[i];
-        const sliceH = breakPoints[i + 1] - sliceTop;
-        
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sliceH;
-        
-        const ctx = pageCanvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(
-            canvas,
-            0, sliceTop, canvas.width, sliceH,
-            0, 0, canvas.width, sliceH
-          );
-          
-          const imgData = pageCanvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', margin, margin, usableWidth, sliceH * scale);
-        }
-      }
-
-      pdf.save(`orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
 
       toast({
         title: 'PDF gerado',
