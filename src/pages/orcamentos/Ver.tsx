@@ -565,7 +565,7 @@ export default function VerOrcamentoPage() {
                 {/* Subtotal dos artigos (com margem aplicada) */}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal Artigos</span>
-                  <span>{formatCurrency(subtotalArtigos * (1 + margemDecimal))}</span>
+                  <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? subtotalArtigos / (1 - margemDecimal) : subtotalArtigos)}</span>
                 </div>
 
                 {/* Custos Indiretos - mostrar individualmente se existirem */}
