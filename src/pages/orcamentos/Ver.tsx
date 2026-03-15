@@ -574,7 +574,7 @@ export default function VerOrcamentoPage() {
                     {(orcamento.custos_indiretos?.estaleiro || 0) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground pl-4">Estaleiro</span>
-                        <span>{formatCurrency((orcamento.custos_indiretos?.estaleiro || 0) * (1 + margemDecimal))}</span>
+                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.estaleiro || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.estaleiro || 0))}</span>
                       </div>
                     )}
                     {(orcamento.custos_indiretos?.seguros || 0) > 0 && (
