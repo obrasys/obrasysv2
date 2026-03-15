@@ -98,6 +98,7 @@ export default function EditarOrcamentoPage() {
    const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
    const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
    const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+   const [manualTaxa, setManualTaxa] = useState<number | null>(null);
  
    // Local editable margin state
    const [localMargemLucro, setLocalMargemLucro] = useState<number | null>(null);
@@ -510,19 +511,20 @@ export default function EditarOrcamentoPage() {
                          { value: 0, label: 'Autoliquidação', desc: '0% — Subempreitada (art. 2º)' },
                          { value: 13, label: 'IVA Intermédio', desc: '13% — Taxa intermédia' },
                        ].map((regime) => {
-                         const currentTaxa = fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
-                         const isActive = currentTaxa === regime.value;
-                         return (
-                           <button
-                             key={regime.value}
-                             type="button"
-                             disabled={isReadOnly}
-                             onClick={() => {
-                               // Reset fiscal selectors and manually set
-                               setTipoObra(undefined);
-                               setTipoCliente(undefined);
-                               setTipoOperacao(undefined);
-                             }}
+                          const currentTaxa = manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
+                          const isActive = currentTaxa === regime.value;
+                          return (
+                            <button
+                              key={regime.value}
+                              type="button"
+                              disabled={isReadOnly}
+                              onClick={() => {
+                                // Set manual tax and clear fiscal selectors
+                                setManualTaxa(regime.value);
+                                setTipoObra(undefined);
+                                setTipoCliente(undefined);
+                                setTipoOperacao(undefined);
+                              }}
                              className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
                                isActive
                                  ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
@@ -538,17 +540,19 @@ export default function EditarOrcamentoPage() {
                    </div>
 
                    {/* Current IVA highlight */}
-                   <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
-                     <div>
-                       <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
-                       <p className="text-sm font-medium text-foreground">
-                         {fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
-                       </p>
-                     </div>
-                     <span className="text-3xl font-black text-primary tabular-nums">
-                       {fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
-                     </span>
-                   </div>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {manualTaxa !== null
+                            ? [{ v: 23, n: 'IVA Normal' }, { v: 6, n: 'IVA Reduzido' }, { v: 0, n: 'Autoliquidação' }, { v: 13, n: 'IVA Intermédio' }].find(r => r.v === manualTaxa)?.n || 'Manual'
+                            : fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
+                        </p>
+                      </div>
+                      <span className="text-3xl font-black text-primary tabular-nums">
+                        {manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
+                      </span>
+                    </div>
 
                    {fiscalPreview?.nota_legal && (
                      <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
@@ -564,7 +568,10 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Obra</Label>
                        <Select
                          value={tipoObra || '_none_'}
-                         onValueChange={(v) => setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal)}
+                          onValueChange={(v) => {
+                            setTipoObra(v === '_none_' ? undefined : v as TipoObraFiscal);
+                            setManualTaxa(null);
+                          }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
@@ -582,7 +589,10 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Cliente</Label>
                        <Select
                          value={tipoCliente || '_none_'}
-                         onValueChange={(v) => setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal)}
+                          onValueChange={(v) => {
+                            setTipoCliente(v === '_none_' ? undefined : v as TipoClienteFiscal);
+                            setManualTaxa(null);
+                          }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
@@ -600,7 +610,10 @@ export default function EditarOrcamentoPage() {
                        <Label className="text-xs text-muted-foreground">Tipo de Operação</Label>
                        <Select
                          value={tipoOperacao || '_none_'}
-                         onValueChange={(v) => setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal)}
+                          onValueChange={(v) => {
+                            setTipoOperacao(v === '_none_' ? undefined : v as TipoOperacaoFiscal);
+                            setManualTaxa(null);
+                          }}
                          disabled={isReadOnly}
                        >
                          <SelectTrigger>
