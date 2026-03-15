@@ -97,7 +97,9 @@ export function ArtigoForm({
 
   useEffect(() => {
     if (precoBase !== undefined && margemLucro !== undefined) {
-      const precoComMargem = precoBase * (1 + margemLucro / 100);
+      const precoComMargem = margemLucro > 0 && margemLucro < 100
+        ? precoBase / (1 - margemLucro / 100)
+        : precoBase;
       form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
     }
   }, [precoBase, margemLucro, form]);
