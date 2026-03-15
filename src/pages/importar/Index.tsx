@@ -118,6 +118,37 @@ export default function ImportarPage() {
           </CardContent>
         </Card>
 
+        {/* Orçamentos - Special AI Import Card */}
+        <Card 
+          className="border-primary/30 bg-primary/5 cursor-pointer hover:shadow-md transition-all"
+          onClick={() => setOrcamentoModalOpen(true)}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
+                  <Calculator className="w-6 h-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Orçamentos
+                    <Badge className="text-xs">IA</Badge>
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Importe orçamentos do Excel. A IA organiza automaticamente em capítulos e artigos no padrão ObraSys.
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>Clique para importar com organização automática por IA</span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Import Categories */}
         <div className="grid gap-4 md:grid-cols-2">
           {IMPORT_CATEGORIES.map((category) => (
@@ -133,6 +164,8 @@ export default function ImportarPage() {
             />
           ))}
         </div>
+
+        <ImportOrcamentoModal open={orcamentoModalOpen} onOpenChange={setOrcamentoModalOpen} />
       </div>
     </AppLayout>
   );
