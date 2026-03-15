@@ -283,14 +283,6 @@ export default function EditarOrcamentoPage() {
   // Header actions
   const headerActions = (
     <>
-       <Button variant="outline" size="sm" onClick={handleOpenSettings}>
-        <Settings className="mr-2 h-4 w-4" />
-        Configurações
-      </Button>
-      <Button variant="outline" size="sm">
-        <Sparkles className="mr-2 h-4 w-4" />
-        Validar com IA
-      </Button>
       <Button variant="outline" size="sm">
         <FileText className="mr-2 h-4 w-4" />
         PDF
