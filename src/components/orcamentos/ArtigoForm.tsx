@@ -36,7 +36,7 @@ const formSchema = z.object({
   unidade: z.string().min(1, 'Unidade é obrigatória'),
   quantidade: z.number().min(0, 'Quantidade deve ser positiva'),
   preco_base: z.number().min(0, 'Preço base deve ser positivo'),
-  margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(100, 'Margem máxima é 100%'),
+  margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(99.99, 'Margem deve ser inferior a 100%'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
   quantity_source: z.enum(['manual', 'parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
