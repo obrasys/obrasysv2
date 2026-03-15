@@ -127,9 +127,38 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
   const totalArtigos = organized?.capitulos.reduce((sum, c) => sum + c.artigos.length, 0) ?? 0;
   const totalValor = organized?.capitulos.reduce(
-    (sum, c) => sum + c.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
+    (sum, c) => sum + c.artigos.reduce((s, a) => s + Number(a.quantidade || 0) * Number(a.preco_unitario || 0), 0),
     0,
   ) ?? 0;
+
+  const parseNumeric = (value: unknown, fallback = 0) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value !== 'string') return fallback;
+
+    const cleaned = value
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/€|eur/gi, '')
+      .replace(/\.(?=\d{3}(\D|$))/g, '')
+      .replace(',', '.');
+
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const normalizeUnit = (unit: unknown) => {
+    const raw = String(unit ?? '').trim().toLowerCase();
+    if (!raw) return 'un';
+    if (['un', 'uni', 'unid', 'unidade', 'unidades'].includes(raw)) return 'un';
+    if (['m', 'metro', 'metros'].includes(raw)) return 'm';
+    if (['m2', 'm²', 'mq'].includes(raw)) return 'm2';
+    if (['m3', 'm³'].includes(raw)) return 'm3';
+    if (['ml', 'm.l.', 'metro linear', 'metros lineares'].includes(raw)) return 'ml';
+    if (['kg', 'quilo', 'quilos'].includes(raw)) return 'kg';
+    if (['l', 'lt', 'litro', 'litros'].includes(raw)) return 'l';
+    if (['vg', 'verba'].includes(raw)) return 'vg';
+    return raw.slice(0, 12);
+  };
 
   const handleSave = async () => {
     if (!organized || !user) return;

@@ -60,6 +60,28 @@ serve(async (req) => {
       });
     }
 
+    const { data: userPriceRows } = await client
+      .from("artigos_trabalho")
+      .select("codigo, descricao, unidade, preco_unitario")
+      .eq("ativo", true)
+      .limit(1000);
+
+    const { data: defaultPriceRows } = await client
+      .from("default_articles")
+      .select("codigo, descricao, unidade, preco_unitario")
+      .limit(1000);
+
+    const priceCatalog = [...(userPriceRows ?? []), ...(defaultPriceRows ?? [])]
+      .filter((item) => Number(item?.preco_unitario) > 0)
+      .slice(0, 1200);
+
+    const compactPriceCatalog = priceCatalog.map((item) => ({
+      codigo: item.codigo,
+      descricao: item.descricao,
+      unidade: item.unidade,
+      preco_unitario: Number(item.preco_unitario),
+    }));
+
     const systemPrompt = `Você é um especialista em orçamentos de construção civil portuguesa. Recebe dados brutos extraídos de um ficheiro Excel de orçamento e deve organizá-los no formato padrão do ObraSys.
 
 REGRAS:
@@ -69,7 +91,7 @@ REGRAS:
 4. Se uma linha tiver apenas texto (sem valores numéricos relevantes), é provavelmente um capítulo.
 5. Se o código do artigo não existir, gere um código sequencial (ex: 1.1, 1.2, 2.1).
 6. Sugira um título para o orçamento baseado no conteúdo.
-7. Mantenha os preços originais sem alterar.
+7. Se o preço unitário vier vazio, nulo, 0 ou inválido, procure na BASE DE PREÇOS por código ou descrição semelhante e preencha o valor encontrado.
 8. Se existirem subtotais ou totais, IGNORE essas linhas.
 
 IMPORTANTE: Não invente dados. Se um campo não existir nos dados originais, use null.`;
@@ -80,6 +102,9 @@ Dados brutos (${rows.length} linhas):
 ${JSON.stringify(rows.slice(0, 200), null, 0)}
 
 ${rows.length > 200 ? `... e mais ${rows.length - 200} linhas adicionais.` : ''}
+
+BASE DE PREÇOS (${compactPriceCatalog.length} itens):
+${JSON.stringify(compactPriceCatalog.slice(0, 400), null, 0)}
 
 Organize estes dados no formato JSON estruturado do ObraSys.`;
 
