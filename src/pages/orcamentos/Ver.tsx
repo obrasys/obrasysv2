@@ -33,8 +33,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
@@ -62,120 +61,68 @@ export default function VerOrcamentoPage() {
     window.print();
   };
 
-  const handleGeneratePDF = async () => {
-    if (!printRef.current || !orcamento) return;
+  if (isLoading || !orcamento) {
+    return (
+      <AppLayout title="Carregar Orçamento...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
+  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
+  const custosIndiretosTotal =
+    (orcamento.custos_indiretos?.estaleiro || 0) +
+    (orcamento.custos_indiretos?.seguros || 0) +
+    (orcamento.custos_indiretos?.licenciamento || 0);
+
+  const subtotalArtigos = orcamento.valor_total;
+  const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
+  const margemDecimal = orcamento.margem_lucro / 100;
+  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
+
+  const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
+  const valorIVA = valorBase * (taxaIVA / 100);
+  const valorFinal = valorBase + valorIVA;
+
+  const notaLegal = contextoFiscal?.regime_id
+    ? getNotaLegalPorRegime(contextoFiscal.regime_id)
+    : null;
+  const regimeNome = contextoFiscal?.regime_id
+    ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome
+    : 'IVA Normal';
+
+  const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
+  const companyNif = profile?.empresa_nif || profile?.nif;
+
+  const handleGeneratePDF = async () => {
     toast({
       title: 'A gerar PDF...',
       description: 'Por favor aguarde',
     });
 
     try {
-      const element = printRef.current;
-      
-      // Force light mode for PDF generation
-      element.classList.add('generating-pdf');
-      const root = document.documentElement;
-      const prevClass = root.className;
-      root.classList.remove('dark');
-      root.classList.add('light');
-      root.style.colorScheme = 'light';
-      
-      // Wait for styles to apply
-      await new Promise(r => setTimeout(r, 150));
-      
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-      });
-      
-      // Restore original theme
-      element.classList.remove('generating-pdf');
-      root.className = prevClass;
-      root.style.colorScheme = '';
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
+      const blob = await generateOrcamentoPdf({
+        orcamento,
+        profile: profile as any,
+        margemDecimal,
+        taxaIVA,
+        valorBase,
+        valorIVA,
+        valorFinal,
+        custosIndiretosTotal,
+        subtotalArtigos,
+        notaLegal,
+        regimeNome,
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 5;
-      const usableWidth = pdfWidth - margin * 2;
-      const usableHeight = pdfHeight - margin * 2;
-      
-      // Scale factor from canvas pixels to PDF mm
-      const scale = usableWidth / canvas.width;
-      
-      // Find safe break points by looking at keep-together elements
-      const keepTogetherEls = element.querySelectorAll('.pdf-keep-together, .print\\:break-inside-avoid, .border-2');
-      const noBreakZones: Array<{top: number; bottom: number}> = [];
-      const elementRect = element.getBoundingClientRect();
-      
-      keepTogetherEls.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        // Convert to canvas pixel coordinates (html2canvas uses scale: 2)
-        const top = (rect.top - elementRect.top) * 2;
-        const bottom = (rect.bottom - elementRect.top) * 2;
-        noBreakZones.push({ top, bottom });
-      });
-      
-      // Calculate page break positions avoiding no-break zones
-      const sliceHeightPx = usableHeight / scale; // max canvas pixels per page
-      const breakPoints: number[] = [0];
-      let currentY = 0;
-      
-      while (currentY + sliceHeightPx < canvas.height) {
-        let idealBreak = currentY + sliceHeightPx;
-        
-        // Check if this break falls inside a no-break zone
-        const conflict = noBreakZones.find(z => idealBreak > z.top && idealBreak < z.bottom);
-        if (conflict) {
-          // Move break point to before this element
-          idealBreak = conflict.top - 10;
-          if (idealBreak <= currentY) {
-            idealBreak = currentY + sliceHeightPx;
-          }
-        }
-        
-        breakPoints.push(idealBreak);
-        currentY = idealBreak;
-      }
-      breakPoints.push(canvas.height);
-      
-      // Render each page slice
-      for (let i = 0; i < breakPoints.length - 1; i++) {
-        if (i > 0) pdf.addPage();
-        
-        const sliceTop = breakPoints[i];
-        const sliceH = breakPoints[i + 1] - sliceTop;
-        
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sliceH;
-        
-        const ctx = pageCanvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(
-            canvas,
-            0, sliceTop, canvas.width, sliceH,
-            0, 0, canvas.width, sliceH
-          );
-          
-          const imgData = pageCanvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', margin, margin, usableWidth, sliceH * scale);
-        }
-      }
-
-      pdf.save(`orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
 
       toast({
         title: 'PDF gerado',
@@ -190,48 +137,6 @@ export default function VerOrcamentoPage() {
       });
     }
   };
-
-  if (isLoading || !orcamento) {
-    return (
-      <AppLayout title="Carregar Orçamento...">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
-  // The final prices already include the margin (price of sale)
-  const custosIndiretosTotal =
-    (orcamento.custos_indiretos?.estaleiro || 0) +
-    (orcamento.custos_indiretos?.seguros || 0) +
-    (orcamento.custos_indiretos?.licenciamento || 0);
-
-  const subtotalArtigos = orcamento.valor_total;
-  const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
-  
-  // Apply margin to get final price (not shown on print)
-  const margemDecimal = orcamento.margem_lucro / 100;
-  const valorBase = subtotalComIndiretos * (1 + margemDecimal);
-  
-   // Calculate IVA using fiscal engine
-   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
-   const valorIVA = valorBase * (taxaIVA / 100);
-   const valorFinal = valorBase + valorIVA;
-   
-   // Get legal note for PDF/print
-   const notaLegal = contextoFiscal?.regime_id 
-     ? getNotaLegalPorRegime(contextoFiscal.regime_id) 
-     : null;
-   const regimeNome = contextoFiscal?.regime_id 
-     ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome 
-     : 'IVA Normal';
-
-  // Company info
-  const hasCompanyInfo = profile?.empresa_nome || profile?.empresa_logo_url;
-  const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
-  const companyNif = profile?.empresa_nif || profile?.nif;
 
   return (
     <AppLayout
