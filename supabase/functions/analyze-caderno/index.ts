@@ -369,7 +369,7 @@ ${text}`;
 
 async function callLovableAi(apiKey: string, payload: Record<string, unknown>) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
 
   let response: Response;
   try {
