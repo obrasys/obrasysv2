@@ -28,7 +28,7 @@ interface ItemAnalise {
   };
 }
 
-const MAX_CHARS_PER_CHUNK = 100000; // ~100K chars per chunk
+const MAX_CHARS_PER_CHUNK = 35000; // chunks menores para reduzir timeout e melhorar consistência
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
