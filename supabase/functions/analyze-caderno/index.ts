@@ -26,7 +26,7 @@ interface ItemAnalise {
   };
 }
 
-const MAX_CHARS_PER_CHUNK = 120000; // ~120K chars per chunk for Gemini's large context
+const MAX_CHARS_PER_CHUNK = 100000; // ~100K chars per chunk
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -125,15 +125,13 @@ serve(async (req) => {
     const textLength = textoParaAnalise.length;
     console.log(`Texto para análise: ${textLength} caracteres`);
 
-    // If document fits in one chunk, analyze directly
-    // If larger, split into chunks and merge results
     let allSecoes: SecaoAnalise[] = [];
 
     if (textLength <= MAX_CHARS_PER_CHUNK) {
       const resultado = await analyzeChunk(textoParaAnalise, LOVABLE_API_KEY, 1, 1);
       allSecoes = resultado.secoes;
     } else {
-      // Split text into chunks by lines to avoid cutting mid-item
+      // Split text into chunks, trying to split at section boundaries
       const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
       console.log(`Documento grande: dividido em ${chunks.length} partes`);
 
@@ -152,7 +150,6 @@ serve(async (req) => {
           }
         } catch (err) {
           console.error(`Erro na parte ${i + 1}:`, err);
-          // Continue with other chunks
         }
       }
     }
@@ -189,8 +186,16 @@ function splitTextIntoChunks(text: string, maxChars: number): string[] {
   const chunks: string[] = [];
   let currentChunk = "";
 
+  // Try to split at section boundaries (lines starting with major section markers)
+  const isSectionBoundary = (line: string): boolean => {
+    // Match patterns like "||A|1|", "||A|12|", section headers
+    return /^\[\d+\]\s*\|*\s*\|*\s*A\s*\|\s*\d+\s*\|/.test(line) ||
+           /^\[\d+\]\s*.*\|(ESTALEIRO|PREPARAÇÕES|TETOS|PAREDES|ACABAMENTOS|PAVIMENTOS|CANTARIAS|CARPINTARIAS|SERRALHARIAS|ILUMINAÇÃO|REDE DE|SEGURANÇA|DETEÇÃO|ITED|AVAC|DIVERSOS|IMAGEM|SPRINKLERS|RIA)/i.test(line);
+  };
+
   for (const line of lines) {
     if (currentChunk.length + line.length + 1 > maxChars && currentChunk.length > 0) {
+      // Try to find a section boundary nearby to split
       chunks.push(currentChunk);
       currentChunk = "";
     }
@@ -209,32 +214,49 @@ async function analyzeChunk(
   totalChunks: number
 ): Promise<{ secoes: SecaoAnalise[] }> {
   const chunkContext = totalChunks > 1 
-    ? `\n\nNOTA: Este é o bloco ${chunkIndex} de ${totalChunks} do documento completo. Extrai TODOS os itens que encontrares neste bloco, mesmo que pertençam a secções já identificadas noutros blocos.` 
+    ? `\n\nNOTA IMPORTANTE: Este é o bloco ${chunkIndex} de ${totalChunks} do documento completo. Extrai TODOS os itens deste bloco sem exceção.` 
     : "";
 
-  const systemPrompt = `És um especialista em cadernos de encargos de construção civil para Portugal e Espanha.
+  const systemPrompt = `És um especialista em cadernos de encargos e mapas de quantidades de construção civil para Portugal e Espanha.
 
-A tua tarefa é analisar o texto de um caderno de encargos e extrair TODA a informação estruturada. É CRÍTICO que extraias TODOS os itens sem exceção.
+A tua tarefa é analisar o texto de um mapa de quantidades / caderno de encargos e extrair TODA a informação estruturada. É ABSOLUTAMENTE CRÍTICO que extraias TODOS os itens sem exceção.
 
-REGRAS IMPORTANTES:
+O DOCUMENTO TEM ESTA ESTRUTURA TÍPICA:
+- Colunas: SPU | Especialidade | Item | Designação | Unidade | Quantidade | Preço Unitário | Valor
+- Secções principais são identificadas por números (1, 2, 3...) e nomes em MAIÚSCULAS
+- Sub-itens dentro de cada secção têm numeração hierárquica (1.1, 1.2, 2.1, etc.)
+- Linhas com dados podem ter formato: [nº linha] valor1 | valor2 | valor3 ...
+
+REGRAS CRÍTICAS:
 1. NUNCA inventes quantidades - se não encontrares, deixa null
-2. Identifica secções/capítulos hierárquicos
-3. Extrai TODOS os itens de trabalho encontrados - não omitas nenhum
-4. Para cada item de trabalho, extrai:
-   - Descrição completa
-   - Unidade (m2, m3, un, ml, kg, vg, etc.)
-   - Quantidade (apenas se explicitamente indicada)
-   - Texto original
-5. Classifica cada item por:
-   - Tipo de trabalho (demolição, estrutura, alvenaria, revestimento, etc.)
-   - Método construtivo (manual, mecânico, pré-fabricado, etc.)
-   - Material principal
-6. Se o texto vier em formato tabular (com colunas separadas por |), cada linha da tabela é potencialmente um item de trabalho
-7. NÃO agrupes itens - cada linha/artigo individual deve ser um item separado
+2. Extrai ABSOLUTAMENTE TODOS os itens de trabalho - NÃO OMITAS NENHUM
+3. As SECÇÕES DE ESPECIALIDADES (Rede Eléctrica, AVAC, Gás, Segurança, Deteção de Incêndios, Sprinklers, RIA) contêm muitos sub-itens com numeração INLINE no texto da designação. Exemplo:
+   - "1.1.1 -RZ1-K (AS) 3G1,5 fornecimento..." → item com código 1.1.1
+   - "2.3.1 - Tomada monofásica..." → item com código 2.3.1
+   - "3.5.1.1 - Caminho de cabos 600x60" → item com código 3.5.1.1
+   CADA UM destes é um item SEPARADO que DEVE ser extraído.
+4. Itens de AVAC são numerados sequencialmente (1, 2, 3... até 56) e cada um pode ter SUB-ITENS com modelos específicos
+5. Secções de Sprinklers e RIA têm tubagens com diferentes diâmetros - CADA diâmetro é um item separado
+6. Sub-itens em secções de Gás (válvulas, contadores, etc.) devem ser TODOS extraídos individualmente
+7. Quando uma designação lista múltiplos equipamentos/modelos em linhas separadas, CADA equipamento/modelo é um item
+8. Linhas que contêm apenas "0.00 €" ou estão completamente vazias NÃO são itens
+9. Notas explicativas (parágrafos longos sem unidade/quantidade) NÃO são itens de trabalho
+10. Para cada item extraído, inclui:
+    - descricao: descrição completa do trabalho
+    - unidade: m2, m3, un, ml, kg, vg, conj, s/u, etc.
+    - quantidade: valor numérico (null se não indicado)
+    - texto_original: texto exato como aparece no documento
+11. Classifica cada item por tipo_trabalho, metodo_construtivo, material_principal
+
+ATENÇÃO ESPECIAL - Padrões que indicam itens frequentemente omitidos:
+- Linhas com unidade "un", "m", "ml", "conj", "vg" seguidas de quantidade
+- Linhas com diâmetros (DN 25, Ø 6.4 mm, 100 mm, etc.)
+- Linhas com modelos de equipamento (tipo XYZ ou equivalente)
+- Linhas com referências (REF:, P 00 16, etc.)
 
 Responde APENAS com a chamada da função extract_caderno_structure.`;
 
-  const userPrompt = `Analisa o seguinte caderno de encargos e extrai a estrutura completa com TODOS os itens:${chunkContext}
+  const userPrompt = `Analisa o seguinte mapa de quantidades / caderno de encargos e extrai a estrutura completa com ABSOLUTAMENTE TODOS os itens de trabalho:${chunkContext}
 
 ${text}`;
 
@@ -255,7 +277,7 @@ ${text}`;
           type: "function",
           function: {
             name: "extract_caderno_structure",
-            description: "Extrair estrutura completa do caderno de encargos com TODOS os itens",
+            description: "Extrair estrutura completa do caderno de encargos com TODOS os itens sem exceção",
             parameters: {
               type: "object",
               properties: {
@@ -264,7 +286,7 @@ ${text}`;
                   items: {
                     type: "object",
                     properties: {
-                      codigo: { type: "string", description: "Código da secção (ex: 1, 1.1, 2)" },
+                      codigo: { type: "string", description: "Código da secção (ex: 1, 1.1, 2, A.12)" },
                       nome: { type: "string", description: "Nome da secção" },
                       nivel: { type: "integer", description: "Nível hierárquico (1, 2, 3...)" },
                       parent_codigo: { type: "string", description: "Código da secção pai" },
@@ -320,7 +342,10 @@ ${text}`;
   
   const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
   if (toolCall?.function?.arguments) {
-    return JSON.parse(toolCall.function.arguments);
+    const parsed = JSON.parse(toolCall.function.arguments);
+    const totalItems = parsed.secoes?.reduce((s: number, sec: any) => s + (sec.itens?.length || 0), 0) || 0;
+    console.log(`Chunk ${chunkIndex}: extracted ${parsed.secoes?.length || 0} sections, ${totalItems} items`);
+    return parsed;
   }
   
   const content = aiResponse.choices?.[0]?.message?.content;
@@ -413,26 +438,28 @@ async function salvarResultado(
 
     secaoIdMap[secao.codigo] = secaoData.id;
 
-    // Insert items in batches for efficiency
-    const itemsBatch = secao.itens.map((item, j) => ({
-      secao_id: secaoData.id,
-      descricao_original: item.descricao,
-      unidade_detectada: item.unidade,
-      quantidade_detectada: item.quantidade,
-      texto_original: item.texto_original,
-      ordem: j,
-      status: "pendente",
-      classificacao: item.classificacao || {},
-    }));
+    // Insert items in batches of 50 for efficiency
+    const BATCH_SIZE = 50;
+    for (let batchStart = 0; batchStart < secao.itens.length; batchStart += BATCH_SIZE) {
+      const batch = secao.itens.slice(batchStart, batchStart + BATCH_SIZE);
+      const itemsBatch = batch.map((item, j) => ({
+        secao_id: secaoData.id,
+        descricao_original: item.descricao,
+        unidade_detectada: item.unidade,
+        quantidade_detectada: item.quantidade,
+        texto_original: item.texto_original,
+        ordem: batchStart + j,
+        status: "pendente",
+        classificacao: item.classificacao || {},
+      }));
 
-    if (itemsBatch.length > 0) {
       const { error: itemError, data: insertedItems } = await supabase
         .from("caderno_itens")
         .insert(itemsBatch)
         .select("id");
 
       if (itemError) {
-        console.error("Erro ao criar itens em lote:", itemError);
+        console.error(`Erro ao criar itens em lote (batch ${batchStart}):`, itemError);
         // Fallback: insert one by one
         for (const item of itemsBatch) {
           const { error: singleError } = await supabase
@@ -445,6 +472,8 @@ async function salvarResultado(
       }
     }
   }
+
+  console.log(`Total items saved to DB: ${totalItens}`);
 
   await supabase
     .from("cadernos_encargos")
