@@ -9,6 +9,7 @@ import { useCaderno, useCadernoUpload } from "@/hooks/useCadernos";
 import { useObra } from "@/hooks/useObras";
 import type { CadernoOrigem, AnaliseProgresso } from "@/types/cadernos";
 import { toast } from "sonner";
+import { parseExcelFile } from "@/lib/excel-budget-parser";
 
 export default function ImportarCadernoPage() {
   const { id: obraId } = useParams<{ id: string }>();
