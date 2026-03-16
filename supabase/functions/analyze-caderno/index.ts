@@ -29,6 +29,7 @@ interface ItemAnalise {
 }
 
 const MAX_CHARS_PER_CHUNK = 35000; // chunks menores para reduzir timeout e melhorar consistência
+const AI_REQUEST_TIMEOUT_MS = 30000;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -145,7 +146,12 @@ serve(async (req) => {
               return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
             } catch (err) {
               console.error(`Erro na parte ${i + 1}:`, err);
-              return null;
+              const fallback = parseStructuredTabularText(chunk);
+              if (fallback?.secoes?.length) {
+                console.warn(`Parte ${i + 1}: fallback tabular ativado (${fallback.secoes.length} secções)`);
+                return fallback;
+              }
+              return { secoes: [] };
             }
           })
         );
@@ -335,6 +341,11 @@ ${text}`;
 
   console.warn(`Chunk ${chunkIndex}: resposta sem estrutura válida no 1º pedido, a tentar fallback JSON...`);
 
+  // Em documentos grandes, evitar 2ª chamada à IA por chunk para não ultrapassar timeout da função.
+  if (totalChunks > 1) {
+    throw new Error(`Resposta sem estrutura válida para o bloco ${chunkIndex}`);
+  }
+
   const retryResponse = await callLovableAi(apiKey, {
     model: "google/gemini-2.5-flash",
     temperature: 0,
@@ -358,7 +369,7 @@ ${text}`;
 
 async function callLovableAi(apiKey: string, payload: Record<string, unknown>) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
 
   let response: Response;
   try {
