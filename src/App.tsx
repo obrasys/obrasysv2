@@ -86,6 +86,7 @@ import RedeFornecedoresPage from "./pages/rede-fornecedores/Index";
 import AxiaPage from "./pages/axia/Index";
 import ImportarPage from "./pages/importar/Index";
 import EssencialPage from "./pages/orcamentos/Essencial";
+import { WhatsAppButton } from "./components/WhatsAppButton";
 
 const queryClient = new QueryClient();
 
@@ -183,6 +184,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <WhatsAppButton />
             </BrowserRouter>
           </AuthProvider>
         </PreferencesProvider>
