@@ -573,9 +573,21 @@ function normalizeAiResult(parsed: any): { secoes: SecaoAnalise[] } | null {
 function parseQuantidade(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const normalized = value.replace(/\s/g, "").replace(/,/g, ".");
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
+    const cleaned = value.trim().replace(/\s/g, "");
+    if (!cleaned) return null;
+
+    // 1.234,56 -> 1234.56
+    const ptFormatted = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    const parsedPt = Number(ptFormatted);
+    if (Number.isFinite(parsedPt)) return parsedPt;
+
+    // 1,234.56 -> 1234.56
+    const enFormatted = cleaned.replace(/,/g, "");
+    const parsedEn = Number(enFormatted);
+    if (Number.isFinite(parsedEn)) return parsedEn;
+
+    const parsedSimple = Number(cleaned.replace(/,/g, "."));
+    return Number.isFinite(parsedSimple) ? parsedSimple : null;
   }
   return null;
 }
