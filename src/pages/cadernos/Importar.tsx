@@ -88,31 +88,63 @@ export default function ImportarCadernoPage() {
 
   // Função para ler o conteúdo do ficheiro
   const lerConteudoFicheiro = async (file: File): Promise<string> => {
+    const fileName = file.name.toLowerCase();
+    
+    // XLSX: usar parser dedicado para extrair dados estruturados
+    if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || 
+        file.type.includes("spreadsheet") || file.type.includes("excel")) {
+      const parsed = await parseExcelFile(file);
+      // Converter dados Excel para texto estruturado que a IA consegue analisar
+      const lines: string[] = [];
+      lines.push(`Folha: ${parsed.sheetName}`);
+      lines.push(`Colunas: ${parsed.headers.join(" | ")}`);
+      lines.push("---");
+      for (const row of parsed.rows) {
+        const values = parsed.headers.map(h => {
+          const v = row[h];
+          return v !== null && v !== undefined ? String(v) : "";
+        });
+        const line = values.join(" | ");
+        if (line.trim()) lines.push(line);
+      }
+      return lines.join("\n");
+    }
+    
+    // XML/BC3: ler como texto
+    if (file.type.includes("xml") || fileName.endsWith(".xml")) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string || "");
+        reader.onerror = () => reject(new Error("Erro ao ler ficheiro XML"));
+        reader.readAsText(file);
+      });
+    }
+    
+    // PDF: ler como base64 para enviar ao servidor
+    if (fileName.endsWith(".pdf") || file.type.includes("pdf")) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          // Converter para base64 para preservar dados binários
+          const uint8Array = new Uint8Array(arrayBuffer);
+          let binary = "";
+          for (let i = 0; i < uint8Array.length; i++) {
+            binary += String.fromCharCode(uint8Array[i]);
+          }
+          resolve(`[PDF_BASE64]${btoa(binary)}`);
+        };
+        reader.onerror = () => reject(new Error("Erro ao ler ficheiro PDF"));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+    
+    // DOCX: ler como texto (fallback)
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const content = e.target?.result;
-        if (typeof content === "string") {
-          resolve(content);
-        } else if (content instanceof ArrayBuffer) {
-          // Para ficheiros binários, converter para base64
-          const decoder = new TextDecoder("utf-8");
-          resolve(decoder.decode(content));
-        } else {
-          resolve("");
-        }
-      };
-      
+      reader.onload = (e) => resolve(e.target?.result as string || "");
       reader.onerror = () => reject(new Error("Erro ao ler ficheiro"));
-      
-      // Para XML, ler como texto
-      if (file.type.includes("xml")) {
-        reader.readAsText(file);
-      } else {
-        // Para outros formatos, ler como texto (simplificado - em produção usaria um parser adequado)
-        reader.readAsText(file);
-      }
+      reader.readAsText(file);
     });
   };
 
