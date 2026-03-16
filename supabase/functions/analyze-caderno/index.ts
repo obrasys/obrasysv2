@@ -28,7 +28,7 @@ interface ItemAnalise {
   };
 }
 
-const MAX_CHARS_PER_CHUNK = 100000; // ~100K chars per chunk
+const MAX_CHARS_PER_CHUNK = 35000; // chunks menores para reduzir timeout e melhorar consistência
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -137,21 +137,29 @@ serve(async (req) => {
       const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
       console.log(`Documento grande: dividido em ${chunks.length} partes`);
 
-      for (let i = 0; i < chunks.length; i++) {
-        console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-        try {
-          const resultado = await analyzeChunk(chunks[i], LOVABLE_API_KEY, i + 1, chunks.length);
-          // Merge sections: if same section code exists, merge items
-          for (const secao of resultado.secoes) {
-            const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
-            if (existing) {
-              existing.itens.push(...secao.itens);
-            } else {
-              allSecoes.push(secao);
-            }
+      const chunkResults = await Promise.all(
+        chunks.map(async (chunk, i) => {
+          console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+          try {
+            return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
+          } catch (err) {
+            console.error(`Erro na parte ${i + 1}:`, err);
+            return null;
           }
-        } catch (err) {
-          console.error(`Erro na parte ${i + 1}:`, err);
+        })
+      );
+
+      for (const chunkResult of chunkResults) {
+        if (!chunkResult) continue;
+
+        // Merge sections: if same section code exists, merge items
+        for (const secao of chunkResult.secoes) {
+          const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
+          if (existing) {
+            existing.itens.push(...secao.itens);
+          } else {
+            allSecoes.push(secao);
+          }
         }
       }
     }
@@ -215,8 +223,8 @@ async function analyzeChunk(
   chunkIndex: number,
   totalChunks: number
 ): Promise<{ secoes: SecaoAnalise[] }> {
-  const chunkContext = totalChunks > 1 
-    ? `\n\nNOTA IMPORTANTE: Este é o bloco ${chunkIndex} de ${totalChunks} do documento completo. Extrai TODOS os itens deste bloco sem exceção.` 
+  const chunkContext = totalChunks > 1
+    ? `\n\nNOTA IMPORTANTE: Este é o bloco ${chunkIndex} de ${totalChunks} do documento completo. Extrai TODOS os itens deste bloco sem exceção.`
     : "";
 
   const systemPrompt = `És um especialista em cadernos de encargos e mapas de quantidades de construção civil para Portugal e Espanha.
@@ -232,133 +240,313 @@ O DOCUMENTO TEM ESTA ESTRUTURA TÍPICA:
 REGRAS CRÍTICAS:
 1. NUNCA inventes quantidades - se não encontrares, deixa null
 2. Extrai ABSOLUTAMENTE TODOS os itens de trabalho - NÃO OMITAS NENHUM
-3. As SECÇÕES DE ESPECIALIDADES (Rede Eléctrica, AVAC, Gás, Segurança, Deteção de Incêndios, Sprinklers, RIA) contêm muitos sub-itens com numeração INLINE no texto da designação. Exemplo:
-   - "1.1.1 -RZ1-K (AS) 3G1,5 fornecimento..." → item com código 1.1.1
-   - "2.3.1 - Tomada monofásica..." → item com código 2.3.1
-   - "3.5.1.1 - Caminho de cabos 600x60" → item com código 3.5.1.1
-   CADA UM destes é um item SEPARADO que DEVE ser extraído.
-4. Itens de AVAC são numerados sequencialmente (1, 2, 3... até 56) e cada um pode ter SUB-ITENS com modelos específicos
-5. Secções de Sprinklers e RIA têm tubagens com diferentes diâmetros - CADA diâmetro é um item separado
-6. Sub-itens em secções de Gás (válvulas, contadores, etc.) devem ser TODOS extraídos individualmente
-7. Quando uma designação lista múltiplos equipamentos/modelos em linhas separadas, CADA equipamento/modelo é um item
-8. Linhas que contêm apenas "0.00 €" ou estão completamente vazias NÃO são itens
-9. Notas explicativas (parágrafos longos sem unidade/quantidade) NÃO são itens de trabalho
-10. Para cada item extraído, inclui:
-    - descricao: descrição completa do trabalho
-    - unidade: m2, m3, un, ml, kg, vg, conj, s/u, etc.
-    - quantidade: valor numérico (null se não indicado)
-    - texto_original: texto exato como aparece no documento
-11. Classifica cada item por tipo_trabalho, metodo_construtivo, material_principal
+3. Linhas com "0.00 €" ou completamente vazias NÃO são itens
+4. Notas explicativas longas sem unidade/quantidade NÃO são itens de trabalho
+5. Para cada item: descricao, unidade, quantidade, texto_original e classificacao`;
 
-ATENÇÃO ESPECIAL - Padrões que indicam itens frequentemente omitidos:
-- Linhas com unidade "un", "m", "ml", "conj", "vg" seguidas de quantidade
-- Linhas com diâmetros (DN 25, Ø 6.4 mm, 100 mm, etc.)
-- Linhas com modelos de equipamento (tipo XYZ ou equivalente)
-- Linhas com referências (REF:, P 00 16, etc.)
-
-Responde APENAS com a chamada da função extract_caderno_structure.`;
-
-  const userPrompt = `Analisa o seguinte mapa de quantidades / caderno de encargos e extrai a estrutura completa com ABSOLUTAMENTE TODOS os itens de trabalho:${chunkContext}
+  const userPrompt = `Analisa o seguinte mapa de quantidades / caderno de encargos e extrai a estrutura completa com ABSOLUTAMENTE TODOS os itens de trabalho.${chunkContext}
 
 ${text}`;
 
+  const tools = [
+    {
+      type: "function",
+      function: {
+        name: "extract_caderno_structure",
+        description: "Extrair estrutura completa do caderno de encargos com TODOS os itens sem exceção",
+        parameters: {
+          type: "object",
+          properties: {
+            secoes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  codigo: { type: "string", description: "Código da secção (ex: 1, 1.1, 2, A.12)" },
+                  nome: { type: "string", description: "Nome da secção" },
+                  nivel: { type: "integer", description: "Nível hierárquico (1, 2, 3...)" },
+                  parent_codigo: { type: "string", description: "Código da secção pai" },
+                  itens: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        descricao: { type: "string" },
+                        unidade: { type: "string", nullable: true },
+                        quantidade: { type: "number", nullable: true },
+                        texto_original: { type: "string" },
+                        classificacao: {
+                          type: "object",
+                          properties: {
+                            tipo_trabalho: { type: "string" },
+                            metodo_construtivo: { type: "string" },
+                            material_principal: { type: "string" },
+                          },
+                        },
+                      },
+                      required: ["descricao", "texto_original"],
+                    },
+                  },
+                },
+                required: ["codigo", "nome", "nivel", "itens"],
+              },
+            },
+          },
+          required: ["secoes"],
+        },
+      },
+    },
+  ];
+
+  const primaryResponse = await callLovableAi(apiKey, {
+    model: "google/gemini-2.5-flash",
+    temperature: 0,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    tools,
+    tool_choice: { type: "function", function: { name: "extract_caderno_structure" } },
+  });
+
+  let parsed = extractStructuredResult(primaryResponse);
+  if (parsed) {
+    const totalItems = parsed.secoes.reduce((s, sec) => s + sec.itens.length, 0);
+    console.log(`Chunk ${chunkIndex}: extracted ${parsed.secoes.length} sections, ${totalItems} items`);
+    return parsed;
+  }
+
+  console.warn(`Chunk ${chunkIndex}: resposta sem estrutura válida no 1º pedido, a tentar fallback JSON...`);
+
+  const retryResponse = await callLovableAi(apiKey, {
+    model: "google/gemini-2.5-flash",
+    temperature: 0,
+    messages: [
+      { role: "system", content: `${systemPrompt}\n\nResponde APENAS com JSON válido neste formato: {"secoes":[...]} sem markdown.` },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  parsed = extractStructuredResult(retryResponse);
+  if (parsed) {
+    const totalItems = parsed.secoes.reduce((s, sec) => s + sec.itens.length, 0);
+    console.log(`Chunk ${chunkIndex} (fallback): extracted ${parsed.secoes.length} sections, ${totalItems} items`);
+    return parsed;
+  }
+
+  const finishReason = retryResponse?.choices?.[0]?.finish_reason || primaryResponse?.choices?.[0]?.finish_reason || "unknown";
+  throw new Error(`Não foi possível extrair estrutura da resposta da IA (finish_reason=${finishReason})`);
+}
+
+async function callLovableAi(apiKey: string, payload: Record<string, unknown>) {
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "extract_caderno_structure",
-            description: "Extrair estrutura completa do caderno de encargos com TODOS os itens sem exceção",
-            parameters: {
-              type: "object",
-              properties: {
-                secoes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      codigo: { type: "string", description: "Código da secção (ex: 1, 1.1, 2, A.12)" },
-                      nome: { type: "string", description: "Nome da secção" },
-                      nivel: { type: "integer", description: "Nível hierárquico (1, 2, 3...)" },
-                      parent_codigo: { type: "string", description: "Código da secção pai" },
-                      itens: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            descricao: { type: "string" },
-                            unidade: { type: "string", nullable: true },
-                            quantidade: { type: "number", nullable: true },
-                            texto_original: { type: "string" },
-                            classificacao: {
-                              type: "object",
-                              properties: {
-                                tipo_trabalho: { type: "string" },
-                                metodo_construtivo: { type: "string" },
-                                material_principal: { type: "string" },
-                              },
-                            },
-                          },
-                          required: ["descricao", "texto_original"],
-                        },
-                      },
-                    },
-                    required: ["codigo", "nome", "nivel", "itens"],
-                  },
-                },
-              },
-              required: ["secoes"],
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "extract_caderno_structure" } },
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error("AI Gateway error:", response.status, errorText);
-    
+
     if (response.status === 429) {
       throw new Error("Limite de pedidos excedido. Tente novamente mais tarde.");
     }
     if (response.status === 402) {
       throw new Error("Créditos insuficientes. Adicione créditos ao workspace.");
     }
+
     throw new Error(`AI Gateway error: ${response.status}`);
   }
 
-  const aiResponse = await response.json();
-  
-  const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
-  if (toolCall?.function?.arguments) {
-    const parsed = JSON.parse(toolCall.function.arguments);
-    const totalItems = parsed.secoes?.reduce((s: number, sec: any) => s + (sec.itens?.length || 0), 0) || 0;
-    console.log(`Chunk ${chunkIndex}: extracted ${parsed.secoes?.length || 0} sections, ${totalItems} items`);
-    return parsed;
-  }
-  
-  const content = aiResponse.choices?.[0]?.message?.content;
-  if (content) {
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+  return response.json();
+}
+
+function extractStructuredResult(aiResponse: any): { secoes: SecaoAnalise[] } | null {
+  const message = aiResponse?.choices?.[0]?.message;
+  const candidates: unknown[] = [];
+
+  if (Array.isArray(message?.tool_calls)) {
+    for (const toolCall of message.tool_calls) {
+      if (toolCall?.function?.arguments) {
+        candidates.push(toolCall.function.arguments);
+      }
     }
   }
-  
-  throw new Error("Não foi possível extrair estrutura da resposta da IA");
+
+  if (typeof message?.content === "string" && message.content.trim()) {
+    candidates.push(message.content);
+  }
+
+  if (Array.isArray(message?.content)) {
+    const textParts = message.content
+      .filter((part: any) => part?.type === "text" && typeof part?.text === "string")
+      .map((part: any) => part.text)
+      .join("\n");
+    if (textParts.trim()) {
+      candidates.push(textParts);
+    }
+  }
+
+  for (const candidate of candidates) {
+    const parsed = tryParseJsonFlexible(candidate);
+    const normalized = normalizeAiResult(parsed);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+function tryParseJsonFlexible(input: unknown): any | null {
+  if (!input) return null;
+  if (typeof input === "object") return input;
+  if (typeof input !== "string") return null;
+
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const sanitized = trimmed
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  const attempts = [sanitized, cleanupJsonString(sanitized)];
+
+  const extracted = extractFirstJsonObject(sanitized);
+  if (extracted) {
+    attempts.push(extracted, cleanupJsonString(extracted));
+  }
+
+  for (const attempt of attempts) {
+    try {
+      return JSON.parse(attempt);
+    } catch {
+      // try next
+    }
+  }
+
+  return null;
+}
+
+function cleanupJsonString(value: string): string {
+  return value
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'");
+}
+
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (ch === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (ch === "{") depth++;
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function normalizeAiResult(parsed: any): { secoes: SecaoAnalise[] } | null {
+  if (!parsed) return null;
+
+  let rawSecoes = parsed.secoes;
+  if (!Array.isArray(rawSecoes)) {
+    if (Array.isArray(parsed.sections)) {
+      rawSecoes = parsed.sections;
+    } else if (Array.isArray(parsed.capitulos)) {
+      rawSecoes = parsed.capitulos;
+    } else if (Array.isArray(parsed.itens)) {
+      rawSecoes = [{ codigo: "1", nome: "Geral", nivel: 1, itens: parsed.itens }];
+    } else {
+      return null;
+    }
+  }
+
+  const secoes: SecaoAnalise[] = rawSecoes
+    .map((secao: any, index: number) => {
+      const rawItens = Array.isArray(secao?.itens) ? secao.itens : [];
+      const itens: ItemAnalise[] = rawItens
+        .map((item: any) => {
+          const descricao = String(item?.descricao || item?.texto_original || "").trim();
+          if (!descricao) return null;
+
+          const unidade = item?.unidade == null ? null : String(item.unidade).trim() || null;
+          const quantidade = parseQuantidade(item?.quantidade);
+          const textoOriginal = String(item?.texto_original || descricao).trim();
+
+          return {
+            descricao,
+            unidade,
+            quantidade,
+            texto_original: textoOriginal,
+            classificacao: {
+              tipo_trabalho: item?.classificacao?.tipo_trabalho,
+              metodo_construtivo: item?.classificacao?.metodo_construtivo,
+              material_principal: item?.classificacao?.material_principal,
+            },
+          };
+        })
+        .filter((item: ItemAnalise | null): item is ItemAnalise => item !== null);
+
+      return {
+        codigo: String(secao?.codigo || index + 1),
+        nome: String(secao?.nome || `Secção ${index + 1}`),
+        nivel: Number(secao?.nivel) > 0 ? Number(secao.nivel) : 1,
+        parent_codigo: secao?.parent_codigo ? String(secao.parent_codigo) : undefined,
+        itens,
+      };
+    })
+    .filter((secao: SecaoAnalise) => secao.itens.length > 0);
+
+  if (!secoes.length) return null;
+
+  return { secoes };
+}
+
+function parseQuantidade(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(/\s/g, "").replace(/,/g, ".");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 // Parser básico para BC3
