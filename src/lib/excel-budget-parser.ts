@@ -36,7 +36,8 @@ export async function parseExcelFile(file: File): Promise<ParsedExcelData> {
   }
 
   // Limit to 500 rows
-  const limitedData = rawData.slice(0, 500);
+  // Allow up to 5000 rows for caderno de encargos
+  const limitedData = rawData.slice(0, 5000);
 
   // Extract headers from first row keys
   const headers = Object.keys(limitedData[0]);
