@@ -129,42 +129,59 @@ serve(async (req) => {
 
     let allSecoes: SecaoAnalise[] = [];
 
-    if (textLength <= MAX_CHARS_PER_CHUNK) {
-      const resultado = await analyzeChunk(textoParaAnalise, LOVABLE_API_KEY, 1, 1);
-      allSecoes = resultado.secoes;
-    } else {
-      // Split text into chunks, trying to split at section boundaries
-      const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
-      console.log(`Documento grande: dividido em ${chunks.length} partes`);
+    try {
+      if (textLength <= MAX_CHARS_PER_CHUNK) {
+        const resultado = await analyzeChunk(textoParaAnalise, LOVABLE_API_KEY, 1, 1);
+        allSecoes = resultado.secoes;
+      } else {
+        // Split text into chunks, trying to split at section boundaries
+        const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
+        console.log(`Documento grande: dividido em ${chunks.length} partes`);
 
-      const chunkResults = await Promise.all(
-        chunks.map(async (chunk, i) => {
-          console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
-          try {
-            return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
-          } catch (err) {
-            console.error(`Erro na parte ${i + 1}:`, err);
-            return null;
-          }
-        })
-      );
+        const chunkResults = await Promise.all(
+          chunks.map(async (chunk, i) => {
+            console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+            try {
+              return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
+            } catch (err) {
+              console.error(`Erro na parte ${i + 1}:`, err);
+              return null;
+            }
+          })
+        );
 
-      for (const chunkResult of chunkResults) {
-        if (!chunkResult) continue;
+        for (const chunkResult of chunkResults) {
+          if (!chunkResult) continue;
 
-        // Merge sections: if same section code exists, merge items
-        for (const secao of chunkResult.secoes) {
-          const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
-          if (existing) {
-            existing.itens.push(...secao.itens);
-          } else {
-            allSecoes.push(secao);
+          // Merge sections: if same section code exists, merge items
+          for (const secao of chunkResult.secoes) {
+            const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
+            if (existing) {
+              existing.itens.push(...secao.itens);
+            } else {
+              allSecoes.push(secao);
+            }
           }
         }
+      }
+    } catch (aiError) {
+      console.error("Falha na análise por IA, a tentar fallback tabular:", aiError);
+    }
+
+    if (allSecoes.length === 0) {
+      const fallback = parseStructuredTabularText(textoParaAnalise);
+      if (fallback) {
+        allSecoes = fallback.secoes;
+        console.log(`Fallback tabular ativado: ${allSecoes.length} secções`);
       }
     }
 
     if (allSecoes.length === 0) {
+      await supabaseClient
+        .from("cadernos_encargos")
+        .update({ status: "importado" })
+        .eq("id", caderno_id);
+
       return new Response(
         JSON.stringify({ error: "Não foi possível extrair itens do documento. Verifique se o formato é suportado." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
