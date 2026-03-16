@@ -137,21 +137,29 @@ serve(async (req) => {
       const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
       console.log(`Documento grande: dividido em ${chunks.length} partes`);
 
-      for (let i = 0; i < chunks.length; i++) {
-        console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-        try {
-          const resultado = await analyzeChunk(chunks[i], LOVABLE_API_KEY, i + 1, chunks.length);
-          // Merge sections: if same section code exists, merge items
-          for (const secao of resultado.secoes) {
-            const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
-            if (existing) {
-              existing.itens.push(...secao.itens);
-            } else {
-              allSecoes.push(secao);
-            }
+      const chunkResults = await Promise.all(
+        chunks.map(async (chunk, i) => {
+          console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+          try {
+            return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
+          } catch (err) {
+            console.error(`Erro na parte ${i + 1}:`, err);
+            return null;
           }
-        } catch (err) {
-          console.error(`Erro na parte ${i + 1}:`, err);
+        })
+      );
+
+      for (const chunkResult of chunkResults) {
+        if (!chunkResult) continue;
+
+        // Merge sections: if same section code exists, merge items
+        for (const secao of chunkResult.secoes) {
+          const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
+          if (existing) {
+            existing.itens.push(...secao.itens);
+          } else {
+            allSecoes.push(secao);
+          }
         }
       }
     }
