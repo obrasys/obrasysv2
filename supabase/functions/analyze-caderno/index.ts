@@ -32,7 +32,7 @@ const MAX_CHARS_PER_CHUNK = 100000; // ~100K chars per chunk
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
