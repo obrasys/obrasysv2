@@ -580,6 +580,89 @@ function parseQuantidade(value: unknown): number | null {
   return null;
 }
 
+function parseStructuredTabularText(content: string): { secoes: SecaoAnalise[] } | null {
+  const lines = content.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.some((line) => line.startsWith("["))) return null;
+
+  const headerLine = lines.find((line) => line.toLowerCase().startsWith("colunas:"));
+  const headers = headerLine
+    ? headerLine.replace(/^colunas:\s*/i, "").split("|").map((h) => h.trim().toLowerCase())
+    : [];
+
+  const findHeaderIndex = (patterns: RegExp[]) => {
+    return headers.findIndex((header) => patterns.some((pattern) => pattern.test(header)));
+  };
+
+  const secaoIdx = findHeaderIndex([/especialidade/, /sec[aã]o/, /cap[ií]tulo/, /^spu$/]);
+  const descIdx = findHeaderIndex([/designa[cç][aã]o/, /descri[cç][aã]o/, /trabalho/, /^item$/, /artigo/]);
+  const unitIdx = findHeaderIndex([/^un$/, /unidade/]);
+  const qtyIdx = findHeaderIndex([/quantidade/, /^quant$/]);
+
+  const secaoMap = new Map<string, SecaoAnalise>();
+
+  for (const line of lines) {
+    const match = line.match(/^\[(\d+)\]\s*(.+)$/);
+    if (!match) continue;
+
+    const rawText = match[2];
+    const cols = rawText.split("|").map((col) => col.trim());
+
+    const pickByIndex = (index: number): string | null => {
+      if (index < 0 || index >= cols.length) return null;
+      const value = cols[index]?.trim();
+      return value ? value : null;
+    };
+
+    const rawDescricao = pickByIndex(descIdx) ?? inferDescricao(cols);
+    if (!rawDescricao || isNonItemLine(rawDescricao)) continue;
+
+    const unidade = pickByIndex(unitIdx);
+    const quantidade = parseQuantidade(pickByIndex(qtyIdx));
+
+    const secaoNome = (pickByIndex(secaoIdx) || "Geral").slice(0, 80);
+    const secaoCodigo = String(secaoMap.size + 1);
+
+    if (!secaoMap.has(secaoNome)) {
+      secaoMap.set(secaoNome, {
+        codigo: secaoCodigo,
+        nome: secaoNome,
+        nivel: 1,
+        itens: [],
+      });
+    }
+
+    const secao = secaoMap.get(secaoNome)!;
+    secao.itens.push({
+      descricao: rawDescricao,
+      unidade,
+      quantidade,
+      texto_original: rawText,
+      classificacao: {},
+    });
+  }
+
+  const secoes = Array.from(secaoMap.values()).filter((secao) => secao.itens.length > 0);
+  if (secoes.length === 0) return null;
+
+  return { secoes };
+}
+
+function inferDescricao(cols: string[]): string | null {
+  const candidates = cols
+    .map((value) => value.trim())
+    .filter((value) => value && !/^\d+(?:[.,]\d+)?$/.test(value) && !/€$/.test(value));
+
+  if (candidates.length === 0) return null;
+  return candidates.sort((a, b) => b.length - a.length)[0];
+}
+
+function isNonItemLine(value: string): boolean {
+  const normalized = value.toLowerCase().trim();
+  if (!normalized) return true;
+  if (normalized === "0.00" || normalized === "0.00 €") return true;
+  return /^[-–—]+$/.test(normalized);
+}
+
 // Parser básico para BC3
 async function parseBC3(xmlContent: string): Promise<{ secoes: SecaoAnalise[] } | null> {
   try {
