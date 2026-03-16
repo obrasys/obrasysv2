@@ -146,7 +146,12 @@ serve(async (req) => {
               return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
             } catch (err) {
               console.error(`Erro na parte ${i + 1}:`, err);
-              return null;
+              const fallback = parseStructuredTabularText(chunk);
+              if (fallback?.secoes?.length) {
+                console.warn(`Parte ${i + 1}: fallback tabular ativado (${fallback.secoes.length} secções)`);
+                return fallback;
+              }
+              return { secoes: [] };
             }
           })
         );
