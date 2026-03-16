@@ -24,8 +24,9 @@ serve(async (req: Request) => {
       });
     }
 
-    // Verify caller is a super admin
-    const userClient = createClient(supabaseUrl, supabaseServiceKey, {
+    // Verify caller is a super admin using anon key (so auth.uid() is set from JWT)
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
