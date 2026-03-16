@@ -341,6 +341,11 @@ ${text}`;
 
   console.warn(`Chunk ${chunkIndex}: resposta sem estrutura válida no 1º pedido, a tentar fallback JSON...`);
 
+  // Em documentos grandes, evitar 2ª chamada à IA por chunk para não ultrapassar timeout da função.
+  if (totalChunks > 1) {
+    throw new Error(`Resposta sem estrutura válida para o bloco ${chunkIndex}`);
+  }
+
   const retryResponse = await callLovableAi(apiKey, {
     model: "google/gemini-2.5-flash",
     temperature: 0,
