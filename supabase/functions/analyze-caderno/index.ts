@@ -129,42 +129,59 @@ serve(async (req) => {
 
     let allSecoes: SecaoAnalise[] = [];
 
-    if (textLength <= MAX_CHARS_PER_CHUNK) {
-      const resultado = await analyzeChunk(textoParaAnalise, LOVABLE_API_KEY, 1, 1);
-      allSecoes = resultado.secoes;
-    } else {
-      // Split text into chunks, trying to split at section boundaries
-      const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
-      console.log(`Documento grande: dividido em ${chunks.length} partes`);
+    try {
+      if (textLength <= MAX_CHARS_PER_CHUNK) {
+        const resultado = await analyzeChunk(textoParaAnalise, LOVABLE_API_KEY, 1, 1);
+        allSecoes = resultado.secoes;
+      } else {
+        // Split text into chunks, trying to split at section boundaries
+        const chunks = splitTextIntoChunks(textoParaAnalise, MAX_CHARS_PER_CHUNK);
+        console.log(`Documento grande: dividido em ${chunks.length} partes`);
 
-      const chunkResults = await Promise.all(
-        chunks.map(async (chunk, i) => {
-          console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
-          try {
-            return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
-          } catch (err) {
-            console.error(`Erro na parte ${i + 1}:`, err);
-            return null;
-          }
-        })
-      );
+        const chunkResults = await Promise.all(
+          chunks.map(async (chunk, i) => {
+            console.log(`A analisar parte ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+            try {
+              return await analyzeChunk(chunk, LOVABLE_API_KEY, i + 1, chunks.length);
+            } catch (err) {
+              console.error(`Erro na parte ${i + 1}:`, err);
+              return null;
+            }
+          })
+        );
 
-      for (const chunkResult of chunkResults) {
-        if (!chunkResult) continue;
+        for (const chunkResult of chunkResults) {
+          if (!chunkResult) continue;
 
-        // Merge sections: if same section code exists, merge items
-        for (const secao of chunkResult.secoes) {
-          const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
-          if (existing) {
-            existing.itens.push(...secao.itens);
-          } else {
-            allSecoes.push(secao);
+          // Merge sections: if same section code exists, merge items
+          for (const secao of chunkResult.secoes) {
+            const existing = allSecoes.find(s => s.codigo === secao.codigo && s.nome === secao.nome);
+            if (existing) {
+              existing.itens.push(...secao.itens);
+            } else {
+              allSecoes.push(secao);
+            }
           }
         }
+      }
+    } catch (aiError) {
+      console.error("Falha na análise por IA, a tentar fallback tabular:", aiError);
+    }
+
+    if (allSecoes.length === 0) {
+      const fallback = parseStructuredTabularText(textoParaAnalise);
+      if (fallback) {
+        allSecoes = fallback.secoes;
+        console.log(`Fallback tabular ativado: ${allSecoes.length} secções`);
       }
     }
 
     if (allSecoes.length === 0) {
+      await supabaseClient
+        .from("cadernos_encargos")
+        .update({ status: "importado" })
+        .eq("id", caderno_id);
+
       return new Response(
         JSON.stringify({ error: "Não foi possível extrair itens do documento. Verifique se o formato é suportado." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -340,14 +357,28 @@ ${text}`;
 }
 
 async function callLovableAi(apiKey: string, payload: Record<string, unknown>) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  let response: Response;
+  try {
+    response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Timeout ao contactar a IA");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -542,11 +573,106 @@ function normalizeAiResult(parsed: any): { secoes: SecaoAnalise[] } | null {
 function parseQuantidade(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const normalized = value.replace(/\s/g, "").replace(/,/g, ".");
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
+    const cleaned = value.trim().replace(/\s/g, "");
+    if (!cleaned) return null;
+
+    // 1.234,56 -> 1234.56
+    const ptFormatted = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    const parsedPt = Number(ptFormatted);
+    if (Number.isFinite(parsedPt)) return parsedPt;
+
+    // 1,234.56 -> 1234.56
+    const enFormatted = cleaned.replace(/,/g, "");
+    const parsedEn = Number(enFormatted);
+    if (Number.isFinite(parsedEn)) return parsedEn;
+
+    const parsedSimple = Number(cleaned.replace(/,/g, "."));
+    return Number.isFinite(parsedSimple) ? parsedSimple : null;
   }
   return null;
+}
+
+function parseStructuredTabularText(content: string): { secoes: SecaoAnalise[] } | null {
+  const lines = content.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.some((line) => line.startsWith("["))) return null;
+
+  const headerLine = lines.find((line) => line.toLowerCase().startsWith("colunas:"));
+  const headers = headerLine
+    ? headerLine.replace(/^colunas:\s*/i, "").split("|").map((h) => h.trim().toLowerCase())
+    : [];
+
+  const findHeaderIndex = (patterns: RegExp[]) => {
+    return headers.findIndex((header) => patterns.some((pattern) => pattern.test(header)));
+  };
+
+  const secaoIdx = findHeaderIndex([/especialidade/, /sec[aã]o/, /cap[ií]tulo/, /^spu$/]);
+  const descIdx = findHeaderIndex([/designa[cç][aã]o/, /descri[cç][aã]o/, /trabalho/, /^item$/, /artigo/]);
+  const unitIdx = findHeaderIndex([/^un$/, /unidade/]);
+  const qtyIdx = findHeaderIndex([/quantidade/, /^quant$/]);
+
+  const secaoMap = new Map<string, SecaoAnalise>();
+
+  for (const line of lines) {
+    const match = line.match(/^\[(\d+)\]\s*(.+)$/);
+    if (!match) continue;
+
+    const rawText = match[2];
+    const cols = rawText.split("|").map((col) => col.trim());
+
+    const pickByIndex = (index: number): string | null => {
+      if (index < 0 || index >= cols.length) return null;
+      const value = cols[index]?.trim();
+      return value ? value : null;
+    };
+
+    const rawDescricao = pickByIndex(descIdx) ?? inferDescricao(cols);
+    if (!rawDescricao || isNonItemLine(rawDescricao)) continue;
+
+    const unidade = pickByIndex(unitIdx);
+    const quantidade = parseQuantidade(pickByIndex(qtyIdx));
+
+    const secaoNome = (pickByIndex(secaoIdx) || "Geral").slice(0, 80);
+    const secaoCodigo = String(secaoMap.size + 1);
+
+    if (!secaoMap.has(secaoNome)) {
+      secaoMap.set(secaoNome, {
+        codigo: secaoCodigo,
+        nome: secaoNome,
+        nivel: 1,
+        itens: [],
+      });
+    }
+
+    const secao = secaoMap.get(secaoNome)!;
+    secao.itens.push({
+      descricao: rawDescricao,
+      unidade,
+      quantidade,
+      texto_original: rawText,
+      classificacao: {},
+    });
+  }
+
+  const secoes = Array.from(secaoMap.values()).filter((secao) => secao.itens.length > 0);
+  if (secoes.length === 0) return null;
+
+  return { secoes };
+}
+
+function inferDescricao(cols: string[]): string | null {
+  const candidates = cols
+    .map((value) => value.trim())
+    .filter((value) => value && !/^\d+(?:[.,]\d+)?$/.test(value) && !/€$/.test(value));
+
+  if (candidates.length === 0) return null;
+  return candidates.sort((a, b) => b.length - a.length)[0];
+}
+
+function isNonItemLine(value: string): boolean {
+  const normalized = value.toLowerCase().trim();
+  if (!normalized) return true;
+  if (normalized === "0.00" || normalized === "0.00 €") return true;
+  return /^[-–—]+$/.test(normalized);
 }
 
 // Parser básico para BC3
