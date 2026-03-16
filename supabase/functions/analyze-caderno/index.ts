@@ -29,6 +29,7 @@ interface ItemAnalise {
 }
 
 const MAX_CHARS_PER_CHUNK = 35000; // chunks menores para reduzir timeout e melhorar consistência
+const AI_REQUEST_TIMEOUT_MS = 30000;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
