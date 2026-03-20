@@ -308,6 +308,8 @@ function InviteSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
 
 interface SupplierDrawerProps {
   supplier: SupplierProfile | null;
