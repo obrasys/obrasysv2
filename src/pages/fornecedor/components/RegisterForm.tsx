@@ -175,7 +175,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
         frequencia_atualizacao: data.frequencia_atualizacao,
       };
 
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -184,6 +184,20 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
       });
 
       if (error) throw error;
+
+      // Upload logo if provided and we got a user id
+      if (logoFile && signUpData?.user?.id) {
+        try {
+          const ext = logoFile.name.split('.').pop()?.toLowerCase() || 'png';
+          const filePath = `${signUpData.user.id}/logo.${ext}`;
+          await supabase.storage.from('empresa-logos').upload(filePath, logoFile, { upsert: true });
+          const { data: urlData } = supabase.storage.from('empresa-logos').getPublicUrl(filePath);
+          // Update the supplier profile with the logo URL
+          await supabase.from('supplier_profiles').update({ logo_url: urlData.publicUrl }).eq('user_id', signUpData.user.id);
+        } catch (logoErr) {
+          console.warn('Logo upload failed, can be added later from profile:', logoErr);
+        }
+      }
 
       toast({
         title: "Registo efetuado com sucesso!",
