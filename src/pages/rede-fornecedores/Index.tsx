@@ -837,6 +837,11 @@ export default function RedeFornecedoresPage() {
           supplierName={reviewSupplier.trade_name || reviewSupplier.legal_name}
         />
       )}
+
+      <InviteSupplierDialog
+        open={showInvite}
+        onOpenChange={setShowInvite}
+      />
     </AppLayout>
   );
 }
