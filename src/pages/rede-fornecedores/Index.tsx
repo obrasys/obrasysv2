@@ -6,6 +6,8 @@ import {
   useCreateQuoteRequest,
   useSupplierReviews,
   useMySupplierReview,
+  useCreateSupplierInvite,
+  useSupplierInvites,
 } from "@/hooks/useSuppliers";
 import { SupplierReviewDialog } from "@/components/fornecedor/SupplierReviewDialog";
 import { Input } from "@/components/ui/input";
@@ -52,8 +54,15 @@ import {
   Send,
   MessageSquare,
   PenSquare,
+  UserPlus,
+  Copy,
+  Check,
+  Mail,
 } from "lucide-react";
 import type { SupplierProfile } from "@/types/suppliers";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 
 const DISTRICTS = [
   "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco",
