@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Save, Loader2, Building2, MapPin, Phone, Tag, Clock, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LogoUpload } from '@/components/fornecedor/LogoUpload';
 
 export default function FornecedorPerfil() {
   const { data: profile, isLoading } = useSupplierProfile();
@@ -91,6 +92,22 @@ export default function FornecedorPerfil() {
             )}
           </div>
         )}
+
+        {/* Logo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Logotipo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogoUpload
+              currentUrl={profile?.logo_url}
+              onUploaded={(url) => {
+                upsertProfile.mutate({ logo_url: url });
+              }}
+              size="lg"
+            />
+          </CardContent>
+        </Card>
 
         {/* Company info */}
         <Card>
