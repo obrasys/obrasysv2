@@ -93,6 +93,22 @@ export default function FornecedorPerfil() {
           </div>
         )}
 
+        {/* Logo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Logotipo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogoUpload
+              currentUrl={profile?.logo_url}
+              onUploaded={(url) => {
+                upsertProfile.mutate({ logo_url: url });
+              }}
+              size="lg"
+            />
+          </CardContent>
+        </Card>
+
         {/* Company info */}
         <Card>
           <CardHeader>
