@@ -89,6 +89,11 @@ export default function FornecedorDashboard() {
         </Card>
       </div>
 
+      {/* Upload de Tabela de Preços - Destaque */}
+      <div className="mb-6">
+        <PriceListUploadCard />
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Recent requests */}
         <div className="lg:col-span-2">
