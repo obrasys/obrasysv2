@@ -596,6 +596,7 @@ export default function RedeFornecedoresPage() {
   const [quoteSupplier, setQuoteSupplier] = useState<SupplierProfile | null>(null);
   const [reviewSupplier, setReviewSupplier] = useState<SupplierProfile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   const { data: categories = [] } = useSupplierCategories();
   const { data: suppliers = [], isLoading } = useDiscoverSuppliers({
