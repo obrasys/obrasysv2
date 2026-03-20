@@ -8,6 +8,7 @@ import { ClipboardList, Tag, Clock, CheckCircle2, XCircle, Eye, TrendingUp } fro
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { PriceListUploadCard } from '@/components/fornecedor/PriceListUploadCard';
 
 export default function FornecedorDashboard() {
   const navigate = useNavigate();
