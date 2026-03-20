@@ -216,6 +216,99 @@ function QuoteDialog({ supplier, open, onOpenChange }: QuoteDialogProps) {
   );
 }
 
+function InviteSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const [email, setEmail] = useState("");
+  const createInvite = useCreateSupplierInvite();
+  const { data: invites = [] } = useSupplierInvites();
+  const { toast } = useToast();
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  const handleInvite = () => {
+    if (!email.trim()) return;
+    createInvite.mutate(email, {
+      onSuccess: () => setEmail(""),
+    });
+  };
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/fornecedor/auth?invite=${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2000);
+    toast({ title: "Link copiado!" });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Convidar Fornecedor
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Convide fornecedores para se registarem na plataforma. A aprovação e certificação será feita pela equipa ObraSys.
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Email do fornecedor..."
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+            />
+            <Button onClick={handleInvite} disabled={!email.trim() || createInvite.isPending}>
+              <Mail className="w-4 h-4 mr-2" />
+              Enviar
+            </Button>
+          </div>
+
+          {invites.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Convites enviados</p>
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {invites.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg border bg-muted/30 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{inv.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(inv.created_at), "d MMM yyyy", { locale: pt })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge
+                        variant={inv.status === "accepted" ? "default" : inv.status === "expired" ? "destructive" : "secondary"}
+                        className="text-xs"
+                      >
+                        {inv.status === "accepted" ? "Aceite" : inv.status === "expired" ? "Expirado" : "Pendente"}
+                      </Badge>
+                      {inv.status === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => copyLink(inv.token)}
+                        >
+                          {copiedToken === inv.token ? (
+                            <Check className="w-3.5 h-3.5 text-primary" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+
 interface SupplierDrawerProps {
   supplier: SupplierProfile | null;
   open: boolean;
