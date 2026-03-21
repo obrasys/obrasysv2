@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileSpreadsheet, FileText, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,8 @@ export function PriceListUploadCard() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!user?.id) return;
@@ -93,6 +95,49 @@ export function PriceListUploadCard() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const doneFiles = files.filter(f => f.status === 'done');
+  const hasUploading = files.some(f => f.status === 'uploading');
+
+  const handleSubmit = async () => {
+    if (!user?.id || doneFiles.length === 0) return;
+
+    setSubmitting(true);
+    try {
+      const { data: profile } = await supabase
+        .from('supplier_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Perfil de fornecedor não encontrado');
+
+      for (const file of doneFiles) {
+        await supabase
+          .from('supplier_pricebooks')
+          .insert({
+            supplier_id: profile.id,
+            name: file.name,
+            status: 'draft' as const,
+            currency: 'EUR',
+          });
+      }
+
+      setSubmitted(true);
+      toast({
+        title: 'Tabelas enviadas com sucesso!',
+        description: `${doneFiles.length} ficheiro(s) registado(s) na base de preços.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Erro ao registar tabelas',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.03] to-transparent">
       <CardHeader className="pb-3">
@@ -105,49 +150,88 @@ export function PriceListUploadCard() {
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div
-          {...getRootProps()}
-          className={`
-            border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-            ${isDragActive
-              ? 'border-primary bg-primary/5'
-              : 'border-muted-foreground/20 hover:border-primary/40 hover:bg-muted/30'
-            }
-          `}
-        >
-          <input {...getInputProps()} />
-          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-          <p className="text-sm font-medium text-foreground">
-            {isDragActive ? 'Largue aqui...' : 'Arraste ficheiros ou clique para selecionar'}
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-2">
-            <Badge variant="secondary" className="text-xs">PDF</Badge>
-            <Badge variant="secondary" className="text-xs">XLS</Badge>
-            <Badge variant="secondary" className="text-xs">XLSX</Badge>
-            <Badge variant="secondary" className="text-xs">CSV</Badge>
+        {submitted ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
+            <div>
+              <p className="font-medium text-foreground">Tabelas registadas com sucesso!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pode gerir as suas tabelas na secção de preços.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFiles([]);
+                setSubmitted(false);
+              }}
+            >
+              Carregar mais ficheiros
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Máximo 20MB por ficheiro</p>
-        </div>
-
-        {files.length > 0 && (
-          <div className="space-y-2">
-            {files.map((file) => (
-              <div
-                key={file.name}
-                className="flex items-center gap-3 p-2 rounded-md bg-muted/50 text-sm"
-              >
-                {getFileIcon(file.type)}
-                <span className="flex-1 truncate">{file.name}</span>
-                <span className="text-xs text-muted-foreground">{formatSize(file.size)}</span>
-                {file.status === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                {file.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
-                {file.status === 'error' && <Badge variant="destructive" className="text-xs">Erro</Badge>}
-                <button onClick={() => removeFile(file.name)} className="text-muted-foreground hover:text-destructive">
-                  <X className="h-3.5 w-3.5" />
-                </button>
+        ) : (
+          <>
+            <div
+              {...getRootProps()}
+              className={`
+                border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+                ${isDragActive
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-foreground/20 hover:border-primary/40 hover:bg-muted/30'
+                }
+              `}
+            >
+              <input {...getInputProps()} />
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-sm font-medium text-foreground">
+                {isDragActive ? 'Largue aqui...' : 'Arraste ficheiros ou clique para selecionar'}
+              </p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs">PDF</Badge>
+                <Badge variant="secondary" className="text-xs">XLS</Badge>
+                <Badge variant="secondary" className="text-xs">XLSX</Badge>
+                <Badge variant="secondary" className="text-xs">CSV</Badge>
               </div>
-            ))}
-          </div>
+              <p className="text-xs text-muted-foreground mt-1">Máximo 20MB por ficheiro</p>
+            </div>
+
+            {files.length > 0 && (
+              <div className="space-y-2">
+                {files.map((file) => (
+                  <div
+                    key={file.name}
+                    className="flex items-center gap-3 p-2 rounded-md bg-muted/50 text-sm"
+                  >
+                    {getFileIcon(file.type)}
+                    <span className="flex-1 truncate">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">{formatSize(file.size)}</span>
+                    {file.status === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                    {file.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                    {file.status === 'error' && <Badge variant="destructive" className="text-xs">Erro</Badge>}
+                    <button onClick={() => removeFile(file.name)} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {doneFiles.length > 0 && !hasUploading && (
+              <Button
+                className="w-full"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Enviar {doneFiles.length} ficheiro{doneFiles.length > 1 ? 's' : ''} para a base
+              </Button>
+            )}
+          </>
         )}
 
         <Button
