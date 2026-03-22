@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,8 +29,9 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    // Download file contents from storage
-    const fileContents: string[] = [];
+    // Build multimodal content parts
+    const contentParts: any[] = [];
+    
     for (const fp of file_paths) {
       const { data: fileData, error: dlErr } = await client.storage
         .from("supplier-pricelists")
@@ -39,28 +40,48 @@ serve(async (req) => {
         console.error("Download error for", fp, dlErr);
         continue;
       }
-      // For text-based files, read as text; for PDFs, read as base64
+
       const fileName = fp.toLowerCase();
-      if (fileName.endsWith(".csv") || fileName.endsWith(".xls") || fileName.endsWith(".xlsx")) {
-        const text = await fileData.text();
-        // Take first 50k chars to avoid token limits
-        fileContents.push(`--- Ficheiro: ${fp} ---\n${text.substring(0, 50000)}`);
-      } else if (fileName.endsWith(".pdf")) {
-        // Convert PDF to base64 for AI processing
+      if (fileName.endsWith(".pdf")) {
+        // Send PDF as multimodal image_url with data URI (Gemini supports PDF natively)
         const buffer = await fileData.arrayBuffer();
         const bytes = new Uint8Array(buffer);
         let binary = "";
         for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
         const b64 = btoa(binary);
-        fileContents.push(`--- Ficheiro PDF: ${fp} (base64, primeiros 30k chars) ---\n${b64.substring(0, 30000)}`);
+        
+        contentParts.push({
+          type: "text",
+          text: `Ficheiro: ${fp}`,
+        });
+        contentParts.push({
+          type: "image_url",
+          image_url: {
+            url: `data:application/pdf;base64,${b64}`,
+          },
+        });
+      } else {
+        // CSV/XLS/XLSX - send as text (first 100k chars)
+        const text = await fileData.text();
+        contentParts.push({
+          type: "text",
+          text: `--- Ficheiro: ${fp} ---\n${text.substring(0, 100000)}`,
+        });
       }
     }
 
-    if (fileContents.length === 0) throw new Error("Nenhum ficheiro processado com sucesso");
+    if (contentParts.length === 0) throw new Error("Nenhum ficheiro processado com sucesso");
+
+    // Add the instruction as the first text part
+    contentParts.unshift({
+      type: "text",
+      text: "Analisa a seguinte tabela de preços de fornecedor e extrai TODOS os itens/artigos. Não ignores nenhuma categoria ou secção do documento. Extrai cada produto individualmente com código, nome, unidade e preço.",
+    });
 
     const systemPrompt = `Sou o Axia™, o motor de inteligência da plataforma ObraSys especializado em construção civil portuguesa.
 
-A tua tarefa é analisar a tabela de preços de um fornecedor e extrair todos os itens/artigos encontrados num formato estruturado.
+A tua tarefa é analisar a tabela de preços de um fornecedor e extrair TODOS os itens/artigos encontrados num formato estruturado.
+É CRÍTICO que extraias TODOS os itens do documento inteiro, não apenas os primeiros. Percorre TODAS as páginas e secções.
 
 Para cada item extraído, retorna:
 - item_code: código do artigo (se existir)
@@ -71,16 +92,14 @@ Para cada item extraído, retorna:
 - vat_rate: taxa de IVA se mencionada (default 23)
 - min_qty: quantidade mínima se mencionada
 - lead_time_days: prazo de entrega em dias se mencionado
-- notes: observações relevantes
+- notes: observações relevantes (incluir a categoria/secção do produto)
 
 Regras:
 - Normaliza unidades para o padrão PT: m2→m², m3→m³, un→un, ml→ml, kg→kg
 - Se o preço incluir IVA, calcula o preço sem IVA
 - Ignora cabeçalhos, totais e linhas vazias
-- Agrupa por categorias se possível
-- Extrai o máximo de itens possível`;
-
-    const userPrompt = `Analisa a seguinte tabela de preços de fornecedor e extrai todos os itens:\n\n${fileContents.join("\n\n")}`;
+- Inclui a categoria/secção na descrição ou notas de cada item
+- EXTRAI ABSOLUTAMENTE TODOS OS ITENS do documento, sem exceção`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -89,10 +108,10 @@ Regras:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user", content: contentParts },
         ],
         tools: [
           {
@@ -116,14 +135,14 @@ Regras:
                         vat_rate: { type: "number", description: "Taxa IVA" },
                         min_qty: { type: "number", description: "Quantidade mínima" },
                         lead_time_days: { type: "number", description: "Prazo entrega em dias" },
-                        notes: { type: "string", description: "Observações" },
+                        notes: { type: "string", description: "Categoria/secção e observações" },
                       },
                       required: ["item_name", "unit", "base_price"],
                     },
                   },
                   summary: {
                     type: "string",
-                    description: "Resumo da análise: total de itens encontrados, categorias identificadas, observações",
+                    description: "Resumo da análise: total de itens, categorias identificadas, observações",
                   },
                 },
                 required: ["items", "summary"],
