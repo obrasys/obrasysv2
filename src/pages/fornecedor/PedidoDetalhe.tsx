@@ -8,6 +8,7 @@ import {
   useCreateQuoteResponse,
   usePricebookItems,
   useSupplierPricebooks,
+  useSupplierItemsByCategories,
 } from '@/hooks/useSuppliers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
