@@ -51,16 +51,43 @@ export default function FornecedorPedidoDetalhe() {
   const [notes, setNotes] = useState('');
   const [deliveryDays, setDeliveryDays] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
 
   const { data: pricebookItems = [] } = usePricebookItems(selectedPricebook || undefined);
 
   const assignment: any = assignments.find((a: any) => a.id === id);
 
+  // Extract category IDs from the quote request
+  const categoryIds = assignment?.quote_requests?.quote_request_categories
+    ?.map((c: any) => c.category_id || c.supplier_categories?.id)
+    .filter(Boolean) || [];
+
+  const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
+
+  // Mark as viewed
   useEffect(() => {
     if (assignment && assignment.status === 'invited') {
       markViewed.mutate(assignment.id);
     }
   }, [assignment?.id, assignment?.status]);
+
+  // Auto-fill items from pricebook when matched items load
+  useEffect(() => {
+    if (matchedItems.length > 0 && items.length === 0 && !autoFilled && !alreadyResponded && !isDeclined) {
+      const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
+        item_name: pbItem.item_name,
+        unit: pbItem.unit || 'un',
+        qty: pbItem.min_qty || 1,
+        unit_price: Number(pbItem.base_price) || 0,
+        vat_rate: Number(pbItem.vat_rate) || 23,
+        lead_time_days: pbItem.lead_time_days || 1,
+        notes: pbItem.notes || '',
+        source_pricebook_item_id: pbItem.id,
+      }));
+      setItems(prefilled);
+      setAutoFilled(true);
+    }
+  }, [matchedItems, autoFilled]);
 
   if (!assignment) {
     return (
