@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, MapPin, Calendar, Send, XCircle, Plus, Trash2,
-  Package, CheckCircle2, Loader2
+  Package, CheckCircle2, Loader2, Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
