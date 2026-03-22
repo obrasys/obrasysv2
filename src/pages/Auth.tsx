@@ -275,6 +275,16 @@ const Auth = () => {
                   Criar conta grátis
                 </button>
               </p>
+
+              <p className="text-center text-sm text-muted-foreground">
+                É fornecedor?{" "}
+                <button
+                  onClick={() => navigate("/fornecedor/auth")}
+                  className="text-accent hover:underline font-medium"
+                >
+                  Entre aqui
+                </button>
+              </p>
             </div>
           )}
 
