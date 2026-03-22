@@ -241,6 +241,16 @@ export default function FornecedorPedidoDetalhe() {
                 </div>
               )}
 
+              {/* Auto-fill banner */}
+              {autoFilled && (
+                <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-accent flex-shrink-0" />
+                  <p className="text-sm text-accent">
+                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) importado(s) da sua tabela de preços. Revise as quantidades e preços antes de enviar.
+                  </p>
+                </div>
+              )}
+
               {/* Items table */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
