@@ -300,7 +300,8 @@ export function PriceListUploadCard() {
 
               {doneFiles.length > 0 && !hasUploading && (
                 <Button
-                  className="w-full bg-[hsl(var(--chart-4))] hover:bg-[hsl(var(--chart-4))]/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  size="lg"
                   onClick={handleAnalyze}
                   disabled={analyzing}
                 >
