@@ -73,7 +73,8 @@ export default function FornecedorPedidoDetalhe() {
 
   // Auto-fill items from pricebook when matched items load
   useEffect(() => {
-    if (matchedItems.length > 0 && items.length === 0 && !autoFilled && !alreadyResponded && !isDeclined) {
+    if (matchedItems.length > 0 && items.length === 0 && !autoFilled 
+        && assignment?.status !== 'responded' && assignment?.status !== 'declined') {
       const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
         item_name: pbItem.item_name,
         unit: pbItem.unit || 'un',
@@ -87,7 +88,7 @@ export default function FornecedorPedidoDetalhe() {
       setItems(prefilled);
       setAutoFilled(true);
     }
-  }, [matchedItems, autoFilled]);
+  }, [matchedItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
     return (
