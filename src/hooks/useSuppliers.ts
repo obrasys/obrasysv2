@@ -152,6 +152,43 @@ export function usePricebookItems(pricebookId: string | undefined) {
   });
 }
 
+/** Fetch all active pricebook items for the current supplier, optionally filtered by category IDs */
+export function useSupplierItemsByCategories(categoryIds: string[]) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['supplier-items-by-category', user?.id, categoryIds],
+    queryFn: async () => {
+      if (!user?.id || categoryIds.length === 0) return [];
+      const { data: profile } = await supabase
+        .from('supplier_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!profile) return [];
+
+      const { data: pbs } = await supabase
+        .from('supplier_pricebooks')
+        .select('id')
+        .eq('supplier_id', profile.id)
+        .eq('status', 'published');
+      if (!pbs || pbs.length === 0) return [];
+
+      const pbIds = pbs.map((p: any) => p.id);
+
+      const { data, error } = await supabase
+        .from('supplier_pricebook_items')
+        .select('*, supplier_categories(id, name, slug)')
+        .in('pricebook_id', pbIds)
+        .in('category_id', categoryIds)
+        .eq('is_active', true)
+        .order('item_name');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && categoryIds.length > 0,
+  });
+}
+
 export function useCreatePricebook() {
   const { user } = useAuth();
   const queryClient = useQueryClient();

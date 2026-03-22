@@ -8,6 +8,7 @@ import {
   useCreateQuoteResponse,
   usePricebookItems,
   useSupplierPricebooks,
+  useSupplierItemsByCategories,
 } from '@/hooks/useSuppliers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, MapPin, Calendar, Send, XCircle, Plus, Trash2,
-  Package, CheckCircle2, Loader2
+  Package, CheckCircle2, Loader2, Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -50,16 +51,44 @@ export default function FornecedorPedidoDetalhe() {
   const [notes, setNotes] = useState('');
   const [deliveryDays, setDeliveryDays] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
 
   const { data: pricebookItems = [] } = usePricebookItems(selectedPricebook || undefined);
 
   const assignment: any = assignments.find((a: any) => a.id === id);
 
+  // Extract category IDs from the quote request
+  const categoryIds = assignment?.quote_requests?.quote_request_categories
+    ?.map((c: any) => c.category_id || c.supplier_categories?.id)
+    .filter(Boolean) || [];
+
+  const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
+
+  // Mark as viewed
   useEffect(() => {
     if (assignment && assignment.status === 'invited') {
       markViewed.mutate(assignment.id);
     }
   }, [assignment?.id, assignment?.status]);
+
+  // Auto-fill items from pricebook when matched items load
+  useEffect(() => {
+    if (matchedItems.length > 0 && items.length === 0 && !autoFilled 
+        && assignment?.status !== 'responded' && assignment?.status !== 'declined') {
+      const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
+        item_name: pbItem.item_name,
+        unit: pbItem.unit || 'un',
+        qty: pbItem.min_qty || 1,
+        unit_price: Number(pbItem.base_price) || 0,
+        vat_rate: Number(pbItem.vat_rate) || 23,
+        lead_time_days: pbItem.lead_time_days || 1,
+        notes: pbItem.notes || '',
+        source_pricebook_item_id: pbItem.id,
+      }));
+      setItems(prefilled);
+      setAutoFilled(true);
+    }
+  }, [matchedItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
     return (
@@ -209,6 +238,16 @@ export default function FornecedorPedidoDetalhe() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Auto-fill banner */}
+              {autoFilled && (
+                <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-accent flex-shrink-0" />
+                  <p className="text-sm text-accent">
+                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) importado(s) da sua tabela de preços. Revise as quantidades e preços antes de enviar.
+                  </p>
                 </div>
               )}
 
