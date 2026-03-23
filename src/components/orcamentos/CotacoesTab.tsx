@@ -45,12 +45,22 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
   const [message, setMessage] = useState('');
+  const [showAllSuppliers, setShowAllSuppliers] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<{ supplierId: string; supplierName: string; quoteRequestId: string } | null>(null);
 
-  const { data: availableSuppliers = [] } = useAvailableSuppliers(selectedCategories);
+  // When showAllSuppliers is true, pass empty array to get ALL suppliers
+  const { data: availableSuppliers = [] } = useAvailableSuppliers(showAllSuppliers ? [] : selectedCategories);
 
   const toggleCategory = (id: string) => setSelectedCategories((p) => p.includes(id) ? p.filter((c) => c !== id) : [...p, id]);
   const toggleSupplier = (id: string) => setSelectedSuppliers((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
+
+  const selectAllSuppliers = () => {
+    if (selectedSuppliers.length === availableSuppliers.length) {
+      setSelectedSuppliers([]);
+    } else {
+      setSelectedSuppliers(availableSuppliers.map((s: any) => s.id));
+    }
+  };
 
   const handleSend = () => {
     createRequest.mutate({
@@ -62,7 +72,7 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
     }, {
       onSuccess: () => {
         setShowDialog(false);
-        setSelectedCategories([]); setSelectedSuppliers([]); setDeadline(''); setMessage('');
+        setSelectedCategories([]); setSelectedSuppliers([]); setDeadline(''); setMessage(''); setShowAllSuppliers(false);
       }
     });
   };
