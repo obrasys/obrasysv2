@@ -23,6 +23,7 @@ import {
   Clock,
   Loader2,
   Sparkles,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
