@@ -34,6 +34,7 @@ import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { RDOStatusBadge } from '@/components/rdos';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
 import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
+import { useNotifications } from '@/hooks/useNotifications';
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import type { ObraStatus } from '@/types/obras';
 
