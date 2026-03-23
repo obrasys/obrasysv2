@@ -249,8 +249,7 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
                   ))}
                 </div>
               )}
-              </div>
-            )}
+            </div>
 
             <div className="space-y-1">
               <Label>Prazo para receber proposta</Label>
