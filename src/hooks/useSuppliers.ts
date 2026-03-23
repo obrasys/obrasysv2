@@ -541,6 +541,25 @@ export function useCreateQuoteResponse() {
         .update({ status: 'responded', responded_at: new Date().toISOString() })
         .eq('id', quoteRequestSupplierId);
 
+      // Notify builder that a supplier responded
+      try {
+        const { data: supplierProfile } = await supabase
+          .from('supplier_profiles')
+          .select('trade_name, legal_name')
+          .eq('id', profile.id)
+          .single();
+        
+        await supabase.functions.invoke('notify-builder', {
+          body: {
+            quote_request_id: quoteRequestId,
+            supplier_name: supplierProfile?.trade_name || supplierProfile?.legal_name || 'Fornecedor',
+            total_amount: total,
+          },
+        });
+      } catch (notifyErr) {
+        console.error('notify-builder exception:', notifyErr);
+      }
+
       return resp;
     },
     onSuccess: () => {
