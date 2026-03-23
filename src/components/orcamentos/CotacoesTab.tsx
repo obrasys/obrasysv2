@@ -45,12 +45,22 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
   const [message, setMessage] = useState('');
+  const [showAllSuppliers, setShowAllSuppliers] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<{ supplierId: string; supplierName: string; quoteRequestId: string } | null>(null);
 
-  const { data: availableSuppliers = [] } = useAvailableSuppliers(selectedCategories);
+  // When showAllSuppliers is true, pass empty array to get ALL suppliers
+  const { data: availableSuppliers = [] } = useAvailableSuppliers(showAllSuppliers ? [] : selectedCategories);
 
   const toggleCategory = (id: string) => setSelectedCategories((p) => p.includes(id) ? p.filter((c) => c !== id) : [...p, id]);
   const toggleSupplier = (id: string) => setSelectedSuppliers((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
+
+  const selectAllSuppliers = () => {
+    if (selectedSuppliers.length === availableSuppliers.length) {
+      setSelectedSuppliers([]);
+    } else {
+      setSelectedSuppliers(availableSuppliers.map((s: any) => s.id));
+    }
+  };
 
   const handleSend = () => {
     createRequest.mutate({
@@ -62,7 +72,7 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
     }, {
       onSuccess: () => {
         setShowDialog(false);
-        setSelectedCategories([]); setSelectedSuppliers([]); setDeadline(''); setMessage('');
+        setSelectedCategories([]); setSelectedSuppliers([]); setDeadline(''); setMessage(''); setShowAllSuppliers(false);
       }
     });
   };
@@ -192,30 +202,54 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
               </div>
             </div>
 
-            {selectedCategories.length > 0 && (
-              <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Fornecedores disponíveis ({availableSuppliers.length})
+            <Separator />
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium">
+                  Fornecedores ({availableSuppliers.length})
                 </Label>
-                {availableSuppliers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum fornecedor certificado para estas categorias ainda.</p>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                    {availableSuppliers.map((s: any) => (
-                      <div key={s.id} className="flex items-center gap-3">
-                        <Checkbox id={`s-${s.id}`} checked={selectedSuppliers.includes(s.id)} onCheckedChange={() => toggleSupplier(s.id)} />
-                        <label htmlFor={`s-${s.id}`} className="flex items-center gap-2 cursor-pointer text-sm flex-1">
-                          <span>{s.trade_name || s.legal_name}</span>
-                          {s.is_certified && <ShieldCheck className="h-3.5 w-3.5 text-primary" />}
-                          {s.location_district && <span className="text-muted-foreground flex items-center gap-0.5"><MapPin className="h-3 w-3" />{s.location_district}</span>}
-                          <span className="ml-auto text-muted-foreground">SLA: {s.sla_response_hours}h</span>
-                        </label>
-                      </div>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-all"
+                      checked={showAllSuppliers}
+                      onCheckedChange={(checked) => {
+                        setShowAllSuppliers(!!checked);
+                        setSelectedSuppliers([]);
+                      }}
+                    />
+                    <label htmlFor="show-all" className="text-sm cursor-pointer text-muted-foreground">
+                      Todos (ignorar categorias)
+                    </label>
                   </div>
-                )}
+                  {availableSuppliers.length > 0 && (
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAllSuppliers}>
+                      {selectedSuppliers.length === availableSuppliers.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                    </Button>
+                  )}
+                </div>
               </div>
-            )}
+              {!showAllSuppliers && selectedCategories.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Selecione categorias acima ou marque "Todos" para ver fornecedores.</p>
+              ) : availableSuppliers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum fornecedor ativo encontrado.</p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                  {availableSuppliers.map((s: any) => (
+                    <div key={s.id} className="flex items-center gap-3">
+                      <Checkbox id={`s-${s.id}`} checked={selectedSuppliers.includes(s.id)} onCheckedChange={() => toggleSupplier(s.id)} />
+                      <label htmlFor={`s-${s.id}`} className="flex items-center gap-2 cursor-pointer text-sm flex-1">
+                        <span>{s.trade_name || s.legal_name}</span>
+                        {s.is_certified && <ShieldCheck className="h-3.5 w-3.5 text-primary" />}
+                        {s.location_district && <span className="text-muted-foreground flex items-center gap-0.5"><MapPin className="h-3 w-3" />{s.location_district}</span>}
+                        <span className="ml-auto text-muted-foreground">SLA: {s.sla_response_hours}h</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-1">
               <Label>Prazo para receber proposta</Label>
