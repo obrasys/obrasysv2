@@ -122,21 +122,63 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
-              {hasAlerts && (
+              {(hasAlerts || unreadCount > 0) && (
                 <span className={`absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                  errorCount > 0 ? 'bg-red-500' : 'bg-yellow-500'
+                  errorCount > 0 ? 'bg-destructive' : unreadCount > 0 ? 'bg-primary' : 'bg-yellow-500'
                 }`}>
-                  {totalAlerts > 9 ? '9+' : totalAlerts}
+                  {(totalAlerts + unreadCount) > 9 ? '9+' : totalAlerts + unreadCount}
                 </span>
               )}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-96 p-0" align="end">
-            <div className="p-3 border-b">
-              <h3 className="font-semibold">Alertas de Acompanhamento</h3>
+            <div className="p-3 border-b flex items-center justify-between">
+              <h3 className="font-semibold">Notificações</h3>
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => markAllAsRead()}>
+                  Marcar tudo como lido
+                </Button>
+              )}
             </div>
-            <div className="p-3 max-h-96 overflow-y-auto">
-              <ObraAlertsPanel maxAlerts={5} showHeader={false} compact />
+            <div className="max-h-96 overflow-y-auto">
+              {/* Quote response notifications */}
+              {notifications.length > 0 && (
+                <div className="divide-y">
+                  {notifications.slice(0, 10).map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-3 flex items-start gap-3 cursor-pointer hover:bg-muted/50 transition-colors ${
+                        !n.read ? 'bg-primary/5' : ''
+                      }`}
+                      onClick={() => {
+                        markAsRead(n.id);
+                        if (n.link) navigate(n.link);
+                      }}
+                    >
+                      <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${!n.read ? 'bg-primary' : 'bg-transparent'}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm ${!n.read ? 'font-medium' : 'text-muted-foreground'}`}>{n.title}</p>
+                        {n.message && <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(n.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Obra alerts */}
+              {hasAlerts && (
+                <div className="p-3 border-t">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Alertas de Obra</p>
+                  <ObraAlertsPanel maxAlerts={3} showHeader={false} compact />
+                </div>
+              )}
+              {!hasAlerts && notifications.length === 0 && (
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  Sem notificações
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>
