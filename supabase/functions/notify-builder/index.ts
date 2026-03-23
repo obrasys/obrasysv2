@@ -1,0 +1,87 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { quote_request_id, supplier_name, total_amount } = await req.json();
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendKey = Deno.env.get("RESEND_API_KEY")!;
+
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Get quote request with categories
+    const { data: qr } = await supabase
+      .from("quote_requests")
+      .select("*, quote_request_categories(supplier_categories(name))")
+      .eq("id", quote_request_id)
+      .single();
+
+    if (!qr) throw new Error("Quote request not found");
+
+    // Get builder email from auth
+    const { data: builderData } = await supabase.auth.admin.getUserById(qr.builder_user_id);
+    const builderEmail = builderData?.user?.email;
+    if (!builderEmail) throw new Error("Builder email not found");
+
+    // Get builder name from profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nome")
+      .eq("user_id", qr.builder_user_id)
+      .single();
+
+    const builderName = profile?.nome || "Utilizador";
+    const cats = qr.quote_request_categories?.map((c: any) => c.supplier_categories?.name).filter(Boolean).join(", ") || "Geral";
+    const portalUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/rede-fornecedores`;
+
+    const formattedTotal = total_amount
+      ? new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(total_amount)
+      : null;
+
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "ObraSys <noreply@obrasys.pt>",
+        to: [builderEmail],
+        subject: `Nova proposta recebida — ${cats}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+            <h2 style="color:#00679d;">Nova Proposta de Cotação</h2>
+            <p>Olá <strong>${builderName}</strong>,</p>
+            <p>Recebeu uma nova proposta de cotação de um fornecedor da Rede ObraSys.</p>
+            <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
+              <p><strong>Fornecedor:</strong> ${supplier_name || "Fornecedor"}</p>
+              <p><strong>Categorias:</strong> ${cats}</p>
+              ${formattedTotal ? `<p><strong>Valor total:</strong> ${formattedTotal}</p>` : ""}
+              ${qr.location_district ? `<p><strong>Local:</strong> ${qr.location_district}${qr.location_municipality ? `, ${qr.location_municipality}` : ""}</p>` : ""}
+            </div>
+            <a href="${portalUrl}" style="display:inline-block;background:#00679d;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+              Ver Proposta na Plataforma
+            </a>
+            <p style="color:#888;margin-top:24px;font-size:12px;">ObraSys — Rede de Fornecedores Certificados</p>
+          </div>
+        `,
+      }),
+    });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("notify-builder error:", err);
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
