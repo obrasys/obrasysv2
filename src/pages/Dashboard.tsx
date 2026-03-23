@@ -44,6 +44,7 @@ const Dashboard = () => {
   const { obras, isLoading: loadingObras } = useObras();
   const { rdos, recentRDOs, obrasComRDO, isLoading: loadingRDOs } = useRDOs();
   const { activeState, dismissMessage, markShown } = useEngagement();
+  const { notifications: userNotifications, markAsRead: markNotifRead } = useNotifications();
   const { 
     progress: onboardingProgress, showWelcomeModal, showChecklist, 
     showCompletionModal, setShowCompletionModal, showInactiveReminder,
