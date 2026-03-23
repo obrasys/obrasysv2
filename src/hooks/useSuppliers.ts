@@ -548,11 +548,31 @@ export function useCreateQuoteResponse() {
           .select('trade_name, legal_name')
           .eq('id', profile.id)
           .single();
+
+        const supplierName = supplierProfile?.trade_name || supplierProfile?.legal_name || 'Fornecedor';
         
+        // Get builder_user_id from the quote request
+        const { data: qrData } = await supabase
+          .from('quote_requests')
+          .select('builder_user_id')
+          .eq('id', quoteRequestId)
+          .single();
+
+        // Insert in-app notification for the builder
+        if (qrData?.builder_user_id) {
+          await supabase.from('user_notifications').insert({
+            user_id: qrData.builder_user_id,
+            type: 'cotacao_respondida',
+            title: `${supplierName} respondeu à sua cotação`,
+            message: `Valor total: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(total)}`,
+            link: '/rede-fornecedores',
+          });
+        }
+
         await supabase.functions.invoke('notify-builder', {
           body: {
             quote_request_id: quoteRequestId,
-            supplier_name: supplierProfile?.trade_name || supplierProfile?.legal_name || 'Fornecedor',
+            supplier_name: supplierName,
             total_amount: total,
           },
         });
