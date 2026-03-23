@@ -297,6 +297,39 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Quote Response Notifications */}
+        {userNotifications.filter(n => !n.read).length > 0 && (
+          <Card className="border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                Cotações Respondidas
+                <Badge className="bg-primary text-primary-foreground ml-auto">
+                  {userNotifications.filter(n => !n.read).length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {userNotifications.filter(n => !n.read).slice(0, 5).map((n) => (
+                <div
+                  key={n.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    markNotifRead(n.id);
+                    if (n.link) navigate(n.link);
+                  }}
+                >
+                  <div>
+                    <p className="text-sm font-medium">{n.title}</p>
+                    {n.message && <p className="text-xs text-muted-foreground">{n.message}</p>}
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Alerts Section */}
         <ObraAlertsPanel maxAlerts={4} />
 
