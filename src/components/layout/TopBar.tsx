@@ -50,6 +50,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   const navigate = useNavigate();
   const { profile, signOut, trialDaysRemaining } = useAuth();
   const { totalAlerts, errorCount, hasAlerts } = useObraAlerts();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
