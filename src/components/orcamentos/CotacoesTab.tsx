@@ -202,28 +202,53 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
               </div>
             </div>
 
-            {selectedCategories.length > 0 && (
-              <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Fornecedores disponíveis ({availableSuppliers.length})
+            <Separator />
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium">
+                  Fornecedores ({availableSuppliers.length})
                 </Label>
-                {availableSuppliers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum fornecedor certificado para estas categorias ainda.</p>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                    {availableSuppliers.map((s: any) => (
-                      <div key={s.id} className="flex items-center gap-3">
-                        <Checkbox id={`s-${s.id}`} checked={selectedSuppliers.includes(s.id)} onCheckedChange={() => toggleSupplier(s.id)} />
-                        <label htmlFor={`s-${s.id}`} className="flex items-center gap-2 cursor-pointer text-sm flex-1">
-                          <span>{s.trade_name || s.legal_name}</span>
-                          {s.is_certified && <ShieldCheck className="h-3.5 w-3.5 text-primary" />}
-                          {s.location_district && <span className="text-muted-foreground flex items-center gap-0.5"><MapPin className="h-3 w-3" />{s.location_district}</span>}
-                          <span className="ml-auto text-muted-foreground">SLA: {s.sla_response_hours}h</span>
-                        </label>
-                      </div>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-all"
+                      checked={showAllSuppliers}
+                      onCheckedChange={(checked) => {
+                        setShowAllSuppliers(!!checked);
+                        setSelectedSuppliers([]);
+                      }}
+                    />
+                    <label htmlFor="show-all" className="text-sm cursor-pointer text-muted-foreground">
+                      Todos (ignorar categorias)
+                    </label>
                   </div>
-                )}
+                  {availableSuppliers.length > 0 && (
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAllSuppliers}>
+                      {selectedSuppliers.length === availableSuppliers.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {!showAllSuppliers && selectedCategories.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Selecione categorias acima ou marque "Todos" para ver fornecedores.</p>
+              ) : availableSuppliers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum fornecedor ativo encontrado.</p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                  {availableSuppliers.map((s: any) => (
+                    <div key={s.id} className="flex items-center gap-3">
+                      <Checkbox id={`s-${s.id}`} checked={selectedSuppliers.includes(s.id)} onCheckedChange={() => toggleSupplier(s.id)} />
+                      <label htmlFor={`s-${s.id}`} className="flex items-center gap-2 cursor-pointer text-sm flex-1">
+                        <span>{s.trade_name || s.legal_name}</span>
+                        {s.is_certified && <ShieldCheck className="h-3.5 w-3.5 text-primary" />}
+                        {s.location_district && <span className="text-muted-foreground flex items-center gap-0.5"><MapPin className="h-3 w-3" />{s.location_district}</span>}
+                        <span className="ml-auto text-muted-foreground">SLA: {s.sla_response_hours}h</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
             )}
 
