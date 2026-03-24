@@ -9,6 +9,7 @@ import {
   usePricebookItems,
   useSupplierPricebooks,
   useSupplierItemsByCategories,
+  useSupplierProfile,
 } from '@/hooks/useSuppliers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,11 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, MapPin, Calendar, Send, XCircle, Plus, Trash2,
-  Package, CheckCircle2, Loader2, Sparkles
+  Package, CheckCircle2, Loader2, Sparkles, Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { useEffect } from 'react';
+import { generateCotacaoPdf } from '@/lib/cotacao-pdf';
 
 interface ResponseItem {
   item_name: string;
@@ -45,7 +47,7 @@ export default function FornecedorPedidoDetalhe() {
   const declineQuote = useDeclineQuote();
   const createResponse = useCreateQuoteResponse();
   const { data: pricebooks = [] } = useSupplierPricebooks();
-
+  const { data: profile } = useSupplierProfile();
   const [selectedPricebook, setSelectedPricebook] = useState<string>('');
   const [items, setItems] = useState<ResponseItem[]>([]);
   const [notes, setNotes] = useState('');
@@ -129,6 +131,27 @@ export default function FornecedorPedidoDetalhe() {
   };
 
   const total = items.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
+
+  const handleDownloadPdf = () => {
+    const location = [qr?.location_district, qr?.location_municipality].filter(Boolean).join(', ');
+    const deadline = qr?.requested_deadline
+      ? format(new Date(qr.requested_deadline), "d 'de' MMMM yyyy", { locale: pt })
+      : undefined;
+    
+    const pdfDoc = generateCotacaoPdf({
+      categories: cats,
+      location: location || undefined,
+      deadline,
+      message: qr?.message_to_suppliers || undefined,
+      items,
+      notes,
+      estimatedDeliveryDays: deliveryDays ? parseInt(deliveryDays) : undefined,
+      supplierName: profile?.trade_name || profile?.legal_name || 'Fornecedor',
+      supplierNif: profile?.nif || undefined,
+      date: format(new Date(), "dd/MM/yyyy", { locale: pt }),
+    });
+    pdfDoc.save(`cotacao_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  };
 
   const handleSubmit = () => {
     if (items.length === 0) return;
@@ -351,6 +374,14 @@ export default function FornecedorPedidoDetalhe() {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={items.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar PDF
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={handleDecline}
                   disabled={declineQuote.isPending}
                   className="text-destructive border-destructive/30 hover:bg-destructive/10"
@@ -364,9 +395,15 @@ export default function FornecedorPedidoDetalhe() {
         )}
 
         {alreadyResponded && (
-          <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
-            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm font-medium">Proposta enviada com sucesso. O construtor foi notificado.</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
+              <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+              <p className="text-sm font-medium">Proposta enviada com sucesso. O construtor foi notificado.</p>
+            </div>
+            <Button variant="outline" onClick={handleDownloadPdf} disabled={items.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar Proposta em PDF
+            </Button>
           </div>
         )}
       </div>

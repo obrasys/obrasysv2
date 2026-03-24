@@ -4,7 +4,8 @@ import { useSupplierQuoteRequests } from '@/hooks/useSuppliers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, Tag, Clock, CheckCircle2, XCircle, Eye, TrendingUp } from 'lucide-react';
+import { KpiCard } from '@/components/relatorios/KpiCard';
+import { ClipboardList, Tag, Clock, CheckCircle2, TrendingUp, Eye, BarChart3, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -42,54 +43,44 @@ export default function FornecedorDashboard() {
   return (
     <SupplierLayout title="Dashboard" subtitle="Visão geral da sua atividade">
       {profile?.status === 'pending' && (
-        <div className="mb-6 p-4 bg-accent/10 border border-accent/20 rounded-lg text-sm text-accent">
-          ⏳ A sua conta está a aguardar validação pela equipa ObraSys. Poderá receber pedidos assim que for aprovada.
+        <div className="mb-6 p-4 bg-accent/10 border border-accent/20 rounded-lg text-sm text-accent flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          A sua conta está a aguardar validação pela equipa ObraSys. Poderá receber pedidos assim que for aprovada.
         </div>
       )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Pedidos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Novos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-accent">{newCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" /> Respondidos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{respondedCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" /> Taxa Resposta
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{responseRate}%</div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Total Pedidos"
+          value={total}
+          icon={ClipboardList}
+          description="Pedidos recebidos"
+        />
+        <KpiCard
+          title="Novos"
+          value={newCount}
+          icon={Clock}
+          description="Aguardam resposta"
+          iconClassName="bg-accent/10"
+        />
+        <KpiCard
+          title="Respondidos"
+          value={respondedCount}
+          icon={CheckCircle2}
+          description={`${declinedCount} recusados`}
+          iconClassName="bg-primary/10"
+        />
+        <KpiCard
+          title="Taxa Resposta"
+          value={`${responseRate}%`}
+          icon={TrendingUp}
+          description={`${viewedCount} visualizados`}
+          iconClassName="bg-green-500/10"
+        />
       </div>
 
-      {/* Upload de Tabela de Preços - Destaque */}
+      {/* Upload de Tabela de Preços */}
       <div className="mb-6">
         <PriceListUploadCard />
       </div>
@@ -151,7 +142,7 @@ export default function FornecedorDashboard() {
           </Card>
         </div>
 
-        {/* Quick actions */}
+        {/* Quick actions & profile */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -173,26 +164,34 @@ export default function FornecedorDashboard() {
             </CardContent>
           </Card>
 
-          {/* Profile status */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Estado do Perfil</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Resumo do Perfil
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Estado</span>
                 <Badge variant={profile?.status === 'active' ? 'default' : 'secondary'}>
                   {profile?.status === 'active' ? 'Ativo' : profile?.status === 'pending' ? 'Pendente' : 'Suspenso'}
                 </Badge>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Certificado</span>
                 <span>{profile?.is_certified ? '✅ Sim' : '❌ Não'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">SLA Resposta</span>
-                <span>{profile?.sla_response_hours ?? 48}h</span>
+                <span className="font-medium">{profile?.sla_response_hours ?? 48}h</span>
               </div>
+              {profile?.rating_avg !== undefined && profile?.rating_avg > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Avaliação</span>
+                  <span className="font-medium">⭐ {profile.rating_avg.toFixed(1)} ({profile.rating_count})</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
