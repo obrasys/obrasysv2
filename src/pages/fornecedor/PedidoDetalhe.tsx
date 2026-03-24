@@ -251,6 +251,38 @@ export default function FornecedorPedidoDetalhe() {
                 <p className="text-sm text-muted-foreground">{qr.message_to_suppliers}</p>
               </div>
             )}
+
+
+            {/* Budget items requested */}
+            {budgetItems.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Artigos do orçamento solicitados</p>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        {budgetItems.some((bi: any) => bi.capitulo) && <th className="text-left p-2 font-medium">Capítulo</th>}
+                        {budgetItems.some((bi: any) => bi.codigo) && <th className="text-left p-2 font-medium">Código</th>}
+                        <th className="text-left p-2 font-medium">Descrição</th>
+                        <th className="text-center p-2 font-medium">Un.</th>
+                        <th className="text-right p-2 font-medium">Qtd</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {budgetItems.map((bi: any) => (
+                        <tr key={bi.id} className="border-t">
+                          {budgetItems.some((b: any) => b.capitulo) && <td className="p-2 text-muted-foreground">{bi.capitulo || '—'}</td>}
+                          {budgetItems.some((b: any) => b.codigo) && <td className="p-2 text-muted-foreground">{bi.codigo || '—'}</td>}
+                          <td className="p-2">{bi.descricao}</td>
+                          <td className="p-2 text-center">{bi.unidade}</td>
+                          <td className="p-2 text-right">{Number(bi.quantidade).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
