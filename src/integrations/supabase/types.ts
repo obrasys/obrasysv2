@@ -3814,6 +3814,57 @@ export type Database = {
           },
         ]
       }
+      quote_request_items: {
+        Row: {
+          artigo_orcamento_id: string | null
+          capitulo: string | null
+          codigo: string | null
+          created_at: string
+          descricao: string
+          id: string
+          quantidade: number
+          quote_request_id: string
+          unidade: string
+        }
+        Insert: {
+          artigo_orcamento_id?: string | null
+          capitulo?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          quantidade?: number
+          quote_request_id: string
+          unidade?: string
+        }
+        Update: {
+          artigo_orcamento_id?: string | null
+          capitulo?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          quantidade?: number
+          quote_request_id?: string
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_request_items_artigo_orcamento_id_fkey"
+            columns: ["artigo_orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "artigos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_request_items_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_request_suppliers: {
         Row: {
           created_at: string
