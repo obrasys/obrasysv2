@@ -47,7 +47,7 @@ export default function FornecedorPedidoDetalhe() {
   const declineQuote = useDeclineQuote();
   const createResponse = useCreateQuoteResponse();
   const { data: pricebooks = [] } = useSupplierPricebooks();
-
+  const { data: profile } = useSupplierProfile();
   const [selectedPricebook, setSelectedPricebook] = useState<string>('');
   const [items, setItems] = useState<ResponseItem[]>([]);
   const [notes, setNotes] = useState('');
