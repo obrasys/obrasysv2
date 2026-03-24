@@ -374,6 +374,14 @@ export default function FornecedorPedidoDetalhe() {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={items.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar PDF
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={handleDecline}
                   disabled={declineQuote.isPending}
                   className="text-destructive border-destructive/30 hover:bg-destructive/10"
@@ -387,9 +395,15 @@ export default function FornecedorPedidoDetalhe() {
         )}
 
         {alreadyResponded && (
-          <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
-            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-            <p className="text-sm font-medium">Proposta enviada com sucesso. O construtor foi notificado.</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
+              <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+              <p className="text-sm font-medium">Proposta enviada com sucesso. O construtor foi notificado.</p>
+            </div>
+            <Button variant="outline" onClick={handleDownloadPdf} disabled={items.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar Proposta em PDF
+            </Button>
           </div>
         )}
       </div>
