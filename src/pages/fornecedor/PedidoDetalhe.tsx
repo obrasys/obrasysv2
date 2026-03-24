@@ -64,6 +64,9 @@ export default function FornecedorPedidoDetalhe() {
     ?.map((c: any) => c.category_id || c.supplier_categories?.id)
     .filter(Boolean) || [];
 
+  // Budget items sent with the quote request
+  const budgetItems = assignment?.quote_requests?.quote_request_items || [];
+
   const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
 
   // Mark as viewed
@@ -73,24 +76,52 @@ export default function FornecedorPedidoDetalhe() {
     }
   }, [assignment?.id, assignment?.status]);
 
-  // Auto-fill items from pricebook when matched items load
+  // Auto-fill: use budget items and match prices from supplier pricebook
   useEffect(() => {
-    if (matchedItems.length > 0 && items.length === 0 && !autoFilled 
+    if (items.length === 0 && !autoFilled 
         && assignment?.status !== 'responded' && assignment?.status !== 'declined') {
-      const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
-        item_name: pbItem.item_name,
-        unit: pbItem.unit || 'un',
-        qty: pbItem.min_qty || 1,
-        unit_price: Number(pbItem.base_price) || 0,
-        vat_rate: Number(pbItem.vat_rate) || 23,
-        lead_time_days: pbItem.lead_time_days || 1,
-        notes: pbItem.notes || '',
-        source_pricebook_item_id: pbItem.id,
-      }));
-      setItems(prefilled);
-      setAutoFilled(true);
+      
+      if (budgetItems.length > 0) {
+        // We have budget items — use them and try to match prices from supplier's pricebook
+        const prefilled: ResponseItem[] = budgetItems.map((bi: any) => {
+          // Try to find a matching pricebook item by name similarity
+          const normalise = (s: string) => s.toLowerCase().replace(/[^a-záàâãéèêíïóôõúç\w\s]/g, '').trim();
+          const biNorm = normalise(bi.descricao);
+          const match = matchedItems.find((pb: any) => {
+            const pbNorm = normalise(pb.item_name);
+            return pbNorm === biNorm || pbNorm.includes(biNorm) || biNorm.includes(pbNorm);
+          });
+
+          return {
+            item_name: bi.descricao,
+            unit: bi.unidade || 'un',
+            qty: Number(bi.quantidade) || 1,
+            unit_price: match ? Number(match.base_price) : 0,
+            vat_rate: match ? Number(match.vat_rate) : 23,
+            lead_time_days: match?.lead_time_days || 1,
+            notes: match ? `Preço da tabela: ${match.item_name}` : '',
+            source_pricebook_item_id: match?.id || undefined,
+          };
+        });
+        setItems(prefilled);
+        setAutoFilled(true);
+      } else if (matchedItems.length > 0) {
+        // Fallback: no budget items, use pricebook items by category
+        const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
+          item_name: pbItem.item_name,
+          unit: pbItem.unit || 'un',
+          qty: pbItem.min_qty || 1,
+          unit_price: Number(pbItem.base_price) || 0,
+          vat_rate: Number(pbItem.vat_rate) || 23,
+          lead_time_days: pbItem.lead_time_days || 1,
+          notes: pbItem.notes || '',
+          source_pricebook_item_id: pbItem.id,
+        }));
+        setItems(prefilled);
+        setAutoFilled(true);
+      }
     }
-  }, [matchedItems, autoFilled, assignment?.status]);
+  }, [matchedItems, budgetItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
     return (
