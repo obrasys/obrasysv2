@@ -48,12 +48,9 @@ export function SupplierLayout({ children, title, subtitle }: SupplierLayoutProp
     <>
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <Store className="h-5 w-5 text-accent" />
-          <div>
-            <img src={logo} alt="ObraSys" className="h-6 w-auto brightness-0 invert" />
-            <p className="text-[10px] text-sidebar-foreground/50 mt-0.5">Portal Fornecedor</p>
-          </div>
+        <div>
+          <img src={logo} alt="ObraSys" className="h-6 w-auto brightness-0 invert" />
+          <p className="text-[10px] text-sidebar-foreground/50 mt-0.5">Portal Fornecedor</p>
         </div>
       </div>
 
