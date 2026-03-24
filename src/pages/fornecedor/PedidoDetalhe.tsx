@@ -9,6 +9,7 @@ import {
   usePricebookItems,
   useSupplierPricebooks,
   useSupplierItemsByCategories,
+  useSupplierProfile,
 } from '@/hooks/useSuppliers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,11 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, MapPin, Calendar, Send, XCircle, Plus, Trash2,
-  Package, CheckCircle2, Loader2, Sparkles
+  Package, CheckCircle2, Loader2, Sparkles, Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { useEffect } from 'react';
+import { generateCotacaoPdf } from '@/lib/cotacao-pdf';
 
 interface ResponseItem {
   item_name: string;
