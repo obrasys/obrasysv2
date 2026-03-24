@@ -11,7 +11,6 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Store,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useState } from 'react';
