@@ -332,7 +332,7 @@ export default function FornecedorPedidoDetalhe() {
                 <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
                   <Sparkles className="h-5 w-5 text-accent flex-shrink-0" />
                   <p className="text-sm text-accent">
-                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) importado(s) da sua tabela de preços. Revise as quantidades e preços antes de enviar.
+                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) {budgetItems.length > 0 ? 'do orçamento importados com preços da sua tabela' : 'importado(s) da sua tabela de preços'}. Revise os valores antes de enviar.
                   </p>
                 </div>
               )}
