@@ -449,7 +449,8 @@ export function useSupplierQuoteRequests() {
           quote_requests(
             id, location_district, location_municipality, requested_deadline,
             message_to_suppliers, status, created_at,
-            quote_request_categories(supplier_categories(id, name, slug))
+            quote_request_categories(supplier_categories(id, name, slug)),
+            quote_request_items(id, descricao, unidade, quantidade, codigo, capitulo)
           )
         `)
         .eq('supplier_id', profile.id)
