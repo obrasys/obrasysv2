@@ -132,6 +132,27 @@ export default function FornecedorPedidoDetalhe() {
 
   const total = items.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
 
+  const handleDownloadPdf = () => {
+    const location = [qr?.location_district, qr?.location_municipality].filter(Boolean).join(', ');
+    const deadline = qr?.requested_deadline
+      ? format(new Date(qr.requested_deadline), "d 'de' MMMM yyyy", { locale: pt })
+      : undefined;
+    
+    const pdfDoc = generateCotacaoPdf({
+      categories: cats,
+      location: location || undefined,
+      deadline,
+      message: qr?.message_to_suppliers || undefined,
+      items,
+      notes,
+      estimatedDeliveryDays: deliveryDays ? parseInt(deliveryDays) : undefined,
+      supplierName: profile?.trade_name || profile?.legal_name || 'Fornecedor',
+      supplierNif: profile?.nif || undefined,
+      date: format(new Date(), "dd/MM/yyyy", { locale: pt }),
+    });
+    pdfDoc.save(`cotacao_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  };
+
   const handleSubmit = () => {
     if (items.length === 0) return;
     createResponse.mutate({
