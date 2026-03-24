@@ -378,6 +378,31 @@ export function useCreateQuoteRequest() {
         );
       }
 
+      // Copy budget items (without prices) if budgetId is provided
+      if (budgetId) {
+        const { data: capitulos } = await supabase
+          .from('capitulos_orcamento')
+          .select('id, titulo, artigos_orcamento(id, descricao, unidade, quantidade, codigo)')
+          .eq('orcamento_id', budgetId);
+
+        if (capitulos && capitulos.length > 0) {
+          const items = capitulos.flatMap((cap: any) =>
+            (cap.artigos_orcamento || []).map((art: any) => ({
+              quote_request_id: qr.id,
+              artigo_orcamento_id: art.id,
+              descricao: art.descricao,
+              unidade: art.unidade || 'un',
+              quantidade: art.quantidade || 1,
+              codigo: art.codigo || null,
+              capitulo: cap.titulo || null,
+            }))
+          );
+          if (items.length > 0) {
+            await supabase.from('quote_request_items').insert(items);
+          }
+        }
+      }
+
       // Trigger notification edge function
       try {
         const { error: notifyError } = await supabase.functions.invoke('notify-supplier', {
@@ -424,7 +449,8 @@ export function useSupplierQuoteRequests() {
           quote_requests(
             id, location_district, location_municipality, requested_deadline,
             message_to_suppliers, status, created_at,
-            quote_request_categories(supplier_categories(id, name, slug))
+            quote_request_categories(supplier_categories(id, name, slug)),
+            quote_request_items(id, descricao, unidade, quantidade, codigo, capitulo)
           )
         `)
         .eq('supplier_id', profile.id)

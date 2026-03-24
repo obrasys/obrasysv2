@@ -64,6 +64,9 @@ export default function FornecedorPedidoDetalhe() {
     ?.map((c: any) => c.category_id || c.supplier_categories?.id)
     .filter(Boolean) || [];
 
+  // Budget items sent with the quote request
+  const budgetItems = assignment?.quote_requests?.quote_request_items || [];
+
   const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
 
   // Mark as viewed
@@ -73,24 +76,52 @@ export default function FornecedorPedidoDetalhe() {
     }
   }, [assignment?.id, assignment?.status]);
 
-  // Auto-fill items from pricebook when matched items load
+  // Auto-fill: use budget items and match prices from supplier pricebook
   useEffect(() => {
-    if (matchedItems.length > 0 && items.length === 0 && !autoFilled 
+    if (items.length === 0 && !autoFilled 
         && assignment?.status !== 'responded' && assignment?.status !== 'declined') {
-      const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
-        item_name: pbItem.item_name,
-        unit: pbItem.unit || 'un',
-        qty: pbItem.min_qty || 1,
-        unit_price: Number(pbItem.base_price) || 0,
-        vat_rate: Number(pbItem.vat_rate) || 23,
-        lead_time_days: pbItem.lead_time_days || 1,
-        notes: pbItem.notes || '',
-        source_pricebook_item_id: pbItem.id,
-      }));
-      setItems(prefilled);
-      setAutoFilled(true);
+      
+      if (budgetItems.length > 0) {
+        // We have budget items — use them and try to match prices from supplier's pricebook
+        const prefilled: ResponseItem[] = budgetItems.map((bi: any) => {
+          // Try to find a matching pricebook item by name similarity
+          const normalise = (s: string) => s.toLowerCase().replace(/[^a-záàâãéèêíïóôõúç\w\s]/g, '').trim();
+          const biNorm = normalise(bi.descricao);
+          const match = matchedItems.find((pb: any) => {
+            const pbNorm = normalise(pb.item_name);
+            return pbNorm === biNorm || pbNorm.includes(biNorm) || biNorm.includes(pbNorm);
+          });
+
+          return {
+            item_name: bi.descricao,
+            unit: bi.unidade || 'un',
+            qty: Number(bi.quantidade) || 1,
+            unit_price: match ? Number(match.base_price) : 0,
+            vat_rate: match ? Number(match.vat_rate) : 23,
+            lead_time_days: match?.lead_time_days || 1,
+            notes: match ? `Preço da tabela: ${match.item_name}` : '',
+            source_pricebook_item_id: match?.id || undefined,
+          };
+        });
+        setItems(prefilled);
+        setAutoFilled(true);
+      } else if (matchedItems.length > 0) {
+        // Fallback: no budget items, use pricebook items by category
+        const prefilled: ResponseItem[] = matchedItems.map((pbItem: any) => ({
+          item_name: pbItem.item_name,
+          unit: pbItem.unit || 'un',
+          qty: pbItem.min_qty || 1,
+          unit_price: Number(pbItem.base_price) || 0,
+          vat_rate: Number(pbItem.vat_rate) || 23,
+          lead_time_days: pbItem.lead_time_days || 1,
+          notes: pbItem.notes || '',
+          source_pricebook_item_id: pbItem.id,
+        }));
+        setItems(prefilled);
+        setAutoFilled(true);
+      }
     }
-  }, [matchedItems, autoFilled, assignment?.status]);
+  }, [matchedItems, budgetItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
     return (
@@ -220,6 +251,38 @@ export default function FornecedorPedidoDetalhe() {
                 <p className="text-sm text-muted-foreground">{qr.message_to_suppliers}</p>
               </div>
             )}
+
+
+            {/* Budget items requested */}
+            {budgetItems.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Artigos do orçamento solicitados</p>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        {budgetItems.some((bi: any) => bi.capitulo) && <th className="text-left p-2 font-medium">Capítulo</th>}
+                        {budgetItems.some((bi: any) => bi.codigo) && <th className="text-left p-2 font-medium">Código</th>}
+                        <th className="text-left p-2 font-medium">Descrição</th>
+                        <th className="text-center p-2 font-medium">Un.</th>
+                        <th className="text-right p-2 font-medium">Qtd</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {budgetItems.map((bi: any) => (
+                        <tr key={bi.id} className="border-t">
+                          {budgetItems.some((b: any) => b.capitulo) && <td className="p-2 text-muted-foreground">{bi.capitulo || '—'}</td>}
+                          {budgetItems.some((b: any) => b.codigo) && <td className="p-2 text-muted-foreground">{bi.codigo || '—'}</td>}
+                          <td className="p-2">{bi.descricao}</td>
+                          <td className="p-2 text-center">{bi.unidade}</td>
+                          <td className="p-2 text-right">{Number(bi.quantidade).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -269,7 +332,7 @@ export default function FornecedorPedidoDetalhe() {
                 <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
                   <Sparkles className="h-5 w-5 text-accent flex-shrink-0" />
                   <p className="text-sm text-accent">
-                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) importado(s) da sua tabela de preços. Revise as quantidades e preços antes de enviar.
+                    <strong>Preenchimento automático:</strong> {items.length} artigo(s) {budgetItems.length > 0 ? 'do orçamento importados com preços da sua tabela' : 'importado(s) da sua tabela de preços'}. Revise os valores antes de enviar.
                   </p>
                 </div>
               )}
