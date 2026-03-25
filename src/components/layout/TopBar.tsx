@@ -247,9 +247,62 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   return (
-    <>
-      <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
-        {MAIN_NAV_ITEMS.map((item) => {
+    <nav className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
+            {group.label}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => go(item.href)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    active
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {isSuperAdmin && (
+        <div>
+          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
+            Administração
+          </p>
+          <div className="space-y-0.5">
+            {ADMIN_NAV_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => go(item.href)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    active
+                      ? 'bg-primary/20 text-primary font-semibold'
+                      : 'text-sidebar-foreground/70 hover:bg-primary/10 hover:text-primary'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </nav>
+  );
           const active = isActive(item.href);
           return (
             <button
