@@ -421,10 +421,12 @@ export default function EditarOrcamentoPage() {
                      </div>
                      {localMargemLucro !== null && localMargemLucro !== orcamento.margem_lucro && (
                        <Button
-                         onClick={async () => {
-                           await updateOrcamento.mutateAsync({ id: orcamento.id, margem_lucro: localMargemLucro });
-                           setLocalMargemLucro(null);
-                         }}
+                          onClick={async () => {
+                            const savedValue = localMargemLucro;
+                            await updateOrcamento.mutateAsync({ id: orcamento.id, margem_lucro: localMargemLucro });
+                            // Keep local value until query refetch updates orcamento.margem_lucro
+                            setLocalMargemLucro(savedValue);
+                          }}
                          disabled={updateOrcamento.isPending}
                          className="w-full"
                        >
