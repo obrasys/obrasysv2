@@ -312,10 +312,57 @@ export default function AxiaPage() {
           ))}
         </div>
 
-        {/* ═══ 1. PERGUNTAS RÁPIDAS ═══ */}
+        {/* ═══ 1. PERGUNTAS RÁPIDAS (OPERACIONAL) ═══ */}
         <Section icon={MessageSquare} title="Perguntas Rápidas" description="Faça perguntas sobre os seus dados operacionais"
           accentClass="bg-primary/10 text-primary">
           <div className="space-y-3">
+            {/* Chat messages */}
+            {chatMessages.length > 0 && (
+              <ScrollArea className="max-h-[360px] pr-2">
+                <div className="space-y-3">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.role === 'assistant' && (
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Bot className="w-4 h-4 text-primary" />
+                        </div>
+                      )}
+                      <div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}>
+                        {msg.role === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1.5 [&>ul]:mt-1 [&>ol]:mt-1">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p>{msg.content}</p>
+                        )}
+                      </div>
+                      {msg.role === 'user' && (
+                        <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isStreaming && chatMessages[chatMessages.length - 1]?.role === 'user' && (
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Bot className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="bg-muted rounded-xl px-3.5 py-2.5">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+              </ScrollArea>
+            )}
+
+            {/* Input */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -323,24 +370,36 @@ export default function AxiaPage() {
                   placeholder="Pergunte algo à Axia..."
                   value={question}
                   onChange={e => setQuestion(e.target.value)}
-                  className="pl-10 pr-10"
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  className="pl-10"
+                  disabled={isStreaming}
                 />
               </div>
-              <Button size="icon" className="shrink-0">
-                <Send className="w-4 h-4" />
+              {chatMessages.length > 0 && (
+                <Button variant="outline" size="icon" className="shrink-0" onClick={() => setChatMessages([])}
+                  disabled={isStreaming} title="Limpar conversa">
+                  <Eraser className="w-4 h-4" />
+                </Button>
+              )}
+              <Button size="icon" className="shrink-0" onClick={() => handleSend()} disabled={isStreaming || !question.trim()}>
+                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_QUESTIONS.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => setQuestion(q)}
-                  className="text-xs px-3 py-1.5 rounded-full border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+
+            {/* Quick question chips — hide when chat has messages */}
+            {chatMessages.length === 0 && (
+              <div className="flex flex-wrap gap-2">
+                {QUICK_QUESTIONS.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSend(q)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </Section>
 
