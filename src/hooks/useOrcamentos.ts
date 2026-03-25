@@ -118,9 +118,10 @@ export function useOrcamentos() {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Orçamento não encontrado');
       return data;
     },
     onSuccess: () => {
@@ -179,9 +180,10 @@ export function useOrcamentos() {
         .from('orcamentos')
         .select('*, obra:obras(id)')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) throw fetchError;
+      if (!orcamento) throw new Error('Orçamento não encontrado');
 
       // Se status é 'adjudicado' e não tem obra, criar automaticamente
       if (status === 'adjudicado' && !orcamento.obra_id) {
@@ -208,9 +210,10 @@ export function useOrcamentos() {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Orçamento não encontrado');
 
       // If adjudicado, trigger client portal access creation
       if (status === 'adjudicado') {
