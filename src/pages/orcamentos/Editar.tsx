@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
+import { useClientes } from '@/hooks/useClientes';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
 import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
