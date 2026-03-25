@@ -31,8 +31,8 @@ export function Sidebar() {
         </a>
       </div>
 
-      {/* Navigation — no scroll */}
-      <nav className="flex-1 px-3 space-y-4">
+      {/* Navigation — with scroll */}
+      <nav className="flex-1 overflow-y-auto px-3 space-y-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             <p className="px-2 mb-1 text-[9px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.12em]">
