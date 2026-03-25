@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Loader2, AlertTriangle, TrendingDown, PackageMinus, CheckCircle, XCircle,
   Clock, Brain, Zap, MessageSquare, ShieldAlert, CalendarClock, Search as SearchIcon,
@@ -184,8 +183,12 @@ export default function AxiaPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [chatMessages]);
 
   const handleSend = useCallback(async (text?: string) => {
@@ -318,8 +321,7 @@ export default function AxiaPage() {
           <div className="space-y-3">
             {/* Chat messages */}
             {chatMessages.length > 0 && (
-              <ScrollArea className="max-h-[360px] pr-2">
-                <div className="space-y-3">
+              <div ref={chatContainerRef} className="max-h-[360px] overflow-y-auto pr-2 space-y-3">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       {msg.role === 'assistant' && (
@@ -357,9 +359,7 @@ export default function AxiaPage() {
                       </div>
                     </div>
                   )}
-                  <div ref={chatEndRef} />
-                </div>
-              </ScrollArea>
+              </div>
             )}
 
             {/* Input */}
