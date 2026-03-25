@@ -32,7 +32,7 @@ const Dashboard = () => {
   const { obras, isLoading: loadingObras } = useObras();
   const { rdos, isLoading: loadingRDOs } = useRDOs();
   const { orcamentos, isLoading: loadingOrcamentos } = useOrcamentos();
-  const { tarefas, isLoadingTarefas } = useTarefas();
+  const { tarefas, isLoading: loadingTarefas } = useTarefas();
   const { membros, loading: loadingMembros } = useEquipaMembros();
   const { activeState, dismissMessage } = useEngagement();
   const { notifications: userNotifications, markAsRead: markNotifRead } = useNotifications();
