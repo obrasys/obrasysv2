@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Loader2, AlertTriangle, TrendingDown, PackageMinus, CheckCircle, XCircle,
   Clock, Brain, Zap, MessageSquare, ShieldAlert, CalendarClock, Search as SearchIcon,
