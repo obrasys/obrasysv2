@@ -23,7 +23,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="px-5 pt-5 pb-4">
         <a href="/" className="flex items-center">
