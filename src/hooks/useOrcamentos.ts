@@ -180,7 +180,7 @@ export function useOrcamentos() {
         .from('orcamentos')
         .select('*, obra:obras(id)')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) throw fetchError;
 
