@@ -63,6 +63,8 @@ import {
   Scale,
   Info,
   Eye,
+  User,
+  AlertTriangle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
