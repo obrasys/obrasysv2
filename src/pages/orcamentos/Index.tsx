@@ -19,7 +19,7 @@ import {
 import { STATUS_CONFIG } from '@/types/orcamentos';
 import {
   Plus, Search, FileText, Loader2, Sparkles, Filter, Euro, Layers, Package,
-  Clock, MoreHorizontal, Eye, Edit, Copy, GitBranch, Trash2, ChevronLeft, ChevronRight, TrendingUp,
+  Clock, ChevronLeft, ChevronRight, TrendingUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
