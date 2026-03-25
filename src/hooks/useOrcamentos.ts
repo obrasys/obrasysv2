@@ -210,9 +210,10 @@ export function useOrcamentos() {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Orçamento não encontrado');
 
       // If adjudicado, trigger client portal access creation
       if (status === 'adjudicado') {
