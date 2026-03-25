@@ -1,0 +1,212 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY não configurada");
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { question, history } = await req.json();
+    if (!question || typeof question !== "string") {
+      return new Response(JSON.stringify({ error: "Pergunta em falta" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Gather operational context ──────────────────────────
+    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes] =
+      await Promise.all([
+        supabase
+          .from("obras")
+          .select("id, nome, cliente, status, progresso, valor_previsto, data_inicio, data_fim, arquivada")
+          .eq("arquivada", false)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("orcamentos")
+          .select("id, titulo, status, valor_total, margem_lucro, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("rdos")
+          .select("id, obra_id, data, status, clima, created_at")
+          .order("created_at", { ascending: false })
+          .limit(15),
+        supabase
+          .from("tarefas")
+          .select("id, titulo, estado, prioridade, obra_id, data_limite")
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("ai_budget_insights")
+          .select("id, title, message, type, severity, status")
+          .eq("status", "open")
+          .limit(15),
+        supabase
+          .from("autos_medicao")
+          .select("id, obra_id, numero_auto, estado, valor_medido_atual, percentagem_global")
+          .order("created_at", { ascending: false })
+          .limit(10),
+      ]);
+
+    const obras = obrasRes.data || [];
+    const orcamentos = orcamentosRes.data || [];
+    const rdos = rdosRes.data || [];
+    const tarefas = tarefasRes.data || [];
+    const insights = insightsRes.data || [];
+    const autos = autosMedicaoRes.data || [];
+
+    // ── Build context summary ───────────────────────────────
+    const obrasEmCurso = obras.filter((o: any) => o.status === "em_curso");
+    const obrasConcluidas = obras.filter((o: any) => o.status === "concluida");
+    const valorTotalPrevisto = obras.reduce((s: number, o: any) => s + (o.valor_previsto || 0), 0);
+    const progressoMedio = obras.length > 0
+      ? Math.round(obras.reduce((s: number, o: any) => s + (o.progresso || 0), 0) / obras.length)
+      : 0;
+
+    const tarefasPendentes = tarefas.filter((t: any) => t.estado === "pendente" || t.estado === "em_progresso");
+    const tarefasAtrasadas = tarefas.filter((t: any) => {
+      if (!t.data_limite) return false;
+      return new Date(t.data_limite) < new Date() && t.estado !== "concluida";
+    });
+
+    const contextBlock = `
+## DADOS OPERACIONAIS DO UTILIZADOR (atualizados agora)
+
+### Obras (${obras.length} total, ${obrasEmCurso.length} em curso, ${obrasConcluidas.length} concluídas)
+Progresso médio: ${progressoMedio}%
+Valor total previsto: €${valorTotalPrevisto.toLocaleString("pt-PT")}
+${obras.map((o: any) => `- "${o.nome}" | Cliente: ${o.cliente || "N/D"} | Status: ${o.status} | Progresso: ${o.progresso || 0}% | Valor: €${(o.valor_previsto || 0).toLocaleString("pt-PT")} | Início: ${o.data_inicio || "N/D"} | Fim previsto: ${o.data_fim || "N/D"}`).join("\n")}
+
+### Orçamentos (${orcamentos.length} registados)
+${orcamentos.map((o: any) => `- "${o.titulo}" | Status: ${o.status} | Valor: €${(o.valor_total || 0).toLocaleString("pt-PT")} | Margem: ${o.margem_lucro || 0}%`).join("\n")}
+
+### Tarefas (${tarefas.length} total, ${tarefasPendentes.length} pendentes, ${tarefasAtrasadas.length} atrasadas)
+${tarefas.slice(0, 10).map((t: any) => `- "${t.titulo}" | Estado: ${t.estado} | Prioridade: ${t.prioridade} | Limite: ${t.data_limite || "N/D"}`).join("\n")}
+
+### RDOs (${rdos.length} registados)
+${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"}`).join("\n")}
+
+### Alertas Axia Abertos (${insights.length})
+${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\n")}
+
+### Autos de Medição (${autos.length})
+${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Valor medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
+`.trim();
+
+    const systemPrompt = `Tu és a Axia, a assistente de inteligência operacional do Obra Sys — uma plataforma de gestão de obras e construção civil em Portugal.
+
+REGRAS:
+- Responde SEMPRE em Português de Portugal.
+- Sê concisa, profissional e direta.
+- Baseia TODAS as respostas nos dados reais fornecidos abaixo. Nunca inventes dados.
+- Se não tiveres dados suficientes para responder, diz claramente o que falta.
+- Usa formatação markdown: negrito, listas, tabelas quando apropriado.
+- Valores monetários em formato €X.XXX,XX.
+- Quando relevante, sugere ações concretas que o utilizador pode tomar.
+- Não menciones que estás a ler dados de contexto; responde naturalmente como se soubesses.
+
+${contextBlock}`;
+
+    // ── Build messages array ────────────────────────────────
+    const messages: Array<{ role: string; content: string }> = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    if (Array.isArray(history)) {
+      for (const msg of history.slice(-10)) {
+        if (msg.role === "user" || msg.role === "assistant") {
+          messages.push({ role: msg.role, content: msg.content });
+        }
+      }
+    }
+
+    messages.push({ role: "user", content: question });
+
+    // ── Call Lovable AI Gateway (streaming) ─────────────────
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages,
+        stream: true,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breve." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos nas definições." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const errText = await aiResponse.text();
+      console.error("AI gateway error:", aiResponse.status, errText);
+      return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(aiResponse.body, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+      },
+    });
+  } catch (e) {
+    console.error("axia-chat error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

@@ -1,20 +1,84 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Loader2, AlertTriangle, TrendingDown, PackageMinus, CheckCircle, XCircle,
   Clock, Brain, Zap, MessageSquare, ShieldAlert, CalendarClock, Search as SearchIcon,
   Lightbulb, Eye, BarChart3, ArrowUpRight, ArrowDownRight, Activity,
-  HardHat, Send, Sparkles, ChevronRight, FileWarning, Target,
+  HardHat, Send, Sparkles, ChevronRight, FileWarning, Target, User, Bot, Eraser,
 } from 'lucide-react';
 import { AxiaIcon } from '@/components/axia/AxiaIcon';
 import { useAxiaDashboard } from '@/hooks/useAxiaDashboard';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+
+/* ── Types ─────────────────────────────────────────────── */
+type ChatMessage = { role: 'user' | 'assistant'; content: string };
+
+/* ── Stream helper ─────────────────────────────────────── */
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/axia-chat`;
+
+async function streamAxiaChat({
+  question, history, token, onDelta, onDone, onError,
+}: {
+  question: string; history: ChatMessage[]; token: string;
+  onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void;
+}) {
+  const resp = await fetch(CHAT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ question, history }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({ error: 'Erro de rede' }));
+    onError(body.error || `Erro ${resp.status}`);
+    return;
+  }
+
+  if (!resp.body) { onError('Sem resposta'); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    let nl: number;
+    while ((nl = buf.indexOf('\n')) !== -1) {
+      let line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line.endsWith('\r')) line = line.slice(0, -1);
+      if (line.startsWith(':') || line.trim() === '') continue;
+      if (!line.startsWith('data: ')) continue;
+      const json = line.slice(6).trim();
+      if (json === '[DONE]') { onDone(); return; }
+      try {
+        const parsed = JSON.parse(json);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) onDelta(content);
+      } catch {
+        buf = line + '\n' + buf;
+        break;
+      }
+    }
+  }
+  onDone();
+}
 
 /* ── Score Ring ─────────────────────────────────────────── */
 function ScoreRing({ score }: { score: number }) {
@@ -113,7 +177,59 @@ const MOCK_INSIGHTS_OBRA = [
 /* ── Main Page ─────────────────────────────────────────── */
 export default function AxiaPage() {
   const { data, isLoading } = useAxiaDashboard();
+  const { session } = useAuth();
+  const { toast } = useToast();
   const [question, setQuestion] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleSend = useCallback(async (text?: string) => {
+    const q = (text || question).trim();
+    if (!q || isStreaming) return;
+    if (!session?.access_token) {
+      toast({ title: 'Sessão expirada', description: 'Faça login novamente.', variant: 'destructive' });
+      return;
+    }
+
+    const userMsg: ChatMessage = { role: 'user', content: q };
+    setChatMessages(prev => [...prev, userMsg]);
+    setQuestion('');
+    setIsStreaming(true);
+
+    let assistantSoFar = '';
+    const upsert = (chunk: string) => {
+      assistantSoFar += chunk;
+      setChatMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === 'assistant') {
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+        }
+        return [...prev, { role: 'assistant', content: assistantSoFar }];
+      });
+    };
+
+    try {
+      await streamAxiaChat({
+        question: q,
+        history: chatMessages,
+        token: session.access_token,
+        onDelta: upsert,
+        onDone: () => setIsStreaming(false),
+        onError: (msg) => {
+          toast({ title: 'Erro Axia', description: msg, variant: 'destructive' });
+          setIsStreaming(false);
+        },
+      });
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao contactar a Axia.', variant: 'destructive' });
+      setIsStreaming(false);
+    }
+  }, [question, isStreaming, session, chatMessages, toast]);
 
   if (isLoading) {
     return (
@@ -196,10 +312,57 @@ export default function AxiaPage() {
           ))}
         </div>
 
-        {/* ═══ 1. PERGUNTAS RÁPIDAS ═══ */}
+        {/* ═══ 1. PERGUNTAS RÁPIDAS (OPERACIONAL) ═══ */}
         <Section icon={MessageSquare} title="Perguntas Rápidas" description="Faça perguntas sobre os seus dados operacionais"
           accentClass="bg-primary/10 text-primary">
           <div className="space-y-3">
+            {/* Chat messages */}
+            {chatMessages.length > 0 && (
+              <ScrollArea className="max-h-[360px] pr-2">
+                <div className="space-y-3">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.role === 'assistant' && (
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Bot className="w-4 h-4 text-primary" />
+                        </div>
+                      )}
+                      <div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}>
+                        {msg.role === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1.5 [&>ul]:mt-1 [&>ol]:mt-1">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p>{msg.content}</p>
+                        )}
+                      </div>
+                      {msg.role === 'user' && (
+                        <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isStreaming && chatMessages[chatMessages.length - 1]?.role === 'user' && (
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Bot className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="bg-muted rounded-xl px-3.5 py-2.5">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+              </ScrollArea>
+            )}
+
+            {/* Input */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -207,24 +370,36 @@ export default function AxiaPage() {
                   placeholder="Pergunte algo à Axia..."
                   value={question}
                   onChange={e => setQuestion(e.target.value)}
-                  className="pl-10 pr-10"
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  className="pl-10"
+                  disabled={isStreaming}
                 />
               </div>
-              <Button size="icon" className="shrink-0">
-                <Send className="w-4 h-4" />
+              {chatMessages.length > 0 && (
+                <Button variant="outline" size="icon" className="shrink-0" onClick={() => setChatMessages([])}
+                  disabled={isStreaming} title="Limpar conversa">
+                  <Eraser className="w-4 h-4" />
+                </Button>
+              )}
+              <Button size="icon" className="shrink-0" onClick={() => handleSend()} disabled={isStreaming || !question.trim()}>
+                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_QUESTIONS.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => setQuestion(q)}
-                  className="text-xs px-3 py-1.5 rounded-full border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+
+            {/* Quick question chips — hide when chat has messages */}
+            {chatMessages.length === 0 && (
+              <div className="flex flex-wrap gap-2">
+                {QUICK_QUESTIONS.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSend(q)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </Section>
 
