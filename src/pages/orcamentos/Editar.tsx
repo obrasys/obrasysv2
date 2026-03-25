@@ -86,6 +86,9 @@ export default function EditarOrcamentoPage() {
     addArtigosFromCatalog,
   } = useOrcamento(id);
 
+   // Clientes for finalization
+   const { clientesAtivos } = useClientes();
+
    // Fiscal engine
    const { 
      useOrcamentoContextoFiscal, 
@@ -113,6 +116,8 @@ export default function EditarOrcamentoPage() {
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [finalizarClienteId, setFinalizarClienteId] = useState<string>('');
   const [valorAdjudicado, setValorAdjudicado] = useState<string>('');
   const [deleteCapituloId, setDeleteCapituloId] = useState<string | null>(null);
   const [deleteArtigoId, setDeleteArtigoId] = useState<string | null>(null);
