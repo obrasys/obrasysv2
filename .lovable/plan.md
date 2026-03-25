@@ -1,42 +1,47 @@
 
 
-# Sidebar Light Theme — Estilo Fiscaliza
+# Redesign da Página "Gestão de Obras" — Estilo Fiscaliza
 
-## O que muda
+## Conceito
 
-Transformar o sidebar de fundo escuro (azul) para **fundo branco/claro**, com items em cinza e o item ativo em **texto azul + barra lateral azul à direita** (sem background colorido no active). Inspirado no screenshot de referência.
+Transformar a página de obras num layout executivo consistente com o Dashboard: KPIs com ícones coloridos em círculo, substituir os cards verticais por uma **tabela profissional** (como a `ObrasSummaryTable` do dashboard), e manter filtros inline.
+
+```text
+┌─────────────────────────────────────────────────┐
+│  Header: "Gestão de Obras" + botão Nova Obra    │
+├────────┬────────┬──────────┬────────────────────┤
+│ 🔵Total│ 🟢Curso│ 🟣Concl. │ 📊Prog. Médio     │
+│  KPI   │  KPI   │   KPI    │   KPI              │
+├────────┴────────┴──────────┴────────────────────┤
+│ Tabs: Ativas | Arquivadas                        │
+├─────────────────────────────────────────────────┤
+│ [🔍 Pesquisar...        ] [Filtro Estado ▼]     │
+├─────────────────────────────────────────────────┤
+│  Tabela: Nome | Cliente | Progresso | Data |    │
+│          Valor | Status | Ações (ver/editar/...) │
+│  ─ paginada, 8 por página ─                     │
+└─────────────────────────────────────────────────┘
+```
 
 ## Alterações
 
-### 1. `src/index.css` — Tokens do sidebar
+### 1. `src/pages/obras/Index.tsx` — Reescrever layout
 
-Trocar as variáveis CSS do sidebar para tema claro:
+- **KPIs**: Trocar os 4 `div` simples por cards estilo Dashboard (ícone colorido em círculo + valor grande + label), usando `Building2`, `Play`, `CheckCircle`, `TrendingUp`
+- **Tabela em vez de cards**: Substituir o grid de `ObraCard` por uma tabela inline (estilo `ObrasSummaryTable`) com colunas: Nome, Cliente, Progresso (barra), Data, Valor, Status (badge), Ações (dropdown)
+- **Paginação**: 8 items por página com navegação prev/next
+- **Arquivadas**: Mesma tabela mas simplificada (nome, cliente, botões restaurar/eliminar)
+- Remover import de `ObraCard`
 
-```
---sidebar-background: 0 0% 100%;        /* branco */
---sidebar-foreground: 220 10% 40%;       /* cinza escuro para texto */
---sidebar-primary: 230 100% 50%;         /* azul vivo para active */
---sidebar-primary-foreground: 230 100% 50%;
---sidebar-accent: 220 15% 96%;           /* hover suave */
---sidebar-accent-foreground: 220 10% 30%;
---sidebar-border: 220 15% 92%;
-```
+### 2. `src/components/obras/ObraCard.tsx` — Manter (sem alterações)
 
-### 2. `src/components/layout/Sidebar.tsx`
-
-- Remover `brightness-0 invert` do logo (fundo agora é branco, logo precisa estar na cor original)
-- **Active state**: sem `bg-*`, apenas `text-primary font-semibold` + `border-r-[3px] border-primary` (barra azul à direita como no screenshot)
-- **Inactive state**: `text-muted-foreground hover:text-foreground` (sem hover background)
-- **Group labels**: `text-muted-foreground/60` (cinza claro)
-- Adicionar `border-r border-sidebar-border` no `<aside>` para separar do conteúdo
-- Aumentar ligeiramente o spacing entre items (`py-2.5` em vez de `py-1.5`) para match visual
-- Admin section: mesma lógica (active = azul, sem bg)
-- Sign out button: manter estilo discreto, sem bg no hover
+O componente fica disponível para uso futuro mas a página principal usa tabela.
 
 ### Ficheiros
 
 | Ficheiro | Ação |
 |---|---|
-| `src/index.css` | Editar tokens sidebar (linhas 54-62) |
-| `src/components/layout/Sidebar.tsx` | Editar estilos (active state, logo, spacing) |
+| `src/pages/obras/Index.tsx` | Reescrever com KPIs estilizados + tabela paginada |
+
+Uma única alteração de ficheiro. Sem backend, sem rotas novas.
 
