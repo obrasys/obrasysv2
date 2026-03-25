@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,16 +21,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { useObras } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
 import { FiscalContextSection } from '@/components/orcamentos/FiscalContextSection';
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
-import { Loader2, Building2, User, Save } from 'lucide-react';
+import { Loader2, Building2, User, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 const formSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
   obra_id: z.string().optional(),
-  cliente_id: z.string().optional(),
+  cliente_id: z.string().min(1, 'Cliente é obrigatório'),
   margem_lucro: z.number().min(0).max(99.99, 'Margem deve ser inferior a 100%'),
   custos_indiretos: z.object({
     estaleiro: z.number().min(0),
@@ -39,6 +41,11 @@ const formSchema = z.object({
   tipo_obra: z.string().optional(),
   tipo_cliente: z.string().optional(),
   tipo_operacao: z.string().optional(),
+});
+
+// Draft only requires title
+const draftSchema = z.object({
+  titulo: z.string().min(1, 'Título é obrigatório'),
 });
 
 interface OrcamentoFormProps {
@@ -80,7 +87,25 @@ export function OrcamentoForm({
     },
   });
 
+  const selectedClienteId = form.watch('cliente_id');
+  const selectedCliente = clientesAtivos?.find(c => c.id === selectedClienteId);
+
+  // Validate client completeness
+  const clientMissingFields: string[] = [];
+  if (selectedCliente) {
+    if (!selectedCliente.email) clientMissingFields.push('email');
+    if (!selectedCliente.telefone && !selectedCliente.telemovel) clientMissingFields.push('telefone');
+    if (!selectedCliente.endereco) clientMissingFields.push('morada');
+  }
+  const isClientComplete = selectedCliente && clientMissingFields.length === 0;
+
   const handleSubmit = (data: OrcamentoFormData) => {
+    if (!isClientComplete) {
+      form.setError('cliente_id', { 
+        message: `Cliente incompleto: falta ${clientMissingFields.join(', ')}. Edite o cliente primeiro.` 
+      });
+      return;
+    }
     onSubmit(data);
   };
 
@@ -106,7 +131,9 @@ export function OrcamentoForm({
           name="cliente_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Cliente</FormLabel>
+              <FormLabel>
+                Cliente <span className="text-destructive">*</span>
+              </FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -132,12 +159,34 @@ export function OrcamentoForm({
                     ))
                   ) : (
                     <div className="py-4 text-center text-sm text-muted-foreground">
-                      Nenhum cliente encontrado
+                      Nenhum cliente encontrado. Crie um cliente primeiro.
                     </div>
                   )}
                 </SelectContent>
               </Select>
               <FormMessage />
+              {/* Client completeness indicator */}
+              {selectedCliente && (
+                <div className="mt-2">
+                  {isClientComplete ? (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Cliente completo
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-1.5 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded-md p-2">
+                      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium">Dados em falta:</span> {clientMissingFields.join(', ')}.
+                        <br />
+                        <a href={`/clientes/${selectedCliente.id}/editar`} className="underline font-medium">
+                          Editar cliente
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </FormItem>
           )}
         />
