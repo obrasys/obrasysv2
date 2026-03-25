@@ -36,7 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
-import { ADMIN_NAV_ITEMS, MAIN_NAV_ITEMS } from '@/config/navigation';
+import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
@@ -247,89 +247,60 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   return (
-    <>
-      <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
-        {MAIN_NAV_ITEMS.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <button
-              key={item.href}
-              onClick={() => go(item.href)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                active
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
-            </button>
-          );
-        })}
+    <nav className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
+            {group.label}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => go(item.href)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    active
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
-        {/* Super Admin Section */}
-        {isSuperAdmin && (
-          <>
-            <div className="pt-4 pb-2">
-              <p className="px-4 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                Administração
-              </p>
-            </div>
+      {isSuperAdmin && (
+        <div>
+          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
+            Administração
+          </p>
+          <div className="space-y-0.5">
             {ADMIN_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (
                 <button
                   key={item.href}
                   onClick={() => go(item.href)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     active
-                      ? 'bg-primary/20 text-primary'
+                      ? 'bg-primary/20 text-primary font-semibold'
                       : 'text-sidebar-foreground/70 hover:bg-primary/10 hover:text-primary'
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
                 </button>
               );
             })}
-          </>
-        )}
-      </nav>
-      <div className="p-4 border-t border-sidebar-border space-y-1">
-        <button
-          onClick={() => go('/subscricao')}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-            location.pathname.startsWith('/subscricao')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-          }`}
-        >
-          <CreditCard className="w-5 h-5" />
-          <span className="font-medium">Subscrição</span>
-        </button>
-        <button
-          onClick={() => go('/definicoes')}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-            location.pathname.startsWith('/definicoes')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-          }`}
-        >
-          <Settings className="w-5 h-5" />
-          <span className="font-medium">Definições</span>
-        </button>
-        <button
-          onClick={() => go('/suporte')}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-            location.pathname.startsWith('/suporte')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-          }`}
-        >
-          <HelpCircle className="w-5 h-5" />
-          <span className="font-medium">Suporte</span>
-        </button>
-      </div>
-    </>
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }
