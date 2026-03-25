@@ -183,6 +183,7 @@ export function useOrcamentos() {
         .maybeSingle();
 
       if (fetchError) throw fetchError;
+      if (!orcamento) throw new Error('Orçamento não encontrado');
 
       // Se status é 'adjudicado' e não tem obra, criar automaticamente
       if (status === 'adjudicado' && !orcamento.obra_id) {
