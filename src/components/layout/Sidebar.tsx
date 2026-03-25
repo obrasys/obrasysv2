@@ -23,32 +23,32 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-60 bg-sidebar hidden lg:flex flex-col h-screen">
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
       {/* Logo */}
       <div className="px-5 pt-5 pb-4">
         <a href="/" className="flex items-center">
-          <img src={logo} alt="ObraSys" className="h-8 w-auto brightness-0 invert" />
+          <img src={logo} alt="ObraSys" className="h-8 w-auto" />
         </a>
       </div>
 
       {/* Navigation — no scroll */}
-      <nav className="flex-1 px-3 space-y-3">
+      <nav className="flex-1 px-3 space-y-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="px-2 mb-0.5 text-[9px] font-bold text-sidebar-foreground/35 uppercase tracking-[0.12em]">
+            <p className="px-2 mb-1 text-[9px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.12em]">
               {group.label}
             </p>
-            <div className="space-y-px">
+            <div className="space-y-0.5">
               {group.items.map((item) => {
                 const active = isActive(item.href);
                 return (
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors text-[13px] ${
+                    className={`w-full flex items-center gap-2.5 px-2 py-2 transition-colors text-[13px] ${
                       active
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                        : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground'
+                        ? 'text-primary font-semibold border-r-[3px] border-primary'
+                        : 'text-sidebar-foreground hover:text-primary'
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -63,20 +63,20 @@ export function Sidebar() {
         {/* Super Admin Section */}
         {isSuperAdmin && (
           <div>
-            <p className="px-2 mb-0.5 text-[9px] font-bold text-sidebar-foreground/35 uppercase tracking-[0.12em]">
+            <p className="px-2 mb-1 text-[9px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.12em]">
               Administração
             </p>
-            <div className="space-y-px">
+            <div className="space-y-0.5">
               {ADMIN_NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 return (
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors text-[13px] ${
+                    className={`w-full flex items-center gap-2.5 px-2 py-2 transition-colors text-[13px] ${
                       active
-                        ? 'bg-primary/20 text-primary font-semibold'
-                        : 'text-sidebar-foreground/65 hover:bg-primary/10 hover:text-primary'
+                        ? 'text-primary font-semibold border-r-[3px] border-primary'
+                        : 'text-sidebar-foreground hover:text-primary'
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -93,7 +93,7 @@ export function Sidebar() {
       <div className="px-3 pb-4 pt-2">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[13px] text-sidebar-foreground/50 hover:bg-destructive/10 hover:text-destructive transition-colors"
+          className="w-full flex items-center gap-2.5 px-2 py-2 text-[13px] text-sidebar-foreground/60 hover:text-destructive transition-colors"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           <span>Sair</span>
