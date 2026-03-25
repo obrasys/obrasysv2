@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
+import { useClientes } from '@/hooks/useClientes';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
 import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
@@ -62,6 +63,8 @@ import {
   Scale,
   Info,
   Eye,
+  User,
+  AlertTriangle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
@@ -82,6 +85,9 @@ export default function EditarOrcamentoPage() {
     deleteArtigo,
     addArtigosFromCatalog,
   } = useOrcamento(id);
+
+   // Clientes for finalization
+   const { clientesAtivos } = useClientes();
 
    // Fiscal engine
    const { 
@@ -110,6 +116,8 @@ export default function EditarOrcamentoPage() {
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [finalizarClienteId, setFinalizarClienteId] = useState<string>('');
   const [valorAdjudicado, setValorAdjudicado] = useState<string>('');
   const [deleteCapituloId, setDeleteCapituloId] = useState<string | null>(null);
   const [deleteArtigoId, setDeleteArtigoId] = useState<string | null>(null);
@@ -240,12 +248,39 @@ export default function EditarOrcamentoPage() {
     }
   };
 
+  const handleOpenFinalizar = () => {
+    // Pre-select current client if exists
+    setFinalizarClienteId(orcamento.cliente_id || '');
+    setShowFinalizarModal(true);
+  };
+
   const handleFinalizar = async () => {
+    // Validate client
+    const cliente = clientesAtivos?.find(c => c.id === finalizarClienteId);
+    if (!cliente) {
+      toast({ title: 'Erro', description: 'Selecione um cliente para finalizar', variant: 'destructive' });
+      return;
+    }
+    const missing: string[] = [];
+    if (!cliente.email) missing.push('email');
+    if (!cliente.telefone && !cliente.telemovel) missing.push('telefone');
+    if (!cliente.endereco) missing.push('morada');
+    if (missing.length > 0) {
+      toast({ title: 'Cliente incompleto', description: `Falta: ${missing.join(', ')}. Edite o cliente primeiro.`, variant: 'destructive' });
+      return;
+    }
+
+    // Save client to orcamento if changed
+    if (finalizarClienteId !== orcamento.cliente_id) {
+      await updateOrcamento.mutateAsync({ id: orcamento.id, cliente_id: finalizarClienteId });
+    }
+
     await updateStatus.mutateAsync({
       id: orcamento.id,
       status: 'enviado',
       data_envio: new Date().toISOString(),
     });
+    setShowFinalizarModal(false);
     toast({ title: 'Sucesso', description: 'Orçamento enviado ao cliente' });
   };
 
@@ -288,7 +323,7 @@ export default function EditarOrcamentoPage() {
         Ver Orçamento
       </Button>
       {orcamento.status === 'rascunho' && (
-        <Button onClick={handleFinalizar}>
+        <Button onClick={handleOpenFinalizar}>
           <Send className="mr-2 h-4 w-4" />
           Finalizar
         </Button>
@@ -822,6 +857,92 @@ export default function EditarOrcamentoPage() {
             >
               {updateStatus.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmar Adjudicação
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Finalizar Modal - Seleção de Cliente */}
+      <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" />
+              Finalizar Orçamento
+            </DialogTitle>
+            <DialogDescription>
+              Confirme ou selecione o cliente antes de enviar o orçamento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Cliente <span className="text-destructive">*</span></Label>
+              <Select value={finalizarClienteId} onValueChange={setFinalizarClienteId}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Selecionar cliente..." />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {clientesAtivos && clientesAtivos.length > 0 ? (
+                    clientesAtivos.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {cliente.nome}
+                          {cliente.empresa && (
+                            <span className="text-muted-foreground text-xs">({cliente.empresa})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="py-4 text-center text-sm text-muted-foreground">
+                      Nenhum cliente encontrado
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Client validation feedback */}
+            {finalizarClienteId && (() => {
+              const cliente = clientesAtivos?.find(c => c.id === finalizarClienteId);
+              if (!cliente) return null;
+              const missing: string[] = [];
+              if (!cliente.email) missing.push('email');
+              if (!cliente.telefone && !cliente.telemovel) missing.push('telefone');
+              if (!cliente.endereco) missing.push('morada');
+              if (missing.length > 0) {
+                return (
+                  <div className="flex items-start gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded-md p-3">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium">Dados em falta: {missing.join(', ')}</p>
+                      <a href={`/clientes/${cliente.id}/editar`} className="underline text-xs">
+                        Editar cliente
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Cliente com dados completos
+                </div>
+              );
+            })()}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowFinalizarModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleFinalizar}
+              disabled={updateStatus.isPending || updateOrcamento.isPending || !finalizarClienteId}
+            >
+              {(updateStatus.isPending || updateOrcamento.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Send className="mr-2 h-4 w-4" />
+              Enviar ao Cliente
             </Button>
           </div>
         </DialogContent>
