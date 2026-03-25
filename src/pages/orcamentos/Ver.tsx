@@ -1,36 +1,25 @@
 import { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
-import { useOrcamento } from '@/hooks/useOrcamentos';
+import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  ArrowLeft,
-  Printer,
-  FileText,
-  Building2,
-  Calendar,
-  Euro,
-  Edit,
-  Loader2,
-  Phone,
-  Mail,
-  MapPin,
-  User,
-  Send,
+  ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
+  Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
+  Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
+  Zap, HardHat, MoreHorizontal,
 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
@@ -44,22 +33,16 @@ export default function VerOrcamentoPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { orcamento, isLoading } = useOrcamento(id);
+  const { duplicateOrcamento, createRevisao, updateStatus } = useOrcamentos();
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
-   const { useOrcamentoContextoFiscal, calcularIVA, getNotaLegalPorRegime, regimes } = useFiscalEngine();
-   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+  const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
+  const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(value);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
 
   if (isLoading || !orcamento) {
     return (
@@ -71,7 +54,7 @@ export default function VerOrcamentoPage() {
     );
   }
 
-  // Calculate totals - IMPORTANT: Margin is applied internally but NOT shown to client
+  // ── Calculations ──
   const custosIndiretosTotal =
     (orcamento.custos_indiretos?.estaleiro || 0) +
     (orcamento.custos_indiretos?.seguros || 0) +
@@ -87,243 +70,125 @@ export default function VerOrcamentoPage() {
   const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
   const valorIVA = valorBase * (taxaIVA / 100);
   const valorFinal = valorBase + valorIVA;
+  const lucroEstimado = valorBase - subtotalComIndiretos;
 
-  const notaLegal = contextoFiscal?.regime_id
-    ? getNotaLegalPorRegime(contextoFiscal.regime_id)
-    : null;
+  const notaLegal = contextoFiscal?.regime_id ? getNotaLegalPorRegime(contextoFiscal.regime_id) : null;
   const regimeNome = contextoFiscal?.regime_id
-    ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome
-    : 'IVA Normal';
+    ? regimes?.find(r => r.id === contextoFiscal.regime_id)?.nome : 'IVA Normal';
 
   const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome;
   const companyNif = profile?.empresa_nif || profile?.nif;
 
-  const handleGeneratePDF = async () => {
-    toast({
-      title: 'A gerar PDF...',
-      description: 'Por favor aguarde',
-    });
+  const totalCapitulos = orcamento.capitulos?.length || 0;
+  const totalItens = orcamento.capitulos?.reduce((s, c) => s + (c.artigos?.length || 0), 0) || 0;
 
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters(prev => {
+      const next = new Set(prev);
+      next.has(chapterId) ? next.delete(chapterId) : next.add(chapterId);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    const allIds = new Set(orcamento.capitulos?.map(c => c.id) || []);
+    setExpandedChapters(allIds);
+  };
+
+  const collapseAll = () => setExpandedChapters(new Set());
+
+  const handleGeneratePDF = async () => {
+    toast({ title: 'A gerar PDF...', description: 'Por favor aguarde' });
     try {
       const blob = await generateOrcamentoPdf({
-        orcamento,
-        profile: profile as any,
-        margemDecimal,
-        taxaIVA,
-        valorBase,
-        valorIVA,
-        valorFinal,
-        custosIndiretosTotal,
-        subtotalArtigos,
-        notaLegal,
-        regimeNome,
+        orcamento, profile: profile as any,
+        margemDecimal, taxaIVA, valorBase, valorIVA, valorFinal,
+        custosIndiretosTotal, subtotalArtigos, notaLegal, regimeNome,
       });
-
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-
-      toast({
-        title: 'PDF gerado',
-        description: 'O ficheiro foi descarregado',
-      });
+      toast({ title: 'PDF gerado', description: 'O ficheiro foi descarregado' });
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível gerar o PDF',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: 'Não foi possível gerar o PDF', variant: 'destructive' });
     }
   };
+
+  const handleConvertToObra = async () => {
+    try {
+      await updateStatus.mutateAsync({ id: orcamento.id, status: 'adjudicado' });
+      toast({ title: 'Orçamento adjudicado', description: 'Obra criada automaticamente' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível adjudicar', variant: 'destructive' });
+    }
+  };
+
+  // ── Mock Axia alerts ──
+  const axiaAlerts = [
+    { icon: PackageMinus, color: 'text-primary', bg: 'bg-primary/10', label: 'Possível item em falta', desc: 'Impermeabilização não encontrada nos capítulos', severity: 'Médio' },
+    { icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-500/10', label: 'Desvio de preço detectado', desc: 'Betão C25/30 — 23% acima da mediana', severity: 'Alto' },
+    { icon: Layers, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Capítulo incompleto', desc: 'Cap. 3 — apenas 1 artigo (média: 5)', severity: 'Alto' },
+    { icon: Lightbulb, color: 'text-emerald-600', bg: 'bg-emerald-500/10', label: 'Serviço relacionado sugerido', desc: 'Considerar "Pintura exterior" no Cap. 6', severity: 'Baixo' },
+    { icon: AlertTriangle, color: 'text-rose-500', bg: 'bg-rose-500/10', label: 'Incoerência técnica', desc: 'Unidade "ml" usada onde deveria ser "m²"', severity: 'Crítico' },
+  ];
 
   return (
     <AppLayout
       title={orcamento.titulo}
-      subtitle="Visualização do Orçamento"
+      subtitle={`Orçamento ${orcamento.codigo || ''}`}
       actions={
-        <div className="flex gap-2 no-print">
-          <Button variant="outline" onClick={() => navigate('/orcamentos')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+        <div className="flex gap-2 no-print flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => navigate('/orcamentos')}>
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Voltar
           </Button>
-          <Button variant="outline" onClick={() => navigate(`/orcamentos/${id}/editar`)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
-          </Button>
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
-          </Button>
-          <Button onClick={handleGeneratePDF}>
-            <FileText className="mr-2 h-4 w-4" />
-            Gerar PDF
-          </Button>
-          <Button onClick={() => setEnviarDialogOpen(true)} className="bg-accent hover:bg-accent/90">
-            <Send className="mr-2 h-4 w-4" />
-            Enviar Orçamento
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <MoreHorizontal className="mr-1.5 h-3.5 w-3.5" /> Ações
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-background">
+              <DropdownMenuItem onClick={() => navigate(`/orcamentos/${id}/editar`)}>
+                <Edit className="w-3.5 h-3.5 mr-2" /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => duplicateOrcamento.mutateAsync(orcamento.id)}>
+                <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => createRevisao.mutateAsync(orcamento.id).then(r => navigate(`/orcamentos/${r.id}/editar`))}>
+                <GitBranch className="w-3.5 h-3.5 mr-2" /> Criar Revisão
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleGeneratePDF}>
+                <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.print()}>
+                <Printer className="w-3.5 h-3.5 mr-2" /> Imprimir
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEnviarDialogOpen(true)}>
+                <Send className="w-3.5 h-3.5 mr-2" /> Enviar
+              </DropdownMenuItem>
+              {orcamento.status !== 'adjudicado' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleConvertToObra}>
+                    <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       }
     >
-      {/* Enviar Dialog */}
       <EnviarOrcamentoDialog
-        open={enviarDialogOpen}
-        onOpenChange={setEnviarDialogOpen}
-        orcamentoId={orcamento.id}
-        orcamentoTitulo={orcamento.titulo}
-        clienteEmail={orcamento.cliente?.email}
-        clienteNome={orcamento.cliente?.nome}
+        open={enviarDialogOpen} onOpenChange={setEnviarDialogOpen}
+        orcamentoId={orcamento.id} orcamentoTitulo={orcamento.titulo}
+        clienteEmail={orcamento.cliente?.email} clienteNome={orcamento.cliente?.nome}
       />
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          /* Reset everything */
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm !important;
-            font-size: 11px !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            background: white !important;
-            overflow: visible !important;
-          }
-          
-          body * {
-            visibility: hidden;
-          }
-          
-          #print-content, #print-content * {
-            visibility: visible;
-          }
-          
-          #print-content {
-            position: relative !important;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-            background: white !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            overflow: visible !important;
-          }
-          
-          .no-print {
-            display: none !important;
-          }
-          
-          /* Scale down content to fit A4 */
-          #print-content {
-            font-size: 10px !important;
-          }
-          
-          #print-content h1 {
-            font-size: 18px !important;
-          }
-          
-          #print-content h2 {
-            font-size: 14px !important;
-          }
-          
-          #print-content h3, #print-content h4 {
-            font-size: 12px !important;
-          }
-          
-          /* Tables - compact for A4 */
-          #print-content table {
-            font-size: 9px !important;
-            width: 100% !important;
-          }
-          
-          #print-content th, #print-content td {
-            padding: 3px 6px !important;
-          }
-          
-          /* Cards - remove shadows and reduce spacing */
-          #print-content .rounded-lg,
-          #print-content [class*="Card"] {
-            box-shadow: none !important;
-            border-radius: 4px !important;
-          }
-          
-          /* Reduce spacing between sections */
-          #print-content .space-y-6 > * + * {
-            margin-top: 12px !important;
-          }
-          
-          #print-content .space-y-2 > * + * {
-            margin-top: 4px !important;
-          }
-          
-          /* Prevent page breaks inside important elements */
-          #print-content .print\\:break-inside-avoid,
-          #print-content .pdf-keep-together {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          
-          /* Keep chapter cards together when possible */
-          #print-content table {
-            break-inside: auto !important;
-          }
-          
-          #print-content tr {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          
-          #print-content thead {
-            display: table-header-group !important;
-          }
-          
-          /* Avoid orphaned headers */
-          #print-content [class*="CardHeader"] {
-            break-after: avoid !important;
-            page-break-after: avoid !important;
-          }
-          
-          /* Summary section - always together */
-          #print-content .border-2 {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          
-          /* Footer and observations */
-          #print-content .bg-muted\\/30 {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          
-          /* Remove unnecessary padding */
-          #print-content .p-6, #print-content .md\\:p-8 {
-            padding: 0 !important;
-          }
-          
-          #print-content .p-4 {
-            padding: 8px !important;
-          }
-          
-          /* Page margins */
-          @page {
-            size: A4 portrait;
-            margin: 15mm 15mm 20mm 15mm;
-          }
-        }
-        
-        /* PDF generation styles - keep elements together */
-        .generating-pdf .pdf-keep-together {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-      `}</style>
 
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
@@ -337,309 +202,275 @@ export default function VerOrcamentoPage() {
           </TabsContent>
 
           <TabsContent value="orcamento">
-        <div
-          ref={printRef}
-          id="print-content"
-          className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-sm space-y-6"
-        >
-          {/* Company Header */}
-          <div className="flex justify-between items-start border-b pb-6">
-            <div className="flex items-start gap-4">
-              {profile?.empresa_logo_url && (
-                <img
-                  src={profile.empresa_logo_url}
-                  alt="Logo da empresa"
-                  className="h-16 w-auto object-contain"
-                  crossOrigin="anonymous"
-                />
-              )}
-              <div>
-                <h2 className="text-lg font-bold text-foreground">
-                  {companyName}
-                </h2>
-                {companyNif && (
-                  <p className="text-sm text-muted-foreground">NIF: {companyNif}</p>
-                )}
-                {profile?.empresa_morada && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {profile.empresa_morada}
-                    {profile.empresa_codigo_postal && `, ${profile.empresa_codigo_postal}`}
-                    {profile.empresa_cidade && ` ${profile.empresa_cidade}`}
-                  </p>
-                )}
-                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                  {(profile?.empresa_telefone || profile?.telefone) && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {profile.empresa_telefone || profile.telefone}
-                    </span>
-                  )}
-                  {(profile?.empresa_email || profile?.email) && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {profile.empresa_email || profile.email}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <h1 className="text-2xl font-bold text-primary">ORÇAMENTO</h1>
-              {orcamento.codigo && (
-                <p className="text-sm font-mono text-muted-foreground mt-1">
-                  {orcamento.codigo}
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                Data: {format(new Date(orcamento.data_criacao), "d 'de' MMMM 'de' yyyy", { locale: pt })}
-              </p>
-            </div>
-          </div>
-
-          {/* Budget Info + Client Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/30 p-4 rounded-lg">
-            <div className="space-y-2">
-              <h3 className="font-semibold text-foreground">{orcamento.titulo}</h3>
-              {orcamento.obra && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Obra:</span>
-                  <span>{orcamento.obra.nome}</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Client Info Section */}
-            {orcamento.cliente && (
-              <div className="space-y-2 border-l pl-4 md:border-l-0 md:pl-0 md:border-t-0 pt-4 md:pt-0">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-foreground">Cliente</h4>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p className="font-medium">{orcamento.cliente.nome}</p>
-                  {orcamento.cliente.empresa && (
-                    <p className="text-muted-foreground">{orcamento.cliente.empresa}</p>
-                  )}
-                  {orcamento.cliente.nif && (
-                    <p className="text-muted-foreground">NIF: {orcamento.cliente.nif}</p>
-                  )}
-                  {orcamento.cliente.endereco && (
-                    <p className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {orcamento.cliente.endereco}
-                      {orcamento.cliente.codigo_postal && `, ${orcamento.cliente.codigo_postal}`}
-                      {orcamento.cliente.cidade && ` ${orcamento.cliente.cidade}`}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-3">
-                    {(orcamento.cliente.telefone || orcamento.cliente.telemovel) && (
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {orcamento.cliente.telemovel || orcamento.cliente.telefone}
-                      </span>
-                    )}
-                    {orcamento.cliente.email && (
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {orcamento.cliente.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Fallback to obra.cliente if no direct client */}
-            {!orcamento.cliente && orcamento.obra?.cliente && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Cliente:</span>
-                  <span>{orcamento.obra.cliente}</span>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex justify-end items-start md:col-span-2 md:mt-2">
-              <OrcamentoStatus status={orcamento.status} />
-            </div>
-          </div>
-
-          {/* Chapters and Articles */}
-          <div className="space-y-6">
-            {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
-              orcamento.capitulos.map((capitulo) => (
-                <Card key={capitulo.id} className="border shadow-none print:break-inside-avoid">
-                  <CardHeader className="bg-muted/50 py-3">
-                    <CardTitle className="text-base font-semibold">
-                      {capitulo.numero}. {capitulo.titulo}
-                    </CardTitle>
-                    {capitulo.descricao && (
-                      <p className="text-sm text-muted-foreground">{capitulo.descricao}</p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {capitulo.artigos && capitulo.artigos.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">Código</TableHead>
-                            <TableHead>Descrição</TableHead>
-                            <TableHead className="w-[70px] text-center">Un.</TableHead>
-                            <TableHead className="w-[80px] text-right">Qtd.</TableHead>
-                            <TableHead className="w-[100px] text-right">P. Unit.</TableHead>
-                            <TableHead className="w-[100px] text-right">Total</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {capitulo.artigos.map((artigo) => {
-                            // Apply margin to unit price for display (hidden margin)
-                            const precoComMargem = margemDecimal > 0 && margemDecimal < 1
-                              ? artigo.preco_unitario / (1 - margemDecimal)
-                              : artigo.preco_unitario;
-                            const totalComMargem = artigo.quantidade * precoComMargem;
-                            
-                            return (
-                              <TableRow key={artigo.id}>
-                                <TableCell className="font-mono text-xs">
-                                  {artigo.codigo || '-'}
-                                </TableCell>
-                                <TableCell className="text-sm">{artigo.descricao}</TableCell>
-                                <TableCell className="text-center text-sm">
-                                  {artigo.unidade}
-                                </TableCell>
-                                <TableCell className="text-right text-sm">
-                                  {artigo.quantidade.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-right text-sm">
-                                  {formatCurrency(precoComMargem)}
-                                </TableCell>
-                                <TableCell className="text-right font-medium text-sm">
-                                  {formatCurrency(totalComMargem)}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <p className="p-4 text-sm text-muted-foreground text-center">
-                        Sem artigos neste capítulo
-                      </p>
-                    )}
-                    {/* Chapter Total - with margin applied */}
-                    <div className="flex justify-end p-3 bg-muted/30 border-t">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium">Subtotal Capítulo:</span>
-                        <span className="font-semibold">
-                          {formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (capitulo.valor_total || 0) / (1 - margemDecimal) : (capitulo.valor_total || 0))}
-                        </span>
+            <div className="space-y-5">
+              {/* ── KPI Strip ── */}
+              <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+                {[
+                  { icon: Euro, label: 'Valor Final', value: formatCurrency(valorFinal), bg: 'bg-primary/10', ic: 'text-primary' },
+                  { icon: TrendingUp, label: 'Margem', value: `${orcamento.margem_lucro}%`, bg: 'bg-emerald-500/10', ic: 'text-emerald-600' },
+                  { icon: Layers, label: 'Capítulos', value: String(totalCapitulos), bg: 'bg-amber-500/10', ic: 'text-amber-600' },
+                  { icon: Package, label: 'Itens', value: String(totalItens), bg: 'bg-purple-500/10', ic: 'text-purple-600' },
+                  { icon: Calendar, label: 'Atualizado', value: format(new Date(orcamento.updated_at), 'dd/MM/yy', { locale: pt }), bg: 'bg-primary/10', ic: 'text-primary' },
+                ].map((k, i) => (
+                  <Card key={i}>
+                    <CardContent className="pt-4 pb-3 flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${k.bg}`}>
+                        <k.icon className={`w-4.5 h-4.5 ${k.ic}`} />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Card className="border shadow-none">
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Nenhum capítulo neste orçamento
+                      <div>
+                        <p className="text-lg font-bold leading-none">{k.value}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{k.label}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* ── Info bar ── */}
+              <Card>
+                <CardContent className="py-4">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    <OrcamentoStatus status={orcamento.status} />
+                    {orcamento.obra && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" /> {orcamento.obra.nome}
+                      </span>
+                    )}
+                    {orcamento.cliente && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <User className="h-3.5 w-3.5" /> {orcamento.cliente.nome}
+                        {orcamento.cliente.nif && <span className="text-xs">• NIF: {orcamento.cliente.nif}</span>}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {format(new Date(orcamento.data_criacao), "d MMM yyyy", { locale: pt })}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
 
-          <Separator />
+              {/* ── Main Content: Chapters + Sidebar ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* ── Left: Chapters (2/3) ── */}
+                <div className="lg:col-span-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-primary" /> Capítulos e Artigos
+                    </h3>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={expandAll}>Expandir tudo</Button>
+                      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={collapseAll}>Recolher</Button>
+                    </div>
+                  </div>
 
-          {/* Summary - Shows all costs breakdown except internal margin */}
-          <Card className="border-2 border-primary/20 pdf-keep-together print:break-inside-avoid">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Euro className="h-5 w-5" />
-                Resumo do Orçamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {/* Subtotal dos artigos (com margem aplicada) */}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal Artigos</span>
-                  <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? subtotalArtigos / (1 - margemDecimal) : subtotalArtigos)}</span>
+                  {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
+                    orcamento.capitulos.map((capitulo) => {
+                      const isOpen = expandedChapters.has(capitulo.id);
+                      const capValor = margemDecimal > 0 && margemDecimal < 1
+                        ? (capitulo.valor_total || 0) / (1 - margemDecimal)
+                        : (capitulo.valor_total || 0);
+
+                      return (
+                        <Collapsible key={capitulo.id} open={isOpen} onOpenChange={() => toggleChapter(capitulo.id)}>
+                          <Card className="overflow-hidden">
+                            <CollapsibleTrigger asChild>
+                              <div className="flex items-center justify-between px-4 py-3 bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors">
+                                <div className="flex items-center gap-2.5">
+                                  {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                                  <div>
+                                    <span className="text-sm font-semibold">{capitulo.numero}. {capitulo.titulo}</span>
+                                    {capitulo.descricao && <p className="text-xs text-muted-foreground mt-0.5">{capitulo.descricao}</p>}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <Badge variant="secondary" className="text-xs">{capitulo.artigos?.length || 0} itens</Badge>
+                                  <span className="text-sm font-semibold whitespace-nowrap">{formatCurrency(capValor)}</span>
+                                </div>
+                              </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              {capitulo.artigos && capitulo.artigos.length > 0 ? (
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="text-xs w-[70px]">Código</TableHead>
+                                      <TableHead className="text-xs">Descrição</TableHead>
+                                      <TableHead className="text-xs w-[50px] text-center">Un.</TableHead>
+                                      <TableHead className="text-xs w-[60px] text-right">Qtd.</TableHead>
+                                      <TableHead className="text-xs w-[90px] text-right">P.Unit.</TableHead>
+                                      <TableHead className="text-xs w-[90px] text-right">Total</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {capitulo.artigos.map((artigo) => {
+                                      const precoComMargem = margemDecimal > 0 && margemDecimal < 1
+                                        ? artigo.preco_unitario / (1 - margemDecimal)
+                                        : artigo.preco_unitario;
+                                      const totalComMargem = artigo.quantidade * precoComMargem;
+                                      return (
+                                        <TableRow key={artigo.id}>
+                                          <TableCell className="font-mono text-xs text-muted-foreground">{artigo.codigo || '—'}</TableCell>
+                                          <TableCell className="text-sm">{artigo.descricao}</TableCell>
+                                          <TableCell className="text-center text-xs">{artigo.unidade}</TableCell>
+                                          <TableCell className="text-right text-sm">{artigo.quantidade.toFixed(2)}</TableCell>
+                                          <TableCell className="text-right text-sm">{formatCurrency(precoComMargem)}</TableCell>
+                                          <TableCell className="text-right font-medium text-sm">{formatCurrency(totalComMargem)}</TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              ) : (
+                                <p className="p-4 text-sm text-muted-foreground text-center">Sem artigos neste capítulo</p>
+                              )}
+                            </CollapsibleContent>
+                          </Card>
+                        </Collapsible>
+                      );
+                    })
+                  ) : (
+                    <Card>
+                      <CardContent className="py-8 text-center text-muted-foreground">Nenhum capítulo neste orçamento</CardContent>
+                    </Card>
+                  )}
                 </div>
 
-                {/* Custos Indiretos - mostrar individualmente se existirem */}
-                {custosIndiretosTotal > 0 && (
-                  <>
-                    {(orcamento.custos_indiretos?.estaleiro || 0) > 0 && (
+                {/* ── Right: Financial Summary + Axia (1/3) ── */}
+                <div className="space-y-4">
+                  {/* Financial summary */}
+                  <Card className="border-primary/20">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Euro className="h-4 w-4 text-primary" /> Resumo Financeiro
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground pl-4">Estaleiro</span>
-                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.estaleiro || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.estaleiro || 0))}</span>
+                        <span className="text-muted-foreground">Subtotal Artigos</span>
+                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? subtotalArtigos / (1 - margemDecimal) : subtotalArtigos)}</span>
                       </div>
-                    )}
-                    {(orcamento.custos_indiretos?.seguros || 0) > 0 && (
+                      {custosIndiretosTotal > 0 && (
+                        <>
+                          {(orcamento.custos_indiretos?.estaleiro || 0) > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground pl-3">Estaleiro</span>
+                              <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos.estaleiro || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos.estaleiro || 0))}</span>
+                            </div>
+                          )}
+                          {(orcamento.custos_indiretos?.seguros || 0) > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground pl-3">Seguros</span>
+                              <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos.seguros || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos.seguros || 0))}</span>
+                            </div>
+                          )}
+                          {(orcamento.custos_indiretos?.licenciamento || 0) > 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground pl-3">Licenciamento</span>
+                              <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos.licenciamento || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos.licenciamento || 0))}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <Separator />
+                      <div className="flex justify-between text-sm font-medium">
+                        <span>Subtotal (s/ IVA)</span>
+                        <span>{formatCurrency(valorBase)}</span>
+                      </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground pl-4">Seguros</span>
-                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.seguros || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.seguros || 0))}</span>
+                        <span className="text-muted-foreground">IVA ({taxaIVA}%)</span>
+                        <span>{formatCurrency(valorIVA)}</span>
                       </div>
-                    )}
-                    {(orcamento.custos_indiretos?.licenciamento || 0) > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground pl-4">Licenciamento</span>
-                        <span>{formatCurrency(margemDecimal > 0 && margemDecimal < 1 ? (orcamento.custos_indiretos?.licenciamento || 0) / (1 - margemDecimal) : (orcamento.custos_indiretos?.licenciamento || 0))}</span>
+                      <Separator />
+                      <div className="flex justify-between text-lg font-bold pt-1">
+                        <span>TOTAL</span>
+                        <span className="text-primary">{formatCurrency(valorFinal)}</span>
                       </div>
-                    )}
-                  </>
-                )}
 
-                <Separator className="my-2" />
+                      {/* Internal-only info */}
+                      <div className="mt-3 pt-3 border-t border-dashed space-y-1.5">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Apenas interno</p>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Custo Real</span>
+                          <span>{formatCurrency(subtotalComIndiretos)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Lucro Estimado</span>
+                          <span className="text-emerald-600 font-semibold">{formatCurrency(lucroEstimado)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Regime Fiscal</span>
+                          <span className="font-medium">{regimeNome}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Subtotal antes do IVA */}
-                <div className="flex justify-between text-sm font-medium">
-                  <span className="text-muted-foreground">Subtotal (s/ IVA)</span>
-                  <span>{formatCurrency(valorBase)}</span>
-                </div>
+                  {/* Axia Alerts */}
+                  <Card className="border-primary/10">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-primary" /> Alertas Axia
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-0">
+                      {axiaAlerts.map((alert, i) => (
+                        <div key={i} className="flex items-start gap-2.5 py-2.5 border-b last:border-0 border-border/40">
+                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${alert.bg}`}>
+                            <alert.icon className={`w-3.5 h-3.5 ${alert.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold">{alert.label}</p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">{alert.desc}</p>
+                          </div>
+                          <Badge variant="outline" className="text-[9px] shrink-0">{alert.severity}</Badge>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
 
-                <div className="flex justify-between text-sm">
-                   <span className="text-muted-foreground">IVA ({taxaIVA}%)</span>
-                  <span>{formatCurrency(valorIVA)}</span>
-                </div>
-
-                <Separator className="my-2" />
-
-                <div className="flex justify-between text-lg font-bold pt-2">
-                  <span>TOTAL</span>
-                  <span className="text-primary">{formatCurrency(valorFinal)}</span>
+                  {/* Quick actions */}
+                  <Card>
+                    <CardContent className="pt-4 pb-3 space-y-2">
+                      <Button className="w-full" size="sm" onClick={() => navigate(`/orcamentos/${id}/editar`)}>
+                        <Edit className="w-3.5 h-3.5 mr-2" /> Editar Orçamento
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm" onClick={handleGeneratePDF}>
+                        <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm" onClick={() => setEnviarDialogOpen(true)}>
+                        <Send className="w-3.5 h-3.5 mr-2" /> Enviar ao Cliente
+                      </Button>
+                      {orcamento.status !== 'adjudicado' && (
+                        <Button variant="outline" className="w-full" size="sm" onClick={handleConvertToObra}>
+                          <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Observations */}
-          <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-2 pdf-keep-together print:break-inside-avoid">
-            <h4 className="font-semibold">Observações:</h4>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1">
-              <li>Este orçamento é válido por 30 dias a contar da data de emissão.</li>
-              <li>Os preços apresentados incluem todos os materiais e mão de obra necessários.</li>
-              <li>Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.</li>
-              <li>Condições de pagamento a acordar.</li>
-            </ul>
-             {/* Legal note for fiscal compliance */}
-             {notaLegal && (
-               <div className="mt-3 pt-3 border-t border-border">
-                 <p className="text-xs text-muted-foreground italic">
-                   <strong>Nota Fiscal:</strong> {notaLegal}
-                 </p>
-               </div>
-             )}
-          </div>
-
-          {/* Footer */}
-          <div className="text-center text-xs text-muted-foreground pt-4 border-t pdf-keep-together print:break-inside-avoid">
-            <p>Documento gerado em {format(new Date(), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}</p>
-            {companyName && <p className="mt-1">{companyName} {companyNif && `• NIF: ${companyNif}`}</p>}
-          </div>
-        </div>
+              {/* ── Observations ── */}
+              <Card className="bg-muted/30">
+                <CardContent className="py-4 text-sm space-y-2">
+                  <h4 className="font-semibold">Observações:</h4>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-1 text-xs">
+                    <li>Orçamento válido por 30 dias a contar da data de emissão.</li>
+                    <li>Preços incluem materiais e mão de obra necessários.</li>
+                    <li>Trabalhos adicionais serão orçamentados separadamente.</li>
+                    <li>Condições de pagamento a acordar.</li>
+                  </ul>
+                  {notaLegal && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground italic">
+                        <strong>Nota Fiscal:</strong> {notaLegal}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
