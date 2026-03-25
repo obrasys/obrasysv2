@@ -177,7 +177,59 @@ const MOCK_INSIGHTS_OBRA = [
 /* ── Main Page ─────────────────────────────────────────── */
 export default function AxiaPage() {
   const { data, isLoading } = useAxiaDashboard();
+  const { session } = useAuth();
+  const { toast } = useToast();
   const [question, setQuestion] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleSend = useCallback(async (text?: string) => {
+    const q = (text || question).trim();
+    if (!q || isStreaming) return;
+    if (!session?.access_token) {
+      toast({ title: 'Sessão expirada', description: 'Faça login novamente.', variant: 'destructive' });
+      return;
+    }
+
+    const userMsg: ChatMessage = { role: 'user', content: q };
+    setChatMessages(prev => [...prev, userMsg]);
+    setQuestion('');
+    setIsStreaming(true);
+
+    let assistantSoFar = '';
+    const upsert = (chunk: string) => {
+      assistantSoFar += chunk;
+      setChatMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === 'assistant') {
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+        }
+        return [...prev, { role: 'assistant', content: assistantSoFar }];
+      });
+    };
+
+    try {
+      await streamAxiaChat({
+        question: q,
+        history: chatMessages,
+        token: session.access_token,
+        onDelta: upsert,
+        onDone: () => setIsStreaming(false),
+        onError: (msg) => {
+          toast({ title: 'Erro Axia', description: msg, variant: 'destructive' });
+          setIsStreaming(false);
+        },
+      });
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao contactar a Axia.', variant: 'destructive' });
+      setIsStreaming(false);
+    }
+  }, [question, isStreaming, session, chatMessages, toast]);
 
   if (isLoading) {
     return (
