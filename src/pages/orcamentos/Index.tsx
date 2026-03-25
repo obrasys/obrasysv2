@@ -162,84 +162,25 @@ export default function OrcamentosPage() {
           </Select>
         </div>
 
-        {/* Table */}
+        {/* Cards Grid */}
         {pageData.length > 0 ? (
-          <div className="bg-card border rounded-xl">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Código</TableHead>
-                    <TableHead className="text-xs">Título</TableHead>
-                    <TableHead className="text-xs">Obra / Cliente</TableHead>
-                    <TableHead className="text-xs">Estado</TableHead>
-                    <TableHead className="text-xs text-center">Cap.</TableHead>
-                    <TableHead className="text-xs text-center">Itens</TableHead>
-                    <TableHead className="text-xs text-right">Margem</TableHead>
-                    <TableHead className="text-xs text-right">Valor</TableHead>
-                    <TableHead className="text-xs">Data</TableHead>
-                    <TableHead className="text-xs w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pageData.map((orc) => {
-                    const numCaps = orc.capitulos?.length || 0;
-                    const numItens = orc.capitulos?.reduce((s, c) => s + (c.artigos?.length || 0), 0) || 0;
-
-                    return (
-                      <TableRow
-                        key={orc.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/orcamentos/${orc.id}`)}
-                      >
-                        <TableCell className="font-mono text-xs text-muted-foreground">{orc.codigo || '—'}</TableCell>
-                        <TableCell className="font-medium text-sm max-w-[200px] truncate">{orc.titulo}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate">
-                          {orc.obra?.nome || orc.cliente?.nome || '—'}
-                        </TableCell>
-                        <TableCell><OrcamentoStatus status={orc.status} /></TableCell>
-                        <TableCell className="text-center text-sm">{numCaps}</TableCell>
-                        <TableCell className="text-center text-sm">{numItens}</TableCell>
-                        <TableCell className="text-right text-sm font-medium">{orc.margem_lucro}%</TableCell>
-                        <TableCell className="text-right text-sm font-semibold whitespace-nowrap">{formatCurrencyFull(getValorFinal(orc))}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {format(new Date(orc.data_criacao), 'dd/MM/yy', { locale: pt })}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-background">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos/${orc.id}`); }}>
-                                <Eye className="w-3.5 h-3.5 mr-2" /> Ver
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/orcamentos/${orc.id}/editar`); }}>
-                                <Edit className="w-3.5 h-3.5 mr-2" /> Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); duplicateOrcamento.mutateAsync(orc.id); }}>
-                                <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); createRevisao.mutateAsync(orc.id).then(r => navigate(`/orcamentos/${r.id}/editar`)); }}>
-                                <GitBranch className="w-3.5 h-3.5 mr-2" /> Criar Revisão
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(orc.id); }}>
-                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Eliminar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+          <>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+              {pageData.map((orc) => (
+                <OrcamentoCard
+                  key={orc.id}
+                  orcamento={orc}
+                  onView={(id) => navigate(`/orcamentos/${id}`)}
+                  onEdit={(id) => navigate(`/orcamentos/${id}/editar`)}
+                  onDuplicate={(id) => duplicateOrcamento.mutateAsync(id)}
+                  onRevision={(id) => createRevisao.mutateAsync(id).then(r => navigate(`/orcamentos/${r.id}/editar`))}
+                  onDelete={(id) => setDeleteId(id)}
+                  onGeneratePDF={() => {}}
+                />
+              ))}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   {filtered.length} orçamento{filtered.length !== 1 ? 's' : ''} • Página {page + 1} de {totalPages}
                 </p>
@@ -253,7 +194,7 @@ export default function OrcamentosPage() {
                 </div>
               </div>
             )}
-          </div>
+          </>
         ) : (
           <div className="text-center py-16 bg-muted/30 rounded-xl">
             <FileText className="h-14 w-14 mx-auto text-muted-foreground/40 mb-4" />
