@@ -93,9 +93,14 @@ Deno.serve(async (req) => {
     }
 
     if (!clienteEmail) {
+      // No client email — skip portal access creation silently
       return new Response(
-        JSON.stringify({ error: "Email do cliente é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          message: "Sem email de cliente associado — acesso ao portal não criado",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
