@@ -36,7 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
-import { ADMIN_NAV_ITEMS, MAIN_NAV_ITEMS } from '@/config/navigation';
+import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
