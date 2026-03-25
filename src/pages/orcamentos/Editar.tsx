@@ -323,7 +323,7 @@ export default function EditarOrcamentoPage() {
         Ver Orçamento
       </Button>
       {orcamento.status === 'rascunho' && (
-        <Button onClick={handleFinalizar}>
+        <Button onClick={handleOpenFinalizar}>
           <Send className="mr-2 h-4 w-4" />
           Finalizar
         </Button>
