@@ -861,6 +861,92 @@ export default function EditarOrcamentoPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Finalizar Modal - Seleção de Cliente */}
+      <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" />
+              Finalizar Orçamento
+            </DialogTitle>
+            <DialogDescription>
+              Confirme ou selecione o cliente antes de enviar o orçamento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Cliente <span className="text-destructive">*</span></Label>
+              <Select value={finalizarClienteId} onValueChange={setFinalizarClienteId}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Selecionar cliente..." />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {clientesAtivos && clientesAtivos.length > 0 ? (
+                    clientesAtivos.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {cliente.nome}
+                          {cliente.empresa && (
+                            <span className="text-muted-foreground text-xs">({cliente.empresa})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="py-4 text-center text-sm text-muted-foreground">
+                      Nenhum cliente encontrado
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Client validation feedback */}
+            {finalizarClienteId && (() => {
+              const cliente = clientesAtivos?.find(c => c.id === finalizarClienteId);
+              if (!cliente) return null;
+              const missing: string[] = [];
+              if (!cliente.email) missing.push('email');
+              if (!cliente.telefone && !cliente.telemovel) missing.push('telefone');
+              if (!cliente.endereco) missing.push('morada');
+              if (missing.length > 0) {
+                return (
+                  <div className="flex items-start gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 rounded-md p-3">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium">Dados em falta: {missing.join(', ')}</p>
+                      <a href={`/clientes/${cliente.id}/editar`} className="underline text-xs">
+                        Editar cliente
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Cliente com dados completos
+                </div>
+              );
+            })()}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowFinalizarModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleFinalizar}
+              disabled={updateStatus.isPending || updateOrcamento.isPending || !finalizarClienteId}
+            >
+              {(updateStatus.isPending || updateOrcamento.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Send className="mr-2 h-4 w-4" />
+              Enviar ao Cliente
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
