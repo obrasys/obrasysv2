@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         .from("orcamentos")
         .select("*, cliente:clientes(id, nome, email)")
         .eq("id", orcamento_id)
-        .single();
+        .maybeSingle();
 
       if (orcError || !orc) {
         return new Response(
@@ -78,15 +78,10 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (!orc.cliente || !orc.cliente.email) {
-        return new Response(
-          JSON.stringify({ error: "Cliente sem email associado ao orçamento" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (orc.cliente && orc.cliente.email) {
+        clienteEmail = orc.cliente.email;
+        clienteNome = orc.cliente.nome;
       }
-
-      clienteEmail = orc.cliente.email;
-      clienteNome = orc.cliente.nome;
       obraIdFinal = orc.obra_id;
     }
 
