@@ -248,12 +248,39 @@ export default function EditarOrcamentoPage() {
     }
   };
 
+  const handleOpenFinalizar = () => {
+    // Pre-select current client if exists
+    setFinalizarClienteId(orcamento.cliente_id || '');
+    setShowFinalizarModal(true);
+  };
+
   const handleFinalizar = async () => {
+    // Validate client
+    const cliente = clientesAtivos?.find(c => c.id === finalizarClienteId);
+    if (!cliente) {
+      toast({ title: 'Erro', description: 'Selecione um cliente para finalizar', variant: 'destructive' });
+      return;
+    }
+    const missing: string[] = [];
+    if (!cliente.email) missing.push('email');
+    if (!cliente.telefone && !cliente.telemovel) missing.push('telefone');
+    if (!cliente.endereco) missing.push('morada');
+    if (missing.length > 0) {
+      toast({ title: 'Cliente incompleto', description: `Falta: ${missing.join(', ')}. Edite o cliente primeiro.`, variant: 'destructive' });
+      return;
+    }
+
+    // Save client to orcamento if changed
+    if (finalizarClienteId !== orcamento.cliente_id) {
+      await updateOrcamento.mutateAsync({ id: orcamento.id, cliente_id: finalizarClienteId });
+    }
+
     await updateStatus.mutateAsync({
       id: orcamento.id,
       status: 'enviado',
       data_envio: new Date().toISOString(),
     });
+    setShowFinalizarModal(false);
     toast({ title: 'Sucesso', description: 'Orçamento enviado ao cliente' });
   };
 
