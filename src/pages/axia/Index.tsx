@@ -1,20 +1,84 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Loader2, AlertTriangle, TrendingDown, PackageMinus, CheckCircle, XCircle,
   Clock, Brain, Zap, MessageSquare, ShieldAlert, CalendarClock, Search as SearchIcon,
   Lightbulb, Eye, BarChart3, ArrowUpRight, ArrowDownRight, Activity,
-  HardHat, Send, Sparkles, ChevronRight, FileWarning, Target,
+  HardHat, Send, Sparkles, ChevronRight, FileWarning, Target, User, Bot, Eraser,
 } from 'lucide-react';
 import { AxiaIcon } from '@/components/axia/AxiaIcon';
 import { useAxiaDashboard } from '@/hooks/useAxiaDashboard';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+
+/* ── Types ─────────────────────────────────────────────── */
+type ChatMessage = { role: 'user' | 'assistant'; content: string };
+
+/* ── Stream helper ─────────────────────────────────────── */
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/axia-chat`;
+
+async function streamAxiaChat({
+  question, history, token, onDelta, onDone, onError,
+}: {
+  question: string; history: ChatMessage[]; token: string;
+  onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void;
+}) {
+  const resp = await fetch(CHAT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ question, history }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({ error: 'Erro de rede' }));
+    onError(body.error || `Erro ${resp.status}`);
+    return;
+  }
+
+  if (!resp.body) { onError('Sem resposta'); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    let nl: number;
+    while ((nl = buf.indexOf('\n')) !== -1) {
+      let line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line.endsWith('\r')) line = line.slice(0, -1);
+      if (line.startsWith(':') || line.trim() === '') continue;
+      if (!line.startsWith('data: ')) continue;
+      const json = line.slice(6).trim();
+      if (json === '[DONE]') { onDone(); return; }
+      try {
+        const parsed = JSON.parse(json);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) onDelta(content);
+      } catch {
+        buf = line + '\n' + buf;
+        break;
+      }
+    }
+  }
+  onDone();
+}
 
 /* ── Score Ring ─────────────────────────────────────────── */
 function ScoreRing({ score }: { score: number }) {
