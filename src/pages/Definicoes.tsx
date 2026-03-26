@@ -70,6 +70,7 @@ export default function DefinicoesPage() {
   const [axiaEnabled, setAxiaEnabled] = useState(true);
   const [axiaLlm, setAxiaLlm] = useState(true);
   const [axiaPredictive, setAxiaPredictive] = useState(true);
+  const [axiaContextual, setAxiaContextual] = useState(true);
   const [axiaMargin, setAxiaMargin] = useState('15');
   const [axiaSensitivity, setAxiaSensitivity] = useState('2.5');
 
@@ -79,6 +80,7 @@ export default function DefinicoesPage() {
       setAxiaEnabled(axiaSettings.enabled);
       setAxiaLlm(axiaSettings.llm_enabled);
       setAxiaPredictive(true);
+      setAxiaContextual(axiaSettings.contextual_assistant_enabled ?? true);
       setAxiaMargin(String(axiaSettings.min_margin_percent));
       setAxiaSensitivity(String(axiaSettings.outlier_zscore));
     }
@@ -476,6 +478,25 @@ export default function DefinicoesPage() {
                 onCheckedChange={(v) => {
                   setAxiaPredictive(v);
                   updateAxiaSettings.mutate({ enabled: axiaEnabled });
+                }}
+                disabled={!axiaEnabled}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Assistente Contextual</Label>
+                <p className="text-sm text-muted-foreground">
+                  Chat inteligente da Axia com acesso aos dados da plataforma
+                </p>
+              </div>
+              <Switch
+                checked={axiaContextual}
+                onCheckedChange={(v) => {
+                  setAxiaContextual(v);
+                  updateAxiaSettings.mutate({ contextual_assistant_enabled: v } as any);
                 }}
                 disabled={!axiaEnabled}
               />

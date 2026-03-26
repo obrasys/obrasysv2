@@ -768,6 +768,7 @@ serve(async (req) => {
           .update({
             enabled: newSettings.enabled,
             llm_enabled: newSettings.llm_enabled,
+            contextual_assistant_enabled: newSettings.contextual_assistant_enabled,
             min_margin_percent: newSettings.min_margin_percent,
             outlier_zscore: newSettings.outlier_zscore,
             country: newSettings.country,

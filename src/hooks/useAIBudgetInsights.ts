@@ -25,6 +25,7 @@ export interface CompanyAISettings {
   country: string;
   enabled: boolean;
   llm_enabled: boolean;
+  contextual_assistant_enabled: boolean;
   min_margin_percent: number;
   outlier_zscore: number;
   param_profile_default: string;

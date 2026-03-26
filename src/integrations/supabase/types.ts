@@ -1596,6 +1596,7 @@ export type Database = {
       }
       company_ai_settings: {
         Row: {
+          contextual_assistant_enabled: boolean
           country: string
           created_at: string
           enabled: boolean
@@ -1609,6 +1610,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          contextual_assistant_enabled?: boolean
           country?: string
           created_at?: string
           enabled?: boolean
@@ -1622,6 +1624,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          contextual_assistant_enabled?: boolean
           country?: string
           created_at?: string
           enabled?: boolean
