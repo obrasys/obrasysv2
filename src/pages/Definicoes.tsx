@@ -80,6 +80,7 @@ export default function DefinicoesPage() {
       setAxiaEnabled(axiaSettings.enabled);
       setAxiaLlm(axiaSettings.llm_enabled);
       setAxiaPredictive(true);
+      setAxiaContextual(axiaSettings.contextual_assistant_enabled ?? true);
       setAxiaMargin(String(axiaSettings.min_margin_percent));
       setAxiaSensitivity(String(axiaSettings.outlier_zscore));
     }
