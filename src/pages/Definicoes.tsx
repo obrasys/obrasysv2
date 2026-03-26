@@ -485,6 +485,25 @@ export default function DefinicoesPage() {
             
             <Separator />
             
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Assistente Contextual</Label>
+                <p className="text-sm text-muted-foreground">
+                  Chat inteligente da Axia com acesso aos dados da plataforma
+                </p>
+              </div>
+              <Switch
+                checked={axiaContextual}
+                onCheckedChange={(v) => {
+                  setAxiaContextual(v);
+                  updateAxiaSettings.mutate({ contextual_assistant_enabled: v } as any);
+                }}
+                disabled={!axiaEnabled}
+              />
+            </div>
+            
+            <Separator />
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('min_margin')}</Label>
