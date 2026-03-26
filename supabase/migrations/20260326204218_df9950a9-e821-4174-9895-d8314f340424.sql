@@ -1,0 +1,1 @@
+ALTER TABLE public.company_ai_settings ADD COLUMN IF NOT EXISTS contextual_assistant_enabled boolean NOT NULL DEFAULT true;
