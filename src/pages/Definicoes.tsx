@@ -70,6 +70,7 @@ export default function DefinicoesPage() {
   const [axiaEnabled, setAxiaEnabled] = useState(true);
   const [axiaLlm, setAxiaLlm] = useState(true);
   const [axiaPredictive, setAxiaPredictive] = useState(true);
+  const [axiaContextual, setAxiaContextual] = useState(true);
   const [axiaMargin, setAxiaMargin] = useState('15');
   const [axiaSensitivity, setAxiaSensitivity] = useState('2.5');
 
