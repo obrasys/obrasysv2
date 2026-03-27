@@ -121,14 +121,7 @@ export default function VerOrcamentoPage() {
     }
   };
 
-  const handleConvertToObra = async () => {
-    try {
-      await updateStatus.mutateAsync({ id: orcamento.id, status: 'adjudicado' });
-      toast({ title: 'Orçamento adjudicado', description: 'Obra criada automaticamente' });
-    } catch {
-      toast({ title: 'Erro', description: 'Não foi possível adjudicar', variant: 'destructive' });
-    }
-  };
+  const canAdjudicar = ADJUDICAVEL_STATUSES.includes(orcamento.status as any);
 
   // ── Mock Axia alerts ──
   const axiaAlerts = [
