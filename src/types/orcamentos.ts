@@ -223,7 +223,13 @@ export const UNIDADES = [
 export const STATUS_CONFIG: Record<OrcamentoStatus, { label: string; color: string; bgColor: string }> = {
   rascunho: { label: 'Rascunho', color: 'text-muted-foreground', bgColor: 'bg-muted' },
   enviado: { label: 'Enviado', color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  visto: { label: 'Visto', color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
+  negociacao: { label: 'Em Negociação', color: 'text-amber-600', bgColor: 'bg-amber-100' },
   aprovado: { label: 'Aprovado', color: 'text-green-600', bgColor: 'bg-green-100' },
-  rejeitado: { label: 'Rejeitado', color: 'text-red-600', bgColor: 'bg-red-100' },
   adjudicado: { label: 'Adjudicado', color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  rejeitado: { label: 'Rejeitado', color: 'text-red-600', bgColor: 'bg-red-100' },
+  cancelado: { label: 'Cancelado', color: 'text-gray-500', bgColor: 'bg-gray-100' },
 };
+
+// States that allow awarding
+export const ADJUDICAVEL_STATUSES: OrcamentoStatus[] = ['enviado', 'visto', 'negociacao', 'aprovado'];
