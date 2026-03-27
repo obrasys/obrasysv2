@@ -285,19 +285,7 @@ export default function EditarOrcamentoPage() {
     toast({ title: 'Sucesso', description: 'Orçamento enviado ao cliente' });
   };
 
-  const handleAdjudicar = async () => {
-    const valor = parseFloat(valorAdjudicado);
-    if (isNaN(valor) || valor <= 0) {
-      toast({ title: 'Erro', description: 'Introduza um valor adjudicado válido', variant: 'destructive' });
-      return;
-    }
-    await updateStatus.mutateAsync({
-      id: orcamento.id,
-      status: 'adjudicado',
-      valor_adjudicado: valor,
-    });
-    setShowAdjudicarModal(false);
-  };
+  // Adjudicação now handled by the wizard component
 
   const getArtigoDefaults = (): Partial<ArtigoFormData> | undefined => {
     if (editingArtigo) {
