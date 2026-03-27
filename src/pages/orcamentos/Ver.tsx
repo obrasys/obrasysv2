@@ -445,10 +445,15 @@ export default function VerOrcamentoPage() {
                       <Button variant="outline" className="w-full" size="sm" onClick={() => setEnviarDialogOpen(true)}>
                         <Send className="w-3.5 h-3.5 mr-2" /> Enviar ao Cliente
                       </Button>
-                      {orcamento.status !== 'adjudicado' && (
-                        <Button variant="outline" className="w-full" size="sm" onClick={handleConvertToObra}>
-                          <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                      {canAdjudicar && (
+                        <Button className="w-full bg-primary hover:bg-primary/90" size="sm" onClick={() => setAdjudicarOpen(true)}>
+                          <HardHat className="w-3.5 h-3.5 mr-2" /> Adjudicar Orçamento
                         </Button>
+                      )}
+                      {orcamento.status === 'adjudicado' && (
+                        <Badge className="w-full justify-center py-1.5 bg-purple-100 text-purple-700">
+                          Orçamento Adjudicado
+                        </Badge>
                       )}
                     </CardContent>
                   </Card>
