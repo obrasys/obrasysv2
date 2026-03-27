@@ -4,6 +4,8 @@ import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
+import { AdjudicacaoWizard } from '@/components/orcamentos/AdjudicacaoWizard';
+import { ADJUDICAVEL_STATUSES } from '@/types/orcamentos';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +39,7 @@ export default function VerOrcamentoPage() {
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
+  const [adjudicarOpen, setAdjudicarOpen] = useState(false);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
@@ -118,14 +121,7 @@ export default function VerOrcamentoPage() {
     }
   };
 
-  const handleConvertToObra = async () => {
-    try {
-      await updateStatus.mutateAsync({ id: orcamento.id, status: 'adjudicado' });
-      toast({ title: 'Orçamento adjudicado', description: 'Obra criada automaticamente' });
-    } catch {
-      toast({ title: 'Erro', description: 'Não foi possível adjudicar', variant: 'destructive' });
-    }
-  };
+  const canAdjudicar = ADJUDICAVEL_STATUSES.includes(orcamento.status as any);
 
   // ── Mock Axia alerts ──
   const axiaAlerts = [
@@ -171,11 +167,11 @@ export default function VerOrcamentoPage() {
               <DropdownMenuItem onClick={() => setEnviarDialogOpen(true)}>
                 <Send className="w-3.5 h-3.5 mr-2" /> Enviar
               </DropdownMenuItem>
-              {orcamento.status !== 'adjudicado' && (
+              {canAdjudicar && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleConvertToObra}>
-                    <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                  <DropdownMenuItem onClick={() => setAdjudicarOpen(true)}>
+                    <HardHat className="w-3.5 h-3.5 mr-2" /> Adjudicar Orçamento
                   </DropdownMenuItem>
                 </>
               )}
@@ -189,6 +185,14 @@ export default function VerOrcamentoPage() {
         orcamentoId={orcamento.id} orcamentoTitulo={orcamento.titulo}
         clienteEmail={orcamento.cliente?.email} clienteNome={orcamento.cliente?.nome}
       />
+      {canAdjudicar && (
+        <AdjudicacaoWizard
+          open={adjudicarOpen}
+          onOpenChange={setAdjudicarOpen}
+          orcamento={orcamento as any}
+          valorFinal={valorFinal}
+        />
+      )}
 
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
@@ -441,10 +445,15 @@ export default function VerOrcamentoPage() {
                       <Button variant="outline" className="w-full" size="sm" onClick={() => setEnviarDialogOpen(true)}>
                         <Send className="w-3.5 h-3.5 mr-2" /> Enviar ao Cliente
                       </Button>
-                      {orcamento.status !== 'adjudicado' && (
-                        <Button variant="outline" className="w-full" size="sm" onClick={handleConvertToObra}>
-                          <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                      {canAdjudicar && (
+                        <Button className="w-full bg-primary hover:bg-primary/90" size="sm" onClick={() => setAdjudicarOpen(true)}>
+                          <HardHat className="w-3.5 h-3.5 mr-2" /> Adjudicar Orçamento
                         </Button>
+                      )}
+                      {orcamento.status === 'adjudicado' && (
+                        <Badge className="w-full justify-center py-1.5 bg-purple-100 text-purple-700">
+                          Orçamento Adjudicado
+                        </Badge>
                       )}
                     </CardContent>
                   </Card>

@@ -12,6 +12,8 @@ import { ParametricMeasurements } from '@/components/parametric';
 import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
 import { AxiaStatusBadge } from '@/components/axia/AxiaStatusBadge';
 import { useAIBudgetInsights } from '@/hooks/useAIBudgetInsights';
+import { AdjudicacaoWizard } from '@/components/orcamentos/AdjudicacaoWizard';
+import { ADJUDICAVEL_STATUSES } from '@/types/orcamentos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -118,7 +120,6 @@ export default function EditarOrcamentoPage() {
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [finalizarClienteId, setFinalizarClienteId] = useState<string>('');
-  const [valorAdjudicado, setValorAdjudicado] = useState<string>('');
   const [deleteCapituloId, setDeleteCapituloId] = useState<string | null>(null);
   const [deleteArtigoId, setDeleteArtigoId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('artigos');
@@ -284,19 +285,7 @@ export default function EditarOrcamentoPage() {
     toast({ title: 'Sucesso', description: 'Orçamento enviado ao cliente' });
   };
 
-  const handleAdjudicar = async () => {
-    const valor = parseFloat(valorAdjudicado);
-    if (isNaN(valor) || valor <= 0) {
-      toast({ title: 'Erro', description: 'Introduza um valor adjudicado válido', variant: 'destructive' });
-      return;
-    }
-    await updateStatus.mutateAsync({
-      id: orcamento.id,
-      status: 'adjudicado',
-      valor_adjudicado: valor,
-    });
-    setShowAdjudicarModal(false);
-  };
+  // Adjudicação now handled by the wizard component
 
   const getArtigoDefaults = (): Partial<ArtigoFormData> | undefined => {
     if (editingArtigo) {
@@ -328,13 +317,10 @@ export default function EditarOrcamentoPage() {
           Finalizar
         </Button>
       )}
-      {(orcamento.status === 'enviado' || orcamento.status === 'aprovado') && (
+      {ADJUDICAVEL_STATUSES.includes(orcamento.status as any) && (
         <Button
-          onClick={() => {
-            setValorAdjudicado(String(orcamento.valor_total || ''));
-            setShowAdjudicarModal(true);
-          }}
-          className="bg-green-600 hover:bg-green-700"
+          onClick={() => setShowAdjudicarModal(true)}
+          className="bg-primary hover:bg-primary/90"
         >
           <CheckCircle className="mr-2 h-4 w-4" />
           Adjudicar
@@ -812,55 +798,15 @@ export default function EditarOrcamentoPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Adjudicar Modal */}
-      <Dialog open={showAdjudicarModal} onOpenChange={setShowAdjudicarModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              Adjudicar Orçamento
-            </DialogTitle>
-            <DialogDescription>
-              Confirme o valor adjudicado pelo cliente. Será criada uma obra automaticamente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="valor-adjudicado">Valor Adjudicado (€)</Label>
-              <div className="relative mt-1.5">
-                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="valor-adjudicado"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={valorAdjudicado}
-                  onChange={(e) => setValorAdjudicado(e.target.value)}
-                  className="pl-9 text-lg font-semibold"
-                  placeholder="0.00"
-                  autoFocus
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Valor total do orçamento: {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(orcamento.valor_total || 0)}
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowAdjudicarModal(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleAdjudicar}
-              disabled={updateStatus.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {updateStatus.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmar Adjudicação
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Adjudicar Wizard */}
+      {ADJUDICAVEL_STATUSES.includes(orcamento.status as any) && (
+        <AdjudicacaoWizard
+          open={showAdjudicarModal}
+          onOpenChange={setShowAdjudicarModal}
+          orcamento={orcamento as any}
+          valorFinal={orcamento.valor_total || 0}
+        />
+      )}
 
       {/* Finalizar Modal - Seleção de Cliente */}
       <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>

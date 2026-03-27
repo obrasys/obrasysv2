@@ -1003,6 +1003,132 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_awards: {
+        Row: {
+          awarded_at: string
+          awarded_by_user_id: string
+          awarded_total_amount: number
+          budget_id: string
+          created_at: string
+          deposit_amount: number
+          deposit_percent: number
+          id: string
+          notes: string | null
+          obra_id: string | null
+          remaining_amount: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          awarded_by_user_id: string
+          awarded_total_amount: number
+          budget_id: string
+          created_at?: string
+          deposit_amount?: number
+          deposit_percent?: number
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          remaining_amount?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          awarded_by_user_id?: string
+          awarded_total_amount?: number
+          budget_id?: string
+          created_at?: string
+          deposit_amount?: number
+          deposit_percent?: number
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          remaining_amount?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_awards_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_awards_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_payment_plans: {
+        Row: {
+          amount: number
+          budget_award_id: string
+          created_at: string
+          due_date: string
+          id: string
+          installment_no: number
+          label: string
+          obra_id: string | null
+          percent_of_award: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          budget_award_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_no: number
+          label: string
+          obra_id?: string | null
+          percent_of_award?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          budget_award_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_no?: number
+          label?: string
+          obra_id?: string | null
+          percent_of_award?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_payment_plans_budget_award_id_fkey"
+            columns: ["budget_award_id"]
+            isOneToOne: false
+            referencedRelation: "budget_awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_payment_plans_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caderno_item_match: {
         Row: {
           artigo_base_id: string | null
@@ -4083,6 +4209,176 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receivable_alerts: {
+        Row: {
+          alert_type: string
+          channel: string
+          created_at: string
+          id: string
+          receivable_id: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          receivable_id: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          receivable_id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivable_alerts_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receivable_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          obra_id: string | null
+          payment_date: string
+          payment_method: string | null
+          receivable_id: string
+          reference: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          receivable_id: string
+          reference?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          receivable_id?: string
+          reference?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivable_payments_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivable_payments_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receivables: {
+        Row: {
+          amount: number
+          client_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          obra_id: string | null
+          paid_amount: number
+          remaining_amount: number
+          source_id: string | null
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          issue_date?: string
+          obra_id?: string | null
+          paid_amount?: number
+          remaining_amount?: number
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          issue_date?: string
+          obra_id?: string | null
+          paid_amount?: number
+          remaining_amount?: number
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
         ]
