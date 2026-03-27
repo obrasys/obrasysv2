@@ -317,13 +317,10 @@ export default function EditarOrcamentoPage() {
           Finalizar
         </Button>
       )}
-      {(orcamento.status === 'enviado' || orcamento.status === 'aprovado') && (
+      {ADJUDICAVEL_STATUSES.includes(orcamento.status as any) && (
         <Button
-          onClick={() => {
-            setValorAdjudicado(String(orcamento.valor_total || ''));
-            setShowAdjudicarModal(true);
-          }}
-          className="bg-green-600 hover:bg-green-700"
+          onClick={() => setShowAdjudicarModal(true)}
+          className="bg-primary hover:bg-primary/90"
         >
           <CheckCircle className="mr-2 h-4 w-4" />
           Adjudicar
