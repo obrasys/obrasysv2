@@ -120,7 +120,6 @@ export default function EditarOrcamentoPage() {
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
   const [finalizarClienteId, setFinalizarClienteId] = useState<string>('');
-  const [valorAdjudicado, setValorAdjudicado] = useState<string>('');
   const [deleteCapituloId, setDeleteCapituloId] = useState<string | null>(null);
   const [deleteArtigoId, setDeleteArtigoId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('artigos');
