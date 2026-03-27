@@ -6,6 +6,7 @@ import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { AdjudicacaoWizard } from '@/components/orcamentos/AdjudicacaoWizard';
 import { ADJUDICAVEL_STATUSES } from '@/types/orcamentos';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
