@@ -167,11 +167,11 @@ export default function VerOrcamentoPage() {
               <DropdownMenuItem onClick={() => setEnviarDialogOpen(true)}>
                 <Send className="w-3.5 h-3.5 mr-2" /> Enviar
               </DropdownMenuItem>
-              {orcamento.status !== 'adjudicado' && (
+              {canAdjudicar && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleConvertToObra}>
-                    <HardHat className="w-3.5 h-3.5 mr-2" /> Converter em Obra
+                  <DropdownMenuItem onClick={() => setAdjudicarOpen(true)}>
+                    <HardHat className="w-3.5 h-3.5 mr-2" /> Adjudicar Orçamento
                   </DropdownMenuItem>
                 </>
               )}
