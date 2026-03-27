@@ -12,6 +12,8 @@ import { ParametricMeasurements } from '@/components/parametric';
 import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
 import { AxiaStatusBadge } from '@/components/axia/AxiaStatusBadge';
 import { useAIBudgetInsights } from '@/hooks/useAIBudgetInsights';
+import { AdjudicacaoWizard } from '@/components/orcamentos/AdjudicacaoWizard';
+import { ADJUDICAVEL_STATUSES } from '@/types/orcamentos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
