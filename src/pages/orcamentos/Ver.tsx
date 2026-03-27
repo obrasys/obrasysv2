@@ -38,6 +38,7 @@ export default function VerOrcamentoPage() {
   const { profile } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
+  const [adjudicarOpen, setAdjudicarOpen] = useState(false);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
