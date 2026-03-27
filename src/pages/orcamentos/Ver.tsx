@@ -185,6 +185,14 @@ export default function VerOrcamentoPage() {
         orcamentoId={orcamento.id} orcamentoTitulo={orcamento.titulo}
         clienteEmail={orcamento.cliente?.email} clienteNome={orcamento.cliente?.nome}
       />
+      {canAdjudicar && (
+        <AdjudicacaoWizard
+          open={adjudicarOpen}
+          onOpenChange={setAdjudicarOpen}
+          orcamento={orcamento as any}
+          valorFinal={valorFinal}
+        />
+      )}
 
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
