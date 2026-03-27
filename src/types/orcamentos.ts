@@ -1,6 +1,6 @@
 // Tipos para o módulo de orçamentos
 
-export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'rejeitado' | 'adjudicado';
+export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'rejeitado' | 'adjudicado' | 'visto' | 'negociacao' | 'cancelado';
 
 export interface CustosIndiretos {
   estaleiro: number;
