@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Search,
   Link as LinkIcon,
+  Bell,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
