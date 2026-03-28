@@ -105,51 +105,27 @@ export default function LivroPontoIndex() {
       <div className="space-y-6">
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Trabalhadores</p>
-                  <p className="text-2xl font-bold">{totalWorkers}</p>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Trabalhadores", value: totalWorkers, icon: Users, color: "text-blue-600", bgColor: "bg-blue-100" },
+            { title: "Horas Totais", value: formatMinutes(totalMinutes), icon: Timer, color: "text-green-600", bgColor: "bg-green-100" },
+            { title: "Custo Total", value: formatCurrency(totalCost), icon: Euro, color: "text-purple-600", bgColor: "bg-purple-100" },
+            { title: "Pendentes", value: pendingTimesheets.length, icon: Clock, color: "text-amber-600", bgColor: "bg-amber-100" },
+          ].map((card, index) => (
+            <Card key={index}>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{card.title}</p>
+                    <p className="text-2xl font-bold mt-1">{card.value}</p>
+                  </div>
+                  <div className={`p-3 rounded-full ${card.bgColor}`}>
+                    <card.icon className={`h-5 w-5 ${card.color}`} />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Timer className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Horas Totais</p>
-                  <p className="text-2xl font-bold">{formatMinutes(totalMinutes)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Euro className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Custo Total</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalCost)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-destructive" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
-                  <p className="text-2xl font-bold">{pendingTimesheets.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Filters */}
