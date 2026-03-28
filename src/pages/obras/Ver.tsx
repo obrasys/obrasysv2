@@ -40,6 +40,7 @@ import { RDOStatusBadge } from '@/components/rdos';
 import { CadernoStatusBadge } from '@/components/cadernos';
 import { ObraEquipaTab } from '@/components/obras/ObraEquipaTab';
 import { ObraPortalClienteTab } from '@/components/obras/ObraPortalClienteTab';
+import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useCadernos } from '@/hooks/useCadernos';
