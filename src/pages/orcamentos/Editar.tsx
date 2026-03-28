@@ -744,6 +744,9 @@ export default function EditarOrcamentoPage() {
                  </CardContent>
                </Card>
              </div>
+           </TabsContent>
+
+           {/* Tab: Medições Paramétricas */}
            <TabsContent value="medicoes" className="space-y-0">
              <ParametricMeasurements 
                orcamentoId={orcamento.id} 
