@@ -36,8 +36,7 @@ export default function LivroPontoIndex() {
   const [selectedWorker, setSelectedWorker] = useState<string>("");
   const [activeTab, setActiveTab] = useState("diario");
 
-  const { data: workers = [] } = useWorkers();
-  const { data: obras = [] } = useObras();
+  const { obras = [] } = useObras() as any;
   const { data: timesheets = [], isLoading } = useTimesheets({
     date: activeTab === "diario" ? selectedDate : undefined,
     obraId: selectedObra || undefined,
