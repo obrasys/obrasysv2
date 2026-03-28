@@ -152,6 +152,14 @@ export default function ObraFinanceiroPage() {
   const contasReceber = filteredContas?.filter(c => c.tipo === 'receber') || [];
   const contasRH = filteredContas?.filter(c => c.origem === 'mao_de_obra') || [];
   const contasMaterial = filteredContas?.filter(c => c.origem === 'material') || [];
+  const contasAVencer = filteredContas?.filter(c => {
+    if (c.pago || c.tipo !== 'receber') return false;
+    const due = new Date(c.data_vencimento);
+    const today = new Date();
+    const in5 = new Date();
+    in5.setDate(in5.getDate() + 5);
+    return due >= today && due <= in5;
+  }) || [];
 
   if (loadingObra || isLoading) {
     return (
