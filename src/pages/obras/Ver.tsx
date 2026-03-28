@@ -44,6 +44,7 @@ import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { ObraMateriaisTab } from '@/components/obras/ObraMateriaisTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
+import { useProjectResourceSummary } from '@/hooks/useProjectResources';
 import { useCadernos } from '@/hooks/useCadernos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { supabase } from '@/integrations/supabase/client';
