@@ -3,3 +3,4 @@ export { ObraForm } from './ObraForm';
 export { ObraProgressTracker } from './ObraProgressTracker';
 export { ObraStatusBadge } from './ObraStatusBadge';
 export { FinalizarObraModal } from './FinalizarObraModal';
+export { ObraLaborCostsTab } from './ObraLaborCostsTab';

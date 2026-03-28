@@ -610,6 +610,19 @@ export default function VerObraPage() {
           clienteId={null}
         />
 
+        {/* Custos Reais de Mão de Obra */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CircleDollarSign className="w-5 h-5" />
+              Custos Reais de Mão de Obra
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ObraLaborCostsTab obraId={id!} compact />
+          </CardContent>
+        </Card>
+
         {/* Equipa Alocada */}
         <ObraEquipaTab obraId={id!} />
 
