@@ -3990,6 +3990,76 @@ export type Database = {
         }
         Relationships: []
       }
+      project_labor_cost_entries: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          entry_date: string
+          hourly_cost: number | null
+          hours_worked: number | null
+          id: string
+          obra_id: string
+          origin_type: string | null
+          status: string | null
+          timesheet_allocation_id: string | null
+          updated_at: string | null
+          user_id: string
+          worker_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          entry_date: string
+          hourly_cost?: number | null
+          hours_worked?: number | null
+          id?: string
+          obra_id: string
+          origin_type?: string | null
+          status?: string | null
+          timesheet_allocation_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          worker_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          entry_date?: string
+          hourly_cost?: number | null
+          hours_worked?: number | null
+          id?: string
+          obra_id?: string
+          origin_type?: string | null
+          status?: string | null
+          timesheet_allocation_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_labor_cost_entries_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_labor_cost_entries_timesheet_allocation_id_fkey"
+            columns: ["timesheet_allocation_id"]
+            isOneToOne: false
+            referencedRelation: "timesheet_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_labor_cost_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_request_categories: {
         Row: {
           category_id: string
@@ -5544,6 +5614,147 @@ export type Database = {
         }
         Relationships: []
       }
+      timesheet_allocations: {
+        Row: {
+          cost_amount: number | null
+          cost_type: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          hourly_cost_snapshot: number | null
+          id: string
+          obra_id: string
+          rdo_id: string | null
+          start_time: string | null
+          timesheet_id: string
+          updated_at: string | null
+          user_id: string
+          work_date: string
+          worked_minutes: number | null
+          worker_id: string
+        }
+        Insert: {
+          cost_amount?: number | null
+          cost_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          hourly_cost_snapshot?: number | null
+          id?: string
+          obra_id: string
+          rdo_id?: string | null
+          start_time?: string | null
+          timesheet_id: string
+          updated_at?: string | null
+          user_id: string
+          work_date: string
+          worked_minutes?: number | null
+          worker_id: string
+        }
+        Update: {
+          cost_amount?: number | null
+          cost_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          hourly_cost_snapshot?: number | null
+          id?: string
+          obra_id?: string
+          rdo_id?: string | null
+          start_time?: string | null
+          timesheet_id?: string
+          updated_at?: string | null
+          user_id?: string
+          work_date?: string
+          worked_minutes?: number | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheet_allocations_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_allocations_timesheet_id_fkey"
+            columns: ["timesheet_id"]
+            isOneToOne: false
+            referencedRelation: "timesheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_allocations_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          break_minutes: number | null
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          total_worked_minutes: number | null
+          updated_at: string | null
+          user_id: string
+          work_date: string
+          worker_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          total_worked_minutes?: number | null
+          updated_at?: string | null
+          user_id: string
+          work_date: string
+          worker_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          total_worked_minutes?: number | null
+          updated_at?: string | null
+          user_id?: string
+          work_date?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_engagement_status: {
         Row: {
           created_at: string
@@ -5654,6 +5865,57 @@ export type Database = {
           step_2_completed?: boolean | null
           step_3_completed?: boolean | null
           step_4_completed?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workers: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          default_daily_cost: number | null
+          default_hourly_cost: number | null
+          employee_code: string | null
+          employment_type: string | null
+          end_date: string | null
+          full_name: string
+          id: string
+          overtime_hourly_cost: number | null
+          role: string | null
+          start_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          default_daily_cost?: number | null
+          default_hourly_cost?: number | null
+          employee_code?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          full_name: string
+          id?: string
+          overtime_hourly_cost?: number | null
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          default_daily_cost?: number | null
+          default_hourly_cost?: number | null
+          employee_code?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          full_name?: string
+          id?: string
+          overtime_hourly_cost?: number | null
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
