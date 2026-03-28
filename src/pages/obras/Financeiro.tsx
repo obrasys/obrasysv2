@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ContaCard, ContaForm, FinanceiroDashboard } from '@/components/financeiro';
-import { useObra } from '@/hooks/useObras';
+import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
