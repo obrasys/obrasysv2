@@ -315,10 +315,10 @@ export default function ObraFinanceiroPage() {
               <div className="mt-4">
                 <div className="flex justify-between text-sm text-muted-foreground mb-1">
                   <span>Margem de lucro</span>
-                  <span>{Math.round(((valorOrcamentoAprovado - dashboard.totalPagar) / valorOrcamentoAprovado) * 100)}%</span>
+                  <span>{Math.round(((valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) / valorOrcamentoAprovado) * 100)}%</span>
                 </div>
                 <Progress 
-                  value={Math.min(100, Math.max(0, ((valorOrcamentoAprovado - dashboard.totalPagar) / valorOrcamentoAprovado) * 100))} 
+                  value={Math.min(100, Math.max(0, ((valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) / valorOrcamentoAprovado) * 100))} 
                   className="h-2" 
                 />
               </div>
