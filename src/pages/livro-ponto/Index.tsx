@@ -85,7 +85,7 @@ export default function LivroPontoIndex() {
   const pendingTimesheets = timesheets.filter((t: any) => t.status === "draft" || t.status === "submitted");
 
   return (
-    <AppLayout>
+    <AppLayout title="Livro de Ponto" subtitle="Gestão de presenças, horas e custos de mão de obra">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
