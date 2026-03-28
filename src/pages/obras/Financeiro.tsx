@@ -282,6 +282,9 @@ export default function ObraFinanceiroPage() {
         {/* Dashboard Financeiro */}
         <FinanceiroDashboard data={dashboard} isLoading={loadingDashboard} />
 
+        {/* Alertas de Vencimento */}
+        <ReceivableAlertsCard obraId={id} />
+
         {/* Saldo da Obra */}
         {valorOrcamentoAprovado > 0 && dashboard && (
           <Card>
