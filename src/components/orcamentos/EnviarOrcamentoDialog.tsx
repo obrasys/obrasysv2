@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, Send, FileText, FileStack } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +37,7 @@ export function EnviarOrcamentoDialog({
   const [mensagem, setMensagem] = useState(
     `Caro(a) ${clienteNome || 'Cliente'},\n\nSegue em anexo o orçamento "${orcamentoTitulo}" para a sua apreciação.\n\nAguardamos o seu feedback.\n\nCom os melhores cumprimentos`
   );
+  const [formato, setFormato] = useState<'tecnico' | 'comercial'>('tecnico');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -58,6 +60,7 @@ export function EnviarOrcamentoDialog({
           orcamento_id: orcamentoId,
           email: email.trim(),
           mensagem: mensagem.trim(),
+          formato,
         },
       });
 
@@ -69,7 +72,7 @@ export function EnviarOrcamentoDialog({
         .update({ status: 'enviado', data_envio: new Date().toISOString() })
         .eq('id', orcamentoId);
 
-      toast({ title: 'Orçamento enviado', description: `Email enviado para ${email.trim()}` });
+      toast({ title: 'Orçamento enviado', description: `Email enviado para ${email.trim()} (formato ${formato === 'tecnico' ? 'técnico' : 'comercial'})` });
       onOpenChange(false);
     } catch (err: any) {
       console.error('Erro ao enviar orçamento:', err);
@@ -97,6 +100,37 @@ export function EnviarOrcamentoDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Format selector */}
+          <div className="space-y-2">
+            <Label>Formato do documento</Label>
+            <RadioGroup value={formato} onValueChange={(v) => setFormato(v as 'tecnico' | 'comercial')} className="grid grid-cols-2 gap-3">
+              <label
+                className={`flex items-center gap-2.5 rounded-lg border p-3 cursor-pointer transition-all ${formato === 'tecnico' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}
+              >
+                <RadioGroupItem value="tecnico" id="fmt-tecnico" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <FileStack className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-medium">Técnico</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Capítulos, artigos, quantidades e preços</p>
+                </div>
+              </label>
+              <label
+                className={`flex items-center gap-2.5 rounded-lg border p-3 cursor-pointer transition-all ${formato === 'comercial' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}
+              >
+                <RadioGroupItem value="comercial" id="fmt-comercial" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-medium">Comercial</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Resumo narrativo, sem detalhe técnico</p>
+                </div>
+              </label>
+            </RadioGroup>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email-cliente">Email do cliente *</Label>
             <Input
@@ -111,7 +145,7 @@ export function EnviarOrcamentoDialog({
             <Label htmlFor="mensagem">Mensagem</Label>
             <Textarea
               id="mensagem"
-              rows={6}
+              rows={5}
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
               className="resize-none"
