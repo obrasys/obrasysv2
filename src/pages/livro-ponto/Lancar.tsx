@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save, Clock } from "lucide-react";
 import { useWorkers, useCreateTimesheet } from "@/hooks/useLivroPonto";
+import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import { useObras } from "@/hooks/useObras";
 import { format } from "date-fns";
 import type { AllocationFormData, CostType } from "@/types/livro-ponto";
