@@ -64,6 +64,7 @@ export default function ObraFinanceiroPage() {
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
 
   const { obra, isLoading: loadingObra } = useObra(id);
+  const { data: laborSummary } = useObraLaborSummary(id);
   const { 
     contas, 
     fornecedores, 
