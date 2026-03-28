@@ -613,6 +613,9 @@ export default function VerObraPage() {
           clienteId={null}
         />
 
+        {/* Materiais e Recursos */}
+        <ObraMateriaisTab obraId={id!} />
+
         {/* Custos Reais de Mão de Obra */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
