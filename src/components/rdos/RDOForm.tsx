@@ -26,6 +26,7 @@ import type { RelatorioDiario, RDOFormData, TrabalhoQuantificado } from '@/types
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import { useObras } from '@/hooks/useObras';
 import { RDOImageUpload } from './RDOImageUpload';
+import { RDOMaterialRequests, type RDOMaterialRequestLine } from './RDOMaterialRequests';
 import { 
   Calendar, 
   Cloud, 
