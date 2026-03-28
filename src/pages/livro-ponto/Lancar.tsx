@@ -105,7 +105,7 @@ export default function LancarPage() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title="Lançar Horas" subtitle="Registar tempo de trabalho por trabalhador e obra">
       <div className="space-y-6 max-w-3xl">
         {/* Header */}
         <div className="flex items-center gap-3">

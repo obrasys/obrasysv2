@@ -143,7 +143,7 @@ export default function LivroPontoIndex() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-orange-500" />
+                <Clock className="h-8 w-8 text-destructive" />
                 <div>
                   <p className="text-sm text-muted-foreground">Pendentes</p>
                   <p className="text-2xl font-bold">{pendingTimesheets.length}</p>

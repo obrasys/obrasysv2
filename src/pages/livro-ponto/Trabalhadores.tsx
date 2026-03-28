@@ -81,7 +81,7 @@ export default function TrabalhadoresPage() {
     new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
 
   return (
-    <AppLayout>
+    <AppLayout title="Trabalhadores" subtitle="Gestão de recursos humanos e custos">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
