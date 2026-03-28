@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Search,
   Link as LinkIcon,
+  Bell,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -42,11 +43,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ContaCard, ContaForm, FinanceiroDashboard } from '@/components/financeiro';
+import { ContaCard, ContaForm, FinanceiroDashboard, ReceivableAlertsCard } from '@/components/financeiro';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
+import { useReceivableAlerts } from '@/hooks/useReceivableAlerts';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
@@ -65,6 +67,7 @@ export default function ObraFinanceiroPage() {
 
   const { obra, isLoading: loadingObra } = useObra(id);
   const { data: laborSummary } = useObraLaborSummary(id);
+  const { totalDueSoon, totalOverdue } = useReceivableAlerts(id);
   const { 
     contas, 
     fornecedores, 
@@ -149,6 +152,14 @@ export default function ObraFinanceiroPage() {
   const contasReceber = filteredContas?.filter(c => c.tipo === 'receber') || [];
   const contasRH = filteredContas?.filter(c => c.origem === 'mao_de_obra') || [];
   const contasMaterial = filteredContas?.filter(c => c.origem === 'material') || [];
+  const contasAVencer = filteredContas?.filter(c => {
+    if (c.pago || c.tipo !== 'receber') return false;
+    const due = new Date(c.data_vencimento);
+    const today = new Date();
+    const in5 = new Date();
+    in5.setDate(in5.getDate() + 5);
+    return due >= today && due <= in5;
+  }) || [];
 
   if (loadingObra || isLoading) {
     return (
@@ -282,6 +293,9 @@ export default function ObraFinanceiroPage() {
         {/* Dashboard Financeiro */}
         <FinanceiroDashboard data={dashboard} isLoading={loadingDashboard} />
 
+        {/* Alertas de Vencimento */}
+        <ReceivableAlertsCard obraId={id} />
+
         {/* Saldo da Obra */}
         {valorOrcamentoAprovado > 0 && dashboard && (
           <Card>
@@ -399,6 +413,12 @@ export default function ObraFinanceiroPage() {
               <Users className="w-3 h-3" />
               Mão de Obra
             </TabsTrigger>
+            {(totalDueSoon > 0 || totalOverdue > 0 || contasAVencer.length > 0) && (
+              <TabsTrigger value="a-vencer" className="flex items-center gap-1">
+                <Bell className="w-3 h-3" />
+                A Vencer ({totalDueSoon + totalOverdue + contasAVencer.length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="todas" className="mt-4">
@@ -457,6 +477,22 @@ export default function ObraFinanceiroPage() {
 
           <TabsContent value="mao-de-obra" className="mt-4">
             <ObraLaborCostsTab obraId={id!} />
+          </TabsContent>
+
+          <TabsContent value="a-vencer" className="mt-4">
+            <ReceivableAlertsCard obraId={id} />
+            {contasAVencer.length > 0 && (
+              <div className="mt-4">
+                <ContasList
+                  contas={contasAVencer}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onTogglePago={handleTogglePago}
+                  onUploadComprovante={handleUploadComprovante}
+                  emptyMessage="Nenhuma conta a vencer em breve"
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
