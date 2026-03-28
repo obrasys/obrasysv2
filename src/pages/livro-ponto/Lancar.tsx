@@ -107,16 +107,6 @@ export default function LancarPage() {
   return (
     <AppLayout title="Lançar Horas" subtitle="Registar tempo de trabalho por trabalhador e obra">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/livro-ponto")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Lançar Horas</h1>
-            <p className="text-muted-foreground">Registar tempo de trabalho por trabalhador e obra</p>
-          </div>
-        </div>
 
         {/* Worker & Date */}
         <Card>
