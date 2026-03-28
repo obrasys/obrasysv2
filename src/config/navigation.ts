@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardCheck,
   ClipboardList,
+  Clock,
   CreditCard,
   Database,
   FileText,
