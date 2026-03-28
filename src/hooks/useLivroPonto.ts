@@ -21,7 +21,7 @@ export function useWorkers() {
     queryFn: async () => {
       const { data, error } = await sb
         .from("workers")
-        .select("*")
+        .select("*, subempreiteiro:subempreiteiros(id, nome), equipa_membro:equipa_membros(id, nome)")
         .order("full_name");
       if (error) throw error;
       return data;

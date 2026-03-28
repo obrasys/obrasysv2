@@ -35,10 +35,25 @@ export default function LancarPage() {
   const { data: workers = [] } = useWorkers();
   const { obras = [] } = useObras() as any;
   const createMutation = useCreateTimesheet();
+  const { subempreiteiros } = useSubempreiteiros();
+  const { membros: equipaMembros } = useEquipaMembros();
 
   const activeWorkers = workers.filter((w) => w.active);
 
+  const [filterSubempreiteiro, setFilterSubempreiteiro] = useState("");
+  const [filterEquipa, setFilterEquipa] = useState("");
   const [workerId, setWorkerId] = useState("");
+
+  const filteredWorkers = useMemo(() => {
+    let list = activeWorkers;
+    if (filterSubempreiteiro) {
+      list = list.filter((w) => w.subempreiteiro_id === filterSubempreiteiro);
+    }
+    if (filterEquipa) {
+      list = list.filter((w) => w.equipa_membro_id === filterEquipa);
+    }
+    return list;
+  }, [activeWorkers, filterSubempreiteiro, filterEquipa]);
   const [workDate, setWorkDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");

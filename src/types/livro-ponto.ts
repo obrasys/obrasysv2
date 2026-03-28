@@ -11,8 +11,12 @@ export interface Worker {
   active: boolean;
   start_date: string | null;
   end_date: string | null;
+  subempreiteiro_id: string | null;
+  equipa_membro_id: string | null;
   created_at: string;
   updated_at: string;
+  subempreiteiro?: { id: string; nome: string };
+  equipa_membro?: { id: string; nome: string };
 }
 
 export interface Timesheet {
