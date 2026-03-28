@@ -210,7 +210,46 @@ export default function VerOrcamentoPage() {
         orcamentoId={orcamento.id} orcamentoTitulo={orcamento.titulo}
         clienteEmail={orcamento.cliente?.email} clienteNome={orcamento.cliente?.nome}
       />
-      {canAdjudicar && (
+      {/* PDF Format Selector Dialog */}
+      <Dialog open={pdfFormatOpen} onOpenChange={setPdfFormatOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Gerar PDF
+            </DialogTitle>
+            <DialogDescription>Escolha o formato do documento.</DialogDescription>
+          </DialogHeader>
+          <RadioGroup value={pdfFormato} onValueChange={(v) => setPdfFormato(v as 'tecnico' | 'comercial')} className="grid grid-cols-1 gap-3 py-2">
+            <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'tecnico' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
+              <RadioGroupItem value="tecnico" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileStack className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Completo Técnico</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Capítulos, artigos, quantidades, preços unitários e subtotais</p>
+              </div>
+            </label>
+            <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'comercial' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
+              <RadioGroupItem value="comercial" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Comercial Resumido</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Proposta narrativa com resumo por capítulo, sem detalhe técnico</p>
+              </div>
+            </label>
+          </RadioGroup>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPdfFormatOpen(false)}>Cancelar</Button>
+            <Button onClick={handleGeneratePDF}>
+              <FileText className="mr-2 h-4 w-4" /> Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
         <AdjudicacaoWizard
           open={adjudicarOpen}
           onOpenChange={setAdjudicarOpen}
