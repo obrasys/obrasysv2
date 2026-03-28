@@ -292,7 +292,7 @@ export default function ObraFinanceiroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Receita (Orçamento)</p>
                   <p className="text-2xl font-bold text-green-600">{formatCurrency(valorOrcamentoAprovado)}</p>
@@ -302,9 +302,13 @@ export default function ObraFinanceiroPage() {
                   <p className="text-2xl font-bold text-red-600">{formatCurrency(dashboard.totalPagar)}</p>
                 </div>
                 <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Mão de Obra</p>
+                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(laborSummary?.totalCost || 0)}</p>
+                </div>
+                <div className="text-center">
                   <p className="text-sm text-muted-foreground">Lucro Previsto</p>
-                  <p className={`text-2xl font-bold ${(valorOrcamentoAprovado - dashboard.totalPagar) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(valorOrcamentoAprovado - dashboard.totalPagar)}
+                  <p className={`text-2xl font-bold ${(valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0))}
                   </p>
                 </div>
               </div>
