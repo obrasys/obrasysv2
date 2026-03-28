@@ -433,6 +433,9 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
           </CardContent>
         </Card>
 
+        {/* Daily Plan Tasks for this date */}
+        <RDODailyPlanSection obraId={form.watch('obra_id')} date={form.watch('data')} />
+
         {/* Material Requests for Tomorrow */}
         <RDOMaterialRequests requests={materialRequests} onChange={setMaterialRequests} />
 
