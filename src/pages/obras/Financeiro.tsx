@@ -395,6 +395,10 @@ export default function ObraFinanceiroPage() {
               <TrendingUp className="w-3 h-3" />
               A Receber ({contasReceber.length})
             </TabsTrigger>
+            <TabsTrigger value="mao-de-obra" className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              Mão de Obra
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="todas" className="mt-4">
