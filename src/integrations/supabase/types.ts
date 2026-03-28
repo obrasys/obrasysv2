@@ -7883,6 +7883,7 @@ export type Database = {
         Args: { p_element_id: string }
         Returns: undefined
       }
+      classify_task_delay: { Args: { p_task_id: string }; Returns: string }
       determinar_regime_fiscal: {
         Args: {
           p_data_referencia?: string
@@ -7916,6 +7917,14 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      generate_project_snapshot: {
+        Args: { p_obra_id: string }
+        Returns: undefined
+      }
+      generate_task_snapshots: {
+        Args: { p_obra_id: string }
+        Returns: undefined
+      }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       get_org_member_ids: { Args: never; Returns: string[] }
       get_price_stats: {
@@ -7942,6 +7951,14 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
+      propagate_dependency_impact: {
+        Args: { p_task_id: string }
+        Returns: undefined
+      }
+      recalculate_task_progress_from_rdo: {
+        Args: { p_daily_report_id: string }
+        Returns: undefined
+      }
       refresh_engagement_status: {
         Args: { p_user_id: string }
         Returns: undefined
