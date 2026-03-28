@@ -27,6 +27,9 @@ import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import { useObras } from '@/hooks/useObras';
 import { RDOImageUpload } from './RDOImageUpload';
 import { RDOMaterialRequests, type RDOMaterialRequestLine } from './RDOMaterialRequests';
+import { useDailyPlan } from '@/hooks/useDailyPlans';
+import { TASK_STATUS_CONFIG } from '@/types/daily-plans';
+import type { DailyPlanTaskStatus } from '@/types/daily-plans';
 import { 
   Calendar, 
   Cloud, 
