@@ -216,7 +216,21 @@ export default function LancarPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <Label>Horas Totais *</Label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      min={0}
+                      placeholder="Ex: 4"
+                      value={a.worked_minutes > 0 ? (a.worked_minutes / 60).toString() : ""}
+                      onChange={(e) => {
+                        const hours = parseFloat(e.target.value) || 0;
+                        updateAllocation(i, { worked_minutes: Math.round(hours * 60) });
+                      }}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label>Hora Início</Label>
                     <Input
@@ -240,6 +254,8 @@ export default function LancarPage() {
                       value={a.worked_minutes}
                       onChange={(e) => updateAllocation(i, { worked_minutes: parseInt(e.target.value) || 0 })}
                       min={0}
+                      className="text-muted-foreground"
+                      readOnly
                     />
                   </div>
                 </div>
