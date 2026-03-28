@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, ArrowLeft, Pencil, Trash2, Users } from "lucide-react";
 import { useWorkers, useCreateWorker, useUpdateWorker, useDeleteWorker } from "@/hooks/useLivroPonto";
+import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import type { Worker } from "@/types/livro-ponto";
 
 const emptyForm = {
@@ -25,6 +26,8 @@ const emptyForm = {
   active: true,
   start_date: "",
   end_date: "",
+  subempreiteiro_id: "",
+  equipa_membro_id: "",
 };
 
 export default function TrabalhadoresPage() {
@@ -33,6 +36,8 @@ export default function TrabalhadoresPage() {
   const createMutation = useCreateWorker();
   const updateMutation = useUpdateWorker();
   const deleteMutation = useDeleteWorker();
+  const { subempreiteiros } = useSubempreiteiros();
+  const { membros: equipaMembros } = useEquipaMembros();
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -57,6 +62,8 @@ export default function TrabalhadoresPage() {
       active: w.active,
       start_date: w.start_date || "",
       end_date: w.end_date || "",
+      subempreiteiro_id: w.subempreiteiro_id || "",
+      equipa_membro_id: w.equipa_membro_id || "",
     });
     setOpen(true);
   };
@@ -68,6 +75,8 @@ export default function TrabalhadoresPage() {
       role: form.role || null,
       start_date: form.start_date || null,
       end_date: form.end_date || null,
+      subempreiteiro_id: form.subempreiteiro_id || null,
+      equipa_membro_id: form.equipa_membro_id || null,
     };
     if (editingId) {
       await updateMutation.mutateAsync({ id: editingId, ...payload });
@@ -79,6 +88,9 @@ export default function TrabalhadoresPage() {
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
+
+  const activeSubempreiteiros = subempreiteiros.filter((s) => s.ativo);
+  const activeEquipaMembros = equipaMembros.filter((m) => m.ativo);
 
   return (
     <AppLayout title="Trabalhadores" subtitle="Gestão de recursos humanos e custos">
@@ -100,7 +112,7 @@ export default function TrabalhadoresPage() {
                 Novo Trabalhador
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingId ? "Editar Trabalhador" : "Novo Trabalhador"}</DialogTitle>
               </DialogHeader>
@@ -141,6 +153,33 @@ export default function TrabalhadoresPage() {
                         <SelectItem value="part_time">Tempo Parcial</SelectItem>
                         <SelectItem value="contractor">Subcontratado</SelectItem>
                         <SelectItem value="temporary">Temporário</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {/* Subempreiteiro & Equipa */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Subempreiteiro</Label>
+                    <Select value={form.subempreiteiro_id || "none"} onValueChange={(v) => setForm({ ...form, subempreiteiro_id: v === "none" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {activeSubempreiteiros.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Membro Equipa</Label>
+                    <Select value={form.equipa_membro_id || "none"} onValueChange={(v) => setForm({ ...form, equipa_membro_id: v === "none" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {activeEquipaMembros.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -218,59 +257,63 @@ export default function TrabalhadoresPage() {
                 <p className="text-sm">Adicione trabalhadores para começar a registar horas</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Função</TableHead>
-                    <TableHead>Contrato</TableHead>
-                    <TableHead>Custo/Hora</TableHead>
-                    <TableHead>Extra/Hora</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workers.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell className="font-mono text-sm">{w.employee_code || "—"}</TableCell>
-                      <TableCell className="font-medium">{w.full_name}</TableCell>
-                      <TableCell>{w.role || "—"}</TableCell>
-                      <TableCell className="text-sm">
-                        {{
-                          full_time: "Tempo Inteiro",
-                          part_time: "Tempo Parcial",
-                          contractor: "Subcontratado",
-                          temporary: "Temporário",
-                        }[w.employment_type] || w.employment_type}
-                      </TableCell>
-                      <TableCell>{formatCurrency(w.default_hourly_cost)}</TableCell>
-                      <TableCell>{formatCurrency(w.overtime_hourly_cost)}</TableCell>
-                      <TableCell>
-                        <Badge variant={w.active ? "default" : "secondary"}>
-                          {w.active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(w)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => {
-                            if (confirm("Eliminar este trabalhador?")) deleteMutation.mutate(w.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Função</TableHead>
+                      <TableHead>Subempreiteiro</TableHead>
+                      <TableHead>Equipa</TableHead>
+                      <TableHead>Contrato</TableHead>
+                      <TableHead>Custo/Hora</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {workers.map((w) => (
+                      <TableRow key={w.id}>
+                        <TableCell className="font-mono text-sm">{w.employee_code || "—"}</TableCell>
+                        <TableCell className="font-medium">{w.full_name}</TableCell>
+                        <TableCell>{w.role || "—"}</TableCell>
+                        <TableCell className="text-sm">{w.subempreiteiro?.nome || "—"}</TableCell>
+                        <TableCell className="text-sm">{w.equipa_membro?.nome || "—"}</TableCell>
+                        <TableCell className="text-sm">
+                          {{
+                            full_time: "Tempo Inteiro",
+                            part_time: "Tempo Parcial",
+                            contractor: "Subcontratado",
+                            temporary: "Temporário",
+                          }[w.employment_type] || w.employment_type}
+                        </TableCell>
+                        <TableCell>{formatCurrency(w.default_hourly_cost)}</TableCell>
+                        <TableCell>
+                          <Badge variant={w.active ? "default" : "secondary"}>
+                            {w.active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right space-x-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(w)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => {
+                              if (confirm("Eliminar este trabalhador?")) deleteMutation.mutate(w.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

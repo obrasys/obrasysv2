@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save, Clock } from "lucide-react";
 import { useWorkers, useCreateTimesheet } from "@/hooks/useLivroPonto";
+import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import { useObras } from "@/hooks/useObras";
 import { format } from "date-fns";
 import type { AllocationFormData, CostType } from "@/types/livro-ponto";
@@ -34,10 +35,25 @@ export default function LancarPage() {
   const { data: workers = [] } = useWorkers();
   const { obras = [] } = useObras() as any;
   const createMutation = useCreateTimesheet();
+  const { subempreiteiros } = useSubempreiteiros();
+  const { membros: equipaMembros } = useEquipaMembros();
 
   const activeWorkers = workers.filter((w) => w.active);
 
+  const [filterSubempreiteiro, setFilterSubempreiteiro] = useState("");
+  const [filterEquipa, setFilterEquipa] = useState("");
   const [workerId, setWorkerId] = useState("");
+
+  const filteredWorkers = useMemo(() => {
+    let list = activeWorkers;
+    if (filterSubempreiteiro) {
+      list = list.filter((w) => w.subempreiteiro_id === filterSubempreiteiro);
+    }
+    if (filterEquipa) {
+      list = list.filter((w) => w.equipa_membro_id === filterEquipa);
+    }
+    return list;
+  }, [activeWorkers, filterSubempreiteiro, filterEquipa]);
   const [workDate, setWorkDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -114,6 +130,33 @@ export default function LancarPage() {
             <CardTitle className="text-lg">Identificação</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Filtros por Subempreiteiro / Equipa */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Filtrar por Subempreiteiro</Label>
+                <Select value={filterSubempreiteiro || "all"} onValueChange={(v) => { setFilterSubempreiteiro(v === "all" ? "" : v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {subempreiteiros.filter((s) => s.ativo).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Filtrar por Equipa</Label>
+                <Select value={filterEquipa || "all"} onValueChange={(v) => { setFilterEquipa(v === "all" ? "" : v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {equipaMembros.filter((m) => m.ativo).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Trabalhador *</Label>
@@ -122,7 +165,7 @@ export default function LancarPage() {
                     <SelectValue placeholder="Selecionar trabalhador" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeWorkers.map((w) => (
+                    {filteredWorkers.map((w) => (
                       <SelectItem key={w.id} value={w.id}>
                         {w.full_name} {w.role ? `(${w.role})` : ""} — {formatCurrency(w.default_hourly_cost)}/h
                       </SelectItem>
