@@ -43,7 +43,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ContaCard, ContaForm, FinanceiroDashboard } from '@/components/financeiro';
+import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useObra } from '@/hooks/useObras';
+import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
@@ -62,6 +64,7 @@ export default function ObraFinanceiroPage() {
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
 
   const { obra, isLoading: loadingObra } = useObra(id);
+  const { data: laborSummary } = useObraLaborSummary(id);
   const { 
     contas, 
     fornecedores, 
@@ -289,7 +292,7 @@ export default function ObraFinanceiroPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Receita (Orçamento)</p>
                   <p className="text-2xl font-bold text-green-600">{formatCurrency(valorOrcamentoAprovado)}</p>
@@ -299,19 +302,23 @@ export default function ObraFinanceiroPage() {
                   <p className="text-2xl font-bold text-red-600">{formatCurrency(dashboard.totalPagar)}</p>
                 </div>
                 <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Mão de Obra</p>
+                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(laborSummary?.totalCost || 0)}</p>
+                </div>
+                <div className="text-center">
                   <p className="text-sm text-muted-foreground">Lucro Previsto</p>
-                  <p className={`text-2xl font-bold ${(valorOrcamentoAprovado - dashboard.totalPagar) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(valorOrcamentoAprovado - dashboard.totalPagar)}
+                  <p className={`text-2xl font-bold ${(valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0))}
                   </p>
                 </div>
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-sm text-muted-foreground mb-1">
                   <span>Margem de lucro</span>
-                  <span>{Math.round(((valorOrcamentoAprovado - dashboard.totalPagar) / valorOrcamentoAprovado) * 100)}%</span>
+                  <span>{Math.round(((valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) / valorOrcamentoAprovado) * 100)}%</span>
                 </div>
                 <Progress 
-                  value={Math.min(100, Math.max(0, ((valorOrcamentoAprovado - dashboard.totalPagar) / valorOrcamentoAprovado) * 100))} 
+                  value={Math.min(100, Math.max(0, ((valorOrcamentoAprovado - dashboard.totalPagar - (laborSummary?.totalCost || 0)) / valorOrcamentoAprovado) * 100))} 
                   className="h-2" 
                 />
               </div>
@@ -388,6 +395,10 @@ export default function ObraFinanceiroPage() {
               <TrendingUp className="w-3 h-3" />
               A Receber ({contasReceber.length})
             </TabsTrigger>
+            <TabsTrigger value="mao-de-obra" className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              Mão de Obra
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="todas" className="mt-4">
@@ -442,6 +453,10 @@ export default function ObraFinanceiroPage() {
               onUploadComprovante={handleUploadComprovante}
               emptyMessage="Nenhuma conta a receber"
             />
+          </TabsContent>
+
+          <TabsContent value="mao-de-obra" className="mt-4">
+            <ObraLaborCostsTab obraId={id!} />
           </TabsContent>
         </Tabs>
 

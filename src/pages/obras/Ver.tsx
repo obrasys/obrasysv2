@@ -40,6 +40,7 @@ import { RDOStatusBadge } from '@/components/rdos';
 import { CadernoStatusBadge } from '@/components/cadernos';
 import { ObraEquipaTab } from '@/components/obras/ObraEquipaTab';
 import { ObraPortalClienteTab } from '@/components/obras/ObraPortalClienteTab';
+import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useCadernos } from '@/hooks/useCadernos';
@@ -608,6 +609,19 @@ export default function VerObraPage() {
           clienteEmail={null}
           clienteId={null}
         />
+
+        {/* Custos Reais de Mão de Obra */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CircleDollarSign className="w-5 h-5" />
+              Custos Reais de Mão de Obra
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ObraLaborCostsTab obraId={id!} compact />
+          </CardContent>
+        </Card>
 
         {/* Equipa Alocada */}
         <ObraEquipaTab obraId={id!} />
