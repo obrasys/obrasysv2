@@ -4029,6 +4029,154 @@ export type Database = {
         }
         Relationships: []
       }
+      project_daily_plan_tasks: {
+        Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          area_or_zone: string | null
+          assigned_worker_id: string | null
+          created_at: string
+          daily_plan_id: string
+          description: string | null
+          discipline: string | null
+          id: string
+          linked_rdo_entry_id: string | null
+          notes: string | null
+          plan_date: string
+          planned_end_time: string | null
+          planned_order: number
+          planned_start_time: string | null
+          priority: string
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          area_or_zone?: string | null
+          assigned_worker_id?: string | null
+          created_at?: string
+          daily_plan_id: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          linked_rdo_entry_id?: string | null
+          notes?: string | null
+          plan_date: string
+          planned_end_time?: string | null
+          planned_order?: number
+          planned_start_time?: string | null
+          priority?: string
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          area_or_zone?: string | null
+          assigned_worker_id?: string | null
+          created_at?: string
+          daily_plan_id?: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          linked_rdo_entry_id?: string | null
+          notes?: string | null
+          plan_date?: string
+          planned_end_time?: string | null
+          planned_order?: number
+          planned_start_time?: string | null
+          priority?: string
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_daily_plan_tasks_assigned_worker_id_fkey"
+            columns: ["assigned_worker_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_daily_plan_tasks_daily_plan_id_fkey"
+            columns: ["daily_plan_id"]
+            isOneToOne: false
+            referencedRelation: "project_daily_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_daily_plan_tasks_linked_rdo_entry_id_fkey"
+            columns: ["linked_rdo_entry_id"]
+            isOneToOne: false
+            referencedRelation: "relatorios_diarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_daily_plan_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_daily_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          plan_date: string
+          project_id: string
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          plan_date: string
+          project_id: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          plan_date?: string
+          project_id?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_daily_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_labor_cost_entries: {
         Row: {
           amount: number | null
