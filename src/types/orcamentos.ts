@@ -55,6 +55,13 @@ export interface Orcamento {
   updated_at: string;
   revisao_de?: string | null;
   numero_revisao?: number;
+  // Commercial fields
+  client_document_mode_default?: string;
+  commercial_intro_text?: string | null;
+  commercial_payment_terms_text?: string | null;
+  commercial_validity_text?: string | null;
+  commercial_notes_text?: string | null;
+  show_signature_block?: boolean;
   obra?: ObraPartial;
   cliente?: ClientePartial;
   capitulos?: Capitulo[];
