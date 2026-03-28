@@ -429,6 +429,9 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
           </CardContent>
         </Card>
 
+        {/* Material Requests for Tomorrow */}
+        <RDOMaterialRequests requests={materialRequests} onChange={setMaterialRequests} />
+
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
