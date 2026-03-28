@@ -183,7 +183,7 @@ export default function VerOrcamentoPage() {
                 <GitBranch className="w-3.5 h-3.5 mr-2" /> Criar Revisão
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleGeneratePDF}>
+              <DropdownMenuItem onClick={() => setPdfFormatOpen(true)}>
                 <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.print()}>
