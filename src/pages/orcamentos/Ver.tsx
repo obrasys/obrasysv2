@@ -504,7 +504,7 @@ export default function VerOrcamentoPage() {
                       <Button className="w-full" size="sm" onClick={() => navigate(`/orcamentos/${id}/editar`)}>
                         <Edit className="w-3.5 h-3.5 mr-2" /> Editar Orçamento
                       </Button>
-                      <Button variant="outline" className="w-full" size="sm" onClick={handleGeneratePDF}>
+                      <Button variant="outline" className="w-full" size="sm" onClick={() => setPdfFormatOpen(true)}>
                         <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
                       </Button>
                       <Button variant="outline" className="w-full" size="sm" onClick={() => setEnviarDialogOpen(true)}>

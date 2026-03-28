@@ -349,7 +349,7 @@ export default function EditarOrcamentoPage() {
 
         {/* Tabs */}
          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-           <TabsList className="grid w-full max-w-lg grid-cols-3">
+           <TabsList className="grid w-full max-w-2xl grid-cols-4">
              <TabsTrigger value="artigos" className="flex items-center gap-2">
                <FileStack className="h-4 w-4" />
                Artigos
@@ -357,6 +357,10 @@ export default function EditarOrcamentoPage() {
              <TabsTrigger value="margem" className="flex items-center gap-2">
                <Euro className="h-4 w-4" />
                Margem & IVA
+             </TabsTrigger>
+             <TabsTrigger value="comercial" className="flex items-center gap-2">
+               <FileText className="h-4 w-4" />
+               Comercial
              </TabsTrigger>
              <TabsTrigger value="medicoes" className="flex items-center gap-2">
                <Ruler className="h-4 w-4" />
