@@ -63,7 +63,7 @@ const formSchema = z.object({
 interface RDOFormProps {
   rdo?: RelatorioDiario;
   obraId?: string;
-  onSubmit: (data: RDOFormData) => void;
+  onSubmit: (data: RDOFormData & { materialRequests?: RDOMaterialRequestLine[] }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
