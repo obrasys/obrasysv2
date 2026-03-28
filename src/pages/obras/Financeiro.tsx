@@ -413,6 +413,12 @@ export default function ObraFinanceiroPage() {
               <Users className="w-3 h-3" />
               Mão de Obra
             </TabsTrigger>
+            {(totalDueSoon > 0 || totalOverdue > 0 || contasAVencer.length > 0) && (
+              <TabsTrigger value="a-vencer" className="flex items-center gap-1">
+                <Bell className="w-3 h-3" />
+                A Vencer ({totalDueSoon + totalOverdue + contasAVencer.length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="todas" className="mt-4">
