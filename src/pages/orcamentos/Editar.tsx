@@ -663,7 +663,87 @@ export default function EditarOrcamentoPage() {
              </div>
            </TabsContent>
 
-           {/* Tab: Medições Paramétricas */}
+           {/* Tab: Configuração Comercial */}
+           <TabsContent value="comercial" className="space-y-0">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               <Card>
+                 <CardContent className="pt-6 space-y-5">
+                   <div className="flex items-center gap-2 mb-2">
+                     <FileText className="h-5 w-5 text-primary" />
+                     <h3 className="text-lg font-semibold text-foreground">Textos Comerciais</h3>
+                   </div>
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Introdução comercial</Label>
+                     <Textarea
+                       placeholder="Ex: Temos o prazer de apresentar a nossa proposta para os trabalhos de..."
+                       defaultValue={orcamento.commercial_intro_text || ''}
+                       rows={4}
+                       disabled={isReadOnly}
+                       className="resize-none mt-1"
+                       onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, commercial_intro_text: e.target.value || null } as any)}
+                     />
+                   </div>
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Condições de pagamento</Label>
+                     <Textarea
+                       placeholder="Ex: 30% na adjudicação, 40% a meio da obra, 30% na conclusão"
+                       defaultValue={orcamento.commercial_payment_terms_text || ''}
+                       rows={3}
+                       disabled={isReadOnly}
+                       className="resize-none mt-1"
+                       onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, commercial_payment_terms_text: e.target.value || null } as any)}
+                     />
+                   </div>
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Validade da proposta</Label>
+                     <Input
+                       placeholder="Ex: Esta proposta é válida por 30 dias"
+                       defaultValue={orcamento.commercial_validity_text || ''}
+                       disabled={isReadOnly}
+                       className="mt-1"
+                       onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, commercial_validity_text: e.target.value || null } as any)}
+                     />
+                   </div>
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Notas / Observações</Label>
+                     <Textarea
+                       placeholder="Notas adicionais para o documento comercial..."
+                       defaultValue={orcamento.commercial_notes_text || ''}
+                       rows={3}
+                       disabled={isReadOnly}
+                       className="resize-none mt-1"
+                       onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, commercial_notes_text: e.target.value || null } as any)}
+                     />
+                   </div>
+                 </CardContent>
+               </Card>
+               <Card>
+                 <CardContent className="pt-6 space-y-5">
+                   <div className="flex items-center gap-2 mb-2">
+                     <Info className="h-5 w-5 text-primary" />
+                     <h3 className="text-lg font-semibold text-foreground">Opções do Documento</h3>
+                   </div>
+                   <div className="flex items-center justify-between rounded-lg border p-3">
+                     <div>
+                       <p className="text-sm font-medium">Bloco de Assinatura</p>
+                       <p className="text-xs text-muted-foreground">Incluir espaço para assinatura do cliente e empresa</p>
+                     </div>
+                     <input
+                       type="checkbox"
+                       className="h-4 w-4 accent-primary"
+                       defaultChecked={orcamento.show_signature_block || false}
+                       disabled={isReadOnly}
+                       onChange={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, show_signature_block: e.target.checked } as any)}
+                     />
+                   </div>
+                   <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                     <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                     <p>Configure os textos comerciais e preencha o "Resumo Cliente" em cada capítulo na aba Artigos.</p>
+                     <p className="mt-1">Ao gerar PDF, escolha o formato <strong>Comercial Resumido</strong>.</p>
+                   </div>
+                 </CardContent>
+               </Card>
+             </div>
            <TabsContent value="medicoes" className="space-y-0">
              <ParametricMeasurements 
                orcamentoId={orcamento.id} 
