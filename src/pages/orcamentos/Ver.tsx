@@ -13,11 +13,16 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
-  Zap, HardHat, MoreHorizontal,
+  Zap, HardHat, MoreHorizontal, FileStack,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -25,6 +30,8 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
+import { generateComercialPdf } from '@/lib/orcamento-pdf-comercial';
+import { useBudgetDocuments } from '@/hooks/useBudgetDocuments';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
