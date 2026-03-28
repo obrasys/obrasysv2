@@ -153,6 +153,10 @@ const App = () => (
                 <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
                 <Route path="/autos-medicao/:id" element={<ManagerRoute><VerAutoMedicaoPage /></ManagerRoute>} />
                 <Route path="/autos-medicao/:id/editar" element={<ManagerRoute><EditarAutoMedicaoPage /></ManagerRoute>} />
+                {/* Livro de Ponto */}
+                <Route path="/livro-ponto" element={<ManagerRoute><LivroPontoPage /></ManagerRoute>} />
+                <Route path="/livro-ponto/trabalhadores" element={<ManagerRoute><LivroPontoTrabalhadores /></ManagerRoute>} />
+                <Route path="/livro-ponto/lancar" element={<ManagerRoute><LivroPontoLancar /></ManagerRoute>} />
                 {/* Instalações */}
                 <Route path="/instalacoes" element={<ManagerRoute><InstalacoesIndex /></ManagerRoute>} />
                 <Route path="/instalacoes/eletrica" element={<ManagerRoute><EletricaPage /></ManagerRoute>} />
