@@ -32,7 +32,7 @@ function calcMinutes(start: string, end: string): number {
 export default function LancarPage() {
   const navigate = useNavigate();
   const { data: workers = [] } = useWorkers();
-  const { data: obras = [] } = useObras();
+  const { obras = [] } = useObras() as any;
   const createMutation = useCreateTimesheet();
 
   const activeWorkers = workers.filter((w) => w.active);
