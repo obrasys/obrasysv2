@@ -113,18 +113,33 @@ export default function VerOrcamentoPage() {
   const handleGeneratePDF = async () => {
     toast({ title: 'A gerar PDF...', description: 'Por favor aguarde' });
     try {
-      const blob = await generateOrcamentoPdf({
-        orcamento, profile: profile as any,
-        margemDecimal, taxaIVA, valorBase, valorIVA, valorFinal,
-        custosIndiretosTotal, subtotalArtigos, notaLegal, regimeNome,
-      });
+      let blob: Blob;
+      if (pdfFormato === 'comercial') {
+        blob = await generateComercialPdf({
+          orcamento, profile: profile as any,
+          valorFinal, taxaIVA, valorBase, valorIVA,
+        });
+      } else {
+        blob = await generateOrcamentoPdf({
+          orcamento, profile: profile as any,
+          margemDecimal, taxaIVA, valorBase, valorIVA, valorFinal,
+          custosIndiretosTotal, subtotalArtigos, notaLegal, regimeNome,
+        });
+      }
+
+      // Save snapshot
+      try {
+        await saveDocument.mutateAsync({ budgetId: orcamento.id, viewMode: pdfFormato, blob });
+      } catch { /* non-blocking */ }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+      a.download = `orcamento-${pdfFormato}-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: 'PDF gerado', description: 'O ficheiro foi descarregado' });
+      toast({ title: 'PDF gerado', description: `Formato ${pdfFormato === 'tecnico' ? 'técnico' : 'comercial'} descarregado` });
+      setPdfFormatOpen(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({ title: 'Erro', description: 'Não foi possível gerar o PDF', variant: 'destructive' });
