@@ -28,48 +28,39 @@ interface ComercialPdfOptions {
   valorIVA: number;
 }
 
-const COLORS = {
-  primary: [37, 99, 235] as [number, number, number],
-  primaryLight: [219, 234, 254] as [number, number, number],
-  dark: [30, 30, 30] as [number, number, number],
-  text: [55, 55, 55] as [number, number, number],
-  muted: [120, 120, 120] as [number, number, number],
-  border: [220, 220, 220] as [number, number, number],
-  headerBg: [245, 245, 245] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
-};
-
-const PAGE = { marginLeft: 15, marginRight: 15, marginTop: 18, marginBottom: 22 };
+const PAGE = { left: 25, right: 25, top: 25, bottom: 25 };
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
-function getUsable(doc: jsPDF) {
+function usable(doc: jsPDF) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  return { width: w - PAGE.marginLeft - PAGE.marginRight, pageW: w, pageH: h };
+  return { w: w - PAGE.left - PAGE.right, pw: w, ph: h };
 }
 
-function ensureSpace(doc: jsPDF, needed: number, y: number): number {
-  const { pageH } = getUsable(doc);
-  if (y + needed > pageH - PAGE.marginBottom) { doc.addPage(); return PAGE.marginTop; }
+function ensureSpace(doc: jsPDF, need: number, y: number): number {
+  if (y + need > usable(doc).ph - PAGE.bottom) {
+    doc.addPage();
+    return PAGE.top;
+  }
   return y;
 }
 
-function addFooter(doc: jsPDF, companyName: string | undefined) {
+function addFooter(doc: jsPDF, name: string | undefined) {
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    const { pageW, pageH } = getUsable(doc);
-    const footerY = pageH - 8;
-    doc.setDrawColor(...COLORS.border);
+    const { pw, ph } = usable(doc);
+    const fy = ph - 10;
+    doc.setDrawColor(180, 180, 180);
     doc.setLineWidth(0.3);
-    doc.line(PAGE.marginLeft, footerY - 3, pageW - PAGE.marginRight, footerY - 3);
+    doc.line(PAGE.left, fy - 2, pw - PAGE.right, fy - 2);
     doc.setFontSize(7);
-    doc.setTextColor(...COLORS.muted);
+    doc.setTextColor(140, 140, 140);
     doc.setFont('helvetica', 'normal');
-    if (companyName) doc.text(companyName, PAGE.marginLeft, footerY);
-    doc.text(`Página ${i} de ${pages}`, pageW - PAGE.marginRight, footerY, { align: 'right' });
+    if (name) doc.text(name, PAGE.left, fy + 1);
+    doc.text(`Página ${i} de ${pages}`, pw - PAGE.right, fy + 1, { align: 'right' });
   }
 }
 
@@ -107,327 +98,260 @@ async function loadImage(url: string): Promise<{ data: string; width: number; he
   } catch { return null; }
 }
 
+/** Render lines as bullet list ("- line;") */
+function renderBulletList(doc: jsPDF, text: string, x: number, maxW: number, y: number, fontSize: number = 9): number {
+  doc.setFontSize(fontSize);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(40, 40, 40);
+  const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const raw of rawLines) {
+    // If it already starts with - or •, keep it; otherwise add -
+    const line = raw.startsWith('-') || raw.startsWith('•') ? raw : `- ${raw}`;
+    const wrapped = doc.splitTextToSize(line, maxW - 6);
+    for (let j = 0; j < wrapped.length; j++) {
+      y = ensureSpace(doc, 5, y);
+      doc.text(wrapped[j], x + (j === 0 ? 0 : 3), y);
+      y += 4.2;
+    }
+  }
+  return y;
+}
+
+/** Render a section heading: bold, underlined */
+function renderSectionTitle(doc: jsPDF, title: string, x: number, y: number, fontSize: number = 11): number {
+  y = ensureSpace(doc, 10, y);
+  doc.setFontSize(fontSize);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text(title, x, y);
+  // underline
+  const tw = doc.getTextWidth(title);
+  doc.setDrawColor(30, 30, 30);
+  doc.setLineWidth(0.4);
+  doc.line(x, y + 1, x + tw, y + 1);
+  return y + 6;
+}
+
 export async function generateComercialPdf(options: ComercialPdfOptions): Promise<Blob> {
   const { orcamento, profile, valorFinal, taxaIVA, valorBase, valorIVA } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const { width: usableW, pageW } = getUsable(doc);
+  const { w: uw, pw } = usable(doc);
   const companyName = profile?.empresa_nome || profile?.empresa || profile?.nome || '';
+  const companyPhone = profile?.empresa_telefone || profile?.telefone || '';
+  const companyNif = profile?.empresa_nif || profile?.nif || '';
 
-  let y = PAGE.marginTop;
+  let y = PAGE.top;
 
-  // ─── HEADER ───
-  let logoRendered = false;
+  // ─── LOGO (centered or left) ───
   if (profile?.empresa_logo_url) {
     const logoResult = await loadImage(profile.empresa_logo_url);
     if (logoResult) {
       try {
-        const maxH = 14;
-        const maxW = 40;
+        const maxH = 18;
+        const maxW = 50;
         const ratio = logoResult.width / logoResult.height;
         let logoW = maxH * ratio;
         let logoH = maxH;
         if (logoW > maxW) { logoW = maxW; logoH = maxW / ratio; }
-        doc.addImage(logoResult.data, 'PNG', PAGE.marginLeft, y, logoW, logoH);
-        logoRendered = true;
+        const logoX = pw / 2 - logoW / 2;
+        doc.addImage(logoResult.data, 'PNG', logoX, y, logoW, logoH);
+        y += logoH + 4;
       } catch { /* skip */ }
     }
   }
 
-  const infoX = logoRendered ? PAGE.marginLeft + 44 : PAGE.marginLeft;
-  doc.setFontSize(11);
+  // ─── TITLE "Orçamento" centered ───
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.dark);
-  doc.text(companyName, infoX, y + 4);
+  doc.setTextColor(30, 30, 30);
+  doc.text('Orçamento', pw / 2, y, { align: 'center' });
+  y += 10;
 
-  doc.setFontSize(8);
+  // ─── CLIENT / OBRA / DATE / CODE centered ───
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...COLORS.muted);
-  let infoY = y + 8;
-  if (profile?.empresa_nif || profile?.nif) {
-    doc.text(`NIF: ${profile?.empresa_nif || profile?.nif}`, infoX, infoY);
-    infoY += 3.5;
+  doc.setTextColor(50, 50, 50);
+
+  if (orcamento.cliente?.nome) {
+    doc.text(`Cliente: ${orcamento.cliente.nome}`, pw / 2, y, { align: 'center' });
+    y += 5;
   }
-  if (profile?.empresa_morada) {
-    let addr = profile.empresa_morada;
-    if (profile.empresa_codigo_postal) addr += `, ${profile.empresa_codigo_postal}`;
-    if (profile.empresa_cidade) addr += ` ${profile.empresa_cidade}`;
-    doc.text(addr, infoX, infoY);
-    infoY += 3.5;
-  }
-  const contacts: string[] = [];
-  if (profile?.empresa_telefone || profile?.telefone) contacts.push(`Tel: ${profile?.empresa_telefone || profile?.telefone}`);
-  if (profile?.empresa_email || profile?.email) contacts.push(profile?.empresa_email || profile?.email || '');
-  if (contacts.length) doc.text(contacts.join('  •  '), infoX, infoY);
-
-  // Title right
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.primary);
-  doc.text('PROPOSTA COMERCIAL', pageW - PAGE.marginRight, y + 5, { align: 'right' });
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...COLORS.muted);
-  if (orcamento.codigo) doc.text(orcamento.codigo, pageW - PAGE.marginRight, y + 10, { align: 'right' });
-  doc.text(`Data: ${format(new Date(orcamento.data_criacao), "d 'de' MMMM 'de' yyyy", { locale: pt })}`, pageW - PAGE.marginRight, y + 14, { align: 'right' });
-
-  y += 20;
-  doc.setDrawColor(...COLORS.primary);
-  doc.setLineWidth(0.6);
-  doc.line(PAGE.marginLeft, y, pageW - PAGE.marginRight, y);
-  y += 6;
-
-  // ─── TITLE ───
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.dark);
-  const titleLines = doc.splitTextToSize(orcamento.titulo, usableW);
-  doc.text(titleLines, PAGE.marginLeft, y);
-  y += titleLines.length * 5 + 2;
-
   if (orcamento.obra?.nome) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.muted);
-    doc.text(`Obra: ${orcamento.obra.nome}`, PAGE.marginLeft, y);
-    y += 4;
+    doc.text(`Obra: ${orcamento.obra.nome}`, pw / 2, y, { align: 'center' });
+    y += 5;
   }
 
-  // ─── CLIENT BOX ───
-  if (orcamento.cliente) {
-    y += 2;
-    const c = orcamento.cliente;
-    doc.setFillColor(...COLORS.headerBg);
-    doc.roundedRect(PAGE.marginLeft, y, usableW, 20, 1.5, 1.5, 'F');
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('CLIENTE', PAGE.marginLeft + 4, y + 5);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.text);
-
-    const col2 = PAGE.marginLeft + usableW / 2;
-    doc.setFont('helvetica', 'bold');
-    doc.text(c.nome, PAGE.marginLeft + 4, y + 9);
-    doc.setFont('helvetica', 'normal');
-    if (c.empresa) doc.text(c.empresa, PAGE.marginLeft + 4, y + 13);
-    if (c.nif) doc.text(`NIF: ${c.nif}`, PAGE.marginLeft + 4, y + 17);
-
-    if (c.endereco) {
-      let addr = c.endereco;
-      if (c.codigo_postal) addr += `, ${c.codigo_postal}`;
-      if (c.cidade) addr += ` ${c.cidade}`;
-      doc.text(addr, col2, y + 9);
-    }
-    if (c.telemovel || c.telefone) doc.text(`Tel: ${c.telemovel || c.telefone}`, col2, y + 13);
-    if (c.email) doc.text(c.email, col2, y + 17);
-
-    y += 24;
-  }
-
-  y += 4;
+  // Date + code on same line
+  const dateStr = format(new Date(orcamento.data_criacao), "dd-MM-yyyy", { locale: pt });
+  const codePart = orcamento.codigo ? `  orç nº${orcamento.codigo}` : '';
+  doc.text(`Data: ${dateStr}${codePart}`, PAGE.left, y);
+  y += 8;
 
   // ─── COMMERCIAL INTRO ───
   if (orcamento.commercial_intro_text) {
-    y = ensureSpace(doc, 15, y);
-    doc.setFontSize(9);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.text);
-    const introLines = doc.splitTextToSize(orcamento.commercial_intro_text, usableW - 6);
-    doc.text(introLines, PAGE.marginLeft + 3, y);
-    y += introLines.length * 4 + 4;
+    doc.setTextColor(40, 40, 40);
+    const introLines = doc.splitTextToSize(orcamento.commercial_intro_text, uw);
+    for (const line of introLines) {
+      y = ensureSpace(doc, 5, y);
+      doc.text(line, PAGE.left, y);
+      y += 4.5;
+    }
+    y += 4;
   }
 
-  // ─── CHAPTER BLOCKS (narrative) ───
+  // ─── CHAPTER BLOCKS (narrative with bullet lists) ───
   const chapters = (orcamento.capitulos || [])
     .filter(c => c.include_in_client_summary !== false)
     .sort((a, b) => (a.client_summary_order ?? a.ordem) - (b.client_summary_order ?? b.ordem));
 
   for (const cap of chapters) {
-    y = ensureSpace(doc, 20, y);
-
-    // Chapter header
-    doc.setFillColor(...COLORS.primaryLight);
-    doc.roundedRect(PAGE.marginLeft, y, usableW, 7, 1, 1, 'F');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
+    // Chapter title — bold underlined
     const chTitle = cap.client_summary_title || `${cap.numero}. ${cap.titulo}`;
-    doc.text(chTitle, PAGE.marginLeft + 3, y + 5);
-    y += 10;
+    y = renderSectionTitle(doc, chTitle, PAGE.left, y, 11);
 
-    // Summary text
+    // Summary text as bullet list
     const summaryText = cap.client_summary_text;
     if (summaryText) {
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...COLORS.text);
-      const sLines = doc.splitTextToSize(summaryText, usableW - 8);
-      for (let i = 0; i < sLines.length; i++) {
-        y = ensureSpace(doc, 4, y);
-        doc.text(sLines[i], PAGE.marginLeft + 4, y);
-        y += 3.8;
-      }
+      y = renderBulletList(doc, summaryText, PAGE.left, uw, y, 9);
       y += 2;
     }
 
     // Exclusions
     const exclusions = cap.client_exclusions_text;
     if (exclusions) {
-      y = ensureSpace(doc, 8, y);
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...COLORS.muted);
-      doc.text('Exclusões:', PAGE.marginLeft + 4, y);
-      y += 3.5;
-      doc.setFont('helvetica', 'italic');
-      const exLines = doc.splitTextToSize(exclusions, usableW - 12);
-      for (let i = 0; i < exLines.length; i++) {
-        y = ensureSpace(doc, 4, y);
-        doc.text(exLines[i], PAGE.marginLeft + 6, y);
-        y += 3.5;
-      }
+      y += 2;
+      // "Não está incluído neste orçamento:" bold underlined
+      y = renderSectionTitle(doc, 'Não está incluído neste orçamento:', PAGE.left, y, 9);
+      y = renderBulletList(doc, exclusions, PAGE.left, uw, y, 8.5);
       y += 2;
     }
 
-    // Separator
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.15);
-    doc.line(PAGE.marginLeft + 3, y, pageW - PAGE.marginRight - 3, y);
     y += 4;
   }
 
   // ─── TOTAL ───
-  y = ensureSpace(doc, 30, y);
-  doc.setDrawColor(...COLORS.primary);
+  y = ensureSpace(doc, 15, y);
+  y += 2;
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+
+  // Show subtotal, IVA, and total
+  const totalText = `Orçamento total: ${fmt(valorBase)} (+ IVA ${taxaIVA}%)`;
+  doc.text(totalText, PAGE.left, y);
+  const ttw = doc.getTextWidth(totalText);
+  doc.setDrawColor(30, 30, 30);
   doc.setLineWidth(0.4);
-  doc.line(PAGE.marginLeft, y, pageW - PAGE.marginRight, y);
+  doc.line(PAGE.left, y + 1, PAGE.left + ttw, y + 1);
   y += 6;
 
-  const summaryX = pageW - PAGE.marginRight - 60;
-  const summaryValX = pageW - PAGE.marginRight - 3;
-
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...COLORS.text);
-  doc.text('Subtotal (s/ IVA)', summaryX, y);
-  doc.text(fmt(valorBase), summaryValX, y, { align: 'right' });
-  y += 5;
-
-  doc.text(`IVA (${taxaIVA}%)`, summaryX, y);
-  doc.text(fmt(valorIVA), summaryValX, y, { align: 'right' });
-  y += 3;
-
-  doc.setDrawColor(...COLORS.primary);
-  doc.setLineWidth(0.4);
-  doc.line(summaryX, y, summaryValX, y);
-  y += 1;
-  doc.line(summaryX, y, summaryValX, y);
-  y += 5;
-
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.primary);
-  doc.text('TOTAL', summaryX, y);
-  doc.text(fmt(valorFinal), summaryValX, y, { align: 'right' });
+  const grandTotalText = `Total com IVA: ${fmt(valorFinal)}`;
+  doc.text(grandTotalText, PAGE.left, y);
+  const gtw = doc.getTextWidth(grandTotalText);
+  doc.line(PAGE.left, y + 1, PAGE.left + gtw, y + 1);
   y += 10;
 
   // ─── PAYMENT TERMS ───
   if (orcamento.commercial_payment_terms_text) {
-    y = ensureSpace(doc, 15, y);
-    doc.setFillColor(...COLORS.headerBg);
-    doc.roundedRect(PAGE.marginLeft, y, usableW, 4, 1, 1, 'F');
-    doc.setFontSize(8);
+    y = ensureSpace(doc, 12, y);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('Condições de Pagamento', PAGE.marginLeft + 3, y + 3);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.text);
-    const ptLines = doc.splitTextToSize(orcamento.commercial_payment_terms_text, usableW - 6);
-    doc.text(ptLines, PAGE.marginLeft + 3, y);
-    y += ptLines.length * 3.5 + 3;
+    doc.setTextColor(30, 30, 30);
+    const ptLabel = `Condições de pagamento: ${orcamento.commercial_payment_terms_text}`;
+    const ptLines = doc.splitTextToSize(ptLabel, uw);
+    for (const line of ptLines) {
+      y = ensureSpace(doc, 5, y);
+      doc.text(line, PAGE.left, y);
+      y += 4.2;
+    }
+    y += 2;
   }
+
+  // ─── IVA note ───
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text('Todos os valores já têm o IVA incluído.', PAGE.left, y);
+  y += 5;
 
   // ─── VALIDITY ───
   if (orcamento.commercial_validity_text) {
-    y = ensureSpace(doc, 10, y);
-    doc.setFillColor(...COLORS.headerBg);
-    doc.roundedRect(PAGE.marginLeft, y, usableW, 4, 1, 1, 'F');
-    doc.setFontSize(8);
+    y = ensureSpace(doc, 8, y);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('Validade', PAGE.marginLeft + 3, y + 3);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.text);
-    const vLines = doc.splitTextToSize(orcamento.commercial_validity_text, usableW - 6);
-    doc.text(vLines, PAGE.marginLeft + 3, y);
-    y += vLines.length * 3.5 + 3;
+    doc.text(`Esta proposta é válida por ${orcamento.commercial_validity_text}.`, PAGE.left, y);
+    y += 5;
   }
 
   // ─── NOTES ───
   if (orcamento.commercial_notes_text) {
     y = ensureSpace(doc, 10, y);
-    doc.setFillColor(...COLORS.headerBg);
-    doc.roundedRect(PAGE.marginLeft, y, usableW, 4, 1, 1, 'F');
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.dark);
-    doc.text('Observações', PAGE.marginLeft + 3, y + 3);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.text);
-    const nLines = doc.splitTextToSize(orcamento.commercial_notes_text, usableW - 6);
-    doc.text(nLines, PAGE.marginLeft + 3, y);
-    y += nLines.length * 3.5 + 3;
+    doc.setFont('helvetica', 'bolditalic');
+    const noteLabel = `Nota: ${orcamento.commercial_notes_text}`;
+    const nLines = doc.splitTextToSize(noteLabel, uw);
+    for (const line of nLines) {
+      y = ensureSpace(doc, 5, y);
+      doc.text(line, PAGE.left, y);
+      y += 4.2;
+    }
+    y += 3;
   }
+
+  // ─── Closing text ───
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(40, 40, 40);
+  doc.text('Esperando merecer a vossa preferência, aguardo a vossa confirmação.', PAGE.left, y);
+  y += 5;
+  doc.text('Sem mais de momento.', PAGE.left, y);
+  y += 8;
 
   // ─── SIGNATURE BLOCK ───
   if (orcamento.show_signature_block) {
-    y = ensureSpace(doc, 40, y);
-    y += 5;
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.2);
+    y = ensureSpace(doc, 50, y);
 
-    const sigW = (usableW - 10) / 2;
-    const sigLeftX = PAGE.marginLeft;
-    const sigRightX = PAGE.marginLeft + sigW + 10;
+    // Push to lower part of page if there's enough space
+    const { ph } = usable(doc);
+    const sigBlockHeight = 45;
+    const desiredSigY = ph - PAGE.bottom - sigBlockHeight;
+    if (y < desiredSigY) y = desiredSigY;
 
-    // Left: company
-    doc.setFontSize(7.5);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...COLORS.muted);
-    doc.text('O Prestador de Serviços:', sigLeftX, y);
-    y += 15;
-    doc.line(sigLeftX, y, sigLeftX + sigW, y);
-    doc.text(companyName, sigLeftX, y + 4);
+    doc.setTextColor(40, 40, 40);
 
-    // Right: client
-    const clientName = orcamento.cliente?.nome || 'O Cliente';
-    doc.text('O Cliente:', sigRightX, y - 15);
-    doc.line(sigRightX, y, sigRightX + sigW, y);
-    doc.text(clientName, sigRightX, y + 4);
+    // Client signs
+    doc.text('O cliente Adjudica: ', PAGE.left, y);
+    doc.setDrawColor(40, 40, 40);
+    doc.setLineWidth(0.3);
+    const lineStart = PAGE.left + doc.getTextWidth('O cliente Adjudica: ');
+    doc.line(lineStart, y, PAGE.left + uw * 0.7, y);
+    y += 7;
 
+    doc.text('Data: _____/_____/_____', PAGE.left, y);
     y += 10;
-  }
 
-  // ─── GENERATION DATE ───
-  y += 5;
-  y = ensureSpace(doc, 8, y);
-  doc.setFontSize(7);
-  doc.setTextColor(...COLORS.muted);
-  doc.setFont('helvetica', 'normal');
-  doc.text(
-    `Documento gerado em ${format(new Date(), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}`,
-    pageW / 2, y, { align: 'center' }
-  );
+    doc.text('Responsável: ', PAGE.left, y);
+    const respLineStart = PAGE.left + doc.getTextWidth('Responsável: ');
+    doc.line(respLineStart, y, PAGE.left + uw * 0.7, y);
+    y += 6;
+
+    // Company info
+    if (companyName) {
+      doc.text(companyName, PAGE.left, y);
+      y += 4.5;
+    }
+    if (companyPhone) {
+      doc.text(companyPhone, PAGE.left, y);
+      y += 4.5;
+    }
+    if (companyNif) {
+      doc.text(`NIF: ${companyNif}`, PAGE.left, y);
+    }
+  }
 
   addFooter(doc, companyName);
   return doc.output('blob');
