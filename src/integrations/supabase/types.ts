@@ -2098,6 +2098,807 @@ export type Database = {
           },
         ]
       }
+      daily_report_activities: {
+        Row: {
+          accumulated_deviation: number | null
+          actual_percent_after_rdo: number | null
+          actual_percent_before_rdo: number | null
+          actual_productivity_day: number | null
+          average_productivity_task: number | null
+          created_at: string
+          criticality: string | null
+          daily_deviation: number | null
+          daily_report_id: string
+          estimated_remaining_duration_days: number | null
+          id: string
+          impact_schedule_days: number | null
+          not_started_or_suspension_reason: string | null
+          notes: string | null
+          obra_id: string
+          plan_adherence_percent: number | null
+          planned_percent_to_date: number | null
+          planned_productivity_day: number | null
+          quantity_done_accumulated: number | null
+          quantity_done_today: number | null
+          quantity_planned_today: number | null
+          remaining_quantity: number | null
+          requires_replanning: boolean | null
+          schedule_performance_index: number | null
+          schedule_task_id: string | null
+          task_status: string | null
+          total_planned_quantity: number | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          wbs_code: string | null
+          work_area: string | null
+        }
+        Insert: {
+          accumulated_deviation?: number | null
+          actual_percent_after_rdo?: number | null
+          actual_percent_before_rdo?: number | null
+          actual_productivity_day?: number | null
+          average_productivity_task?: number | null
+          created_at?: string
+          criticality?: string | null
+          daily_deviation?: number | null
+          daily_report_id: string
+          estimated_remaining_duration_days?: number | null
+          id?: string
+          impact_schedule_days?: number | null
+          not_started_or_suspension_reason?: string | null
+          notes?: string | null
+          obra_id: string
+          plan_adherence_percent?: number | null
+          planned_percent_to_date?: number | null
+          planned_productivity_day?: number | null
+          quantity_done_accumulated?: number | null
+          quantity_done_today?: number | null
+          quantity_planned_today?: number | null
+          remaining_quantity?: number | null
+          requires_replanning?: boolean | null
+          schedule_performance_index?: number | null
+          schedule_task_id?: string | null
+          task_status?: string | null
+          total_planned_quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+          wbs_code?: string | null
+          work_area?: string | null
+        }
+        Update: {
+          accumulated_deviation?: number | null
+          actual_percent_after_rdo?: number | null
+          actual_percent_before_rdo?: number | null
+          actual_productivity_day?: number | null
+          average_productivity_task?: number | null
+          created_at?: string
+          criticality?: string | null
+          daily_deviation?: number | null
+          daily_report_id?: string
+          estimated_remaining_duration_days?: number | null
+          id?: string
+          impact_schedule_days?: number | null
+          not_started_or_suspension_reason?: string | null
+          notes?: string | null
+          obra_id?: string
+          plan_adherence_percent?: number | null
+          planned_percent_to_date?: number | null
+          planned_productivity_day?: number | null
+          quantity_done_accumulated?: number | null
+          quantity_done_today?: number | null
+          quantity_planned_today?: number | null
+          remaining_quantity?: number | null
+          requires_replanning?: boolean | null
+          schedule_performance_index?: number | null
+          schedule_task_id?: string | null
+          task_status?: string | null
+          total_planned_quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+          wbs_code?: string | null
+          work_area?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_activities_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_activities_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_activities_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_client_inspection: {
+        Row: {
+          created_at: string
+          daily_report_id: string
+          extraordinary_requests: string | null
+          id: string
+          notes: string | null
+          obra_id: string
+          pending_approvals_count: number | null
+          releases_issued_count: number | null
+          scope_change_flag: boolean | null
+          technical_pending_items: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_report_id: string
+          extraordinary_requests?: string | null
+          id?: string
+          notes?: string | null
+          obra_id: string
+          pending_approvals_count?: number | null
+          releases_issued_count?: number | null
+          scope_change_flag?: boolean | null
+          technical_pending_items?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_report_id?: string
+          extraordinary_requests?: string | null
+          id?: string
+          notes?: string | null
+          obra_id?: string
+          pending_approvals_count?: number | null
+          releases_issued_count?: number | null
+          scope_change_flag?: boolean | null
+          technical_pending_items?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_client_inspection_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_client_inspection_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_constraints: {
+        Row: {
+          blocks_successors: boolean | null
+          constraint_type: string
+          created_at: string
+          daily_report_id: string
+          id: string
+          impact_days: number | null
+          impact_end_at: string | null
+          impact_hours: number | null
+          impact_start_at: string | null
+          impacted_task_id: string | null
+          objective_description: string
+          obra_id: string
+          resolution_due_date: string | null
+          responsible_resolution_user_id: string | null
+          severity: string
+          status: string
+          triggers_auto_replanning: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocks_successors?: boolean | null
+          constraint_type: string
+          created_at?: string
+          daily_report_id: string
+          id?: string
+          impact_days?: number | null
+          impact_end_at?: string | null
+          impact_hours?: number | null
+          impact_start_at?: string | null
+          impacted_task_id?: string | null
+          objective_description: string
+          obra_id: string
+          resolution_due_date?: string | null
+          responsible_resolution_user_id?: string | null
+          severity?: string
+          status?: string
+          triggers_auto_replanning?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocks_successors?: boolean | null
+          constraint_type?: string
+          created_at?: string
+          daily_report_id?: string
+          id?: string
+          impact_days?: number | null
+          impact_end_at?: string | null
+          impact_hours?: number | null
+          impact_start_at?: string | null
+          impacted_task_id?: string | null
+          objective_description?: string
+          obra_id?: string
+          resolution_due_date?: string | null
+          responsible_resolution_user_id?: string | null
+          severity?: string
+          status?: string
+          triggers_auto_replanning?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_constraints_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_constraints_impacted_task_id_fkey"
+            columns: ["impacted_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_constraints_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_equipment_resources: {
+        Row: {
+          available_hours: number | null
+          created_at: string
+          daily_report_activity_id: string | null
+          daily_report_id: string
+          downtime_hours: number | null
+          downtime_reason: string | null
+          equipment_name: string
+          equipment_status: string | null
+          hours_in_use: number | null
+          id: string
+          obra_id: string
+          quantity: number | null
+          user_id: string
+        }
+        Insert: {
+          available_hours?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id: string
+          downtime_hours?: number | null
+          downtime_reason?: string | null
+          equipment_name: string
+          equipment_status?: string | null
+          hours_in_use?: number | null
+          id?: string
+          obra_id: string
+          quantity?: number | null
+          user_id: string
+        }
+        Update: {
+          available_hours?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id?: string
+          downtime_hours?: number | null
+          downtime_reason?: string | null
+          equipment_name?: string
+          equipment_status?: string | null
+          hours_in_use?: number | null
+          id?: string
+          obra_id?: string
+          quantity?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_equipment_resources_daily_report_activity_id_fkey"
+            columns: ["daily_report_activity_id"]
+            isOneToOne: false
+            referencedRelation: "daily_report_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_equipment_resources_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_equipment_resources_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_labor_resources: {
+        Row: {
+          absences_count: number | null
+          created_at: string
+          daily_report_activity_id: string | null
+          daily_report_id: string
+          hours_per_resource: number | null
+          id: string
+          obra_id: string
+          performance_notes: string | null
+          planned_workers_count: number | null
+          present_workers_count: number | null
+          role_name: string
+          team_productivity: number | null
+          user_id: string
+        }
+        Insert: {
+          absences_count?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id: string
+          hours_per_resource?: number | null
+          id?: string
+          obra_id: string
+          performance_notes?: string | null
+          planned_workers_count?: number | null
+          present_workers_count?: number | null
+          role_name: string
+          team_productivity?: number | null
+          user_id: string
+        }
+        Update: {
+          absences_count?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id?: string
+          hours_per_resource?: number | null
+          id?: string
+          obra_id?: string
+          performance_notes?: string | null
+          planned_workers_count?: number | null
+          present_workers_count?: number | null
+          role_name?: string
+          team_productivity?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_labor_resources_daily_report_activity_id_fkey"
+            columns: ["daily_report_activity_id"]
+            isOneToOne: false
+            referencedRelation: "daily_report_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_labor_resources_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_labor_resources_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_materials: {
+        Row: {
+          batch_reference: string | null
+          consumed_quantity_today: number | null
+          created_at: string
+          daily_report_activity_id: string | null
+          daily_report_id: string
+          id: string
+          material_name: string
+          obra_id: string
+          received_quantity_today: number | null
+          rejected_quantity: number | null
+          shortage_flag: boolean | null
+          stock_risk_flag: boolean | null
+          supplier_name: string | null
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          batch_reference?: string | null
+          consumed_quantity_today?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id: string
+          id?: string
+          material_name: string
+          obra_id: string
+          received_quantity_today?: number | null
+          rejected_quantity?: number | null
+          shortage_flag?: boolean | null
+          stock_risk_flag?: boolean | null
+          supplier_name?: string | null
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          batch_reference?: string | null
+          consumed_quantity_today?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id?: string
+          id?: string
+          material_name?: string
+          obra_id?: string
+          received_quantity_today?: number | null
+          rejected_quantity?: number | null
+          shortage_flag?: boolean | null
+          stock_risk_flag?: boolean | null
+          supplier_name?: string | null
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_materials_daily_report_activity_id_fkey"
+            columns: ["daily_report_activity_id"]
+            isOneToOne: false
+            referencedRelation: "daily_report_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_materials_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_materials_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_productions: {
+        Row: {
+          accumulated_production: number | null
+          approved_production: number | null
+          created_at: string
+          daily_report_activity_id: string | null
+          daily_report_id: string
+          exact_location: string | null
+          executed_percent_task: number | null
+          id: string
+          obra_id: string
+          quantity_executed_today: number | null
+          quantity_planned_today: number | null
+          rejected_production: number | null
+          related_schedule_task_id: string | null
+          service_name: string
+          subservice_name: string | null
+          technical_notes: string | null
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          accumulated_production?: number | null
+          approved_production?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id: string
+          exact_location?: string | null
+          executed_percent_task?: number | null
+          id?: string
+          obra_id: string
+          quantity_executed_today?: number | null
+          quantity_planned_today?: number | null
+          rejected_production?: number | null
+          related_schedule_task_id?: string | null
+          service_name: string
+          subservice_name?: string | null
+          technical_notes?: string | null
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          accumulated_production?: number | null
+          approved_production?: number | null
+          created_at?: string
+          daily_report_activity_id?: string | null
+          daily_report_id?: string
+          exact_location?: string | null
+          executed_percent_task?: number | null
+          id?: string
+          obra_id?: string
+          quantity_executed_today?: number | null
+          quantity_planned_today?: number | null
+          rejected_production?: number | null
+          related_schedule_task_id?: string | null
+          service_name?: string
+          subservice_name?: string | null
+          technical_notes?: string | null
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_productions_daily_report_activity_id_fkey"
+            columns: ["daily_report_activity_id"]
+            isOneToOne: false
+            referencedRelation: "daily_report_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_productions_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_productions_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_productions_related_schedule_task_id_fkey"
+            columns: ["related_schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_quality: {
+        Row: {
+          blocked_tasks_by_quality: number | null
+          created_at: string
+          daily_report_id: string
+          id: string
+          inspections_count: number | null
+          non_conformities_count: number | null
+          notes: string | null
+          obra_id: string
+          quality_status: string | null
+          reexecuted_quantity: number | null
+          rejected_quantity: number | null
+          rework_generated: boolean | null
+          user_id: string
+        }
+        Insert: {
+          blocked_tasks_by_quality?: number | null
+          created_at?: string
+          daily_report_id: string
+          id?: string
+          inspections_count?: number | null
+          non_conformities_count?: number | null
+          notes?: string | null
+          obra_id: string
+          quality_status?: string | null
+          reexecuted_quantity?: number | null
+          rejected_quantity?: number | null
+          rework_generated?: boolean | null
+          user_id: string
+        }
+        Update: {
+          blocked_tasks_by_quality?: number | null
+          created_at?: string
+          daily_report_id?: string
+          id?: string
+          inspections_count?: number | null
+          non_conformities_count?: number | null
+          notes?: string | null
+          obra_id?: string
+          quality_status?: string | null
+          reexecuted_quantity?: number | null
+          rejected_quantity?: number | null
+          rework_generated?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_quality_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_quality_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_safety: {
+        Row: {
+          created_at: string
+          daily_report_id: string
+          id: string
+          incidents_count: number | null
+          interdicted_workfronts_count: number | null
+          lost_hours_due_safety: number | null
+          near_misses_count: number | null
+          notes: string | null
+          obra_id: string
+          stoppages_due_safety: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_report_id: string
+          id?: string
+          incidents_count?: number | null
+          interdicted_workfronts_count?: number | null
+          lost_hours_due_safety?: number | null
+          near_misses_count?: number | null
+          notes?: string | null
+          obra_id: string
+          stoppages_due_safety?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_report_id?: string
+          id?: string
+          incidents_count?: number | null
+          interdicted_workfronts_count?: number | null
+          lost_hours_due_safety?: number | null
+          near_misses_count?: number | null
+          notes?: string | null
+          obra_id?: string
+          stoppages_due_safety?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_safety_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_safety_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_reports: {
+        Row: {
+          actual_work_hours: number | null
+          approved_at: string | null
+          approved_by: string | null
+          closed_at: string | null
+          created_at: string
+          critical_occurrences: string | null
+          daily_production_level: string | null
+          day_type: string | null
+          executive_summary: string | null
+          filled_by_user_id: string | null
+          geolocation_lat: number | null
+          geolocation_lng: number | null
+          id: string
+          obra_id: string
+          opened_at: string | null
+          planned_work_hours: number | null
+          report_date: string
+          responsible_engineer_id: string | null
+          responsible_site_manager_id: string | null
+          shift: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          weather_condition: string | null
+          weather_impact: string | null
+          weekday: string | null
+          work_regime: string | null
+          workfront_id: string | null
+        }
+        Insert: {
+          actual_work_hours?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          critical_occurrences?: string | null
+          daily_production_level?: string | null
+          day_type?: string | null
+          executive_summary?: string | null
+          filled_by_user_id?: string | null
+          geolocation_lat?: number | null
+          geolocation_lng?: number | null
+          id?: string
+          obra_id: string
+          opened_at?: string | null
+          planned_work_hours?: number | null
+          report_date: string
+          responsible_engineer_id?: string | null
+          responsible_site_manager_id?: string | null
+          shift?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          weather_condition?: string | null
+          weather_impact?: string | null
+          weekday?: string | null
+          work_regime?: string | null
+          workfront_id?: string | null
+        }
+        Update: {
+          actual_work_hours?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          critical_occurrences?: string | null
+          daily_production_level?: string | null
+          day_type?: string | null
+          executive_summary?: string | null
+          filled_by_user_id?: string | null
+          geolocation_lat?: number | null
+          geolocation_lng?: number | null
+          id?: string
+          obra_id?: string
+          opened_at?: string | null
+          planned_work_hours?: number | null
+          report_date?: string
+          responsible_engineer_id?: string | null
+          responsible_site_manager_id?: string | null
+          shift?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          weather_condition?: string | null
+          weather_impact?: string | null
+          weekday?: string | null
+          work_regime?: string | null
+          workfront_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       default_articles: {
         Row: {
           categoria: string
@@ -2584,6 +3385,160 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          created_at: string
+          dedupe_key: string | null
+          detected_at: string
+          explanation_json: Json | null
+          id: string
+          message: string
+          obra_id: string
+          related_milestone_id: string | null
+          related_task_id: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          created_at?: string
+          dedupe_key?: string | null
+          detected_at?: string
+          explanation_json?: Json | null
+          id?: string
+          message: string
+          obra_id: string
+          related_milestone_id?: string | null
+          related_task_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          created_at?: string
+          dedupe_key?: string | null
+          detected_at?: string
+          explanation_json?: Json | null
+          id?: string
+          message?: string
+          obra_id?: string
+          related_milestone_id?: string | null
+          related_task_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_alerts_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_alerts_related_milestone_id_fkey"
+            columns: ["related_milestone_id"]
+            isOneToOne: false
+            referencedRelation: "financial_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_alerts_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_milestones: {
+        Row: {
+          actual_amount: number | null
+          actual_date: string | null
+          created_at: string
+          description: string
+          forecast_amount: number | null
+          forecast_date: string | null
+          id: string
+          milestone_type: string
+          obra_id: string
+          planned_amount: number | null
+          planned_date: string | null
+          related_task_id: string | null
+          status: string | null
+          trigger_mode: string
+          trigger_progress_percent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_amount?: number | null
+          actual_date?: string | null
+          created_at?: string
+          description: string
+          forecast_amount?: number | null
+          forecast_date?: string | null
+          id?: string
+          milestone_type: string
+          obra_id: string
+          planned_amount?: number | null
+          planned_date?: string | null
+          related_task_id?: string | null
+          status?: string | null
+          trigger_mode?: string
+          trigger_progress_percent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_amount?: number | null
+          actual_date?: string | null
+          created_at?: string
+          description?: string
+          forecast_amount?: number | null
+          forecast_date?: string | null
+          id?: string
+          milestone_type?: string
+          obra_id?: string
+          planned_amount?: number | null
+          planned_date?: string | null
+          related_task_id?: string | null
+          status?: string | null
+          trigger_mode?: string
+          trigger_progress_percent?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_milestones_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_milestones_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -4247,6 +5202,119 @@ export type Database = {
           },
         ]
       }
+      project_milestones: {
+        Row: {
+          actual_date: string | null
+          created_at: string
+          forecast_date: string | null
+          id: string
+          name: string
+          obra_id: string
+          planned_date: string | null
+          related_task_id: string | null
+          risk_level: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_date?: string | null
+          created_at?: string
+          forecast_date?: string | null
+          id?: string
+          name: string
+          obra_id: string
+          planned_date?: string | null
+          related_task_id?: string | null
+          risk_level?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_date?: string | null
+          created_at?: string
+          forecast_date?: string | null
+          id?: string
+          name?: string
+          obra_id?: string
+          planned_date?: string | null
+          related_task_id?: string | null
+          risk_level?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_progress_snapshots: {
+        Row: {
+          actual_global_progress: number | null
+          generated_at: string
+          health_status: string | null
+          id: string
+          obra_id: string
+          physical_deviation: number | null
+          planned_global_progress: number | null
+          probable_completion_date: string | null
+          projected_global_progress: number | null
+          schedule_deviation_days: number | null
+          snapshot_date: string
+          user_id: string
+        }
+        Insert: {
+          actual_global_progress?: number | null
+          generated_at?: string
+          health_status?: string | null
+          id?: string
+          obra_id: string
+          physical_deviation?: number | null
+          planned_global_progress?: number | null
+          probable_completion_date?: string | null
+          projected_global_progress?: number | null
+          schedule_deviation_days?: number | null
+          snapshot_date: string
+          user_id: string
+        }
+        Update: {
+          actual_global_progress?: number | null
+          generated_at?: string
+          health_status?: string | null
+          id?: string
+          obra_id?: string
+          physical_deviation?: number | null
+          planned_global_progress?: number | null
+          probable_completion_date?: string | null
+          projected_global_progress?: number | null
+          schedule_deviation_days?: number | null
+          snapshot_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_progress_snapshots_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_resource_allocations: {
         Row: {
           allocation_date: string
@@ -4309,6 +5377,266 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_schedule_dependencies: {
+        Row: {
+          created_at: string
+          dependency_type: string
+          id: string
+          lag_days: number | null
+          obra_id: string
+          predecessor_task_id: string
+          successor_task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dependency_type?: string
+          id?: string
+          lag_days?: number | null
+          obra_id: string
+          predecessor_task_id: string
+          successor_task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dependency_type?: string
+          id?: string
+          lag_days?: number | null
+          obra_id?: string
+          predecessor_task_id?: string
+          successor_task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_schedule_dependencies_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_schedule_dependencies_predecessor_task_id_fkey"
+            columns: ["predecessor_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_schedule_dependencies_successor_task_id_fkey"
+            columns: ["successor_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_schedule_tasks: {
+        Row: {
+          actual_end: string | null
+          actual_progress_percent: number | null
+          actual_start: string | null
+          budget_chapter_id: string | null
+          budget_item_id: string | null
+          code: string | null
+          created_at: string
+          criticality: string | null
+          delay_classification: string | null
+          forecast_end: string | null
+          forecast_start: string | null
+          id: string
+          name: string
+          obra_id: string
+          parent_task_id: string | null
+          planned_duration_days: number | null
+          planned_end: string | null
+          planned_progress_curve_type: string | null
+          planned_progress_percent: number | null
+          planned_start: string | null
+          progress_method: string
+          projected_progress_percent: number | null
+          remaining_duration_days: number | null
+          schedule_float_days: number | null
+          schedule_version_id: string
+          sort_order: number | null
+          status_flag: string | null
+          task_type: string
+          total_planned_quantity: number | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          wbs_code: string | null
+          weight_financial: number | null
+          weight_physical: number | null
+          work_area_label: string | null
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_progress_percent?: number | null
+          actual_start?: string | null
+          budget_chapter_id?: string | null
+          budget_item_id?: string | null
+          code?: string | null
+          created_at?: string
+          criticality?: string | null
+          delay_classification?: string | null
+          forecast_end?: string | null
+          forecast_start?: string | null
+          id?: string
+          name: string
+          obra_id: string
+          parent_task_id?: string | null
+          planned_duration_days?: number | null
+          planned_end?: string | null
+          planned_progress_curve_type?: string | null
+          planned_progress_percent?: number | null
+          planned_start?: string | null
+          progress_method?: string
+          projected_progress_percent?: number | null
+          remaining_duration_days?: number | null
+          schedule_float_days?: number | null
+          schedule_version_id: string
+          sort_order?: number | null
+          status_flag?: string | null
+          task_type?: string
+          total_planned_quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+          wbs_code?: string | null
+          weight_financial?: number | null
+          weight_physical?: number | null
+          work_area_label?: string | null
+        }
+        Update: {
+          actual_end?: string | null
+          actual_progress_percent?: number | null
+          actual_start?: string | null
+          budget_chapter_id?: string | null
+          budget_item_id?: string | null
+          code?: string | null
+          created_at?: string
+          criticality?: string | null
+          delay_classification?: string | null
+          forecast_end?: string | null
+          forecast_start?: string | null
+          id?: string
+          name?: string
+          obra_id?: string
+          parent_task_id?: string | null
+          planned_duration_days?: number | null
+          planned_end?: string | null
+          planned_progress_curve_type?: string | null
+          planned_progress_percent?: number | null
+          planned_start?: string | null
+          progress_method?: string
+          projected_progress_percent?: number | null
+          remaining_duration_days?: number | null
+          schedule_float_days?: number | null
+          schedule_version_id?: string
+          sort_order?: number | null
+          status_flag?: string | null
+          task_type?: string
+          total_planned_quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+          wbs_code?: string | null
+          weight_financial?: number | null
+          weight_physical?: number | null
+          work_area_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_schedule_tasks_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_schedule_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_schedule_tasks_schedule_version_id_fkey"
+            columns: ["schedule_version_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_schedule_versions: {
+        Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          generated_by_type: string
+          id: string
+          is_baseline: boolean
+          notes: string | null
+          obra_id: string
+          source_budget_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+          version_no: number
+        }
+        Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          generated_by_type?: string
+          id?: string
+          is_baseline?: boolean
+          notes?: string | null
+          obra_id: string
+          source_budget_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+          version_no?: number
+        }
+        Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          generated_by_type?: string
+          id?: string
+          is_baseline?: boolean
+          notes?: string | null
+          obra_id?: string
+          source_budget_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_schedule_versions_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_schedule_versions_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -5079,6 +6407,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schedule_audit_log: {
+        Row: {
+          action: string
+          actor_type: string
+          actor_user_id: string | null
+          after_json: Json | null
+          before_json: Json | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_type?: string
+          actor_user_id?: string | null
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_type?: string
+          actor_user_id?: string | null
+          after_json?: Json | null
+          before_json?: Json | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       subempreiteiros: {
         Row: {
@@ -5881,6 +7248,181 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_productivity_history: {
+        Row: {
+          actual_productivity: number | null
+          average_actual_productivity: number | null
+          created_at: string
+          id: string
+          obra_id: string
+          planned_productivity: number | null
+          reference_date: string
+          schedule_task_id: string
+          user_id: string
+        }
+        Insert: {
+          actual_productivity?: number | null
+          average_actual_productivity?: number | null
+          created_at?: string
+          id?: string
+          obra_id: string
+          planned_productivity?: number | null
+          reference_date: string
+          schedule_task_id: string
+          user_id: string
+        }
+        Update: {
+          actual_productivity?: number | null
+          average_actual_productivity?: number | null
+          created_at?: string
+          id?: string
+          obra_id?: string
+          planned_productivity?: number | null
+          reference_date?: string
+          schedule_task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_productivity_history_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_productivity_history_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_progress_snapshots: {
+        Row: {
+          actual_progress_percent: number | null
+          delay_days: number | null
+          generated_at: string
+          id: string
+          obra_id: string
+          planned_progress_percent: number | null
+          projected_progress_percent: number | null
+          schedule_task_id: string
+          snapshot_date: string
+          status_flag: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_progress_percent?: number | null
+          delay_days?: number | null
+          generated_at?: string
+          id?: string
+          obra_id: string
+          planned_progress_percent?: number | null
+          projected_progress_percent?: number | null
+          schedule_task_id: string
+          snapshot_date: string
+          status_flag?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_progress_percent?: number | null
+          delay_days?: number | null
+          generated_at?: string
+          id?: string
+          obra_id?: string
+          planned_progress_percent?: number | null
+          projected_progress_percent?: number | null
+          schedule_task_id?: string
+          snapshot_date?: string
+          status_flag?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_progress_snapshots_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_progress_snapshots_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_reforecast: {
+        Row: {
+          created_at: string
+          delay_classification: string | null
+          id: string
+          new_forecast_end: string | null
+          new_remaining_duration_days: number | null
+          obra_id: string
+          previous_forecast_end: string | null
+          previous_remaining_duration_days: number | null
+          reason_summary: string | null
+          reference_daily_report_id: string | null
+          schedule_task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delay_classification?: string | null
+          id?: string
+          new_forecast_end?: string | null
+          new_remaining_duration_days?: number | null
+          obra_id: string
+          previous_forecast_end?: string | null
+          previous_remaining_duration_days?: number | null
+          reason_summary?: string | null
+          reference_daily_report_id?: string | null
+          schedule_task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delay_classification?: string | null
+          id?: string
+          new_forecast_end?: string | null
+          new_remaining_duration_days?: number | null
+          obra_id?: string
+          previous_forecast_end?: string | null
+          previous_remaining_duration_days?: number | null
+          reason_summary?: string | null
+          reference_daily_report_id?: string | null
+          schedule_task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reforecast_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_reforecast_reference_daily_report_id_fkey"
+            columns: ["reference_daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_reforecast_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_schedule_tasks"
             referencedColumns: ["id"]
           },
         ]
