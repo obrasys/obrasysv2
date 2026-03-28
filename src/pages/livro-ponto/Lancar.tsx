@@ -130,6 +130,33 @@ export default function LancarPage() {
             <CardTitle className="text-lg">Identificação</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Filtros por Subempreiteiro / Equipa */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Filtrar por Subempreiteiro</Label>
+                <Select value={filterSubempreiteiro || "all"} onValueChange={(v) => { setFilterSubempreiteiro(v === "all" ? "" : v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {subempreiteiros.filter((s) => s.ativo).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Filtrar por Equipa</Label>
+                <Select value={filterEquipa || "all"} onValueChange={(v) => { setFilterEquipa(v === "all" ? "" : v); setWorkerId(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {equipaMembros.filter((m) => m.ativo).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Trabalhador *</Label>
@@ -138,7 +165,7 @@ export default function LancarPage() {
                     <SelectValue placeholder="Selecionar trabalhador" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeWorkers.map((w) => (
+                    {filteredWorkers.map((w) => (
                       <SelectItem key={w.id} value={w.id}>
                         {w.full_name} {w.role ? `(${w.role})` : ""} — {formatCurrency(w.default_hourly_cost)}/h
                       </SelectItem>
