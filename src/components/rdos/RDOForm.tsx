@@ -74,6 +74,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
     rdo?.trabalhos_quantificados || []
   );
   const [fotos, setFotos] = useState<string[]>(rdo?.fotos || []);
+  const [materialRequests, setMaterialRequests] = useState<RDOMaterialRequestLine[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
