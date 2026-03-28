@@ -47,6 +47,7 @@ import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
+import { useReceivableAlerts } from '@/hooks/useReceivableAlerts';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
