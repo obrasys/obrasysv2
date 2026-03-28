@@ -41,8 +41,10 @@ import { CadernoStatusBadge } from '@/components/cadernos';
 import { ObraEquipaTab } from '@/components/obras/ObraEquipaTab';
 import { ObraPortalClienteTab } from '@/components/obras/ObraPortalClienteTab';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
+import { ObraMateriaisTab } from '@/components/obras/ObraMateriaisTab';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
+import { useProjectResourceSummary } from '@/hooks/useProjectResources';
 import { useCadernos } from '@/hooks/useCadernos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +89,7 @@ export default function VerObraPage() {
   const { contas, createConta, isLoading: loadingContas } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
+  const { data: resourceSummary } = useProjectResourceSummary(id);
 
   const calculateProgressWithAI = async () => {
     if (!id) return;
@@ -609,6 +612,9 @@ export default function VerObraPage() {
           clienteEmail={null}
           clienteId={null}
         />
+
+        {/* Materiais e Recursos */}
+        <ObraMateriaisTab obraId={id!} />
 
         {/* Custos Reais de Mão de Obra */}
         <Card>

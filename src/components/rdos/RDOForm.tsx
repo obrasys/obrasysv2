@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,6 +26,7 @@ import type { RelatorioDiario, RDOFormData, TrabalhoQuantificado } from '@/types
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
 import { useObras } from '@/hooks/useObras';
 import { RDOImageUpload } from './RDOImageUpload';
+import { RDOMaterialRequests, type RDOMaterialRequestLine } from './RDOMaterialRequests';
 import { 
   Calendar, 
   Cloud, 
@@ -62,7 +63,7 @@ const formSchema = z.object({
 interface RDOFormProps {
   rdo?: RelatorioDiario;
   obraId?: string;
-  onSubmit: (data: RDOFormData) => void;
+  onSubmit: (data: RDOFormData & { materialRequests?: RDOMaterialRequestLine[] }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -73,6 +74,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
     rdo?.trabalhos_quantificados || []
   );
   const [fotos, setFotos] = useState<string[]>(rdo?.fotos || []);
+  const [materialRequests, setMaterialRequests] = useState<RDOMaterialRequestLine[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,6 +115,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     const validTrabalhos = trabalhos.filter(t => t.descricao.trim() !== '');
+    const validMaterialRequests = materialRequests.filter(r => r.free_text_item_name.trim() !== '');
     onSubmit({
       obra_id: data.obra_id,
       data: data.data,
@@ -123,6 +126,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
       mao_de_obra_presente: data.mao_de_obra_presente,
       trabalhos_quantificados: validTrabalhos,
       fotos: fotos,
+      materialRequests: validMaterialRequests.length > 0 ? validMaterialRequests : undefined,
     });
   };
 
@@ -425,6 +429,9 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
             />
           </CardContent>
         </Card>
+
+        {/* Material Requests for Tomorrow */}
+        <RDOMaterialRequests requests={materialRequests} onChange={setMaterialRequests} />
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4">

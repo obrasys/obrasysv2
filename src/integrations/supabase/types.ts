@@ -1582,6 +1582,45 @@ export type Database = {
           },
         ]
       }
+      catalog_items: {
+        Row: {
+          active: boolean
+          code: string | null
+          created_at: string
+          description: string | null
+          id: string
+          item_type: string
+          name: string
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_type?: string
+          name: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_type?: string
+          name?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categorias_financeiras: {
         Row: {
           ativo: boolean | null
@@ -4060,6 +4099,72 @@ export type Database = {
           },
         ]
       }
+      project_resource_allocations: {
+        Row: {
+          allocation_date: string
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string | null
+          item_name: string
+          item_type: string
+          notes: string | null
+          project_id: string
+          quantity: number
+          status: string
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocation_date?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          item_id?: string | null
+          item_name: string
+          item_type?: string
+          notes?: string | null
+          project_id: string
+          quantity?: number
+          status?: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocation_date?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          item_type?: string
+          notes?: string | null
+          project_id?: string
+          quantity?: number
+          status?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_resource_allocations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_resource_allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_request_categories: {
         Row: {
           category_id: string
@@ -4359,6 +4464,98 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rdo_material_requests: {
+        Row: {
+          allocation_id: string | null
+          created_at: string
+          created_by: string
+          free_text_item_name: string | null
+          id: string
+          item_id: string | null
+          item_type: string
+          needed_for_date: string
+          notes: string | null
+          priority: string
+          project_id: string
+          quantity: number
+          rdo_id: string | null
+          request_date: string
+          status: string
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocation_id?: string | null
+          created_at?: string
+          created_by: string
+          free_text_item_name?: string | null
+          id?: string
+          item_id?: string | null
+          item_type?: string
+          needed_for_date: string
+          notes?: string | null
+          priority?: string
+          project_id: string
+          quantity?: number
+          rdo_id?: string | null
+          request_date?: string
+          status?: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocation_id?: string | null
+          created_at?: string
+          created_by?: string
+          free_text_item_name?: string | null
+          id?: string
+          item_id?: string | null
+          item_type?: string
+          needed_for_date?: string
+          notes?: string | null
+          priority?: string
+          project_id?: string
+          quantity?: number
+          rdo_id?: string | null
+          request_date?: string
+          status?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdo_material_requests_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "project_resource_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rdo_material_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rdo_material_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rdo_material_requests_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "relatorios_diarios"
             referencedColumns: ["id"]
           },
         ]
