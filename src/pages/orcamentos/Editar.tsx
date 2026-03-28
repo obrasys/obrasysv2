@@ -385,6 +385,7 @@ export default function EditarOrcamentoPage() {
                        onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
                        onDeleteArtigo={setDeleteArtigoId}
                        onOpenCatalog={handleOpenCatalog}
+                       onUpdateCommercial={(capId, data) => updateCapitulo.mutateAsync({ capituloId: capId, ...data })}
                        isReadOnly={isReadOnly}
                      />
                    ))
