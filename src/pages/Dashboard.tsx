@@ -99,9 +99,9 @@ const Dashboard = () => {
               <Plus className="w-4 h-4 mr-1" />
               <span className="hidden sm:inline">Novo </span>RDO
             </Button>
-            <Button size="sm" onClick={() => navigate('/obras/criar')}>
+            <Button size="sm" onClick={() => navigate('/clientes/criar')}>
               <Plus className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Nova </span>Obra
+              <span className="hidden sm:inline">Novo </span>Cliente
             </Button>
           </div>
         </div>

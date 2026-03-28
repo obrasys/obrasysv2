@@ -263,60 +263,6 @@ export function ClienteForm({ cliente, onSubmit, onCancel, isLoading }: ClienteF
           </CardContent>
         </Card>
 
-        {/* Configurações */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Configurações
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="nivel_acesso"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nível de Acesso (Portal)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar nível" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="bg-popover">
-                      {NIVEL_ACESSO_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="observacoes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Notas internas sobre o cliente..." 
-                      className="resize-none" 
-                      rows={3}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
