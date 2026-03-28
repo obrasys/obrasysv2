@@ -86,25 +86,23 @@ export default function LivroPontoIndex() {
   const pendingTimesheets = timesheets.filter((t: any) => t.status === "draft" || t.status === "submitted");
 
   return (
-    <AppLayout title="Livro de Ponto" subtitle="Gestão de presenças, horas e custos de mão de obra">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Livro de Ponto</h1>
-            <p className="text-muted-foreground">Gestão de presenças, horas e custos de mão de obra</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/livro-ponto/trabalhadores")}>
-              <Users className="h-4 w-4 mr-2" />
-              Trabalhadores
-            </Button>
-            <Button onClick={() => navigate("/livro-ponto/lancar")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Lançar Horas
-            </Button>
-          </div>
+    <AppLayout 
+      title="Livro de Ponto" 
+      subtitle="Gestão de presenças, horas e custos de mão de obra"
+      actions={
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/livro-ponto/trabalhadores")}>
+            <Users className="h-4 w-4 mr-2" />
+            Trabalhadores
+          </Button>
+          <Button onClick={() => navigate("/livro-ponto/lancar")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Lançar Horas
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-6">
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
