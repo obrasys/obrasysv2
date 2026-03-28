@@ -71,6 +71,67 @@ interface RDOFormProps {
   isLoading?: boolean;
 }
 
+function RDODailyPlanSection({ obraId, date }: { obraId: string; date: string }) {
+  const { tasks, updateTaskStatus } = useDailyPlan(obraId || undefined, date);
+
+  if (!obraId || !date || !tasks || tasks.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Plano do Dia ({tasks.length} tarefas)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {tasks.map(task => {
+            const conf = TASK_STATUS_CONFIG[task.status];
+            return (
+              <div key={task.id} className="flex items-center justify-between p-2 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${task.status === 'done' ? 'line-through opacity-60' : ''}`}>
+                    {task.title}
+                  </span>
+                  {task.area_or_zone && (
+                    <span className="text-xs text-muted-foreground ml-2">• {task.area_or_zone}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className={`text-xs ${conf.color}`}>{conf.label}</Badge>
+                  {task.status !== 'done' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => updateTaskStatus.mutate({ taskId: task.id, status: 'done' })}
+                    >
+                      ✅ Executada
+                    </Button>
+                  )}
+                  {task.status !== 'blocked' && task.status !== 'done' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => updateTaskStatus.mutate({ taskId: task.id, status: 'blocked' })}
+                    >
+                      🚫 Impedida
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormProps) {
   const { obras, isLoading: loadingObras } = useObras();
   const [trabalhos, setTrabalhos] = useState<TrabalhoQuantificado[]>(
