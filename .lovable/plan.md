@@ -1,124 +1,53 @@
 
 
-# Plano: Formato Duplo de PDF (Completo Tecnico + Comercial Resumido)
+# Plano: Reformular PDF Comercial para Corresponder ao Layout de Referência
 
-## Resumo
+## Objetivo
 
-Adicionar a capacidade de gerar orçamentos em dois formatos: o atual "Completo Tecnico" (com artigos, quantidades, precos) e um novo "Comercial Resumido" (narrativo, sem detalhe tecnico, com introdução comercial, resumos por capitulo, exclusões, condições e assinatura).
+Alterar `src/lib/orcamento-pdf-comercial.ts` para que o PDF comercial resumido tenha exatamente o layout do anexo: cabeçalho igual ao PDF técnico (logo à esquerda, dados empresa ao centro, "ORÇAMENTO" à direita com código e data), artigos listados por capítulo como texto simples sem preços, total num bloco destacado, e rodapé com condições.
 
----
+## Alterações — Ficheiro Único
 
-## 1. Migração de Base de Dados
+### `src/lib/orcamento-pdf-comercial.ts`
 
-### Tabela `orcamentos` — novos campos:
-- `client_document_mode_default` (text, default `'tecnico'`)
-- `commercial_intro_text` (text, nullable)
-- `commercial_payment_terms_text` (text, nullable)
-- `commercial_validity_text` (text, nullable)
-- `commercial_notes_text` (text, nullable)
-- `show_signature_block` (boolean, default false)
+**1. Cabeçalho — replicar o estilo do PDF técnico:**
+- Logo à esquerda
+- Nome empresa, NIF, morada, telefone/email ao centro
+- "ORÇAMENTO" grande em azul à direita, código e data por baixo
+- Linha separadora azul
 
-### Tabela `capitulos_orcamento` — novos campos:
-- `client_summary_title` (text, nullable)
-- `client_summary_text` (text, nullable)
-- `client_exclusions_text` (text, nullable)
-- `include_in_client_summary` (boolean, default true)
-- `client_summary_order` (integer, nullable)
+**2. Título do orçamento + Cliente/Obra:**
+- Título do orçamento em bold (ex: "Orçamento de Instalação de Ar Condicionado")
+- `Obra: ...` em texto menor
+- `Cliente: Nome` e `Obra: Nome` em bold
 
-### Nova tabela `budget_documents`:
-- `id` (uuid, PK)
-- `user_id` (uuid, FK auth.users)
-- `budget_id` (uuid, FK orcamentos)
-- `document_type` (text — 'pdf')
-- `view_mode` (text — 'tecnico' | 'comercial')
-- `storage_path` (text)
-- `generated_at` (timestamptz)
-- `sent_to_email` (text, nullable)
-- `sent_at` (timestamptz, nullable)
-- `created_at` (timestamptz)
+**3. Introdução comercial:**
+- Texto livre como parágrafo normal
 
-RLS: users can only access their own documents.
+**4. Capítulos com artigos (sem preços):**
+- Título do capítulo em bold (ex: "Eletricidade:")
+- Listar cada **artigo real** do capítulo pela sua `descricao` — texto simples, sem bullet, sem preço, sem quantidade, sem unidade
+- Se existir `client_summary_text`, usá-lo como fallback quando não há artigos
+- Se existir `client_exclusions_text`, mostrar exclusões
 
-Storage: criar bucket `budget-documents` (privado) para guardar PDFs gerados.
+**5. Total — bloco com borda:**
+- Texto "Orçamento total e de: XX.XXX,XX€" dentro de um rectângulo com borda (como na referência)
+- Usar `valorFinal` (com IVA incluído)
 
----
+**6. Rodapé de condições:**
+- `Condições de pagamento:` em bold + texto
+- "Todos os valores já têm o IVA incluído"
+- Validade
+- `Nota:` em bold + texto
+- Texto de fecho
+- Bloco de assinatura (se ativo)
 
-## 2. Tipos TypeScript
+**7. Footer institucional:** manter páginas numeradas
 
-### `src/types/orcamentos.ts`
-- Adicionar campos comerciais a `Orcamento` e `Capitulo`.
-- Adicionar interface `BudgetDocument`.
+## Resumo Técnico
 
----
-
-## 3. Editor de Orçamento — Resumo Comercial por Capítulo
-
-### `src/components/orcamentos/CapituloAccordion.tsx`
-- Adicionar tab/secção "Resumo para Cliente" dentro de cada capítulo expandido.
-- Campos: titulo comercial, texto resumido, exclusões, checkbox "incluir no resumo".
-- Salvar via `updateCapitulo` existente.
-
-### `src/pages/orcamentos/Editar.tsx`
-- Adicionar tab "Configuração Comercial" no editor com:
-  - Texto de introdução comercial
-  - Condições de pagamento
-  - Validade
-  - Notas/observações
-  - Toggle de bloco de assinatura
-  - Formato por defeito (tecnico/comercial)
-
----
-
-## 4. Gerador de PDF Comercial Resumido
-
-### `src/lib/orcamento-pdf-comercial.ts` (novo ficheiro)
-Gera PDF com layout narrativo:
-- Cabeçalho (logo, empresa, nº orçamento, data, cliente, obra)
-- Introdução comercial
-- Blocos por capítulo (titulo comercial, texto resumido, exclusões) — sem artigos/precos/quantidades
-- Total final (calculado do orçamento real)
-- Condições de pagamento, validade, notas
-- Bloco de assinatura opcional
-- Rodapé institucional
-
-Usa os mesmos COLORS, ensureSpace, addFooter do motor existente.
-
----
-
-## 5. Seletor de Formato no PDF e Envio
-
-### `src/pages/orcamentos/Ver.tsx`
-- "Gerar PDF" abre modal com escolha: Completo Tecnico / Comercial Resumido.
-- Preview simples do layout selecionado (mini mockup ou descrição).
-- Ao gerar, guarda snapshot em `budget_documents` + upload ao storage.
-
-### `src/components/orcamentos/EnviarOrcamentoDialog.tsx`
-- Adicionar selector de formato antes do envio.
-- Gerar PDF no formato escolhido, guardar snapshot, enviar.
-
----
-
-## 6. Hook de Documentos
-
-### `src/hooks/useBudgetDocuments.ts` (novo)
-- Query para listar documentos gerados de um orçamento.
-- Mutation para criar documento (gerar PDF, upload storage, insert registro).
-- Função de download via signed URL.
-
----
-
-## 7. Ficheiros Alterados
-
-| Ficheiro | Alteração |
-|---|---|
-| Migração SQL | Novos campos + tabela `budget_documents` |
-| `src/types/orcamentos.ts` | Novos campos nos tipos |
-| `src/components/orcamentos/CapituloAccordion.tsx` | Secção "Resumo para Cliente" |
-| `src/pages/orcamentos/Editar.tsx` | Tab "Configuração Comercial" |
-| `src/lib/orcamento-pdf-comercial.ts` | Novo gerador PDF comercial |
-| `src/lib/orcamento-pdf.ts` | Pequenos ajustes para exportar helpers partilhados |
-| `src/pages/orcamentos/Ver.tsx` | Modal seletor de formato + snapshot |
-| `src/components/orcamentos/EnviarOrcamentoDialog.tsx` | Seletor de formato |
-| `src/hooks/useBudgetDocuments.ts` | Novo hook |
-| `src/hooks/useOrcamentos.ts` | Suporte aos novos campos nos mutations |
+Apenas 1 ficheiro alterado: `src/lib/orcamento-pdf-comercial.ts`. A mudança principal é:
+- Cabeçalho passa de centrado para layout split (logo | info | título) igual ao técnico
+- Capítulos passam a listar `artigos[].descricao` em vez de apenas `client_summary_text`
+- Total passa a ter borda/caixa em vez de texto sublinhado
 
