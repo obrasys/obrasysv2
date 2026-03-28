@@ -106,7 +106,7 @@ export default function LancarPage() {
 
   return (
     <AppLayout title="Lançar Horas" subtitle="Registar tempo de trabalho por trabalhador e obra">
-      <div className="space-y-6 max-w-3xl">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-3xl">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/livro-ponto")}>
