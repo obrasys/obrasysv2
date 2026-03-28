@@ -8,3 +8,4 @@ export { CategoriaForm } from './CategoriaForm';
 export { CategoriasManager } from './CategoriasManager';
 export { ImportFornecedoresModal } from './ImportFornecedoresModal';
 export { MargensLucroCard } from './MargensLucroCard';
+export { ReceivableAlertsCard } from './ReceivableAlertsCard';
