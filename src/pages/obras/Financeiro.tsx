@@ -454,6 +454,10 @@ export default function ObraFinanceiroPage() {
               emptyMessage="Nenhuma conta a receber"
             />
           </TabsContent>
+
+          <TabsContent value="mao-de-obra" className="mt-4">
+            <ObraLaborCostsTab obraId={id!} />
+          </TabsContent>
         </Tabs>
 
         {/* Form Modal - obra_id já preenchido */}
