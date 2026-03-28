@@ -89,6 +89,7 @@ export default function VerObraPage() {
   const { contas, createConta, isLoading: loadingContas } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
+  const { data: resourceSummary } = useProjectResourceSummary(id);
 
   const calculateProgressWithAI = async () => {
     if (!id) return;
