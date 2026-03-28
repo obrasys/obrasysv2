@@ -114,6 +114,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     const validTrabalhos = trabalhos.filter(t => t.descricao.trim() !== '');
+    const validMaterialRequests = materialRequests.filter(r => r.free_text_item_name.trim() !== '');
     onSubmit({
       obra_id: data.obra_id,
       data: data.data,
@@ -124,6 +125,7 @@ export function RDOForm({ rdo, obraId, onSubmit, onCancel, isLoading }: RDOFormP
       mao_de_obra_presente: data.mao_de_obra_presente,
       trabalhos_quantificados: validTrabalhos,
       fotos: fotos,
+      materialRequests: validMaterialRequests.length > 0 ? validMaterialRequests : undefined,
     });
   };
 
