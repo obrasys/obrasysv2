@@ -67,6 +67,7 @@ export default function ObraFinanceiroPage() {
 
   const { obra, isLoading: loadingObra } = useObra(id);
   const { data: laborSummary } = useObraLaborSummary(id);
+  const { totalDueSoon, totalOverdue } = useReceivableAlerts(id);
   const { 
     contas, 
     fornecedores, 
