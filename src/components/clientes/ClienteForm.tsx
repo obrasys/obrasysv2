@@ -12,17 +12,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Cliente, ClienteFormData } from '@/types/clientes';
-import { NIVEL_ACESSO_OPTIONS } from '@/types/clientes';
-import { User, Building2, MapPin, Settings } from 'lucide-react';
+import { User, Building2, MapPin } from 'lucide-react';
 
 const formSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
