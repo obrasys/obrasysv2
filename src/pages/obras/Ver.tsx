@@ -514,6 +514,9 @@ export default function VerObraPage() {
           </CardContent>
         </Card>
 
+        {/* Plano Diário */}
+        <ObraPlanoDiarioTab obraId={id!} />
+
         {/* RDOs Section */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
