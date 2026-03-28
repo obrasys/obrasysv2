@@ -47,9 +47,12 @@ export default function VerOrcamentoPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [adjudicarOpen, setAdjudicarOpen] = useState(false);
+  const [pdfFormatOpen, setPdfFormatOpen] = useState(false);
+  const [pdfFormato, setPdfFormato] = useState<'tecnico' | 'comercial'>('tecnico');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
+  const { saveDocument } = useBudgetDocuments(id);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
