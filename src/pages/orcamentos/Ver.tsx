@@ -250,6 +250,7 @@ export default function VerOrcamentoPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {canAdjudicar && (
         <AdjudicacaoWizard
           open={adjudicarOpen}
           onOpenChange={setAdjudicarOpen}
