@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
+import { APP_VERSION } from '@/config/version';
 
 export function Sidebar() {
   const location = useLocation();
@@ -27,8 +28,9 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 pt-5 pb-4">
         <a href="/" className="flex items-center">
-          <img src={logo} alt="ObraSys" className="h-8 w-auto" />
+          <img src={logo} alt="ObraSys" className="h-8 w-auto brightness-0 invert" />
         </a>
+        <p className="text-[10px] text-sidebar-foreground/50 mt-1 px-0.5">Versão {APP_VERSION}</p>
       </div>
 
       {/* Navigation — with scroll */}
@@ -45,10 +47,10 @@ export function Sidebar() {
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-2 transition-colors text-[13px] ${
+                    className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
                       active
-                        ? 'text-primary font-semibold border-r-[3px] border-primary'
-                        : 'text-sidebar-foreground hover:text-primary'
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -73,10 +75,10 @@ export function Sidebar() {
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-2 transition-colors text-[13px] ${
+                    className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
                       active
-                        ? 'text-primary font-semibold border-r-[3px] border-primary'
-                        : 'text-sidebar-foreground hover:text-primary'
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
