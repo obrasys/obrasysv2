@@ -55,6 +55,13 @@ export interface Orcamento {
   updated_at: string;
   revisao_de?: string | null;
   numero_revisao?: number;
+  // Commercial fields
+  client_document_mode_default?: string;
+  commercial_intro_text?: string | null;
+  commercial_payment_terms_text?: string | null;
+  commercial_validity_text?: string | null;
+  commercial_notes_text?: string | null;
+  show_signature_block?: boolean;
   obra?: ObraPartial;
   cliente?: ClientePartial;
   capitulos?: Capitulo[];
@@ -70,7 +77,26 @@ export interface Capitulo {
   ordem: number;
   created_at: string;
   updated_at: string;
+  // Commercial summary fields
+  client_summary_title?: string | null;
+  client_summary_text?: string | null;
+  client_exclusions_text?: string | null;
+  include_in_client_summary?: boolean;
+  client_summary_order?: number | null;
   artigos?: ArtigoOrcamento[];
+}
+
+export interface BudgetDocument {
+  id: string;
+  user_id: string;
+  budget_id: string;
+  document_type: string;
+  view_mode: string;
+  storage_path: string;
+  generated_at: string;
+  sent_to_email?: string | null;
+  sent_at?: string | null;
+  created_at: string;
 }
 
 export interface ArtigoOrcamento {

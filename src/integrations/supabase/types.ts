@@ -1069,6 +1069,53 @@ export type Database = {
           },
         ]
       }
+      budget_documents: {
+        Row: {
+          budget_id: string
+          created_at: string
+          document_type: string
+          generated_at: string
+          id: string
+          sent_at: string | null
+          sent_to_email: string | null
+          storage_path: string
+          user_id: string
+          view_mode: string
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          document_type?: string
+          generated_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          storage_path: string
+          user_id: string
+          view_mode?: string
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          document_type?: string
+          generated_at?: string
+          id?: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          storage_path?: string
+          user_id?: string
+          view_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_documents_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_payment_plans: {
         Row: {
           amount: number
@@ -1478,9 +1525,14 @@ export type Database = {
       }
       capitulos_orcamento: {
         Row: {
+          client_exclusions_text: string | null
+          client_summary_order: number | null
+          client_summary_text: string | null
+          client_summary_title: string | null
           created_at: string
           descricao: string | null
           id: string
+          include_in_client_summary: boolean | null
           numero: number
           orcamento_id: string
           ordem: number
@@ -1489,9 +1541,14 @@ export type Database = {
           valor_total: number | null
         }
         Insert: {
+          client_exclusions_text?: string | null
+          client_summary_order?: number | null
+          client_summary_text?: string | null
+          client_summary_title?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
+          include_in_client_summary?: boolean | null
           numero: number
           orcamento_id: string
           ordem?: number
@@ -1500,9 +1557,14 @@ export type Database = {
           valor_total?: number | null
         }
         Update: {
+          client_exclusions_text?: string | null
+          client_summary_order?: number | null
+          client_summary_text?: string | null
+          client_summary_title?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
+          include_in_client_summary?: boolean | null
           numero?: number
           orcamento_id?: string
           ordem?: number
@@ -3507,8 +3569,13 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          client_document_mode_default: string | null
           cliente_id: string | null
           codigo: string | null
+          commercial_intro_text: string | null
+          commercial_notes_text: string | null
+          commercial_payment_terms_text: string | null
+          commercial_validity_text: string | null
           created_at: string
           custos_indiretos: Json | null
           data_criacao: string
@@ -3518,6 +3585,7 @@ export type Database = {
           numero_revisao: number | null
           obra_id: string | null
           revisao_de: string | null
+          show_signature_block: boolean | null
           status: string
           titulo: string
           updated_at: string
@@ -3526,8 +3594,13 @@ export type Database = {
           valor_total: number | null
         }
         Insert: {
+          client_document_mode_default?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          commercial_intro_text?: string | null
+          commercial_notes_text?: string | null
+          commercial_payment_terms_text?: string | null
+          commercial_validity_text?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -3537,6 +3610,7 @@ export type Database = {
           numero_revisao?: number | null
           obra_id?: string | null
           revisao_de?: string | null
+          show_signature_block?: boolean | null
           status?: string
           titulo: string
           updated_at?: string
@@ -3545,8 +3619,13 @@ export type Database = {
           valor_total?: number | null
         }
         Update: {
+          client_document_mode_default?: string | null
           cliente_id?: string | null
           codigo?: string | null
+          commercial_intro_text?: string | null
+          commercial_notes_text?: string | null
+          commercial_payment_terms_text?: string | null
+          commercial_validity_text?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -3556,6 +3635,7 @@ export type Database = {
           numero_revisao?: number | null
           obra_id?: string | null
           revisao_de?: string | null
+          show_signature_block?: boolean | null
           status?: string
           titulo?: string
           updated_at?: string

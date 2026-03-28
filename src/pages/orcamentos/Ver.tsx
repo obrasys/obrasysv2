@@ -13,11 +13,16 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
-  Zap, HardHat, MoreHorizontal,
+  Zap, HardHat, MoreHorizontal, FileStack,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -25,6 +30,8 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
+import { generateComercialPdf } from '@/lib/orcamento-pdf-comercial';
+import { useBudgetDocuments } from '@/hooks/useBudgetDocuments';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
@@ -40,9 +47,12 @@ export default function VerOrcamentoPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [adjudicarOpen, setAdjudicarOpen] = useState(false);
+  const [pdfFormatOpen, setPdfFormatOpen] = useState(false);
+  const [pdfFormato, setPdfFormato] = useState<'tecnico' | 'comercial'>('tecnico');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
+  const { saveDocument } = useBudgetDocuments(id);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
@@ -103,18 +113,33 @@ export default function VerOrcamentoPage() {
   const handleGeneratePDF = async () => {
     toast({ title: 'A gerar PDF...', description: 'Por favor aguarde' });
     try {
-      const blob = await generateOrcamentoPdf({
-        orcamento, profile: profile as any,
-        margemDecimal, taxaIVA, valorBase, valorIVA, valorFinal,
-        custosIndiretosTotal, subtotalArtigos, notaLegal, regimeNome,
-      });
+      let blob: Blob;
+      if (pdfFormato === 'comercial') {
+        blob = await generateComercialPdf({
+          orcamento, profile: profile as any,
+          valorFinal, taxaIVA, valorBase, valorIVA,
+        });
+      } else {
+        blob = await generateOrcamentoPdf({
+          orcamento, profile: profile as any,
+          margemDecimal, taxaIVA, valorBase, valorIVA, valorFinal,
+          custosIndiretosTotal, subtotalArtigos, notaLegal, regimeNome,
+        });
+      }
+
+      // Save snapshot
+      try {
+        await saveDocument.mutateAsync({ budgetId: orcamento.id, viewMode: pdfFormato, blob });
+      } catch { /* non-blocking */ }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `orcamento-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+      a.download = `orcamento-${pdfFormato}-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: 'PDF gerado', description: 'O ficheiro foi descarregado' });
+      toast({ title: 'PDF gerado', description: `Formato ${pdfFormato === 'tecnico' ? 'técnico' : 'comercial'} descarregado` });
+      setPdfFormatOpen(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({ title: 'Erro', description: 'Não foi possível gerar o PDF', variant: 'destructive' });
@@ -158,7 +183,7 @@ export default function VerOrcamentoPage() {
                 <GitBranch className="w-3.5 h-3.5 mr-2" /> Criar Revisão
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleGeneratePDF}>
+              <DropdownMenuItem onClick={() => setPdfFormatOpen(true)}>
                 <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.print()}>
@@ -185,6 +210,46 @@ export default function VerOrcamentoPage() {
         orcamentoId={orcamento.id} orcamentoTitulo={orcamento.titulo}
         clienteEmail={orcamento.cliente?.email} clienteNome={orcamento.cliente?.nome}
       />
+      {/* PDF Format Selector Dialog */}
+      <Dialog open={pdfFormatOpen} onOpenChange={setPdfFormatOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Gerar PDF
+            </DialogTitle>
+            <DialogDescription>Escolha o formato do documento.</DialogDescription>
+          </DialogHeader>
+          <RadioGroup value={pdfFormato} onValueChange={(v) => setPdfFormato(v as 'tecnico' | 'comercial')} className="grid grid-cols-1 gap-3 py-2">
+            <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'tecnico' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
+              <RadioGroupItem value="tecnico" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileStack className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Completo Técnico</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Capítulos, artigos, quantidades, preços unitários e subtotais</p>
+              </div>
+            </label>
+            <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'comercial' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
+              <RadioGroupItem value="comercial" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Comercial Resumido</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Proposta narrativa com resumo por capítulo, sem detalhe técnico</p>
+              </div>
+            </label>
+          </RadioGroup>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPdfFormatOpen(false)}>Cancelar</Button>
+            <Button onClick={handleGeneratePDF}>
+              <FileText className="mr-2 h-4 w-4" /> Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {canAdjudicar && (
         <AdjudicacaoWizard
           open={adjudicarOpen}
@@ -439,7 +504,7 @@ export default function VerOrcamentoPage() {
                       <Button className="w-full" size="sm" onClick={() => navigate(`/orcamentos/${id}/editar`)}>
                         <Edit className="w-3.5 h-3.5 mr-2" /> Editar Orçamento
                       </Button>
-                      <Button variant="outline" className="w-full" size="sm" onClick={handleGeneratePDF}>
+                      <Button variant="outline" className="w-full" size="sm" onClick={() => setPdfFormatOpen(true)}>
                         <FileText className="w-3.5 h-3.5 mr-2" /> Gerar PDF
                       </Button>
                       <Button variant="outline" className="w-full" size="sm" onClick={() => setEnviarDialogOpen(true)}>
