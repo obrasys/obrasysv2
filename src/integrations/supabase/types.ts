@@ -5878,11 +5878,13 @@ export type Database = {
           employee_code: string | null
           employment_type: string | null
           end_date: string | null
+          equipa_membro_id: string | null
           full_name: string
           id: string
           overtime_hourly_cost: number | null
           role: string | null
           start_date: string | null
+          subempreiteiro_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -5894,11 +5896,13 @@ export type Database = {
           employee_code?: string | null
           employment_type?: string | null
           end_date?: string | null
+          equipa_membro_id?: string | null
           full_name: string
           id?: string
           overtime_hourly_cost?: number | null
           role?: string | null
           start_date?: string | null
+          subempreiteiro_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -5910,15 +5914,32 @@ export type Database = {
           employee_code?: string | null
           employment_type?: string | null
           end_date?: string | null
+          equipa_membro_id?: string | null
           full_name?: string
           id?: string
           overtime_hourly_cost?: number | null
           role?: string | null
           start_date?: string | null
+          subempreiteiro_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workers_equipa_membro_id_fkey"
+            columns: ["equipa_membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workers_subempreiteiro_id_fkey"
+            columns: ["subempreiteiro_id"]
+            isOneToOne: false
+            referencedRelation: "subempreiteiros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
