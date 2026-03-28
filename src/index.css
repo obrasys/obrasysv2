@@ -52,13 +52,13 @@
     --shadow-hero: 0 25px 50px -12px hsl(199 100% 15% / 0.25);
 
     /* Sidebar - Light theme */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 10% 40%;
-    --sidebar-primary: 199 100% 31%;
-    --sidebar-primary-foreground: 199 100% 31%;
-    --sidebar-accent: 220 15% 96%;
-    --sidebar-accent-foreground: 220 10% 30%;
-    --sidebar-border: 220 15% 92%;
+    --sidebar-background: 210 52% 71%;
+    --sidebar-foreground: 210 60% 15%;
+    --sidebar-primary: 210 80% 20%;
+    --sidebar-primary-foreground: 210 80% 20%;
+    --sidebar-accent: 210 52% 63%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 52% 63%;
     --sidebar-ring: 199 100% 50%;
   }
 
