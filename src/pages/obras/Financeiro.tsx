@@ -478,6 +478,22 @@ export default function ObraFinanceiroPage() {
           <TabsContent value="mao-de-obra" className="mt-4">
             <ObraLaborCostsTab obraId={id!} />
           </TabsContent>
+
+          <TabsContent value="a-vencer" className="mt-4">
+            <ReceivableAlertsCard obraId={id} />
+            {contasAVencer.length > 0 && (
+              <div className="mt-4">
+                <ContasList
+                  contas={contasAVencer}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onTogglePago={handleTogglePago}
+                  onUploadComprovante={handleUploadComprovante}
+                  emptyMessage="Nenhuma conta a vencer em breve"
+                />
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* Form Modal - obra_id já preenchido */}
