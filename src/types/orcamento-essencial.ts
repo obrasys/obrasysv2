@@ -66,11 +66,26 @@ export const AREAS_LSF: AreaConfig[] = [
   { key: 'isolamento_termico', label: 'Isolamento Térmico' },
 ];
 
+export const AREAS_ICF: AreaConfig[] = [
+  { key: 'preparacao_terras', label: '1 - Preparação e Mov. Terras' },
+  { key: 'fundacoes_laje', label: '2 - Fundações e Laje' },
+  { key: 'paredes_icf', label: '3 - Paredes ICF' },
+  { key: 'laje_cobertura', label: '4 - Laje / Cobertura' },
+  { key: 'impermeabilizacao_icf', label: '5 - Impermeabilização' },
+  { key: 'instalacoes_aguas', label: '6 - Instalações de águas' },
+  { key: 'instalacoes_eletricas', label: '7 - Instalações elétricas' },
+  { key: 'revestimentos_interiores', label: '8 - Revestimentos interiores' },
+  { key: 'revestimentos_exteriores', label: '9 - Revestimentos exteriores' },
+  { key: 'caixilharias_serralharias', label: '10 - Caixilharias e serralharias' },
+  { key: 'arranjos_exteriores', label: '11 - Arranjos exteriores' },
+];
+
 export function getAreasForType(type: BudgetType): AreaConfig[] {
   switch (type) {
     case 'remodelacao': return AREAS_REMODELACAO;
     case 'construcao_nova': return AREAS_CONSTRUCAO_NOVA;
     case 'lsf': return AREAS_LSF;
+    case 'icf': return AREAS_ICF;
   }
 }
 
