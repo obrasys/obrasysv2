@@ -94,6 +94,23 @@ export function Sidebar() {
         )}
       </nav>
 
+      {/* Portal do Cliente link for multi-role users */}
+      {showPortalLink && (
+        <div className="px-3 pt-2">
+          <button
+            onClick={() => navigate('/portal')}
+            className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+              isActive('/portal')
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+            }`}
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            <span>Portal do Cliente</span>
+          </button>
+        </div>
+      )}
+
       {/* Sign out */}
       <div className="px-3 pb-4 pt-2">
         <button
