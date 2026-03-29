@@ -111,6 +111,19 @@ export function useFinanceiro(obraId?: string) {
         return sum;
       }, 0);
 
+      // Buscar custos reais do Livro de Ponto (project_labor_cost_entries)
+      let laborQuery = (supabase as any)
+        .from('project_labor_cost_entries')
+        .select('amount')
+        .neq('status', 'reversed');
+
+      if (obraId) {
+        laborQuery = laborQuery.eq('obra_id', obraId);
+      }
+
+      const { data: laborEntries } = await laborQuery;
+      const custosLivroPonto = (laborEntries || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+
       const contasPagar = todasContas?.filter(c => c.tipo === 'pagar') || [];
       const contasReceber = todasContas?.filter(c => c.tipo === 'receber') || [];
 
@@ -133,20 +146,21 @@ export function useFinanceiro(obraId?: string) {
       }) || [];
 
       const maoDeObraContas = contasPagar.filter(c => c.origem === 'mao_de_obra').reduce((sum, c) => sum + Number(c.valor), 0);
+      const totalMaoDeObra = maoDeObraContas + custosPessoal + custosLivroPonto;
 
       return {
-        totalPagar: totalPagar + custosPessoal,
+        totalPagar: totalPagar + custosPessoal + custosLivroPonto,
         totalReceber,
         pagoPagar,
         pagoReceber,
-        saldo: totalReceber - totalPagar - custosPessoal,
+        saldo: totalReceber - totalPagar - custosPessoal - custosLivroPonto,
         saldoRealizado: pagoReceber - pagoPagar,
         vencidas: vencidas.length,
         valorVencido: vencidas.reduce((sum, c) => sum + Number(c.valor), 0),
         aVencer7Dias: aVencer7Dias.length,
         valorAVencer: aVencer7Dias.reduce((sum, c) => sum + Number(c.valor), 0),
         contasPorOrigem: {
-          mao_de_obra: maoDeObraContas + custosPessoal,
+          mao_de_obra: totalMaoDeObra,
           material: contasPagar.filter(c => c.origem === 'material').reduce((sum, c) => sum + Number(c.valor), 0),
           outros: contasPagar.filter(c => c.origem === 'outros').reduce((sum, c) => sum + Number(c.valor), 0),
         },
