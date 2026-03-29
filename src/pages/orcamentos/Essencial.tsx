@@ -259,12 +259,30 @@ export default function EssencialPage() {
     return { orcamento, valorBase: subtotalBeforeVat, valorIVA: vatValue, valorFinal: totalFinal };
   };
 
+  // Validate required client fields
+  const validateClientFields = (): boolean => {
+    if (!clientInfo.clientName.trim()) {
+      toast({ title: 'Campo obrigatório', description: 'Preencha o nome do cliente.', variant: 'destructive' });
+      return false;
+    }
+    if (!clientInfo.workLocation.trim()) {
+      toast({ title: 'Campo obrigatório', description: 'Preencha o local da obra.', variant: 'destructive' });
+      return false;
+    }
+    if (!clientInfo.conditions.trim()) {
+      toast({ title: 'Campo obrigatório', description: 'Preencha as condições de pagamento.', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
+
   // Preview PDF
   const handlePreview = async (format: 'tecnico' | 'comercial') => {
     if (items.length === 0) {
       toast({ title: 'Atenção', description: 'Adicione pelo menos um item.', variant: 'destructive' });
       return;
     }
+    if (!validateClientFields()) return;
     setIsPreviewLoading(true);
     try {
       const { orcamento, valorBase, valorIVA, valorFinal } = buildMockOrcamento();
