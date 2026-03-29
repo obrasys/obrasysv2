@@ -31,7 +31,7 @@ export function AdjudicacaoWizard({ open, onOpenChange, orcamento, valorFinal }:
 
   const [formData, setFormData] = useState<AdjudicacaoFormData>({
     awarded_at: new Date().toISOString().split('T')[0],
-    awarded_total_amount: valorFinal,
+    awarded_total_amount: Math.round(valorFinal * 100) / 100,
     deposit_amount: 0,
     deposit_percent: 0,
     notes: '',
