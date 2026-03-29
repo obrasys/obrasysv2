@@ -12,6 +12,54 @@ export interface AxiaActionLog {
   after_snapshot: any;
 }
 
+export interface AxiaSugestao {
+  label: string;
+  detail: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+}
+
+export interface AxiaAlertaOrcamento {
+  label: string;
+  detail: string;
+  severity: 'critical' | 'warn' | 'info';
+}
+
+export interface AxiaAlertaPrazo {
+  obra: string;
+  dias: number;
+  tipo: 'atraso' | 'adiantado';
+  detail?: string;
+}
+
+export interface AxiaInconsistencia {
+  desc: string;
+  tipo: string;
+}
+
+export interface AxiaPrevisaoDesvio {
+  obra: string;
+  desvio_percent: number;
+  valor: number;
+  detail?: string;
+}
+
+export interface AxiaInsightObra {
+  obra: string;
+  insight: string;
+  tipo: 'produtividade' | 'custo' | 'positivo' | 'risco' | 'prazo';
+}
+
+export interface AxiaAnalysis {
+  sugestoes: AxiaSugestao[];
+  alertas_orcamento: AxiaAlertaOrcamento[];
+  alertas_prazo: AxiaAlertaPrazo[];
+  inconsistencias: AxiaInconsistencia[];
+  previsao_desvios: AxiaPrevisaoDesvio[];
+  insights_obra: AxiaInsightObra[];
+  resumo_executivo: string;
+}
+
 export interface AxiaDashboardData {
   score: number;
   totalInsights: number;
@@ -28,27 +76,23 @@ export interface AxiaDashboardData {
 
 function computeScore(data: { criticalCount: number; warnCount: number; missingCount: number; outlierCount: number; totalInsights: number; openInsights: number }): number {
   if (data.totalInsights === 0) return 100;
-  
   const resolvedRatio = data.totalInsights > 0 ? (data.totalInsights - data.openInsights) / data.totalInsights : 1;
   const criticalPenalty = Math.min(data.criticalCount * 15, 40);
   const warnPenalty = Math.min(data.warnCount * 8, 30);
   const missingPenalty = Math.min(data.missingCount * 5, 30);
-
   const score = Math.round(100 * resolvedRatio - criticalPenalty - warnPenalty - missingPenalty);
   return Math.max(0, Math.min(100, score));
 }
 
 export function useAxiaDashboard() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const dashboardQuery = useQuery({
     queryKey: ['axia-dashboard', user?.id],
     queryFn: async (): Promise<AxiaDashboardData> => {
-      // Fetch all insights
       const { data: insights, error: insErr } = await supabase
         .from('ai_budget_insights')
         .select('id, type, severity, status');
-
       if (insErr) throw insErr;
 
       const all = insights || [];
@@ -61,13 +105,11 @@ export function useAxiaDashboard() {
       const outlier = open.filter(i => i.type === 'outlier_prices');
       const margin = open.filter(i => i.type === 'low_margin');
 
-      // Fetch action history
       const { data: actions, error: actErr } = await supabase
         .from('ai_budget_actions_log')
         .select('id, action, budget_id, insight_id, created_at, before_snapshot, after_snapshot')
         .order('created_at', { ascending: false })
         .limit(20);
-
       if (actErr) throw actErr;
 
       const counts = {
@@ -96,8 +138,30 @@ export function useAxiaDashboard() {
     enabled: !!user?.id,
   });
 
+  // AI analysis query - separate so it doesn't block KPIs
+  const analysisQuery = useQuery({
+    queryKey: ['axia-analysis', user?.id],
+    queryFn: async (): Promise<AxiaAnalysis> => {
+      const { data, error } = await supabase.functions.invoke('axia-analysis', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      return data as AxiaAnalysis;
+    },
+    enabled: !!user?.id && !!session?.access_token,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: false,
+  });
+
   return {
     data: dashboardQuery.data,
     isLoading: dashboardQuery.isLoading,
+    analysis: analysisQuery.data,
+    analysisLoading: analysisQuery.isLoading,
+    analysisError: analysisQuery.error,
+    refetchAnalysis: analysisQuery.refetch,
   };
 }

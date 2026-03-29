@@ -51,22 +51,22 @@ serve(async (req) => {
     }
 
     // ── Gather operational context ──────────────────────────
-    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes] =
+    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes, contasRes, equipaRes] =
       await Promise.all([
         supabase
           .from("obras")
-          .select("id, nome, cliente, status, progresso, valor_previsto, data_inicio, data_fim, arquivada")
+          .select("id, nome, cliente, status, progresso, valor_previsto, data_inicio, data_fim, orcamento_total, custo_atual, arquivada")
           .eq("arquivada", false)
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
           .from("orcamentos")
-          .select("id, titulo, status, valor_total, margem_lucro, created_at")
+          .select("id, titulo, codigo, status, valor_total, margem_lucro, created_at, updated_at, cliente_nome")
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
           .from("rdos")
-          .select("id, obra_id, data, status, clima, created_at")
+          .select("id, obra_id, data, status, clima, mao_obra_total, created_at")
           .order("created_at", { ascending: false })
           .limit(15),
         supabase
@@ -81,7 +81,7 @@ serve(async (req) => {
           .limit(15),
         supabase
           .from("autos_medicao")
-          .select("id, obra_id, numero_auto, estado, valor_medido_atual, percentagem_global")
+          .select("id, obra_id, numero_auto, estado, valor_medido_atual, valor_previsto, percentagem_global")
           .order("created_at", { ascending: false })
           .limit(10),
         supabase
@@ -89,6 +89,16 @@ serve(async (req) => {
           .select("id, obra_id, name, task_type, wbs_code, status_flag, planned_start, planned_end, forecast_end, actual_start, actual_end, planned_progress_percent, actual_progress_percent, delay_classification, criticality, weight_financial")
           .in("status_flag", ["in_progress", "started", "suspended", "not_started"])
           .order("updated_at", { ascending: false })
+          .limit(30),
+        supabase
+          .from("contas_financeiras")
+          .select("id, obra_id, descricao, tipo, valor, data, categoria")
+          .order("data", { ascending: false })
+          .limit(80),
+        supabase
+          .from("equipa_membros")
+          .select("id, nome, cargo, ativo, obra_atual_id")
+          .eq("ativo", true)
           .limit(30),
       ]);
 
@@ -99,6 +109,8 @@ serve(async (req) => {
     const insights = insightsRes.data || [];
     const autos = autosMedicaoRes.data || [];
     const scheduleTasks = scheduleTasksRes.data || [];
+    const contas = contasRes.data || [];
+    const equipa = equipaRes.data || [];
 
     // ── Build context summary ───────────────────────────────
     const obrasEmCurso = obras.filter((o: any) => o.status === "em_curso");
@@ -114,48 +126,82 @@ serve(async (req) => {
       return new Date(t.data_limite) < new Date() && t.estado !== "concluida";
     });
 
+    // Financial aggregation per obra
+    const obraFinancials: Record<string, { receitas: number; despesas: number }> = {};
+    for (const c of contas) {
+      const oid = (c as any).obra_id;
+      if (!oid) continue;
+      if (!obraFinancials[oid]) obraFinancials[oid] = { receitas: 0, despesas: 0 };
+      const val = (c as any).valor || 0;
+      if ((c as any).tipo === "receita") obraFinancials[oid].receitas += val;
+      else obraFinancials[oid].despesas += val;
+    }
+
     const contextBlock = `
-## DADOS OPERACIONAIS DO UTILIZADOR (atualizados agora)
+## DADOS OPERACIONAIS REAIS (${new Date().toISOString()})
 
 ### Obras (${obras.length} total, ${obrasEmCurso.length} em curso, ${obrasConcluidas.length} concluídas)
 Progresso médio: ${progressoMedio}%
 Valor total previsto: €${valorTotalPrevisto.toLocaleString("pt-PT")}
-${obras.map((o: any) => `- "${o.nome}" | Cliente: ${o.cliente || "N/D"} | Status: ${o.status} | Progresso: ${o.progresso || 0}% | Valor: €${(o.valor_previsto || 0).toLocaleString("pt-PT")} | Início: ${o.data_inicio || "N/D"} | Fim previsto: ${o.data_fim || "N/D"}`).join("\n")}
+${obras.map((o: any) => {
+  const fin = obraFinancials[o.id] || { receitas: 0, despesas: 0 };
+  return `- "${o.nome}" | Cliente: ${o.cliente || "N/D"} | Status: ${o.status} | Progresso: ${o.progresso || 0}% | Valor previsto: €${(o.valor_previsto || 0).toLocaleString("pt-PT")} | Despesas reais: €${fin.despesas.toLocaleString("pt-PT")} | Receitas: €${fin.receitas.toLocaleString("pt-PT")} | Início: ${o.data_inicio || "N/D"} | Fim: ${o.data_fim || "N/D"}`;
+}).join("\n")}
 
 ### Orçamentos (${orcamentos.length} registados)
-${orcamentos.map((o: any) => `- "${o.titulo}" | Status: ${o.status} | Valor: €${(o.valor_total || 0).toLocaleString("pt-PT")} | Margem: ${o.margem_lucro || 0}%`).join("\n")}
+${orcamentos.map((o: any) => `- ${o.codigo || "S/C"} "${o.titulo}" | Cliente: ${o.cliente_nome || "N/D"} | Status: ${o.status} | Valor: €${(o.valor_total || 0).toLocaleString("pt-PT")} | Margem: ${o.margem_lucro || 0}%`).join("\n")}
 
 ### Tarefas (${tarefas.length} total, ${tarefasPendentes.length} pendentes, ${tarefasAtrasadas.length} atrasadas)
 ${tarefas.slice(0, 10).map((t: any) => `- "${t.titulo}" | Estado: ${t.estado} | Prioridade: ${t.prioridade} | Limite: ${t.data_limite || "N/D"}`).join("\n")}
 
 ### RDOs (${rdos.length} registados)
-${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"}`).join("\n")}
+${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"} | MO: ${(r as any).mao_obra_total || 0}h`).join("\n")}
 
 ### Alertas Axia Abertos (${insights.length})
 ${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\n")}
 
 ### Autos de Medição (${autos.length})
-${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Valor medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
+${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Previsto: €${((a as any).valor_previsto || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
 
-### Cronograma / Tarefas do Planeamento (${scheduleTasks.length} ativas)
+### Equipa Ativa (${equipa.length} membros)
+${equipa.slice(0, 15).map((e: any) => `- ${e.nome} | Cargo: ${e.cargo || "N/D"} | ${e.obra_atual_id ? "Alocado a obra" : "Disponível"}`).join("\n")}
+
+### Cronograma (${scheduleTasks.length} tarefas ativas)
 ${scheduleTasks.slice(0, 15).map((t: any) => {
   const delay = t.planned_end && t.forecast_end ? Math.max(0, Math.ceil((new Date(t.forecast_end).getTime() - new Date(t.planned_end).getTime()) / (1000*60*60*24))) : 0;
-  return `- [${t.wbs_code || '-'}] "${t.name}" | Tipo: ${t.task_type} | Estado: ${t.status_flag} | Planeado: ${t.planned_progress_percent}% | Real: ${t.actual_progress_percent}% | Atraso: ${delay}d | Classificação: ${t.delay_classification || 'N/A'} | Criticidade: ${t.criticality}`;
+  return `- [${t.wbs_code || '-'}] "${t.name}" | Estado: ${t.status_flag} | Real: ${t.actual_progress_percent}% vs Plan: ${t.planned_progress_percent}% | Atraso: ${delay}d | Criticidade: ${t.criticality}`;
 }).join("\n")}
 `.trim();
 
-    const systemPrompt = `Tu és a Axia, a assistente de inteligência operacional do Obra Sys — uma plataforma de gestão de obras e construção civil em Portugal.
+    const systemPrompt = `Tu és a **Axia™**, o motor de inteligência operacional do ObraSys — plataforma de gestão de obras e construção civil em Portugal.
 
-REGRAS:
-- Responde SEMPRE em Português de Portugal.
-- Sê concisa, profissional e direta.
-- Baseia TODAS as respostas nos dados reais fornecidos abaixo. Nunca inventes dados.
-- Se não tiveres dados suficientes para responder, diz claramente o que falta.
-- Usa formatação markdown: negrito, listas, tabelas quando apropriado.
-- Valores monetários em formato €X.XXX,XX.
-- Quando relevante, sugere ações concretas que o utilizador pode tomar.
-- Não menciones que estás a ler dados de contexto; responde naturalmente como se soubesses.
+## IDENTIDADE
+- Nome: Axia (pronuncia-se "Áxia")
+- Personalidade: Analítica, assertiva, orientada a resultados. Usa linguagem técnica de construção civil quando apropriado.
+- Nunca digas "não tenho acesso" ou "sou uma IA". Responde como um diretor de operações experiente que conhece todos os dados.
 
+## REGRAS ABSOLUTAS
+1. Responde SEMPRE em **Português de Portugal** (nunca brasileiro).
+2. Baseia TODAS as respostas nos dados reais abaixo. **NUNCA inventes** nomes de obras, valores, datas ou situações.
+3. Se não existirem dados para responder, diz claramente: "Com base nos dados atuais, não encontro informação sobre [X]. Pode ser necessário registar mais dados no sistema."
+4. Valores monetários: **€X.XXX,XX** (formato PT).
+5. Percentagens com 1 casa decimal.
+6. Datas em formato DD/MM/AAAA.
+
+## FORMATAÇÃO
+- Usa **markdown rico**: negrito, listas, tabelas, separadores.
+- Para comparações financeiras, usa tabelas markdown.
+- Para listas de riscos, usa emojis de severidade: 🔴 Crítico, 🟡 Aviso, 🟢 OK.
+- Respostas curtas (2-4 parágrafos) exceto quando pedem relatórios ou análises detalhadas.
+
+## ANÁLISE AVANÇADA
+- Quando perguntarem sobre "risco", considera: desvios de prazo, margem baixa (<15%), tarefas atrasadas, e autos de medição pendentes.
+- Quando perguntarem sobre "produtividade", cruza dados de RDOs, progresso de obras e equipa alocada.
+- Quando perguntarem sobre "financeiro", cruza valor previsto vs despesas reais, margens de orçamento e planos de pagamento.
+- Sempre que identificares um problema, sugere **ações concretas** que o utilizador pode executar no ObraSys.
+- Prioriza informação acionável sobre informação descritiva.
+
+## CONTEXTO OPERACIONAL
 ${contextBlock}`;
 
     // ── Build messages array ────────────────────────────────

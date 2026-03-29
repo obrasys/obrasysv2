@@ -6,14 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Loader2, AlertTriangle, TrendingDown, PackageMinus, CheckCircle, XCircle,
   Clock, Brain, Zap, MessageSquare, ShieldAlert, CalendarClock, Search as SearchIcon,
   Lightbulb, Eye, BarChart3, ArrowUpRight, ArrowDownRight, Activity,
   HardHat, Send, Sparkles, ChevronRight, FileWarning, Target, User, Bot, Eraser,
+  RefreshCw,
 } from 'lucide-react';
 import { AxiaIcon } from '@/components/axia/AxiaIcon';
 import { useAxiaDashboard } from '@/hooks/useAxiaDashboard';
+import type { AxiaSugestao, AxiaAlertaOrcamento, AxiaAlertaPrazo, AxiaInconsistencia, AxiaPrevisaoDesvio, AxiaInsightObra } from '@/hooks/useAxiaDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -120,20 +123,30 @@ function Section({ icon: Icon, title, description, children, accentClass = 'bg-p
   );
 }
 
-/* ── Insight item row ──────────────────────────────────── */
-function InsightRow({ icon: Icon, iconClass, label, value, sub }: {
-  icon: React.ElementType; iconClass: string; label: string; value: string | number; sub?: string;
-}) {
+/* ── Loading skeleton for sections ─────────────────────── */
+function SectionSkeleton() {
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b last:border-0 border-border/50">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${iconClass}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{label}</p>
-        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-      </div>
-      <Badge variant="secondary" className="font-semibold text-xs shrink-0">{value}</Badge>
+    <div className="space-y-3">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="flex items-center gap-3 py-2">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="h-5 w-14 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Empty state ───────────────────────────────────────── */
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="text-center py-6">
+      <CheckCircle className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }
@@ -148,41 +161,42 @@ const QUICK_QUESTIONS = [
   'Há itens em falta nos orçamentos?',
 ];
 
-/* ── Simulated data for demo sections ──────────────────── */
-const MOCK_ALERTS_PRAZO = [
-  { obra: 'Remodelação T3 Cascais', dias: 5, tipo: 'atraso' as const },
-  { obra: 'Reabilitação Almada', dias: 12, tipo: 'atraso' as const },
-  { obra: 'Instalação Solar Oeiras', dias: -3, tipo: 'adiantado' as const },
-];
+/* ── Priority helpers ──────────────────────────────────── */
+function priorityConfig(p: string) {
+  switch (p) {
+    case 'critical': return { label: 'Crítico', class: 'bg-red-500/10 text-red-600', icon: AlertTriangle, iconClass: 'bg-red-500/10 text-red-500' };
+    case 'high': return { label: 'Alto', class: 'bg-amber-500/10 text-amber-600', icon: TrendingDown, iconClass: 'bg-amber-500/10 text-amber-600' };
+    case 'medium': return { label: 'Médio', class: 'bg-primary/10 text-primary', icon: Lightbulb, iconClass: 'bg-primary/10 text-primary' };
+    default: return { label: 'Baixo', class: 'bg-emerald-500/10 text-emerald-600', icon: Sparkles, iconClass: 'bg-emerald-500/10 text-emerald-600' };
+  }
+}
 
-const MOCK_INCONSISTENCIAS = [
-  { desc: 'Artigo "Tinta Vinílica" com preço 40% acima da média', tipo: 'preço' },
-  { desc: 'Quantidade de betão C25/30 duplicada no cap. 3', tipo: 'duplicado' },
-  { desc: 'Unidade "ml" usada onde deveria ser "m²"', tipo: 'unidade' },
-];
+function severityConfig(s: string) {
+  switch (s) {
+    case 'critical': return { label: 'Crítico', icon: AlertTriangle, iconClass: 'bg-red-500/10 text-red-500' };
+    case 'warn': return { label: 'Aviso', icon: TrendingDown, iconClass: 'bg-amber-500/10 text-amber-600' };
+    default: return { label: 'Info', icon: Eye, iconClass: 'bg-primary/10 text-primary' };
+  }
+}
 
-const MOCK_PREVISOES = [
-  { obra: 'T3 Cascais', desvioPercent: 12, valor: 4800 },
-  { obra: 'Loft Chiado', desvioPercent: -3, valor: -1200 },
-  { obra: 'Moradia Sintra', desvioPercent: 8, valor: 6400 },
-];
-
-const MOCK_INSIGHTS_OBRA = [
-  { obra: 'T3 Cascais', insight: 'Produtividade 15% abaixo da média nas últimas 2 semanas', tipo: 'produtividade' },
-  { obra: 'Almada', insight: 'Custo de mão-de-obra excedeu previsão em 8%', tipo: 'custo' },
-  { obra: 'Oeiras', insight: 'Obra com maior progresso do mês (92%)', tipo: 'positivo' },
-];
+function insightTipoConfig(tipo: string) {
+  switch (tipo) {
+    case 'positivo': return { icon: CheckCircle, iconClass: 'bg-emerald-500/10 text-emerald-500' };
+    case 'custo': return { icon: AlertTriangle, iconClass: 'bg-amber-500/10 text-amber-500' };
+    case 'risco': return { icon: ShieldAlert, iconClass: 'bg-red-500/10 text-red-500' };
+    case 'prazo': return { icon: CalendarClock, iconClass: 'bg-orange-500/10 text-orange-500' };
+    default: return { icon: Target, iconClass: 'bg-primary/10 text-primary' };
+  }
+}
 
 /* ── Main Page ─────────────────────────────────────────── */
 export default function AxiaPage() {
-  const { data, isLoading } = useAxiaDashboard();
+  const { data, isLoading, analysis, analysisLoading, refetchAnalysis } = useAxiaDashboard();
   const { session } = useAuth();
   const { toast } = useToast();
   const [question, setQuestion] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -250,6 +264,8 @@ export default function AxiaPage() {
     actionHistory: [],
   };
 
+  const a = analysis;
+
   return (
     <AppLayout
       title="Axia IA"
@@ -272,10 +288,14 @@ export default function AxiaPage() {
                     <p className="text-xs text-muted-foreground">Powered by Axia™</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground max-w-lg">
-                  Monitorização inteligente de obras, orçamentos e prazos. A Axia analisa dados em tempo real, 
-                  identifica riscos e sugere ações para proteger a sua margem e eficiência operacional.
-                </p>
+                {a?.resumo_executivo ? (
+                  <p className="text-sm text-muted-foreground max-w-lg">{a.resumo_executivo}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground max-w-lg">
+                    Monitorização inteligente de obras, orçamentos e prazos. A Axia analisa dados em tempo real, 
+                    identifica riscos e sugere ações para proteger a sua margem e eficiência operacional.
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                   <Badge variant="outline" className="text-xs border-primary/30 text-primary">
                     <Activity className="w-3 h-3 mr-1" /> {d.totalInsights} insights gerados
@@ -286,6 +306,9 @@ export default function AxiaPage() {
                   <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-600">
                     <AlertTriangle className="w-3 h-3 mr-1" /> {d.openInsights} pendentes
                   </Badge>
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground" onClick={() => refetchAnalysis()} disabled={analysisLoading}>
+                    <RefreshCw className={`w-3 h-3 mr-1 ${analysisLoading ? 'animate-spin' : ''}`} /> Atualizar análise
+                  </Button>
                 </div>
               </div>
               <ScoreRing score={d.score} />
@@ -315,54 +338,50 @@ export default function AxiaPage() {
           ))}
         </div>
 
-        {/* ═══ 1. PERGUNTAS RÁPIDAS (OPERACIONAL) ═══ */}
+        {/* ═══ 1. PERGUNTAS RÁPIDAS (CHAT) ═══ */}
         <Section icon={MessageSquare} title="Perguntas Rápidas" description="Faça perguntas sobre os seus dados operacionais"
           accentClass="bg-primary/10 text-primary">
           <div className="space-y-3">
-            {/* Chat messages */}
             {chatMessages.length > 0 && (
               <div ref={chatContainerRef} className="max-h-[360px] overflow-y-auto pr-2 space-y-3">
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      {msg.role === 'assistant' && (
-                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Bot className="w-4 h-4 text-primary" />
-                        </div>
-                      )}
-                      <div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}>
-                        {msg.role === 'assistant' ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1.5 [&>ul]:mt-1 [&>ol]:mt-1">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                          </div>
-                        ) : (
-                          <p>{msg.content}</p>
-                        )}
-                      </div>
-                      {msg.role === 'user' && (
-                        <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {isStreaming && chatMessages[chatMessages.length - 1]?.role === 'user' && (
-                    <div className="flex gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                         <Bot className="w-4 h-4 text-primary" />
                       </div>
-                      <div className="bg-muted rounded-xl px-3.5 py-2.5">
-                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                      </div>
+                    )}
+                    <div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm ${
+                      msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      {msg.role === 'assistant' ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1.5 [&>ul]:mt-1 [&>ol]:mt-1">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
                     </div>
-                  )}
+                    {msg.role === 'user' && (
+                      <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {isStreaming && chatMessages[chatMessages.length - 1]?.role === 'user' && (
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Bot className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="bg-muted rounded-xl px-3.5 py-2.5">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Input */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -386,7 +405,6 @@ export default function AxiaPage() {
               </Button>
             </div>
 
-            {/* Quick question chips — hide when chat has messages */}
             {chatMessages.length === 0 && (
               <div className="flex flex-wrap gap-2">
                 {QUICK_QUESTIONS.map((q, i) => (
@@ -405,34 +423,60 @@ export default function AxiaPage() {
 
         {/* ═══ 2 + 3. SUGESTÕES + ALERTAS ORÇAMENTO ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Section icon={Sparkles} title="Sugestões Automáticas" description="Ações sugeridas pela IA para otimizar operações"
+          <Section icon={Sparkles} title="Sugestões Automáticas" description="Ações sugeridas pela IA com base nos seus dados reais"
             accentClass="bg-amber-500/10 text-amber-600">
-            <div className="space-y-0.5">
-              <InsightRow icon={TrendingDown} iconClass="bg-amber-500/10 text-amber-600" label="Rever preço de betão armado C25/30"
-                value="Alto" sub="Preço 23% acima da mediana de mercado" />
-              <InsightRow icon={PackageMinus} iconClass="bg-primary/10 text-primary" label="Adicionar impermeabilização no Cap. 5"
-                value="Médio" sub="Item comum em obras similares" />
-              <InsightRow icon={Lightbulb} iconClass="bg-emerald-500/10 text-emerald-600" label="Agrupar compras de cerâmica"
-                value="Baixo" sub="Potencial de poupança ~€2.400" />
-            </div>
-            <Button variant="outline" size="sm" className="w-full mt-3 text-xs">
-              Ver todas as sugestões <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Button>
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.sugestoes && a.sugestoes.length > 0 ? (
+                <div className="space-y-0.5">
+                  {a.sugestoes.map((s, i) => {
+                    const cfg = priorityConfig(s.priority);
+                    return (
+                      <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-0 border-border/50">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconClass}`}>
+                          <cfg.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{s.label}</p>
+                          <p className="text-xs text-muted-foreground">{s.detail}</p>
+                        </div>
+                        <Badge variant="secondary" className="font-semibold text-xs shrink-0">{cfg.label}</Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState message="Nenhuma sugestão ativa. Os seus dados estão otimizados." />
+              )
+            )}
           </Section>
 
           <Section icon={FileWarning} title="Alertas de Orçamento" description="Riscos identificados nos orçamentos ativos"
             accentClass="bg-red-500/10 text-red-500">
-            <div className="space-y-0.5">
-              <InsightRow icon={AlertTriangle} iconClass="bg-red-500/10 text-red-500" label="Margem negativa no orçamento ORC-047"
-                value="Crítico" sub="Margem atual: -2.3%" />
-              <InsightRow icon={TrendingDown} iconClass="bg-amber-500/10 text-amber-600" label="3 artigos sem preço atualizado"
-                value="Aviso" sub="Última atualização há 90+ dias" />
-              <InsightRow icon={Eye} iconClass="bg-primary/10 text-primary" label="Orçamento ORC-051 sem revisão"
-                value="Info" sub="Criado há 15 dias sem aprovação" />
-            </div>
-            <Button variant="outline" size="sm" className="w-full mt-3 text-xs">
-              Ver todos os alertas <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Button>
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.alertas_orcamento && a.alertas_orcamento.length > 0 ? (
+                <div className="space-y-0.5">
+                  {a.alertas_orcamento.map((al, i) => {
+                    const cfg = severityConfig(al.severity);
+                    return (
+                      <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-0 border-border/50">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconClass}`}>
+                          <cfg.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{al.label}</p>
+                          <p className="text-xs text-muted-foreground">{al.detail}</p>
+                        </div>
+                        <Badge variant={al.severity === 'critical' ? 'destructive' : 'secondary'} className="font-semibold text-xs shrink-0">
+                          {cfg.label}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState message="Nenhum alerta de orçamento. Tudo em ordem." />
+              )
+            )}
           </Section>
         </div>
 
@@ -440,43 +484,56 @@ export default function AxiaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Section icon={CalendarClock} title="Alertas de Prazo" description="Obras com desvios de cronograma detectados"
             accentClass="bg-orange-500/10 text-orange-600">
-            <div className="space-y-2.5">
-              {MOCK_ALERTS_PRAZO.map((a, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0 border-border/50">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${a.tipo === 'atraso' ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
-                    {a.tipo === 'atraso'
-                      ? <ArrowUpRight className="w-4 h-4 text-red-500" />
-                      : <ArrowDownRight className="w-4 h-4 text-emerald-500" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{a.obra}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {a.tipo === 'atraso' ? `${a.dias} dias de atraso` : `${Math.abs(a.dias)} dias adiantado`}
-                    </p>
-                  </div>
-                  <Badge variant={a.tipo === 'atraso' ? 'destructive' : 'secondary'} className="text-xs shrink-0">
-                    {a.tipo === 'atraso' ? 'Atraso' : 'Adiantado'}
-                  </Badge>
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.alertas_prazo && a.alertas_prazo.length > 0 ? (
+                <div className="space-y-2.5">
+                  {a.alertas_prazo.map((ap, i) => (
+                    <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0 border-border/50">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${ap.tipo === 'atraso' ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
+                        {ap.tipo === 'atraso'
+                          ? <ArrowUpRight className="w-4 h-4 text-red-500" />
+                          : <ArrowDownRight className="w-4 h-4 text-emerald-500" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{ap.obra}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {ap.tipo === 'atraso' ? `${ap.dias} dias de atraso` : `${Math.abs(ap.dias)} dias adiantado`}
+                          {ap.detail ? ` — ${ap.detail}` : ''}
+                        </p>
+                      </div>
+                      <Badge variant={ap.tipo === 'atraso' ? 'destructive' : 'secondary'} className="text-xs shrink-0">
+                        {ap.tipo === 'atraso' ? 'Atraso' : 'Adiantado'}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <EmptyState message="Nenhum desvio de prazo detetado. Cronogramas dentro do esperado." />
+              )
+            )}
           </Section>
 
           <Section icon={SearchIcon} title="Inconsistências Detectadas" description="Erros e anomalias encontrados nos dados"
             accentClass="bg-rose-500/10 text-rose-600">
-            <div className="space-y-2.5">
-              {MOCK_INCONSISTENCIAS.map((inc, i) => (
-                <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0 border-border/50">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <XCircle className="w-4 h-4 text-rose-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm">{inc.desc}</p>
-                    <Badge variant="outline" className="text-[10px] mt-1">{inc.tipo}</Badge>
-                  </div>
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.inconsistencias && a.inconsistencias.length > 0 ? (
+                <div className="space-y-2.5">
+                  {a.inconsistencias.map((inc, i) => (
+                    <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0 border-border/50">
+                      <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <XCircle className="w-4 h-4 text-rose-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">{inc.desc}</p>
+                        <Badge variant="outline" className="text-[10px] mt-1">{inc.tipo}</Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <EmptyState message="Nenhuma inconsistência detetada nos dados." />
+              )
+            )}
           </Section>
         </div>
 
@@ -484,68 +541,87 @@ export default function AxiaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Section icon={BarChart3} title="Previsão de Desvios" description="Estimativa de desvios financeiros por obra"
             accentClass="bg-indigo-500/10 text-indigo-600">
-            <div className="space-y-3">
-              {MOCK_PREVISOES.map((p, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{p.obra}</span>
-                    <span className={`text-xs font-semibold ${p.desvioPercent > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                      {p.desvioPercent > 0 ? '+' : ''}{p.desvioPercent}%
-                      <span className="text-muted-foreground font-normal ml-1">
-                        ({p.valor > 0 ? '+' : ''}€{Math.abs(p.valor).toLocaleString('pt-PT')})
-                      </span>
-                    </span>
-                  </div>
-                  <Progress
-                    value={Math.min(Math.abs(p.desvioPercent) * 5, 100)}
-                    className={`h-1.5 ${p.desvioPercent > 0 ? '[&>div]:bg-red-500' : '[&>div]:bg-emerald-500'}`}
-                  />
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.previsao_desvios && a.previsao_desvios.length > 0 ? (
+                <div className="space-y-3">
+                  {a.previsao_desvios.map((p, i) => (
+                    <div key={i} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium truncate mr-2">{p.obra}</span>
+                        <span className={`text-xs font-semibold whitespace-nowrap ${p.desvio_percent > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                          {p.desvio_percent > 0 ? '+' : ''}{p.desvio_percent.toFixed(1)}%
+                          <span className="text-muted-foreground font-normal ml-1">
+                            ({p.valor > 0 ? '+' : ''}€{Math.abs(p.valor).toLocaleString('pt-PT')})
+                          </span>
+                        </span>
+                      </div>
+                      {p.detail && <p className="text-xs text-muted-foreground">{p.detail}</p>}
+                      <Progress
+                        value={Math.min(Math.abs(p.desvio_percent) * 5, 100)}
+                        className={`h-1.5 ${p.desvio_percent > 0 ? '[&>div]:bg-red-500' : '[&>div]:bg-emerald-500'}`}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <EmptyState message="Sem desvios financeiros significativos." />
+              )
+            )}
           </Section>
 
           <Section icon={HardHat} title="Insights da Obra" description="Observações inteligentes sobre as obras ativas"
             accentClass="bg-teal-500/10 text-teal-600">
-            <div className="space-y-2.5">
-              {MOCK_INSIGHTS_OBRA.map((ins, i) => (
-                <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0 border-border/50">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                    ins.tipo === 'positivo' ? 'bg-emerald-500/10' : ins.tipo === 'custo' ? 'bg-amber-500/10' : 'bg-primary/10'
-                  }`}>
-                    {ins.tipo === 'positivo'
-                      ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                      : ins.tipo === 'custo'
-                        ? <AlertTriangle className="w-4 h-4 text-amber-500" />
-                        : <Target className="w-4 h-4 text-primary" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-muted-foreground">{ins.obra}</p>
-                    <p className="text-sm mt-0.5">{ins.insight}</p>
-                  </div>
+            {analysisLoading ? <SectionSkeleton /> : (
+              a?.insights_obra && a.insights_obra.length > 0 ? (
+                <div className="space-y-2.5">
+                  {a.insights_obra.map((ins, i) => {
+                    const cfg = insightTipoConfig(ins.tipo);
+                    return (
+                      <div key={i} className="flex items-start gap-3 py-2 border-b last:border-0 border-border/50">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${cfg.iconClass}`}>
+                          <cfg.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-muted-foreground">{ins.obra}</p>
+                          <p className="text-sm mt-0.5">{ins.insight}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <EmptyState message="Sem insights adicionais para as obras ativas." />
+              )
+            )}
           </Section>
         </div>
 
         {/* ═══ 8. ASSISTENTE CONTEXTUAL + HISTÓRICO ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Section icon={Zap} title="Assistente Contextual" description="Acções rápidas baseadas no contexto atual"
+          <Section icon={Zap} title="Assistente Contextual" description="Ações rápidas baseadas no contexto atual"
             accentClass="bg-primary/10 text-primary">
             <div className="space-y-2">
               {[
-                { label: 'Gerar relatório de desvios do mês', icon: BarChart3 },
-                { label: 'Verificar orçamentos sem aprovação', icon: FileWarning },
-                { label: 'Analisar produtividade da equipa', icon: Activity },
-                { label: 'Comparar custos reais vs. previstos', icon: TrendingDown },
+                { label: 'Gerar relatório de desvios do mês', question: 'Gera um relatório completo dos desvios financeiros e de prazo deste mês, por obra.' },
+                { label: 'Verificar orçamentos sem aprovação', question: 'Quais orçamentos estão em rascunho há mais de 7 dias sem aprovação? Lista-os com valores e clientes.' },
+                { label: 'Analisar produtividade da equipa', question: 'Analisa a produtividade da equipa nas obras ativas. Há trabalhadores sem obra alocada? Que obras precisam de mais recursos?' },
+                { label: 'Comparar custos reais vs. previstos', question: 'Compara os custos reais das obras em curso com os valores previstos. Quais obras estão acima do orçamento?' },
+                { label: 'Resumo semanal para a direção', question: 'Gera um resumo executivo semanal para a direção com: estado das obras, orçamentos pendentes, riscos financeiros e prazos em risco.' },
+                { label: 'Identificar oportunidades de poupança', question: 'Com base nos dados dos orçamentos e obras, identifica oportunidades concretas de redução de custos ou otimização de recursos.' },
               ].map((action, i) => (
                 <button
                   key={i}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/60 hover:border-primary/30 hover:bg-primary/[0.03] transition-all text-left group"
+                  onClick={() => handleSend(action.question)}
+                  disabled={isStreaming}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/60 hover:border-primary/30 hover:bg-primary/[0.03] transition-all text-left group disabled:opacity-50"
                 >
                   <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                    <action.icon className="w-3.5 h-3.5 text-primary" />
+                    {i === 0 ? <BarChart3 className="w-3.5 h-3.5 text-primary" /> :
+                     i === 1 ? <FileWarning className="w-3.5 h-3.5 text-primary" /> :
+                     i === 2 ? <Activity className="w-3.5 h-3.5 text-primary" /> :
+                     i === 3 ? <TrendingDown className="w-3.5 h-3.5 text-primary" /> :
+                     i === 4 ? <Brain className="w-3.5 h-3.5 text-primary" /> :
+                     <Lightbulb className="w-3.5 h-3.5 text-primary" />}
                   </div>
                   <span className="text-sm flex-1">{action.label}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
