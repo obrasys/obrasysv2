@@ -5,6 +5,8 @@ import { TrendingUp, TrendingDown, Target, Clock, AlertTriangle, Activity } from
 import { useProjectProgress } from '@/hooks/useProjectProgress';
 import { ProgressCurveChart } from './ProgressCurveChart';
 import { TaskSemaphoreTable } from './TaskSemaphoreTable';
+import { ProductivityTrendChart } from './ProductivityTrendChart';
+import { ReforecastTable } from './ReforecastTable';
 
 interface Props {
   obraId: string;
@@ -116,6 +118,12 @@ export function ProgressDashboard({ obraId, versionId }: Props) {
 
       {/* Progress curve chart */}
       <ProgressCurveChart snapshots={snapshots || []} />
+
+      {/* Productivity trend */}
+      <ProductivityTrendChart obraId={obraId} />
+
+      {/* Reforecast history */}
+      <ReforecastTable obraId={obraId} />
 
       {/* Task semaphore table */}
       <TaskSemaphoreTable tasks={allTasks || []} />

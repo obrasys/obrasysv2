@@ -90,10 +90,36 @@ export function useDailyReports(obraId?: string) {
         closed_at: new Date().toISOString(),
       }).eq('id', id);
       if (error) throw error;
+
+      // Trigger async processing — recalculate progress, propagate dependencies, generate snapshots
+      try {
+        await supabase.functions.invoke('process-daily-report', {
+          body: { daily_report_id: id },
+        });
+      } catch (procErr) {
+        console.warn('process-daily-report invocation failed (non-blocking):', procErr);
+      }
+
+      // Also generate financial alerts for the obra
+      try {
+        const { data: report } = await supabase.from('daily_reports').select('obra_id').eq('id', id).single();
+        if (report?.obra_id) {
+          await supabase.functions.invoke('generate-financial-alerts', {
+            body: { obra_id: report.obra_id },
+          });
+        }
+      } catch (alertErr) {
+        console.warn('generate-financial-alerts invocation failed (non-blocking):', alertErr);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['daily-reports', obraId] });
-      toast({ title: 'RDO aprovada' });
+      qc.invalidateQueries({ queryKey: ['schedule-tasks'] });
+      qc.invalidateQueries({ queryKey: ['project-progress-snapshots'] });
+      qc.invalidateQueries({ queryKey: ['financial-alerts'] });
+      qc.invalidateQueries({ queryKey: ['productivity-history'] });
+      qc.invalidateQueries({ queryKey: ['task-reforecasts'] });
+      toast({ title: 'RDO aprovada', description: 'Progresso recalculado e cronograma atualizado.' });
     },
   });
 
