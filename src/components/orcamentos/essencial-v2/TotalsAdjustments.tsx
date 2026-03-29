@@ -71,12 +71,8 @@ export function TotalsAdjustments({
     tipo_operacao: tipoOperacao || null,
   });
 
-  // Auto-update VAT when fiscal context changes
-  useEffect(() => {
-    if (fiscalResult && (tipoObra || tipoCliente || tipoOperacao)) {
-      onVatChange(fiscalResult.taxa_iva);
-    }
-  }, [fiscalResult?.taxa_iva, tipoObra, tipoCliente, tipoOperacao]);
+  // Show fiscal suggestion but do NOT auto-apply
+  // User must click to apply the suggested rate
 
   // Calculate with margin (real margin on sale price)
   const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
