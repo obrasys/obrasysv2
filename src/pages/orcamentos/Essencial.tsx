@@ -290,8 +290,13 @@ export default function EssencialPage() {
       }
 
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `preview-${format === 'comercial' ? 'comercial' : 'tecnico'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err: any) {
       toast({ title: 'Erro na pré-visualização', description: err.message, variant: 'destructive' });
     }
