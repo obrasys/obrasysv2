@@ -7724,11 +7724,15 @@ export type Database = {
           first_login_done: boolean | null
           id: string
           onboarding_dismissed: boolean | null
+          selected_goal: string | null
+          selected_role: string | null
           step_1_completed: boolean | null
           step_2_completed: boolean | null
           step_3_completed: boolean | null
           step_4_completed: boolean | null
           user_id: string
+          wizard_current_step: number | null
+          wizard_status: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -7736,11 +7740,15 @@ export type Database = {
           first_login_done?: boolean | null
           id?: string
           onboarding_dismissed?: boolean | null
+          selected_goal?: string | null
+          selected_role?: string | null
           step_1_completed?: boolean | null
           step_2_completed?: boolean | null
           step_3_completed?: boolean | null
           step_4_completed?: boolean | null
           user_id: string
+          wizard_current_step?: number | null
+          wizard_status?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -7748,11 +7756,15 @@ export type Database = {
           first_login_done?: boolean | null
           id?: string
           onboarding_dismissed?: boolean | null
+          selected_goal?: string | null
+          selected_role?: string | null
           step_1_completed?: boolean | null
           step_2_completed?: boolean | null
           step_3_completed?: boolean | null
           step_4_completed?: boolean | null
           user_id?: string
+          wizard_current_step?: number | null
+          wizard_status?: string | null
         }
         Relationships: []
       }

@@ -1,4 +1,4 @@
-export { OnboardingWelcomeModal } from './OnboardingWelcomeModal';
-export { OnboardingChecklist } from './OnboardingChecklist';
+export { OnboardingWizard } from './OnboardingWizard';
+export { OnboardingProgressPanel } from './OnboardingProgressPanel';
+export { OnboardingChecklistItem } from './OnboardingChecklistItem';
 export { OnboardingCompletionModal } from './OnboardingCompletionModal';
-export { OnboardingInactiveReminder } from './OnboardingInactiveReminder';
