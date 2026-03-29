@@ -161,6 +161,7 @@ export function DashboardStats({ obras, tarefas, membros }: DashboardStatsProps)
             activeMembros.map((m) => (
               <div key={m.id} className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
+                  {m.foto_url && <AvatarImage src={m.foto_url} alt={m.nome} />}
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                     {m.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
