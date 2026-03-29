@@ -91,6 +91,7 @@ export function PlanComparisonCard({
   const [isYearly, setIsYearly] = useState(false);
 
   const getButtonText = (planTier: string) => {
+    if (currentTier === "founder") return "Parceiro Fundador";
     if (currentTier === planTier) return "Plano Atual";
     if (currentTier === "trial") return "Começar";
     
@@ -100,7 +101,7 @@ export function PlanComparisonCard({
     return targetIndex > currentIndex ? "Fazer Upgrade" : "Mudar Plano";
   };
 
-  const isCurrentPlan = (planTier: string) => currentTier === planTier;
+  const isCurrentPlan = (planTier: string) => currentTier === planTier || currentTier === "founder";
 
   return (
     <Card>

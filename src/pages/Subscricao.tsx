@@ -132,7 +132,7 @@ export default function SubscricaoPage() {
         <PaymentHistoryTable />
 
         {/* Cancel Subscription */}
-        {subscription?.subscribed && (
+        {subscription?.subscribed && !subscription?.is_founder && subscription?.subscription_tier !== "founder" && (
           <div className="border rounded-lg p-6 bg-muted/30">
             <div className="flex items-center justify-between">
               <div>
