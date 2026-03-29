@@ -119,6 +119,12 @@ export function ProgressDashboard({ obraId, versionId }: Props) {
       {/* Progress curve chart */}
       <ProgressCurveChart snapshots={snapshots || []} />
 
+      {/* Productivity trend */}
+      <ProductivityTrendChart obraId={obraId} />
+
+      {/* Reforecast history */}
+      <ReforecastTable obraId={obraId} />
+
       {/* Task semaphore table */}
       <TaskSemaphoreTable tasks={allTasks || []} />
     </div>
