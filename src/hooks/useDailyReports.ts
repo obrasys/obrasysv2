@@ -243,6 +243,7 @@ export function useDailyReportConstraints(reportId?: string) {
 
 export function useDailyReportResources(reportId?: string) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const qc = useQueryClient();
 
   const { data: labor } = useQuery({
@@ -284,6 +285,15 @@ export function useDailyReportResources(reportId?: string) {
       const { error } = await supabase.from('daily_report_labor_resources').insert({ ...data, user_id: user.id });
       if (error) throw error;
     },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['daily-report-labor', reportId] }); toast({ title: 'Mão de obra registada' }); },
+    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+  });
+
+  const removeLabor = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_report_labor_resources').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-labor', reportId] }),
   });
 
@@ -291,6 +301,15 @@ export function useDailyReportResources(reportId?: string) {
     mutationFn: async (data: Partial<DailyReportEquipmentResource> & { daily_report_id: string; obra_id: string; equipment_name: string }) => {
       if (!user) throw new Error('Não autenticado');
       const { error } = await supabase.from('daily_report_equipment_resources').insert({ ...data, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['daily-report-equipment', reportId] }); toast({ title: 'Equipamento registado' }); },
+    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+  });
+
+  const removeEquipment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_report_equipment_resources').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-equipment', reportId] }),
@@ -302,10 +321,19 @@ export function useDailyReportResources(reportId?: string) {
       const { error } = await supabase.from('daily_report_materials').insert({ ...data, user_id: user.id });
       if (error) throw error;
     },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['daily-report-materials', reportId] }); toast({ title: 'Material registado' }); },
+    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+  });
+
+  const removeMaterial = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_report_materials').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-materials', reportId] }),
   });
 
-  return { labor, equipment, materials, addLabor, addEquipment, addMaterial };
+  return { labor, equipment, materials, addLabor, removeLabor, addEquipment, removeEquipment, addMaterial, removeMaterial };
 }
 
 export function useDailyReportQualitySafety(reportId?: string) {
