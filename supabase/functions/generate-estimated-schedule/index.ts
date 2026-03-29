@@ -286,7 +286,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
 
     for (let i = 0; i < phaseSchedules.length; i++) {
       const ps = phaseSchedules[i];
-      const phaseDuration = Math.max(1, ps.phase.duration_days);
+      const phaseDuration = Math.round(Math.max(1, ps.phase.duration_days));
 
       const { data: phaseTask, error: ptError } = await client
         .from("project_schedule_tasks")
@@ -311,7 +311,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
           schedule_float_days: 0,
           criticality: "non_critical",
           status_flag: "not_started",
-          sort_order: ps.phase.sort_order,
+          sort_order: Math.round(ps.phase.sort_order),
         })
         .select()
         .single();
