@@ -157,7 +157,7 @@ const CriarConta = () => {
 
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome completo</Label>
+                  <Label htmlFor="nome">Nome completo <span className="text-destructive">*</span></Label>
                   <Input
                     id="nome"
                     type="text"
