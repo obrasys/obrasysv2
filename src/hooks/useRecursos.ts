@@ -286,6 +286,7 @@ export function useEquipaMembros() {
         subempreiteiro_id: formData.subempreiteiro_id || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .select()
       .single();
