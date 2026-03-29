@@ -265,6 +265,26 @@ export function useAdjudicacao(budgetId?: string) {
         // Non-critical
       }
 
+      // 10. Generate estimated schedule (Planeamento) via Axia
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        await supabase.functions.invoke('generate-estimated-schedule', {
+          body: {
+            obra_id: obraId,
+            budget_id: orcamento.id,
+            user_id: user.id,
+            awarded_amount: formData.awarded_total_amount,
+            awarded_at: formData.awarded_at,
+          },
+          headers: session?.session?.access_token
+            ? { Authorization: `Bearer ${session.session.access_token}` }
+            : undefined,
+        });
+      } catch {
+        // Non-critical - schedule generation failure should not block adjudication
+        console.warn('Falha na geração automática do planeamento');
+      }
+
       return awardData;
     },
     onSuccess: () => {
@@ -275,9 +295,12 @@ export function useAdjudicacao(budgetId?: string) {
       queryClient.invalidateQueries({ queryKey: ['financeiro-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['budget-award'] });
       queryClient.invalidateQueries({ queryKey: ['budget-receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule-versions'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['project-milestones'] });
       toast({
         title: 'Orçamento adjudicado com sucesso!',
-        description: 'Obra, plano de pagamento e contas a receber foram criados automaticamente.',
+        description: 'Obra, plano de pagamento, contas a receber e planeamento estimado (Axia™) foram criados automaticamente.',
       });
     },
     onError: (error: Error) => {
