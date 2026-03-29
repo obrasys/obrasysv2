@@ -321,7 +321,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
 
       // Sub-tasks
       for (const ts of ps.taskSchedules) {
-        const taskDuration = Math.max(1, ts.task.duration_days);
+        const taskDuration = Math.round(Math.max(1, ts.task.duration_days));
         const { data: subTask, error: stError } = await client
           .from("project_schedule_tasks")
           .insert({
@@ -345,7 +345,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
             schedule_float_days: 0,
             criticality: "non_critical",
             status_flag: "not_started",
-            sort_order: ts.task.sort_order,
+            sort_order: Math.round(ts.task.sort_order),
           })
           .select()
           .single();
