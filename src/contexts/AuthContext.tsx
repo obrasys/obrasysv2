@@ -39,7 +39,7 @@ interface AuthContextType {
   profile: Profile | null;
   organization: OrganizationInfo | null;
   loading: boolean;
-  signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, nome: string, extra?: { telefone?: string; empresa?: string; nif?: string }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
