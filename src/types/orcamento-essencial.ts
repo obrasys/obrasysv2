@@ -1,6 +1,6 @@
 // Types for the redesigned Orçamento Essencial page
 
-export type BudgetType = 'remodelacao' | 'construcao_nova' | 'lsf';
+export type BudgetType = 'remodelacao' | 'construcao_nova' | 'lsf' | 'icf';
 
 export interface BudgetTypeOption {
   value: BudgetType;
@@ -12,6 +12,7 @@ export const BUDGET_TYPES: BudgetTypeOption[] = [
   { value: 'remodelacao', label: 'Remodelação', subtitle: 'Obras de remodelação / reabilitação' },
   { value: 'construcao_nova', label: 'Construção Nova', subtitle: 'Construção de raiz / obra nova' },
   { value: 'lsf', label: 'LSF', subtitle: 'Light Steel Frame' },
+  { value: 'icf', label: 'ICF', subtitle: 'Insulated Concrete Forms' },
 ];
 
 export interface AreaConfig {
