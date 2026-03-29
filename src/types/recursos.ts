@@ -45,6 +45,7 @@ export interface Equipamento {
   localizacao?: string | null;
   obra_id?: string | null;
   observacoes?: string | null;
+  foto_url?: string | null;
   created_at: string;
   updated_at: string;
   // Joined fields
@@ -64,6 +65,7 @@ export interface EquipamentoFormData {
   localizacao?: string;
   obra_id?: string;
   observacoes?: string;
+  foto_url?: string;
 }
 
 // Equipa (Team Members)
