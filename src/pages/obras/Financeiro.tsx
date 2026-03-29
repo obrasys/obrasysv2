@@ -432,14 +432,18 @@ export default function ObraFinanceiroPage() {
           </TabsContent>
 
           <TabsContent value="rh" className="mt-4">
-            <ContasList 
-              contas={contasRH}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onTogglePago={handleTogglePago}
-              onUploadComprovante={handleUploadComprovante}
-              emptyMessage="Nenhuma conta de Recursos Humanos"
-            />
+            {laborSummary && laborSummary.totalCost > 0 ? (
+              <ObraLaborCostsTab obraId={id!} />
+            ) : (
+              <ContasList 
+                contas={contasRH}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onTogglePago={handleTogglePago}
+                onUploadComprovante={handleUploadComprovante}
+                emptyMessage="Nenhum registo de mão de obra. Lance horas no Livro de Ponto para ver os custos aqui."
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="material" className="mt-4">
