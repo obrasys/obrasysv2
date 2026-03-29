@@ -494,7 +494,7 @@ export default function VerObraPage() {
 
           {/* Tab: Planeamento */}
           <TabsContent value="planeamento" className="mt-4">
-            <ScheduleGanttTable obraId={id!} orcamentoId={obra.orcamentos?.[0]?.id} />
+            <ScheduleGanttTable obraId={id!} obraNome={obra.nome} orcamentoId={obra.orcamentos?.[0]?.id} />
           </TabsContent>
 
           {/* Tab: RDO Operacional */}

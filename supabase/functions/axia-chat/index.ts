@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     // ── Gather operational context ──────────────────────────
-    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes] =
+    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes] =
       await Promise.all([
         supabase
           .from("obras")
@@ -84,6 +84,12 @@ serve(async (req) => {
           .select("id, obra_id, numero_auto, estado, valor_medido_atual, percentagem_global")
           .order("created_at", { ascending: false })
           .limit(10),
+        supabase
+          .from("project_schedule_tasks")
+          .select("id, obra_id, name, task_type, wbs_code, status_flag, planned_start, planned_end, forecast_end, actual_start, actual_end, planned_progress_percent, actual_progress_percent, delay_classification, criticality, weight_financial")
+          .in("status_flag", ["in_progress", "started", "suspended", "not_started"])
+          .order("updated_at", { ascending: false })
+          .limit(30),
       ]);
 
     const obras = obrasRes.data || [];
@@ -92,6 +98,7 @@ serve(async (req) => {
     const tarefas = tarefasRes.data || [];
     const insights = insightsRes.data || [];
     const autos = autosMedicaoRes.data || [];
+    const scheduleTasks = scheduleTasksRes.data || [];
 
     // ── Build context summary ───────────────────────────────
     const obrasEmCurso = obras.filter((o: any) => o.status === "em_curso");
@@ -129,6 +136,12 @@ ${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\
 
 ### Autos de Medição (${autos.length})
 ${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Valor medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
+
+### Cronograma / Tarefas do Planeamento (${scheduleTasks.length} ativas)
+${scheduleTasks.slice(0, 15).map((t: any) => {
+  const delay = t.planned_end && t.forecast_end ? Math.max(0, Math.ceil((new Date(t.forecast_end).getTime() - new Date(t.planned_end).getTime()) / (1000*60*60*24))) : 0;
+  return `- [${t.wbs_code || '-'}] "${t.name}" | Tipo: ${t.task_type} | Estado: ${t.status_flag} | Planeado: ${t.planned_progress_percent}% | Real: ${t.actual_progress_percent}% | Atraso: ${delay}d | Classificação: ${t.delay_classification || 'N/A'} | Criticidade: ${t.criticality}`;
+}).join("\n")}
 `.trim();
 
     const systemPrompt = `Tu és a Axia, a assistente de inteligência operacional do Obra Sys — uma plataforma de gestão de obras e construção civil em Portugal.

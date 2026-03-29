@@ -6,18 +6,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useScheduleVersions, useScheduleTasks, useScheduleDependencies } from '@/hooks/useSchedule';
 import { BaselineApprovalCard } from './BaselineApprovalCard';
 import { ScheduleTaskRow } from './ScheduleTaskRow';
+import { AxiaSchedulePanel } from './AxiaSchedulePanel';
+import { DeviationExplainerCard } from './DeviationExplainerCard';
+import { SmartAlertsPanel } from './SmartAlertsPanel';
 import { Plus, CheckCircle2, Calendar, GitBranch } from 'lucide-react';
 import type { ScheduleTask } from '@/types/schedule';
 
 interface Props {
   obraId: string;
+  obraNome?: string;
   orcamentoId?: string;
 }
 
-export function ScheduleGanttTable({ obraId, orcamentoId }: Props) {
+export function ScheduleGanttTable({ obraId, obraNome, orcamentoId }: Props) {
   const { versions, baseline, latestVersion, isLoading: loadingVersions, createVersion, approveBaseline } = useScheduleVersions(obraId);
   const activeVersionId = baseline?.id || latestVersion?.id;
   const { tasks, taskTree, isLoading: loadingTasks, createTask, updateTask, deleteTask } = useScheduleTasks(activeVersionId, obraId);
+  const { dependencies } = useScheduleDependencies(obraId);
 
   // Date range for Gantt
   const allDates = (tasks || []).flatMap(t => [t.planned_start, t.planned_end, t.actual_start, t.actual_end].filter(Boolean) as string[]);
@@ -148,6 +153,31 @@ export function ScheduleGanttTable({ obraId, orcamentoId }: Props) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Smart Alerts */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <SmartAlertsPanel tasks={tasks} dependencies={dependencies || []} />
+      )}
+
+      {/* Deviation Explainer */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <DeviationExplainerCard
+          tasks={tasks}
+          dependencies={dependencies || []}
+          obraNome={obraNome || 'Obra'}
+        />
+      )}
+
+      {/* Axia AI Assistant */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <AxiaSchedulePanel
+          obraId={obraId}
+          obraNome={obraNome || 'Obra'}
+          tasks={tasks}
+          dependencies={dependencies || []}
+          hasBaseline={!!baseline}
+        />
       )}
     </div>
   );
