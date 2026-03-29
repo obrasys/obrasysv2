@@ -238,7 +238,23 @@ export function useDailyReportConstraints(reportId?: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-constraints', reportId] }),
   });
 
-  return { constraints, isLoading, addConstraint };
+  const updateConstraint = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<DailyReportConstraint> & { id: string }) => {
+      const { error } = await supabase.from('daily_report_constraints').update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-constraints', reportId] }),
+  });
+
+  const removeConstraint = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_report_constraints').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-constraints', reportId] }),
+  });
+
+  return { constraints, isLoading, addConstraint, updateConstraint, removeConstraint };
 }
 
 export function useDailyReportResources(reportId?: string) {
