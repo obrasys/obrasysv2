@@ -11,6 +11,7 @@ import {
   Plus,
   Loader2,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
