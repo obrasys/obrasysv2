@@ -27,7 +27,7 @@ import {
   type TipoOperacaoFiscal,
 } from '@/types/fiscal';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const IVA_REGIMES = [
   { value: 23, label: 'IVA Normal', description: '23% — Regime geral' },
