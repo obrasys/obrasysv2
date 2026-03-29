@@ -10,6 +10,7 @@ export interface Subempreiteiro {
   endereco?: string | null;
   ativo: boolean;
   observacoes?: string | null;
+  foto_url?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface SubempreiteiroFormData {
   endereco?: string;
   ativo?: boolean;
   observacoes?: string;
+  foto_url?: string;
 }
 
 // Equipamentos (Equipment)
