@@ -165,7 +165,7 @@ export default function EssencialPage() {
   }, []);
 
   // Save & generate PDF
-  const handleSave = async () => {
+  const handleSave = async (format: 'tecnico' | 'comercial' = 'tecnico') => {
     if (!user) {
       toast({ title: 'Erro', description: 'Precisa estar autenticado.', variant: 'destructive' });
       return;
