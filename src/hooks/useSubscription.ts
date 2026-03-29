@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Subscription {
   subscribed: boolean;
-  subscription_tier: "trial" | "starter" | "professional" | "enterprise";
+  subscription_tier: "trial" | "starter" | "professional" | "enterprise" | "founder";
   subscription_status: "trialing" | "active" | "canceled" | "past_due";
   subscription_end: string | null;
+  is_founder?: boolean;
 }
 
 export function useSubscription() {
