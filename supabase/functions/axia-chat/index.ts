@@ -136,6 +136,12 @@ ${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\
 
 ### Autos de Medição (${autos.length})
 ${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Valor medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
+
+### Cronograma / Tarefas do Planeamento (${scheduleTasks.length} ativas)
+${scheduleTasks.slice(0, 15).map((t: any) => {
+  const delay = t.planned_end && t.forecast_end ? Math.max(0, Math.ceil((new Date(t.forecast_end).getTime() - new Date(t.planned_end).getTime()) / (1000*60*60*24))) : 0;
+  return `- [${t.wbs_code || '-'}] "${t.name}" | Tipo: ${t.task_type} | Estado: ${t.status_flag} | Planeado: ${t.planned_progress_percent}% | Real: ${t.actual_progress_percent}% | Atraso: ${delay}d | Classificação: ${t.delay_classification || 'N/A'} | Criticidade: ${t.criticality}`;
+}).join("\n")}
 `.trim();
 
     const systemPrompt = `Tu és a Axia, a assistente de inteligência operacional do Obra Sys — uma plataforma de gestão de obras e construção civil em Portugal.
