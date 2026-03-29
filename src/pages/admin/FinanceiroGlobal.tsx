@@ -8,6 +8,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 const mockUsers = [
+  { email: "bruno.ferreira@ferreiralcantara.com", plano: "Founder", valor: 490 },
   { email: "inrioimobiliaria@gmail.com", plano: "Professional", valor: 99 },
   { email: "modenoepeculiar@gmail.com", plano: "Starter", valor: 49 },
   { email: "jmsplacido@gmail.com", plano: "Professional", valor: 99 },
@@ -20,7 +21,7 @@ const chartData = [
   { month: "Dez 2025", receita: 0 },
   { month: "Jan 2026", receita: 0 },
   { month: "Fev 2026", receita: 247 },
-  { month: "Mar 2026", receita: 0 },
+  { month: "Mar 2026", receita: 737 },
 ];
 
 const chartConfig = {
@@ -62,7 +63,7 @@ export default function AdminFinanceiroGlobal() {
             <CardContent>
               <div className="text-2xl font-bold">{mockUsers.length}</div>
               <p className="text-xs text-muted-foreground">
-                {mockUsers.filter(u => u.valor === 99).length} Professional · {mockUsers.filter(u => u.valor === 49).length} Starter
+                 {mockUsers.filter(u => u.plano === "Founder").length} Founder · {mockUsers.filter(u => u.valor === 99).length} Professional · {mockUsers.filter(u => u.valor === 49).length} Starter
               </p>
             </CardContent>
           </Card>
@@ -121,10 +122,10 @@ export default function AdminFinanceiroGlobal() {
                 {mockUsers.map((user) => (
                   <TableRow key={user.email}>
                     <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.plano === "Professional" ? "default" : "secondary"}>
-                        {user.plano}
-                      </Badge>
+                     <TableCell>
+                       <Badge variant={user.plano === "Founder" ? "default" : user.plano === "Professional" ? "default" : "secondary"} className={user.plano === "Founder" ? "bg-amber-600 hover:bg-amber-700" : ""}>
+                         {user.plano === "Founder" ? "⭐ Founder" : user.plano}
+                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       €{user.valor.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}
