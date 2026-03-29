@@ -168,6 +168,136 @@ export default function EssencialPage() {
     setCustomAreas((prev) => prev.map((a) => a.key === key ? { ...a, label: newLabel } : a));
   }, []);
 
+  // Build a mock Orcamento object from in-memory items for PDF preview
+  const buildMockOrcamento = (): { orcamento: Orcamento; valorBase: number; valorIVA: number; valorFinal: number } => {
+    const tipoLabel = budgetType === 'remodelacao' ? 'Remodelação'
+      : budgetType === 'construcao_nova' ? 'Construção Nova'
+      : budgetType === 'icf' ? 'ICF' : 'LSF';
+
+    const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
+    const contingencyValue = subtotalWithMargin * (contingencyPercent / 100);
+    const afterContingency = subtotalWithMargin + contingencyValue;
+    const discountValue = afterContingency * (discountPercent / 100);
+    const subtotalBeforeVat = afterContingency - discountValue;
+    const vatValue = subtotalBeforeVat * (vatPercent / 100);
+    const totalFinal = subtotalBeforeVat + vatValue;
+
+    // Group items by area → chapters
+    const grouped: Record<string, BudgetItem[]> = {};
+    items.forEach((item) => { (grouped[item.areaKey] ||= []).push(item); });
+
+    let capOrder = 1;
+    const capitulos: Capitulo[] = Object.entries(grouped).map(([areaKey, areaItems]) => {
+      const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
+      const artigos: ArtigoOrcamento[] = areaItems.map((item, idx) => {
+        const unitCost = item.laborUnitPrice + item.materialTotalPrice;
+        const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
+        return {
+          id: item.id,
+          capitulo_id: `cap-${capOrder}`,
+          codigo: null,
+          descricao: item.name,
+          unidade: item.unit,
+          quantidade: item.quantity,
+          preco_unitario: unitSalePrice,
+          preco_base: unitCost,
+          margem_lucro_artigo: marginPercent,
+          valor_total: unitSalePrice * item.quantity,
+          ordem: idx + 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      });
+      const capValor = artigos.reduce((s, a) => s + a.valor_total, 0);
+      const cap: Capitulo = {
+        id: `cap-${capOrder}`,
+        orcamento_id: 'preview',
+        numero: capOrder,
+        titulo: areaLabel,
+        descricao: null,
+        valor_total: capValor,
+        ordem: capOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        artigos,
+        include_in_client_summary: true,
+      };
+      capOrder++;
+      return cap;
+    });
+
+    const orcamento: Orcamento = {
+      id: 'preview',
+      obra_id: null,
+      cliente_id: null,
+      user_id: user?.id || '',
+      titulo: `Orçamento ${tipoLabel} - ${clientInfo.clientName || 'Sem cliente'}`,
+      codigo: clientInfo.budgetNumber || null,
+      status: 'rascunho',
+      valor_total: totalFinal,
+      margem_lucro: marginPercent,
+      custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
+      data_criacao: new Date().toISOString(),
+      data_envio: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      capitulos,
+      cliente: clientInfo.clientName ? { id: 'preview', nome: clientInfo.clientName } : undefined,
+    };
+
+    return { orcamento, valorBase: subtotalBeforeVat, valorIVA: vatValue, valorFinal: totalFinal };
+  };
+
+  // Preview PDF
+  const handlePreview = async (format: 'tecnico' | 'comercial') => {
+    if (items.length === 0) {
+      toast({ title: 'Atenção', description: 'Adicione pelo menos um item.', variant: 'destructive' });
+      return;
+    }
+    setIsPreviewLoading(true);
+    try {
+      const { orcamento, valorBase, valorIVA, valorFinal } = buildMockOrcamento();
+
+      // Fetch profile for PDF header
+      let profile = null;
+      if (user) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        profile = data;
+      }
+
+      let blob: Blob;
+      if (format === 'comercial') {
+        blob = await generateComercialPdf({
+          orcamento,
+          profile,
+          valorFinal,
+          taxaIVA: vatPercent,
+          valorBase,
+          valorIVA,
+        });
+      } else {
+        blob = await generateOrcamentoPdf({
+          orcamento,
+          profile,
+          margemDecimal: marginPercent / 100,
+          taxaIVA: vatPercent,
+          valorBase,
+          valorIVA,
+          valorFinal,
+          custosIndiretosTotal: 0,
+          subtotalArtigos: subtotalBase,
+        });
+      }
+
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err: any) {
+      toast({ title: 'Erro na pré-visualização', description: err.message, variant: 'destructive' });
+    }
+    setIsPreviewLoading(false);
+  };
+
   // Save & generate PDF
   const handleSave = async (format: 'tecnico' | 'comercial' = 'tecnico') => {
     if (!user) {
