@@ -5,6 +5,8 @@ import { TrendingUp, TrendingDown, Target, Clock, AlertTriangle, Activity } from
 import { useProjectProgress } from '@/hooks/useProjectProgress';
 import { ProgressCurveChart } from './ProgressCurveChart';
 import { TaskSemaphoreTable } from './TaskSemaphoreTable';
+import { ProductivityTrendChart } from './ProductivityTrendChart';
+import { ReforecastTable } from './ReforecastTable';
 
 interface Props {
   obraId: string;
