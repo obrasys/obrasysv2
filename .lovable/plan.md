@@ -1,116 +1,57 @@
 
 
-# Redesign Completo do Onboarding — Obra Sys
+# Redesign dos Recursos com Cards com Foto + Equipa Ativa no Dashboard
 
-## Visão Geral
+## Contexto
+As tabelas `equipa_membros`, `subempreiteiros` e `equipamentos` **nao possuem campo de foto**. Sera necessario adicionar uma coluna `foto_url` a cada tabela e implementar upload de imagem no formulario de cada recurso. O design dos cards seguira o modelo do anexo: avatar circular grande, nome em destaque, funcao/especialidade, e metadados como obra, vinculo e remuneracao.
 
-Substituir o onboarding atual (modal welcome + cards checklist separados) por uma experiência em 2 fases: **Wizard guiado full-screen** na primeira sessão + **Painel de progresso compacto único** no dashboard.
+## Plano
 
----
+### 1. Migracao de Base de Dados
+Adicionar coluna `foto_url TEXT NULL` nas 3 tabelas:
+- `equipa_membros`
+- `subempreiteiros`
+- `equipamentos`
 
-## 1. Migração de Base de Dados
+Criar um storage bucket `recursos` para armazenar as fotos, com politicas RLS para upload/leitura pelo proprietario.
 
-Adicionar colunas à tabela `user_onboarding_progress`:
+### 2. Atualizar Tipos TypeScript
+Adicionar `foto_url?: string | null` nos tipos `EquipaMembro`, `Subempreiteiro`, `Equipamento` e nos respectivos `FormData`.
 
-```sql
-ALTER TABLE user_onboarding_progress
-  ADD COLUMN IF NOT EXISTS wizard_status text DEFAULT 'not_started',    -- not_started | in_progress | completed | skipped
-  ADD COLUMN IF NOT EXISTS wizard_current_step integer DEFAULT 0,       -- 0-4
-  ADD COLUMN IF NOT EXISTS selected_goal text,                          -- organizar_obra | criar_orcamento | acompanhar_execucao | centralizar_equipa
-  ADD COLUMN IF NOT EXISTS selected_role text;                          -- diretor | gestor_obra | orcamentista | tecnico_fiscal | outro
-```
+### 3. Componente de Upload de Foto nos Formularios
+Criar um componente reutilizavel `ResourcePhotoUpload` que:
+- Mostra o avatar atual ou um placeholder
+- Permite selecionar uma imagem (max 2MB)
+- Faz upload para o bucket `recursos` no storage
+- Retorna a URL publica
 
-A função `sync_onboarding_progress` mantém-se (verifica dados reais), mas o wizard tem estado próprio.
+Integrar este componente nos 3 formularios existentes: `SubempreiteiroForm`, `EquipamentoForm`, `EquipaMembroForm`.
 
----
+### 4. Redesign da Pagina de Recursos (Cards)
+Substituir as tabelas atuais por grelhas de cards visuais no estilo do anexo:
+- **Avatar circular** grande com a foto ou iniciais como fallback
+- **Nome** em destaque (bold, cor primaria `#00679d`)
+- **Funcao/Especialidade/Categoria** como subtitulo
+- **Metadados**: Obra associada, vinculo (contrato/estado), remuneracao/valor
+- **Badge** de estado (Ativo/Inativo, Disponivel/Em Uso)
+- **Menu de acoes** (editar/eliminar) no canto
 
-## 2. Novos Componentes
+Layout: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4`
 
-### Wizard (Fase 1)
-- **`OnboardingWizard.tsx`** — Container principal com stepper visual (4 dots/passos), controla navegação entre steps, persiste estado no DB a cada transição. Layout centralizado, max-w-2xl, fundo branco com sombra premium.
-- **`OnboardingStepWelcome.tsx`** — Passo 1: headline "Organize a sua primeira obra em minutos", CTAs "Começar" / "Explorar primeiro"
-- **`OnboardingStepGoal.tsx`** — Passo 2: 4 tiles selecionáveis com ícone + microcopy de benefício
-- **`OnboardingStepRole.tsx`** — Passo 3: 5 opções de perfil como botões radio visuais
-- **`OnboardingStepCreateProject.tsx`** — Passo 4: formulário mínimo inline (nome, cliente, localização + opcionais tipo/data início). Usa `useObras().createObra` diretamente. Após sucesso mostra estado de confirmação com CTAs "Ir para o dashboard" / "Criar orçamento agora"
+### 5. Equipa Ativa no Dashboard Principal
+Atualizar `DashboardStats.tsx` na seccao "Equipa Ativa":
+- Substituir o avatar com fallback de iniciais pelo avatar com `foto_url`
+- Usar `AvatarImage` com a URL da foto quando disponivel
+- Manter fallback de iniciais para membros sem foto
 
-### Checklist Dashboard (Fase 2)
-- **`OnboardingProgressPanel.tsx`** — Container único com título orientado a resultado, barra de progresso com pesos (40/25/15/20%), até 3 próximos passos visíveis, reordenação dinâmica baseada no `selected_goal`, botão minimizar/fechar. Quando ativação mínima atingida (obra + 1 ação), transforma-se em estado de sucesso.
-- **`OnboardingChecklistItem.tsx`** — Item individual: ícone, título, microcopy de benefício, badge de estado (pendente/concluído), CTA de ação
-
-### Mantidos (sem alteração)
-- `OnboardingCompletionModal.tsx` — reutilizado no estado de conclusão total
-
-### Removidos
-- `OnboardingWelcomeModal.tsx` — substituído pelo Step 1 do wizard
-- `OnboardingChecklist.tsx` — substituído pelo ProgressPanel
-- `OnboardingInactiveReminder.tsx` — integrado no ProgressPanel
-
----
-
-## 3. Hook `useOnboarding` — Reescrita
-
-Novo estado exposto:
-```ts
-{
-  progress,                    // dados DB completos
-  loading,
-  wizardStatus,               // not_started | in_progress | completed | skipped
-  showWizard,                 // wizard_status !== completed && !== skipped
-  showProgressPanel,          // wizard done/skipped && !dismissed && !minActivation
-  showSuccessState,           // ativação mínima atingida (obra + 1 outro)
-  percentage,                 // com pesos 40/25/15/20
-  orderedSteps,               // reordenados por selected_goal
-  // actions
-  updateWizardStep,           // persiste step atual + dados
-  completeWizard,
-  skipWizard,
-  dismissPanel,
-  refreshProgress,
-}
-```
-
-Percentagem com pesos: obra=40%, orçamento=25%, equipa=15%, RDO=20%.
-
-Reordenação: se `selected_goal === 'criar_orcamento'`, orçamento sobe para posição 1 (após obra se já criada).
-
----
-
-## 4. Dashboard.tsx — Integração
-
-- Remover imports de `OnboardingWelcomeModal`, `OnboardingChecklist`, `OnboardingInactiveReminder`
-- Se `showWizard`: renderizar `<OnboardingWizard />` como overlay/secção principal acima do conteúdo do dashboard (não bloqueia navegação sidebar)
-- Se `showProgressPanel`: renderizar `<OnboardingProgressPanel />` como primeiro bloco no dashboard
-- Se `showSuccessState`: renderizar estado de sucesso no ProgressPanel
-- Manter engagement banners e KPIs abaixo
-
----
-
-## 5. Design Visual
-
-- Wizard: container branco centralizado, `rounded-2xl shadow-xl border`, stepper com circles numerados + linha conectora, azul `#00679d` como cor de destaque
-- Progress Panel: card único `border-primary/20`, gradient subtil, barra de progresso azul, items com hover suave
-- Tipografia Red Hat Display nos headlines
-- Ícones Lucide consistentes: Building2, FileText, Users, ClipboardList
-- Mobile responsive: wizard usa `max-w-lg` no mobile, tiles empilham verticalmente
-
----
-
-## Ficheiros Afetados
-
-| Ação | Ficheiro |
-|------|---------|
-| Criar | `src/components/onboarding/OnboardingWizard.tsx` |
-| Criar | `src/components/onboarding/OnboardingStepWelcome.tsx` |
-| Criar | `src/components/onboarding/OnboardingStepGoal.tsx` |
-| Criar | `src/components/onboarding/OnboardingStepRole.tsx` |
-| Criar | `src/components/onboarding/OnboardingStepCreateProject.tsx` |
-| Criar | `src/components/onboarding/OnboardingProgressPanel.tsx` |
-| Criar | `src/components/onboarding/OnboardingChecklistItem.tsx` |
-| Reescrever | `src/hooks/useOnboarding.ts` |
-| Editar | `src/pages/Dashboard.tsx` |
-| Editar | `src/components/onboarding/index.ts` |
-| Remover | `src/components/onboarding/OnboardingWelcomeModal.tsx` |
-| Remover | `src/components/onboarding/OnboardingChecklist.tsx` |
-| Remover | `src/components/onboarding/OnboardingInactiveReminder.tsx` |
-| Migração DB | Adicionar colunas wizard_status, wizard_current_step, selected_goal, selected_role |
+### Ficheiros Afetados
+- **Migracao SQL**: nova migracao para colunas + bucket + RLS
+- `src/types/recursos.ts` — adicionar `foto_url`
+- `src/hooks/useRecursos.ts` — incluir `foto_url` nos CRUD
+- `src/components/recursos/ResourcePhotoUpload.tsx` — novo componente
+- `src/components/recursos/SubempreiteiroForm.tsx` — integrar upload
+- `src/components/recursos/EquipamentoForm.tsx` — integrar upload
+- `src/components/recursos/EquipaMembroForm.tsx` — integrar upload
+- `src/pages/recursos/Index.tsx` — substituir tabelas por cards
+- `src/components/dashboard/DashboardStats.tsx` — foto na Equipa Ativa
 
