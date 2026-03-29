@@ -178,6 +178,8 @@ export default function LancarPage() {
           onCheckOutChange={setCheckOut}
           breakMin={breakMin}
           onBreakMinChange={setBreakMin}
+          manualHours={manualHours}
+          onManualHoursChange={setManualHours}
           notes={notes}
           onNotesChange={setNotes}
           allocations={allocations}
