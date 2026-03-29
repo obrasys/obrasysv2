@@ -46,6 +46,7 @@ export default function LancarPage() {
   const [checkOut, setCheckOut] = useState("");
   const [breakMin, setBreakMin] = useState(0);
   const [notes, setNotes] = useState("");
+  const [manualHours, setManualHours] = useState("");
   const [allocations, setAllocations] = useState<AllocationFormData[]>([
     { ...emptyAllocation, obra_id: initialObra },
   ]);
