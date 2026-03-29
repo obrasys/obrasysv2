@@ -18,6 +18,7 @@ interface LaborEntry {
   entry_date: string;
   worker_id: string;
   worker_name: string;
+  worker_role: string | null;
   hours_worked: number;
   hourly_cost: number;
   amount: number;
