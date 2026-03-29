@@ -90,7 +90,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
         {/* Right column */}
         <div className="space-y-4">
           <div>
-            <Label className="text-sm text-muted-foreground">Nome do Cliente</Label>
+            <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
             <Input
               placeholder="Ex.: João Silva"
               value={data.clientName}
