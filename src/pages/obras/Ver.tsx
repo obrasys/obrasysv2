@@ -80,7 +80,7 @@ export default function VerObraPage() {
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
   const { data: resourceSummary } = useProjectResourceSummary(id);
   const { baseline, latestVersion } = useScheduleVersions(id);
-  const laborSummary = useObraLaborSummary(id);
+  const { data: laborSummary } = useObraLaborSummary(id);
 
   const activeVersionId = baseline?.id || latestVersion?.id;
 
