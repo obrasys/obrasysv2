@@ -89,27 +89,7 @@ serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
-    // Check local subscriber record first for founder/lifetime plans
-    const { data: subscriber } = await supabaseClient
-      .from("subscribers")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
 
-    // If user is a founder, return immediately regardless of Stripe
-    if (subscriber?.subscription_tier === "founder") {
-      logStep("Founder user detected", { userId: user.id });
-      return new Response(JSON.stringify({
-        subscribed: true,
-        subscription_tier: "founder",
-        subscription_status: "active",
-        subscription_end: subscriber.subscription_end,
-        is_founder: true,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, checking local subscriber record");
