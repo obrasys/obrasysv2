@@ -6,11 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useScheduleVersions, useScheduleTasks, useScheduleDependencies } from '@/hooks/useSchedule';
 import { BaselineApprovalCard } from './BaselineApprovalCard';
 import { ScheduleTaskRow } from './ScheduleTaskRow';
+import { AxiaSchedulePanel } from './AxiaSchedulePanel';
+import { DeviationExplainerCard } from './DeviationExplainerCard';
+import { SmartAlertsPanel } from './SmartAlertsPanel';
 import { Plus, CheckCircle2, Calendar, GitBranch } from 'lucide-react';
 import type { ScheduleTask } from '@/types/schedule';
 
 interface Props {
   obraId: string;
+  obraNome?: string;
   orcamentoId?: string;
 }
 
