@@ -407,10 +407,14 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
               </TabsContent>
 
               <TabsContent value="qualidade" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Registe inspeções, não conformidades e segurança.</p>
-                </div>
+                {latestDraft ? (
+                  <RDOQualitySafetyEditor reportId={latestDraft.id} obraId={obraId} />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Crie ou selecione um RDO primeiro.</p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="impacto" className="mt-4">
