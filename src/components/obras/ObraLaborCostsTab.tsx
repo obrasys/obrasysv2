@@ -72,6 +72,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const navigate = useNavigate();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [workerModalOpen, setWorkerModalOpen] = useState(false);
 
   const { data: summary, isLoading: loadingSummary } = useObraLaborSummary(obraId);
   const { data: entries, isLoading: loadingEntries } = useObraLaborEntries(obraId, {
@@ -81,6 +82,9 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const { data: chartData } = useObraLaborChart(obraId);
   const { data: byWorker } = useObraLaborByWorker(obraId);
   const { data: byCostType } = useObraLaborByCostType(obraId);
+  const createWorkerMutation = useCreateWorker();
+  const { subempreiteiros } = useSubempreiteiros();
+  const { membros: equipaMembros } = useEquipaMembros();
 
   const isLoading = loadingSummary || loadingEntries;
 
