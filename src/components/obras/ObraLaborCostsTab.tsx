@@ -300,6 +300,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
                       <TableRow>
                         <TableHead>Data</TableHead>
                         <TableHead>Trabalhador</TableHead>
+                        <TableHead>Função</TableHead>
                         <TableHead className="text-right">Horas</TableHead>
                         <TableHead className="text-right">Custo/Hora</TableHead>
                         <TableHead className="text-right">Custo Total</TableHead>
@@ -311,6 +312,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
                         <TableRow key={entry.id}>
                           <TableCell>{format(parseISO(entry.entry_date), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="font-medium">{entry.worker_name}</TableCell>
+                          <TableCell className="text-muted-foreground">{entry.worker_role || '—'}</TableCell>
                           <TableCell className="text-right">{entry.hours_worked.toFixed(1)}h</TableCell>
                           <TableCell className="text-right">{formatCurrency(entry.hourly_cost)}</TableCell>
                           <TableCell className="text-right font-semibold">{formatCurrency(entry.amount)}</TableCell>
