@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ContaCard, ContaForm, FinanceiroDashboard, ReceivableAlertsCard } from '@/components/financeiro';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
+import { ObraCustosExtrasTab } from '@/components/obras/ObraCustosExtrasTab';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
