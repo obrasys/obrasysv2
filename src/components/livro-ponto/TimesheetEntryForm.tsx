@@ -39,6 +39,11 @@ function calcMinutesFromTimes(start: string, end: string, breakMin: number): num
   return Math.max(0, (eh * 60 + em) - (sh * 60 + sm) - breakMin);
 }
 
+function formatMinutesToDecimal(m: number): string {
+  if (m <= 0) return "";
+  return (m / 60).toFixed(2).replace(/\.?0+$/, "");
+}
+
 export function TimesheetEntryForm({
   workers,
   obras,
