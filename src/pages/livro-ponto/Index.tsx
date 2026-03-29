@@ -38,14 +38,17 @@ export default function LivroPontoIndex() {
 
   const { data: workers = [] } = useWorkers();
   const { obras = [] } = useObras() as any;
+  const obraFilter = selectedObra && selectedObra !== "all" ? selectedObra : undefined;
+  const workerFilter = selectedWorker && selectedWorker !== "all" ? selectedWorker : undefined;
+
   const { data: timesheets = [], isLoading } = useTimesheets({
     date: activeTab === "diario" ? selectedDate : undefined,
-    obraId: selectedObra || undefined,
-    workerId: selectedWorker || undefined,
+    obraId: obraFilter,
+    workerId: workerFilter,
   });
   const { data: allocations = [] } = useTimesheetAllocations(undefined, {
     date: activeTab !== "aprovacoes" ? selectedDate : undefined,
-    obraId: selectedObra || undefined,
+    obraId: obraFilter,
   });
   const approveMutation = useApproveTimesheet();
 
