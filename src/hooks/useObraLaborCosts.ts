@@ -110,7 +110,7 @@ export function useObraLaborEntries(
     queryFn: async (): Promise<LaborEntry[]> => {
       let q = supabase
         .from('project_labor_cost_entries')
-        .select('id, entry_date, worker_id, hours_worked, hourly_cost, amount, origin_type, status, workers!project_labor_cost_entries_worker_id_fkey(name)')
+        .select('id, entry_date, worker_id, hours_worked, hourly_cost, amount, origin_type, status, workers!project_labor_cost_entries_worker_id_fkey(full_name, role)')
         .eq('obra_id', obraId!)
         .neq('status', 'reversed')
         .order('entry_date', { ascending: false });
