@@ -26,6 +26,8 @@ interface TimesheetEntryFormProps {
   onCheckOutChange: (v: string) => void;
   breakMin: number;
   onBreakMinChange: (v: number) => void;
+  manualHours: string;
+  onManualHoursChange: (v: string) => void;
   notes: string;
   onNotesChange: (v: string) => void;
   allocations: AllocationFormData[];
