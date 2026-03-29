@@ -342,6 +342,7 @@ export default function EssencialPage() {
       toast({ title: 'Atenção', description: 'Adicione pelo menos um item ao orçamento.', variant: 'destructive' });
       return;
     }
+    if (!validateClientFields()) return;
 
     setIsLoading(true);
     try {
