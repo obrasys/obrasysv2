@@ -63,7 +63,7 @@ export default function AdminFinanceiroGlobal() {
             <CardContent>
               <div className="text-2xl font-bold">{mockUsers.length}</div>
               <p className="text-xs text-muted-foreground">
-                {mockUsers.filter(u => u.valor === 99).length} Professional · {mockUsers.filter(u => u.valor === 49).length} Starter
+                 {mockUsers.filter(u => u.plano === "Founder").length} Founder · {mockUsers.filter(u => u.valor === 99).length} Professional · {mockUsers.filter(u => u.valor === 49).length} Starter
               </p>
             </CardContent>
           </Card>
