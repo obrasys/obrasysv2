@@ -9,12 +9,12 @@ import { useAuth } from '@/contexts/AuthContext';
 export function useClientAccess() {
   const { user, profile } = useAuth();
 
-  const { data: hasClientAccess = false, isLoading } = useQuery({
+  const isCliente = profile?.role === 'cliente';
+
+  const { data: hasObraAccess = false, isLoading } = useQuery({
     queryKey: ['client-access-check', user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
-      // cliente role users always have access
-      if (profile?.role === 'cliente') return true;
 
       const { data, error } = await supabase
         .from('client_obra_access')
@@ -26,9 +26,9 @@ export function useClientAccess() {
       if (error) return false;
       return (data?.length ?? 0) > 0;
     },
-    enabled: !!user?.id && profile?.role !== 'cliente',
+    enabled: !!user?.id && !isCliente,
     staleTime: 5 * 60 * 1000,
   });
 
-  return { hasClientAccess, isLoading };
+  return { hasClientAccess: isCliente || hasObraAccess, isLoading };
 }

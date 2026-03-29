@@ -21,5 +21,9 @@ export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/portal" replace />;
   }
 
+  if (profile?.role === "supplier") {
+    return <Navigate to="/fornecedor/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
