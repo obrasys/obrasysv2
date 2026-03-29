@@ -24,6 +24,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { OnboardingWizard, OnboardingProgressPanel, OnboardingCompletionModal } from '@/components/onboarding';
 import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
 import { DashboardCharts, DashboardMetrics, DashboardStats, ObrasSummaryTable } from '@/components/dashboard';
+import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
