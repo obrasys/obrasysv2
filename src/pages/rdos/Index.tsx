@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RDOCard } from '@/components/rdos';
+import { KpiCard } from '@/components/relatorios/KpiCard';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useObras } from '@/hooks/useObras';
 import type { RelatorioDiario } from '@/types/rdos';
