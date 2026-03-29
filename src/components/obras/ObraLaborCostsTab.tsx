@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Loader2,
   Calendar,
+  UserPlus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,9 @@ import {
   useObraLaborByCostType,
   getOriginLabel,
 } from '@/hooks/useObraLaborCosts';
+import { WorkerCreateModal } from '@/components/livro-ponto/WorkerCreateModal';
+import { useCreateWorker } from '@/hooks/useLivroPonto';
+import { useSubempreiteiros, useEquipaMembros } from '@/hooks/useRecursos';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
@@ -68,6 +72,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const navigate = useNavigate();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [workerModalOpen, setWorkerModalOpen] = useState(false);
 
   const { data: summary, isLoading: loadingSummary } = useObraLaborSummary(obraId);
   const { data: entries, isLoading: loadingEntries } = useObraLaborEntries(obraId, {
@@ -77,8 +82,16 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const { data: chartData } = useObraLaborChart(obraId);
   const { data: byWorker } = useObraLaborByWorker(obraId);
   const { data: byCostType } = useObraLaborByCostType(obraId);
+  const createWorkerMutation = useCreateWorker();
+  const { subempreiteiros } = useSubempreiteiros();
+  const { membros: equipaMembros } = useEquipaMembros();
 
   const isLoading = loadingSummary || loadingEntries;
+
+  const handleCreateWorker = async (data: any) => {
+    await createWorkerMutation.mutateAsync(data);
+    setWorkerModalOpen(false);
+  };
 
   const costTypeChartData = useMemo(
     () => (byCostType || []).map(ct => ({ name: getOriginLabel(ct.origin_type), value: ct.total_cost })),
@@ -105,19 +118,45 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
           <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Nenhum custo de mão de obra registado.</p>
           <p className="text-sm mt-1">Os custos aparecerão automaticamente ao lançar horas no Livro de Ponto.</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
-            <Clock className="w-4 h-4 mr-2" />
-            Ir para Livro de Ponto
-          </Button>
+          <div className="flex gap-2 justify-center mt-4">
+            <Button variant="outline" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
+              <Clock className="w-4 h-4 mr-2" />
+              Ir para Livro de Ponto
+            </Button>
+            <Button onClick={() => setWorkerModalOpen(true)}>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Novo Trabalhador
+            </Button>
+          </div>
+          <WorkerCreateModal
+            open={workerModalOpen}
+            onOpenChange={setWorkerModalOpen}
+            subempreiteiros={subempreiteiros}
+            equipaMembros={equipaMembros}
+            onSave={handleCreateWorker}
+            isLoading={createWorkerMutation.isPending}
+          />
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    return (
+      <div className="space-y-4 md:space-y-6">
+        {/* Header with action */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <CircleDollarSign className="w-5 h-5 text-primary" />
+            Custos de Mão de Obra
+          </h3>
+          <Button size="sm" onClick={() => setWorkerModalOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Novo Trabalhador
+          </Button>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -338,6 +377,15 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
           </Card>
         </>
       )}
+
+      <WorkerCreateModal
+        open={workerModalOpen}
+        onOpenChange={setWorkerModalOpen}
+        subempreiteiros={subempreiteiros}
+        equipaMembros={equipaMembros}
+        onSave={handleCreateWorker}
+        isLoading={createWorkerMutation.isPending}
+      />
     </div>
   );
 }
