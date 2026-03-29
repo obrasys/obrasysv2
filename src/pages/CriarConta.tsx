@@ -172,7 +172,7 @@ const CriarConta = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">Email <span className="text-destructive">*</span></Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -184,6 +184,52 @@ const CriarConta = () => {
                       {signUpForm.formState.errors.email.message}
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone <span className="text-destructive">*</span></Label>
+                  <Input
+                    id="telefone"
+                    type="tel"
+                    placeholder="+351 912 345 678"
+                    {...signUpForm.register("telefone")}
+                  />
+                  {signUpForm.formState.errors.telefone && (
+                    <p className="text-sm text-destructive">
+                      {signUpForm.formState.errors.telefone.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="empresa">Empresa</Label>
+                    <Input
+                      id="empresa"
+                      type="text"
+                      placeholder="Nome da empresa"
+                      {...signUpForm.register("empresa")}
+                    />
+                    {signUpForm.formState.errors.empresa && (
+                      <p className="text-sm text-destructive">
+                        {signUpForm.formState.errors.empresa.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nif">NIF</Label>
+                    <Input
+                      id="nif"
+                      type="text"
+                      placeholder="123456789"
+                      {...signUpForm.register("nif")}
+                    />
+                    {signUpForm.formState.errors.nif && (
+                      <p className="text-sm text-destructive">
+                        {signUpForm.formState.errors.nif.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
