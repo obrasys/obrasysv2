@@ -143,12 +143,8 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
 
     return (
       <div className="space-y-4 md:space-y-6">
-        {/* Header with action */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <CircleDollarSign className="w-5 h-5 text-primary" />
-            Custos de Mão de Obra
-          </h3>
+        {/* Action button */}
+        <div className="flex justify-end">
           <Button size="sm" onClick={() => setWorkerModalOpen(true)}>
             <UserPlus className="w-4 h-4 mr-2" />
             Novo Trabalhador
