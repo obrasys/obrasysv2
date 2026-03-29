@@ -17,6 +17,7 @@ import { useScheduleTasks } from '@/hooks/useSchedule';
 import { RDOActivityEditor } from './RDOActivityEditor';
 import { RDOProductionEditor } from './RDOProductionEditor';
 import { RDOResourcesEditor } from './RDOResourcesEditor';
+import { RDOConstraintsEditor } from './RDOConstraintsEditor';
 import type { DailyReportFormData, DayType, WeatherImpact, WorkRegime } from '@/types/daily-reports';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
