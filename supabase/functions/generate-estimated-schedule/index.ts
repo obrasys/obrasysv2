@@ -254,7 +254,23 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
       ? phaseSchedules[phaseSchedules.length - 1].planned_end
       : formatDate(startDate);
 
-    // 4. Get next version number and create schedule version
+    // 4. Check for existing Axia-generated version and get next version number
+    const { data: existingAxiaVersion } = await client
+      .from("project_schedule_versions")
+      .select("id")
+      .eq("obra_id", obra_id)
+      .eq("generated_by_type", "axia")
+      .eq("source_budget_id", budget_id)
+      .limit(1);
+
+    if (existingAxiaVersion && existingAxiaVersion.length > 0) {
+      // Already has an Axia schedule for this budget - skip
+      return new Response(
+        JSON.stringify({ success: true, message: "Schedule already exists", version_id: existingAxiaVersion[0].id }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: existingVersions } = await client
       .from("project_schedule_versions")
       .select("version_no")
