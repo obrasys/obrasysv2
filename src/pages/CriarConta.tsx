@@ -35,7 +35,11 @@ const CriarConta = () => {
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
-    const { error } = await signUp(data.email, data.password, data.nome);
+    const { error } = await signUp(data.email, data.password, data.nome, {
+      telefone: data.telefone,
+      empresa: data.empresa || undefined,
+      nif: data.nif || undefined,
+    });
     setIsLoading(false);
 
     if (error) {
