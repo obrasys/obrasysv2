@@ -45,6 +45,9 @@ import {
   useObraLaborByCostType,
   getOriginLabel,
 } from '@/hooks/useObraLaborCosts';
+import { WorkerCreateModal } from '@/components/livro-ponto/WorkerCreateModal';
+import { useCreateWorker } from '@/hooks/useLivroPonto';
+import { useSubempreiteiros, useEquipaMembros } from '@/hooks/useRecursos';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
