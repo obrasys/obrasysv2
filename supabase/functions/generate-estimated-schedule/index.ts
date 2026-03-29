@@ -254,13 +254,21 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
       ? phaseSchedules[phaseSchedules.length - 1].planned_end
       : formatDate(startDate);
 
-    // 4. Create schedule version
+    // 4. Get next version number and create schedule version
+    const { data: existingVersions } = await client
+      .from("project_schedule_versions")
+      .select("version_no")
+      .eq("obra_id", obra_id)
+      .order("version_no", { ascending: false })
+      .limit(1);
+    const nextVersionNo = (existingVersions?.[0]?.version_no || 0) + 1;
+
     const { data: version, error: vError } = await client
       .from("project_schedule_versions")
       .insert({
         user_id,
         obra_id,
-        version_no: 1,
+        version_no: nextVersionNo,
         type: "estimated",
         is_baseline: false,
         generated_by_type: "axia",
