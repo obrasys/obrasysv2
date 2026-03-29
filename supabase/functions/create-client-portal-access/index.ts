@@ -122,14 +122,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get obra name
+    // Get obra name and verify ownership
     const { data: obraData } = await supabaseAdmin
       .from("obras")
-      .select("nome")
+      .select("user_id, nome")
       .eq("id", obraIdFinal)
       .single();
 
-    obraNome = obraData?.nome || "Obra";
+    if (!obraData) {
+      return new Response(
+        JSON.stringify({ error: "Obra não encontrada" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Ownership check: caller must own the obra (or be in same org)
+    if (obraData.user_id !== caller.id) {
+      const { data: orgCheck } = await supabaseAuth.rpc("get_org_member_ids");
+      const orgMembers: string[] = orgCheck || [];
+      if (!orgMembers.includes(obraData.user_id)) {
+        return new Response(
+          JSON.stringify({ error: "Sem permissão para esta obra" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    obraNome = obraData.nome || "Obra";
 
     // Check if user already exists with this email
     let clientUserId: string | null = null;
