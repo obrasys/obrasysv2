@@ -6,3 +6,4 @@ export { FinalizarObraModal } from './FinalizarObraModal';
 export { ObraLaborCostsTab } from './ObraLaborCostsTab';
 export { ObraMateriaisTab } from './ObraMateriaisTab';
 export { ObraPlanoDiarioTab } from './ObraPlanoDiarioTab';
+export { ObraCustosExtrasTab } from './ObraCustosExtrasTab';

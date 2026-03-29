@@ -488,6 +488,10 @@ export default function ObraFinanceiroPage() {
             <ObraLaborCostsTab obraId={id!} />
           </TabsContent>
 
+          <TabsContent value="custos-extra" className="mt-4">
+            <ObraCustosExtrasTab obraId={id!} />
+          </TabsContent>
+
           <TabsContent value="a-vencer" className="mt-4">
             <ReceivableAlertsCard obraId={id} />
             {contasAVencer.length > 0 && (
