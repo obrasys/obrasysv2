@@ -1,5 +1,5 @@
-import { CheckCircle2, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Props {
   icon: React.ReactNode;
@@ -11,39 +11,34 @@ interface Props {
 }
 
 export function OnboardingChecklistItem({ icon, title, benefit, completed, ctaLabel, onAction }: Props) {
-  return (
-    <div
-      className={`flex items-center gap-3.5 p-3.5 rounded-xl border transition-all duration-200 ${
-        completed
-          ? 'bg-green-50/60 border-green-200/50 dark:bg-green-950/20 dark:border-green-800/30'
-          : 'bg-card border-border hover:border-primary/30 hover:shadow-sm'
-      }`}
-    >
-      <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-          completed
-            ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
-            : 'bg-primary/10 text-primary'
-        }`}
+  if (completed) {
+    return (
+      <motion.div
+        initial={{ scale: 0.98 }}
+        animate={{ scale: 1 }}
+        className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
       >
-        {completed ? <CheckCircle2 className="w-5 h-5" /> : icon}
+        <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+          <Check className="w-3 h-3 text-primary" />
+        </div>
+        <span className="text-xs text-muted-foreground">{title}</span>
+      </motion.div>
+    );
+  }
+
+  return (
+    <button
+      onClick={onAction}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/60 bg-card hover:border-primary/25 hover:bg-primary/[0.02] transition-all duration-200 group text-left"
+    >
+      <div className="w-8 h-8 rounded-lg bg-primary/8 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/12 transition-colors">
+        {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <h4
-          className={`text-sm font-semibold ${
-            completed ? 'text-green-700 dark:text-green-400 line-through' : 'text-foreground'
-          }`}
-        >
-          {title}
-        </h4>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{benefit}</p>
+        <h4 className="text-[13px] font-medium text-foreground leading-tight">{title}</h4>
+        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{benefit}</p>
       </div>
-      {!completed && (
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs gap-1" onClick={onAction}>
-          {ctaLabel}
-          <ChevronRight className="w-3 h-3" />
-        </Button>
-      )}
-    </div>
+      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+    </button>
   );
 }

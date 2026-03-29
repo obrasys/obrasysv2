@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PartyPopper, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Sparkles, X, ChevronDown, ChevronUp, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { OnboardingChecklistItem } from './OnboardingChecklistItem';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface ChecklistStep {
   key: string;
@@ -24,110 +23,170 @@ interface Props {
   onDismiss: () => void;
 }
 
+function AnimatedProgress({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => setDisplay(value), 100);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  return (
+    <div className="relative h-1.5 w-full rounded-full bg-primary/10 overflow-hidden">
+      <motion.div
+        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/70"
+        initial={{ width: 0 }}
+        animate={{ width: `${display}%` }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      />
+    </div>
+  );
+}
+
 export function OnboardingProgressPanel({ steps, percentage, isMinActivation, onDismiss }: Props) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
   const completedCount = steps.filter((s) => s.completed).length;
 
-  // Success state
+  // ── Elegant completion state ──
   if (isMinActivation) {
     return (
-      <Card className="border-green-200/60 bg-gradient-to-r from-green-50/80 via-background to-background dark:from-green-950/20 dark:border-green-800/30">
-        <CardContent className="py-5 flex flex-col sm:flex-row items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center shrink-0">
-            <PartyPopper className="w-6 h-6 text-green-600 dark:text-green-400" />
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="relative overflow-hidden rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.04] via-background to-background"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.06),transparent_60%)]" />
+        <div className="relative flex items-center gap-4 px-5 py-3.5">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4.5 h-4.5 text-primary" />
           </div>
-          <div className="flex-1 text-center sm:text-left">
-            <h3 className="font-display text-base font-bold text-foreground">
-              A sua operação já está em marcha no Obra Sys
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Agora pode aprofundar orçamento, execução e controlo à medida que a obra evolui.
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Operação ativa — está pronto para gerir a obra
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Continue a explorar orçamentos, equipa e controlo financeiro.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={onDismiss}>
-            Ver dashboard completo
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-xs text-muted-foreground hover:text-foreground h-7"
+            onClick={onDismiss}
+          >
+            Fechar
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     );
   }
 
-  const pendingSteps = steps.filter((s) => !s.completed);
-  const visiblePending = pendingSteps.slice(0, 3);
+  // Only show up to 3 items total (completed items condensed, then pending)
+  const completedSteps = steps.filter(s => s.completed);
+  const pendingSteps = steps.filter(s => !s.completed);
+  const visibleItems = [...completedSteps, ...pendingSteps].slice(0, 3);
+
+  // Find the first pending step for the primary CTA
+  const nextStep = pendingSteps[0];
 
   return (
-    <Card className="border-primary/15 bg-gradient-to-br from-background via-background to-primary/[0.03] shadow-sm">
-      <CardContent className="py-5 px-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <h3 className="font-display text-base md:text-lg font-bold text-foreground">
-              Está a poucos passos de ter a obra sob controlo
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Centralize o essencial agora e evolua à medida que a sua operação cresce.
-            </p>
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="relative overflow-hidden rounded-xl border border-primary/12 bg-gradient-to-br from-background via-background to-primary/[0.03]"
+    >
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+
+      <div className="px-5 py-3.5">
+        {/* Compact header row */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-sm font-bold text-foreground truncate">
+                  Configure a sua operação
+                </h3>
+                <span className="text-xs font-semibold text-primary tabular-nums">
+                  {Math.round(percentage)}%
+                </span>
+              </div>
+              <div className="mt-1.5">
+                <AnimatedProgress value={percentage} />
+              </div>
+            </div>
           </div>
+
           <div className="flex items-center gap-1 shrink-0">
+            {nextStep && (
+              <Button
+                size="sm"
+                className="h-7 text-xs font-semibold gap-1 bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20"
+                onClick={() => navigate(nextStep.route)}
+              >
+                {nextStep.ctaLabel}
+                <ArrowRight className="w-3 h-3" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground"
+              className="h-7 w-7 text-muted-foreground/60 hover:text-foreground"
               onClick={() => setCollapsed((c) => !c)}
             >
-              {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              {collapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 text-muted-foreground/40 hover:text-foreground"
               onClick={onDismiss}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-            <span>{completedCount} de {steps.length} passos concluídos</span>
-            <span className="font-semibold text-primary">{Math.round(percentage)}%</span>
-          </div>
-          <Progress value={percentage} className="h-2.5" />
-        </div>
-
-        {/* Checklist items */}
-        {!collapsed && (
-          <div className="mt-5 space-y-2.5">
-            {/* Show completed first, then pending */}
-            {steps.filter(s => s.completed).map((step) => (
-              <OnboardingChecklistItem
-                key={step.key}
-                icon={step.icon}
-                title={step.title}
-                benefit={step.benefit}
-                completed={true}
-                ctaLabel={step.ctaLabel}
-                onAction={() => navigate(step.route)}
-              />
-            ))}
-            {visiblePending.map((step) => (
-              <OnboardingChecklistItem
-                key={step.key}
-                icon={step.icon}
-                title={step.title}
-                benefit={step.benefit}
-                completed={false}
-                ctaLabel={step.ctaLabel}
-                onAction={() => navigate(step.route)}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        {/* Checklist — max 3 items */}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 space-y-1.5">
+                {visibleItems.map((step, i) => (
+                  <motion.div
+                    key={step.key}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.06, duration: 0.25 }}
+                  >
+                    <OnboardingChecklistItem
+                      icon={step.icon}
+                      title={step.title}
+                      benefit={step.benefit}
+                      completed={step.completed}
+                      ctaLabel={step.ctaLabel}
+                      onAction={() => navigate(step.route)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              {pendingSteps.length > 3 && (
+                <p className="text-[11px] text-muted-foreground/60 mt-2 text-center">
+                  +{pendingSteps.length - 3} passos restantes
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
