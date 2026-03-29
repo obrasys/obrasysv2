@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,21 +35,31 @@ interface SubempreiteiroFormProps {
 }
 
 export function SubempreiteiroForm({ open, onOpenChange, subempreiteiro, onSubmit, isLoading }: SubempreiteiroFormProps) {
-  const [fotoUrl, setFotoUrl] = useState<string>(subempreiteiro?.foto_url || '');
+  const [fotoUrl, setFotoUrl] = useState<string>('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: subempreiteiro?.nome || '',
-      nif: subempreiteiro?.nif || '',
-      email: subempreiteiro?.email || '',
-      telefone: subempreiteiro?.telefone || '',
-      especialidade: subempreiteiro?.especialidade || '',
-      endereco: subempreiteiro?.endereco || '',
-      ativo: subempreiteiro?.ativo ?? true,
-      observacoes: subempreiteiro?.observacoes || '',
+      nome: '', nif: '', email: '', telefone: '',
+      especialidade: '', endereco: '', ativo: true, observacoes: '',
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        nome: subempreiteiro?.nome || '',
+        nif: subempreiteiro?.nif || '',
+        email: subempreiteiro?.email || '',
+        telefone: subempreiteiro?.telefone || '',
+        especialidade: subempreiteiro?.especialidade || '',
+        endereco: subempreiteiro?.endereco || '',
+        ativo: subempreiteiro?.ativo ?? true,
+        observacoes: subempreiteiro?.observacoes || '',
+      });
+      setFotoUrl(subempreiteiro?.foto_url || '');
+    }
+  }, [open, subempreiteiro]);
 
   const initials = (form.watch('nome') || 'S')
     .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -48,19 +48,30 @@ export function EquipaMembroForm({ open, onOpenChange, membro, subempreiteiros, 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: membro?.nome || '',
-      cargo: membro?.cargo || '',
-      email: membro?.email || '',
-      telefone: membro?.telefone || '',
-      nif: membro?.nif || '',
-      data_admissao: membro?.data_admissao || '',
-      salario_base: membro?.salario_base || undefined,
-      tipo_contrato: membro?.tipo_contrato || '',
-      subempreiteiro_id: membro?.subempreiteiro_id || '',
-      ativo: membro?.ativo ?? true,
-      observacoes: membro?.observacoes || '',
+      nome: '', cargo: '', email: '', telefone: '', nif: '',
+      data_admissao: '', salario_base: undefined, tipo_contrato: '',
+      subempreiteiro_id: '', ativo: true, observacoes: '',
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        nome: membro?.nome || '',
+        cargo: membro?.cargo || '',
+        email: membro?.email || '',
+        telefone: membro?.telefone || '',
+        nif: membro?.nif || '',
+        data_admissao: membro?.data_admissao || '',
+        salario_base: membro?.salario_base || undefined,
+        tipo_contrato: membro?.tipo_contrato || '',
+        subempreiteiro_id: membro?.subempreiteiro_id || '',
+        ativo: membro?.ativo ?? true,
+        observacoes: membro?.observacoes || '',
+      });
+      setFotoUrl(membro?.foto_url || '');
+    }
+  }, [open, membro]);
 
   const initials = (form.watch('nome') || 'M')
     .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
