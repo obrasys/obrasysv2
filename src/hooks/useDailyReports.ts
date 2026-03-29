@@ -354,3 +354,58 @@ export function useDailyReportQualitySafety(reportId?: string) {
 
   return { quality, safety, saveQuality, saveSafety };
 }
+
+export function useDailyReportProductions(reportId?: string) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: productions, isLoading } = useQuery({
+    queryKey: ['daily-report-productions', reportId],
+    queryFn: async () => {
+      if (!reportId) return [];
+      const { data, error } = await supabase
+        .from('daily_report_productions')
+        .select('*, schedule_task:project_schedule_tasks(id, name, wbs_code)')
+        .eq('daily_report_id', reportId)
+        .order('created_at');
+      if (error) throw error;
+      return data as (DailyReportProduction & { schedule_task?: { id: string; name: string; wbs_code: string } })[];
+    },
+    enabled: !!user && !!reportId,
+  });
+
+  const addProduction = useMutation({
+    mutationFn: async (data: Partial<DailyReportProduction> & { daily_report_id: string; obra_id: string; service_name: string }) => {
+      if (!user) throw new Error('Não autenticado');
+      const { error } = await supabase.from('daily_report_productions').insert({ ...data, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['daily-report-productions', reportId] });
+      toast({ title: 'Produção registada' });
+    },
+    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+  });
+
+  const updateProduction = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<DailyReportProduction> }) => {
+      const { error } = await supabase.from('daily_report_productions').update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily-report-productions', reportId] }),
+  });
+
+  const removeProduction = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_report_productions').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['daily-report-productions', reportId] });
+      toast({ title: 'Produção removida' });
+    },
+  });
+
+  return { productions, isLoading, addProduction, updateProduction, removeProduction };
+}
