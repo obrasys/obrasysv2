@@ -1,16 +1,19 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
-import { LogOut } from 'lucide-react';
+import { LogOut, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { useClientAccess } from '@/hooks/useClientAccess';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
+  const { hasClientAccess } = useClientAccess();
+  const showPortalLink = hasClientAccess && profile?.role !== 'cliente';
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
@@ -90,6 +93,23 @@ export function Sidebar() {
           </div>
         )}
       </nav>
+
+      {/* Portal do Cliente link for multi-role users */}
+      {showPortalLink && (
+        <div className="px-3 pt-2">
+          <button
+            onClick={() => navigate('/portal')}
+            className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+              isActive('/portal')
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+            }`}
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            <span>Portal do Cliente</span>
+          </button>
+        </div>
+      )}
 
       {/* Sign out */}
       <div className="px-3 pb-4 pt-2">
