@@ -93,8 +93,9 @@ export function WorkerCreateModal({
 
   const handleSave = async () => {
     // Sync hourly_rate to default_hourly_cost for compatibility
+    const { observacoes, ...rest } = form;
     const payload = {
-      ...form,
+      ...rest,
       default_hourly_cost: form.compensation_type === "hourly" ? form.hourly_rate : form.default_hourly_cost,
       employee_code: form.employee_code || null,
       nif: form.nif || null,
@@ -102,7 +103,7 @@ export function WorkerCreateModal({
       email: form.email || null,
       role: form.role || null,
       start_date: form.start_date || null,
-      end_date: form.end_date || null,
+      end_date: null,
     };
     const result = await onSave(payload);
     // Reset form
