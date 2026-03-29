@@ -30,7 +30,7 @@ const CriarConta = () => {
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { nome: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { nome: "", email: "", telefone: "", empresa: "", nif: "", password: "", confirmPassword: "" },
   });
 
   const handleSignUp = async (data: SignUpFormData) => {

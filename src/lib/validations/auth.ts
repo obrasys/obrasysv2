@@ -46,6 +46,9 @@ export const loginSchema = z.object({
 export const signUpSchema = z.object({
   nome: nomeSchema,
   email: emailSchema,
+  telefone: z.string().min(9, "O telefone deve ter pelo menos 9 dígitos").max(20, "Telefone inválido"),
+  empresa: z.string().max(150, "O nome da empresa não pode exceder 150 caracteres").optional().or(z.literal("")),
+  nif: z.string().max(20, "NIF inválido").optional().or(z.literal("")),
   password: passwordSchema,
   confirmPassword: z.string().min(1, "Confirme a sua password"),
 }).refine((data) => data.password === data.confirmPassword, {
