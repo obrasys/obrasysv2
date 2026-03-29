@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileText, Users, ClipboardList, PartyPopper, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { PartyPopper, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { OnboardingChecklistItem } from './OnboardingChecklistItem';
-import { useState } from 'react';
 
 export interface ChecklistStep {
   key: string;
