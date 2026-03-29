@@ -10,8 +10,10 @@ import { APP_VERSION } from '@/config/version';
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
+  const { hasClientAccess } = useClientAccess();
+  const showPortalLink = hasClientAccess && profile?.role !== 'cliente';
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
