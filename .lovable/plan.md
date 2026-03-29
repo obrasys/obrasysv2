@@ -1,87 +1,116 @@
 
 
-# Auditoria Geral do Sistema ObraSys
+# Redesign Completo do Onboarding — Obra Sys
 
-## Resumo da Auditoria
+## Visão Geral
 
-Analisei rotas, componentes, hooks, edge functions, logs de consola e ligações entre módulos. Seguem os problemas identificados organizados por severidade.
-
----
-
-## ERROS ATIVOS (Severidade Alta)
-
-### 1. Warning React: forwardRef em ConformidadeIndex
-- **Problema**: `Dialog` e `AlertDialog` do Radix estão a receber refs em componentes funcionais sem `forwardRef`, gerando warnings na consola.
-- **Ficheiro**: `src/pages/conformidade/Index.tsx`
-- **Correção**: Garantir que os componentes `Dialog` e `AlertDialog` estejam a ser usados com estado controlado (`open`/`onOpenChange`) em vez de refs.
-
-### 2. CORS incompleto em `process-daily-report`
-- **Problema**: Os headers CORS estão incompletos (`'authorization, x-client-info, apikey, content-type'`), faltam os headers de plataforma/runtime usados pelo cliente Supabase.
-- **Ficheiro**: `supabase/functions/process-daily-report/index.ts`
-- **Correção**: Atualizar para incluir `x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version`.
-
-### 3. `create-client-portal-access` tenta mudar role de utilizadores existentes
-- **Problema**: Quando um utilizador existente (ex: gestor) é convidado, o `user_metadata` passa `role: 'cliente'` na criação. Para utilizadores existentes, isto não é aplicado, mas para novos utilizadores criados com `created_by`, o trigger `handle_new_user` pode atribuir o role errado.
-- **Ficheiro**: `supabase/functions/create-client-portal-access/index.ts` (linha 135)
-- **Correção**: Não passar `role: 'cliente'` no `user_metadata` para evitar conflitos. Usar apenas `client_obra_access` para controlo de acesso ao portal.
+Substituir o onboarding atual (modal welcome + cards checklist separados) por uma experiência em 2 fases: **Wizard guiado full-screen** na primeira sessão + **Painel de progresso compacto único** no dashboard.
 
 ---
 
-## CÓDIGO ÓRFÃO (Severidade Média)
+## 1. Migração de Base de Dados
 
-### 4. Hook `useFiscalReports` nunca importado
-- **Ficheiro**: `src/hooks/useFiscalReports.ts` (159 linhas)
-- **Status**: Exporta `useFiscalReports()` mas nenhum componente o importa.
-- **Ação**: Remover ou ligar a uma página de relatórios fiscais.
+Adicionar colunas à tabela `user_onboarding_progress`:
 
-### 5. Hook `useOrcamentoEssencial` nunca importado
-- **Ficheiro**: `src/hooks/useOrcamentoEssencial.ts` (306 linhas)
-- **Status**: Exporta `useOrcamentoEssencial()` mas nenhum componente o importa. A página `Essencial.tsx` provavelmente usa uma versão v2 diferente.
-- **Ação**: Verificar se é código legado e remover.
+```sql
+ALTER TABLE user_onboarding_progress
+  ADD COLUMN IF NOT EXISTS wizard_status text DEFAULT 'not_started',    -- not_started | in_progress | completed | skipped
+  ADD COLUMN IF NOT EXISTS wizard_current_step integer DEFAULT 0,       -- 0-4
+  ADD COLUMN IF NOT EXISTS selected_goal text,                          -- organizar_obra | criar_orcamento | acompanhar_execucao | centralizar_equipa
+  ADD COLUMN IF NOT EXISTS selected_role text;                          -- diretor | gestor_obra | orcamentista | tecnico_fiscal | outro
+```
 
----
-
-## INCONSISTÊNCIAS (Severidade Média)
-
-### 6. `process-daily-report` usa `esm.sh` em vez de `npm:`
-- **Problema**: `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'` enquanto outras funções usam `npm:@supabase/supabase-js@2`. Isto pode causar incompatibilidades de versão.
-- **Ficheiro**: `supabase/functions/process-daily-report/index.ts`
-- **Correção**: Normalizar para `npm:@supabase/supabase-js@2`.
-
-### 7. `ManagerRoute` não bloqueia role `supplier`
-- **Problema**: O `ManagerRoute` só redireciona `cliente` para `/portal`. Um utilizador com role `supplier` pode aceder a todas as rotas de gestor.
-- **Ficheiro**: `src/components/portal/ManagerRoute.tsx`
-- **Correção**: Adicionar verificação para `supplier` e redirecionar para `/fornecedor/dashboard`.
-
-### 8. `useClientAccess` query desativada para role `cliente`
-- **Problema**: O hook tem `enabled: !!user?.id && profile?.role !== 'cliente'` mas retorna `false` por default quando desativado, o que é inconsistente pois clientes deveriam ter `hasClientAccess = true`.
-- **Ficheiro**: `src/hooks/useClientAccess.ts`
-- **Correção**: Retornar `true` diretamente quando `profile?.role === 'cliente'`, sem depender do `useQuery`.
+A função `sync_onboarding_progress` mantém-se (verifica dados reais), mas o wizard tem estado próprio.
 
 ---
 
-## MELHORIAS DE ROBUSTEZ (Severidade Baixa)
+## 2. Novos Componentes
 
-### 9. Sidebar já mostra "Portal do Cliente" corretamente
-- O link condicional foi implementado corretamente na última alteração.
+### Wizard (Fase 1)
+- **`OnboardingWizard.tsx`** — Container principal com stepper visual (4 dots/passos), controla navegação entre steps, persiste estado no DB a cada transição. Layout centralizado, max-w-2xl, fundo branco com sombra premium.
+- **`OnboardingStepWelcome.tsx`** — Passo 1: headline "Organize a sua primeira obra em minutos", CTAs "Começar" / "Explorar primeiro"
+- **`OnboardingStepGoal.tsx`** — Passo 2: 4 tiles selecionáveis com ícone + microcopy de benefício
+- **`OnboardingStepRole.tsx`** — Passo 3: 5 opções de perfil como botões radio visuais
+- **`OnboardingStepCreateProject.tsx`** — Passo 4: formulário mínimo inline (nome, cliente, localização + opcionais tipo/data início). Usa `useObras().createObra` diretamente. Após sucesso mostra estado de confirmação com CTAs "Ir para o dashboard" / "Criar orçamento agora"
 
-### 10. Falta rota `/admin/migracao` no menu de navegação
-- **Problema**: A rota existe em `App.tsx` mas não aparece em `ADMIN_NAV_ITEMS` no `navigation.ts`.
-- **Correção**: Adicionar item de navegação ou remover a rota se não for mais necessária.
+### Checklist Dashboard (Fase 2)
+- **`OnboardingProgressPanel.tsx`** — Container único com título orientado a resultado, barra de progresso com pesos (40/25/15/20%), até 3 próximos passos visíveis, reordenação dinâmica baseada no `selected_goal`, botão minimizar/fechar. Quando ativação mínima atingida (obra + 1 ação), transforma-se em estado de sucesso.
+- **`OnboardingChecklistItem.tsx`** — Item individual: ícone, título, microcopy de benefício, badge de estado (pendente/concluído), CTA de ação
+
+### Mantidos (sem alteração)
+- `OnboardingCompletionModal.tsx` — reutilizado no estado de conclusão total
+
+### Removidos
+- `OnboardingWelcomeModal.tsx` — substituído pelo Step 1 do wizard
+- `OnboardingChecklist.tsx` — substituído pelo ProgressPanel
+- `OnboardingInactiveReminder.tsx` — integrado no ProgressPanel
 
 ---
 
-## Plano de Correções
+## 3. Hook `useOnboarding` — Reescrita
 
-| # | Correção | Ficheiro(s) |
-|---|---------|-------------|
-| 1 | Corrigir ref warnings no Conformidade | `src/pages/conformidade/Index.tsx` |
-| 2 | Atualizar CORS do process-daily-report | `supabase/functions/process-daily-report/index.ts` |
-| 3 | Remover `role: 'cliente'` do metadata na criação de portal | `supabase/functions/create-client-portal-access/index.ts` |
-| 4 | Remover hook órfão `useFiscalReports` | `src/hooks/useFiscalReports.ts` |
-| 5 | Remover hook órfão `useOrcamentoEssencial` | `src/hooks/useOrcamentoEssencial.ts` |
-| 6 | Normalizar import esm.sh → npm: | `supabase/functions/process-daily-report/index.ts` |
-| 7 | Bloquear suppliers no ManagerRoute | `src/components/portal/ManagerRoute.tsx` |
-| 8 | Corrigir default de useClientAccess para clientes | `src/hooks/useClientAccess.ts` |
-| 9 | Adicionar Migração ao menu admin (ou remover rota) | `src/config/navigation.ts` |
+Novo estado exposto:
+```ts
+{
+  progress,                    // dados DB completos
+  loading,
+  wizardStatus,               // not_started | in_progress | completed | skipped
+  showWizard,                 // wizard_status !== completed && !== skipped
+  showProgressPanel,          // wizard done/skipped && !dismissed && !minActivation
+  showSuccessState,           // ativação mínima atingida (obra + 1 outro)
+  percentage,                 // com pesos 40/25/15/20
+  orderedSteps,               // reordenados por selected_goal
+  // actions
+  updateWizardStep,           // persiste step atual + dados
+  completeWizard,
+  skipWizard,
+  dismissPanel,
+  refreshProgress,
+}
+```
+
+Percentagem com pesos: obra=40%, orçamento=25%, equipa=15%, RDO=20%.
+
+Reordenação: se `selected_goal === 'criar_orcamento'`, orçamento sobe para posição 1 (após obra se já criada).
+
+---
+
+## 4. Dashboard.tsx — Integração
+
+- Remover imports de `OnboardingWelcomeModal`, `OnboardingChecklist`, `OnboardingInactiveReminder`
+- Se `showWizard`: renderizar `<OnboardingWizard />` como overlay/secção principal acima do conteúdo do dashboard (não bloqueia navegação sidebar)
+- Se `showProgressPanel`: renderizar `<OnboardingProgressPanel />` como primeiro bloco no dashboard
+- Se `showSuccessState`: renderizar estado de sucesso no ProgressPanel
+- Manter engagement banners e KPIs abaixo
+
+---
+
+## 5. Design Visual
+
+- Wizard: container branco centralizado, `rounded-2xl shadow-xl border`, stepper com circles numerados + linha conectora, azul `#00679d` como cor de destaque
+- Progress Panel: card único `border-primary/20`, gradient subtil, barra de progresso azul, items com hover suave
+- Tipografia Red Hat Display nos headlines
+- Ícones Lucide consistentes: Building2, FileText, Users, ClipboardList
+- Mobile responsive: wizard usa `max-w-lg` no mobile, tiles empilham verticalmente
+
+---
+
+## Ficheiros Afetados
+
+| Ação | Ficheiro |
+|------|---------|
+| Criar | `src/components/onboarding/OnboardingWizard.tsx` |
+| Criar | `src/components/onboarding/OnboardingStepWelcome.tsx` |
+| Criar | `src/components/onboarding/OnboardingStepGoal.tsx` |
+| Criar | `src/components/onboarding/OnboardingStepRole.tsx` |
+| Criar | `src/components/onboarding/OnboardingStepCreateProject.tsx` |
+| Criar | `src/components/onboarding/OnboardingProgressPanel.tsx` |
+| Criar | `src/components/onboarding/OnboardingChecklistItem.tsx` |
+| Reescrever | `src/hooks/useOnboarding.ts` |
+| Editar | `src/pages/Dashboard.tsx` |
+| Editar | `src/components/onboarding/index.ts` |
+| Remover | `src/components/onboarding/OnboardingWelcomeModal.tsx` |
+| Remover | `src/components/onboarding/OnboardingChecklist.tsx` |
+| Remover | `src/components/onboarding/OnboardingInactiveReminder.tsx` |
+| Migração DB | Adicionar colunas wizard_status, wizard_current_step, selected_goal, selected_role |
 
