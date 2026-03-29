@@ -27,7 +27,7 @@ import {
   type TipoOperacaoFiscal,
 } from '@/types/fiscal';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const IVA_REGIMES = [
   { value: 23, label: 'IVA Normal', description: '23% — Regime geral' },
@@ -71,12 +71,8 @@ export function TotalsAdjustments({
     tipo_operacao: tipoOperacao || null,
   });
 
-  // Auto-update VAT when fiscal context changes
-  useEffect(() => {
-    if (fiscalResult && (tipoObra || tipoCliente || tipoOperacao)) {
-      onVatChange(fiscalResult.taxa_iva);
-    }
-  }, [fiscalResult?.taxa_iva, tipoObra, tipoCliente, tipoOperacao]);
+  // Show fiscal suggestion but do NOT auto-apply
+  // User must click to apply the suggested rate
 
   // Calculate with margin (real margin on sale price)
   const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
@@ -248,10 +244,24 @@ export function TotalsAdjustments({
         {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
           <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">Regime determinado</p>
+              <p className="text-xs text-muted-foreground">Regime sugerido</p>
               <p className="text-sm font-medium text-foreground">{fiscalResult.regime_nome}</p>
             </div>
-            <span className="text-2xl font-black text-primary tabular-nums">{fiscalResult.taxa_iva}%</span>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-black text-primary tabular-nums">{fiscalResult.taxa_iva}%</span>
+              {vatPercent !== fiscalResult.taxa_iva && (
+                <button
+                  type="button"
+                  onClick={() => onVatChange(fiscalResult.taxa_iva)}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Aplicar
+                </button>
+              )}
+              {vatPercent === fiscalResult.taxa_iva && (
+                <Badge variant="secondary" className="text-[10px]">Aplicado</Badge>
+              )}
+            </div>
           </div>
         )}
 
