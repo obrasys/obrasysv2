@@ -1,14 +1,26 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { FileText, Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { FileText, FileStack, Loader2, Send } from 'lucide-react';
 import { type BudgetClientInfo } from '@/types/orcamento-essencial';
+
+export type BudgetFormat = 'tecnico' | 'comercial';
 
 interface Props {
   data: BudgetClientInfo;
   onChange: (data: BudgetClientInfo) => void;
-  onSave: () => void;
+  onSave: (format: BudgetFormat) => void;
   isLoading?: boolean;
 }
 
