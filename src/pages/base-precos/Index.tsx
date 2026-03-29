@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import {
   Table,
   TableBody,
@@ -18,18 +17,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Database,
   Search,
-  Filter,
   ArrowUpDown,
   Plus,
   Loader2,
+  Sparkles,
+  TrendingUp,
+  Package,
+  BarChart3,
+  ShieldCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PriceConfidenceBadge } from "@/components/base-precos";
+import { AIPriceSearchPanel } from "@/components/base-precos/AIPriceSearchPanel";
 import {
   useMaterialPriceReferences,
   useMaterialCategories,
@@ -46,22 +51,21 @@ export default function BasePrecosIndex() {
   });
   const [sortBy, setSortBy] = useState<"preco" | "confidence">("preco");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [activeTab, setActiveTab] = useState("pesquisa-ai");
 
   const { data: priceRefs, isLoading } = useMaterialPriceReferences(filters);
   const { data: categories } = useMaterialCategories();
   const { data: regions } = useRegions();
 
-  // Ordenar os resultados
   const sortedPrices = [...(priceRefs || [])].sort((a, b) => {
     if (sortBy === "preco") {
       return sortOrder === "asc"
         ? a.preco_medio - b.preco_medio
         : b.preco_medio - a.preco_medio;
-    } else {
-      return sortOrder === "asc"
-        ? a.confidence_score - b.confidence_score
-        : b.confidence_score - a.confidence_score;
     }
+    return sortOrder === "asc"
+      ? a.confidence_score - b.confidence_score
+      : b.confidence_score - a.confidence_score;
   });
 
   const toggleSort = (field: "preco" | "confidence") => {
@@ -73,37 +77,67 @@ export default function BasePrecosIndex() {
     }
   };
 
+  // Stats
+  const totalMaterials = priceRefs?.length || 0;
+  const avgConfidence = totalMaterials > 0
+    ? Math.round((priceRefs || []).reduce((s, p) => s + p.confidence_score, 0) / totalMaterials)
+    : 0;
+  const highConfidence = (priceRefs || []).filter(p => p.confidence_score >= 80).length;
+  const totalCategories = new Set((priceRefs || []).map(p => p.material?.category?.nome)).size;
+
   return (
-    <AppLayout 
+    <AppLayout
       title="Base de Preços"
-      subtitle="Preços de referência para materiais de construção"
+      subtitle="Pesquisa inteligente e referências de materiais de construção"
       actions={
         <Link to="/base-precos/inserir">
-          <Button>
+          <Button size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Inserir Preço
           </Button>
         </Link>
       }
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-5">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <KpiMini icon={Package} label="Materiais" value={totalMaterials} />
+          <KpiMini icon={BarChart3} label="Confiança Média" value={`${avgConfidence}%`} />
+          <KpiMini icon={ShieldCheck} label="Alta Confiança" value={highConfidence} />
+          <KpiMini icon={TrendingUp} label="Categorias" value={totalCategories} />
+        </div>
 
-        {/* Filtros */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Pesquisa */}
-              <div className="relative">
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full grid grid-cols-2 max-w-md">
+            <TabsTrigger value="pesquisa-ai" className="flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              Pesquisa Axia™
+            </TabsTrigger>
+            <TabsTrigger value="base-dados" className="flex items-center gap-2">
+              <Database className="h-3.5 w-3.5" />
+              Base de Dados
+            </TabsTrigger>
+          </TabsList>
+
+          {/* AI Search Tab */}
+          <TabsContent value="pesquisa-ai" className="mt-4">
+            <Card>
+              <CardContent className="pt-5">
+                <AIPriceSearchPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Database Tab */}
+          <TabsContent value="base-dados" className="mt-4 space-y-4">
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-3">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Pesquisar material..."
-                  className="pl-10"
+                  className="pl-10 h-9"
                   value={filters.search}
                   onChange={(e) =>
                     setFilters({ ...filters, search: e.target.value })
@@ -111,7 +145,6 @@ export default function BasePrecosIndex() {
                 />
               </div>
 
-              {/* Categoria */}
               <Select
                 value={filters.category_id || "all"}
                 onValueChange={(v) =>
@@ -121,11 +154,11 @@ export default function BasePrecosIndex() {
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-[180px] h-9">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas categorias</SelectItem>
                   {(categories || []).map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.nome}
@@ -134,7 +167,6 @@ export default function BasePrecosIndex() {
                 </SelectContent>
               </Select>
 
-              {/* Região */}
               <Select
                 value={filters.region_id || "all"}
                 onValueChange={(v) =>
@@ -144,11 +176,11 @@ export default function BasePrecosIndex() {
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-[160px] h-9">
                   <SelectValue placeholder="Região" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as regiões</SelectItem>
+                  <SelectItem value="all">Todas regiões</SelectItem>
                   {(regions || []).map((reg) => (
                     <SelectItem key={reg.id} value={reg.id}>
                       {reg.nome}
@@ -156,140 +188,134 @@ export default function BasePrecosIndex() {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Confiança mínima */}
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">
-                  Confiança mínima: {filters.min_confidence}%
-                </label>
-                <Slider
-                  value={[filters.min_confidence || 0]}
-                  onValueChange={([v]) =>
-                    setFilters({ ...filters, min_confidence: v })
-                  }
-                  max={100}
-                  step={10}
-                />
-              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Tabela de preços */}
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : sortedPrices.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum preço de referência encontrado.</p>
-                <p className="text-sm mt-1">
-                  Os preços são calculados automaticamente a partir dos preços
-                  brutos inseridos.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Material</TableHead>
-                      <TableHead>Unidade</TableHead>
-                      <TableHead>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="-ml-3"
-                          onClick={() => toggleSort("preco")}
-                        >
-                          Preço Médio
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                      <TableHead>P10</TableHead>
-                      <TableHead>P90</TableHead>
-                      <TableHead>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="-ml-3"
-                          onClick={() => toggleSort("confidence")}
-                        >
-                          Confiança
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                      <TableHead>Região</TableHead>
-                      <TableHead>Amostras</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedPrices.map((ref) => (
-                      <TableRow key={ref.id}>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {ref.material?.category?.nome || "-"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {ref.material?.codigo}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {ref.material?.nome}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{ref.material?.unidade_base}</TableCell>
-                        <TableCell className="font-medium">
-                          €{ref.preco_medio.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {ref.preco_p10
-                            ? `€${ref.preco_p10.toFixed(2)}`
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {ref.preco_p90
-                            ? `€${ref.preco_p90.toFixed(2)}`
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <PriceConfidenceBadge
-                            score={ref.confidence_score}
-                            size="sm"
-                          />
-                        </TableCell>
-                        <TableCell>{ref.region?.nome}</TableCell>
-                        <TableCell>{ref.sample_size}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            {/* Price Table */}
+            <Card>
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : sortedPrices.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Database className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="font-medium">Nenhum preço de referência encontrado</p>
+                    <p className="text-sm mt-1">
+                      Use a pesquisa Axia™ para encontrar preços de mercado ou insira manualmente.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="w-[120px]">Categoria</TableHead>
+                          <TableHead>Material</TableHead>
+                          <TableHead className="w-[70px]">Unid.</TableHead>
+                          <TableHead className="w-[110px]">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="-ml-3 h-7 text-xs"
+                              onClick={() => toggleSort("preco")}
+                            >
+                              Preço Médio
+                              <ArrowUpDown className="ml-1 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[80px]">P10</TableHead>
+                          <TableHead className="w-[80px]">P90</TableHead>
+                          <TableHead className="w-[100px]">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="-ml-3 h-7 text-xs"
+                              onClick={() => toggleSort("confidence")}
+                            >
+                              Confiança
+                              <ArrowUpDown className="ml-1 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[100px]">Região</TableHead>
+                          <TableHead className="w-[60px] text-center">N</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sortedPrices.map((ref) => (
+                          <TableRow key={ref.id} className="hover:bg-muted/20">
+                            <TableCell>
+                              <Badge variant="secondary" className="text-[10px] font-normal">
+                                {ref.material?.category?.nome || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">
+                                  {ref.material?.codigo}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {ref.material?.nome}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {ref.material?.unidade_base}
+                            </TableCell>
+                            <TableCell className="font-semibold text-sm">
+                              €{ref.preco_medio.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {ref.preco_p10 ? `€${ref.preco_p10.toFixed(2)}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {ref.preco_p90 ? `€${ref.preco_p90.toFixed(2)}` : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <PriceConfidenceBadge
+                                score={ref.confidence_score}
+                                size="sm"
+                              />
+                            </TableCell>
+                            <TableCell className="text-xs">{ref.region?.nome}</TableCell>
+                            <TableCell className="text-xs text-center text-muted-foreground">
+                              {ref.sample_size}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Legenda */}
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-          <span>
-            <strong>P10:</strong> Preço mínimo (percentil 10)
-          </span>
-          <span>
-            <strong>P90:</strong> Preço máximo (percentil 90)
-          </span>
-          <span>
-            <strong>Confiança:</strong> Baseada em amostras, recência e
-            consistência
-          </span>
-        </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+              <span><strong>P10:</strong> Percentil 10 (mínimo)</span>
+              <span><strong>P90:</strong> Percentil 90 (máximo)</span>
+              <span><strong>N:</strong> Nº de amostras</span>
+              <span><strong>Confiança:</strong> Baseada em amostras, recência e consistência</span>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
+  );
+}
+
+function KpiMini({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+  return (
+    <Card className="border-border">
+      <CardContent className="p-3 flex items-center gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground truncate">{label}</p>
+          <p className="text-lg font-bold text-foreground leading-tight">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
