@@ -72,7 +72,7 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                 return (
                   <div
                     key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_80px_32px] gap-2 items-center px-3 py-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center px-3 py-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
                   >
                     <span className="text-sm text-foreground truncate">{item.name}</span>
                     <span className="text-xs text-muted-foreground text-center">{item.unit}</span>

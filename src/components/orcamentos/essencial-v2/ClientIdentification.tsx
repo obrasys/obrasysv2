@@ -116,11 +116,61 @@ export function ClientIdentification({ data, onChange, onSave, isLoading }: Prop
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button size="lg" className="h-12 px-8 text-base font-semibold gap-2" onClick={onSave} disabled={isLoading}>
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-          Guardar & Ver PDF
+        <Button size="lg" className="h-12 px-8 text-base font-semibold gap-2" onClick={() => setShowFormatDialog(true)} disabled={isLoading}>
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          Guardar & Enviar
         </Button>
       </div>
+
+      {/* Format selection dialog */}
+      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Formato do orçamento
+            </DialogTitle>
+            <DialogDescription>
+              Escolha o formato do documento antes de guardar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <RadioGroup value={selectedFormat} onValueChange={(v) => setSelectedFormat(v as BudgetFormat)} className="grid grid-cols-2 gap-3 py-2">
+            <label
+              className={`flex items-center gap-2.5 rounded-lg border p-4 cursor-pointer transition-all ${selectedFormat === 'tecnico' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}
+            >
+              <RadioGroupItem value="tecnico" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileStack className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Técnico</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">Capítulos, artigos, quantidades e preços unitários</p>
+              </div>
+            </label>
+            <label
+              className={`flex items-center gap-2.5 rounded-lg border p-4 cursor-pointer transition-all ${selectedFormat === 'comercial' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}
+            >
+              <RadioGroupItem value="comercial" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Comercial</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">Resumo narrativo, sem detalhe técnico</p>
+              </div>
+            </label>
+          </RadioGroup>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFormatDialog(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmSend} disabled={isLoading} className="gap-2">
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
