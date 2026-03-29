@@ -54,6 +54,7 @@ export function useSubempreiteiros() {
         endereco: formData.endereco || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .select()
       .single();
@@ -80,6 +81,7 @@ export function useSubempreiteiros() {
         endereco: formData.endereco || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .eq('id', id);
 
@@ -166,6 +168,7 @@ export function useEquipamentos() {
         localizacao: formData.localizacao || null,
         obra_id: formData.obra_id || null,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .select()
       .single();
@@ -196,6 +199,7 @@ export function useEquipamentos() {
         localizacao: formData.localizacao || null,
         obra_id: formData.obra_id || null,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .eq('id', id);
 
@@ -282,6 +286,7 @@ export function useEquipaMembros() {
         subempreiteiro_id: formData.subempreiteiro_id || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .select()
       .single();
@@ -311,6 +316,7 @@ export function useEquipaMembros() {
         subempreiteiro_id: formData.subempreiteiro_id || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .eq('id', id);
 

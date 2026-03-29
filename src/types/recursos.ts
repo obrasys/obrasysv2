@@ -10,6 +10,7 @@ export interface Subempreiteiro {
   endereco?: string | null;
   ativo: boolean;
   observacoes?: string | null;
+  foto_url?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface SubempreiteiroFormData {
   endereco?: string;
   ativo?: boolean;
   observacoes?: string;
+  foto_url?: string;
 }
 
 // Equipamentos (Equipment)
@@ -43,6 +45,7 @@ export interface Equipamento {
   localizacao?: string | null;
   obra_id?: string | null;
   observacoes?: string | null;
+  foto_url?: string | null;
   created_at: string;
   updated_at: string;
   // Joined fields
@@ -62,6 +65,7 @@ export interface EquipamentoFormData {
   localizacao?: string;
   obra_id?: string;
   observacoes?: string;
+  foto_url?: string;
 }
 
 // Equipa (Team Members)
@@ -82,6 +86,7 @@ export interface EquipaMembro {
   obra_atual_id?: string | null;
   ativo: boolean;
   observacoes?: string | null;
+  foto_url?: string | null;
   created_at: string;
   updated_at: string;
   // Joined fields
@@ -101,6 +106,7 @@ export interface EquipaMembroFormData {
   subempreiteiro_id?: string;
   ativo?: boolean;
   observacoes?: string;
+  foto_url?: string;
 }
 
 // Config constants
