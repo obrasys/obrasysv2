@@ -58,16 +58,37 @@ export function TimesheetEntryForm({
   onCheckOutChange,
   breakMin,
   onBreakMinChange,
+  manualHours,
+  onManualHoursChange,
   notes,
   onNotesChange,
   allocations,
   onAllocationsChange,
 }: TimesheetEntryFormProps) {
   const selectedWorker = workers.find((w) => w.id === workerId);
-  const totalWorkedMinutes = useMemo(
+
+  const timeBasedMinutes = useMemo(
     () => calcMinutesFromTimes(checkIn, checkOut, breakMin),
     [checkIn, checkOut, breakMin]
   );
+
+  const manualMinutes = useMemo(() => {
+    const parsed = parseFloat(manualHours);
+    return isNaN(parsed) || parsed <= 0 ? 0 : Math.round(parsed * 60);
+  }, [manualHours]);
+
+  // Time-based takes priority; manual is fallback
+  const totalWorkedMinutes = timeBasedMinutes > 0 ? timeBasedMinutes : manualMinutes;
+
+  // Sync manual hours display when calculated from times
+  useEffect(() => {
+    if (timeBasedMinutes > 0) {
+      const decimal = formatMinutesToDecimal(timeBasedMinutes);
+      if (manualHours !== decimal) {
+        onManualHoursChange(decimal);
+      }
+    }
+  }, [timeBasedMinutes]);
 
   const formatMinutes = (m: number) => {
     const h = Math.floor(m / 60);
