@@ -19,6 +19,7 @@ import { RDOProductionEditor } from './RDOProductionEditor';
 import { RDOResourcesEditor } from './RDOResourcesEditor';
 import { RDOConstraintsEditor } from './RDOConstraintsEditor';
 import { RDOQualitySafetyEditor } from './RDOQualitySafetyEditor';
+import { RDOImpactPanel } from './RDOImpactPanel';
 import type { DailyReportFormData, DayType, WeatherImpact, WorkRegime } from '@/types/daily-reports';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
