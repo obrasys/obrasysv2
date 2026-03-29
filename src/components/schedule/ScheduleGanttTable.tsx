@@ -18,10 +18,11 @@ interface Props {
   orcamentoId?: string;
 }
 
-export function ScheduleGanttTable({ obraId, orcamentoId }: Props) {
+export function ScheduleGanttTable({ obraId, obraNome, orcamentoId }: Props) {
   const { versions, baseline, latestVersion, isLoading: loadingVersions, createVersion, approveBaseline } = useScheduleVersions(obraId);
   const activeVersionId = baseline?.id || latestVersion?.id;
   const { tasks, taskTree, isLoading: loadingTasks, createTask, updateTask, deleteTask } = useScheduleTasks(activeVersionId, obraId);
+  const { dependencies } = useScheduleDependencies(obraId);
 
   // Date range for Gantt
   const allDates = (tasks || []).flatMap(t => [t.planned_start, t.planned_end, t.actual_start, t.actual_end].filter(Boolean) as string[]);
