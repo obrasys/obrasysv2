@@ -25,8 +25,16 @@ interface Props {
 }
 
 export function ClientIdentification({ data, onChange, onSave, isLoading }: Props) {
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
+
   const update = (field: keyof BudgetClientInfo, value: string) => {
     onChange({ ...data, [field]: value });
+  };
+
+  const handleConfirmSend = () => {
+    setShowFormatDialog(false);
+    onSave(selectedFormat);
   };
 
   return (
