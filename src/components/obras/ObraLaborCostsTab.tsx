@@ -363,6 +363,15 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
           </Card>
         </>
       )}
+
+      <WorkerCreateModal
+        open={workerModalOpen}
+        onOpenChange={setWorkerModalOpen}
+        subempreiteiros={subempreiteiros}
+        equipaMembros={equipaMembros}
+        onSave={handleCreateWorker}
+        isLoading={createWorkerMutation.isPending}
+      />
     </div>
   );
 }
