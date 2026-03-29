@@ -65,10 +65,24 @@ export const AREAS_CONSTRUCAO_NOVA: AreaConfig[] = [
 ];
 
 export const AREAS_LSF: AreaConfig[] = [
-  ...AREAS_CONSTRUCAO_NOVA,
-  { key: 'estrutura_lsf', label: 'Estrutura LSF' },
-  { key: 'paineis_osb', label: 'Painéis OSB' },
-  { key: 'isolamento_termico', label: 'Isolamento Térmico' },
+  { key: 'lsf_preparacao_terras', label: '1 - Preparação e Mov. Terras' },
+  { key: 'lsf_fundacao_laje', label: '2 - Fundação / Laje Base' },
+  { key: 'lsf_estrutura', label: '3 - Estrutura LSF' },
+  { key: 'lsf_fecho_exterior', label: '4 - Fecho Exterior LSF' },
+  { key: 'lsf_divisorias', label: '5 - Divisórias Interiores' },
+  { key: 'lsf_cobertura', label: '6 - Cobertura LSF' },
+  { key: 'lsf_isolamentos', label: '7 - Isolamentos Térmicos/Acústicos' },
+  { key: 'lsf_fachada', label: '8 - Fachada Exterior' },
+  { key: 'lsf_instalacoes_aguas', label: '9 - Instalações Hidráulicas' },
+  { key: 'lsf_instalacoes_eletricas', label: '10 - Instalações Elétricas' },
+  { key: 'lsf_rebocos_estuques', label: '11 - Rebocos / Estuques / Gesso' },
+  { key: 'lsf_tetos_falsos', label: '12 - Tetos Falsos e Pladur' },
+  { key: 'lsf_pavimentos', label: '13 - Pavimentos e Revestimentos' },
+  { key: 'lsf_caixilharias', label: '14 - Caixilharias Exteriores' },
+  { key: 'lsf_carpintarias', label: '15 - Carpintarias Interiores' },
+  { key: 'lsf_pinturas', label: '16 - Pinturas' },
+  { key: 'lsf_loucas_sanitarios', label: '17 - Louças, Sanitários e Equipamentos' },
+  { key: 'lsf_arranjos_exteriores', label: '18 - Arranjos Exteriores' },
 ];
 
 export const AREAS_ICF: AreaConfig[] = [
