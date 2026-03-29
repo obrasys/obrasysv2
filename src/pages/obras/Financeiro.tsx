@@ -414,6 +414,10 @@ export default function ObraFinanceiroPage() {
               <Users className="w-3 h-3" />
               Mão de Obra
             </TabsTrigger>
+            <TabsTrigger value="custos-extra" className="flex items-center gap-1">
+              <MoreHorizontal className="w-3 h-3" />
+              Custos Extra
+            </TabsTrigger>
             {(totalDueSoon > 0 || totalOverdue > 0 || contasAVencer.length > 0) && (
               <TabsTrigger value="a-vencer" className="flex items-center gap-1">
                 <Bell className="w-3 h-3" />
