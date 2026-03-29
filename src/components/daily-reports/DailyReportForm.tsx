@@ -378,11 +378,11 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
               </TabsContent>
 
               <TabsContent value="producao" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <Hammer className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Registe a produção física por serviço e zona.</p>
-                  <p className="text-xs mt-1">Vinculada automaticamente às atividades do cronograma.</p>
-                </div>
+                <RDOProductionEditor
+                  reportId={latestDraft.id}
+                  obraId={obraId}
+                  scheduleVersionId={scheduleVersionId}
+                />
               </TabsContent>
 
               <TabsContent value="recursos" className="mt-4">
