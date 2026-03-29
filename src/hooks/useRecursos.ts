@@ -54,6 +54,7 @@ export function useSubempreiteiros() {
         endereco: formData.endereco || null,
         ativo: formData.ativo ?? true,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .select()
       .single();
