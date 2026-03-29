@@ -24,6 +24,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { OnboardingWizard, OnboardingProgressPanel, OnboardingCompletionModal } from '@/components/onboarding';
 import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
 import { DashboardCharts, DashboardMetrics, DashboardStats, ObrasSummaryTable } from '@/components/dashboard';
+import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -50,10 +51,18 @@ const Dashboard = () => {
     dismissPanel,
   } = useOnboarding();
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showEmpresaModal, setShowEmpresaModal] = useState(false);
+  const [empresaPromptDismissed, setEmpresaPromptDismissed] = useState(false);
 
   useEffect(() => {
     if (activeState === 'B') setShowBudgetModal(true);
   }, [activeState]);
+
+  // Show company completion prompt after onboarding wizard is done and company data is incomplete
+  const companyIncomplete = profile && !profile.empresa_morada && !profile.empresa_cidade;
+  const showCompanyPrompt = !showWizard && !empresaPromptDismissed && companyIncomplete && (
+    onboardingProgress?.wizard_status === 'completed' || onboardingProgress?.wizard_status === 'skipped'
+  );
 
   // KPI counts
   const kpis = useMemo(() => ({
@@ -142,6 +151,43 @@ const Dashboard = () => {
                 onDismiss={dismissPanel}
               />
             )}
+
+            {/* Company completion prompt */}
+            {showCompanyPrompt && (
+              <Card className="border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700/30">
+                <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Complete os dados da sua empresa</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Preencha morada, contactos e logotipo para usar nos seus orçamentos e documentos.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEmpresaPromptDismissed(true)}
+                    >
+                      Mais tarde
+                    </Button>
+                    <Button size="sm" onClick={() => setShowEmpresaModal(true)}>
+                      <Building2 className="w-4 h-4 mr-1" /> Completar agora
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Empresa Modal */}
+            <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => {
+              setShowEmpresaModal(open);
+              if (!open) setEmpresaPromptDismissed(true);
+            }} />
 
             {/* Completion modal */}
             <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
