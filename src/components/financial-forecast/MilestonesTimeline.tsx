@@ -67,8 +67,7 @@ export function MilestonesTimeline({ obraId }: Props) {
 
       const { data, error } = await supabase.functions.invoke('axia-chat', {
         body: {
-          message: `Analisa a previsão financeira desta obra com base no cronograma e marcos financeiros. Identifica riscos de cash-flow, datas de recebimento comprometidas por atrasos, e sugere ações. Dados: ${JSON.stringify(contextData)}. Responde em português, formato conciso com emojis.`,
-          stream: false,
+          question: `Analisa a previsão financeira desta obra com base no cronograma e marcos financeiros. Identifica riscos de cash-flow, datas de recebimento comprometidas por atrasos, e sugere ações. Dados: ${JSON.stringify(contextData)}. Responde em português, formato conciso com emojis.`,
         },
       });
       if (error) throw error;

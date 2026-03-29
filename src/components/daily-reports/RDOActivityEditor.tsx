@@ -137,7 +137,7 @@ export function RDOActivityEditor({ reportId, obraId, scheduleVersionId, readOnl
     try {
       const { data, error } = await supabase.functions.invoke('axia-chat', {
         body: {
-          message: `Analisa o progresso das atividades registadas nesta RDO e dá-me um resumo com alertas e sugestões. Atividades: ${JSON.stringify(
+          question: `Analisa o progresso das atividades registadas nesta RDO e dá-me um resumo com alertas e sugestões. Atividades: ${JSON.stringify(
             activities.map(a => ({
               tarefa: a.schedule_task?.name || a.wbs_code || 'Sem nome',
               previsto: a.planned_percent_to_date,
@@ -148,7 +148,6 @@ export function RDOActivityEditor({ reportId, obraId, scheduleVersionId, readOnl
               criticidade: a.criticality,
             }))
           )}. Responde em português de forma concisa com emojis para facilitar a leitura.`,
-          stream: false,
         },
       });
       if (error) throw error;
