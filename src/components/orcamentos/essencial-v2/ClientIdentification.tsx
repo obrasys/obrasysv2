@@ -99,7 +99,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             />
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Local da Obra</Label>
+            <Label className="text-sm text-muted-foreground">Local da Obra <span className="text-destructive">*</span></Label>
             <Input
               placeholder="Morada / Localidade"
               value={data.workLocation}
