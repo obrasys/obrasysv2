@@ -95,6 +95,7 @@ export default function EssencialPage() {
   const [vatPercent, setVatPercent] = useState(draft?.vatPercent ?? 23);
   const [marginPercent, setMarginPercent] = useState(draft?.marginPercent ?? 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   // Modal state
