@@ -45,121 +45,100 @@ export function RDOCard({
   const navigate = useNavigate();
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "EEEE, d 'de' MMMM", { locale: pt });
+    return format(new Date(date), "dd/MM/yyyy", { locale: pt });
   };
 
-  const truncateText = (text: string | null, maxLength: number = 100) => {
-    if (!text) return null;
-    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+  const formatDayName = (date: string) => {
+    return format(new Date(date), "EEE", { locale: pt });
   };
 
   return (
-    <Card className="group transition-all hover:shadow-md">
-      <CardContent className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" />
-              <span className="capitalize">{formatDate(rdo.data)}</span>
-            </div>
-            {showObra && rdo.obra && (
-              <h3 className="font-semibold text-foreground mt-1 flex items-center gap-2">
-                <HardHat className="h-4 w-4 text-primary" />
-                {rdo.obra.nome}
-              </h3>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <RDOStatusBadge status={rdo.status} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover">
-                <DropdownMenuItem onClick={() => navigate(`/rdos/${rdo.id}`)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Ver detalhes
-                </DropdownMenuItem>
-                {rdo.status === 'rascunho' && (
-                  <DropdownMenuItem onClick={() => onEdit?.(rdo)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                {rdo.status === 'rascunho' && (
-                  <>
-                    <DropdownMenuItem 
-                      onClick={() => onDelete?.(rdo)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+    <div 
+      className="group flex items-center gap-4 p-3 md:p-4 border rounded-lg bg-card hover:bg-muted/40 transition-colors cursor-pointer"
+      onClick={() => navigate(`/rdos/${rdo.id}`)}
+    >
+      {/* Date indicator */}
+      <div className="shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+        <span className="text-xs font-medium text-primary uppercase">{formatDayName(rdo.data)}</span>
+        <span className="text-sm font-bold text-primary">{format(new Date(rdo.data), "dd")}</span>
+      </div>
 
-        {/* Content preview */}
+      {/* Main content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          {showObra && rdo.obra && (
+            <span className="text-sm font-semibold truncate">{rdo.obra.nome}</span>
+          )}
+          <RDOStatusBadge status={rdo.status} />
+        </div>
         {rdo.trabalhos_executados && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {truncateText(rdo.trabalhos_executados, 150)}
+          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+            {rdo.trabalhos_executados}
           </p>
         )}
-
-        {/* Meta info */}
-        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />{formatDate(rdo.data)}
+          </span>
           {rdo.condicoes_meteorologicas && (
             <span className="flex items-center gap-1">
-              <Cloud className="h-3.5 w-3.5" />
-              {rdo.condicoes_meteorologicas}
+              <Cloud className="h-3 w-3" />{rdo.condicoes_meteorologicas}
             </span>
           )}
           {rdo.mao_de_obra_presente > 0 && (
             <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              {rdo.mao_de_obra_presente} trabalhadores
-            </span>
-          )}
-          {rdo.trabalhos_quantificados && rdo.trabalhos_quantificados.length > 0 && (
-            <span className="text-primary font-medium">
-              {rdo.trabalhos_quantificados.length} trabalhos quantificados
+              <Users className="h-3 w-3" />{rdo.mao_de_obra_presente}
             </span>
           )}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => navigate(`/rdos/${rdo.id}`)}>
-            <Eye className="h-3.5 w-3.5 mr-1" />
-            Ver
-          </Button>
-          {rdo.status === 'rascunho' && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => onEdit?.(rdo)}>
-              <Edit className="h-3.5 w-3.5 mr-1" />
-              Editar
+      {/* Actions */}
+      <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        {rdo.status === 'rascunho' && (
+          <>
+            <Button variant="outline" size="sm" className="h-7 text-xs hidden sm:flex" onClick={() => onEdit?.(rdo)}>
+              <Edit className="h-3 w-3 mr-1" />Editar
             </Button>
-          )}
-          {rdo.status === 'rascunho' && (
             <Button size="sm" className="h-7 text-xs" onClick={() => onSubmit?.(rdo)}>
-              <Send className="h-3.5 w-3.5 mr-1" />
-              Submeter
+              <Send className="h-3 w-3 mr-1" />Submeter
             </Button>
-          )}
-          {rdo.status === 'submetido' && (
-            <Button size="sm" className="h-7 text-xs" onClick={() => onApprove?.(rdo)}>
-              <Check className="h-3.5 w-3.5 mr-1" />
-              Aprovar
+          </>
+        )}
+        {rdo.status === 'submetido' && (
+          <Button size="sm" className="h-7 text-xs" onClick={() => onApprove?.(rdo)}>
+            <Check className="h-3 w-3 mr-1" />Aprovar
+          </Button>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={() => navigate(`/rdos/${rdo.id}`)}>
+              <Eye className="mr-2 h-4 w-4" />Ver detalhes
+            </DropdownMenuItem>
+            {rdo.status === 'rascunho' && (
+              <DropdownMenuItem onClick={() => onEdit?.(rdo)}>
+                <Edit className="mr-2 h-4 w-4" />Editar
+              </DropdownMenuItem>
+            )}
+            {rdo.status === 'rascunho' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => onDelete?.(rdo)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }
