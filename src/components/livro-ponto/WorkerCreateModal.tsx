@@ -121,7 +121,7 @@ export function WorkerCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 top-[5%] translate-y-0 data-[state=open]:slide-in-from-top-2">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">Novo Trabalhador</DialogTitle>
           <p className="text-sm text-muted-foreground">
