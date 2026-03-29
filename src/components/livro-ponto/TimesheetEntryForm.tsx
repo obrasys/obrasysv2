@@ -171,12 +171,32 @@ export function TimesheetEntryForm({
             min={0}
           />
         </div>
+      </div>
+
+      {/* Manual hours input */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Horas totais</Label>
+          <Label className="text-xs text-muted-foreground">Horas totais (manual)</Label>
+          <Input
+            type="number"
+            step="0.25"
+            min={0}
+            placeholder="Ex: 7.5"
+            value={manualHours}
+            onChange={(e) => onManualHoursChange(e.target.value)}
+            disabled={timeBasedMinutes > 0}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            {timeBasedMinutes > 0
+              ? "Calculado a partir dos horários"
+              : "Preencha se não tiver horário de entrada/saída"}
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Total calculado</Label>
           <div className="flex h-10 items-center rounded-md border border-input bg-muted/50 px-3 text-sm font-medium text-foreground">
             {totalWorkedMinutes > 0 ? formatMinutes(totalWorkedMinutes) : "—"}
           </div>
-          <p className="text-[10px] text-muted-foreground">Calculado automaticamente</p>
         </div>
       </div>
 
