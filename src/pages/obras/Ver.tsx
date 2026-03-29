@@ -6,7 +6,8 @@ import {
   ArrowLeft, Edit, MapPin, Calendar, Building2, FileText, Plus, Loader2,
   ClipboardList, Cloud, Users, ExternalLink, Sparkles, AlertCircle, Lightbulb,
   CheckCircle, Upload, BookOpen, Flag, Wallet, TrendingUp, TrendingDown,
-  CircleDollarSign, GitBranch, Activity, Target, DollarSign,
+  CircleDollarSign, GitBranch, Activity, Target, DollarSign, BarChart3,
+  HardHat, Clock, Percent,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
 import { FinalizarObraModal } from '@/components/obras/FinalizarObraModal';
@@ -30,12 +32,14 @@ import { ExecutionTimeline } from '@/components/schedule/ExecutionTimeline';
 import { DailyReportForm } from '@/components/daily-reports/DailyReportForm';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { MilestonesTimeline } from '@/components/financial-forecast/MilestonesTimeline';
+import { KpiCard } from '@/components/relatorios/KpiCard';
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useProjectResourceSummary } from '@/hooks/useProjectResources';
 import { useCadernos } from '@/hooks/useCadernos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useScheduleVersions } from '@/hooks/useSchedule';
+import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
@@ -76,6 +80,7 @@ export default function VerObraPage() {
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
   const { data: resourceSummary } = useProjectResourceSummary(id);
   const { baseline, latestVersion } = useScheduleVersions(id);
+  const { data: laborSummary } = useObraLaborSummary(id);
 
   const activeVersionId = baseline?.id || latestVersion?.id;
 
@@ -172,106 +177,152 @@ export default function VerObraPage() {
   const totalCadernos = cadernos?.length || 0;
   const recentCadernos = cadernos?.slice(0, 3) || [];
 
+  // Financial calculations
+  const totalReceber = contas?.filter(c => c.tipo === 'receber').reduce((sum, c) => sum + Number(c.valor), 0) || 0;
+  const totalPagar = contas?.filter(c => c.tipo === 'pagar').reduce((sum, c) => sum + Number(c.valor), 0) || 0;
+  const totalLaborCost = laborSummary?.totalCost || 0;
+
+  // Days calculation
+  const startDate = obra.data_inicio ? new Date(obra.data_inicio) : null;
+  const endDate = obra.data_fim ? new Date(obra.data_fim) : null;
+  const today = new Date();
+  const totalDays = startDate && endDate ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const elapsedDays = startDate ? Math.max(0, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+  const remainingDays = Math.max(0, totalDays - elapsedDays);
+
   return (
     <AppLayout
       title={obra.nome}
       subtitle={obra.cliente || 'Sem cliente atribuído'}
       actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/obras')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />Voltar
+          <Button variant="outline" size="sm" onClick={() => navigate('/obras')}>
+            <ArrowLeft className="w-4 h-4 mr-1" />Voltar
           </Button>
-          <Button variant="outline" onClick={() => navigate(`/obras/${id}/financeiro`)}>
-            <Wallet className="w-4 h-4 mr-2" />Financeiro
+          <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${id}/financeiro`)}>
+            <Wallet className="w-4 h-4 mr-1" />Financeiro
           </Button>
           {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
-            <Button variant="outline" onClick={() => setShowFinalizarModal(true)}>
-              <Flag className="w-4 h-4 mr-2" />Finalizar
+            <Button variant="outline" size="sm" onClick={() => setShowFinalizarModal(true)}>
+              <Flag className="w-4 h-4 mr-1" />Finalizar
             </Button>
           )}
-          <Button onClick={() => navigate(`/obras/${id}/editar`)}>
-            <Edit className="w-4 h-4 mr-2" />Editar
+          <Button size="sm" onClick={() => navigate(`/obras/${id}/editar`)}>
+            <Edit className="w-4 h-4 mr-1" />Editar
           </Button>
         </div>
       }
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header Info */}
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-start justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />Informações da Obra
-              </CardTitle>
-              <ObraStatusBadge status={obra.status as ObraStatus} />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {obra.endereco && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                  <span>{obra.endereco}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>
-                  {obra.data_inicio ? format(new Date(obra.data_inicio), "dd 'de' MMMM 'de' yyyy", { locale: pt }) : 'Data de início não definida'}
-                  {obra.data_fim && (<> → {format(new Date(obra.data_fim), "dd 'de' MMMM 'de' yyyy", { locale: pt })}</>)}
+      <div className="p-4 md:p-6 space-y-5">
+        {/* Hero Section: Status + Key Info */}
+        <div className="flex flex-col md:flex-row md:items-center gap-4 pb-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <HardHat className="w-6 h-6 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <ObraStatusBadge status={obra.status as ObraStatus} />
+                {obra.endereco && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                    <MapPin className="w-3 h-3 shrink-0" />{obra.endereco}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {obra.data_inicio ? format(new Date(obra.data_inicio), "dd/MM/yyyy", { locale: pt }) : '—'}
+                  {obra.data_fim && (<> → {format(new Date(obra.data_fim), "dd/MM/yyyy", { locale: pt })}</>)}
                 </span>
               </div>
-              <div className="pt-4 border-t">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-muted-foreground">Progresso Geral</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">{Math.round(obra.progresso || 0)}%</span>
-                    <Button size="sm" variant="outline" onClick={calculateProgressWithAI} disabled={isCalculating}>
-                      {isCalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4 mr-1" />Calcular com IA</>}
-                    </Button>
-                  </div>
-                </div>
-                <Progress value={obra.progresso || 0} className="h-3" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Resumo Financeiro</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Valor Previsto</p>
-                <p className="text-xl font-bold">{formatCurrency(obra.valor_previsto || 0)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Valor Orçamentado</p>
-                <p className="text-xl font-bold">{formatCurrency(valorOrcamentos)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Orçamentos</p>
-                <p className="text-xl font-bold">{obra.orcamentos?.length || 0}</p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={calculateProgressWithAI} disabled={isCalculating} className="shrink-0">
+            {isCalculating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+            Calcular Progresso IA
+          </Button>
         </div>
+
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard
+            title="Progresso"
+            value={`${Math.round(obra.progresso || 0)}%`}
+            icon={Percent}
+            description={`${elapsedDays} de ${totalDays || '—'} dias`}
+            iconClassName="bg-primary/10"
+          />
+          <KpiCard
+            title="Valor Previsto"
+            value={formatCurrency(obra.valor_previsto || 0)}
+            icon={DollarSign}
+            description={`${obra.orcamentos?.length || 0} orçamento(s)`}
+            iconClassName="bg-emerald-500/10"
+          />
+          <KpiCard
+            title="RDOs"
+            value={totalRDOs}
+            icon={ClipboardList}
+            description={totalRDOs > 0 ? `Último: ${formatRDODate(recentRDOs[0]?.data || '')}` : 'Nenhum registado'}
+            iconClassName="bg-blue-500/10"
+          />
+          <KpiCard
+            title="Prazo Restante"
+            value={remainingDays > 0 ? `${remainingDays} dias` : totalDays > 0 ? 'Expirado' : '—'}
+            icon={Clock}
+            description={endDate ? format(endDate, "dd/MM/yyyy") : 'Sem data fim'}
+            iconClassName="bg-amber-500/10"
+          />
+        </div>
+
+        {/* Progress Bar */}
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-muted-foreground">Progresso Geral da Obra</span>
+              <span className="text-sm font-bold">{Math.round(obra.progresso || 0)}%</span>
+            </div>
+            <Progress value={obra.progresso || 0} className="h-2.5" />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[11px] text-muted-foreground">
+                {startDate ? format(startDate, "dd MMM yyyy", { locale: pt }) : '—'}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {endDate ? format(endDate, "dd MMM yyyy", { locale: pt }) : '—'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* AI Result */}
         {aiResult && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />Análise de Progresso com IA
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="w-4 h-4 text-primary" />Análise de Progresso com IA
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-primary">{Math.round(aiResult.progresso)}%</p>
-                  <p className="text-sm text-muted-foreground">Progresso Calculado</p>
+                <div className="text-center px-4 py-2 rounded-lg bg-primary/10">
+                  <p className="text-2xl font-bold text-primary">{Math.round(aiResult.progresso)}%</p>
+                  <p className="text-[11px] text-muted-foreground">Calculado</p>
                 </div>
                 {aiResult.dados_analisados && (
-                  <div className="flex-1 grid grid-cols-3 gap-4 text-center border-l pl-4">
-                    <div><p className="text-lg font-semibold">{aiResult.dados_analisados.total_rdos}</p><p className="text-xs text-muted-foreground">RDOs</p></div>
-                    <div><p className="text-lg font-semibold">{aiResult.dados_analisados.total_trabalhos_quantificados}</p><p className="text-xs text-muted-foreground">Trabalhos</p></div>
-                    <div><p className="text-lg font-semibold">{aiResult.dados_analisados.itens_progresso}</p><p className="text-xs text-muted-foreground">Itens</p></div>
+                  <div className="flex-1 grid grid-cols-3 gap-3 text-center">
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-lg font-semibold">{aiResult.dados_analisados.total_rdos}</p>
+                      <p className="text-[11px] text-muted-foreground">RDOs</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-lg font-semibold">{aiResult.dados_analisados.total_trabalhos_quantificados}</p>
+                      <p className="text-[11px] text-muted-foreground">Trabalhos</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-lg font-semibold">{aiResult.dados_analisados.itens_progresso}</p>
+                      <p className="text-[11px] text-muted-foreground">Itens</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -282,128 +333,172 @@ export default function VerObraPage() {
                 </Alert>
               )}
               {aiResult.sugestoes && aiResult.sugestoes.length > 0 && (
-                <div><h4 className="font-medium mb-2 flex items-center gap-2"><Lightbulb className="w-4 h-4 text-yellow-600" />Sugestões</h4>
+                <div><h4 className="font-medium mb-2 flex items-center gap-2 text-sm"><Lightbulb className="w-4 h-4 text-yellow-600" />Sugestões</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">{aiResult.sugestoes.map((s, i) => <li key={i}>{s}</li>)}</ul>
                 </div>
               )}
-              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setAiResult(null)}>Fechar análise</Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground text-xs" onClick={() => setAiResult(null)}>Fechar análise</Button>
             </CardContent>
           </Card>
         )}
 
         {/* Main Tabs */}
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
-          <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-            <TabsTrigger value="geral" className="text-xs gap-1"><Building2 className="h-3 w-3" />Geral</TabsTrigger>
-            <TabsTrigger value="planeamento" className="text-xs gap-1"><GitBranch className="h-3 w-3" />Planeamento</TabsTrigger>
-            <TabsTrigger value="rdo" className="text-xs gap-1"><ClipboardList className="h-3 w-3" />RDO Operacional</TabsTrigger>
-            <TabsTrigger value="execucao" className="text-xs gap-1"><Activity className="h-3 w-3" />Execução</TabsTrigger>
-            <TabsTrigger value="controlo" className="text-xs gap-1"><Target className="h-3 w-3" />Controlo</TabsTrigger>
-            <TabsTrigger value="financeiro-previsto" className="text-xs gap-1"><DollarSign className="h-3 w-3" />Financeiro Previsto</TabsTrigger>
+          <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+            <TabsTrigger value="geral" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><Building2 className="h-3.5 w-3.5" />Geral</TabsTrigger>
+            <TabsTrigger value="planeamento" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><GitBranch className="h-3.5 w-3.5" />Planeamento</TabsTrigger>
+            <TabsTrigger value="rdo" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><ClipboardList className="h-3.5 w-3.5" />RDO Operacional</TabsTrigger>
+            <TabsTrigger value="execucao" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><Activity className="h-3.5 w-3.5" />Execução</TabsTrigger>
+            <TabsTrigger value="controlo" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><Target className="h-3.5 w-3.5" />Controlo</TabsTrigger>
+            <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"><DollarSign className="h-3.5 w-3.5" />Financeiro Previsto</TabsTrigger>
           </TabsList>
 
-          {/* Tab: Geral (existing content) */}
+          {/* Tab: Geral */}
           <TabsContent value="geral" className="space-y-4 mt-4">
-            {/* Cadernos de Encargos */}
+            {/* Quick Financial Overview */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />Cadernos de Encargos
-                  {totalCadernos > 0 && <Badge variant="secondary" className="ml-2">{totalCadernos}</Badge>}
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Visão Financeira
                 </CardTitle>
-                <Button size="sm" onClick={() => navigate(`/obras/${id}/cadernos/importar`)}>
-                  <Upload className="w-4 h-4 mr-2" />Importar Caderno
-                </Button>
               </CardHeader>
               <CardContent>
-                {loadingCadernos ? (
-                  <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-                ) : recentCadernos.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentCadernos.map((caderno) => (
-                      <div key={caderno.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => {
-                          if (caderno.status === 'importado') navigate(`/obras/${id}/cadernos/${caderno.id}/importar`);
-                          else if (caderno.status === 'analisado') navigate(`/obras/${id}/cadernos/${caderno.id}/validar`);
-                          else if (caderno.status === 'validado') navigate(`/obras/${id}/cadernos/${caderno.id}/resumo`);
-                          else if (caderno.status === 'orcamentado' && caderno.orcamento_id) navigate(`/orcamentos/${caderno.orcamento_id}/editar`);
-                          else navigate(`/obras/${id}/cadernos`);
-                        }}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{caderno.nome}</span>
-                            <CadernoStatusBadge status={caderno.status} />
-                          </div>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                            <span>{caderno.total_itens} itens</span>
-                            {caderno.itens_validados > 0 && <span>{Math.round((caderno.itens_validados / caderno.total_itens) * 100)}% validados</span>}
-                          </div>
-                        </div>
-                        <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
-                      </div>
-                    ))}
-                    {totalCadernos > 3 && <Button variant="ghost" className="w-full" onClick={() => navigate(`/obras/${id}/cadernos`)}>Ver todos os {totalCadernos} cadernos</Button>}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Valor Previsto</p>
+                    <p className="text-lg font-bold mt-0.5">{formatCurrency(obra.valor_previsto || 0)}</p>
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum caderno de encargos importado.</p>
-                    <Button variant="outline" className="mt-4" onClick={() => navigate(`/obras/${id}/cadernos/importar`)}><Upload className="w-4 h-4 mr-2" />Importar Primeiro Caderno</Button>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Orçamentado</p>
+                    <p className="text-lg font-bold mt-0.5">{formatCurrency(valorOrcamentos)}</p>
                   </div>
-                )}
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-emerald-600 font-medium">A Receber</p>
+                    <p className="text-lg font-bold mt-0.5 text-emerald-600">{formatCurrency(totalReceber)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-destructive font-medium">Custos MO</p>
+                    <p className="text-lg font-bold mt-0.5 text-destructive">{formatCurrency(totalLaborCost)}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
+
+            {/* Two-column layout for Cadernos and RDOs */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              {/* Cadernos de Encargos */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-primary" />Cadernos de Encargos
+                    {totalCadernos > 0 && <Badge variant="secondary" className="text-[10px] h-5">{totalCadernos}</Badge>}
+                  </CardTitle>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/obras/${id}/cadernos/importar`)}>
+                    <Upload className="w-3 h-3 mr-1" />Importar
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {loadingCadernos ? (
+                    <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                  ) : recentCadernos.length > 0 ? (
+                    <div className="space-y-2">
+                      {recentCadernos.map((caderno) => (
+                        <div key={caderno.id} className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() => {
+                            if (caderno.status === 'importado') navigate(`/obras/${id}/cadernos/${caderno.id}/importar`);
+                            else if (caderno.status === 'analisado') navigate(`/obras/${id}/cadernos/${caderno.id}/validar`);
+                            else if (caderno.status === 'validado') navigate(`/obras/${id}/cadernos/${caderno.id}/resumo`);
+                            else if (caderno.status === 'orcamentado' && caderno.orcamento_id) navigate(`/orcamentos/${caderno.orcamento_id}/editar`);
+                            else navigate(`/obras/${id}/cadernos`);
+                          }}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium truncate">{caderno.nome}</span>
+                              <CadernoStatusBadge status={caderno.status} />
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+                              <span>{caderno.total_itens} itens</span>
+                              {caderno.itens_validados > 0 && <span>{Math.round((caderno.itens_validados / caderno.total_itens) * 100)}% validados</span>}
+                            </div>
+                          </div>
+                          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
+                        </div>
+                      ))}
+                      {totalCadernos > 3 && <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => navigate(`/obras/${id}/cadernos`)}>Ver todos ({totalCadernos})</Button>}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">Nenhum caderno importado</p>
+                      <Button variant="outline" size="sm" className="mt-3 h-7 text-xs" onClick={() => navigate(`/obras/${id}/cadernos/importar`)}>
+                        <Upload className="w-3 h-3 mr-1" />Importar
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* RDOs Section */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-primary" />Relatórios Diários
+                    {totalRDOs > 0 && <Badge variant="secondary" className="text-[10px] h-5">{totalRDOs}</Badge>}
+                  </CardTitle>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/rdos/criar?obra=${id}`)}>
+                    <Plus className="w-3 h-3 mr-1" />Novo
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {loadingRDOs ? (
+                    <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                  ) : recentRDOs.length > 0 ? (
+                    <div className="space-y-2">
+                      {recentRDOs.slice(0, 4).map((rdo) => (
+                        <div key={rdo.id} className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/rdos/${rdo.id}`)}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{formatRDODate(rdo.data)}</span>
+                              <RDOStatusBadge status={rdo.status} />
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+                              {rdo.condicoes_meteorologicas && <span className="flex items-center gap-1"><Cloud className="h-3 w-3" />{getCondLabel(rdo.condicoes_meteorologicas)}</span>}
+                              {rdo.mao_de_obra_presente > 0 && <span className="flex items-center gap-1"><Users className="h-3 w-3" />{rdo.mao_de_obra_presente}</span>}
+                            </div>
+                          </div>
+                          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
+                        </div>
+                      ))}
+                      {totalRDOs > 4 && <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => navigate(`/rdos?obra=${id}`)}>Ver todos ({totalRDOs})</Button>}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">Nenhum RDO registado</p>
+                      <Button variant="outline" size="sm" className="mt-3 h-7 text-xs" onClick={() => navigate(`/rdos/criar?obra=${id}`)}>
+                        <Plus className="w-3 h-3 mr-1" />Criar RDO
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             <ObraPlanoDiarioTab obraId={id!} />
 
-            {/* RDOs Section */}
+            {/* Portal + Materiais side by side */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <ObraPortalClienteTab obraId={id!} obraNome={obra.nome} clienteNome={obra.cliente} clienteEmail={null} clienteId={null} />
+              <ObraMateriaisTab obraId={id!} />
+            </div>
+
+            {/* Labor Costs */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5" />Relatórios Diários (RDOs)
-                  {totalRDOs > 0 && <Badge variant="secondary" className="ml-2">{totalRDOs}</Badge>}
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <CircleDollarSign className="w-4 h-4 text-primary" />Custos de Mão de Obra
                 </CardTitle>
-                <Button size="sm" onClick={() => navigate(`/rdos/criar?obra=${id}`)}><Plus className="w-4 h-4 mr-2" />Novo RDO</Button>
-              </CardHeader>
-              <CardContent>
-                {loadingRDOs ? (
-                  <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-                ) : recentRDOs.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentRDOs.map((rdo) => (
-                      <div key={rdo.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/rdos/${rdo.id}`)}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{formatRDODate(rdo.data)}</span>
-                            <RDOStatusBadge status={rdo.status} />
-                          </div>
-                          {rdo.trabalhos_executados && <p className="text-sm text-muted-foreground truncate mt-1">{rdo.trabalhos_executados.slice(0, 80)}{rdo.trabalhos_executados.length > 80 ? '...' : ''}</p>}
-                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                            {rdo.condicoes_meteorologicas && <span className="flex items-center gap-1"><Cloud className="h-3 w-3" />{getCondLabel(rdo.condicoes_meteorologicas)}</span>}
-                            {rdo.mao_de_obra_presente > 0 && <span className="flex items-center gap-1"><Users className="h-3 w-3" />{rdo.mao_de_obra_presente}</span>}
-                          </div>
-                        </div>
-                        <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
-                      </div>
-                    ))}
-                    {totalRDOs > 5 && <Button variant="ghost" className="w-full" onClick={() => navigate(`/rdos?obra=${id}`)}>Ver todos os {totalRDOs} RDOs</Button>}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum relatório diário registado.</p>
-                    <Button variant="outline" className="mt-4" onClick={() => navigate(`/rdos/criar?obra=${id}`)}><Plus className="w-4 h-4 mr-2" />Criar Primeiro RDO</Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <ObraPortalClienteTab obraId={id!} obraNome={obra.nome} clienteNome={obra.cliente} clienteEmail={null} clienteId={null} />
-            <ObraMateriaisTab obraId={id!} />
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2"><CircleDollarSign className="w-5 h-5" />Custos Reais de Mão de Obra</CardTitle>
               </CardHeader>
               <CardContent><ObraLaborCostsTab obraId={id!} compact /></CardContent>
             </Card>
@@ -420,24 +515,34 @@ export default function VerObraPage() {
 
             {/* Linked Budgets */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Orçamentos Associados</CardTitle>
-                <Button size="sm" onClick={() => navigate(`/orcamentos/criar?obra_id=${id}`)}><Plus className="w-4 h-4 mr-2" />Novo Orçamento</Button>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />Orçamentos Associados
+                </CardTitle>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/orcamentos/criar?obra_id=${id}`)}>
+                  <Plus className="w-3 h-3 mr-1" />Novo
+                </Button>
               </CardHeader>
               <CardContent>
                 {obra.orcamentos && obra.orcamentos.length > 0 ? (
                   <div className="space-y-2">
                     {obra.orcamentos.map((orcamento) => (
-                      <div key={orcamento.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/orcamentos/${orcamento.id}/editar`)}>
-                        <div><p className="font-medium">{orcamento.titulo}</p><p className="text-sm text-muted-foreground">{formatCurrency(orcamento.valor_total || 0)}</p></div>
-                        <Badge variant="outline">{orcamento.status}</Badge>
+                      <div key={orcamento.id} className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/orcamentos/${orcamento.id}/editar`)}>
+                        <div>
+                          <p className="text-sm font-medium">{orcamento.titulo}</p>
+                          <p className="text-xs text-muted-foreground">{formatCurrency(orcamento.valor_total || 0)}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">{orcamento.status}</Badge>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum orçamento associado.</p>
-                    <Button variant="outline" className="mt-4" onClick={() => navigate(`/orcamentos/criar?obra_id=${id}`)}><Plus className="w-4 h-4 mr-2" />Criar Orçamento</Button>
+                  <div className="text-center py-6 text-muted-foreground">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">Nenhum orçamento associado</p>
+                    <Button variant="outline" size="sm" className="mt-3 h-7 text-xs" onClick={() => navigate(`/orcamentos/criar?obra_id=${id}`)}>
+                      <Plus className="w-3 h-3 mr-1" />Criar
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -445,47 +550,61 @@ export default function VerObraPage() {
 
             {/* Financial History */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5" />Histórico Financeiro
-                  {contas && contas.length > 0 && <Badge variant="secondary" className="ml-2">{contas.length}</Badge>}
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-primary" />Histórico Financeiro
+                  {contas && contas.length > 0 && <Badge variant="secondary" className="text-[10px] h-5">{contas.length}</Badge>}
                 </CardTitle>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/financeiro?obra=${id}`)}>
-                  <CircleDollarSign className="w-4 h-4 mr-2" />Ver Financeiro
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/financeiro?obra=${id}`)}>
+                  Ver Tudo
                 </Button>
               </CardHeader>
               <CardContent>
                 {loadingContas ? (
-                  <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+                  <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
                 ) : contas && contas.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg mb-4">
-                      <div className="text-center"><p className="text-xs text-muted-foreground">A Receber</p><p className="text-lg font-semibold text-green-600">{formatCurrency(contas.filter(c => c.tipo === 'receber').reduce((sum, c) => sum + Number(c.valor), 0))}</p></div>
-                      <div className="text-center"><p className="text-xs text-muted-foreground">A Pagar</p><p className="text-lg font-semibold text-red-600">{formatCurrency(contas.filter(c => c.tipo === 'pagar').reduce((sum, c) => sum + Number(c.valor), 0))}</p></div>
-                      <div className="text-center"><p className="text-xs text-muted-foreground">Recebido</p><p className="text-lg font-semibold">{formatCurrency(contas.filter(c => c.tipo === 'receber' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p></div>
-                      <div className="text-center"><p className="text-xs text-muted-foreground">Pago</p><p className="text-lg font-semibold">{formatCurrency(contas.filter(c => c.tipo === 'pagar' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p></div>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/40 rounded-lg mb-3">
+                      <div className="text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A Receber</p>
+                        <p className="text-sm font-bold text-emerald-600 mt-0.5">{formatCurrency(totalReceber)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">A Pagar</p>
+                        <p className="text-sm font-bold text-destructive mt-0.5">{formatCurrency(totalPagar)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Recebido</p>
+                        <p className="text-sm font-bold mt-0.5">{formatCurrency(contas.filter(c => c.tipo === 'receber' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pago</p>
+                        <p className="text-sm font-bold mt-0.5">{formatCurrency(contas.filter(c => c.tipo === 'pagar' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p>
+                      </div>
                     </div>
-                    {contas.slice(0, 5).map((conta) => (
-                      <div key={conta.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {conta.tipo === 'receber' ? <div className="p-2 rounded-full bg-green-100"><TrendingUp className="w-4 h-4 text-green-600" /></div> : <div className="p-2 rounded-full bg-red-100"><TrendingDown className="w-4 h-4 text-red-600" /></div>}
+                    {contas.slice(0, 4).map((conta) => (
+                      <div key={conta.id} className="flex items-center justify-between p-2.5 border rounded-lg">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`p-1.5 rounded-full ${conta.tipo === 'receber' ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                            {conta.tipo === 'receber' ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-destructive" />}
+                          </div>
                           <div>
-                            <p className="font-medium text-sm">{conta.descricao || (conta.tipo === 'receber' ? 'A Receber' : 'A Pagar')}</p>
-                            <p className="text-xs text-muted-foreground">Venc: {format(new Date(conta.data_vencimento), "dd/MM/yyyy")}{conta.fornecedor && ` • ${conta.fornecedor.nome}`}</p>
+                            <p className="text-sm font-medium">{conta.descricao || (conta.tipo === 'receber' ? 'A Receber' : 'A Pagar')}</p>
+                            <p className="text-[11px] text-muted-foreground">Venc: {format(new Date(conta.data_vencimento), "dd/MM/yyyy")}{conta.fornecedor && ` • ${conta.fornecedor.nome}`}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`font-semibold ${conta.tipo === 'receber' ? 'text-green-600' : 'text-red-600'}`}>{conta.tipo === 'receber' ? '+' : '-'} {formatCurrency(Number(conta.valor))}</p>
-                          <Badge variant={conta.pago ? 'default' : 'outline'} className="text-xs">{conta.pago ? 'Pago' : 'Pendente'}</Badge>
+                          <p className={`text-sm font-semibold ${conta.tipo === 'receber' ? 'text-emerald-600' : 'text-destructive'}`}>{conta.tipo === 'receber' ? '+' : '-'} {formatCurrency(Number(conta.valor))}</p>
+                          <Badge variant={conta.pago ? 'default' : 'outline'} className="text-[10px] h-4">{conta.pago ? 'Pago' : 'Pendente'}</Badge>
                         </div>
                       </div>
                     ))}
-                    {contas.length > 5 && <Button variant="ghost" className="w-full" onClick={() => navigate(`/financeiro?obra=${id}`)}>Ver todas as {contas.length} contas</Button>}
+                    {contas.length > 4 && <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => navigate(`/financeiro?obra=${id}`)}>Ver todas ({contas.length})</Button>}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhuma conta financeira registada.</p>
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">Nenhuma conta registada</p>
                   </div>
                 )}
               </CardContent>
