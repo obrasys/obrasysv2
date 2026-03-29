@@ -18,6 +18,7 @@ interface LaborEntry {
   entry_date: string;
   worker_id: string;
   worker_name: string;
+  worker_role: string | null;
   hours_worked: number;
   hourly_cost: number;
   amount: number;
@@ -109,7 +110,7 @@ export function useObraLaborEntries(
     queryFn: async (): Promise<LaborEntry[]> => {
       let q = supabase
         .from('project_labor_cost_entries')
-        .select('id, entry_date, worker_id, hours_worked, hourly_cost, amount, origin_type, status, workers!project_labor_cost_entries_worker_id_fkey(name)')
+        .select('id, entry_date, worker_id, hours_worked, hourly_cost, amount, origin_type, status, workers!project_labor_cost_entries_worker_id_fkey(full_name, role)')
         .eq('obra_id', obraId!)
         .neq('status', 'reversed')
         .order('entry_date', { ascending: false });
@@ -124,7 +125,8 @@ export function useObraLaborEntries(
         id: e.id,
         entry_date: e.entry_date,
         worker_id: e.worker_id,
-        worker_name: e.workers?.name || 'Trabalhador',
+        worker_name: e.workers?.full_name || 'Trabalhador',
+        worker_role: e.workers?.role || null,
         hours_worked: e.hours_worked || 0,
         hourly_cost: e.hourly_cost || 0,
         amount: e.amount || 0,
