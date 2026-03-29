@@ -122,10 +122,10 @@ export default function AdminFinanceiroGlobal() {
                 {mockUsers.map((user) => (
                   <TableRow key={user.email}>
                     <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.plano === "Professional" ? "default" : "secondary"}>
-                        {user.plano}
-                      </Badge>
+                     <TableCell>
+                       <Badge variant={user.plano === "Founder" ? "default" : user.plano === "Professional" ? "default" : "secondary"} className={user.plano === "Founder" ? "bg-amber-600 hover:bg-amber-700" : ""}>
+                         {user.plano === "Founder" ? "⭐ Founder" : user.plano}
+                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       €{user.valor.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}
