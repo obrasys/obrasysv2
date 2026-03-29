@@ -108,7 +108,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             />
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Condições</Label>
+            <Label className="text-sm text-muted-foreground">Condições <span className="text-destructive">*</span></Label>
             <Textarea
               placeholder="Ex.: 40% adjudicação, 40% a meio, 20% no fim"
               value={data.conditions}
