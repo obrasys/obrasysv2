@@ -54,7 +54,7 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
             <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-3">{getAreaLabel(areaKey)}</h3>
 
             {/* Header */}
-            <div className="hidden md:grid grid-cols-[1fr_60px_72px_90px_90px_80px_32px] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+            <div className="hidden md:grid grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               <span>Descrição</span>
               <span className="text-center">Un.</span>
               <span className="text-center">Qtd</span>
@@ -72,7 +72,7 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                 return (
                   <div
                     key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_80px_32px] gap-2 items-center px-3 py-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center px-3 py-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
                   >
                     <span className="text-sm text-foreground truncate">{item.name}</span>
                     <span className="text-xs text-muted-foreground text-center">{item.unit}</span>
