@@ -43,7 +43,7 @@ export function ScheduleTaskRow({ task, level, minDate, totalDays, onUpdate, onD
   const weight = task.weight_financial ?? task.weight_physical ?? 1;
 
   return (
-    <TableRow className={task.task_type === 'phase' ? 'bg-muted/30 font-medium' : ''}>
+    <TableRow className={task.task_type === 'phase' ? 'bg-muted/60 font-bold' : ''}>
       <TableCell>
         <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
           {task.task_type === 'phase' && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground" />}
