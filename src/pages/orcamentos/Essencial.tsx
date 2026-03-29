@@ -405,6 +405,17 @@ export default function EssencialPage() {
 
       if (orcError) throw orcError;
 
+      // Save fiscal context (IVA rate) so it persists when viewing/editing
+      await supabase.from('orcamento_contexto_fiscal').insert({
+        orcamento_id: orc.id,
+        user_id: user.id,
+        taxa_iva: vatPercent,
+        override_manual: true,
+        override_justificacao: 'Definido no Orçamento Essencial',
+        override_por: user.id,
+        override_em: new Date().toISOString(),
+      });
+
       // Group items by area, create chapters
       const grouped: Record<string, BudgetItem[]> = {};
       items.forEach((item) => {
