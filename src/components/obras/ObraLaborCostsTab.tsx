@@ -88,6 +88,11 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
 
   const isLoading = loadingSummary || loadingEntries;
 
+  const handleCreateWorker = async (data: any) => {
+    await createWorkerMutation.mutateAsync(data);
+    setWorkerModalOpen(false);
+  };
+
   const costTypeChartData = useMemo(
     () => (byCostType || []).map(ct => ({ name: getOriginLabel(ct.origin_type), value: ct.total_cost })),
     [byCostType]
