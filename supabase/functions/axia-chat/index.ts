@@ -126,33 +126,50 @@ serve(async (req) => {
       return new Date(t.data_limite) < new Date() && t.estado !== "concluida";
     });
 
+    // Financial aggregation per obra
+    const obraFinancials: Record<string, { receitas: number; despesas: number }> = {};
+    for (const c of contas) {
+      const oid = (c as any).obra_id;
+      if (!oid) continue;
+      if (!obraFinancials[oid]) obraFinancials[oid] = { receitas: 0, despesas: 0 };
+      const val = (c as any).valor || 0;
+      if ((c as any).tipo === "receita") obraFinancials[oid].receitas += val;
+      else obraFinancials[oid].despesas += val;
+    }
+
     const contextBlock = `
-## DADOS OPERACIONAIS DO UTILIZADOR (atualizados agora)
+## DADOS OPERACIONAIS REAIS (${new Date().toISOString()})
 
 ### Obras (${obras.length} total, ${obrasEmCurso.length} em curso, ${obrasConcluidas.length} concluídas)
 Progresso médio: ${progressoMedio}%
 Valor total previsto: €${valorTotalPrevisto.toLocaleString("pt-PT")}
-${obras.map((o: any) => `- "${o.nome}" | Cliente: ${o.cliente || "N/D"} | Status: ${o.status} | Progresso: ${o.progresso || 0}% | Valor: €${(o.valor_previsto || 0).toLocaleString("pt-PT")} | Início: ${o.data_inicio || "N/D"} | Fim previsto: ${o.data_fim || "N/D"}`).join("\n")}
+${obras.map((o: any) => {
+  const fin = obraFinancials[o.id] || { receitas: 0, despesas: 0 };
+  return `- "${o.nome}" | Cliente: ${o.cliente || "N/D"} | Status: ${o.status} | Progresso: ${o.progresso || 0}% | Valor previsto: €${(o.valor_previsto || 0).toLocaleString("pt-PT")} | Despesas reais: €${fin.despesas.toLocaleString("pt-PT")} | Receitas: €${fin.receitas.toLocaleString("pt-PT")} | Início: ${o.data_inicio || "N/D"} | Fim: ${o.data_fim || "N/D"}`;
+}).join("\n")}
 
 ### Orçamentos (${orcamentos.length} registados)
-${orcamentos.map((o: any) => `- "${o.titulo}" | Status: ${o.status} | Valor: €${(o.valor_total || 0).toLocaleString("pt-PT")} | Margem: ${o.margem_lucro || 0}%`).join("\n")}
+${orcamentos.map((o: any) => `- ${o.codigo || "S/C"} "${o.titulo}" | Cliente: ${o.cliente_nome || "N/D"} | Status: ${o.status} | Valor: €${(o.valor_total || 0).toLocaleString("pt-PT")} | Margem: ${o.margem_lucro || 0}%`).join("\n")}
 
 ### Tarefas (${tarefas.length} total, ${tarefasPendentes.length} pendentes, ${tarefasAtrasadas.length} atrasadas)
 ${tarefas.slice(0, 10).map((t: any) => `- "${t.titulo}" | Estado: ${t.estado} | Prioridade: ${t.prioridade} | Limite: ${t.data_limite || "N/D"}`).join("\n")}
 
 ### RDOs (${rdos.length} registados)
-${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"}`).join("\n")}
+${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"} | MO: ${(r as any).mao_obra_total || 0}h`).join("\n")}
 
 ### Alertas Axia Abertos (${insights.length})
 ${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\n")}
 
 ### Autos de Medição (${autos.length})
-${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Valor medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
+${autos.slice(0, 5).map((a: any) => `- Auto #${a.numero_auto} | Estado: ${a.estado} | Medido: €${(a.valor_medido_atual || 0).toLocaleString("pt-PT")} | Previsto: €${((a as any).valor_previsto || 0).toLocaleString("pt-PT")} | Progresso: ${a.percentagem_global || 0}%`).join("\n")}
 
-### Cronograma / Tarefas do Planeamento (${scheduleTasks.length} ativas)
+### Equipa Ativa (${equipa.length} membros)
+${equipa.slice(0, 15).map((e: any) => `- ${e.nome} | Cargo: ${e.cargo || "N/D"} | ${e.obra_atual_id ? "Alocado a obra" : "Disponível"}`).join("\n")}
+
+### Cronograma (${scheduleTasks.length} tarefas ativas)
 ${scheduleTasks.slice(0, 15).map((t: any) => {
   const delay = t.planned_end && t.forecast_end ? Math.max(0, Math.ceil((new Date(t.forecast_end).getTime() - new Date(t.planned_end).getTime()) / (1000*60*60*24))) : 0;
-  return `- [${t.wbs_code || '-'}] "${t.name}" | Tipo: ${t.task_type} | Estado: ${t.status_flag} | Planeado: ${t.planned_progress_percent}% | Real: ${t.actual_progress_percent}% | Atraso: ${delay}d | Classificação: ${t.delay_classification || 'N/A'} | Criticidade: ${t.criticality}`;
+  return `- [${t.wbs_code || '-'}] "${t.name}" | Estado: ${t.status_flag} | Real: ${t.actual_progress_percent}% vs Plan: ${t.planned_progress_percent}% | Atraso: ${delay}d | Criticidade: ${t.criticality}`;
 }).join("\n")}
 `.trim();
 
