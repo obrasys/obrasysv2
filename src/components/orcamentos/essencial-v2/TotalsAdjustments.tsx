@@ -1,6 +1,5 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import {
   Select,
@@ -17,7 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { formatEUR } from '@/types/orcamento-essencial';
 import { calcPrecoVenda, calcLucro, MARGEM_TOOLTIP } from '@/lib/margin';
-import { Scale, Info, TrendingUp, HelpCircle } from 'lucide-react';
+import { Scale, TrendingUp, HelpCircle } from 'lucide-react';
 import {
   TIPO_OBRA_FISCAL_CONFIG,
   TIPO_CLIENTE_FISCAL_CONFIG,
@@ -26,7 +25,6 @@ import {
   type TipoClienteFiscal,
   type TipoOperacaoFiscal,
 } from '@/types/fiscal';
-import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { useState } from 'react';
 
 const IVA_REGIMES = [
@@ -59,20 +57,9 @@ export function TotalsAdjustments({
   onDiscountChange,
   onVatChange,
 }: Props) {
-  const { determinarRegimeFiscal } = useFiscalEngine();
-
   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
   const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
-
-  const fiscalResult = determinarRegimeFiscal({
-    tipo_obra: tipoObra || null,
-    tipo_cliente: tipoCliente || null,
-    tipo_operacao: tipoOperacao || null,
-  });
-
-  // Show fiscal suggestion but do NOT auto-apply
-  // User must click to apply the suggested rate
 
   // Calculate with margin (real margin on sale price)
   const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
@@ -164,14 +151,9 @@ export function TotalsAdjustments({
               <button
                 key={regime.value}
                 type="button"
-                onClick={() => {
-                  onVatChange(regime.value);
-                  setTipoObra(undefined);
-                  setTipoCliente(undefined);
-                  setTipoOperacao(undefined);
-                }}
+                onClick={() => onVatChange(regime.value)}
                 className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
-                  vatPercent === regime.value && !tipoObra && !tipoCliente && !tipoOperacao
+                  vatPercent === regime.value
                     ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
                     : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
                 }`}
@@ -184,7 +166,7 @@ export function TotalsAdjustments({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Ou selecione o contexto fiscal para determinação automática:
+          Contexto fiscal (opcional, apenas informativo — não altera IVA automaticamente):
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -240,39 +222,6 @@ export function TotalsAdjustments({
             </Select>
           </div>
         </div>
-
-        {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
-          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Regime sugerido</p>
-              <p className="text-sm font-medium text-foreground">{fiscalResult.regime_nome}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-black text-primary tabular-nums">{fiscalResult.taxa_iva}%</span>
-              {vatPercent !== fiscalResult.taxa_iva && (
-                <button
-                  type="button"
-                  onClick={() => onVatChange(fiscalResult.taxa_iva)}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Aplicar
-                </button>
-              )}
-              {vatPercent === fiscalResult.taxa_iva && (
-                <Badge variant="secondary" className="text-[10px]">Aplicado</Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {fiscalResult?.nota_legal && (tipoObra || tipoCliente || tipoOperacao) && (
-          <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
-            <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {fiscalResult.nota_legal}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Adjustments + Summary */}
@@ -306,12 +255,7 @@ export function TotalsAdjustments({
           </div>
 
           <div>
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-muted-foreground">IVA %</Label>
-              {fiscalResult && (tipoObra || tipoCliente || tipoOperacao) && (
-                <Badge variant="secondary" className="text-[10px]">Auto</Badge>
-              )}
-            </div>
+            <Label className="text-sm text-muted-foreground">IVA %</Label>
             <Input
               type="number"
               min={0}
