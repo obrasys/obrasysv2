@@ -149,9 +149,32 @@ export function RDOActivityEditor({ reportId, obraId, scheduleVersionId, readOnl
             }))
           )}. Responde em português de forma concisa com emojis para facilitar a leitura.`,
         },
+        headers: { Accept: 'text/event-stream' },
       });
       if (error) throw error;
-      setAxiaInsights(data?.response || data?.message || 'Sem análise disponível.');
+      let fullText = '';
+      if (data instanceof ReadableStream) {
+        const reader = data.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          for (const line of chunk.split('\n')) {
+            if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) fullText += content;
+            } catch { /* skip */ }
+          }
+        }
+      } else if (typeof data === 'string') {
+        fullText = data;
+      } else {
+        fullText = data?.response || data?.message || '';
+      }
+      setAxiaInsights(fullText || 'Sem análise disponível.');
     } catch (err) {
       console.error('Axia analysis error:', err);
       toast({ title: 'Erro na análise Axia', description: 'Não foi possível gerar a análise.', variant: 'destructive' });
