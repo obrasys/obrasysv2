@@ -17,7 +17,8 @@ export function useScheduleVersions(obraId?: string) {
         .from('project_schedule_versions')
         .select('*')
         .eq('obra_id', obraId)
-        .order('version_no', { ascending: false });
+        .order('version_no', { ascending: false })
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data as ScheduleVersion[];
     },
