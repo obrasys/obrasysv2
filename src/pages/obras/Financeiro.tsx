@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ContaCard, ContaForm, FinanceiroDashboard, ReceivableAlertsCard } from '@/components/financeiro';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
+import { ObraCustosExtrasTab } from '@/components/obras/ObraCustosExtrasTab';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
@@ -413,6 +414,10 @@ export default function ObraFinanceiroPage() {
               <Users className="w-3 h-3" />
               Mão de Obra
             </TabsTrigger>
+            <TabsTrigger value="custos-extra" className="flex items-center gap-1">
+              <MoreHorizontal className="w-3 h-3" />
+              Custos Extra
+            </TabsTrigger>
             {(totalDueSoon > 0 || totalOverdue > 0 || contasAVencer.length > 0) && (
               <TabsTrigger value="a-vencer" className="flex items-center gap-1">
                 <Bell className="w-3 h-3" />
@@ -481,6 +486,10 @@ export default function ObraFinanceiroPage() {
 
           <TabsContent value="mao-de-obra" className="mt-4">
             <ObraLaborCostsTab obraId={id!} />
+          </TabsContent>
+
+          <TabsContent value="custos-extra" className="mt-4">
+            <ObraCustosExtrasTab obraId={id!} />
           </TabsContent>
 
           <TabsContent value="a-vencer" className="mt-4">
