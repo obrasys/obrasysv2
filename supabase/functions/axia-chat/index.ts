@@ -98,6 +98,7 @@ serve(async (req) => {
     const tarefas = tarefasRes.data || [];
     const insights = insightsRes.data || [];
     const autos = autosMedicaoRes.data || [];
+    const scheduleTasks = scheduleTasksRes.data || [];
 
     // ── Build context summary ───────────────────────────────
     const obrasEmCurso = obras.filter((o: any) => o.status === "em_curso");
