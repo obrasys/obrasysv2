@@ -154,6 +154,31 @@ export function ScheduleGanttTable({ obraId, obraNome, orcamentoId }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* Smart Alerts */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <SmartAlertsPanel tasks={tasks} dependencies={dependencies || []} />
+      )}
+
+      {/* Deviation Explainer */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <DeviationExplainerCard
+          tasks={tasks}
+          dependencies={dependencies || []}
+          obraNome={obraNome || 'Obra'}
+        />
+      )}
+
+      {/* Axia AI Assistant */}
+      {activeVersionId && tasks && tasks.length > 0 && (
+        <AxiaSchedulePanel
+          obraId={obraId}
+          obraNome={obraNome || 'Obra'}
+          tasks={tasks}
+          dependencies={dependencies || []}
+          hasBaseline={!!baseline}
+        />
+      )}
     </div>
   );
 }
