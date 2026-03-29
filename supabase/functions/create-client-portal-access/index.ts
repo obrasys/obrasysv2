@@ -9,11 +9,9 @@ const corsHeaders = {
 function generatePassword(length = 12): string {
   const chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+  const randomValues = new Uint32Array(length);
+  crypto.getRandomValues(randomValues);
+  return Array.from(randomValues, (v) => chars[v % chars.length]).join("");
 }
 
 Deno.serve(async (req) => {
@@ -85,6 +83,19 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Ownership check: caller must own the orcamento (or be in same org)
+      if (orc.user_id !== caller.id) {
+        // Check org membership as fallback
+        const { data: orgCheck } = await supabaseAuth.rpc("get_org_member_ids");
+        const orgMembers: string[] = orgCheck || [];
+        if (!orgMembers.includes(orc.user_id)) {
+          return new Response(
+            JSON.stringify({ error: "Sem permissão para este orçamento" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       if (orc.cliente && orc.cliente.email) {
         clienteEmail = orc.cliente.email;
         clienteNome = orc.cliente.nome;
@@ -111,14 +122,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get obra name
+    // Get obra name and verify ownership
     const { data: obraData } = await supabaseAdmin
       .from("obras")
-      .select("nome")
+      .select("user_id, nome")
       .eq("id", obraIdFinal)
       .single();
 
-    obraNome = obraData?.nome || "Obra";
+    if (!obraData) {
+      return new Response(
+        JSON.stringify({ error: "Obra não encontrada" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Ownership check: caller must own the obra (or be in same org)
+    if (obraData.user_id !== caller.id) {
+      const { data: orgCheck } = await supabaseAuth.rpc("get_org_member_ids");
+      const orgMembers: string[] = orgCheck || [];
+      if (!orgMembers.includes(obraData.user_id)) {
+        return new Response(
+          JSON.stringify({ error: "Sem permissão para esta obra" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    obraNome = obraData.nome || "Obra";
 
     // Check if user already exists with this email
     let clientUserId: string | null = null;
