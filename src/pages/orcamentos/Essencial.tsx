@@ -101,6 +101,17 @@ export default function EssencialPage() {
   // Modal state
   const [modalArea, setModalArea] = useState<AreaConfig | null>(null);
 
+  // Auto-generate budget number
+  useEffect(() => {
+    if (!user || clientInfo.budgetNumber) return;
+    (async () => {
+      const { data: codigo } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
+      if (codigo) {
+        setClientInfo((prev) => ({ ...prev, budgetNumber: codigo }));
+      }
+    })();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Autosave
   useEffect(() => {
     const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent };
