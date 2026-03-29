@@ -1,63 +1,44 @@
 
 
-# Geração Automática de Planeamento na Adjudicação
+## Problem Analysis
 
-## O que será feito
+When you invited `pattyc.beja@gmail.com` to the client portal, the system found the existing user and granted `client_obra_access`, but did **not** change her profile role. Since the portal routing checks `profile.role === 'cliente'`, she cannot access the portal — she gets redirected to the dashboard instead.
 
-Quando o utilizador adjudicar um orçamento, o sistema criará automaticamente o cronograma estimado (planeamento) da obra, usando a Axia para sugerir sequência, durações e dependências com base nos capítulos e artigos do orçamento adjudicado.
+The root issue is that the system assumes a user can only have ONE role, but in reality a user might need to be both a `gestor` (managing their own projects) AND a `cliente` (viewing someone else's project via the portal).
 
-## Implementação
+## Proposed Fix
 
-### 1. Edge Function `generate-estimated-schedule`
+**Approach**: Allow any authenticated user with a `client_obra_access` record to access the portal, regardless of their profile role. This way, existing users can be invited to view specific obras without losing their primary role.
 
-Criar `supabase/functions/generate-estimated-schedule/index.ts`:
+### Changes
 
-- Recebe `obra_id`, `budget_id`, `user_id`, `awarded_amount`, `awarded_at`
-- Lê `capitulos_orcamento` + `artigos_orcamento` do orçamento
-- Envia à Axia (Gemini Flash via Lovable AI Gateway) com prompt estruturado pedindo:
-  - Fases hierárquicas baseadas nos capítulos
-  - Tarefas por artigo relevante
-  - Durações estimadas em dias
-  - Sequência lógica e dependências (FS)
-  - Pesos financeiros derivados dos valores dos capítulos
-- Cria `project_schedule_versions` com `type='estimated'`, `generated_by_type='axia'`, `approval_status='pending_validation'`
-- Cria `project_schedule_tasks` com WBS, datas calculadas a partir da data de adjudicação, `budget_chapter_id` vinculado, pesos financeiros proporcionais ao valor do capítulo
-- Cria `project_schedule_dependencies` (FS entre fases sequenciais)
-- Cria `project_milestones` para início e conclusão
+**1. Update `ClientRoute.tsx`**
+- Instead of checking `profile.role === 'cliente'`, query `client_obra_access` to see if the user has any active portal access.
+- Allow users with role `cliente` OR users with active `client_obra_access` records to access `/portal` routes.
 
-### 2. Modificar `useAdjudicacao.ts`
+**2. Update routing logic in `Auth.tsx`, `Index.tsx`, `fornecedor/Auth.tsx`**
+- After login, if a user has role `cliente`, redirect to `/portal` (existing behavior).
+- For other roles, keep redirecting to `/dashboard` (existing behavior).
+- Add a "Portal do Cliente" link in the sidebar/navigation for non-cliente users who have active `client_obra_access` records, so they can navigate there voluntarily.
 
-Após o passo 9 (portal do cliente), adicionar passo 10:
-- Invocar `generate-estimated-schedule` com `obra_id`, `budget_id`, `user_id`, `awarded_amount`, `awarded_at`
-- Não-crítico: envolvido em try/catch (falha silenciosa)
-- Invalidar queries `schedule-versions` e `schedule-tasks`
+**3. Update `ManagerRoute.tsx`**
+- Currently blocks `cliente` role users from admin routes. Keep this, but don't block users who happen to have `client_obra_access` records but a different role — they should still access admin routes.
 
-### 3. Toast de sucesso atualizado
+**4. Update `create-client-portal-access` edge function**
+- When the invited email belongs to an existing user with a non-`cliente` role, do NOT attempt to change their role.
+- Ensure the `client_obra_access` record is created correctly (already works).
+- Adjust the email template to inform existing users they can access the portal via the portal link.
 
-Atualizar a mensagem de sucesso para incluir referência ao planeamento gerado.
+**5. Add portal navigation for multi-role users**
+- In the sidebar (`Sidebar.tsx`), add a conditional "Portal do Cliente" link that appears when the logged-in user (non-`cliente` role) has active `client_obra_access` entries.
 
-## Ficheiros alterados
+### Immediate Data Fix
+- For `pattyc.beja@gmail.com`, verify that `client_obra_access` exists for the correct obra. No role change needed — the code fix will allow her to access the portal with her existing role.
 
-| Ficheiro | Ação |
-|----------|------|
-| `supabase/functions/generate-estimated-schedule/index.ts` | Criar |
-| `src/hooks/useAdjudicacao.ts` | Editar (adicionar chamada à edge function) |
-
-## Lógica da Axia para geração do cronograma
-
-O prompt estruturado pede à IA para devolver JSON com:
-```text
-{
-  phases: [
-    {
-      name, wbs_code, duration_days, sort_order,
-      budget_chapter_id, weight_financial,
-      tasks: [{ name, duration_days, unit, quantity, sort_order }]
-    }
-  ],
-  dependencies: [{ from_wbs, to_wbs, type: "FS", lag: 0 }]
-}
-```
-
-As datas são calculadas server-side (não pela IA) usando a `awarded_at` como data de início, somando durações sequencialmente respeitando as dependências.
+### Files to modify
+- `src/components/portal/ClientRoute.tsx` — Allow access based on `client_obra_access`, not just role
+- `src/pages/Auth.tsx` — Keep existing redirect logic (no change needed)
+- `src/pages/Index.tsx` — Keep existing redirect logic (no change needed)  
+- `src/components/layout/Sidebar.tsx` — Add portal link for users with client access
+- `supabase/functions/create-client-portal-access/index.ts` — Minor: skip role assumption for existing users
 
