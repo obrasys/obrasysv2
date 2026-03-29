@@ -122,6 +122,7 @@ export default function LancarPage() {
       setCheckIn("");
       setCheckOut("");
       setBreakMin(0);
+      setManualHours("");
       setNotes("");
       setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
     } else {
