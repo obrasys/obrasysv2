@@ -189,6 +189,9 @@ const Dashboard = () => {
               if (!open) setEmpresaPromptDismissed(true);
             }} />
 
+            {/* Completion modal */}
+            <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
+
             {/* Quick Action - Orçamento Essencial */}
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
