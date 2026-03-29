@@ -83,6 +83,19 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Ownership check: caller must own the orcamento (or be in same org)
+      if (orc.user_id !== caller.id) {
+        // Check org membership as fallback
+        const { data: orgCheck } = await supabaseAdmin.rpc("get_org_member_ids");
+        const orgMembers: string[] = orgCheck || [];
+        if (!orgMembers.includes(orc.user_id)) {
+          return new Response(
+            JSON.stringify({ error: "Sem permissão para este orçamento" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       if (orc.cliente && orc.cliente.email) {
         clienteEmail = orc.cliente.email;
         clienteNome = orc.cliente.nome;
