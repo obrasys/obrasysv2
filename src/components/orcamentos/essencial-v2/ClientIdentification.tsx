@@ -90,7 +90,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
         {/* Right column */}
         <div className="space-y-4">
           <div>
-            <Label className="text-sm text-muted-foreground">Nome do Cliente</Label>
+            <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
             <Input
               placeholder="Ex.: João Silva"
               value={data.clientName}
@@ -99,7 +99,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             />
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Local da Obra</Label>
+            <Label className="text-sm text-muted-foreground">Local da Obra <span className="text-destructive">*</span></Label>
             <Input
               placeholder="Morada / Localidade"
               value={data.workLocation}
@@ -108,7 +108,7 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             />
           </div>
           <div>
-            <Label className="text-sm text-muted-foreground">Condições</Label>
+            <Label className="text-sm text-muted-foreground">Condições <span className="text-destructive">*</span></Label>
             <Textarea
               placeholder="Ex.: 40% adjudicação, 40% a meio, 20% no fim"
               value={data.conditions}
