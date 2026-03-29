@@ -99,14 +99,14 @@ Deno.serve(async (req) => {
         .eq('id', taskId)
         .single();
 
-      if (task && task.forecast_end && task.planned_end && task.forecast_end !== task.planned_end) {
+      if (task && task.forecast_end && task.planned_end && String(task.forecast_end) !== String(task.planned_end)) {
         await supabase.from('task_reforecast').insert({
           user_id: task.user_id,
           obra_id: task.obra_id,
           schedule_task_id: taskId,
           reference_daily_report_id: daily_report_id,
-          previous_forecast_end: task.planned_end,
-          new_forecast_end: task.forecast_end,
+          previous_forecast_end: String(task.planned_end),
+          new_forecast_end: String(task.forecast_end),
           previous_remaining_duration_days: task.planned_duration_days,
           new_remaining_duration_days: task.remaining_duration_days,
           delay_classification: classification || 'recoverable',
