@@ -18,6 +18,9 @@ import {
   formatEUR,
 } from '@/types/orcamento-essencial';
 import { calcPrecoVenda } from '@/lib/margin';
+import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
+import { generateComercialPdf } from '@/lib/orcamento-pdf-comercial';
+import type { Orcamento, Capitulo, ArtigoOrcamento } from '@/types/orcamentos';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
