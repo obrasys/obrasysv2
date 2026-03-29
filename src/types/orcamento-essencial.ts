@@ -86,17 +86,22 @@ export const AREAS_LSF: AreaConfig[] = [
 ];
 
 export const AREAS_ICF: AreaConfig[] = [
-  { key: 'preparacao_terras', label: '1 - Preparação e Mov. Terras' },
-  { key: 'fundacoes_laje', label: '2 - Fundações e Laje' },
-  { key: 'paredes_icf', label: '3 - Paredes ICF' },
-  { key: 'laje_cobertura', label: '4 - Laje / Cobertura' },
-  { key: 'impermeabilizacao_icf', label: '5 - Impermeabilização' },
-  { key: 'instalacoes_aguas', label: '6 - Instalações de águas' },
-  { key: 'instalacoes_eletricas', label: '7 - Instalações elétricas' },
-  { key: 'revestimentos_interiores', label: '8 - Revestimentos interiores' },
-  { key: 'revestimentos_exteriores', label: '9 - Revestimentos exteriores' },
-  { key: 'caixilharias_serralharias', label: '10 - Caixilharias e serralharias' },
-  { key: 'arranjos_exteriores', label: '11 - Arranjos exteriores' },
+  { key: 'icf_preparacao_terras', label: '1 - Preparação e Mov. Terras' },
+  { key: 'icf_fundacoes_laje', label: '2 - Fundações e Laje Base' },
+  { key: 'icf_paredes_estruturais', label: '3 - Paredes Estruturais ICF' },
+  { key: 'icf_lajes_cobertura', label: '4 - Lajes / Cobertura' },
+  { key: 'icf_impermeabilizacao', label: '5 - Impermeabilização' },
+  { key: 'icf_instalacoes_aguas', label: '6 - Instalações Hidráulicas' },
+  { key: 'icf_instalacoes_eletricas', label: '7 - Instalações Elétricas' },
+  { key: 'icf_revestimento_interior', label: '8 - Revestimento Interior' },
+  { key: 'icf_revestimento_exterior', label: '9 - Revestimento Exterior' },
+  { key: 'icf_tetos_falsos', label: '10 - Tetos Falsos e Pladur' },
+  { key: 'icf_pavimentos', label: '11 - Pavimentos e Revestimentos' },
+  { key: 'icf_caixilharias', label: '12 - Caixilharias Exteriores' },
+  { key: 'icf_carpintarias', label: '13 - Carpintarias Interiores' },
+  { key: 'icf_pinturas', label: '14 - Pinturas' },
+  { key: 'icf_loucas_sanitarios', label: '15 - Louças, Sanitários e Equipamentos' },
+  { key: 'icf_arranjos_exteriores', label: '16 - Arranjos Exteriores' },
 ];
 
 export function getAreasForType(type: BudgetType): AreaConfig[] {
