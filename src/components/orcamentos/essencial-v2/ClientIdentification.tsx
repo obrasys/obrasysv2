@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, FileStack, Loader2, Send } from 'lucide-react';
+import { FileText, FileStack, Loader2, Send, Eye } from 'lucide-react';
 import { type BudgetClientInfo } from '@/types/orcamento-essencial';
 
 export type BudgetFormat = 'tecnico' | 'comercial';
@@ -21,10 +21,12 @@ interface Props {
   data: BudgetClientInfo;
   onChange: (data: BudgetClientInfo) => void;
   onSave: (format: BudgetFormat) => void;
+  onPreview: (format: BudgetFormat) => void;
   isLoading?: boolean;
+  isPreviewLoading?: boolean;
 }
 
-export function ClientIdentification({ data, onChange, onSave, isLoading }: Props) {
+export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading }: Props) {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
 
@@ -36,6 +38,8 @@ export function ClientIdentification({ data, onChange, onSave, isLoading }: Prop
     setShowFormatDialog(false);
     onSave(selectedFormat);
   };
+
+  const busy = isLoading || isPreviewLoading;
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
@@ -115,8 +119,35 @@ export function ClientIdentification({ data, onChange, onSave, isLoading }: Prop
         </div>
       </div>
 
+      {/* Preview buttons */}
+      <div className="mt-6 p-4 rounded-xl bg-muted/30 border border-border/40">
+        <p className="text-sm font-medium text-foreground mb-3">Pré-visualizar antes de guardar</p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => onPreview('tecnico')}
+            disabled={busy}
+          >
+            {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            <FileStack className="h-3.5 w-3.5" />
+            Ver Técnico
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => onPreview('comercial')}
+            disabled={busy}
+          >
+            {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            <FileText className="h-3.5 w-3.5" />
+            Ver Comercial
+          </Button>
+        </div>
+      </div>
+
       <div className="flex justify-end mt-6">
-        <Button size="lg" className="h-12 px-8 text-base font-semibold gap-2" onClick={() => setShowFormatDialog(true)} disabled={isLoading}>
+        <Button size="lg" className="h-12 px-8 text-base font-semibold gap-2" onClick={() => setShowFormatDialog(true)} disabled={busy}>
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Guardar & Enviar
         </Button>
