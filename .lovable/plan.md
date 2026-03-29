@@ -1,57 +1,39 @@
 
 
-# Redesign dos Recursos com Cards com Foto + Equipa Ativa no Dashboard
+## Plano: Custos Extra na Dashboard da Obra (Almoços, Gasóleo, etc.)
 
-## Contexto
-As tabelas `equipa_membros`, `subempreiteiros` e `equipamentos` **nao possuem campo de foto**. Sera necessario adicionar uma coluna `foto_url` a cada tabela e implementar upload de imagem no formulario de cada recurso. O design dos cards seguira o modelo do anexo: avatar circular grande, nome em destaque, funcao/especialidade, e metadados como obra, vinculo e remuneracao.
+### Situação Atual
+O sistema financeiro já tem a tabela `contas_financeiras` com `origem = 'outros'` e suporte a categorias via `categorias_financeiras`. No entanto, não há atalhos rápidos para lançar custos operacionais do dia-a-dia como almoços, gasóleo, portagens, etc.
 
-## Plano
+### Abordagem
+Criar um componente dedicado **"Custos Extra"** como novo separador na página Financeiro da obra, com botões de lançamento rápido para categorias comuns e uma tabela resumo. Reutiliza a infraestrutura existente (`contas_financeiras` com `origem = 'outros'`), sem necessidade de migração.
 
-### 1. Migracao de Base de Dados
-Adicionar coluna `foto_url TEXT NULL` nas 3 tabelas:
-- `equipa_membros`
-- `subempreiteiros`
-- `equipamentos`
+### O que será feito
 
-Criar um storage bucket `recursos` para armazenar as fotos, com politicas RLS para upload/leitura pelo proprietario.
+**1. Componente `ObraCustosExtrasTab`** (novo ficheiro)
+- Linha de KPIs: total almoços, total gasóleo, total outros extras (mês corrente e acumulado)
+- Botões de lançamento rápido com ícones para: Almoço, Gasóleo, Portagens, Estacionamento, Material diverso, Outros
+- Cada botão abre um mini-formulário inline (valor, data, descrição opcional) — sem modal pesado
+- Tabela de registos com filtro por tipo de custo extra e período
+- Gráfico de distribuição por tipo (donut)
 
-### 2. Atualizar Tipos TypeScript
-Adicionar `foto_url?: string | null` nos tipos `EquipaMembro`, `Subempreiteiro`, `Equipamento` e nos respectivos `FormData`.
+**2. Integração na página `Financeiro.tsx`**
+- Novo separador "Custos Extra" na TabsList existente (ao lado de RH, Material, etc.)
+- O balanço da obra passa a incluir os custos extras no cálculo de despesas
 
-### 3. Componente de Upload de Foto nos Formularios
-Criar um componente reutilizavel `ResourcePhotoUpload` que:
-- Mostra o avatar atual ou um placeholder
-- Permite selecionar uma imagem (max 2MB)
-- Faz upload para o bucket `recursos` no storage
-- Retorna a URL publica
+**3. Dados pré-configurados**
+- Constantes com tipos de custo extra comuns (almoços, gasóleo, portagens, estacionamento, ferramentas, deslocações) com ícones e cores
+- Os lançamentos usam `origem = 'outros'` + `descricao` com tag do tipo para filtrar
 
-Integrar este componente nos 3 formularios existentes: `SubempreiteiroForm`, `EquipamentoForm`, `EquipaMembroForm`.
+### Ficheiros a criar/editar
+| Ficheiro | Ação |
+|---|---|
+| `src/components/obras/ObraCustosExtrasTab.tsx` | **Criar** — componente completo |
+| `src/pages/obras/Financeiro.tsx` | **Editar** — adicionar tab "Custos Extra" |
+| `src/components/obras/index.ts` | **Editar** — export do novo componente |
 
-### 4. Redesign da Pagina de Recursos (Cards)
-Substituir as tabelas atuais por grelhas de cards visuais no estilo do anexo:
-- **Avatar circular** grande com a foto ou iniciais como fallback
-- **Nome** em destaque (bold, cor primaria `#00679d`)
-- **Funcao/Especialidade/Categoria** como subtitulo
-- **Metadados**: Obra associada, vinculo (contrato/estado), remuneracao/valor
-- **Badge** de estado (Ativo/Inativo, Disponivel/Em Uso)
-- **Menu de acoes** (editar/eliminar) no canto
-
-Layout: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4`
-
-### 5. Equipa Ativa no Dashboard Principal
-Atualizar `DashboardStats.tsx` na seccao "Equipa Ativa":
-- Substituir o avatar com fallback de iniciais pelo avatar com `foto_url`
-- Usar `AvatarImage` com a URL da foto quando disponivel
-- Manter fallback de iniciais para membros sem foto
-
-### Ficheiros Afetados
-- **Migracao SQL**: nova migracao para colunas + bucket + RLS
-- `src/types/recursos.ts` — adicionar `foto_url`
-- `src/hooks/useRecursos.ts` — incluir `foto_url` nos CRUD
-- `src/components/recursos/ResourcePhotoUpload.tsx` — novo componente
-- `src/components/recursos/SubempreiteiroForm.tsx` — integrar upload
-- `src/components/recursos/EquipamentoForm.tsx` — integrar upload
-- `src/components/recursos/EquipaMembroForm.tsx` — integrar upload
-- `src/pages/recursos/Index.tsx` — substituir tabelas por cards
-- `src/components/dashboard/DashboardStats.tsx` — foto na Equipa Ativa
+### Detalhes técnicos
+- Os custos são gravados na tabela `contas_financeiras` existente com `tipo = 'pagar'`, `origem = 'outros'` e a `descricao` prefixada com tag (ex: `[ALMOÇO]`, `[GASÓLEO]`) para permitir filtragem
+- Usa o hook `useFinanceiro` existente para criar/listar contas
+- KPIs calculados em client-side a partir das contas filtradas por `origem = 'outros'`
 
