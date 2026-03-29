@@ -109,6 +109,8 @@ serve(async (req) => {
     const insights = insightsRes.data || [];
     const autos = autosMedicaoRes.data || [];
     const scheduleTasks = scheduleTasksRes.data || [];
+    const contas = contasRes.data || [];
+    const equipa = equipaRes.data || [];
 
     // ── Build context summary ───────────────────────────────
     const obrasEmCurso = obras.filter((o: any) => o.status === "em_curso");
