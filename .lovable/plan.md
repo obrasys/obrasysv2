@@ -1,44 +1,87 @@
 
 
-## Problem Analysis
+# Auditoria Geral do Sistema ObraSys
 
-When you invited `pattyc.beja@gmail.com` to the client portal, the system found the existing user and granted `client_obra_access`, but did **not** change her profile role. Since the portal routing checks `profile.role === 'cliente'`, she cannot access the portal — she gets redirected to the dashboard instead.
+## Resumo da Auditoria
 
-The root issue is that the system assumes a user can only have ONE role, but in reality a user might need to be both a `gestor` (managing their own projects) AND a `cliente` (viewing someone else's project via the portal).
+Analisei rotas, componentes, hooks, edge functions, logs de consola e ligações entre módulos. Seguem os problemas identificados organizados por severidade.
 
-## Proposed Fix
+---
 
-**Approach**: Allow any authenticated user with a `client_obra_access` record to access the portal, regardless of their profile role. This way, existing users can be invited to view specific obras without losing their primary role.
+## ERROS ATIVOS (Severidade Alta)
 
-### Changes
+### 1. Warning React: forwardRef em ConformidadeIndex
+- **Problema**: `Dialog` e `AlertDialog` do Radix estão a receber refs em componentes funcionais sem `forwardRef`, gerando warnings na consola.
+- **Ficheiro**: `src/pages/conformidade/Index.tsx`
+- **Correção**: Garantir que os componentes `Dialog` e `AlertDialog` estejam a ser usados com estado controlado (`open`/`onOpenChange`) em vez de refs.
 
-**1. Update `ClientRoute.tsx`**
-- Instead of checking `profile.role === 'cliente'`, query `client_obra_access` to see if the user has any active portal access.
-- Allow users with role `cliente` OR users with active `client_obra_access` records to access `/portal` routes.
+### 2. CORS incompleto em `process-daily-report`
+- **Problema**: Os headers CORS estão incompletos (`'authorization, x-client-info, apikey, content-type'`), faltam os headers de plataforma/runtime usados pelo cliente Supabase.
+- **Ficheiro**: `supabase/functions/process-daily-report/index.ts`
+- **Correção**: Atualizar para incluir `x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version`.
 
-**2. Update routing logic in `Auth.tsx`, `Index.tsx`, `fornecedor/Auth.tsx`**
-- After login, if a user has role `cliente`, redirect to `/portal` (existing behavior).
-- For other roles, keep redirecting to `/dashboard` (existing behavior).
-- Add a "Portal do Cliente" link in the sidebar/navigation for non-cliente users who have active `client_obra_access` records, so they can navigate there voluntarily.
+### 3. `create-client-portal-access` tenta mudar role de utilizadores existentes
+- **Problema**: Quando um utilizador existente (ex: gestor) é convidado, o `user_metadata` passa `role: 'cliente'` na criação. Para utilizadores existentes, isto não é aplicado, mas para novos utilizadores criados com `created_by`, o trigger `handle_new_user` pode atribuir o role errado.
+- **Ficheiro**: `supabase/functions/create-client-portal-access/index.ts` (linha 135)
+- **Correção**: Não passar `role: 'cliente'` no `user_metadata` para evitar conflitos. Usar apenas `client_obra_access` para controlo de acesso ao portal.
 
-**3. Update `ManagerRoute.tsx`**
-- Currently blocks `cliente` role users from admin routes. Keep this, but don't block users who happen to have `client_obra_access` records but a different role — they should still access admin routes.
+---
 
-**4. Update `create-client-portal-access` edge function**
-- When the invited email belongs to an existing user with a non-`cliente` role, do NOT attempt to change their role.
-- Ensure the `client_obra_access` record is created correctly (already works).
-- Adjust the email template to inform existing users they can access the portal via the portal link.
+## CÓDIGO ÓRFÃO (Severidade Média)
 
-**5. Add portal navigation for multi-role users**
-- In the sidebar (`Sidebar.tsx`), add a conditional "Portal do Cliente" link that appears when the logged-in user (non-`cliente` role) has active `client_obra_access` entries.
+### 4. Hook `useFiscalReports` nunca importado
+- **Ficheiro**: `src/hooks/useFiscalReports.ts` (159 linhas)
+- **Status**: Exporta `useFiscalReports()` mas nenhum componente o importa.
+- **Ação**: Remover ou ligar a uma página de relatórios fiscais.
 
-### Immediate Data Fix
-- For `pattyc.beja@gmail.com`, verify that `client_obra_access` exists for the correct obra. No role change needed — the code fix will allow her to access the portal with her existing role.
+### 5. Hook `useOrcamentoEssencial` nunca importado
+- **Ficheiro**: `src/hooks/useOrcamentoEssencial.ts` (306 linhas)
+- **Status**: Exporta `useOrcamentoEssencial()` mas nenhum componente o importa. A página `Essencial.tsx` provavelmente usa uma versão v2 diferente.
+- **Ação**: Verificar se é código legado e remover.
 
-### Files to modify
-- `src/components/portal/ClientRoute.tsx` — Allow access based on `client_obra_access`, not just role
-- `src/pages/Auth.tsx` — Keep existing redirect logic (no change needed)
-- `src/pages/Index.tsx` — Keep existing redirect logic (no change needed)  
-- `src/components/layout/Sidebar.tsx` — Add portal link for users with client access
-- `supabase/functions/create-client-portal-access/index.ts` — Minor: skip role assumption for existing users
+---
+
+## INCONSISTÊNCIAS (Severidade Média)
+
+### 6. `process-daily-report` usa `esm.sh` em vez de `npm:`
+- **Problema**: `import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'` enquanto outras funções usam `npm:@supabase/supabase-js@2`. Isto pode causar incompatibilidades de versão.
+- **Ficheiro**: `supabase/functions/process-daily-report/index.ts`
+- **Correção**: Normalizar para `npm:@supabase/supabase-js@2`.
+
+### 7. `ManagerRoute` não bloqueia role `supplier`
+- **Problema**: O `ManagerRoute` só redireciona `cliente` para `/portal`. Um utilizador com role `supplier` pode aceder a todas as rotas de gestor.
+- **Ficheiro**: `src/components/portal/ManagerRoute.tsx`
+- **Correção**: Adicionar verificação para `supplier` e redirecionar para `/fornecedor/dashboard`.
+
+### 8. `useClientAccess` query desativada para role `cliente`
+- **Problema**: O hook tem `enabled: !!user?.id && profile?.role !== 'cliente'` mas retorna `false` por default quando desativado, o que é inconsistente pois clientes deveriam ter `hasClientAccess = true`.
+- **Ficheiro**: `src/hooks/useClientAccess.ts`
+- **Correção**: Retornar `true` diretamente quando `profile?.role === 'cliente'`, sem depender do `useQuery`.
+
+---
+
+## MELHORIAS DE ROBUSTEZ (Severidade Baixa)
+
+### 9. Sidebar já mostra "Portal do Cliente" corretamente
+- O link condicional foi implementado corretamente na última alteração.
+
+### 10. Falta rota `/admin/migracao` no menu de navegação
+- **Problema**: A rota existe em `App.tsx` mas não aparece em `ADMIN_NAV_ITEMS` no `navigation.ts`.
+- **Correção**: Adicionar item de navegação ou remover a rota se não for mais necessária.
+
+---
+
+## Plano de Correções
+
+| # | Correção | Ficheiro(s) |
+|---|---------|-------------|
+| 1 | Corrigir ref warnings no Conformidade | `src/pages/conformidade/Index.tsx` |
+| 2 | Atualizar CORS do process-daily-report | `supabase/functions/process-daily-report/index.ts` |
+| 3 | Remover `role: 'cliente'` do metadata na criação de portal | `supabase/functions/create-client-portal-access/index.ts` |
+| 4 | Remover hook órfão `useFiscalReports` | `src/hooks/useFiscalReports.ts` |
+| 5 | Remover hook órfão `useOrcamentoEssencial` | `src/hooks/useOrcamentoEssencial.ts` |
+| 6 | Normalizar import esm.sh → npm: | `supabase/functions/process-daily-report/index.ts` |
+| 7 | Bloquear suppliers no ManagerRoute | `src/components/portal/ManagerRoute.tsx` |
+| 8 | Corrigir default de useClientAccess para clientes | `src/hooks/useClientAccess.ts` |
+| 9 | Adicionar Migração ao menu admin (ou remover rota) | `src/config/navigation.ts` |
 
