@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
-import { LogOut } from 'lucide-react';
+import { LogOut, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { useClientAccess } from '@/hooks/useClientAccess';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 
