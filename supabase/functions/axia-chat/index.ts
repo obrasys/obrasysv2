@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     // ── Gather operational context ──────────────────────────
-    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes] =
+    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes] =
       await Promise.all([
         supabase
           .from("obras")
@@ -84,6 +84,12 @@ serve(async (req) => {
           .select("id, obra_id, numero_auto, estado, valor_medido_atual, percentagem_global")
           .order("created_at", { ascending: false })
           .limit(10),
+        supabase
+          .from("project_schedule_tasks")
+          .select("id, obra_id, name, task_type, wbs_code, status_flag, planned_start, planned_end, forecast_end, actual_start, actual_end, planned_progress_percent, actual_progress_percent, delay_classification, criticality, weight_financial")
+          .in("status_flag", ["in_progress", "started", "suspended", "not_started"])
+          .order("updated_at", { ascending: false })
+          .limit(30),
       ]);
 
     const obras = obrasRes.data || [];
