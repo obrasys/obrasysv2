@@ -419,29 +419,12 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
               </TabsContent>
 
               <TabsContent value="impacto" className="mt-4">
-                {impactResult ? (
-                  <div className="space-y-3">
-                    <Alert>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <AlertTitle>Impacto processado com sucesso</AlertTitle>
-                      <AlertDescription>
-                        {impactResult.tasks_updated} tarefas atualizadas, {impactResult.delayed_tasks} com atraso detetado.
-                        {impactResult.project_progress && (
-                          <> Progresso global: {impactResult.project_progress.actual.toFixed(1)}% (desvio: {impactResult.project_progress.deviation > 0 ? '+' : ''}{impactResult.project_progress.deviation.toFixed(1)}%)</>
-                        )}
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">O impacto será calculado automaticamente após aprovação da RDO.</p>
-                    <p className="text-xs mt-1">Inclui recálculo de progresso, duração remanescente e caminho crítico.</p>
-                    <p className="text-xs mt-2 flex items-center justify-center gap-1">
-                      <Sparkles className="h-3 w-3" /> Processado pela Axia™
-                    </p>
-                  </div>
-                )}
+                <RDOImpactPanel
+                  reportId={latestDraft?.id || latestSubmitted?.id || ''}
+                  obraId={obraId}
+                  impactResult={impactResult}
+                  reportStatus={latestDraft?.status || latestSubmitted?.status || 'draft'}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>
