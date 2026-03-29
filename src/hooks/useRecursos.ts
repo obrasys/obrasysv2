@@ -199,6 +199,7 @@ export function useEquipamentos() {
         localizacao: formData.localizacao || null,
         obra_id: formData.obra_id || null,
         observacoes: formData.observacoes || null,
+        foto_url: formData.foto_url || null,
       })
       .eq('id', id);
 
