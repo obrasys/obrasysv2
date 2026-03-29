@@ -18,6 +18,7 @@ import { RDOActivityEditor } from './RDOActivityEditor';
 import { RDOProductionEditor } from './RDOProductionEditor';
 import { RDOResourcesEditor } from './RDOResourcesEditor';
 import { RDOConstraintsEditor } from './RDOConstraintsEditor';
+import { RDOQualitySafetyEditor } from './RDOQualitySafetyEditor';
 import type { DailyReportFormData, DayType, WeatherImpact, WorkRegime } from '@/types/daily-reports';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -406,10 +407,14 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
               </TabsContent>
 
               <TabsContent value="qualidade" className="mt-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Registe inspeções, não conformidades e segurança.</p>
-                </div>
+                {latestDraft ? (
+                  <RDOQualitySafetyEditor reportId={latestDraft.id} obraId={obraId} />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Crie ou selecione um RDO primeiro.</p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="impacto" className="mt-4">
