@@ -168,10 +168,10 @@ export function useCreateTimesheet() {
         0
       );
 
-      // Create timesheet
+      // Upsert timesheet (update if worker+date already exists)
       const { data: ts, error: tsErr } = await sb
         .from("timesheets")
-        .insert({
+        .upsert({
           user_id: user.id,
           worker_id: form.worker_id,
           work_date: form.work_date,
@@ -182,7 +182,7 @@ export function useCreateTimesheet() {
           notes: form.notes || null,
           created_by: user.id,
           status: "draft",
-        })
+        }, { onConflict: "worker_id,work_date" })
         .select()
         .single();
       if (tsErr) throw tsErr;
