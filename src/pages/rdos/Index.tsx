@@ -117,57 +117,14 @@ export default function RDOsPage() {
         </Button>
       }
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
 
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de RDOs
-              </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalRDOs}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                RDOs Hoje
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{rdosHoje}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pendentes
-              </CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{rdosPendentes}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Aprovados
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{rdosAprovados}</div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <KpiCard title="Total de RDOs" value={totalRDOs} icon={FileText} iconClassName="bg-primary/10" />
+          <KpiCard title="RDOs Hoje" value={rdosHoje} icon={Calendar} iconClassName="bg-blue-500/10" />
+          <KpiCard title="Pendentes" value={rdosPendentes} icon={Clock} iconClassName="bg-amber-500/10" />
+          <KpiCard title="Aprovados" value={rdosAprovados} icon={CheckCircle} iconClassName="bg-emerald-500/10" />
         </div>
 
         {/* Filters */}
