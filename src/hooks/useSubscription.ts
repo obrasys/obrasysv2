@@ -48,6 +48,7 @@ export function useSubscription() {
         subscription_tier: data.subscription_tier || "trial",
         subscription_status: data.subscription_status || "trialing",
         subscription_end: data.subscription_end || null,
+        is_founder: data.is_founder || false,
       });
     } catch (error) {
       console.error("Error checking subscription:", error);

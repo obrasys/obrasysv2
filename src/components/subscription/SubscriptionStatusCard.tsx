@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Crown, Calendar, CreditCard, AlertTriangle } from "lucide-react";
+import { Crown, Calendar, CreditCard, AlertTriangle, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Subscription } from "@/hooks/useSubscription";
+import seloFounder from "@/assets/selo_founder.png";
 
 interface SubscriptionStatusCardProps {
   subscription: Subscription | null;
@@ -19,6 +20,7 @@ const tierLabels: Record<string, string> = {
   starter: "Starter",
   professional: "Professional",
   enterprise: "Enterprise",
+  founder: "Parceiro Fundador",
 };
 
 const tierColors: Record<string, string> = {
@@ -26,6 +28,7 @@ const tierColors: Record<string, string> = {
   starter: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   professional: "bg-primary/10 text-primary",
   enterprise: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  founder: "bg-blue-700 text-white dark:bg-blue-800 dark:text-white",
 };
 
 const statusLabels: Record<string, string> = {
@@ -88,16 +91,21 @@ export function SubscriptionStatusCard({
 
   const tier = subscription.subscription_tier;
   const status = subscription.subscription_status;
+  const isFounder = subscription.is_founder || tier === "founder";
   const endDate = subscription.subscription_end
     ? new Date(subscription.subscription_end)
     : null;
 
   return (
-    <Card className="border-2 border-primary/20">
+    <Card className={`border-2 ${isFounder ? "border-blue-600/40 bg-gradient-to-br from-blue-50/50 to-background dark:from-blue-950/20" : "border-primary/20"}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-primary" />
+            {isFounder ? (
+              <Shield className="h-5 w-5 text-blue-700 dark:text-blue-400" />
+            ) : (
+              <Crown className="h-5 w-5 text-primary" />
+            )}
             A Sua Subscrição
           </CardTitle>
           <div className="flex gap-2">
@@ -111,8 +119,27 @@ export function SubscriptionStatusCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Founder Seal */}
+        {isFounder && (
+          <div className="flex items-center gap-4 p-4 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+            <img
+              src={seloFounder}
+              alt="Selo Parceiro Fundador ObraSys"
+              className="w-20 h-20 rounded-full object-cover shadow-md"
+            />
+            <div>
+              <h4 className="font-semibold text-blue-900 dark:text-blue-200 text-lg">
+                Parceiro Fundador
+              </h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Acesso vitalício a todas as funcionalidades da plataforma. Obrigado por acreditar no ObraSys desde o início!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Trial Warning */}
-        {status === "trialing" && (
+        {status === "trialing" && !isFounder && (
           <div className={`flex items-center gap-2 p-3 rounded-lg ${
             isTrialExpired 
               ? "bg-destructive/10 text-destructive" 
@@ -135,7 +162,7 @@ export function SubscriptionStatusCard({
 
         {/* Subscription Details */}
         <div className="grid gap-3">
-          {endDate && (
+          {endDate && !isFounder && (
             <div className="flex items-center gap-3 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
@@ -146,8 +173,16 @@ export function SubscriptionStatusCard({
               </span>
             </div>
           )}
+
+          {isFounder && (
+            <div className="flex items-center gap-3 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Tipo de acesso:</span>
+              <span className="font-medium text-blue-700 dark:text-blue-300">Vitalício ∞</span>
+            </div>
+          )}
           
-          {subscription.subscribed && (
+          {subscription.subscribed && !isFounder && (
             <div className="flex items-center gap-3 text-sm">
               <CreditCard className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Faturação:</span>
@@ -157,7 +192,7 @@ export function SubscriptionStatusCard({
         </div>
 
         {/* Actions */}
-        {subscription.subscribed && (
+        {subscription.subscribed && !isFounder && (
           <div className="pt-4 border-t">
             <Button variant="outline" onClick={onManageSubscription}>
               <CreditCard className="h-4 w-4 mr-2" />
