@@ -175,7 +175,7 @@ export default function RDOsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : groupedRDOs && Object.keys(groupedRDOs).length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {Object.entries(groupedRDOs)
               .sort(([a], [b]) => b.localeCompare(a))
               .map(([date, rdosGroup]) => (
