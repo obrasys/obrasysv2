@@ -254,13 +254,21 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
       ? phaseSchedules[phaseSchedules.length - 1].planned_end
       : formatDate(startDate);
 
-    // 4. Create schedule version
+    // 4. Get next version number and create schedule version
+    const { data: existingVersions } = await client
+      .from("project_schedule_versions")
+      .select("version_no")
+      .eq("obra_id", obra_id)
+      .order("version_no", { ascending: false })
+      .limit(1);
+    const nextVersionNo = (existingVersions?.[0]?.version_no || 0) + 1;
+
     const { data: version, error: vError } = await client
       .from("project_schedule_versions")
       .insert({
         user_id,
         obra_id,
-        version_no: 1,
+        version_no: nextVersionNo,
         type: "estimated",
         is_baseline: false,
         generated_by_type: "axia",
@@ -278,7 +286,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
 
     for (let i = 0; i < phaseSchedules.length; i++) {
       const ps = phaseSchedules[i];
-      const phaseDuration = Math.max(1, ps.phase.duration_days);
+      const phaseDuration = Math.round(Math.max(1, ps.phase.duration_days));
 
       const { data: phaseTask, error: ptError } = await client
         .from("project_schedule_tasks")
@@ -303,7 +311,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
           schedule_float_days: 0,
           criticality: "non_critical",
           status_flag: "not_started",
-          sort_order: ps.phase.sort_order,
+          sort_order: Math.round(ps.phase.sort_order),
         })
         .select()
         .single();
@@ -313,7 +321,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
 
       // Sub-tasks
       for (const ts of ps.taskSchedules) {
-        const taskDuration = Math.max(1, ts.task.duration_days);
+        const taskDuration = Math.round(Math.max(1, ts.task.duration_days));
         const { data: subTask, error: stError } = await client
           .from("project_schedule_tasks")
           .insert({
@@ -337,7 +345,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
             schedule_float_days: 0,
             criticality: "non_critical",
             status_flag: "not_started",
-            sort_order: ts.task.sort_order,
+            sort_order: Math.round(ts.task.sort_order),
           })
           .select()
           .single();
