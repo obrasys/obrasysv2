@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.generate-financial-alerts]
 verify_jwt = false
+
+[functions.generate-estimated-schedule]
+verify_jwt = false

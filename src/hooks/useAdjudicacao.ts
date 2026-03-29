@@ -295,9 +295,12 @@ export function useAdjudicacao(budgetId?: string) {
       queryClient.invalidateQueries({ queryKey: ['financeiro-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['budget-award'] });
       queryClient.invalidateQueries({ queryKey: ['budget-receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule-versions'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['project-milestones'] });
       toast({
         title: 'Orçamento adjudicado com sucesso!',
-        description: 'Obra, plano de pagamento e contas a receber foram criados automaticamente.',
+        description: 'Obra, plano de pagamento, contas a receber e planeamento estimado (Axia™) foram criados automaticamente.',
       });
     },
     onError: (error: Error) => {
