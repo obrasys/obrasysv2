@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowRightLeft,
   BarChart3,
   BrainCircuit,
   Building2,
@@ -99,4 +100,5 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Store, label: "Fornecedores", href: "/admin/fornecedores" },
   { icon: TicketCheck, label: "Tickets Suporte", href: "/admin/tickets" },
+  { icon: ArrowRightLeft, label: "Migração", href: "/admin/migracao" },
 ];
