@@ -51,10 +51,18 @@ const Dashboard = () => {
     dismissPanel,
   } = useOnboarding();
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showEmpresaModal, setShowEmpresaModal] = useState(false);
+  const [empresaPromptDismissed, setEmpresaPromptDismissed] = useState(false);
 
   useEffect(() => {
     if (activeState === 'B') setShowBudgetModal(true);
   }, [activeState]);
+
+  // Show company completion prompt after onboarding wizard is done and company data is incomplete
+  const companyIncomplete = profile && !profile.empresa_morada && !profile.empresa_cidade;
+  const showCompanyPrompt = !showWizard && !empresaPromptDismissed && companyIncomplete && (
+    onboardingProgress?.wizard_status === 'completed' || onboardingProgress?.wizard_status === 'skipped'
+  );
 
   // KPI counts
   const kpis = useMemo(() => ({
