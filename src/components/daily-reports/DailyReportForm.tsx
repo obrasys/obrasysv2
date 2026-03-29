@@ -395,8 +395,8 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
               </TabsContent>
 
               <TabsContent value="restricoes" className="mt-4">
-                {selectedReportId ? (
-                  <RDOConstraintsEditor reportId={selectedReportId} obraId={obraId} />
+                {latestDraft ? (
+                  <RDOConstraintsEditor reportId={latestDraft.id} obraId={obraId} />
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
