@@ -8,6 +8,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 const mockUsers = [
+  { email: "bruno.ferreira@ferreiralcantara.com", plano: "Founder", valor: 490 },
   { email: "inrioimobiliaria@gmail.com", plano: "Professional", valor: 99 },
   { email: "modenoepeculiar@gmail.com", plano: "Starter", valor: 49 },
   { email: "jmsplacido@gmail.com", plano: "Professional", valor: 99 },
@@ -20,7 +21,7 @@ const chartData = [
   { month: "Dez 2025", receita: 0 },
   { month: "Jan 2026", receita: 0 },
   { month: "Fev 2026", receita: 247 },
-  { month: "Mar 2026", receita: 0 },
+  { month: "Mar 2026", receita: 737 },
 ];
 
 const chartConfig = {
