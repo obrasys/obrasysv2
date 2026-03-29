@@ -11,6 +11,7 @@ import {
   Plus,
   Loader2,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
@@ -129,6 +130,10 @@ const Dashboard = () => {
                 <Button variant="outline" size="sm" onClick={() => navigate('/rdos/criar')}>
                   <Plus className="w-4 h-4 mr-1" />
                   <span className="hidden sm:inline">Novo </span>RDO
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/importar')}>
+                  <Upload className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Importar </span>Excel
                 </Button>
                 <Button size="sm" onClick={() => navigate('/clientes/criar')}>
                   <Plus className="w-4 h-4 mr-1" />
