@@ -179,11 +179,11 @@ export default function RDOsPage() {
             {Object.entries(groupedRDOs)
               .sort(([a], [b]) => b.localeCompare(a))
               .map(([date, rdosGroup]) => (
-                <div key={date} className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted-foreground capitalize sticky top-0 bg-background py-2">
+                <div key={date} className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background py-2 z-10">
                     {formatDateGroup(date)}
                   </h3>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-2">
                     {rdosGroup.map((rdo) => (
                       <RDOCard
                         key={rdo.id}
