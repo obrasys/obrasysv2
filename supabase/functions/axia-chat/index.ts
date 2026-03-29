@@ -51,22 +51,22 @@ serve(async (req) => {
     }
 
     // ── Gather operational context ──────────────────────────
-    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes] =
+    const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes, contasRes, equipaRes] =
       await Promise.all([
         supabase
           .from("obras")
-          .select("id, nome, cliente, status, progresso, valor_previsto, data_inicio, data_fim, arquivada")
+          .select("id, nome, cliente, status, progresso, valor_previsto, data_inicio, data_fim, orcamento_total, custo_atual, arquivada")
           .eq("arquivada", false)
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
           .from("orcamentos")
-          .select("id, titulo, status, valor_total, margem_lucro, created_at")
+          .select("id, titulo, codigo, status, valor_total, margem_lucro, created_at, updated_at, cliente_nome")
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
           .from("rdos")
-          .select("id, obra_id, data, status, clima, created_at")
+          .select("id, obra_id, data, status, clima, mao_obra_total, created_at")
           .order("created_at", { ascending: false })
           .limit(15),
         supabase
@@ -81,7 +81,7 @@ serve(async (req) => {
           .limit(15),
         supabase
           .from("autos_medicao")
-          .select("id, obra_id, numero_auto, estado, valor_medido_atual, percentagem_global")
+          .select("id, obra_id, numero_auto, estado, valor_medido_atual, valor_previsto, percentagem_global")
           .order("created_at", { ascending: false })
           .limit(10),
         supabase
@@ -89,6 +89,16 @@ serve(async (req) => {
           .select("id, obra_id, name, task_type, wbs_code, status_flag, planned_start, planned_end, forecast_end, actual_start, actual_end, planned_progress_percent, actual_progress_percent, delay_classification, criticality, weight_financial")
           .in("status_flag", ["in_progress", "started", "suspended", "not_started"])
           .order("updated_at", { ascending: false })
+          .limit(30),
+        supabase
+          .from("contas_financeiras")
+          .select("id, obra_id, descricao, tipo, valor, data, categoria")
+          .order("data", { ascending: false })
+          .limit(80),
+        supabase
+          .from("equipa_membros")
+          .select("id, nome, cargo, ativo, obra_atual_id")
+          .eq("ativo", true)
           .limit(30),
       ]);
 
