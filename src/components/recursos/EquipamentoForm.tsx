@@ -44,25 +44,36 @@ interface EquipamentoFormProps {
 
 export function EquipamentoForm({ open, onOpenChange, equipamento, onSubmit, isLoading }: EquipamentoFormProps) {
   const { obras } = useObras();
-  const [fotoUrl, setFotoUrl] = useState<string>(equipamento?.foto_url || '');
+  const [fotoUrl, setFotoUrl] = useState<string>('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: equipamento?.nome || '',
-      codigo: equipamento?.codigo || '',
-      categoria: equipamento?.categoria || '',
-      marca: equipamento?.marca || '',
-      modelo: equipamento?.modelo || '',
-      numero_serie: equipamento?.numero_serie || '',
-      data_aquisicao: equipamento?.data_aquisicao || '',
-      valor_aquisicao: equipamento?.valor_aquisicao || undefined,
-      estado: equipamento?.estado || 'disponivel',
-      localizacao: equipamento?.localizacao || '',
-      obra_id: equipamento?.obra_id || '',
-      observacoes: equipamento?.observacoes || '',
+      nome: '', codigo: '', categoria: '', marca: '', modelo: '',
+      numero_serie: '', data_aquisicao: '', valor_aquisicao: undefined,
+      estado: 'disponivel', localizacao: '', obra_id: '', observacoes: '',
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        nome: equipamento?.nome || '',
+        codigo: equipamento?.codigo || '',
+        categoria: equipamento?.categoria || '',
+        marca: equipamento?.marca || '',
+        modelo: equipamento?.modelo || '',
+        numero_serie: equipamento?.numero_serie || '',
+        data_aquisicao: equipamento?.data_aquisicao || '',
+        valor_aquisicao: equipamento?.valor_aquisicao || undefined,
+        estado: equipamento?.estado || 'disponivel',
+        localizacao: equipamento?.localizacao || '',
+        obra_id: equipamento?.obra_id || '',
+        observacoes: equipamento?.observacoes || '',
+      });
+      setFotoUrl(equipamento?.foto_url || '');
+    }
+  }, [open, equipamento]);
 
   const initials = (form.watch('nome') || 'E')
     .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
