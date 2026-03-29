@@ -54,7 +54,7 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
             <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-3">{getAreaLabel(areaKey)}</h3>
 
             {/* Header */}
-            <div className="hidden md:grid grid-cols-[1fr_60px_72px_90px_90px_80px_32px] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+            <div className="hidden md:grid grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               <span>Descrição</span>
               <span className="text-center">Un.</span>
               <span className="text-center">Qtd</span>
