@@ -518,7 +518,9 @@ export default function EssencialPage() {
               data={clientInfo}
               onChange={setClientInfo}
               onSave={handleSave}
+              onPreview={handlePreview}
               isLoading={isLoading}
+              isPreviewLoading={isPreviewLoading}
             />
           )}
         </div>
