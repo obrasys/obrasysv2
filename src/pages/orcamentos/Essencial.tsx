@@ -17,6 +17,7 @@ import {
   computeItemTotals,
   formatEUR,
 } from '@/types/orcamento-essencial';
+import { calcPrecoVenda } from '@/lib/margin';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +42,7 @@ interface DraftState {
   contingencyPercent: number;
   discountPercent: number;
   vatPercent: number;
+  marginPercent: number;
 }
 
 function getDefaultClientInfo(): BudgetClientInfo {
@@ -88,6 +90,7 @@ export default function EssencialPage() {
   const [contingencyPercent, setContingencyPercent] = useState(draft?.contingencyPercent ?? 0);
   const [discountPercent, setDiscountPercent] = useState(draft?.discountPercent ?? 0);
   const [vatPercent, setVatPercent] = useState(draft?.vatPercent ?? 23);
+  const [marginPercent, setMarginPercent] = useState(draft?.marginPercent ?? 0);
   const [isLoading, setIsLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
 
@@ -96,9 +99,9 @@ export default function EssencialPage() {
 
   // Autosave
   useEffect(() => {
-    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent };
+    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent };
     saveDraft(state);
-  }, [budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent]);
+  }, [budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent]);
 
   // Computed
   const systemAreas = budgetType ? getAreasForType(budgetType) : [];
@@ -112,7 +115,6 @@ export default function EssencialPage() {
   // Handlers
   const handleTypeChange = (type: BudgetType) => {
     setBudgetType(type);
-    // Don't clear items, user may switch back
   };
 
   const handleAddItems = useCallback((newItems: BudgetItem[]) => {
@@ -121,6 +123,10 @@ export default function EssencialPage() {
 
   const handleUpdateQuantity = useCallback((id: string, qty: number) => {
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i));
+  }, []);
+
+  const handleUpdateItem = useCallback((id: string, updates: Partial<BudgetItem>) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, ...updates } : i));
   }, []);
 
   const handleRemoveItem = useCallback((id: string) => {
@@ -138,6 +144,7 @@ export default function EssencialPage() {
     setContingencyPercent(0);
     setDiscountPercent(0);
     setVatPercent(23);
+    setMarginPercent(0);
     setClientInfo(getDefaultClientInfo());
     localStorage.removeItem(DRAFT_KEY);
     setShowClearDialog(false);
@@ -196,13 +203,15 @@ export default function EssencialPage() {
       const { data: codigo } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
 
       const tipoLabel = budgetType === 'remodelacao' ? 'Remodelação'
-        : budgetType === 'construcao_nova' ? 'Construção Nova' : 'LSF';
+        : budgetType === 'construcao_nova' ? 'Construção Nova'
+        : budgetType === 'icf' ? 'ICF' : 'LSF';
 
       const titulo = `Orçamento ${tipoLabel} - ${clientInfo.clientName || 'Sem cliente'}`;
 
-      // Compute final values
-      const contingencyValue = subtotalBase * (contingencyPercent / 100);
-      const afterContingency = subtotalBase + contingencyValue;
+      // Apply margin to subtotal (real margin on sale price)
+      const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
+      const contingencyValue = subtotalWithMargin * (contingencyPercent / 100);
+      const afterContingency = subtotalWithMargin + contingencyValue;
       const discountValue = afterContingency * (discountPercent / 100);
       const subtotalBeforeVat = afterContingency - discountValue;
       const vatValue = subtotalBeforeVat * (vatPercent / 100);
@@ -217,7 +226,7 @@ export default function EssencialPage() {
           codigo: codigo || clientInfo.budgetNumber || null,
           cliente_id: clienteId,
           status: 'enviado',
-          margem_lucro: 0,
+          margem_lucro: marginPercent,
           valor_total: totalFinal,
           custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
           data_envio: new Date().toISOString(),
@@ -251,15 +260,16 @@ export default function EssencialPage() {
         if (capError) throw capError;
 
         const artigos = areaItems.map((item, idx) => {
-          const totals = computeItemTotals(item);
+          const unitCost = item.laborUnitPrice + item.materialTotalPrice;
+          const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
           return {
             capitulo_id: cap.id,
             descricao: item.name,
             unidade: item.unit,
             quantidade: item.quantity,
-            preco_unitario: item.laborUnitPrice + item.materialTotalPrice,
-            preco_base: item.laborUnitPrice + item.materialTotalPrice,
-            margem_lucro_artigo: 0,
+            preco_unitario: unitSalePrice,
+            preco_base: unitCost,
+            margem_lucro_artigo: marginPercent,
             ordem: idx + 1,
           };
         });
@@ -283,6 +293,7 @@ export default function EssencialPage() {
             budget_type: budgetType,
             item_count: items.length,
             total_final: totalFinal,
+            margin_percent: marginPercent,
           },
         });
       } catch { /* silent */ }
@@ -301,64 +312,81 @@ export default function EssencialPage() {
       title="Orçamento Essencial"
       subtitle="Cria um orçamento profissional de forma rápida e intuitiva"
     >
-      <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-        {/* A - Budget Type */}
-        <BudgetTypeSelector value={budgetType} onChange={handleTypeChange} />
+      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        {/* Step indicator */}
+        <div className="flex items-center gap-2 mb-6 text-xs font-medium text-muted-foreground">
+          <span className={budgetType ? 'text-primary' : ''}>① Tipo</span>
+          <span className="text-border">→</span>
+          <span className={items.length > 0 ? 'text-primary' : ''}>② Itens</span>
+          <span className="text-border">→</span>
+          <span>③ Margem & IVA</span>
+          <span className="text-border">→</span>
+          <span>④ Finalizar</span>
+        </div>
 
-        {/* B - Areas */}
-        {budgetType && (
-          <AreasGrid
-            areas={systemAreas}
-            customAreas={customAreas}
-            onAddCustomArea={handleAddCustomArea}
-            onRemoveCustomArea={handleRemoveCustomArea}
-            onEditCustomArea={handleEditCustomArea}
-            onAreaClick={(area) => setModalArea(area)}
-            itemCounts={itemCounts}
-          />
-        )}
+        <div className="space-y-8">
+          {/* A - Budget Type */}
+          <BudgetTypeSelector value={budgetType} onChange={handleTypeChange} />
 
-        {/* C - Selected Items Preview */}
-        {budgetType && (
-          <SelectedItemsPreview
-            items={items}
-            allAreas={allAreas}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
-          />
-        )}
+          {/* B - Areas */}
+          {budgetType && (
+            <AreasGrid
+              areas={systemAreas}
+              customAreas={customAreas}
+              onAddCustomArea={handleAddCustomArea}
+              onRemoveCustomArea={handleRemoveCustomArea}
+              onEditCustomArea={handleEditCustomArea}
+              onAreaClick={(area) => setModalArea(area)}
+              itemCounts={itemCounts}
+            />
+          )}
 
-        {/* D - Summary Table */}
-        {budgetType && (
-          <BudgetSummaryTable
-            items={items}
-            allAreas={allAreas}
-            onClear={handleClear}
-          />
-        )}
+          {/* C - Selected Items Preview */}
+          {budgetType && items.length > 0 && (
+            <SelectedItemsPreview
+              items={items}
+              allAreas={allAreas}
+              onUpdateQuantity={handleUpdateQuantity}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveItem}
+            />
+          )}
 
-        {/* E - Totals & Adjustments */}
-        {budgetType && (
-          <TotalsAdjustments
-            subtotalBase={subtotalBase}
-            contingencyPercent={contingencyPercent}
-            discountPercent={discountPercent}
-            vatPercent={vatPercent}
-            onContingencyChange={setContingencyPercent}
-            onDiscountChange={setDiscountPercent}
-            onVatChange={setVatPercent}
-          />
-        )}
+          {/* D - Summary Table */}
+          {budgetType && items.length > 0 && (
+            <BudgetSummaryTable
+              items={items}
+              allAreas={allAreas}
+              marginPercent={marginPercent}
+              onClear={handleClear}
+            />
+          )}
 
-        {/* F - Client Identification */}
-        {budgetType && (
-          <ClientIdentification
-            data={clientInfo}
-            onChange={setClientInfo}
-            onSave={handleSave}
-            isLoading={isLoading}
-          />
-        )}
+          {/* E - Totals & Adjustments (with margin) */}
+          {budgetType && items.length > 0 && (
+            <TotalsAdjustments
+              subtotalBase={subtotalBase}
+              marginPercent={marginPercent}
+              contingencyPercent={contingencyPercent}
+              discountPercent={discountPercent}
+              vatPercent={vatPercent}
+              onMarginChange={setMarginPercent}
+              onContingencyChange={setContingencyPercent}
+              onDiscountChange={setDiscountPercent}
+              onVatChange={setVatPercent}
+            />
+          )}
+
+          {/* F - Client Identification */}
+          {budgetType && items.length > 0 && (
+            <ClientIdentification
+              data={clientInfo}
+              onChange={setClientInfo}
+              onSave={handleSave}
+              isLoading={isLoading}
+            />
+          )}
+        </div>
       </div>
 
       {/* Item Selector Modal */}

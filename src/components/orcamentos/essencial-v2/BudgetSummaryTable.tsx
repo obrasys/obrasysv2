@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { type BudgetItem, type AreaConfig, type SummaryColumn, SUMMARY_COLUMNS, DEFAULT_VISIBLE_COLUMNS, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
+import { calcPrecoVenda, calcLucro } from '@/lib/margin';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { X, TrendingUp } from 'lucide-react';
@@ -9,10 +10,11 @@ const COL_STORAGE_KEY = 'essencial_summary_columns';
 interface Props {
   items: BudgetItem[];
   allAreas: AreaConfig[];
+  marginPercent: number;
   onClear: () => void;
 }
 
-export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
+export function BudgetSummaryTable({ items, allAreas, marginPercent, onClear }: Props) {
   const [visibleCols, setVisibleCols] = useState<SummaryColumn[]>(() => {
     try {
       const saved = localStorage.getItem(COL_STORAGE_KEY);
@@ -43,11 +45,8 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
     totalMaterial += t.totalMaterial;
   });
   const totalBase = totalLabor + totalMaterial;
-
-  // Profit is already included in the base price via article margins
-  const estimatedCost = totalBase;
-  const profit = 0;
-  const margin = 0;
+  const totalWithMargin = marginPercent > 0 ? calcPrecoVenda(totalBase, marginPercent) : totalBase;
+  const profit = marginPercent > 0 ? calcLucro(totalBase, marginPercent) : 0;
 
   const renderCell = (item: BudgetItem, col: SummaryColumn) => {
     const t = computeItemTotals(item);
@@ -141,11 +140,16 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div className="text-right md:text-right flex-1">
               <p className="text-sm font-semibold">
-                Totais (base): <span className="text-lg tabular-nums">{formatEUR(totalBase)}</span>
+                Custo base: <span className="text-lg tabular-nums">{formatEUR(totalBase)}</span>
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Mão de Obra: {formatEUR(totalLabor)} &nbsp;·&nbsp; Materiais: {formatEUR(totalMaterial)}
               </p>
+              {marginPercent > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Preço venda (c/ margem {marginPercent}%): <span className="font-semibold text-foreground">{formatEUR(totalWithMargin)}</span>
+                </p>
+              )}
             </div>
 
             {/* Profit card */}
@@ -161,7 +165,7 @@ export function BudgetSummaryTable({ items, allAreas, onClear }: Props) {
               <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300 tabular-nums">
                 {formatEUR(profit)}
                 <span className="text-sm font-normal text-emerald-600 dark:text-emerald-400 ml-1">
-                  (margem ~ {margin.toFixed(1)}%)
+                  (margem ~ {marginPercent.toFixed(1)}%)
                 </span>
               </p>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-500 mt-1">

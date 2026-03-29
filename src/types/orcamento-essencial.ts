@@ -1,6 +1,6 @@
 // Types for the redesigned Orçamento Essencial page
 
-export type BudgetType = 'remodelacao' | 'construcao_nova' | 'lsf';
+export type BudgetType = 'remodelacao' | 'construcao_nova' | 'lsf' | 'icf';
 
 export interface BudgetTypeOption {
   value: BudgetType;
@@ -12,6 +12,7 @@ export const BUDGET_TYPES: BudgetTypeOption[] = [
   { value: 'remodelacao', label: 'Remodelação', subtitle: 'Obras de remodelação / reabilitação' },
   { value: 'construcao_nova', label: 'Construção Nova', subtitle: 'Construção de raiz / obra nova' },
   { value: 'lsf', label: 'LSF', subtitle: 'Light Steel Frame' },
+  { value: 'icf', label: 'ICF', subtitle: 'Insulated Concrete Forms' },
 ];
 
 export interface AreaConfig {
@@ -65,11 +66,26 @@ export const AREAS_LSF: AreaConfig[] = [
   { key: 'isolamento_termico', label: 'Isolamento Térmico' },
 ];
 
+export const AREAS_ICF: AreaConfig[] = [
+  { key: 'preparacao_terras', label: '1 - Preparação e Mov. Terras' },
+  { key: 'fundacoes_laje', label: '2 - Fundações e Laje' },
+  { key: 'paredes_icf', label: '3 - Paredes ICF' },
+  { key: 'laje_cobertura', label: '4 - Laje / Cobertura' },
+  { key: 'impermeabilizacao_icf', label: '5 - Impermeabilização' },
+  { key: 'instalacoes_aguas', label: '6 - Instalações de águas' },
+  { key: 'instalacoes_eletricas', label: '7 - Instalações elétricas' },
+  { key: 'revestimentos_interiores', label: '8 - Revestimentos interiores' },
+  { key: 'revestimentos_exteriores', label: '9 - Revestimentos exteriores' },
+  { key: 'caixilharias_serralharias', label: '10 - Caixilharias e serralharias' },
+  { key: 'arranjos_exteriores', label: '11 - Arranjos exteriores' },
+];
+
 export function getAreasForType(type: BudgetType): AreaConfig[] {
   switch (type) {
     case 'remodelacao': return AREAS_REMODELACAO;
     case 'construcao_nova': return AREAS_CONSTRUCAO_NOVA;
     case 'lsf': return AREAS_LSF;
+    case 'icf': return AREAS_ICF;
   }
 }
 
@@ -252,6 +268,33 @@ export const DEFAULT_CATALOG: Record<string, CatalogItem[]> = {
   impermeabilizacao: [
     { id: 'impermeab_1', name: 'Membrana betuminosa', unit: 'm²', laborPrice: 12, materialPrice: 10 },
     { id: 'impermeab_2', name: 'Tela líquida', unit: 'm²', laborPrice: 8, materialPrice: 12 },
+  ],
+  paredes_icf: [
+    { id: 'icf_1', name: 'Blocos ICF standard 150 mm (forn. + montagem)', unit: 'm²', laborPrice: 35, materialPrice: 45 },
+    { id: 'icf_2', name: 'Blocos ICF standard 200 mm (forn. + montagem)', unit: 'm²', laborPrice: 38, materialPrice: 52 },
+    { id: 'icf_3', name: 'Blocos ICF standard 250 mm (forn. + montagem)', unit: 'm²', laborPrice: 40, materialPrice: 60 },
+    { id: 'icf_4', name: 'Blocos ICF curvo / angular', unit: 'm²', laborPrice: 50, materialPrice: 70 },
+    { id: 'icf_5', name: 'Armadura vertical ø12 (corte, dobragem, colocação)', unit: 'kg', laborPrice: 1.5, materialPrice: 1.2 },
+    { id: 'icf_6', name: 'Armadura horizontal ø10 (corte, dobragem, colocação)', unit: 'kg', laborPrice: 1.5, materialPrice: 1.1 },
+    { id: 'icf_7', name: 'Betão C25/30 enchimento ICF (bombagem incluída)', unit: 'm³', laborPrice: 25, materialPrice: 85 },
+    { id: 'icf_8', name: 'Escoramento / travamento provisório paredes ICF', unit: 'ml', laborPrice: 8, materialPrice: 6 },
+    { id: 'icf_9', name: 'Abertura e reforço de vãos em paredes ICF', unit: 'un', laborPrice: 45, materialPrice: 35 },
+    { id: 'icf_10', name: 'Lintel ICF para vãos (pré-fabricado)', unit: 'ml', laborPrice: 20, materialPrice: 30 },
+    { id: 'icf_11', name: 'Cinta / viga de coroamento ICF', unit: 'ml', laborPrice: 18, materialPrice: 25 },
+    { id: 'icf_12', name: 'Selagem de juntas entre blocos ICF', unit: 'ml', laborPrice: 3, materialPrice: 2 },
+  ],
+  laje_cobertura: [
+    { id: 'laje_1', name: 'Laje aligeirada (vigotas + abobadilhas)', unit: 'm²', laborPrice: 30, materialPrice: 35 },
+    { id: 'laje_2', name: 'Laje maciça betão armado', unit: 'm²', laborPrice: 40, materialPrice: 50 },
+    { id: 'laje_3', name: 'Cofragem de laje', unit: 'm²', laborPrice: 15, materialPrice: 12 },
+    { id: 'laje_4', name: 'Betão C25/30 para laje', unit: 'm³', laborPrice: 25, materialPrice: 80 },
+    { id: 'laje_5', name: 'Armadura de laje (malhasol + reforços)', unit: 'kg', laborPrice: 1.5, materialPrice: 1.2 },
+  ],
+  impermeabilizacao_icf: [
+    { id: 'imp_icf_1', name: 'Membrana drenante ICF (enterrado)', unit: 'm²', laborPrice: 8, materialPrice: 6 },
+    { id: 'imp_icf_2', name: 'Impermeabilização betuminosa fundações', unit: 'm²', laborPrice: 10, materialPrice: 8 },
+    { id: 'imp_icf_3', name: 'Barreira pára-vapor', unit: 'm²', laborPrice: 5, materialPrice: 4 },
+    { id: 'imp_icf_4', name: 'Impermeabilização de cobertura plana', unit: 'm²', laborPrice: 15, materialPrice: 12 },
   ],
 };
 
