@@ -152,8 +152,42 @@ const Dashboard = () => {
               />
             )}
 
-            {/* Completion modal */}
-            <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
+            {/* Company completion prompt */}
+            {showCompanyPrompt && (
+              <Card className="border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700/30">
+                <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Complete os dados da sua empresa</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Preencha morada, contactos e logotipo para usar nos seus orçamentos e documentos.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEmpresaPromptDismissed(true)}
+                    >
+                      Mais tarde
+                    </Button>
+                    <Button size="sm" onClick={() => setShowEmpresaModal(true)}>
+                      <Building2 className="w-4 h-4 mr-1" /> Completar agora
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Empresa Modal */}
+            <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => {
+              setShowEmpresaModal(open);
+              if (!open) setEmpresaPromptDismissed(true);
+            }} />
 
             {/* Quick Action - Orçamento Essencial */}
             <Card className="border-primary/20 bg-primary/5">
