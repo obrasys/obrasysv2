@@ -125,39 +125,65 @@ Deno.serve(async (req) => {
     let tempPassword: string | null = null;
     let isNewUser = false;
 
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === clienteEmail?.toLowerCase()
-    );
+    // Try to create user first; if email exists, look them up
+    tempPassword = generatePassword();
+    const { data: newUser, error: createError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: clienteEmail!,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { nome: clienteNome, role: 'cliente', created_by: caller.id },
+      });
 
-    if (existingUser) {
-      clientUserId = existingUser.id;
-    } else {
-      // Create new user with temporary password
-      tempPassword = generatePassword();
-      const { data: newUser, error: createError } =
-        await supabaseAdmin.auth.admin.createUser({
-          email: clienteEmail!,
-          password: tempPassword,
-          email_confirm: true,
-          user_metadata: { nome: clienteNome },
+    if (createError) {
+      if (createError.message?.includes("already been registered")) {
+        // User exists — find them by email
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+          // @ts-ignore — filter by email supported in admin API
         });
+        // listUsers doesn't filter by email reliably; use a profiles lookup instead
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("user_id")
+          .eq("email", clienteEmail!.toLowerCase())
+          .maybeSingle();
 
-      if (createError) {
+        if (profile) {
+          clientUserId = profile.user_id;
+        } else {
+          // Fallback: iterate users (paginated)
+          let page = 1;
+          let found = false;
+          while (!found) {
+            const { data: usersPage } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
+            if (!usersPage?.users?.length) break;
+            const match = usersPage.users.find(
+              (u: any) => u.email?.toLowerCase() === clienteEmail?.toLowerCase()
+            );
+            if (match) { clientUserId = match.id; found = true; }
+            if (usersPage.users.length < 100) break;
+            page++;
+          }
+        }
+
+        if (!clientUserId) {
+          return new Response(
+            JSON.stringify({ error: "Utilizador existe mas não foi possível encontrá-lo" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        tempPassword = null; // existing user, no temp password
+      } else {
         return new Response(
           JSON.stringify({ error: `Erro ao criar utilizador: ${createError.message}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
+    } else {
       clientUserId = newUser.user.id;
       isNewUser = true;
-
-      // Update profile role to 'client'
-      await supabaseAdmin
-        .from("profiles")
-        .update({ role: "client" })
-        .eq("user_id", clientUserId);
     }
 
     // Check if access already exists
