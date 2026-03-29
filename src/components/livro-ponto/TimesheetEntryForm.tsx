@@ -26,6 +26,8 @@ interface TimesheetEntryFormProps {
   onCheckOutChange: (v: string) => void;
   breakMin: number;
   onBreakMinChange: (v: number) => void;
+  manualHours: string;
+  onManualHoursChange: (v: string) => void;
   notes: string;
   onNotesChange: (v: string) => void;
   allocations: AllocationFormData[];
@@ -37,6 +39,11 @@ function calcMinutesFromTimes(start: string, end: string, breakMin: number): num
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
   return Math.max(0, (eh * 60 + em) - (sh * 60 + sm) - breakMin);
+}
+
+function formatMinutesToDecimal(m: number): string {
+  if (m <= 0) return "";
+  return (m / 60).toFixed(2).replace(/\.?0+$/, "");
 }
 
 export function TimesheetEntryForm({
@@ -51,16 +58,37 @@ export function TimesheetEntryForm({
   onCheckOutChange,
   breakMin,
   onBreakMinChange,
+  manualHours,
+  onManualHoursChange,
   notes,
   onNotesChange,
   allocations,
   onAllocationsChange,
 }: TimesheetEntryFormProps) {
   const selectedWorker = workers.find((w) => w.id === workerId);
-  const totalWorkedMinutes = useMemo(
+
+  const timeBasedMinutes = useMemo(
     () => calcMinutesFromTimes(checkIn, checkOut, breakMin),
     [checkIn, checkOut, breakMin]
   );
+
+  const manualMinutes = useMemo(() => {
+    const parsed = parseFloat(manualHours);
+    return isNaN(parsed) || parsed <= 0 ? 0 : Math.round(parsed * 60);
+  }, [manualHours]);
+
+  // Time-based takes priority; manual is fallback
+  const totalWorkedMinutes = timeBasedMinutes > 0 ? timeBasedMinutes : manualMinutes;
+
+  // Sync manual hours display when calculated from times
+  useEffect(() => {
+    if (timeBasedMinutes > 0) {
+      const decimal = formatMinutesToDecimal(timeBasedMinutes);
+      if (manualHours !== decimal) {
+        onManualHoursChange(decimal);
+      }
+    }
+  }, [timeBasedMinutes]);
 
   const formatMinutes = (m: number) => {
     const h = Math.floor(m / 60);
@@ -143,12 +171,32 @@ export function TimesheetEntryForm({
             min={0}
           />
         </div>
+      </div>
+
+      {/* Manual hours input */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Horas totais</Label>
+          <Label className="text-xs text-muted-foreground">Horas totais (manual)</Label>
+          <Input
+            type="number"
+            step="0.25"
+            min={0}
+            placeholder="Ex: 7.5"
+            value={manualHours}
+            onChange={(e) => onManualHoursChange(e.target.value)}
+            disabled={timeBasedMinutes > 0}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            {timeBasedMinutes > 0
+              ? "Calculado a partir dos horários"
+              : "Preencha se não tiver horário de entrada/saída"}
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Total calculado</Label>
           <div className="flex h-10 items-center rounded-md border border-input bg-muted/50 px-3 text-sm font-medium text-foreground">
             {totalWorkedMinutes > 0 ? formatMinutes(totalWorkedMinutes) : "—"}
           </div>
-          <p className="text-[10px] text-muted-foreground">Calculado automaticamente</p>
         </div>
       </div>
 

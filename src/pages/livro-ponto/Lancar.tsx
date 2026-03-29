@@ -46,6 +46,7 @@ export default function LancarPage() {
   const [checkOut, setCheckOut] = useState("");
   const [breakMin, setBreakMin] = useState(0);
   const [notes, setNotes] = useState("");
+  const [manualHours, setManualHours] = useState("");
   const [allocations, setAllocations] = useState<AllocationFormData[]>([
     { ...emptyAllocation, obra_id: initialObra },
   ]);
@@ -72,7 +73,9 @@ export default function LancarPage() {
     return Math.max(0, (eh * 60 + em) - (sh * 60 + sm) - brk);
   };
 
-  const totalMinutes = calcMinutes(checkIn, checkOut, breakMin);
+  const manualMin = parseFloat(manualHours);
+  const manualMinutes = isNaN(manualMin) || manualMin <= 0 ? 0 : Math.round(manualMin * 60);
+  const totalMinutes = calcMinutes(checkIn, checkOut, breakMin) > 0 ? calcMinutes(checkIn, checkOut, breakMin) : manualMinutes;
   const selectedWorker = activeWorkers.find((w: any) => w.id === workerId);
 
   const totalCost = useMemo(() => {
@@ -119,6 +122,7 @@ export default function LancarPage() {
       setCheckIn("");
       setCheckOut("");
       setBreakMin(0);
+      setManualHours("");
       setNotes("");
       setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
     } else {
@@ -174,6 +178,8 @@ export default function LancarPage() {
           onCheckOutChange={setCheckOut}
           breakMin={breakMin}
           onBreakMinChange={setBreakMin}
+          manualHours={manualHours}
+          onManualHoursChange={setManualHours}
           notes={notes}
           onNotesChange={setNotes}
           allocations={allocations}
