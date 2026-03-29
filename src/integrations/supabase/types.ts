@@ -3079,6 +3079,7 @@ export type Database = {
           created_at: string
           data_admissao: string | null
           email: string | null
+          foto_url: string | null
           id: string
           nif: string | null
           nome: string
@@ -3097,6 +3098,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           email?: string | null
+          foto_url?: string | null
           id?: string
           nif?: string | null
           nome: string
@@ -3115,6 +3117,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           email?: string | null
+          foto_url?: string | null
           id?: string
           nif?: string | null
           nome?: string
@@ -3151,6 +3154,7 @@ export type Database = {
           created_at: string
           data_aquisicao: string | null
           estado: string
+          foto_url: string | null
           id: string
           localizacao: string | null
           marca: string | null
@@ -3169,6 +3173,7 @@ export type Database = {
           created_at?: string
           data_aquisicao?: string | null
           estado?: string
+          foto_url?: string | null
           id?: string
           localizacao?: string | null
           marca?: string | null
@@ -3187,6 +3192,7 @@ export type Database = {
           created_at?: string
           data_aquisicao?: string | null
           estado?: string
+          foto_url?: string | null
           id?: string
           localizacao?: string | null
           marca?: string | null
@@ -6454,6 +6460,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           especialidade: string | null
+          foto_url: string | null
           id: string
           nif: string | null
           nome: string
@@ -6468,6 +6475,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           especialidade?: string | null
+          foto_url?: string | null
           id?: string
           nif?: string | null
           nome: string
@@ -6482,6 +6490,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           especialidade?: string | null
+          foto_url?: string | null
           id?: string
           nif?: string | null
           nome?: string
