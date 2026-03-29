@@ -7771,16 +7771,22 @@ export type Database = {
       workers: {
         Row: {
           active: boolean | null
+          compensation_type: string | null
           created_at: string | null
           default_daily_cost: number | null
           default_hourly_cost: number | null
+          email: string | null
           employee_code: string | null
           employment_type: string | null
           end_date: string | null
           equipa_membro_id: string | null
           full_name: string
+          hourly_rate: number | null
           id: string
+          monthly_salary: number | null
+          nif: string | null
           overtime_hourly_cost: number | null
+          phone: string | null
           role: string | null
           start_date: string | null
           subempreiteiro_id: string | null
@@ -7789,16 +7795,22 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          compensation_type?: string | null
           created_at?: string | null
           default_daily_cost?: number | null
           default_hourly_cost?: number | null
+          email?: string | null
           employee_code?: string | null
           employment_type?: string | null
           end_date?: string | null
           equipa_membro_id?: string | null
           full_name: string
+          hourly_rate?: number | null
           id?: string
+          monthly_salary?: number | null
+          nif?: string | null
           overtime_hourly_cost?: number | null
+          phone?: string | null
           role?: string | null
           start_date?: string | null
           subempreiteiro_id?: string | null
@@ -7807,16 +7819,22 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          compensation_type?: string | null
           created_at?: string | null
           default_daily_cost?: number | null
           default_hourly_cost?: number | null
+          email?: string | null
           employee_code?: string | null
           employment_type?: string | null
           end_date?: string | null
           equipa_membro_id?: string | null
           full_name?: string
+          hourly_rate?: number | null
           id?: string
+          monthly_salary?: number | null
+          nif?: string | null
           overtime_hourly_cost?: number | null
+          phone?: string | null
           role?: string | null
           start_date?: string | null
           subempreiteiro_id?: string | null

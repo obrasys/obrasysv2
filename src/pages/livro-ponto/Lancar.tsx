@@ -1,20 +1,18 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Clock } from "lucide-react";
-import { useWorkers, useCreateTimesheet } from "@/hooks/useLivroPonto";
+import { Save, Plus, X, UserPlus, Clock } from "lucide-react";
+import { useWorkers, useCreateWorker, useCreateTimesheet } from "@/hooks/useLivroPonto";
 import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import { useObras } from "@/hooks/useObras";
 import { format } from "date-fns";
 import type { AllocationFormData, CostType } from "@/types/livro-ponto";
+import { TimesheetFilters } from "@/components/livro-ponto/TimesheetFilters";
+import { TimesheetEntryForm } from "@/components/livro-ponto/TimesheetEntryForm";
+import { WorkerCreateModal } from "@/components/livro-ponto/WorkerCreateModal";
 
-const emptAllocation: AllocationFormData = {
+const emptyAllocation: AllocationFormData = {
   obra_id: "",
   start_time: "",
   end_time: "",
@@ -23,93 +21,74 @@ const emptAllocation: AllocationFormData = {
   description: "",
 };
 
-function calcMinutes(start: string, end: string): number {
-  if (!start || !end) return 0;
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  return Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
-}
-
 export default function LancarPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialObra = searchParams.get("obra") || "";
+
   const { data: workers = [] } = useWorkers();
   const { obras = [] } = useObras() as any;
   const createMutation = useCreateTimesheet();
+  const createWorkerMutation = useCreateWorker();
   const { subempreiteiros } = useSubempreiteiros();
   const { membros: equipaMembros } = useEquipaMembros();
 
-  const activeWorkers = workers.filter((w) => w.active);
+  const activeWorkers = workers.filter((w: any) => w.active);
 
+  // Filters
   const [filterSubempreiteiro, setFilterSubempreiteiro] = useState("");
   const [filterEquipa, setFilterEquipa] = useState("");
-  const [workerId, setWorkerId] = useState("");
-
-  const filteredWorkers = useMemo(() => {
-    let list = activeWorkers;
-    if (filterSubempreiteiro) {
-      list = list.filter((w) => w.subempreiteiro_id === filterSubempreiteiro);
-    }
-    if (filterEquipa) {
-      list = list.filter((w) => w.equipa_membro_id === filterEquipa);
-    }
-    return list;
-  }, [activeWorkers, filterSubempreiteiro, filterEquipa]);
   const [workDate, setWorkDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Entry
+  const [workerId, setWorkerId] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [breakMin, setBreakMin] = useState(0);
   const [notes, setNotes] = useState("");
-  const [allocations, setAllocations] = useState<AllocationFormData[]>([{ ...emptAllocation }]);
+  const [allocations, setAllocations] = useState<AllocationFormData[]>([
+    { ...emptyAllocation, obra_id: initialObra },
+  ]);
 
-  const selectedWorker = activeWorkers.find((w) => w.id === workerId);
+  // Worker modal
+  const [workerModalOpen, setWorkerModalOpen] = useState(false);
 
-  const updateAllocation = (i: number, updates: Partial<AllocationFormData>) => {
-    setAllocations((prev) => {
-      const next = [...prev];
-      next[i] = { ...next[i], ...updates };
-      // Auto-calc minutes from times
-      if (updates.start_time !== undefined || updates.end_time !== undefined) {
-        const a = next[i];
-        next[i].worked_minutes = calcMinutes(a.start_time, a.end_time);
-      }
-      return next;
-    });
+  const filteredWorkers = useMemo(() => {
+    let list = activeWorkers;
+    if (filterSubempreiteiro) {
+      list = list.filter((w: any) => w.subempreiteiro_id === filterSubempreiteiro);
+    }
+    if (filterEquipa) {
+      list = list.filter((w: any) => w.equipa_membro_id === filterEquipa);
+    }
+    return list;
+  }, [activeWorkers, filterSubempreiteiro, filterEquipa]);
+
+  // Calculate total
+  const calcMinutes = (start: string, end: string, brk: number) => {
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    return Math.max(0, (eh * 60 + em) - (sh * 60 + sm) - brk);
   };
 
-  const addAllocation = () => setAllocations([...allocations, { ...emptAllocation }]);
+  const totalMinutes = calcMinutes(checkIn, checkOut, breakMin);
+  const selectedWorker = activeWorkers.find((w: any) => w.id === workerId);
 
-  const removeAllocation = (i: number) => {
-    if (allocations.length <= 1) return;
-    setAllocations(allocations.filter((_, j) => j !== i));
-  };
-
-  const totalMinutes = allocations.reduce((s, a) => s + a.worked_minutes, 0);
-  const totalCost = allocations.reduce((s, a) => {
-    if (!selectedWorker) return s;
-    const rate = a.cost_type === "overtime"
-      ? (selectedWorker.overtime_hourly_cost || selectedWorker.default_hourly_cost)
-      : selectedWorker.default_hourly_cost;
-    return s + (a.worked_minutes / 60) * rate;
-  }, 0);
+  const totalCost = useMemo(() => {
+    if (!selectedWorker || totalMinutes <= 0) return 0;
+    const isSalary = selectedWorker.compensation_type === "salary";
+    if (isSalary) return 0;
+    const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
+    return (totalMinutes / 60) * rate;
+  }, [selectedWorker, totalMinutes]);
 
   const canSave =
     workerId &&
     workDate &&
-    allocations.every((a) => a.obra_id && a.worked_minutes > 0) &&
+    totalMinutes > 0 &&
+    allocations.every((a) => a.obra_id) &&
     !createMutation.isPending;
-
-  const handleSave = async () => {
-    await createMutation.mutateAsync({
-      worker_id: workerId,
-      work_date: workDate,
-      check_in_time: checkIn || undefined,
-      check_out_time: checkOut || undefined,
-      break_minutes: breakMin,
-      notes: notes || undefined,
-      allocations,
-    });
-    navigate("/livro-ponto");
-  };
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
@@ -117,243 +96,157 @@ export default function LancarPage() {
   const formatMinutes = (m: number) => {
     const h = Math.floor(m / 60);
     const min = m % 60;
-    return `${h}h${min > 0 ? `${min}m` : ""}`;
+    return `${h}h${min > 0 ? ` ${min}m` : ""}`;
+  };
+
+  const handleSave = async (addAnother = false) => {
+    await createMutation.mutateAsync({
+      worker_id: workerId,
+      work_date: workDate,
+      check_in_time: checkIn || undefined,
+      check_out_time: checkOut || undefined,
+      break_minutes: breakMin,
+      notes: notes || undefined,
+      allocations: allocations.map((a) => ({
+        ...a,
+        worked_minutes: a.worked_minutes || totalMinutes,
+      })),
+    });
+
+    if (addAnother) {
+      // Reset entry but keep context
+      setWorkerId("");
+      setCheckIn("");
+      setCheckOut("");
+      setBreakMin(0);
+      setNotes("");
+      setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
+    } else {
+      navigate("/livro-ponto");
+    }
+  };
+
+  const handleWorkerCreated = async (data: any) => {
+    const result = await createWorkerMutation.mutateAsync(data);
+    setWorkerModalOpen(false);
+    if (result?.id) {
+      setWorkerId(result.id);
+    }
+    return result;
   };
 
   return (
-    <AppLayout title="Lançar Horas" subtitle="Registar tempo de trabalho por trabalhador e obra">
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-3xl">
+    <AppLayout
+      title="Livro de Ponto"
+      subtitle="Registe presenças, horas e equipas com rapidez e controlo diário."
+    >
+      <div className="p-4 md:p-6 max-w-3xl space-y-4">
+        {/* Header action */}
+        <div className="flex items-center justify-end">
+          <Button variant="outline" onClick={() => setWorkerModalOpen(true)} className="gap-1.5">
+            <UserPlus className="h-4 w-4" />
+            Novo trabalhador
+          </Button>
+        </div>
 
-        {/* Worker & Date */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Identificação</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Filtros por Subempreiteiro / Equipa */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Filtrar por Subempreiteiro</Label>
-                <Select value={filterSubempreiteiro || "all"} onValueChange={(v) => { setFilterSubempreiteiro(v === "all" ? "" : v); setWorkerId(""); }}>
-                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {subempreiteiros.filter((s) => s.ativo).map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Filtrar por Equipa</Label>
-                <Select value={filterEquipa || "all"} onValueChange={(v) => { setFilterEquipa(v === "all" ? "" : v); setWorkerId(""); }}>
-                  <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {equipaMembros.filter((m) => m.ativo).map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.nome} {m.cargo ? `(${m.cargo})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Trabalhador *</Label>
-                <Select value={workerId} onValueChange={setWorkerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar trabalhador" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredWorkers.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.full_name} {w.role ? `(${w.role})` : ""} — {formatCurrency(w.default_hourly_cost)}/h
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Data *</Label>
-                <Input type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Hora Entrada</Label>
-                <Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Hora Saída</Label>
-                <Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Pausa (min)</Label>
-                <Input
-                  type="number"
-                  value={breakMin}
-                  onChange={(e) => setBreakMin(parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Context block */}
+        <TimesheetFilters
+          filterSubempreiteiro={filterSubempreiteiro}
+          onFilterSubempreiteiroChange={(v) => { setFilterSubempreiteiro(v); setWorkerId(""); }}
+          filterEquipa={filterEquipa}
+          onFilterEquipaChange={(v) => { setFilterEquipa(v); setWorkerId(""); }}
+          workDate={workDate}
+          onWorkDateChange={setWorkDate}
+          subempreiteiros={subempreiteiros}
+          equipaMembros={equipaMembros}
+        />
 
-        {/* Allocations */}
-        <Card>
-          <CardHeader>
+        {/* Entry form */}
+        <TimesheetEntryForm
+          workers={filteredWorkers}
+          obras={obras as { id: string; nome: string }[]}
+          workerId={workerId}
+          onWorkerIdChange={setWorkerId}
+          onOpenWorkerModal={() => setWorkerModalOpen(true)}
+          checkIn={checkIn}
+          onCheckInChange={setCheckIn}
+          checkOut={checkOut}
+          onCheckOutChange={setCheckOut}
+          breakMin={breakMin}
+          onBreakMinChange={setBreakMin}
+          notes={notes}
+          onNotesChange={setNotes}
+          allocations={allocations}
+          onAllocationsChange={setAllocations}
+        />
+
+        {/* Summary bar */}
+        {totalMinutes > 0 && (
+          <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Alocações por Obra</CardTitle>
-              <Button variant="outline" size="sm" onClick={addAllocation}>
-                <Plus className="h-3 w-3 mr-1" />
-                Adicionar Obra
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {allocations.map((a, i) => (
-              <div key={i} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Alocação {i + 1}</span>
-                  {allocations.length > 1 && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeAllocation(i)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Obra *</Label>
-                    <Select value={a.obra_id} onValueChange={(v) => updateAllocation(i, { obra_id: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar obra" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(obras as any[]).map((o: any) => (
-                          <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tipo de Custo</Label>
-                    <Select value={a.cost_type} onValueChange={(v) => updateAllocation(i, { cost_type: v as CostType })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="regular">Normal</SelectItem>
-                        <SelectItem value="overtime">Horas Extra</SelectItem>
-                        <SelectItem value="night">Noturno</SelectItem>
-                        <SelectItem value="weekend">Fim-de-semana</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="space-y-2">
-                    <Label>Horas Totais *</Label>
-                    <Input
-                      type="number"
-                      step="0.5"
-                      min={0}
-                      placeholder="Ex: 4"
-                      value={a.worked_minutes > 0 ? (a.worked_minutes / 60).toString() : ""}
-                      onChange={(e) => {
-                        const hours = parseFloat(e.target.value) || 0;
-                        updateAllocation(i, { worked_minutes: Math.round(hours * 60) });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Hora Início</Label>
-                    <Input
-                      type="time"
-                      value={a.start_time}
-                      onChange={(e) => updateAllocation(i, { start_time: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Hora Fim</Label>
-                    <Input
-                      type="time"
-                      value={a.end_time}
-                      onChange={(e) => updateAllocation(i, { end_time: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Minutos</Label>
-                    <Input
-                      type="number"
-                      value={a.worked_minutes}
-                      onChange={(e) => updateAllocation(i, { worked_minutes: parseInt(e.target.value) || 0 })}
-                      min={0}
-                      className="text-muted-foreground"
-                      readOnly
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Observação</Label>
-                  <Input
-                    value={a.description}
-                    onChange={(e) => updateAllocation(i, { description: e.target.value })}
-                    placeholder="Trabalho realizado..."
-                  />
-                </div>
-                {selectedWorker && a.worked_minutes > 0 && (
-                  <div className="flex items-center justify-end gap-2 text-sm">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-muted-foreground">{formatMinutes(a.worked_minutes)}</span>
-                    <span className="font-medium text-primary">
-                      {formatCurrency(
-                        (a.worked_minutes / 60) *
-                          (a.cost_type === "overtime"
-                            ? selectedWorker.overtime_hourly_cost || selectedWorker.default_hourly_cost
-                            : selectedWorker.default_hourly_cost)
-                      )}
+                <div>
+                  <p className="text-xs text-muted-foreground">Resumo do registo</p>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-lg font-bold text-foreground">
+                      {formatMinutes(totalMinutes)}
                     </span>
+                    {totalCost > 0 && (
+                      <span className="text-lg font-bold text-primary">
+                        {formatCurrency(totalCost)}
+                      </span>
+                    )}
+                    {selectedWorker?.compensation_type === "salary" && (
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        Ordenado mensal
+                      </span>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Notes */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <Label>Notas</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Observações gerais do dia..."
-                rows={2}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary + Save */}
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Resumo do dia</p>
-                <div className="flex items-center gap-4">
-                  <span className="text-lg font-semibold">{formatMinutes(totalMinutes)}</span>
-                  <span className="text-lg font-bold text-primary">{formatCurrency(totalCost)}</span>
-                  <span className="text-sm text-muted-foreground">{allocations.length} obra(s)</span>
                 </div>
               </div>
-              <Button size="lg" onClick={handleSave} disabled={!canSave}>
-                <Save className="h-4 w-4 mr-2" />
-                {createMutation.isPending ? "A guardar..." : "Guardar Registo"}
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+
+        {/* Footer actions */}
+        <div className="flex items-center justify-between pt-2 pb-8">
+          <Button variant="ghost" onClick={() => navigate("/livro-ponto")}>
+            <X className="h-4 w-4 mr-1.5" />
+            Cancelar
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleSave(true)}
+              disabled={!canSave}
+            >
+              <Save className="h-4 w-4 mr-1.5" />
+              Guardar e adicionar outro
+            </Button>
+            <Button
+              onClick={() => handleSave(false)}
+              disabled={!canSave}
+              className="shadow-md"
+            >
+              <Save className="h-4 w-4 mr-1.5" />
+              {createMutation.isPending ? "A guardar..." : "Guardar registo"}
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Worker creation modal */}
+      <WorkerCreateModal
+        open={workerModalOpen}
+        onOpenChange={setWorkerModalOpen}
+        subempreiteiros={subempreiteiros}
+        equipaMembros={equipaMembros}
+        onSave={handleWorkerCreated}
+        isLoading={createWorkerMutation.isPending}
+      />
     </AppLayout>
   );
 }

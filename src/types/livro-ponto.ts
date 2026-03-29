@@ -1,3 +1,5 @@
+export type CompensationType = "salary" | "hourly";
+
 export interface Worker {
   id: string;
   user_id: string;
@@ -8,6 +10,12 @@ export interface Worker {
   default_hourly_cost: number;
   default_daily_cost: number;
   overtime_hourly_cost: number;
+  compensation_type: CompensationType;
+  monthly_salary: number;
+  hourly_rate: number;
+  nif: string | null;
+  phone: string | null;
+  email: string | null;
   active: boolean;
   start_date: string | null;
   end_date: string | null;
