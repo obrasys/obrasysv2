@@ -118,10 +118,24 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
           <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Nenhum custo de mão de obra registado.</p>
           <p className="text-sm mt-1">Os custos aparecerão automaticamente ao lançar horas no Livro de Ponto.</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
-            <Clock className="w-4 h-4 mr-2" />
-            Ir para Livro de Ponto
-          </Button>
+          <div className="flex gap-2 justify-center mt-4">
+            <Button variant="outline" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
+              <Clock className="w-4 h-4 mr-2" />
+              Ir para Livro de Ponto
+            </Button>
+            <Button onClick={() => setWorkerModalOpen(true)}>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Novo Trabalhador
+            </Button>
+          </div>
+          <WorkerCreateModal
+            open={workerModalOpen}
+            onOpenChange={setWorkerModalOpen}
+            subempreiteiros={subempreiteiros}
+            equipaMembros={equipaMembros}
+            onSave={handleCreateWorker}
+            isLoading={createWorkerMutation.isPending}
+          />
         </CardContent>
       </Card>
     );
