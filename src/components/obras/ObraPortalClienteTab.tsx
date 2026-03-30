@@ -115,15 +115,15 @@ export function ObraPortalClienteTab({ obraId, obraNome, clienteNome, clienteEma
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Globe className="w-5 h-5" />
             Portal do Cliente
             {activeClients.length > 0 && (
               <Badge variant="secondary" className="ml-2">{activeClients.length}</Badge>
             )}
           </CardTitle>
-          <Button size="sm" onClick={() => {
+          <Button size="sm" className="w-full sm:w-auto" onClick={() => {
             setInviteEmail(clienteEmail || '');
             setInviteName(clienteNome || '');
             setInviteOpen(true);
@@ -142,7 +142,7 @@ export function ObraPortalClienteTab({ obraId, obraNome, clienteNome, clienteEma
               {accessList.map((access) => (
                 <div
                   key={access.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 border rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-full ${access.ativo ? 'bg-green-100' : 'bg-muted'}`}>
@@ -171,6 +171,7 @@ export function ObraPortalClienteTab({ obraId, obraNome, clienteNome, clienteEma
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => toggleAccess.mutate({ accessId: access.id, ativo: !access.ativo })}
                   >
                     {access.ativo ? 'Desativar' : 'Reativar'}

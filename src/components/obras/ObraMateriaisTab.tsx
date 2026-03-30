@@ -56,8 +56,8 @@ export function ObraMateriaisTab({ obraId }: ObraMateriaisTabProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Package className="w-5 h-5" />
           Materiais e Recursos
         </CardTitle>
@@ -336,7 +336,7 @@ function MaterialPurchaseSection({ obraId }: { obraId: string }) {
   return (
     <div className="space-y-4">
       {/* KPI + Add */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <ShoppingCart className="w-5 h-5 text-primary" />
@@ -346,7 +346,7 @@ function MaterialPurchaseSection({ obraId }: { obraId: string }) {
             <p className="text-[10px] text-muted-foreground">Total em compras de material</p>
           </div>
         </div>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" className="w-full sm:w-auto" onClick={() => setShowForm(!showForm)}>
           {showForm ? <X className="w-4 h-4 mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
           {showForm ? 'Cancelar' : 'Registar Compra'}
         </Button>
