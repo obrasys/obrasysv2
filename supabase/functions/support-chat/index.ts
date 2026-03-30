@@ -106,7 +106,7 @@ serve(async (req) => {
       
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Créditos esgotados. Por favor, adicione fundos à sua conta Lovable AI." }),
+          JSON.stringify({ error: "Créditos de IA esgotados. Por favor, contacte o suporte." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
