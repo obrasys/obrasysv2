@@ -7922,6 +7922,7 @@ export type Database = {
         Args: { p_element_id: string }
         Returns: undefined
       }
+      can_access_rdo_photo: { Args: { _path: string }; Returns: boolean }
       classify_task_delay: { Args: { p_task_id: string }; Returns: string }
       determinar_regime_fiscal: {
         Args: {
