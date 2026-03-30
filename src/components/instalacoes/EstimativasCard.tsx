@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, CircleDot, Ruler, Euro, Calculator } from 'lucide-react';
 import type { InstallationPackage } from '@/types/instalacoes';
 import { useFormatting } from '@/hooks/useFormatting';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,63 +53,70 @@ export function EstimativasCard({ pkg }: Props) {
     setEditing(false);
   };
 
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base flex items-center gap-2">
-          Estimativas
-          {isManual && !editing && <Badge variant="outline" className="text-xs">Ajustado manualmente</Badge>}
-        </CardTitle>
-        <div className="flex gap-1">
-          {editing ? (
-            <>
-              <Button variant="ghost" size="icon" onClick={handleSave}><Check className="h-4 w-4 text-green-600" /></Button>
-              <Button variant="ghost" size="icon" onClick={handleCancel}><X className="h-4 w-4 text-destructive" /></Button>
-            </>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={() => setEditing(true)}><Pencil className="h-4 w-4" /></Button>
-          )}
+  const metrics = [
+    { icon: CircleDot, label: 'Pontos', value: pointsFinal, color: 'text-amber-600 bg-amber-500/10' },
+    { icon: Ruler, label: 'Metros lineares', value: `${linearFinal} m`, color: 'text-blue-600 bg-blue-500/10' },
+    { icon: Euro, label: 'Custo estimado', value: formatCurrency(costFinal), color: 'text-emerald-600 bg-emerald-500/10' },
+    { icon: Calculator, label: 'Custo/ponto', value: pointsFinal > 0 ? formatCurrency(costFinal / pointsFinal) : '—', color: 'text-violet-600 bg-violet-500/10' },
+  ];
+
+  if (editing) {
+    return (
+      <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-sm">Editar Estimativas</h4>
+            {isManual && <Badge variant="outline" className="text-[10px]">Ajustado</Badge>}
+          </div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" onClick={handleSave} className="gap-1 text-emerald-600 hover:text-emerald-700">
+              <Check className="h-3.5 w-3.5" /> Guardar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="gap-1 text-destructive">
+              <X className="h-3.5 w-3.5" /> Cancelar
+            </Button>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        {editing ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label className="text-xs">Pontos</Label>
-              <Input type="number" min={0} value={points} onChange={e => setPoints(Number(e.target.value))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Metros lineares</Label>
-              <Input type="number" min={0} value={linearM} onChange={e => setLinearM(Number(e.target.value))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Custo estimado (€)</Label>
-              <Input type="number" min={0} step="0.01" value={totalCost} onChange={e => setTotalCost(Number(e.target.value))} />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Pontos</Label>
+            <Input type="number" min={0} value={points} onChange={e => setPoints(Number(e.target.value))} />
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold">{pointsFinal}</p>
-              <p className="text-xs text-muted-foreground">Pontos</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{linearFinal}</p>
-              <p className="text-xs text-muted-foreground">Metros lineares</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{formatCurrency(costFinal)}</p>
-              <p className="text-xs text-muted-foreground">Custo estimado</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">
-                {pointsFinal > 0 ? formatCurrency(costFinal / pointsFinal) : '—'}
-              </p>
-              <p className="text-xs text-muted-foreground">Custo/ponto</p>
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Metros lineares</Label>
+            <Input type="number" min={0} value={linearM} onChange={e => setLinearM(Number(e.target.value))} />
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Custo estimado (€)</Label>
+            <Input type="number" min={0} step="0.01" value={totalCost} onChange={e => setTotalCost(Number(e.target.value))} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isManual && <Badge variant="outline" className="text-[10px]">Ajustado manualmente</Badge>}
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setEditing(true)} className="gap-1.5 text-muted-foreground">
+          <Pencil className="h-3.5 w-3.5" />
+          Editar
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {metrics.map(({ icon: MIcon, label, value, color }) => (
+          <div key={label} className="rounded-lg border p-3 text-center space-y-1">
+            <div className={`mx-auto h-8 w-8 rounded-lg ${color} flex items-center justify-center`}>
+              <MIcon className="h-4 w-4" />
+            </div>
+            <p className="text-lg font-bold">{value}</p>
+            <p className="text-[11px] text-muted-foreground">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
