@@ -1,16 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { OrcamentoStatus } from './OrcamentoStatus';
 import type { Orcamento } from '@/types/orcamentos';
 import { 
-  MoreVertical, 
   Edit, 
   Copy, 
   FileText, 
@@ -19,10 +11,12 @@ import {
   Calendar,
   Euro,
   GitBranch,
-  Hash
+  Hash,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface OrcamentoCardProps {
   orcamento: Orcamento;
@@ -50,7 +44,6 @@ export function OrcamentoCard({
     }).format(value);
   };
 
-  // Calcular valor com margem e custos indiretos
   const custosIndiretosTotal = 
     (orcamento.custos_indiretos?.estaleiro || 0) +
     (orcamento.custos_indiretos?.seguros || 0) +
@@ -60,67 +53,37 @@ export function OrcamentoCard({
   const margemValor = subtotal * (orcamento.margem_lucro / 100);
   const valorFinal = subtotal + margemValor;
 
+  const actions = [
+    { icon: Eye, label: 'Ver', onClick: () => onView(orcamento.id) },
+    { icon: Edit, label: 'Editar', onClick: () => onEdit(orcamento.id) },
+    { icon: Copy, label: 'Duplicar', onClick: () => onDuplicate(orcamento.id) },
+    { icon: GitBranch, label: 'Revisão', onClick: () => onRevision(orcamento.id) },
+    { icon: FileText, label: 'PDF', onClick: () => onGeneratePDF(orcamento.id) },
+    { icon: Trash2, label: 'Eliminar', onClick: () => onDelete(orcamento.id), destructive: true },
+  ];
+
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onView(orcamento.id)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            {orcamento.codigo && (
-              <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
-                <Hash className="h-3 w-3" />
-                <span>{orcamento.codigo}</span>
-              </div>
-            )}
-            <CardTitle className="text-lg font-semibold line-clamp-1">
-              {orcamento.titulo}
-            </CardTitle>
-            {orcamento.obra && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5" />
-                <span>{orcamento.obra.nome}</span>
-              </div>
-            )}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(orcamento.id); }}>
-                <FileText className="mr-2 h-4 w-4" />
-                Ver
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(orcamento.id); }}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(orcamento.id); }}>
-                <Copy className="mr-2 h-4 w-4" />
-                Duplicar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onRevision(orcamento.id); }}>
-                <GitBranch className="mr-2 h-4 w-4" />
-                Criar Revisão
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onGeneratePDF(orcamento.id); }}>
-                <FileText className="mr-2 h-4 w-4" />
-                Gerar PDF
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={(e) => { e.stopPropagation(); onDelete(orcamento.id); }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <Card className="hover:shadow-md transition-shadow flex flex-col">
+      <CardHeader className="pb-3 cursor-pointer" onClick={() => onView(orcamento.id)}>
+        <div className="space-y-1">
+          {orcamento.codigo && (
+            <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
+              <Hash className="h-3 w-3" />
+              <span>{orcamento.codigo}</span>
+            </div>
+          )}
+          <CardTitle className="text-lg font-semibold line-clamp-1">
+            {orcamento.titulo}
+          </CardTitle>
+          {orcamento.obra && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              <span className="line-clamp-1">{orcamento.obra.nome}</span>
+            </div>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 cursor-pointer flex-1" onClick={() => onView(orcamento.id)}>
         <div className="flex items-center justify-between">
           <OrcamentoStatus status={orcamento.status} />
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -155,6 +118,25 @@ export function OrcamentoCard({
           </div>
         </div>
       </CardContent>
+      <CardFooter className="border-t pt-3 pb-3 px-3">
+        <div className="flex items-center justify-between w-full gap-1">
+          {actions.map(({ icon: Icon, label, onClick, destructive }) => (
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 ${destructive ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : 'text-muted-foreground hover:text-foreground'}`}
+                  onClick={(e) => { e.stopPropagation(); onClick(); }}
+                >
+                  <Icon className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </CardFooter>
     </Card>
   );
 }
