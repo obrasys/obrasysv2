@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import {
-  Package, Wrench, Plus, Filter, Loader2, ArrowRightLeft,
-  CheckCircle, XCircle, Eye, ExternalLink, Boxes,
+  Package, Plus, Filter, Loader2, ArrowRightLeft,
+  CheckCircle, XCircle, Eye, Boxes,
+  ShoppingCart, Check, X, Trash2, Receipt,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,25 +23,28 @@ import {
 } from '@/components/ui/table';
 import {
   useProjectAllocations, useProjectMaterialRequests,
-  useCatalogItems, useCatalogItemsMutation,
+  useCatalogItems,
 } from '@/hooks/useProjectResources';
+import { useFinanceiro } from '@/hooks/useFinanceiro';
 import {
   ITEM_TYPE_CONFIG, ALLOCATION_STATUS_CONFIG,
   REQUEST_PRIORITY_CONFIG, REQUEST_STATUS_CONFIG,
   UNIT_OPTIONS,
   type ItemType, type AllocationStatus, type RequestPriority,
-  type RdoMaterialRequest,
 } from '@/types/project-resources';
 
 interface ObraMateriaisTabProps {
   obraId: string;
 }
 
+const formatCurrency = (v: number) =>
+  new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+
 export function ObraMateriaisTab({ obraId }: ObraMateriaisTabProps) {
   const [showAllocationForm, setShowAllocationForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const { allocations, isLoading: loadingAllocs, createAllocation, updateAllocationStatus, deleteAllocation } = useProjectAllocations(obraId);
+  const { allocations, isLoading: loadingAllocs, createAllocation, updateAllocationStatus } = useProjectAllocations(obraId);
   const { requests, isLoading: loadingReqs, updateRequestStatus, convertToAllocation } = useProjectMaterialRequests(obraId);
   const { items: catalogItems } = useCatalogItems();
 
@@ -59,20 +63,33 @@ export function ObraMateriaisTab({ obraId }: ObraMateriaisTabProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="allocations" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="allocations">
-              Destinações
-            </TabsTrigger>
-            <TabsTrigger value="requests" className="flex items-center gap-1.5">
-              Necessidades Pendentes
-              {pendingRequests.length > 0 && (
-                <Badge variant="destructive" className="text-[10px] h-5 px-1.5 ml-1">
-                  {pendingRequests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="compras" className="space-y-4">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-max md:w-auto">
+              <TabsTrigger value="compras" className="flex items-center gap-1.5">
+                <ShoppingCart className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Compras</span>
+              </TabsTrigger>
+              <TabsTrigger value="allocations">
+                <span className="hidden sm:inline">Destinações</span>
+                <span className="sm:hidden">Dest.</span>
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="flex items-center gap-1.5">
+                <span className="hidden sm:inline">Necessidades</span>
+                <span className="sm:hidden">Neces.</span>
+                {pendingRequests.length > 0 && (
+                  <Badge variant="destructive" className="text-[10px] h-5 px-1.5 ml-1">
+                    {pendingRequests.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Compras de Material Tab */}
+          <TabsContent value="compras" className="space-y-4">
+            <MaterialPurchaseSection obraId={obraId} />
+          </TabsContent>
 
           {/* Destinações Tab */}
           <TabsContent value="allocations" className="space-y-4">
@@ -275,6 +292,163 @@ export function ObraMateriaisTab({ obraId }: ObraMateriaisTabProps) {
   );
 }
 
+// ---- Material Purchase Section ----
+
+function MaterialPurchaseSection({ obraId }: { obraId: string }) {
+  const [descricao, setDescricao] = useState('');
+  const [valor, setValor] = useState('');
+  const [data, setData] = useState(new Date().toISOString().split('T')[0]);
+  const [showForm, setShowForm] = useState(false);
+
+  const { contas, createConta, deleteConta } = useFinanceiro(obraId);
+
+  const comprasMaterial = useMemo(
+    () => (contas || []).filter(c => c.tipo === 'pagar' && c.origem === 'material').sort(
+      (a, b) => new Date(b.data_vencimento).getTime() - new Date(a.data_vencimento).getTime()
+    ),
+    [contas],
+  );
+
+  const totalCompras = comprasMaterial.reduce((s, c) => s + Number(c.valor), 0);
+
+  const handleSubmit = () => {
+    const desc = descricao.trim();
+    const val = Number(valor);
+    if (!desc || val <= 0) return;
+
+    createConta.mutate({
+      obra_id: obraId,
+      tipo: 'pagar',
+      origem: 'material',
+      valor: val,
+      descricao: desc,
+      data_vencimento: data,
+      pago: true,
+      data_pagamento: data,
+    });
+
+    setDescricao('');
+    setValor('');
+    setData(new Date().toISOString().split('T')[0]);
+    setShowForm(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* KPI + Add */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">{formatCurrency(totalCompras)}</p>
+            <p className="text-[10px] text-muted-foreground">Total em compras de material</p>
+          </div>
+        </div>
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          {showForm ? <X className="w-4 h-4 mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+          {showForm ? 'Cancelar' : 'Registar Compra'}
+        </Button>
+      </div>
+
+      {/* Quick form */}
+      {showForm && (
+        <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Material comprado *</label>
+            <Textarea
+              placeholder="Ex: 20 sacos de cimento Portland, 50m tubo PVC 110mm..."
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              className="resize-none min-h-[70px] mt-1"
+              maxLength={500}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Valor (€) *</label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Data da compra</label>
+              <Input
+                type="date"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={createConta.isPending || !descricao.trim() || !valor || Number(valor) <= 0}
+            className="w-full"
+          >
+            <Check className="w-4 h-4 mr-1.5" />
+            {createConta.isPending ? 'A gravar...' : 'Registar Compra de Material'}
+          </Button>
+        </div>
+      )}
+
+      {/* Purchase history */}
+      {comprasMaterial.length > 0 ? (
+        <div className="rounded-md border overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Material</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {comprasMaterial.map((conta) => (
+                <TableRow key={conta.id}>
+                  <TableCell className="text-sm max-w-[250px]">
+                    <p className="truncate">{conta.descricao}</p>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {format(new Date(conta.data_vencimento), 'dd/MM/yyyy', { locale: pt })}
+                  </TableCell>
+                  <TableCell className="text-right font-medium text-sm">
+                    {formatCurrency(Number(conta.valor))}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => deleteConta.mutate(conta.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : !showForm ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Receipt className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Nenhuma compra de material registada</p>
+          <p className="text-xs mt-1">Registe as compras para controlar as despesas de material da obra</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // ---- Allocation Form Dialog ----
 
 function AllocationFormDialog({
@@ -317,7 +491,6 @@ function AllocationFormDialog({
       allocation_date: date,
       notes: notes || undefined,
     });
-    // Reset
     setItemName('');
     setQuantity('');
     setNotes('');
