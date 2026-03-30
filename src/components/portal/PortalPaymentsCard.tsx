@@ -64,8 +64,10 @@ function formatCurrency(value: number): string {
 
 export function PortalPaymentsCard({ payments, awards = [] }: PortalPaymentsCardProps) {
   const award = awards.length > 0 ? awards[0] : null;
-  const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-  const paidAmount = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+  const depositPaid = award && award.deposit_amount > 0 ? award.deposit_amount : 0;
+  const installmentsPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+  const paidAmount = depositPaid + installmentsPaid;
+  const totalAmount = depositPaid + payments.reduce((sum, p) => sum + p.amount, 0);
   const pendingPayments = payments.filter(p => getEffectiveStatus(p) !== 'paid');
   const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
   const nextPayment = pendingPayments[0];
