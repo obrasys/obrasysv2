@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Clock, UserPlus } from "lucide-react";
+import { Clock, UserPlus, AlertTriangle } from "lucide-react";
 import type { Worker, AllocationFormData, CostType } from "@/types/livro-ponto";
 import { WorkerSummaryCard } from "./WorkerSummaryCard";
 
@@ -32,6 +32,8 @@ interface TimesheetEntryFormProps {
   onNotesChange: (v: string) => void;
   allocations: AllocationFormData[];
   onAllocationsChange: (allocs: AllocationFormData[]) => void;
+  overtimeHours: string;
+  onOvertimeHoursChange: (v: string) => void;
 }
 
 function calcMinutesFromTimes(start: string, end: string, breakMin: number): number {
@@ -64,6 +66,8 @@ export function TimesheetEntryForm({
   onNotesChange,
   allocations,
   onAllocationsChange,
+  overtimeHours,
+  onOvertimeHoursChange,
 }: TimesheetEntryFormProps) {
   const selectedWorker = workers.find((w) => w.id === workerId);
 
@@ -198,6 +202,35 @@ export function TimesheetEntryForm({
             {totalWorkedMinutes > 0 ? formatMinutes(totalWorkedMinutes) : "—"}
           </div>
         </div>
+      </div>
+
+      {/* Overtime hours */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <AlertTriangle className="h-3 w-3 text-amber-500" />
+            Horas extra
+          </Label>
+          <Input
+            type="number"
+            step="0.25"
+            min={0}
+            placeholder="Ex: 2"
+            value={overtimeHours}
+            onChange={(e) => onOvertimeHoursChange(e.target.value)}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Calculadas ao custo de hora extra do trabalhador
+          </p>
+        </div>
+        {selectedWorker && parseFloat(overtimeHours) > 0 && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Custo hora extra</Label>
+            <div className="flex h-10 items-center rounded-md border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-700">
+              €{(selectedWorker.overtime_hourly_cost || selectedWorker.default_hourly_cost || 0).toFixed(2)}/h
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Allocations - simplified for single obra */}
