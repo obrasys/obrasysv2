@@ -184,6 +184,17 @@ export default function VerObraPage() {
   const totalPagar = contas?.filter(c => c.tipo === 'pagar').reduce((sum, c) => sum + Number(c.valor), 0) || 0;
   const totalLaborCost = laborSummary?.totalCost || 0;
 
+  // Balanço da Obra calculations
+  const orcamentosAprovados = obra.orcamentos?.filter(o => o.status === 'adjudicado') || [];
+  const valorOrcamentoAprovado = orcamentosAprovados.reduce((sum, orc) => sum + (orc.valor_total || 0), 0);
+  const totalDespesas = (dashboard?.totalPagar || 0) + totalLaborCost;
+  const lucroPrevisto = valorOrcamentoAprovado - totalDespesas;
+  const margemLucro = valorOrcamentoAprovado > 0 ? (lucroPrevisto / valorOrcamentoAprovado) * 100 : 0;
+  const percentPago = dashboard && dashboard.totalPagar > 0 ? (dashboard.pagoPagar / dashboard.totalPagar) * 100 : 0;
+  const percentRecebido = dashboard && dashboard.totalReceber > 0 ? (dashboard.pagoReceber / dashboard.totalReceber) * 100 : 0;
+  const formatCurrencyShort = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+  const isObraAtiva = obra.status === 'em_curso' || obra.status === 'planeamento';
+
   // Days calculation
   const startDate = obra.data_inicio ? new Date(obra.data_inicio) : null;
   const endDate = obra.data_fim ? new Date(obra.data_fim) : null;
