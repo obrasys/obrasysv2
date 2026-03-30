@@ -345,7 +345,7 @@ export default function VerObraPage() {
 
         {/* Main Tabs */}
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
             <TabsList className="w-max md:w-full flex h-auto gap-1.5 bg-primary/5 border border-primary/15 p-1.5 rounded-xl">
               <TabsTrigger value="geral" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Building2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Geral</span></TabsTrigger>
               <TabsTrigger value="planeamento" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><GitBranch className="h-3.5 w-3.5" /><span className="hidden sm:inline">Planeamento</span></TabsTrigger>
