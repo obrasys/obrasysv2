@@ -4,3 +4,4 @@ export { SubscriptionStatusCard } from "./SubscriptionStatusCard";
 export { PaymentHistoryTable } from "./PaymentHistoryTable";
 export { PlanComparisonCard } from "./PlanComparisonCard";
 export { PricingCard } from "./PricingCard";
+export { UpgradePromptModal } from "./UpgradePromptModal";
