@@ -259,10 +259,10 @@ export function ObraPlanoDiarioTab({ obraId }: Props) {
               {workers && workers.length > 0 && (
                 <div>
                   <Label>Responsável</Label>
-                  <Select value={newTask.assigned_worker_id} onValueChange={v => setNewTask(p => ({ ...p, assigned_worker_id: v }))}>
+                  <Select value={newTask.assigned_worker_id || "none"} onValueChange={v => setNewTask(p => ({ ...p, assigned_worker_id: v === "none" ? "" : v }))}>
                     <SelectTrigger><SelectValue placeholder="Sem responsável" /></SelectTrigger>
                     <SelectContent className="bg-popover">
-                      <SelectItem value="">Sem responsável</SelectItem>
+                      <SelectItem value="none">Sem responsável</SelectItem>
                       {workers.map((w: any) => (
                         <SelectItem key={w.id} value={w.id}>{w.nome}</SelectItem>
                       ))}
