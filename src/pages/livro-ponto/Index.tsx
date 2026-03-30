@@ -215,7 +215,10 @@ export default function LivroPontoIndex() {
                         const st = statusMap[ts.status] || statusMap.draft;
                         return (
                           <TableRow key={ts.id}>
-                            <TableCell className="font-medium">{ts.worker?.full_name || "—"}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{ts.worker?.full_name || "—"}</div>
+                              <div className="text-[11px] text-muted-foreground">{format(new Date(ts.work_date), "dd/MM/yyyy", { locale: pt })}</div>
+                            </TableCell>
                             <TableCell>{ts.check_in_time?.slice(0, 5) || "—"}</TableCell>
                             <TableCell>{ts.check_out_time?.slice(0, 5) || "—"}</TableCell>
                             <TableCell>{formatMinutes(ts.total_worked_minutes)}</TableCell>
@@ -258,7 +261,12 @@ export default function LivroPontoIndex() {
                   <Card key={key}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">{group.worker?.full_name || "Trabalhador"}</CardTitle>
+                        <CardTitle className="text-base">
+                          {group.worker?.full_name || "Trabalhador"}
+                          <span className="text-xs text-muted-foreground font-normal ml-2">
+                            {group.items[0]?.work_date ? format(new Date(group.items[0].work_date), "dd/MM/yyyy", { locale: pt }) : ""}
+                          </span>
+                        </CardTitle>
                         <div className="flex items-center gap-4 text-sm">
                           <span className="text-muted-foreground">{formatMinutes(group.totalMin)}</span>
                           <span className="font-semibold text-primary">{formatCurrency(group.totalCost)}</span>
@@ -328,7 +336,10 @@ export default function LivroPontoIndex() {
                         <TableBody>
                           {group.items.map((a: any) => (
                             <TableRow key={a.id}>
-                              <TableCell>{a.worker?.full_name || "—"}</TableCell>
+                            <TableCell>
+                              <div>{a.worker?.full_name || "—"}</div>
+                              <div className="text-[11px] text-muted-foreground">{a.work_date ? format(new Date(a.work_date), "dd/MM/yyyy", { locale: pt }) : ""}</div>
+                            </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-xs">{costTypeLabels[a.cost_type] || a.cost_type}</Badge>
                               </TableCell>
