@@ -47,6 +47,7 @@ export default function LancarPage() {
   const [breakMin, setBreakMin] = useState(0);
   const [notes, setNotes] = useState("");
   const [manualHours, setManualHours] = useState("");
+  const [overtimeHours, setOvertimeHours] = useState("");
   const [allocations, setAllocations] = useState<AllocationFormData[]>([
     { ...emptyAllocation, obra_id: initialObra },
   ]);
@@ -78,13 +79,19 @@ export default function LancarPage() {
   const totalMinutes = calcMinutes(checkIn, checkOut, breakMin) > 0 ? calcMinutes(checkIn, checkOut, breakMin) : manualMinutes;
   const selectedWorker = activeWorkers.find((w: any) => w.id === workerId);
 
+  const overtimeParsed = parseFloat(overtimeHours);
+  const overtimeMinutes = isNaN(overtimeParsed) || overtimeParsed <= 0 ? 0 : Math.round(overtimeParsed * 60);
+
   const totalCost = useMemo(() => {
     if (!selectedWorker || totalMinutes <= 0) return 0;
     const isSalary = selectedWorker.compensation_type === "salary";
     if (isSalary) return 0;
     const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
-    return (totalMinutes / 60) * rate;
-  }, [selectedWorker, totalMinutes]);
+    const regularCost = (totalMinutes / 60) * rate;
+    const otRate = selectedWorker.overtime_hourly_cost || rate;
+    const otCost = (overtimeMinutes / 60) * otRate;
+    return regularCost + otCost;
+  }, [selectedWorker, totalMinutes, overtimeMinutes]);
 
   const canSave =
     workerId &&
@@ -103,6 +110,22 @@ export default function LancarPage() {
   };
 
   const handleSave = async (addAnother = false) => {
+    // Build allocations: regular + overtime (if any)
+    const finalAllocations = allocations.map((a) => ({
+      ...a,
+      worked_minutes: a.worked_minutes || totalMinutes,
+      cost_type: "regular" as CostType,
+    }));
+
+    if (overtimeMinutes > 0 && allocations.length > 0) {
+      finalAllocations.push({
+        ...allocations[0],
+        worked_minutes: overtimeMinutes,
+        cost_type: "overtime" as CostType,
+        description: "Horas extra",
+      });
+    }
+
     await createMutation.mutateAsync({
       worker_id: workerId,
       work_date: workDate,
@@ -110,10 +133,7 @@ export default function LancarPage() {
       check_out_time: checkOut || undefined,
       break_minutes: breakMin,
       notes: notes || undefined,
-      allocations: allocations.map((a) => ({
-        ...a,
-        worked_minutes: a.worked_minutes || totalMinutes,
-      })),
+      allocations: finalAllocations,
     });
 
     if (addAnother) {
@@ -123,6 +143,7 @@ export default function LancarPage() {
       setCheckOut("");
       setBreakMin(0);
       setManualHours("");
+      setOvertimeHours("");
       setNotes("");
       setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
     } else {
@@ -184,6 +205,8 @@ export default function LancarPage() {
           onNotesChange={setNotes}
           allocations={allocations}
           onAllocationsChange={setAllocations}
+          overtimeHours={overtimeHours}
+          onOvertimeHoursChange={setOvertimeHours}
         />
 
         {/* Summary bar */}
@@ -200,6 +223,11 @@ export default function LancarPage() {
                     <span className="text-lg font-bold text-foreground">
                       {formatMinutes(totalMinutes)}
                     </span>
+                    {overtimeMinutes > 0 && (
+                      <span className="text-sm font-semibold text-amber-600">
+                        + {formatMinutes(overtimeMinutes)} extra
+                      </span>
+                    )}
                     {totalCost > 0 && (
                       <span className="text-lg font-bold text-primary">
                         {formatCurrency(totalCost)}
