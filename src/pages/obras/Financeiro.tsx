@@ -465,6 +465,9 @@ export default function ObraFinanceiroPage() {
           <TabsContent value="pagar" className="mt-4">
             <ContasList contas={contasPagar} onEdit={handleEdit} onDelete={handleDelete} onTogglePago={handleTogglePago} onUploadComprovante={handleUploadComprovante} emptyMessage="Nenhuma conta a pagar" />
           </TabsContent>
+          <TabsContent value="material" className="mt-4">
+            <ContasList contas={contasMaterial} onEdit={handleEdit} onDelete={handleDelete} onTogglePago={handleTogglePago} onUploadComprovante={handleUploadComprovante} emptyMessage="Nenhuma despesa de material" />
+          </TabsContent>
           <TabsContent value="mao-de-obra" className="mt-4">
             <ObraLaborCostsTab obraId={id!} />
           </TabsContent>
