@@ -162,6 +162,11 @@ const PortalObra = () => {
           </CardContent>
         </Card>
 
+        {/* Payment Alerts */}
+        {!paymentsLoading && paymentPlans && (
+          <PortalPaymentAlertsCard payments={paymentPlans as any} />
+        )}
+
         {/* Tabs */}
         <Tabs defaultValue="progresso" className="space-y-4">
           <TabsList className="h-10 bg-card border border-border rounded-lg p-1 w-full grid grid-cols-5">
