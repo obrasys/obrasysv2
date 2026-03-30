@@ -7,7 +7,8 @@ import {
   ClipboardList, Cloud, Users, ExternalLink, Sparkles, AlertCircle, Lightbulb,
   CheckCircle, Upload, BookOpen, Flag, Wallet, TrendingUp, TrendingDown,
   CircleDollarSign, GitBranch, Activity, Target, DollarSign, BarChart3,
-  HardHat, Clock, Percent,
+  HardHat, Clock, Percent, ArrowUpRight, ArrowDownRight, Link as LinkIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -75,7 +76,7 @@ export default function VerObraPage() {
   } = useObra(id);
   
   const { updateStatus } = useObras();
-  const { contas, createConta, isLoading: loadingContas } = useFinanceiro(id);
+  const { contas, dashboard, createConta, isLoading: loadingContas } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
   const { data: resourceSummary } = useProjectResourceSummary(id);
@@ -183,6 +184,17 @@ export default function VerObraPage() {
   const totalPagar = contas?.filter(c => c.tipo === 'pagar').reduce((sum, c) => sum + Number(c.valor), 0) || 0;
   const totalLaborCost = laborSummary?.totalCost || 0;
 
+  // Balanço da Obra calculations
+  const orcamentosAprovados = obra.orcamentos?.filter(o => o.status === 'adjudicado') || [];
+  const valorOrcamentoAprovado = orcamentosAprovados.reduce((sum, orc) => sum + (orc.valor_total || 0), 0);
+  const totalDespesas = (dashboard?.totalPagar || 0) + totalLaborCost;
+  const lucroPrevisto = valorOrcamentoAprovado - totalDespesas;
+  const margemLucro = valorOrcamentoAprovado > 0 ? (lucroPrevisto / valorOrcamentoAprovado) * 100 : 0;
+  const percentPago = dashboard && dashboard.totalPagar > 0 ? (dashboard.pagoPagar / dashboard.totalPagar) * 100 : 0;
+  const percentRecebido = dashboard && dashboard.totalReceber > 0 ? (dashboard.pagoReceber / dashboard.totalReceber) * 100 : 0;
+  const formatCurrencyShort = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+  const isObraAtiva = obra.status === 'em_curso' || obra.status === 'planeamento';
+
   // Days calculation
   const startDate = obra.data_inicio ? new Date(obra.data_inicio) : null;
   const endDate = obra.data_fim ? new Date(obra.data_fim) : null;
@@ -244,6 +256,142 @@ export default function VerObraPage() {
             Calcular Progresso IA
           </Button>
         </div>
+
+        {/* ═══ BALANÇO DA OBRA ═══ */}
+        {isObraAtiva && (
+          <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-4 md:p-5">
+            <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+              {/* Left: Main balance */}
+              <div className="flex-1 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Balanço da Obra</p>
+                  {valorOrcamentoAprovado > 0 ? (
+                    <>
+                      <p className={`text-3xl md:text-4xl font-bold tracking-tight ${lucroPrevisto >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                        {formatCurrency(lucroPrevisto)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Lucro previsto · Margem de {Math.round(margemLucro)}%
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-3xl md:text-4xl font-bold tracking-tight text-muted-foreground">—</p>
+                      <p className="text-sm text-muted-foreground mt-1">Sem orçamento adjudicado</p>
+                    </>
+                  )}
+                </div>
+
+                {/* Profit margin bar */}
+                {valorOrcamentoAprovado > 0 && (
+                  <div className="max-w-md">
+                    <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
+                      <span>Despesas {formatCurrencyShort(totalDespesas)}</span>
+                      <span>Receita {formatCurrencyShort(valorOrcamentoAprovado)}</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${margemLucro >= 20 ? 'bg-emerald-500' : margemLucro >= 0 ? 'bg-amber-500' : 'bg-destructive'}`}
+                        style={{ width: `${Math.min(100, Math.max(0, (totalDespesas / valorOrcamentoAprovado) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Linked budgets */}
+                {orcamentosAprovados.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {orcamentosAprovados.map((orc) => (
+                      <Badge
+                        key={orc.id}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-primary/10 text-xs"
+                        onClick={() => navigate(`/orcamentos/${orc.id}/editar`)}
+                      >
+                        <LinkIcon className="w-3 h-3 mr-1" />
+                        {orc.titulo} · {formatCurrencyShort(orc.valor_total || 0)}
+                        <ExternalLink className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Quick breakdown cards */}
+              <div className="grid grid-cols-2 gap-3 lg:w-[380px] shrink-0">
+                <div className="rounded-xl bg-card border p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Receita</span>
+                  </div>
+                  <p className="text-lg font-bold text-emerald-600">{formatCurrencyShort(valorOrcamentoAprovado || valorOrcamentos)}</p>
+                  {valorOrcamentoAprovado > 0 && (
+                    <div className="mt-1.5">
+                      <Progress value={percentRecebido} className="h-1" />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{Math.round(percentRecebido)}% recebido</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-card border p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center">
+                      <ArrowDownRight className="w-4 h-4 text-red-500" />
+                    </div>
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Despesas</span>
+                  </div>
+                  <p className="text-lg font-bold text-destructive">{formatCurrencyShort(dashboard?.totalPagar || 0)}</p>
+                  {dashboard && dashboard.totalPagar > 0 && (
+                    <div className="mt-1.5">
+                      <Progress value={percentPago} className="h-1" />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{Math.round(percentPago)}% pago</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-card border p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-orange-500" />
+                    </div>
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Mão de Obra</span>
+                  </div>
+                  <p className="text-lg font-bold">{formatCurrencyShort(laborSummary?.totalCost || 0)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {laborSummary?.totalHours?.toFixed(0) || 0}h · {laborSummary?.totalWorkers || 0} trab.
+                  </p>
+                </div>
+
+                <div className={`rounded-xl border p-3.5 ${(dashboard?.vencidas || 0) > 0 ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800/40' : 'bg-card'}`}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${(dashboard?.vencidas || 0) > 0 ? 'bg-red-500/10' : 'bg-amber-500/10'}`}>
+                      {(dashboard?.vencidas || 0) > 0
+                        ? <AlertTriangle className="w-4 h-4 text-red-500" />
+                        : <Clock className="w-4 h-4 text-amber-500" />
+                      }
+                    </div>
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                      {(dashboard?.vencidas || 0) > 0 ? 'Vencidas' : 'A Vencer'}
+                    </span>
+                  </div>
+                  {(dashboard?.vencidas || 0) > 0 ? (
+                    <>
+                      <p className="text-lg font-bold text-red-600">{dashboard!.vencidas}</p>
+                      <p className="text-[10px] text-red-600 mt-0.5">{formatCurrencyShort(dashboard!.valorVencido)} em atraso</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold text-amber-600">{dashboard?.aVencer7Dias || 0}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{formatCurrencyShort(dashboard?.valorAVencer || 0)} próx. 7 dias</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
