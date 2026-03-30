@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
         email: clienteEmail!,
         password: tempPassword,
         email_confirm: true,
-        user_metadata: { nome: clienteNome, created_by: caller.id },
+        user_metadata: { nome: clienteNome, role: "cliente" },
       });
 
     if (createError) {
