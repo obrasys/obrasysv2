@@ -251,10 +251,19 @@ export default function PerfilPage() {
                 <Button 
                   variant="outline" 
                   className="w-full mt-2" 
-                  onClick={() => setAddUserOpen(true)}
+                  onClick={() => {
+                    if (tier === 'starter' || tier === 'trial') {
+                      setShowUpgradeModal(true);
+                    } else {
+                      setAddUserOpen(true);
+                    }
+                  }}
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Adicionar Utilizador
+                  {(tier === 'starter' || tier === 'trial') && (
+                    <Badge variant="secondary" className="ml-2 text-[10px]">PRO</Badge>
+                  )}
                 </Button>
               </div>
             </CardContent>
