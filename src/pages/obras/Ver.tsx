@@ -75,7 +75,7 @@ export default function VerObraPage() {
   } = useObra(id);
   
   const { updateStatus } = useObras();
-  const { contas, createConta, isLoading: loadingContas } = useFinanceiro(id);
+  const { contas, dashboard, createConta, isLoading: loadingContas } = useFinanceiro(id);
   const { rdos: obrasRDOs, isLoading: loadingRDOs } = useRDOs(id);
   const { cadernos, isLoading: loadingCadernos } = useCadernos(id);
   const { data: resourceSummary } = useProjectResourceSummary(id);
