@@ -295,6 +295,72 @@ export default function ObraFinanceiroPage() {
           </div>
         </div>
 
+        {/* ═══ CONTAS DO DIA ═══ */}
+        {(() => {
+          const today = new Date().toISOString().split('T')[0];
+          const contasHoje = contas?.filter(c => !c.pago && c.data_vencimento <= today) || [];
+          if (contasHoje.length === 0) return null;
+          const totalHoje = contasHoje.reduce((sum, c) => sum + Number(c.valor), 0);
+          return (
+            <Card className="border-amber-200 bg-gradient-to-r from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 dark:border-amber-800/40">
+              <CardHeader className="pb-2 pt-4 px-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                      <CircleDollarSign className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Contas Pendentes Hoje</CardTitle>
+                      <CardDescription className="text-[11px]">
+                        {contasHoje.length} conta{contasHoje.length !== 1 ? 's' : ''} · Total {formatCurrency(totalHoje)}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-100/60 dark:bg-amber-900/30 dark:text-amber-400">
+                    {format(new Date(), "dd MMM", { locale: pt })}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="px-5 pb-4">
+                <div className="space-y-2 mt-1">
+                  {contasHoje.slice(0, 5).map((conta) => (
+                    <div key={conta.id} className="flex items-center gap-3 rounded-lg bg-card border p-3 hover:shadow-sm transition-shadow">
+                      <div className={`w-1.5 h-10 rounded-full shrink-0 ${conta.tipo === 'pagar' ? 'bg-red-400' : 'bg-emerald-400'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {conta.descricao || (conta.tipo === 'pagar' ? 'Conta a pagar' : 'Conta a receber')}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {conta.fornecedor?.nome || conta.cliente?.nome || conta.origem.replace('_', ' ')}
+                          {conta.data_vencimento < today && (
+                            <span className="text-red-500 font-medium ml-1">· Vencida {format(new Date(conta.data_vencimento), "dd/MM", { locale: pt })}</span>
+                          )}
+                        </p>
+                      </div>
+                      <p className={`text-sm font-bold shrink-0 ${conta.tipo === 'pagar' ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {formatCurrency(conta.valor)}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 h-8 px-3 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950"
+                        onClick={() => handleTogglePago(conta.id, true)}
+                      >
+                        ✓ Pagar
+                      </Button>
+                    </div>
+                  ))}
+                  {contasHoje.length > 5 && (
+                    <p className="text-xs text-center text-muted-foreground pt-1">
+                      + {contasHoje.length - 5} contas pendentes
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* ═══ DESPESAS POR ORIGEM ═══ */}
         {dashboard && (
           <div className="grid grid-cols-3 gap-3">
