@@ -336,7 +336,10 @@ export default function LivroPontoIndex() {
                         <TableBody>
                           {group.items.map((a: any) => (
                             <TableRow key={a.id}>
-                              <TableCell>{a.worker?.full_name || "—"}</TableCell>
+                            <TableCell>
+                              <div>{a.worker?.full_name || "—"}</div>
+                              <div className="text-[11px] text-muted-foreground">{a.work_date ? format(new Date(a.work_date), "dd/MM/yyyy", { locale: pt }) : ""}</div>
+                            </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-xs">{costTypeLabels[a.cost_type] || a.cost_type}</Badge>
                               </TableCell>
