@@ -5,11 +5,12 @@ import { PortalProgressCard } from '@/components/portal/PortalProgressCard';
 import { PortalRDOList } from '@/components/portal/PortalRDOList';
 import { PortalPhotoGallery } from '@/components/portal/PortalPhotoGallery';
 import { PortalActivityLog } from '@/components/portal/PortalActivityLog';
+import { PortalPaymentsCard } from '@/components/portal/PortalPaymentsCard';
 import { useClientObraDetail } from '@/hooks/useClientPortal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, FileText, Camera, Activity, Calendar, MapPin, Users } from 'lucide-react';
+import { Loader2, TrendingUp, FileText, Camera, Activity, Calendar, MapPin, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -37,6 +38,8 @@ const PortalObra = () => {
     progressLoading,
     rdos,
     rdosLoading,
+    paymentPlans,
+    paymentsLoading,
     activityLogs,
     logEvent,
   } = useClientObraDetail(id);
@@ -75,6 +78,7 @@ const PortalObra = () => {
   const rdoCount = rdos?.length || 0;
   const photoCount = rdosWithPhotos.reduce((sum: number, r: any) => sum + (r.fotos?.length || 0), 0);
   const progressValue = Math.round(obra.progresso);
+  const pendingPayments = (paymentPlans || []).filter((p: any) => p.status !== 'paid');
 
   // Circular progress for hero
   const radius = 40;
@@ -159,7 +163,7 @@ const PortalObra = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="progresso" className="space-y-4">
-          <TabsList className="h-10 bg-card border border-border rounded-lg p-1 w-full grid grid-cols-4">
+          <TabsList className="h-10 bg-card border border-border rounded-lg p-1 w-full grid grid-cols-5">
             <TabsTrigger value="progresso" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <TrendingUp className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Progresso</span>
@@ -168,6 +172,11 @@ const PortalObra = () => {
               <FileText className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">RDOs</span>
               {rdoCount > 0 && <Badge variant="secondary" className="h-5 px-1.5 text-[10px] hidden sm:flex">{rdoCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="pagamentos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
+              <CreditCard className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Pagamentos</span>
+              {pendingPayments.length > 0 && <Badge variant="secondary" className="h-5 px-1.5 text-[10px] hidden sm:flex">{pendingPayments.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="fotos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
               <Camera className="h-3.5 w-3.5" />
@@ -206,6 +215,16 @@ const PortalObra = () => {
                 obraNome={obra.nome}
                 onLogEvent={handleLogEvent}
               />
+            )}
+          </TabsContent>
+
+          <TabsContent value="pagamentos">
+            {paymentsLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <PortalPaymentsCard payments={(paymentPlans || []) as any} />
             )}
           </TabsContent>
 
