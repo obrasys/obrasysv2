@@ -230,6 +230,10 @@ export function useFinanceiro(obraId?: string) {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contas-financeiras'] });
       queryClient.invalidateQueries({ queryKey: ['financeiro-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-payment-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['client-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['client-awards'] });
       toast({ title: variables.pago ? 'Marcado como pago!' : 'Marcado como pendente!' });
     },
     onError: (error: Error) => {
