@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { useObras } from '@/hooks/useObras';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
 import type { ObraStatus } from '@/types/obras';
 
