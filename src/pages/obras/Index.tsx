@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2, Lock } from 'lucide-react';
+import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2, Lock, Calendar, Euro } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
