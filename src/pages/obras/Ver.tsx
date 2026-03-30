@@ -196,20 +196,20 @@ export default function VerObraPage() {
       title={obra.nome}
       subtitle={obra.cliente || 'Sem cliente atribuído'}
       actions={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate('/obras')}>
-            <ArrowLeft className="w-4 h-4 mr-1" />Voltar
+            <ArrowLeft className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Voltar</span>
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${id}/financeiro`)}>
-            <Wallet className="w-4 h-4 mr-1" />Financeiro
+            <Wallet className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Financeiro</span>
           </Button>
           {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
             <Button variant="outline" size="sm" onClick={() => setShowFinalizarModal(true)}>
-              <Flag className="w-4 h-4 mr-1" />Finalizar
+              <Flag className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Finalizar</span>
             </Button>
           )}
           <Button size="sm" onClick={() => navigate(`/obras/${id}/editar`)}>
-            <Edit className="w-4 h-4 mr-1" />Editar
+            <Edit className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Editar</span>
           </Button>
         </div>
       }
