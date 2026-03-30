@@ -65,8 +65,8 @@ serve(async (req) => {
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
-          .from("rdos")
-          .select("id, obra_id, data, status, clima, mao_obra_total, created_at")
+          .from("relatorios_diarios")
+          .select("id, obra_id, data, status, condicoes_meteorologicas, mao_de_obra_presente, created_at")
           .order("created_at", { ascending: false })
           .limit(15),
         supabase
@@ -92,8 +92,8 @@ serve(async (req) => {
           .limit(30),
         supabase
           .from("contas_financeiras")
-          .select("id, obra_id, descricao, tipo, valor, data, categoria")
-          .order("data", { ascending: false })
+          .select("id, obra_id, descricao, tipo, valor, data_vencimento, categoria_id")
+          .order("data_vencimento", { ascending: false })
           .limit(80),
         supabase
           .from("equipa_membros")
@@ -155,7 +155,7 @@ ${orcamentos.map((o: any) => `- ${o.codigo || "S/C"} "${o.titulo}" | Cliente: ${
 ${tarefas.slice(0, 10).map((t: any) => `- "${t.titulo}" | Estado: ${t.estado} | Prioridade: ${t.prioridade} | Limite: ${t.data_limite || "N/D"}`).join("\n")}
 
 ### RDOs (${rdos.length} registados)
-${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.clima || "N/D"} | MO: ${(r as any).mao_obra_total || 0}h`).join("\n")}
+${rdos.slice(0, 5).map((r: any) => `- Data: ${r.data} | Status: ${r.status} | Clima: ${r.condicoes_meteorologicas || "N/D"} | MO: ${r.mao_de_obra_presente || 0}`).join("\n")}
 
 ### Alertas Axia Abertos (${insights.length})
 ${insights.map((i: any) => `- [${i.severity}] ${i.title}: ${i.message}`).join("\n")}
