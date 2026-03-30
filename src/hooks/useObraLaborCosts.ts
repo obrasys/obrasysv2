@@ -181,7 +181,7 @@ export function useObraLaborByWorker(obraId: string | undefined) {
     queryFn: async (): Promise<WorkerDistribution[]> => {
       const { data, error } = await supabase
         .from('project_labor_cost_entries')
-        .select('worker_id, hours_worked, amount, workers!project_labor_cost_entries_worker_id_fkey(name)')
+        .select('worker_id, hours_worked, amount, workers!project_labor_cost_entries_worker_id_fkey(full_name)')
         .eq('obra_id', obraId!)
         .neq('status', 'reversed');
 
@@ -189,7 +189,7 @@ export function useObraLaborByWorker(obraId: string | undefined) {
 
       const grouped = new Map<string, { name: string; cost: number; hours: number }>();
       for (const e of (data || []) as any[]) {
-        const existing = grouped.get(e.worker_id) || { name: e.workers?.name || 'Trabalhador', cost: 0, hours: 0 };
+        const existing = grouped.get(e.worker_id) || { name: e.workers?.full_name || 'Trabalhador', cost: 0, hours: 0 };
         existing.cost += e.amount || 0;
         existing.hours += e.hours_worked || 0;
         grouped.set(e.worker_id, existing);
