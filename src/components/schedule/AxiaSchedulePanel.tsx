@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { ScheduleTask, ScheduleDependency } from '@/types/schedule';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   obraId: string;
@@ -137,11 +138,13 @@ Apresenta como tabela com: Ação | Tarefa | Ganho (dias) | Risco.`,
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const resp = await fetch(`${supabaseUrl}/functions/v1/axia-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ question: prompt, history: [] }),
       });
