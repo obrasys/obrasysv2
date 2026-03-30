@@ -398,6 +398,13 @@ export default function PerfilPage() {
         open={addUserOpen} 
         onOpenChange={setAddUserOpen} 
       />
+      <UpgradePromptModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Funcionalidade do plano Professional"
+        description="Para adicionar utilizadores à sua equipa, faça upgrade para o plano Professional que inclui até 10 utilizadores."
+        requiredPlan="Professional"
+      />
     </AppLayout>
   );
 }
