@@ -41,6 +41,7 @@ const PortalObra = () => {
     rdosLoading,
     paymentPlans,
     paymentsLoading,
+    budgetAwards,
     activityLogs,
     logEvent,
   } = useClientObraDetail(id);
