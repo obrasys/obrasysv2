@@ -8,14 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   Building2,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
   Users,
   Package,
-  MoreHorizontal,
   Eye,
   Loader2,
+  UtensilsCrossed,
+  Fuel,
+  Car,
+  Wrench,
+  MoreHorizontal,
+  Receipt,
 } from 'lucide-react';
 
 const formatCurrency = (value: number) =>
@@ -24,6 +28,19 @@ const formatCurrency = (value: number) =>
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(value);
+
+const EXTRA_TAGS: Record<string, { label: string; icon: typeof Receipt }> = {
+  'ALMOÇO': { label: 'Almoços', icon: UtensilsCrossed },
+  'GASÓLEO': { label: 'Gasóleo', icon: Fuel },
+  'PORTAGEM': { label: 'Portagens', icon: Car },
+  'FERRAMENTA': { label: 'Ferramentas', icon: Wrench },
+};
+
+function extractTag(desc: string | null): string | null {
+  if (!desc) return null;
+  const match = desc.match(/^\[([A-ZÁÉÍÓÚÃÕÇ]+)\]/);
+  return match ? match[1] : null;
+}
 
 interface ObraFinanceData {
   obraId: string;
@@ -36,6 +53,7 @@ interface ObraFinanceData {
   outros: number;
   lucro: number;
   margem: number;
+  extrasBreakdown: Record<string, number>;
 }
 
 export function FinanceiroObraCards() {
@@ -47,7 +65,6 @@ export function FinanceiroObraCards() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Fetch obras
       const { data: obras, error: obrasErr } = await supabase
         .from('obras')
         .select('id, nome, status')
@@ -55,18 +72,16 @@ export function FinanceiroObraCards() {
         .order('created_at', { ascending: false });
       if (obrasErr) throw obrasErr;
 
-      // Fetch all contas
+      // Fetch contas with descriptions for tag extraction
       const { data: contas } = await supabase
         .from('contas_financeiras')
-        .select('obra_id, tipo, origem, valor, pago');
+        .select('obra_id, tipo, origem, valor, pago, descricao');
 
-      // Fetch budget awards for revenue
       const { data: awards } = await supabase
         .from('budget_awards')
         .select('obra_id, awarded_total_amount')
         .eq('status', 'active');
 
-      // Fetch labor costs
       const { data: laborEntries } = await (supabase as any)
         .from('project_labor_cost_entries')
         .select('obra_id, amount')
@@ -75,33 +90,35 @@ export function FinanceiroObraCards() {
       const results: ObraFinanceData[] = [];
 
       for (const obra of obras || []) {
-        const obraContas = (contas || []).filter(c => c.obra_id === obra.id);
+        const obraContas = (contas || []).filter((c: any) => c.obra_id === obra.id);
         const obraAwards = (awards || []).filter(a => a.obra_id === obra.id);
         const obraLabor = (laborEntries || []).filter((l: any) => l.obra_id === obra.id);
 
         const receita = obraAwards.reduce((s, a) => s + Number(a.awarded_total_amount), 0);
-        const contasPagar = obraContas.filter(c => c.tipo === 'pagar');
-        const maoDeObra = contasPagar.filter(c => c.origem === 'mao_de_obra').reduce((s, c) => s + Number(c.valor), 0)
+        const contasPagar = obraContas.filter((c: any) => c.tipo === 'pagar');
+        const maoDeObra = contasPagar.filter((c: any) => c.origem === 'mao_de_obra').reduce((s: number, c: any) => s + Number(c.valor), 0)
           + obraLabor.reduce((s: number, l: any) => s + Number(l.amount || 0), 0);
-        const material = contasPagar.filter(c => c.origem === 'material').reduce((s, c) => s + Number(c.valor), 0);
-        const outros = contasPagar.filter(c => c.origem === 'outros').reduce((s, c) => s + Number(c.valor), 0);
+        const material = contasPagar.filter((c: any) => c.origem === 'material').reduce((s: number, c: any) => s + Number(c.valor), 0);
+        const outros = contasPagar.filter((c: any) => c.origem === 'outros').reduce((s: number, c: any) => s + Number(c.valor), 0);
+
+        // Extract extras breakdown from 'outros'
+        const extrasBreakdown: Record<string, number> = {};
+        contasPagar.filter((c: any) => c.origem === 'outros').forEach((c: any) => {
+          const tag = extractTag(c.descricao) || 'OUTROS';
+          extrasBreakdown[tag] = (extrasBreakdown[tag] || 0) + Number(c.valor);
+        });
+
         const despesas = maoDeObra + material + outros;
         const lucro = receita - despesas;
         const margem = receita > 0 ? (lucro / receita) * 100 : 0;
 
-        // Only show obras with any financial activity
         if (receita > 0 || despesas > 0) {
           results.push({
             obraId: obra.id,
             obraNome: obra.nome,
             obraStatus: obra.status,
-            receita,
-            despesas,
-            maoDeObra,
-            material,
-            outros,
-            lucro,
-            margem,
+            receita, despesas, maoDeObra, material, outros,
+            lucro, margem, extrasBreakdown,
           });
         }
       }
@@ -149,8 +166,9 @@ export function FinanceiroObraCards() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {obrasFinance.map((obra) => {
           const margemColor = obra.margem >= 15 ? 'text-emerald-600' : obra.margem >= 5 ? 'text-amber-600' : 'text-destructive';
-          const margemBg = obra.margem >= 15 ? 'bg-emerald-500' : obra.margem >= 5 ? 'bg-amber-500' : 'bg-destructive';
           const status = statusMap[obra.obraStatus] || { label: obra.obraStatus, variant: 'outline' as const };
+
+          const extrasEntries = Object.entries(obra.extrasBreakdown).filter(([, v]) => v > 0);
 
           return (
             <Card key={obra.obraId} className="flex flex-col">
@@ -160,7 +178,7 @@ export function FinanceiroObraCards() {
                     <CardTitle className="text-sm font-semibold truncate">{obra.obraNome}</CardTitle>
                     <Badge variant={status.variant} className="mt-1 text-[10px]">{status.label}</Badge>
                   </div>
-                  <div className={`text-right shrink-0`}>
+                  <div className="text-right shrink-0">
                     <p className={`text-lg font-bold ${margemColor}`}>{obra.margem.toFixed(1)}%</p>
                     <p className="text-[10px] text-muted-foreground">Margem</p>
                   </div>
@@ -168,7 +186,7 @@ export function FinanceiroObraCards() {
               </CardHeader>
 
               <CardContent className="pt-0 flex-1 flex flex-col gap-3">
-                {/* Lucro/Prejuízo */}
+                {/* Balanço */}
                 <div className="rounded-lg bg-muted/40 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Balanço</span>
@@ -207,10 +225,28 @@ export function FinanceiroObraCards() {
                   <span className="flex items-center gap-1">
                     <Package className="w-3 h-3" /> {formatCurrency(obra.material)}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <MoreHorizontal className="w-3 h-3" /> {formatCurrency(obra.outros)}
-                  </span>
                 </div>
+
+                {/* Despesas Extras */}
+                {extrasEntries.length > 0 && (
+                  <div className="rounded-lg border border-dashed border-muted-foreground/20 p-2.5">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <Receipt className="w-3 h-3" /> Despesas Extras · {formatCurrency(obra.outros)}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {extrasEntries.map(([tag, val]) => {
+                        const config = EXTRA_TAGS[tag];
+                        const Icon = config?.icon || MoreHorizontal;
+                        return (
+                          <Badge key={tag} variant="secondary" className="gap-1 text-[10px] py-0.5 px-1.5 font-normal">
+                            <Icon className="w-2.5 h-2.5" />
+                            {config?.label || tag}: {formatCurrency(val)}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Action */}
                 <Button
