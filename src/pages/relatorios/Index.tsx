@@ -16,6 +16,10 @@ import { STATUS_CONFIG } from '@/types/orcamentos';
 export default function RelatoriosPage() {
   const { isLoading, resumo, orcamentoStats, obraStats, tarefaStats, clienteStats, financeiroDashboard, margensLucro, recursosStats } = useRelatorios();
   const { formatCurrency } = useFormatting();
+  const { hasFeature, tier } = useFeatureGate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const canAccessFullReports = hasFeature('relatoriosPersonalizados');
+  const { formatCurrency } = useFormatting();
 
   if (isLoading) {
     return (
