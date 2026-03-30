@@ -426,7 +426,8 @@ export default function ObraFinanceiroPage() {
 
         {/* ═══ TABS ═══ */}
         <Tabs defaultValue="todas" className="w-full">
-          <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-primary/5 border border-primary/15 p-1 rounded-xl">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="w-max md:w-full flex h-auto gap-1 bg-primary/5 border border-primary/15 p-1 rounded-xl">
             <TabsTrigger value="todas" className="text-xs gap-1 rounded-lg px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
               Todas ({filteredContas?.length || 0})
             </TabsTrigger>
