@@ -131,7 +131,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-96 p-0" align="end">
+          <PopoverContent className="w-[calc(100vw-2rem)] sm:w-96 max-w-96 p-0" align="end">
             <div className="p-3 border-b flex items-center justify-between">
               <h3 className="font-semibold">Notificações</h3>
               {unreadCount > 0 && (

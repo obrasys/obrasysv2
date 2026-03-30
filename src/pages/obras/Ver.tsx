@@ -196,20 +196,20 @@ export default function VerObraPage() {
       title={obra.nome}
       subtitle={obra.cliente || 'Sem cliente atribuído'}
       actions={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate('/obras')}>
-            <ArrowLeft className="w-4 h-4 mr-1" />Voltar
+            <ArrowLeft className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Voltar</span>
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${id}/financeiro`)}>
-            <Wallet className="w-4 h-4 mr-1" />Financeiro
+            <Wallet className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Financeiro</span>
           </Button>
           {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
             <Button variant="outline" size="sm" onClick={() => setShowFinalizarModal(true)}>
-              <Flag className="w-4 h-4 mr-1" />Finalizar
+              <Flag className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Finalizar</span>
             </Button>
           )}
           <Button size="sm" onClick={() => navigate(`/obras/${id}/editar`)}>
-            <Edit className="w-4 h-4 mr-1" />Editar
+            <Edit className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Editar</span>
           </Button>
         </div>
       }
@@ -345,14 +345,16 @@ export default function VerObraPage() {
 
         {/* Main Tabs */}
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
-          <TabsList className="w-full flex flex-wrap h-auto gap-1.5 bg-primary/5 border border-primary/15 p-1.5 rounded-xl">
-            <TabsTrigger value="geral" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Building2 className="h-3.5 w-3.5" />Geral</TabsTrigger>
-            <TabsTrigger value="planeamento" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><GitBranch className="h-3.5 w-3.5" />Planeamento</TabsTrigger>
-            <TabsTrigger value="rdo" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><ClipboardList className="h-3.5 w-3.5" />RDO Operacional</TabsTrigger>
-            <TabsTrigger value="execucao" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Activity className="h-3.5 w-3.5" />Execução</TabsTrigger>
-            <TabsTrigger value="controlo" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Target className="h-3.5 w-3.5" />Controlo</TabsTrigger>
-            <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 rounded-lg px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><DollarSign className="h-3.5 w-3.5" />Financeiro Previsto</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-max md:w-full flex h-auto gap-1.5 bg-primary/5 border border-primary/15 p-1.5 rounded-xl">
+              <TabsTrigger value="geral" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Building2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Geral</span></TabsTrigger>
+              <TabsTrigger value="planeamento" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><GitBranch className="h-3.5 w-3.5" /><span className="hidden sm:inline">Planeamento</span></TabsTrigger>
+              <TabsTrigger value="rdo" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><ClipboardList className="h-3.5 w-3.5" /><span className="hidden sm:inline">RDO</span></TabsTrigger>
+              <TabsTrigger value="execucao" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Activity className="h-3.5 w-3.5" /><span className="hidden sm:inline">Execução</span></TabsTrigger>
+              <TabsTrigger value="controlo" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Target className="h-3.5 w-3.5" /><span className="hidden sm:inline">Controlo</span></TabsTrigger>
+              <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><DollarSign className="h-3.5 w-3.5" /><span className="hidden sm:inline">Financeiro</span></TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Tab: Geral */}
           <TabsContent value="geral" className="space-y-4 mt-4">

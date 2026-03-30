@@ -150,6 +150,23 @@
     box-shadow: var(--shadow-hero);
   }
 
+  /* Scrollable horizontal containers - hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe area padding for mobile notches */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
