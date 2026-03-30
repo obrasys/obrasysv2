@@ -81,6 +81,7 @@ export default function VerObraPage() {
   const { data: resourceSummary } = useProjectResourceSummary(id);
   const { baseline, latestVersion } = useScheduleVersions(id);
   const { data: laborSummary } = useObraLaborSummary(id);
+  const { data: laborEntries } = useObraLaborEntries(id);
 
   const activeVersionId = baseline?.id || latestVersion?.id;
 
