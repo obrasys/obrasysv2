@@ -10,7 +10,6 @@ import {
 import { OrcamentoStatus } from './OrcamentoStatus';
 import type { Orcamento } from '@/types/orcamentos';
 import { 
-  MoreVertical, 
   Edit, 
   Copy, 
   FileText, 
@@ -19,7 +18,8 @@ import {
   Calendar,
   Euro,
   GitBranch,
-  Hash
+  Hash,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
