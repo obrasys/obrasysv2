@@ -1,68 +1,72 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building2, FileText, Wallet, AlertTriangle, UserCheck, Clock, TrendingUp } from "lucide-react";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { KpiCard } from "@/components/relatorios/KpiCard";
+import {
+  Users, Building2, FileText, Wallet, AlertTriangle, UserCheck,
+  TrendingUp, Activity, Crown, TicketCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  // Fetch all profiles for user stats
-  const { data: profiles, isLoading: profilesLoading } = useQuery({
+  const { data: profiles, isLoading: p1 } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*");
+      const { data, error } = await supabase.from("profiles").select("*");
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch all obras
-  const { data: obras, isLoading: obrasLoading } = useQuery({
+  const { data: obras, isLoading: p2 } = useQuery({
     queryKey: ["admin-obras"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("obras")
-        .select("*");
+      const { data, error } = await supabase.from("obras").select("id");
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch all orcamentos
-  const { data: orcamentos, isLoading: orcamentosLoading } = useQuery({
+  const { data: orcamentos, isLoading: p3 } = useQuery({
     queryKey: ["admin-orcamentos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orcamentos")
-        .select("*");
+      const { data, error } = await supabase.from("orcamentos").select("id");
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch all contas_financeiras
-  const { data: contasFinanceiras, isLoading: financeiroLoading } = useQuery({
+  const { data: contasFinanceiras, isLoading: p4 } = useQuery({
     queryKey: ["admin-contas-financeiras"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contas_financeiras")
-        .select("*");
+      const { data, error } = await supabase.from("contas_financeiras").select("*");
       if (error) throw error;
       return data;
     },
   });
 
-  const isLoading = profilesLoading || obrasLoading || orcamentosLoading || financeiroLoading;
+  const { data: tickets } = useQuery({
+    queryKey: ["admin-tickets-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("id, status");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  // Calculate stats
+  const isLoading = p1 || p2 || p3 || p4;
+
   const totalUsers = profiles?.length || 0;
-  const trialExpired = profiles?.filter(p => p.trial_expired)?.length || 0;
-  const activeTrials = profiles?.filter(p => !p.trial_expired)?.length || 0;
-  
+  const isTrialExpiredByDate = (p: any) => p.trial_end && new Date(p.trial_end) < new Date();
+  const trialExpired = profiles?.filter(isTrialExpiredByDate)?.length || 0;
+  const activeTrials = totalUsers - trialExpired;
+
   const roleStats = profiles?.reduce((acc, p) => {
     acc[p.role] = (acc[p.role] || 0) + 1;
     return acc;
@@ -75,154 +79,154 @@ export default function AdminDashboard() {
   const totalAReceber = contasFinanceiras?.filter(c => c.tipo === 'receber' && !c.pago)?.reduce((sum, c) => sum + Number(c.valor), 0) || 0;
   const contasVencidas = contasFinanceiras?.filter(c => !c.pago && new Date(c.data_vencimento) < new Date())?.length || 0;
 
-  const navigationCards = [
+  const openTickets = tickets?.filter(t => t.status !== 'resolvido')?.length || 0;
+
+  const quickActions = [
     {
-      title: "Gestão de Utilizadores",
-      description: "Ver e gerir todos os utilizadores do sistema",
+      label: "Utilizadores",
+      value: String(totalUsers),
+      description: `${activeTrials} ativos · ${trialExpired} expirados`,
       icon: Users,
       href: "/admin/utilizadores",
-      color: "text-blue-500"
     },
     {
-      title: "Financeiro Global",
-      description: "Visão agregada de todas as contas financeiras",
+      label: "Financeiro",
+      value: `€${((totalAReceber - totalAPagar) / 1000).toFixed(1)}k`,
+      description: contasVencidas > 0 ? `${contasVencidas} vencidas` : "Sem contas vencidas",
       icon: Wallet,
       href: "/admin/financeiro",
-      color: "text-green-500"
     },
     {
-      title: "Auditoria",
-      description: "Logs de sistema e histórico de ações",
-      icon: Clock,
-      href: "/admin/auditoria",
-      color: "text-orange-500"
+      label: "Tickets Abertos",
+      value: String(openTickets),
+      description: "Necessitam resposta",
+      icon: TicketCheck,
+      href: "/admin/tickets",
     },
     {
-      title: "Migração V1→V2",
-      description: "Gestão de migração de utilizadores",
-      icon: TrendingUp,
-      href: "/admin/migracao",
-      color: "text-purple-500"
-    }
+      label: "Analytics",
+      value: `${totalObras + totalOrcamentos}`,
+      description: `${totalObras} obras · ${totalOrcamentos} orçamentos`,
+      icon: Activity,
+      href: "/admin/analytics",
+    },
   ];
 
   return (
-    <AppLayout
-      title="Dashboard Administrativo"
-      subtitle="Painel de controlo exclusivo para super administradores"
+    <AdminLayout
+      title="Painel Administrativo"
+      subtitle="Visão geral do sistema"
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : (
           <>
             {/* KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Utilizadores</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalUsers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {activeTrials} ativos, {trialExpired} expirados
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Obras</CardTitle>
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalObras}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Em todo o sistema
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orçamentos</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalOrcamentos}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Em todo o sistema
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Volume Financeiro</CardTitle>
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    €{((totalAReceber - totalAPagar) / 1000).toFixed(1)}k
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {contasVencidas > 0 && (
-                      <span className="text-destructive flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {contasVencidas} contas vencidas
-                      </span>
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiCard
+                title="Total Utilizadores"
+                value={totalUsers}
+                icon={Users}
+                description={`${activeTrials} ativos`}
+              />
+              <KpiCard
+                title="Total Obras"
+                value={totalObras}
+                icon={Building2}
+                description="Em todo o sistema"
+              />
+              <KpiCard
+                title="Total Orçamentos"
+                value={totalOrcamentos}
+                icon={FileText}
+                description="Em todo o sistema"
+              />
+              <KpiCard
+                title="Volume Financeiro"
+                value={`€${((totalAReceber - totalAPagar) / 1000).toFixed(1)}k`}
+                icon={Wallet}
+                description={contasVencidas > 0 ? `${contasVencidas} vencidas` : "Sem pendências"}
+              />
             </div>
 
-            {/* Role breakdown */}
+            {/* Quick Access Cards */}
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Acesso Rápido</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {quickActions.map((action) => (
+                  <Card
+                    key={action.href}
+                    className="group cursor-pointer hover:border-primary/40 hover:shadow-md transition-all duration-200"
+                    onClick={() => navigate(action.href)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground">{action.label}</p>
+                          <p className="text-xl font-bold text-foreground">{action.value}</p>
+                          <p className="text-[11px] text-muted-foreground">{action.description}</p>
+                        </div>
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <action.icon className="h-4 w-4 text-primary" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Roles Distribution */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
-                  Utilizadores por Role
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-primary" />
+                  Distribuição por Role
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {Object.entries(roleStats).map(([role, count]) => (
-                    <div key={role} className="text-center p-4 bg-muted rounded-lg">
-                      <div className="text-2xl font-bold">{count}</div>
-                      <div className="text-sm text-muted-foreground capitalize">{role}</div>
+                    <div key={role} className="text-center p-3 bg-muted/50 rounded-lg">
+                      <p className="text-lg font-bold text-foreground">{count}</p>
+                      <p className="text-[11px] text-muted-foreground capitalize">{role}</p>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Navigation Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {navigationCards.map((card) => (
-                <Card 
-                  key={card.href}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => navigate(card.href)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <card.icon className={`h-8 w-8 ${card.color}`} />
-                      <div>
-                        <CardTitle className="text-lg">{card.title}</CardTitle>
-                        <CardDescription>{card.description}</CardDescription>
+            {/* Alerts */}
+            {(contasVencidas > 0 || trialExpired > 0) && (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">Atenção Necessária</p>
+                      <div className="flex flex-wrap gap-2">
+                        {contasVencidas > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {contasVencidas} contas vencidas
+                          </Badge>
+                        )}
+                        {trialExpired > 0 && (
+                          <Badge variant="outline" className="text-xs border-destructive/40 text-destructive">
+                            {trialExpired} trials expirados
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>
-    </AppLayout>
+    </AdminLayout>
   );
 }
