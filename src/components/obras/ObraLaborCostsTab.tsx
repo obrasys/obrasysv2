@@ -14,19 +14,17 @@ import {
   Pencil,
   Check,
   X,
+  ChevronDown,
+  ChevronUp,
+  HardHat,
+  Wallet,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import {
   BarChart,
   Bar,
@@ -35,10 +33,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from 'recharts';
 import {
   useObraLaborSummary,
@@ -52,17 +46,6 @@ import {
 import { WorkerCreateModal } from '@/components/livro-ponto/WorkerCreateModal';
 import { useCreateWorker } from '@/hooks/useLivroPonto';
 import { useSubempreiteiros, useEquipaMembros } from '@/hooks/useRecursos';
-
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--accent))',
-  'hsl(210 70% 55%)',
-  'hsl(150 60% 45%)',
-  'hsl(45 90% 55%)',
-  'hsl(0 70% 55%)',
-  'hsl(270 60% 55%)',
-  'hsl(180 50% 45%)',
-];
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
@@ -80,6 +63,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editHours, setEditHours] = useState('');
   const [editRate, setEditRate] = useState('');
+  const [expandedWorker, setExpandedWorker] = useState<string | null>(null);
 
   const { data: summary, isLoading: loadingSummary } = useObraLaborSummary(obraId);
   const { data: entries, isLoading: loadingEntries } = useObraLaborEntries(obraId, {
@@ -123,15 +107,30 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
     });
   };
 
-  const costTypeChartData = useMemo(
-    () => (byCostType || []).map(ct => ({ name: getOriginLabel(ct.origin_type), value: ct.total_cost })),
-    [byCostType]
-  );
+  // Group entries by worker for the worker-centric view
+  const entriesByWorker = useMemo(() => {
+    if (!entries) return {};
+    return entries.reduce((acc, entry) => {
+      if (!acc[entry.worker_id]) {
+        acc[entry.worker_id] = {
+          name: entry.worker_name,
+          role: entry.worker_role,
+          entries: [],
+          totalHours: 0,
+          totalCost: 0,
+        };
+      }
+      acc[entry.worker_id].entries.push(entry);
+      acc[entry.worker_id].totalHours += entry.hours_worked;
+      acc[entry.worker_id].totalCost += entry.amount;
+      return acc;
+    }, {} as Record<string, { name: string; role: string | null; entries: typeof entries; totalHours: number; totalCost: number }>);
+  }, [entries]);
 
-  const workerChartData = useMemo(
-    () => (byWorker || []).slice(0, 8).map(w => ({ name: w.worker_name, value: w.total_cost })),
-    [byWorker]
-  );
+  const maxWorkerCost = useMemo(() => {
+    const values = Object.values(entriesByWorker);
+    return values.length > 0 ? Math.max(...values.map(w => w.totalCost)) : 1;
+  }, [entriesByWorker]);
 
   if (isLoading) {
     return (
@@ -146,7 +145,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
       <Card>
         <CardContent className="text-center py-12 text-muted-foreground">
           <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Nenhum custo de mão de obra registado.</p>
+          <p className="font-medium">Nenhum custo de mão de obra registado</p>
           <p className="text-sm mt-1">Os custos aparecerão automaticamente ao lançar horas no Livro de Ponto.</p>
           <div className="flex gap-2 justify-center mt-4">
             <Button variant="outline" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
@@ -171,75 +170,75 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
     );
   }
 
-    return (
-      <div className="space-y-4 md:space-y-6">
-        {/* Action button */}
-        <div className="flex justify-end">
-          <Button size="sm" onClick={() => setWorkerModalOpen(true)}>
-            <UserPlus className="w-4 h-4 mr-2" />
-            Novo Trabalhador
-          </Button>
-        </div>
+  return (
+    <div className="space-y-5">
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Button variant="outline" size="sm" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
+          <Clock className="w-4 h-4 mr-2" />
+          Lançar Horas
+        </Button>
+        <Button size="sm" onClick={() => setWorkerModalOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Novo Trabalhador
+        </Button>
+      </div>
 
-        {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Mão de obra hoje</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.todayCost)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {summary.todayWorkers} trabalhadores · {summary.todayHours.toFixed(1)}h
-                </p>
+      {/* KPI Summary — Redesigned */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="py-4 px-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <HardHat className="w-5 h-5 text-primary" />
               </div>
-              <div className="p-3 rounded-full bg-primary/10">
-                <Users className="w-5 h-5 text-primary" />
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Hoje</p>
+                <p className="text-xl font-bold leading-tight">{formatCurrency(summary.todayCost)}</p>
+                <p className="text-[11px] text-muted-foreground">{summary.todayWorkers} trab. · {summary.todayHours.toFixed(1)}h</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Esta semana</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.weekCost)}</p>
-              </div>
-              <div className="p-3 rounded-full bg-blue-500/10">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="py-4 px-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-blue-500" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Este mês</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.monthCost)}</p>
-              </div>
-              <div className="p-3 rounded-full bg-green-500/10">
-                <TrendingUp className="w-5 h-5 text-green-500" />
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Semana</p>
+                <p className="text-xl font-bold leading-tight">{formatCurrency(summary.weekCost)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Acumulado total</p>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totalCost)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {summary.totalHours.toFixed(0)}h · {summary.totalWorkers} trabalhadores
-                </p>
+        <Card className="border-l-4 border-l-emerald-500">
+          <CardContent className="py-4 px-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
               </div>
-              <div className="p-3 rounded-full bg-orange-500/10">
-                <CircleDollarSign className="w-5 h-5 text-orange-500" />
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Mês</p>
+                <p className="text-xl font-bold leading-tight">{formatCurrency(summary.monthCost)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardContent className="py-4 px-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-orange-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Total acumulado</p>
+                <p className="text-xl font-bold leading-tight">{formatCurrency(summary.totalCost)}</p>
+                <p className="text-[11px] text-muted-foreground">{summary.totalHours.toFixed(0)}h · {summary.totalWorkers} trab.</p>
               </div>
             </div>
           </CardContent>
@@ -248,17 +247,132 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
 
       {!compact && (
         <>
+          {/* Worker-centric view */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Custos por Trabalhador
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {Object.entries(entriesByWorker).map(([workerId, worker]) => {
+                const isExpanded = expandedWorker === workerId;
+                const costPercent = maxWorkerCost > 0 ? (worker.totalCost / maxWorkerCost) * 100 : 0;
+
+                return (
+                  <div key={workerId} className="border rounded-xl overflow-hidden transition-all">
+                    {/* Worker header row */}
+                    <button
+                      className="w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left"
+                      onClick={() => setExpandedWorker(isExpanded ? null : workerId)}
+                    >
+                      <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm truncate">{worker.name}</span>
+                          {worker.role && (
+                            <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{worker.role}</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <Progress value={costPercent} className="h-1.5 flex-1" />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        <p className="text-sm font-bold">{formatCurrency(worker.totalCost)}</p>
+                        <p className="text-[11px] text-muted-foreground">{worker.totalHours.toFixed(1)}h · {worker.entries.length} lanç.</p>
+                      </div>
+                      <div className="shrink-0 ml-1">
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </button>
+
+                    {/* Expanded entries */}
+                    {isExpanded && (
+                      <div className="border-t bg-muted/20 px-3 py-2 space-y-1.5">
+                        {worker.entries.map(entry => (
+                          <div key={entry.id} className="flex items-center gap-3 py-1.5 text-sm">
+                            <span className="text-muted-foreground text-xs w-[72px] shrink-0">
+                              {format(parseISO(entry.entry_date), 'dd/MM/yyyy')}
+                            </span>
+
+                            {editingId === entry.id ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    value={editHours}
+                                    onChange={e => setEditHours(e.target.value)}
+                                    className="w-16 h-7 text-xs text-right"
+                                  />
+                                  <span className="text-xs text-muted-foreground">h</span>
+                                </div>
+                                <span className="text-muted-foreground">×</span>
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editRate}
+                                    onChange={e => setEditRate(e.target.value)}
+                                    className="w-20 h-7 text-xs text-right"
+                                  />
+                                  <span className="text-xs text-muted-foreground">€/h</span>
+                                </div>
+                                <span className="text-xs font-semibold ml-auto">
+                                  = {formatCurrency((parseFloat(editHours) || 0) * (parseFloat(editRate) || 0))}
+                                </span>
+                                <div className="flex gap-0.5">
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEdit} disabled={updateEntry.isPending}>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}>
+                                    <X className="w-3.5 h-3.5 text-destructive" />
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-muted-foreground">{entry.hours_worked.toFixed(1)}h</span>
+                                <span className="text-muted-foreground">×</span>
+                                <span className="text-muted-foreground">{formatCurrency(entry.hourly_cost)}/h</span>
+                                <Badge variant="outline" className="text-[10px] h-4">{getOriginLabel(entry.origin_type)}</Badge>
+                                <span className="font-semibold ml-auto">{formatCurrency(entry.amount)}</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => startEdit(entry)}>
+                                  <Pencil className="w-3 h-3 text-muted-foreground" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {Object.keys(entriesByWorker).length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-4">Sem lançamentos no período selecionado</p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Evolution Chart */}
           {chartData && chartData.length > 1 && (
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-base">Evolução de Custo Diário</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[280px]">
+                <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
                       <XAxis
                         dataKey="date"
                         tickFormatter={(d: string) => format(parseISO(d), 'dd/MM', { locale: pt })}
@@ -268,8 +382,9 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
                       <Tooltip
                         formatter={(v: number) => formatCurrency(v)}
                         labelFormatter={(d: string) => format(parseISO(d), "d 'de' MMMM", { locale: pt })}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
                       />
-                      <Bar dataKey="cost" name="Custo" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="cost" name="Custo" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -277,61 +392,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
             </Card>
           )}
 
-          {/* Distribution Charts */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {workerChartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Custo por Trabalhador</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={workerChartData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        >
-                          {workerChartData.map((_, i) => (
-                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {costTypeChartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Custo por Tipo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={costTypeChartData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                        <XAxis type="number" tickFormatter={(v: number) => `${v}€`} className="text-xs fill-muted-foreground" />
-                        <YAxis type="category" dataKey="name" width={100} className="text-xs fill-muted-foreground" />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                        <Bar dataKey="value" name="Custo" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Filters */}
+          {/* Date Filters */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="flex gap-2 items-center">
               <span className="text-sm text-muted-foreground">De:</span>
@@ -347,124 +408,6 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
               </Button>
             )}
           </div>
-
-          {/* Entries Table */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Lançamentos de Mão de Obra</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => navigate(`/livro-ponto/lancar?obra=${obraId}`)}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Abrir Livro de Ponto
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {entries && entries.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Trabalhador</TableHead>
-                        <TableHead>Função</TableHead>
-                        <TableHead className="text-right">Horas</TableHead>
-                        <TableHead className="text-right">Custo/Hora</TableHead>
-                        <TableHead className="text-right">Custo Total</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead className="text-center w-[80px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {entries.slice(0, 50).map(entry => (
-                        <TableRow key={entry.id}>
-                          <TableCell>{format(parseISO(entry.entry_date), 'dd/MM/yyyy')}</TableCell>
-                          <TableCell className="font-medium">{entry.worker_name}</TableCell>
-                          <TableCell className="text-muted-foreground">{entry.worker_role || '—'}</TableCell>
-                          <TableCell className="text-right">
-                            {editingId === entry.id ? (
-                              <Input
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                value={editHours}
-                                onChange={e => setEditHours(e.target.value)}
-                                className="w-20 h-8 text-right ml-auto"
-                              />
-                            ) : (
-                              `${entry.hours_worked.toFixed(1)}h`
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {editingId === entry.id ? (
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={editRate}
-                                onChange={e => setEditRate(e.target.value)}
-                                className="w-24 h-8 text-right ml-auto"
-                              />
-                            ) : (
-                              formatCurrency(entry.hourly_cost)
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">
-                            {editingId === entry.id
-                              ? formatCurrency((parseFloat(editHours) || 0) * (parseFloat(editRate) || 0))
-                              : formatCurrency(entry.amount)
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {getOriginLabel(entry.origin_type)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {editingId === entry.id ? (
-                              <div className="flex gap-1 justify-center">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={saveEdit}
-                                  disabled={updateEntry.isPending}
-                                >
-                                  <Check className="w-4 h-4 text-green-600" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={cancelEdit}
-                                >
-                                  <X className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => startEdit(entry)}
-                              >
-                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {entries.length > 50 && (
-                    <p className="text-sm text-muted-foreground text-center mt-3">
-                      A mostrar 50 de {entries.length} lançamentos
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-center py-8 text-muted-foreground">Nenhum lançamento no período selecionado.</p>
-              )}
-            </CardContent>
-          </Card>
         </>
       )}
 
