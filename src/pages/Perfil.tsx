@@ -40,6 +40,8 @@ export default function PerfilPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { hasFeature, tier } = useFeatureGate();
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
