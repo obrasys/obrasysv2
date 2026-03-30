@@ -6,6 +6,7 @@ import { PortalRDOList } from '@/components/portal/PortalRDOList';
 import { PortalPhotoGallery } from '@/components/portal/PortalPhotoGallery';
 import { PortalActivityLog } from '@/components/portal/PortalActivityLog';
 import { PortalPaymentsCard } from '@/components/portal/PortalPaymentsCard';
+import { PortalPaymentAlertsCard } from '@/components/portal/PortalPaymentAlertsCard';
 import { useClientObraDetail } from '@/hooks/useClientPortal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
