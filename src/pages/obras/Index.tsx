@@ -116,7 +116,14 @@ export default function ObrasPage() {
       title="Gestão de Obras"
       subtitle="Gerencie todas as suas obras e projetos"
       actions={
-        <Button onClick={() => navigate('/obras/criar')}>
+        <Button onClick={() => {
+          if (canCreateObra) {
+            navigate('/obras/criar');
+          } else {
+            setShowUpgradeModal(true);
+          }
+        }}>
+          {!canCreateObra && <Lock className="w-4 h-4 mr-2" />}
           <Plus className="w-4 h-4 mr-2" />
           Nova Obra
         </Button>
