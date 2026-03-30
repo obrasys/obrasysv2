@@ -215,7 +215,10 @@ export default function LivroPontoIndex() {
                         const st = statusMap[ts.status] || statusMap.draft;
                         return (
                           <TableRow key={ts.id}>
-                            <TableCell className="font-medium">{ts.worker?.full_name || "—"}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{ts.worker?.full_name || "—"}</div>
+                              <div className="text-[11px] text-muted-foreground">{format(new Date(ts.work_date), "dd/MM/yyyy", { locale: pt })}</div>
+                            </TableCell>
                             <TableCell>{ts.check_in_time?.slice(0, 5) || "—"}</TableCell>
                             <TableCell>{ts.check_out_time?.slice(0, 5) || "—"}</TableCell>
                             <TableCell>{formatMinutes(ts.total_worked_minutes)}</TableCell>
