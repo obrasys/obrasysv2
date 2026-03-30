@@ -26,7 +26,15 @@ import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
-import { ContaCard, ContaForm, FinanceiroDashboard, CategoriasManager, MargensLucroCard } from '@/components/financeiro';
+import {
+  ContaCard,
+  ContaForm,
+  FinanceiroGlobalKPIs,
+  DespesasOrigemCard,
+  FinanceiroObraCards,
+  CategoriasManager,
+  MargensLucroCard,
+} from '@/components/financeiro';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
 
 const FinanceiroIndex = () => {
@@ -37,18 +45,17 @@ const FinanceiroIndex = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingConta, setEditingConta] = useState<ContaFinanceira | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
   const [categoriasOpen, setCategoriasOpen] = useState(false);
 
-  const { 
-    contas, 
-    fornecedores, 
-    dashboard, 
-    isLoading, 
+  const {
+    contas,
+    fornecedores,
+    dashboard,
+    isLoading,
     loadingDashboard,
-    createConta, 
-    updateConta, 
-    marcarPago, 
+    createConta,
+    updateConta,
+    marcarPago,
     deleteConta,
     uploadComprovante,
   } = useFinanceiro();
@@ -93,17 +100,14 @@ const FinanceiroIndex = () => {
     uploadComprovante.mutate({ contaId: conta.id, file });
   };
 
-  // Filtrar contas
   const filteredContas = contas?.filter((conta) => {
     const matchesSearch = conta.descricao?.toLowerCase().includes(search.toLowerCase()) ||
       conta.obra?.nome?.toLowerCase().includes(search.toLowerCase()) ||
       conta.fornecedor?.nome?.toLowerCase().includes(search.toLowerCase());
-    
     const matchesTipo = filterTipo === 'all' || conta.tipo === filterTipo;
-    const matchesPago = filterPago === 'all' || 
-      (filterPago === 'pago' && conta.pago) || 
+    const matchesPago = filterPago === 'all' ||
+      (filterPago === 'pago' && conta.pago) ||
       (filterPago === 'pendente' && !conta.pago);
-
     return matchesSearch && matchesTipo && matchesPago;
   });
 
@@ -122,15 +126,21 @@ const FinanceiroIndex = () => {
 
   return (
     <AppLayout title="Financeiro">
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Dashboard */}
-        <FinanceiroDashboard data={dashboard} isLoading={loadingDashboard} />
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Global KPIs */}
+        <FinanceiroGlobalKPIs data={dashboard} isLoading={loadingDashboard} />
 
-        {/* Margens de Lucro dos Artigos */}
+        {/* Despesas por Origem */}
+        <DespesasOrigemCard contasPorOrigem={dashboard?.contasPorOrigem} />
+
+        {/* Margens de Lucro */}
         <MargensLucroCard />
 
+        {/* Financeiro por Obra */}
+        <FinanceiroObraCards />
+
         {/* Filters and Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div className="flex flex-1 gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -141,7 +151,6 @@ const FinanceiroIndex = () => {
                 className="pl-9"
               />
             </div>
-
             <Select value={filterTipo} onValueChange={setFilterTipo}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Tipo" />
@@ -152,7 +161,6 @@ const FinanceiroIndex = () => {
                 <SelectItem value="receber">A Receber</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={filterPago} onValueChange={setFilterPago}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Status" />
@@ -164,15 +172,14 @@ const FinanceiroIndex = () => {
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setCategoriasOpen(true)}>
               <Tags className="w-4 h-4 mr-2" />
-              Categorias
+              <span className="hidden sm:inline">Categorias</span>
             </Button>
             <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')}>
               <Users className="w-4 h-4 mr-2" />
-              Fornecedores
+              <span className="hidden sm:inline">Fornecedores</span>
             </Button>
             <Button onClick={() => { setEditingConta(null); setFormOpen(true); }}>
               <Plus className="w-4 h-4 mr-2" />
@@ -183,11 +190,13 @@ const FinanceiroIndex = () => {
 
         {/* Contas List */}
         <Tabs defaultValue="todas" className="w-full">
-          <TabsList>
-            <TabsTrigger value="todas">Todas ({filteredContas?.length || 0})</TabsTrigger>
-            <TabsTrigger value="pagar">A Pagar ({contasPagar.length})</TabsTrigger>
-            <TabsTrigger value="receber">A Receber ({contasReceber.length})</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-max md:w-auto">
+              <TabsTrigger value="todas">Todas ({filteredContas?.length || 0})</TabsTrigger>
+              <TabsTrigger value="pagar">A Pagar ({contasPagar.length})</TabsTrigger>
+              <TabsTrigger value="receber">A Receber ({contasReceber.length})</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="todas" className="mt-4">
             <div className="space-y-3">
@@ -267,10 +276,7 @@ const FinanceiroIndex = () => {
         />
 
         {/* Categorias Manager */}
-        <CategoriasManager
-          open={categoriasOpen}
-          onOpenChange={setCategoriasOpen}
-        />
+        <CategoriasManager open={categoriasOpen} onOpenChange={setCategoriasOpen} />
 
         {/* Delete Confirmation */}
         <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
@@ -289,7 +295,6 @@ const FinanceiroIndex = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
       </div>
     </AppLayout>
   );
