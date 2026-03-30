@@ -7,7 +7,8 @@ import {
   ClipboardList, Cloud, Users, ExternalLink, Sparkles, AlertCircle, Lightbulb,
   CheckCircle, Upload, BookOpen, Flag, Wallet, TrendingUp, TrendingDown,
   CircleDollarSign, GitBranch, Activity, Target, DollarSign, BarChart3,
-  HardHat, Clock, Percent,
+  HardHat, Clock, Percent, ArrowUpRight, ArrowDownRight, Link as LinkIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
