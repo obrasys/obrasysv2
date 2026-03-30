@@ -363,7 +363,7 @@ export default function ObraFinanceiroPage() {
 
         {/* ═══ DESPESAS POR ORIGEM ═══ */}
         {dashboard && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: 'Mão de Obra', value: dashboard.contasPorOrigem.mao_de_obra, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
               { label: 'Material', value: dashboard.contasPorOrigem.material, icon: Package, color: 'text-purple-600', bg: 'bg-purple-500/10' },
