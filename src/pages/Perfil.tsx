@@ -28,6 +28,8 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { AddUserDialog } from '@/components/admin/AddUserDialog';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
