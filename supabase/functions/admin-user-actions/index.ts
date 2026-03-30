@@ -111,46 +111,47 @@ serve(async (req: Request): Promise<Response> => {
           .eq("user_id", newUser.user.id);
 
         // ─── ADD NEW USER TO INVITER'S ORGANIZATION ───
-        // Get the inviter's organization
-        const { data: inviterOrg } = await serviceClient
-          .from("organization_members")
-          .select("organization_id")
-          .eq("user_id", callingUser.id)
-          .limit(1)
-          .single();
-
-        if (inviterOrg?.organization_id) {
-          // Add new user to the same organization (ON CONFLICT handled by upsert)
-          // Note: handle_new_user trigger may also insert, so we use upsert to avoid conflicts
-          await serviceClient
+        // Cliente users should NOT be added to the inviter's organization
+        // They only access the client portal via client_obra_access records
+        if (requestedRole !== "cliente") {
+          // Get the inviter's organization
+          const { data: inviterOrg } = await serviceClient
             .from("organization_members")
-            .upsert({
-              organization_id: inviterOrg.organization_id,
-              user_id: newUser.user.id,
-              role: requestedRole,
-            }, { onConflict: 'organization_id,user_id' })
-            .select();
-          
-          console.log(`User ${newUser.user.id} added to organization ${inviterOrg.organization_id}`);
-        } else {
-          // Fallback: create a new org for this user if inviter has no org
-          const { data: newOrg } = await serviceClient
-            .from("organizations")
-            .insert({
-              nome: (nome || email.split("@")[0]) + " - Empresa",
-              owner_user_id: newUser.user.id,
-            })
-            .select()
+            .select("organization_id")
+            .eq("user_id", callingUser.id)
+            .limit(1)
             .single();
 
-          if (newOrg) {
+          if (inviterOrg?.organization_id) {
             await serviceClient
               .from("organization_members")
-              .insert({
-                organization_id: newOrg.id,
+              .upsert({
+                organization_id: inviterOrg.organization_id,
                 user_id: newUser.user.id,
                 role: requestedRole,
-              });
+              }, { onConflict: 'organization_id,user_id' })
+              .select();
+            
+            console.log(`User ${newUser.user.id} added to organization ${inviterOrg.organization_id}`);
+          } else {
+            const { data: newOrg } = await serviceClient
+              .from("organizations")
+              .insert({
+                nome: (nome || email.split("@")[0]) + " - Empresa",
+                owner_user_id: newUser.user.id,
+              })
+              .select()
+              .single();
+
+            if (newOrg) {
+              await serviceClient
+                .from("organization_members")
+                .insert({
+                  organization_id: newOrg.id,
+                  user_id: newUser.user.id,
+                  role: requestedRole,
+                });
+            }
           }
         }
       }
