@@ -74,7 +74,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Sending request to Lovable AI Gateway...");
+    console.log("Sending request to AI Gateway...");
     console.log("Messages count:", messages.length);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
