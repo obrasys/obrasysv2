@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format } from 'date-fns';
 
 interface LaborSummary {
@@ -238,5 +239,29 @@ export function useObraLaborByCostType(obraId: string | undefined) {
         }))
         .sort((a, b) => b.total_cost - a.total_cost);
     },
+  });
+}
+
+export function useUpdateLaborEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, hours_worked, hourly_cost }: { id: string; hours_worked: number; hourly_cost: number }) => {
+      const amount = Math.round(hours_worked * hourly_cost * 100) / 100;
+      const { error } = await (supabase as any)
+        .from('project_labor_cost_entries')
+        .update({ hours_worked, hourly_cost, amount })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra-labor-summary'] });
+      qc.invalidateQueries({ queryKey: ['obra-labor-entries'] });
+      qc.invalidateQueries({ queryKey: ['obra-labor-chart'] });
+      qc.invalidateQueries({ queryKey: ['obra-labor-by-worker'] });
+      qc.invalidateQueries({ queryKey: ['obra-labor-by-cost-type'] });
+      qc.invalidateQueries({ queryKey: ['labor_costs'] });
+      toast.success('Lançamento atualizado com sucesso');
+    },
+    onError: () => toast.error('Erro ao atualizar lançamento'),
   });
 }

@@ -11,6 +11,9 @@ import {
   Loader2,
   Calendar,
   UserPlus,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +46,7 @@ import {
   useObraLaborChart,
   useObraLaborByWorker,
   useObraLaborByCostType,
+  useUpdateLaborEntry,
   getOriginLabel,
 } from '@/hooks/useObraLaborCosts';
 import { WorkerCreateModal } from '@/components/livro-ponto/WorkerCreateModal';
@@ -73,6 +77,9 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editHours, setEditHours] = useState('');
+  const [editRate, setEditRate] = useState('');
 
   const { data: summary, isLoading: loadingSummary } = useObraLaborSummary(obraId);
   const { data: entries, isLoading: loadingEntries } = useObraLaborEntries(obraId, {
@@ -82,6 +89,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const { data: chartData } = useObraLaborChart(obraId);
   const { data: byWorker } = useObraLaborByWorker(obraId);
   const { data: byCostType } = useObraLaborByCostType(obraId);
+  const updateEntry = useUpdateLaborEntry();
   const createWorkerMutation = useCreateWorker();
   const { subempreiteiros } = useSubempreiteiros();
   const { membros: equipaMembros } = useEquipaMembros();
@@ -91,6 +99,28 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
   const handleCreateWorker = async (data: any) => {
     await createWorkerMutation.mutateAsync(data);
     setWorkerModalOpen(false);
+  };
+
+  const startEdit = (entry: { id: string; hours_worked: number; hourly_cost: number }) => {
+    setEditingId(entry.id);
+    setEditHours(entry.hours_worked.toString());
+    setEditRate(entry.hourly_cost.toString());
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditHours('');
+    setEditRate('');
+  };
+
+  const saveEdit = () => {
+    if (!editingId) return;
+    const hours = parseFloat(editHours);
+    const rate = parseFloat(editRate);
+    if (isNaN(hours) || isNaN(rate) || hours < 0 || rate < 0) return;
+    updateEntry.mutate({ id: editingId, hours_worked: hours, hourly_cost: rate }, {
+      onSuccess: () => cancelEdit(),
+    });
   };
 
   const costTypeChartData = useMemo(
@@ -340,6 +370,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
                         <TableHead className="text-right">Custo/Hora</TableHead>
                         <TableHead className="text-right">Custo Total</TableHead>
                         <TableHead>Tipo</TableHead>
+                        <TableHead className="text-center w-[80px]">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -348,13 +379,76 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
                           <TableCell>{format(parseISO(entry.entry_date), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="font-medium">{entry.worker_name}</TableCell>
                           <TableCell className="text-muted-foreground">{entry.worker_role || '—'}</TableCell>
-                          <TableCell className="text-right">{entry.hours_worked.toFixed(1)}h</TableCell>
-                          <TableCell className="text-right">{formatCurrency(entry.hourly_cost)}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(entry.amount)}</TableCell>
+                          <TableCell className="text-right">
+                            {editingId === entry.id ? (
+                              <Input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                value={editHours}
+                                onChange={e => setEditHours(e.target.value)}
+                                className="w-20 h-8 text-right ml-auto"
+                              />
+                            ) : (
+                              `${entry.hours_worked.toFixed(1)}h`
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {editingId === entry.id ? (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={editRate}
+                                onChange={e => setEditRate(e.target.value)}
+                                className="w-24 h-8 text-right ml-auto"
+                              />
+                            ) : (
+                              formatCurrency(entry.hourly_cost)
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {editingId === entry.id
+                              ? formatCurrency((parseFloat(editHours) || 0) * (parseFloat(editRate) || 0))
+                              : formatCurrency(entry.amount)
+                            }
+                          </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs">
                               {getOriginLabel(entry.origin_type)}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {editingId === entry.id ? (
+                              <div className="flex gap-1 justify-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={saveEdit}
+                                  disabled={updateEntry.isPending}
+                                >
+                                  <Check className="w-4 h-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={cancelEdit}
+                                >
+                                  <X className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => startEdit(entry)}
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
