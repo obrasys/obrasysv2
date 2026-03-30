@@ -449,6 +449,7 @@ export default function ObraFinanceiroPage() {
               </TabsTrigger>
             )}
           </TabsList>
+          </div>
 
           <TabsContent value="todas" className="mt-4">
             <ContasList contas={filteredContas || []} onEdit={handleEdit} onDelete={handleDelete} onTogglePago={handleTogglePago} onUploadComprovante={handleUploadComprovante} />
