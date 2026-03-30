@@ -142,6 +142,8 @@ export function useClientObraDetail(obraId: string | undefined) {
     progressLoading,
     rdos,
     rdosLoading,
+    paymentPlans,
+    paymentsLoading,
     activityLogs,
     logEvent,
   };
