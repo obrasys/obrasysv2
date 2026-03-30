@@ -39,7 +39,7 @@ import { useProjectResourceSummary } from '@/hooks/useProjectResources';
 import { useCadernos } from '@/hooks/useCadernos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useScheduleVersions } from '@/hooks/useSchedule';
-import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
+import { useObraLaborSummary, useObraLaborEntries } from '@/hooks/useObraLaborCosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
@@ -81,6 +81,7 @@ export default function VerObraPage() {
   const { data: resourceSummary } = useProjectResourceSummary(id);
   const { baseline, latestVersion } = useScheduleVersions(id);
   const { data: laborSummary } = useObraLaborSummary(id);
+  const { data: laborEntries } = useObraLaborEntries(id);
 
   const activeVersionId = baseline?.id || latestVersion?.id;
 
@@ -553,16 +554,19 @@ export default function VerObraPage() {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-primary" />Histórico Financeiro
-                  {contas && contas.length > 0 && <Badge variant="secondary" className="text-[10px] h-5">{contas.length}</Badge>}
+                  {(() => {
+                    const totalItems = (contas?.length || 0) + (laborEntries?.length || 0);
+                    return totalItems > 0 ? <Badge variant="secondary" className="text-[10px] h-5">{totalItems}</Badge> : null;
+                  })()}
                 </CardTitle>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/financeiro?obra=${id}`)}>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/obras/${id}/financeiro`)}>
                   Ver Tudo
                 </Button>
               </CardHeader>
               <CardContent>
                 {loadingContas ? (
                   <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
-                ) : contas && contas.length > 0 ? (
+                ) : (contas && contas.length > 0) || (laborEntries && laborEntries.length > 0) ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/40 rounded-lg mb-3">
                       <div className="text-center">
@@ -575,14 +579,42 @@ export default function VerObraPage() {
                       </div>
                       <div className="text-center">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Recebido</p>
-                        <p className="text-sm font-bold mt-0.5">{formatCurrency(contas.filter(c => c.tipo === 'receber' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p>
+                        <p className="text-sm font-bold mt-0.5">{formatCurrency(contas?.filter(c => c.tipo === 'receber' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0) || 0)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pago</p>
-                        <p className="text-sm font-bold mt-0.5">{formatCurrency(contas.filter(c => c.tipo === 'pagar' && c.pago).reduce((sum, c) => sum + Number(c.valor), 0))}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Mão de Obra</p>
+                        <p className="text-sm font-bold text-orange-600 mt-0.5">{formatCurrency(totalLaborCost)}</p>
                       </div>
                     </div>
-                    {contas.slice(0, 4).map((conta) => (
+
+                    {/* Labor entries */}
+                    {laborEntries && laborEntries.length > 0 && (
+                      <>
+                        {laborEntries.slice(0, 3).map((entry) => (
+                          <div key={entry.id} className="flex items-center justify-between p-2.5 border rounded-lg">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-1.5 rounded-full bg-orange-100">
+                                <Users className="w-3.5 h-3.5 text-orange-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{entry.worker_name}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {format(new Date(entry.entry_date), "dd/MM/yyyy")} • {entry.hours_worked}h × {formatCurrency(entry.hourly_cost)}/h
+                                  {entry.worker_role && ` • ${entry.worker_role}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-orange-600">- {formatCurrency(entry.amount)}</p>
+                              <Badge variant="outline" className="text-[10px] h-4">MO</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Financial contas */}
+                    {contas?.slice(0, 4).map((conta) => (
                       <div key={conta.id} className="flex items-center justify-between p-2.5 border rounded-lg">
                         <div className="flex items-center gap-2.5">
                           <div className={`p-1.5 rounded-full ${conta.tipo === 'receber' ? 'bg-emerald-100' : 'bg-red-100'}`}>
@@ -599,7 +631,7 @@ export default function VerObraPage() {
                         </div>
                       </div>
                     ))}
-                    {contas.length > 4 && <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => navigate(`/financeiro?obra=${id}`)}>Ver todas ({contas.length})</Button>}
+                    <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => navigate(`/obras/${id}/financeiro`)}>Ver tudo no Financeiro</Button>
                   </div>
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
