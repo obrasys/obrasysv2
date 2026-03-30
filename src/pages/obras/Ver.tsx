@@ -39,7 +39,7 @@ import { useProjectResourceSummary } from '@/hooks/useProjectResources';
 import { useCadernos } from '@/hooks/useCadernos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useScheduleVersions } from '@/hooks/useSchedule';
-import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
+import { useObraLaborSummary, useObraLaborEntries } from '@/hooks/useObraLaborCosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
