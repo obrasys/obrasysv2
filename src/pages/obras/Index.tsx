@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2 } from 'lucide-react';
+import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2, Lock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout';
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
 import { useObras } from '@/hooks/useObras';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
 import type { ObraStatus } from '@/types/obras';
 
@@ -51,6 +53,8 @@ function KpiCard({ index, label, value, suffix }: { index: number; label: string
 export default function ObrasPage() {
   const navigate = useNavigate();
   const { obras, obrasArquivadas, isLoading, archiveObra, deleteObra } = useObras();
+  const { canCreateObra, limits, tier } = useFeatureGate();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -112,7 +116,14 @@ export default function ObrasPage() {
       title="Gestão de Obras"
       subtitle="Gerencie todas as suas obras e projetos"
       actions={
-        <Button onClick={() => navigate('/obras/criar')}>
+        <Button onClick={() => {
+          if (canCreateObra) {
+            navigate('/obras/criar');
+          } else {
+            setShowUpgradeModal(true);
+          }
+        }}>
+          {!canCreateObra && <Lock className="w-4 h-4 mr-2" />}
           <Plus className="w-4 h-4 mr-2" />
           Nova Obra
         </Button>
@@ -286,6 +297,14 @@ export default function ObrasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UpgradePromptModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Limite de obras atingido"
+        description={`O plano ${tier === 'starter' ? 'Starter' : 'atual'} permite até ${limits.maxObrasAtivas} obra(s) ativa(s). Faça upgrade para o plano Professional para obras ilimitadas.`}
+        requiredPlan="Professional"
+      />
     </AppLayout>
   );
 }

@@ -1,17 +1,24 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KpiCard, ReportPieChart, ReportBarChart } from '@/components/relatorios';
 import { useRelatorios } from '@/hooks/useRelatorios';
 import { useFormatting } from '@/hooks/useFormatting';
-import { Loader2, Building2, FileText, Users, CheckSquare, Wallet, TrendingUp, BarChart3, Clock, AlertTriangle, UserCheck, Briefcase, ArrowUpRight, ArrowDownRight, Scale } from 'lucide-react';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
+import { Loader2, Building2, FileText, Users, CheckSquare, Wallet, TrendingUp, BarChart3, Clock, AlertTriangle, UserCheck, Briefcase, ArrowUpRight, ArrowDownRight, Scale, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { STATUS_CONFIG } from '@/types/orcamentos';
 
 export default function RelatoriosPage() {
   const { isLoading, resumo, orcamentoStats, obraStats, tarefaStats, clienteStats, financeiroDashboard, margensLucro, recursosStats } = useRelatorios();
   const { formatCurrency } = useFormatting();
+  const { hasFeature, tier } = useFeatureGate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const canAccessFullReports = hasFeature('relatoriosPersonalizados');
 
   if (isLoading) {
     return (

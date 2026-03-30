@@ -28,6 +28,8 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { AddUserDialog } from '@/components/admin/AddUserDialog';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
@@ -38,6 +40,8 @@ export default function PerfilPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { hasFeature, tier } = useFeatureGate();
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
@@ -247,10 +251,19 @@ export default function PerfilPage() {
                 <Button 
                   variant="outline" 
                   className="w-full mt-2" 
-                  onClick={() => setAddUserOpen(true)}
+                  onClick={() => {
+                    if (tier === 'starter' || tier === 'trial') {
+                      setShowUpgradeModal(true);
+                    } else {
+                      setAddUserOpen(true);
+                    }
+                  }}
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Adicionar Utilizador
+                  {(tier === 'starter' || tier === 'trial') && (
+                    <Badge variant="secondary" className="ml-2 text-[10px]">PRO</Badge>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -384,6 +397,13 @@ export default function PerfilPage() {
       <AddUserDialog 
         open={addUserOpen} 
         onOpenChange={setAddUserOpen} 
+      />
+      <UpgradePromptModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        title="Funcionalidade do plano Professional"
+        description="Para adicionar utilizadores à sua equipa, faça upgrade para o plano Professional que inclui até 10 utilizadores."
+        requiredPlan="Professional"
       />
     </AppLayout>
   );
