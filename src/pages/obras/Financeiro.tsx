@@ -390,36 +390,38 @@ export default function ObraFinanceiroPage() {
         {/* ═══ FILTROS + TABS ═══ */}
         <Card>
           <CardContent className="pt-5 pb-3">
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <div className="flex flex-col gap-3">
+              <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Pesquisar contas..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
               </div>
-              <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="w-[120px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pagar">A Pagar</SelectItem>
-                  <SelectItem value="receber">A Receber</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-                <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Origem" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="mao_de_obra">Mão de Obra</SelectItem>
-                  <SelectItem value="material">Material</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterPago} onValueChange={setFilterPago}>
-                <SelectTrigger className="w-[110px] h-9"><SelectValue placeholder="Estado" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2">
+                <Select value={filterTipo} onValueChange={setFilterTipo}>
+                  <SelectTrigger className="w-[120px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pagar">A Pagar</SelectItem>
+                    <SelectItem value="receber">A Receber</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterOrigem} onValueChange={setFilterOrigem}>
+                  <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Origem" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="mao_de_obra">Mão de Obra</SelectItem>
+                    <SelectItem value="material">Material</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterPago} onValueChange={setFilterPago}>
+                  <SelectTrigger className="w-[110px] h-9"><SelectValue placeholder="Estado" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="pago">Pago</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
