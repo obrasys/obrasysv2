@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,110 +14,86 @@ import { pt } from "date-fns/locale";
 export default function AdminAuditoria() {
   const [activeTab, setActiveTab] = useState("login-attempts");
 
-  // Fetch failed login attempts
-  const { data: failedLogins, isLoading: loginsLoading, refetch: refetchLogins } = useQuery({
+  const { data: failedLogins, isLoading: l1, refetch: r1 } = useQuery({
     queryKey: ["admin-failed-logins"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("failed_login_attempts")
-        .select("*")
-        .order("attempted_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.from("failed_login_attempts").select("*").order("attempted_at", { ascending: false }).limit(100);
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch price audit log
-  const { data: priceAuditLog, isLoading: priceLogLoading, refetch: refetchPriceLog } = useQuery({
+  const { data: priceAuditLog, isLoading: l2, refetch: r2 } = useQuery({
     queryKey: ["admin-price-audit-log"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("price_audit_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.from("price_audit_log").select("*").order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch migrated users for migration audit
-  const { data: migratedUsers, isLoading: migratedLoading, refetch: refetchMigrated } = useQuery({
+  const { data: migratedUsers, isLoading: l3, refetch: r3 } = useQuery({
     queryKey: ["admin-migrated-users-audit"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("migrated_users")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.from("migrated_users").select("*").order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       return data;
     },
   });
 
   const handleRefresh = () => {
-    if (activeTab === "login-attempts") refetchLogins();
-    else if (activeTab === "price-audit") refetchPriceLog();
-    else if (activeTab === "migration") refetchMigrated();
+    if (activeTab === "login-attempts") r1();
+    else if (activeTab === "price-audit") r2();
+    else r3();
   };
 
-  // Parse detalhes JSON for price audit log
   const getAuditDetails = (detalhes: unknown) => {
     if (!detalhes || typeof detalhes !== "object") return { old_price: null, new_price: null };
     const d = detalhes as Record<string, unknown>;
-    return {
-      old_price: d.old_price ?? d.preco_antigo ?? null,
-      new_price: d.new_price ?? d.preco_novo ?? null,
-    };
+    return { old_price: d.old_price ?? d.preco_antigo ?? null, new_price: d.new_price ?? d.preco_novo ?? null };
   };
 
   return (
-    <AppLayout
+    <AdminLayout
       title="Auditoria do Sistema"
-      subtitle="Logs de segurança e histórico de ações críticas"
+      subtitle="Logs de segurança e ações críticas"
       actions={
-        <Button variant="outline" onClick={handleRefresh}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
           Atualizar
         </Button>
       }
     >
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="login-attempts" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Tentativas de Login
+            <TabsTrigger value="login-attempts" className="text-xs gap-1.5">
+              <Shield className="h-3.5 w-3.5" />
+              Logins
             </TabsTrigger>
-            <TabsTrigger value="price-audit" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Auditoria de Preços
+            <TabsTrigger value="price-audit" className="text-xs gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Preços
             </TabsTrigger>
-            <TabsTrigger value="migration" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Migração V1→V2
+            <TabsTrigger value="migration" className="text-xs gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Migração
             </TabsTrigger>
           </TabsList>
 
-          {/* Failed Login Attempts */}
           <TabsContent value="login-attempts">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
                   Tentativas de Login Falhadas
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {loginsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : failedLogins?.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Nenhuma tentativa de login falhada registada
-                  </p>
+              <CardContent className="p-0">
+                {l1 ? (
+                  <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+                ) : !failedLogins?.length ? (
+                  <p className="text-muted-foreground text-center py-12 text-sm">Nenhuma tentativa registada</p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -129,18 +105,12 @@ export default function AdminAuditoria() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {failedLogins?.map((attempt) => (
-                        <TableRow key={attempt.id}>
-                          <TableCell className="font-medium">{attempt.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{attempt.ip_address || "-"}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground">
-                            {attempt.user_agent || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(attempt.attempted_at), "dd/MM/yyyy HH:mm:ss", { locale: pt })}
-                          </TableCell>
+                      {failedLogins.map((a) => (
+                        <TableRow key={a.id}>
+                          <TableCell className="font-medium text-sm">{a.email}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{a.ip_address || "—"}</Badge></TableCell>
+                          <TableCell className="max-w-[250px] truncate text-xs text-muted-foreground">{a.user_agent || "—"}</TableCell>
+                          <TableCell className="text-xs">{format(new Date(a.attempted_at), "dd/MM/yyyy HH:mm:ss", { locale: pt })}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -150,62 +120,41 @@ export default function AdminAuditoria() {
             </Card>
           </TabsContent>
 
-          {/* Price Audit Log */}
           <TabsContent value="price-audit">
             <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Alterações de Preços</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Alterações de Preços</CardTitle>
               </CardHeader>
-              <CardContent>
-                {priceLogLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : priceAuditLog?.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Nenhum registo de auditoria de preços
-                  </p>
+              <CardContent className="p-0">
+                {l2 ? (
+                  <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+                ) : !priceAuditLog?.length ? (
+                  <p className="text-muted-foreground text-center py-12 text-sm">Sem registos</p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Ação</TableHead>
-                        <TableHead>Material ID</TableHead>
+                        <TableHead>Material</TableHead>
                         <TableHead>Preço Antigo</TableHead>
                         <TableHead>Preço Novo</TableHead>
-                        <TableHead>Executado Por</TableHead>
-                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Por</TableHead>
+                        <TableHead>Data</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {priceAuditLog?.map((log) => {
-                        const details = getAuditDetails(log.detalhes);
+                      {priceAuditLog.map((log) => {
+                        const d = getAuditDetails(log.detalhes);
                         return (
                           <TableRow key={log.id}>
                             <TableCell>
-                              <Badge variant={
-                                log.acao === "create" || log.acao === "criar" ? "default" :
-                                log.acao === "update" || log.acao === "atualizar" ? "secondary" :
-                                log.acao === "delete" || log.acao === "eliminar" ? "destructive" : "outline"
-                              }>
-                                {log.acao}
-                              </Badge>
+                              <Badge variant={log.acao === "delete" || log.acao === "eliminar" ? "destructive" : "secondary"} className="text-xs">{log.acao}</Badge>
                             </TableCell>
-                            <TableCell className="font-mono text-xs">
-                              {log.material_id?.slice(0, 8)}...
-                            </TableCell>
-                            <TableCell>
-                              {details.old_price ? `€${Number(details.old_price).toFixed(2)}` : "-"}
-                            </TableCell>
-                            <TableCell>
-                              {details.new_price ? `€${Number(details.new_price).toFixed(2)}` : "-"}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {log.executado_por || "Sistema"}
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: pt })}
-                            </TableCell>
+                            <TableCell className="font-mono text-xs">{log.material_id?.slice(0, 8)}...</TableCell>
+                            <TableCell className="text-xs">{d.old_price ? `€${Number(d.old_price).toFixed(2)}` : "—"}</TableCell>
+                            <TableCell className="text-xs">{d.new_price ? `€${Number(d.new_price).toFixed(2)}` : "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{log.executado_por || "Sistema"}</TableCell>
+                            <TableCell className="text-xs">{format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}</TableCell>
                           </TableRow>
                         );
                       })}
@@ -216,21 +165,16 @@ export default function AdminAuditoria() {
             </Card>
           </TabsContent>
 
-          {/* Migration Audit */}
           <TabsContent value="migration">
             <Card>
-              <CardHeader>
-                <CardTitle>Estado da Migração de Utilizadores</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Migração de Utilizadores</CardTitle>
               </CardHeader>
-              <CardContent>
-                {migratedLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : migratedUsers?.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Nenhum utilizador migrado
-                  </p>
+              <CardContent className="p-0">
+                {l3 ? (
+                  <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+                ) : !migratedUsers?.length ? (
+                  <p className="text-muted-foreground text-center py-12 text-sm">Nenhum utilizador migrado</p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -239,32 +183,24 @@ export default function AdminAuditoria() {
                         <TableHead>Email</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Email Enviado</TableHead>
-                        <TableHead>Migrado em</TableHead>
+                        <TableHead>Migrado</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {migratedUsers?.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.nome || "-"}</TableCell>
-                          <TableCell>{user.email}</TableCell>
+                      {migratedUsers.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell className="font-medium text-sm">{u.nome || "—"}</TableCell>
+                          <TableCell className="text-sm">{u.email}</TableCell>
                           <TableCell>
-                            <Badge variant={
-                              user.status === "completed" ? "default" :
-                              user.status === "email_sent" ? "secondary" :
-                              user.status === "pending" ? "outline" : "destructive"
-                            }>
-                              {user.status}
+                            <Badge variant={u.status === "completed" ? "default" : u.status === "pending" ? "outline" : "secondary"} className="text-xs">
+                              {u.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            {user.email_sent_at 
-                              ? format(new Date(user.email_sent_at), "dd/MM/yyyy", { locale: pt })
-                              : "-"}
+                          <TableCell className="text-xs text-muted-foreground">
+                            {u.email_sent_at ? format(new Date(u.email_sent_at), "dd/MM/yyyy", { locale: pt }) : "—"}
                           </TableCell>
-                          <TableCell>
-                            {user.migrated_at 
-                              ? format(new Date(user.migrated_at), "dd/MM/yyyy", { locale: pt })
-                              : "-"}
+                          <TableCell className="text-xs text-muted-foreground">
+                            {u.migrated_at ? format(new Date(u.migrated_at), "dd/MM/yyyy", { locale: pt }) : "—"}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -276,6 +212,6 @@ export default function AdminAuditoria() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </AdminLayout>
   );
 }

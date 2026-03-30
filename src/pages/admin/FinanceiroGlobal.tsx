@@ -1,12 +1,13 @@
-import { AppLayout } from "@/components/layout/AppLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, Wallet, Crown, BarChart3, ArrowUpRight, Star } from "lucide-react";
+import { KpiCard } from "@/components/relatorios/KpiCard";
+import { TrendingUp, Users, Wallet, BarChart3, Star, ArrowUpRight } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid,
-  AreaChart, Area, LineChart, Line, PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
 
 const mockUsers = [
@@ -40,46 +41,12 @@ const planDistribution = [
   { name: "Starter", value: starterRevenue, count: starterCount },
 ];
 
-const PLAN_COLORS = [
-  "hsl(36, 77%, 49%)",   // amber/founder
-  "hsl(var(--primary))",  // primary/professional
-  "hsl(var(--muted-foreground))", // muted/starter
-];
+const PLAN_COLORS = ["hsl(36, 77%, 49%)", "hsl(199, 100%, 31%)", "hsl(199, 30%, 60%)"];
 
 const chartConfig = {
   receita: { label: "Receita Mensal", color: "hsl(var(--primary))" },
   acumulado: { label: "Receita Acumulada", color: "hsl(var(--accent))" },
 };
-
-function KpiCard({
-  title, value, subtitle, icon: Icon, trend, trendLabel, accentClass = "text-primary",
-}: {
-  title: string; value: string; subtitle: string;
-  icon: React.ElementType; trend?: string; trendLabel?: string;
-  accentClass?: string;
-}) {
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</CardTitle>
-        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className={`text-2xl md:text-3xl font-bold ${accentClass}`}>{value}</div>
-        <div className="flex items-center gap-1.5 mt-1">
-          {trend && (
-            <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600">
-              <ArrowUpRight className="h-3 w-3" /> {trend}
-            </span>
-          )}
-          <span className="text-xs text-muted-foreground">{trendLabel || subtitle}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function getPlanBadge(plano: string) {
   if (plano === "Founder") {
@@ -90,9 +57,7 @@ function getPlanBadge(plano: string) {
       </Badge>
     );
   }
-  if (plano === "Professional") {
-    return <Badge variant="default">{plano}</Badge>;
-  }
+  if (plano === "Professional") return <Badge variant="default">{plano}</Badge>;
   return <Badge variant="secondary">{plano}</Badge>;
 }
 
@@ -102,75 +67,65 @@ export default function AdminFinanceiroGlobal() {
     : 0;
 
   return (
-    <AppLayout
-      title="Financeiro Global"
-      subtitle="Visão agregada das receitas de subscrições"
-    >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <AdminLayout title="Financeiro Global" subtitle="Receitas de subscrições e planos">
+      <div className="p-4 md:p-6 space-y-6">
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
             title="MRR Atual"
-            value={`€${totalMRR.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`}
-            subtitle={`${mockUsers.length} subscrições ativas`}
+            value={`€${totalMRR.toLocaleString("pt-PT")}`}
             icon={TrendingUp}
-            trend={`+${growthPercent}%`}
-            trendLabel="vs mês anterior"
-            accentClass="text-primary"
+            description={`+${growthPercent}% vs mês anterior`}
           />
           <KpiCard
             title="Receita Acumulada"
-            value={`€${revenueChartData[revenueChartData.length - 1].acumulado.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`}
-            subtitle="desde o lançamento"
+            value={`€${revenueChartData[revenueChartData.length - 1].acumulado.toLocaleString("pt-PT")}`}
             icon={BarChart3}
-            accentClass="text-foreground"
+            description="Desde o lançamento"
           />
           <KpiCard
             title="Utilizadores Pagantes"
             value={String(mockUsers.length)}
-            subtitle={`${founderCount} Founder · ${proCount} Pro · ${starterCount} Starter`}
             icon={Users}
+            description={`${founderCount} Founder · ${proCount} Pro · ${starterCount} Starter`}
           />
           <KpiCard
             title="Ticket Médio"
-            value={`€${(totalMRR / mockUsers.length).toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`}
-            subtitle="por utilizador/mês"
+            value={`€${(totalMRR / mockUsers.length).toFixed(0)}`}
             icon={Wallet}
+            description="Por utilizador"
           />
         </div>
 
-        {/* Charts row */}
+        {/* Charts */}
         <div className="grid lg:grid-cols-3 gap-4">
-          {/* Revenue evolution */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Evolução da Receita</CardTitle>
-              <CardDescription>Receita mensal e acumulada nos últimos 6 meses</CardDescription>
+              <CardTitle className="text-sm font-semibold">Evolução da Receita</CardTitle>
+              <CardDescription className="text-xs">Últimos 6 meses</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[280px]">
+              <ChartContainer config={chartConfig} className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueChartData} barCategoryGap="20%">
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(v) => `€${v}`} tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tickFormatter={(v) => `€${v}`} tick={{ fontSize: 11 }} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="receita" fill="var(--color-receita)" name="Receita Mensal" radius={[6, 6, 0, 0]} />
-                    <Line type="monotone" dataKey="acumulado" stroke="var(--color-acumulado)" strokeWidth={2} dot={{ r: 4 }} name="Acumulado" />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
           </Card>
 
-          {/* Plan distribution */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Distribuição por Plano</CardTitle>
-              <CardDescription>Receita por tipo de subscrição</CardDescription>
+              <CardTitle className="text-sm font-semibold">Por Plano</CardTitle>
+              <CardDescription className="text-xs">Distribuição de receita</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[200px]">
+              <ChartContainer config={chartConfig} className="h-[180px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -179,8 +134,8 @@ export default function AdminFinanceiroGlobal() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={45}
-                      outerRadius={75}
+                      innerRadius={40}
+                      outerRadius={70}
                       paddingAngle={4}
                       strokeWidth={2}
                     >
@@ -192,19 +147,14 @@ export default function AdminFinanceiroGlobal() {
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
-
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-3">
                 {planDistribution.map((plan, i) => (
                   <div key={plan.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: PLAN_COLORS[i] }}
-                      />
-                      <span className="text-muted-foreground">{plan.name}</span>
-                      <span className="text-xs text-muted-foreground/60">({plan.count})</span>
+                      <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: PLAN_COLORS[i] }} />
+                      <span className="text-muted-foreground text-xs">{plan.name} ({plan.count})</span>
                     </div>
-                    <span className="font-medium">€{plan.value.toLocaleString("pt-PT")}</span>
+                    <span className="font-medium text-xs">€{plan.value.toLocaleString("pt-PT")}</span>
                   </div>
                 ))}
               </div>
@@ -212,20 +162,12 @@ export default function AdminFinanceiroGlobal() {
           </Card>
         </div>
 
-        {/* Subscriptions table */}
+        {/* Table */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base">Subscrições Ativas</CardTitle>
-                <CardDescription>{mockUsers.length} utilizadores com plano ativo</CardDescription>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {mockUsers.length} ativos
-              </Badge>
-            </div>
+            <CardTitle className="text-sm font-semibold">Subscrições Ativas</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -242,26 +184,22 @@ export default function AdminFinanceiroGlobal() {
                   <TableRow key={user.email}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium uppercase text-muted-foreground">
+                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary uppercase">
                           {user.email.charAt(0)}
                         </div>
-                        <span className="font-medium text-sm">{user.email}</span>
+                        <span className="text-sm truncate max-w-[200px]">{user.email}</span>
                       </div>
                     </TableCell>
                     <TableCell>{getPlanBadge(user.plano)}</TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {user.tipo === "Vitalício" ? "∞ Vitalício" : user.tipo}
-                      </span>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {user.tipo === "Vitalício" ? "∞ Vitalício" : user.tipo}
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">{user.desde}</span>
-                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{user.desde}</TableCell>
                     <TableCell className="text-right font-semibold text-sm">
-                      €{user.valor.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}
+                      €{user.valor.toLocaleString("pt-PT")}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-emerald-300 text-emerald-600 bg-emerald-50/50">
+                      <Badge variant="outline" className="border-emerald-300 text-emerald-600 bg-emerald-50/50 text-xs">
                         Ativo
                       </Badge>
                     </TableCell>
@@ -272,6 +210,6 @@ export default function AdminFinanceiroGlobal() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </AdminLayout>
   );
 }
