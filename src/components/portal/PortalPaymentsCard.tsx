@@ -169,6 +169,28 @@ export function PortalPaymentsCard({ payments, awards = [] }: PortalPaymentsCard
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Detalhe das Parcelas</h3>
           <div className="space-y-2">
+            {/* Deposit / Sinal row */}
+            {award && award.deposit_amount > 0 && (
+              <div className="p-3 rounded-lg border bg-green-50/50 border-green-200">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-foreground">Sinal ({award.deposit_percent}%)</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[11px] bg-green-100 text-green-700">
+                    Pago
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between pl-6">
+                  <span className="text-xs text-muted-foreground">
+                    Pago em {format(new Date(award.awarded_at), 'dd/MM/yyyy')}
+                  </span>
+                  <span className="text-sm font-semibold text-green-700">
+                    {formatCurrency(award.deposit_amount)}
+                  </span>
+                </div>
+              </div>
+            )}
             {payments.map((payment) => {
               const effectiveStatus = getEffectiveStatus(payment);
               const config = statusConfig[effectiveStatus] || statusConfig.pending;
