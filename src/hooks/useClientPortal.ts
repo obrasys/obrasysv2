@@ -65,7 +65,7 @@ export function useClientObraDetail(obraId: string | undefined) {
       // RLS already filters to submetido/aprovado for clients
       const { data, error } = await supabase
         .from('relatorios_diarios')
-        .select('id, obra_id, data, status, observacoes, condicoes_meteorologicas, created_at, updated_at')
+        .select('id, obra_id, data, status, observacoes, condicoes_meteorologicas, fotos, created_at, updated_at')
         .eq('obra_id', obraId)
         .in('status', ['submetido', 'aprovado'])
         .order('data', { ascending: false });
