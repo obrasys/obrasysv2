@@ -41,6 +41,7 @@ const PortalObra = () => {
     rdosLoading,
     paymentPlans,
     paymentsLoading,
+    budgetAwards,
     activityLogs,
     logEvent,
   } = useClientObraDetail(id);
@@ -230,7 +231,7 @@ const PortalObra = () => {
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : (
-              <PortalPaymentsCard payments={(paymentPlans || []) as any} />
+              <PortalPaymentsCard payments={(paymentPlans || []) as any} awards={(budgetAwards || []) as any} />
             )}
           </TabsContent>
 

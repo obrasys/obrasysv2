@@ -90,6 +90,20 @@ export function useClientObraDetail(obraId: string | undefined) {
     enabled: !!obraId && !!user?.id,
   });
 
+  const { data: budgetAwards } = useQuery({
+    queryKey: ['client-awards', obraId],
+    queryFn: async () => {
+      if (!obraId) return [];
+      const { data, error } = await supabase
+        .from('budget_awards')
+        .select('id, awarded_total_amount, awarded_at, deposit_amount, deposit_percent, remaining_amount, status')
+        .eq('obra_id', obraId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!obraId && !!user?.id,
+  });
+
   const { data: activityLogs } = useQuery({
     queryKey: ['client-activity', obraId, user?.id],
     queryFn: async () => {
@@ -144,6 +158,7 @@ export function useClientObraDetail(obraId: string | undefined) {
     rdosLoading,
     paymentPlans,
     paymentsLoading,
+    budgetAwards,
     activityLogs,
     logEvent,
   };
