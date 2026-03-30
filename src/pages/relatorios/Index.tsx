@@ -19,7 +19,6 @@ export default function RelatoriosPage() {
   const { hasFeature, tier } = useFeatureGate();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const canAccessFullReports = hasFeature('relatoriosPersonalizados');
-  const { formatCurrency } = useFormatting();
 
   if (isLoading) {
     return (
