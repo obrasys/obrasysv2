@@ -168,72 +168,122 @@ export default function ObrasPage() {
               </Select>
             </div>
 
-            {/* Table */}
+            {/* Cards Grid */}
             {isLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map(i => <div key={i} className="h-52 bg-muted animate-pulse rounded-xl" />)}
               </div>
             ) : pageData.length > 0 ? (
-              <div className="bg-card border rounded-xl">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">Nome</TableHead>
-                        <TableHead className="text-xs">Cliente</TableHead>
-                        <TableHead className="text-xs">Progresso</TableHead>
-                        <TableHead className="text-xs">Data Início</TableHead>
-                        <TableHead className="text-xs text-right">Valor</TableHead>
-                        <TableHead className="text-xs">Estado</TableHead>
-                        <TableHead className="text-xs w-10"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pageData.map((obra) => (
-                        <TableRow key={obra.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/obras/${obra.id}`)}>
-                          <TableCell className="font-medium text-sm max-w-[200px] truncate">{obra.nome}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate">{obra.cliente || '—'}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 min-w-[100px]">
-                              <Progress value={obra.progresso || 0} className="h-1.5 flex-1" />
-                              <span className="text-xs font-medium w-8 text-right">{Math.round(obra.progresso || 0)}%</span>
+              <>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {pageData.map((obra) => (
+                    <Card key={obra.id} className="hover:shadow-md transition-shadow cursor-pointer flex flex-col" onClick={() => navigate(`/obras/${obra.id}`)}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <h3 className="font-semibold text-lg truncate">{obra.nome}</h3>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(obra.data_inicio)}</TableCell>
-                          <TableCell className="text-sm font-medium text-right whitespace-nowrap">{obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '—'}</TableCell>
-                          <TableCell><ObraStatusBadge status={obra.status as ObraStatus} size="sm" /></TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="bg-background">
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}`); }}>
-                                  <Eye className="w-3.5 h-3.5 mr-2" /> Ver
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}/editar`); }}>
-                                  <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); archiveObra.mutate({ id: obra.id, arquivada: true }); }}>
-                                  <ArchiveIcon className="w-3.5 h-3.5 mr-2" /> Arquivar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirm(obra.id); }}>
-                                  <Trash2 className="w-3.5 h-3.5 mr-2" /> Eliminar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            {obra.cliente && (
+                              <p className="text-sm text-muted-foreground truncate">{obra.cliente}</p>
+                            )}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-background">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}`); }}>
+                                <Eye className="w-3.5 h-3.5 mr-2" /> Ver
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}/editar`); }}>
+                                <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); archiveObra.mutate({ id: obra.id, arquivada: true }); }}>
+                                <ArchiveIcon className="w-3.5 h-3.5 mr-2" /> Arquivar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirm(obra.id); }}>
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4 flex-1 flex flex-col">
+                        <div className="flex items-center justify-between">
+                          <ObraStatusBadge status={obra.status as ObraStatus} size="sm" />
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>{formatDate(obra.data_inicio)}</span>
+                          </div>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Progresso</span>
+                            <span className="font-medium">{Math.round(obra.progresso || 0)}%</span>
+                          </div>
+                          <Progress value={obra.progresso || 0} className="h-2" />
+                        </div>
+
+                        {/* Valor */}
+                        <div className="flex justify-between font-semibold pt-2 border-t">
+                          <span className="flex items-center gap-1 text-sm">
+                            <Euro className="h-4 w-4" />
+                            Valor Previsto
+                          </span>
+                          <span className="text-primary">{obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '—'}</span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-4 gap-2 pt-2 border-t mt-auto">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex flex-col items-center gap-1 h-auto py-2 text-xs"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}`); }}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex flex-col items-center gap-1 h-auto py-2 text-xs"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/obras/${obra.id}/editar`); }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex flex-col items-center gap-1 h-auto py-2 text-xs"
+                            onClick={(e) => { e.stopPropagation(); archiveObra.mutate({ id: obra.id, arquivada: true }); }}
+                          >
+                            <ArchiveIcon className="w-4 h-4" />
+                            Arquivar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex flex-col items-center gap-1 h-auto py-2 text-xs text-destructive hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(obra.id); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <div className="px-4 pb-3">
-                  <Pagination current={page} total={totalPages} onChange={setPage} />
-                </div>
-              </div>
+                <Pagination current={page} total={totalPages} onChange={setPage} />
+              </>
             ) : (
               <div className="text-center py-12 bg-muted/30 rounded-xl">
                 <p className="text-muted-foreground">Nenhuma obra encontrada.</p>
