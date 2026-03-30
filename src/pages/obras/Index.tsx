@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2 } from 'lucide-react';
+import { Plus, Archive, Search, Filter, Building2, Play, CheckCircle, TrendingUp, Eye, Pencil, MoreHorizontal, ChevronLeft, ChevronRight, ArchiveIcon, Trash2, Lock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout';
