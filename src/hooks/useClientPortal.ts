@@ -75,6 +75,21 @@ export function useClientObraDetail(obraId: string | undefined) {
     enabled: !!obraId && !!user?.id,
   });
 
+  const { data: paymentPlans, isLoading: paymentsLoading } = useQuery({
+    queryKey: ['client-payments', obraId],
+    queryFn: async () => {
+      if (!obraId) return [];
+      const { data, error } = await supabase
+        .from('budget_payment_plans')
+        .select('id, label, amount, due_date, status, installment_no, percent_of_award')
+        .eq('obra_id', obraId)
+        .order('installment_no', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!obraId && !!user?.id,
+  });
+
   const { data: activityLogs } = useQuery({
     queryKey: ['client-activity', obraId, user?.id],
     queryFn: async () => {
@@ -127,6 +142,8 @@ export function useClientObraDetail(obraId: string | undefined) {
     progressLoading,
     rdos,
     rdosLoading,
+    paymentPlans,
+    paymentsLoading,
     activityLogs,
     logEvent,
   };
