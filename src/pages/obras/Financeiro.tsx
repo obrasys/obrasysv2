@@ -439,6 +439,9 @@ export default function ObraFinanceiroPage() {
             <TabsTrigger value="pagar" className="text-xs gap-1 rounded-lg px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
               <TrendingDown className="w-3 h-3" />A Pagar ({contasPagar.length})
             </TabsTrigger>
+            <TabsTrigger value="material" className="text-xs gap-1 rounded-lg px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+              <Package className="w-3 h-3" />Material ({contasMaterial.length})
+            </TabsTrigger>
             <TabsTrigger value="mao-de-obra" className="text-xs gap-1 rounded-lg px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
               <Users className="w-3 h-3" />Mão de Obra
             </TabsTrigger>
@@ -461,6 +464,9 @@ export default function ObraFinanceiroPage() {
           </TabsContent>
           <TabsContent value="pagar" className="mt-4">
             <ContasList contas={contasPagar} onEdit={handleEdit} onDelete={handleDelete} onTogglePago={handleTogglePago} onUploadComprovante={handleUploadComprovante} emptyMessage="Nenhuma conta a pagar" />
+          </TabsContent>
+          <TabsContent value="material" className="mt-4">
+            <ContasList contas={contasMaterial} onEdit={handleEdit} onDelete={handleDelete} onTogglePago={handleTogglePago} onUploadComprovante={handleUploadComprovante} emptyMessage="Nenhuma despesa de material" />
           </TabsContent>
           <TabsContent value="mao-de-obra" className="mt-4">
             <ObraLaborCostsTab obraId={id!} />
