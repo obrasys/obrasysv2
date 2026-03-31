@@ -308,6 +308,11 @@ export default function RecursosPage() {
                   </div>
                 )}
               </TabsContent>
+
+              {/* Salários Tab */}
+              <TabsContent value="salarios" className="m-0">
+                <SalariosTab />
+              </TabsContent>
             </CardContent>
           </Tabs>
         </Card>
