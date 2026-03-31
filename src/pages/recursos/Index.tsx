@@ -117,6 +117,7 @@ export default function RecursosPage() {
                   <TabsTrigger value="subempreiteiros" className="flex-1 md:flex-none"><HardHat className="h-4 w-4 mr-2 hidden md:inline" />Subempreiteiros</TabsTrigger>
                   <TabsTrigger value="equipamentos" className="flex-1 md:flex-none"><Wrench className="h-4 w-4 mr-2 hidden md:inline" />Equipamentos</TabsTrigger>
                   <TabsTrigger value="equipa" className="flex-1 md:flex-none"><Users className="h-4 w-4 mr-2 hidden md:inline" />Equipa</TabsTrigger>
+                  <TabsTrigger value="salarios" className="flex-1 md:flex-none"><Wallet className="h-4 w-4 mr-2 hidden md:inline" />Salários</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1 md:w-64">
