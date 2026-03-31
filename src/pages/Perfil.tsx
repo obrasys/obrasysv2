@@ -199,7 +199,7 @@ export default function PerfilPage() {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
               {/* Avatar */}
               <div className="relative group">
-                <Avatar className="w-24 h-24 border-4 border-background shadow-lg ring-2 ring-primary/20">
+                <Avatar className="w-24 h-24 border-4 border-muted shadow-lg">
                   <AvatarImage src={profile.avatar_url || undefined} alt={profile.nome} />
                   <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold">
                     {getInitials(profile.nome)}
