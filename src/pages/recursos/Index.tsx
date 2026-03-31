@@ -38,6 +38,7 @@ import {
   User,
   Briefcase,
   Euro,
+  Wallet,
 } from 'lucide-react';
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
