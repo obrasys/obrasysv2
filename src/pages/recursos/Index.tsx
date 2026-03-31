@@ -124,13 +124,15 @@ export default function RecursosPage() {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
                   </div>
-                  <Button size="sm" onClick={() => {
-                    if (activeTab === 'subempreiteiros') handleOpenSubForm();
-                    else if (activeTab === 'equipamentos') handleOpenEquipForm();
-                    else handleOpenMembroForm();
-                  }}>
-                    <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Adicionar</span>
-                  </Button>
+                  {activeTab !== 'salarios' && (
+                    <Button size="sm" onClick={() => {
+                      if (activeTab === 'subempreiteiros') handleOpenSubForm();
+                      else if (activeTab === 'equipamentos') handleOpenEquipForm();
+                      else handleOpenMembroForm();
+                    }}>
+                      <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Adicionar</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
