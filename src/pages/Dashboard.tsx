@@ -116,7 +116,7 @@ const Dashboard = () => {
               <div className="flex items-center gap-3">
                 <div>
                   <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
-                    Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}! 👋
+                    Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}!
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {hasData
