@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
+import { SalariosTab } from '@/components/recursos/SalariosTab';
 import {
   ESTADO_EQUIPAMENTO_CONFIG,
   TIPO_CONTRATO_CONFIG,
