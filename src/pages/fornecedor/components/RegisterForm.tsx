@@ -18,6 +18,8 @@ import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Upload, Eye, EyeOff } fro
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { passwordSchema as appPasswordSchema } from "@/lib/validations/auth";
 
 // Constantes
 const DISTRICTS = [
@@ -32,37 +34,83 @@ const CATEGORIAS = [
   "Revestimentos", "Ferragens", "Equipamentos", "Subempreiteiro", "Outros"
 ];
 
-// Zod Schemas
+// NIF validation (Portuguese)
+const validateNIF = (nif: string): boolean => {
+  if (!/^\d{9}$/.test(nif)) return false;
+  const checkDigit = parseInt(nif[8]);
+  let sum = 0;
+  for (let i = 0; i < 8; i++) {
+    sum += parseInt(nif[i]) * (9 - i);
+  }
+  const remainder = sum % 11;
+  const expected = remainder < 2 ? 0 : 11 - remainder;
+  return checkDigit === expected;
+};
+
+// Código Postal validation
+const codigoPostalRegex = /^\d{4}-\d{3}$/;
+
+// Zod Schemas with improved validation
 const registerSchema = z.object({
   // Passo 1: Login
-  responsavel_nome: z.string().min(2, "Nome é obrigatório"),
-  email: z.string().email("Email inválido"),
-  telemovel: z.string().min(9, "Telemóvel inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
-  confirmPassword: z.string(),
+  responsavel_nome: z.string()
+    .min(2, "Nome é obrigatório")
+    .max(100, "O nome não pode exceder 100 caracteres")
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "O nome contém caracteres inválidos"),
+  email: z.string()
+    .min(1, "O email é obrigatório")
+    .email("Introduza um email válido")
+    .max(255, "O email não pode exceder 255 caracteres"),
+  telemovel: z.string()
+    .min(9, "O telemóvel deve ter pelo menos 9 dígitos")
+    .max(20, "Telemóvel inválido")
+    .regex(/^[0-9+\s()-]+$/, "Formato de telemóvel inválido"),
+  password: appPasswordSchema,
+  confirmPassword: z.string().min(1, "Confirme a sua password"),
   aceita_termos: z.boolean().refine(val => val === true, "Deve aceitar os termos"),
   aceita_comunicacoes: z.boolean().optional(),
 
   // Passo 2: Empresa
-  legal_name: z.string().min(2, "Nome da empresa obrigatório"),
-  nif: z.string().min(9, "NIF inválido").max(9, "NIF inválido"),
-  morada_completa: z.string().min(5, "Morada obrigatória"),
-  codigo_postal: z.string().min(4, "Código postal obrigatório"),
-  localidade: z.string().min(2, "Localidade obrigatória"),
+  legal_name: z.string()
+    .min(2, "Nome da empresa obrigatório")
+    .max(200, "O nome da empresa não pode exceder 200 caracteres"),
+  nif: z.string()
+    .length(9, "O NIF deve ter exatamente 9 dígitos")
+    .regex(/^\d{9}$/, "O NIF deve conter apenas números")
+    .refine(validateNIF, "NIF inválido (dígito de controlo incorreto)"),
+  morada_completa: z.string()
+    .min(5, "Morada obrigatória")
+    .max(300, "A morada não pode exceder 300 caracteres"),
+  codigo_postal: z.string()
+    .regex(codigoPostalRegex, "Formato: 0000-000"),
+  localidade: z.string()
+    .min(2, "Localidade obrigatória")
+    .max(100, "A localidade não pode exceder 100 caracteres"),
   location_district: z.string().min(2, "Distrito obrigatório"),
   pais: z.string().default("Portugal"),
-  cae_principal: z.string().min(3, "CAE obrigatório"),
-  cae_secundario: z.string().optional(),
-  telefone_fixo: z.string().optional(),
+  cae_principal: z.string()
+    .min(3, "CAE obrigatório")
+    .max(10, "CAE inválido")
+    .regex(/^\d+$/, "O CAE deve conter apenas números"),
+  cae_secundario: z.string().max(10, "CAE inválido").optional().or(z.literal("")),
+  telefone_fixo: z.string()
+    .max(20, "Telefone inválido")
+    .regex(/^[0-9+\s()-]*$/, "Formato de telefone inválido")
+    .optional()
+    .or(z.literal("")),
   email_comercial: z.string().email("Email comercial inválido").optional().or(z.literal("")),
   website: z.string().url("URL inválido").optional().or(z.literal("")),
-  ano_fundacao: z.string().refine(val => !val || (parseInt(val) > 1800 && parseInt(val) <= new Date().getFullYear()), "Ano inválido"),
-  num_colaboradores: z.string(),
-  certificacoes: z.string().optional(), // Textarea separado por virgulas
+  ano_fundacao: z.string().refine(val => {
+    if (!val) return false;
+    const year = parseInt(val);
+    return year > 1800 && year <= new Date().getFullYear();
+  }, "Ano inválido"),
+  num_colaboradores: z.string().min(1, "Selecione o número de colaboradores"),
+  certificacoes: z.string().max(500, "Máximo 500 caracteres").optional(),
 
   // Passo 3: Perfil
   categoria_principal: z.string().min(1, "Categoria obrigatória"),
-  subcategorias: z.string().optional(), // Textarea
+  subcategorias: z.string().max(500, "Máximo 500 caracteres").optional(),
   zona_atuacao: z.enum(["nacional", "distrito", "raio"]),
   distritos_atuacao: z.array(z.string()).optional(),
   raio_atuacao_km: z.string().optional(),
@@ -115,6 +163,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
   const { watch, trigger, register, setValue, formState: { errors } } = form;
   const zonaAtuacao = watch("zona_atuacao");
   const trabalhaCredito = watch("trabalha_credito");
+  const passwordValue = watch("password") || "";
 
   const nextStep = async () => {
     let fieldsToValidate: any[] = [];
@@ -131,34 +180,30 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true);
     try {
-      // Prepare metadata for the trigger
       const metadata = {
         role: "supplier",
         invite_token: inviteToken,
-        // Dados Pessoais
-        responsavel_nome: data.responsavel_nome,
-        telemovel: data.telemovel,
+        responsavel_nome: data.responsavel_nome.trim(),
+        telemovel: data.telemovel.trim(),
         aceita_termos: data.aceita_termos,
         aceita_comunicacoes: data.aceita_comunicacoes,
-        // Dados Empresa
-        legal_name: data.legal_name,
-        nif: data.nif,
-        morada_completa: data.morada_completa,
-        codigo_postal: data.codigo_postal,
-        localidade: data.localidade,
+        legal_name: data.legal_name.trim(),
+        nif: data.nif.trim(),
+        morada_completa: data.morada_completa.trim(),
+        codigo_postal: data.codigo_postal.trim(),
+        localidade: data.localidade.trim(),
         location_district: data.location_district,
         pais: data.pais,
-        cae_principal: data.cae_principal,
-        cae_secundario: data.cae_secundario,
-        telefone_fixo: data.telefone_fixo,
-        email_comercial: data.email_comercial || data.email,
-        website: data.website,
+        cae_principal: data.cae_principal.trim(),
+        cae_secundario: data.cae_secundario?.trim(),
+        telefone_fixo: data.telefone_fixo?.trim(),
+        email_comercial: data.email_comercial?.trim() || data.email.trim(),
+        website: data.website?.trim(),
         ano_fundacao: parseInt(data.ano_fundacao),
         num_colaboradores: data.num_colaboradores,
-        certificacoes: data.certificacoes ? data.certificacoes.split(",").map(s => s.trim()) : [],
-        // Perfil
+        certificacoes: data.certificacoes ? data.certificacoes.split(",").map(s => s.trim()).filter(Boolean) : [],
         categoria_principal: data.categoria_principal,
-        subcategorias: data.subcategorias ? data.subcategorias.split(",").map(s => s.trim()) : [],
+        subcategorias: data.subcategorias ? data.subcategorias.split(",").map(s => s.trim()).filter(Boolean) : [],
         zona_atuacao: data.zona_atuacao,
         distritos_atuacao: data.distritos_atuacao,
         raio_atuacao_km: data.raio_atuacao_km ? parseInt(data.raio_atuacao_km) : null,
@@ -168,7 +213,6 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
         trabalha_credito: data.trabalha_credito,
         prazo_pagamento_padrao: data.prazo_pagamento_padrao,
         desconto_volume: data.desconto_volume,
-        // Config
         aceita_pedidos_plataforma: data.aceita_pedidos_plataforma,
         permite_api: data.permite_api,
         atualizacao_precos: data.atualizacao_precos,
@@ -176,7 +220,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
       };
 
       const { data: signUpData, error } = await supabase.auth.signUp({
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
         options: {
           data: metadata,
@@ -185,14 +229,12 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
 
       if (error) throw error;
 
-      // Upload logo if provided and we got a user id
       if (logoFile && signUpData?.user?.id) {
         try {
           const ext = logoFile.name.split('.').pop()?.toLowerCase() || 'png';
           const filePath = `${signUpData.user.id}/logo.${ext}`;
           await supabase.storage.from('empresa-logos').upload(filePath, logoFile, { upsert: true });
           const { data: urlData } = supabase.storage.from('empresa-logos').getPublicUrl(filePath);
-          // Update the supplier profile with the logo URL
           await supabase.from('supplier_profiles').update({ logo_url: urlData.publicUrl }).eq('user_id', signUpData.user.id);
         } catch (logoErr) {
           console.warn('Logo upload failed, can be added later from profile:', logoErr);
@@ -215,19 +257,29 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
     }
   };
 
+  const stepLabels = ["Acesso", "Empresa", "Comercial", "Integração"];
+
   return (
     <div className="w-full max-w-2xl mx-auto p-6 bg-card border rounded-xl shadow-sm">
       {/* Stepper */}
-      <div className="flex justify-between mb-8 relative">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-muted -z-10" />
+      <div className="flex items-center justify-between mb-8 relative">
+        <div className="absolute top-4 left-0 w-full h-0.5 bg-muted -z-10" />
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-              step >= i ? "bg-accent text-white" : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {i}
+          <div key={i} className="flex flex-col items-center gap-1.5">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                step > i
+                  ? "bg-primary text-primary-foreground"
+                  : step === i
+                  ? "bg-accent text-white ring-4 ring-accent/20"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {step > i ? <CheckCircle2 className="h-4 w-4" /> : i}
+            </div>
+            <span className={`text-[10px] font-medium ${step >= i ? 'text-foreground' : 'text-muted-foreground'}`}>
+              {stepLabels[i - 1]}
+            </span>
           </div>
         ))}
       </div>
@@ -253,19 +305,19 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Nome Completo do Responsável *</Label>
-              <Input {...register("responsavel_nome")} placeholder="Nome Apelido" />
+              <Input {...register("responsavel_nome")} placeholder="Nome Apelido" maxLength={100} />
               {errors.responsavel_nome && <p className="text-destructive text-xs">{errors.responsavel_nome.message}</p>}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Email (Login) *</Label>
-                <Input {...register("email")} type="email" placeholder="email@empresa.pt" />
+                <Input {...register("email")} type="email" placeholder="email@empresa.pt" maxLength={255} />
                 {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Telemóvel *</Label>
-                <Input {...register("telemovel")} placeholder="912 345 678" />
+                <Input {...register("telemovel")} placeholder="912 345 678" maxLength={20} />
                 {errors.telemovel && <p className="text-destructive text-xs">{errors.telemovel.message}</p>}
               </div>
             </div>
@@ -280,6 +332,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
                   </button>
                 </div>
                 {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
+                <PasswordStrengthIndicator password={passwordValue} />
               </div>
               <div className="space-y-2">
                 <Label>Confirmar Palavra-passe *</Label>
@@ -335,13 +388,18 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
                 <input
                   id="logo-input"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       if (file.size > 5 * 1024 * 1024) {
                         toast({ title: 'Ficheiro muito grande', description: 'Máximo 5MB', variant: 'destructive' });
+                        return;
+                      }
+                      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                      if (!allowedTypes.includes(file.type)) {
+                        toast({ title: 'Formato não suportado', description: 'Use JPG, PNG ou WebP', variant: 'destructive' });
                         return;
                       }
                       setLogoFile(file);
@@ -358,31 +416,31 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nome da Empresa *</Label>
-                <Input {...register("legal_name")} placeholder="Empresa Lda" />
+                <Input {...register("legal_name")} placeholder="Empresa Lda" maxLength={200} />
                 {errors.legal_name && <p className="text-destructive text-xs">{errors.legal_name.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>NIF *</Label>
-                <Input {...register("nif")} placeholder="123456789" />
+                <Input {...register("nif")} placeholder="123456789" maxLength={9} />
                 {errors.nif && <p className="text-destructive text-xs">{errors.nif.message}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Morada Completa *</Label>
-              <Input {...register("morada_completa")} placeholder="Rua, Número, Andar" />
+              <Input {...register("morada_completa")} placeholder="Rua, Número, Andar" maxLength={300} />
               {errors.morada_completa && <p className="text-destructive text-xs">{errors.morada_completa.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2 col-span-1">
                 <Label>Código Postal *</Label>
-                <Input {...register("codigo_postal")} placeholder="0000-000" />
+                <Input {...register("codigo_postal")} placeholder="0000-000" maxLength={8} />
                 {errors.codigo_postal && <p className="text-destructive text-xs">{errors.codigo_postal.message}</p>}
               </div>
               <div className="space-y-2 col-span-1">
                 <Label>Localidade *</Label>
-                <Input {...register("localidade")} />
+                <Input {...register("localidade")} maxLength={100} />
                 {errors.localidade && <p className="text-destructive text-xs">{errors.localidade.message}</p>}
               </div>
               <div className="space-y-2 col-span-2">
@@ -404,12 +462,12 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CAE Principal *</Label>
-                <Input {...register("cae_principal")} placeholder="Ex: 41200" />
+                <Input {...register("cae_principal")} placeholder="Ex: 41200" maxLength={10} />
                 {errors.cae_principal && <p className="text-destructive text-xs">{errors.cae_principal.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>CAE Secundário (Opcional)</Label>
-                <Input {...register("cae_secundario")} />
+                <Input {...register("cae_secundario")} maxLength={10} />
               </div>
             </div>
 
@@ -420,7 +478,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
               </div>
               <div className="space-y-2">
                 <Label>Telefone Fixo (Opcional)</Label>
-                <Input {...register("telefone_fixo")} />
+                <Input {...register("telefone_fixo")} maxLength={20} />
               </div>
             </div>
 
@@ -431,7 +489,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
               </div>
               <div className="space-y-2">
                 <Label>Ano Fundação *</Label>
-                <Input {...register("ano_fundacao")} type="number" placeholder="2000" />
+                <Input {...register("ano_fundacao")} type="number" placeholder="2000" min={1800} max={new Date().getFullYear()} />
                 {errors.ano_fundacao && <p className="text-destructive text-xs">{errors.ano_fundacao.message}</p>}
               </div>
               <div className="space-y-2">
@@ -454,7 +512,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
 
             <div className="space-y-2">
               <Label>Certificações (ISO, Alvará, etc.)</Label>
-              <Input {...register("certificacoes")} placeholder="Separe por vírgulas" />
+              <Input {...register("certificacoes")} placeholder="Separe por vírgulas" maxLength={500} />
               <p className="text-xs text-muted-foreground">Ex: ISO 9001, Alvará 12345, PME Líder</p>
             </div>
           </div>
@@ -480,7 +538,7 @@ export function RegisterForm({ onCancel, onSuccess }: { onCancel: () => void, on
 
             <div className="space-y-2">
               <Label>Subcategorias (separar por vírgulas)</Label>
-              <Textarea {...register("subcategorias")} placeholder="Ex: Cimento, Tijolo, Areia" />
+              <Textarea {...register("subcategorias")} placeholder="Ex: Cimento, Tijolo, Areia" maxLength={500} />
             </div>
 
             <div className="space-y-2">
