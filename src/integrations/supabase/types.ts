@@ -3033,6 +3033,36 @@ export type Database = {
           },
         ]
       }
+      email_click_tracking: {
+        Row: {
+          campaign: string
+          clicked_at: string
+          email: string | null
+          id: string
+          ip_address: string | null
+          token: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          campaign?: string
+          clicked_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          token?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          campaign?: string
+          clicked_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          token?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           assunto: string

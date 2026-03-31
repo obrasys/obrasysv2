@@ -54,6 +54,7 @@ const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
 const PesquisaPage = lazy(() => import("./pages/Pesquisa"));
+const RegressarPage = lazy(() => import("./pages/Regressar"));
 const RecursosPage = lazy(() => import("./pages/recursos/Index"));
 const RelatoriosPage = lazy(() => import("./pages/relatorios/Index"));
 const VerMembroPage = lazy(() => import("./pages/recursos/VerMembro"));
@@ -157,6 +158,7 @@ const App = () => (
                   <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
                   <Route path="/recursos/:id" element={<ManagerRoute><VerMembroPage /></ManagerRoute>} />
                   <Route path="/pesquisa" element={<ManagerRoute><PesquisaPage /></ManagerRoute>} />
+                  <Route path="/regressar" element={<RegressarPage />} />
                   <Route path="/relatorios" element={<ManagerRoute><RelatoriosPage /></ManagerRoute>} />
                   <Route path="/autos-medicao" element={<ManagerRoute><AutosMedicaoPage /></ManagerRoute>} />
                   <Route path="/autos-medicao/criar" element={<ManagerRoute><CriarAutoMedicaoPage /></ManagerRoute>} />
