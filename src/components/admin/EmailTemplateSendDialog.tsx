@@ -53,23 +53,26 @@ export function EmailTemplateSendDialog({
     }
   };
 
-  const handleLoadAllUsers = async () => {
+  const handleLoadUsers = async (filter: "all" | "expired_trials") => {
     setIsLoadingUsers(true);
     try {
-      const { data, error } = await supabase.functions.invoke("get-all-user-emails");
+      const { data, error } = await supabase.functions.invoke("get-all-user-emails", {
+        body: { filter },
+      });
 
       if (error) throw error;
 
       if (data?.emails && data.emails.length > 0) {
         setRecipientsRaw(data.emails.join("\n"));
+        const label = filter === "expired_trials" ? "trials expirados" : "utilizadores";
         toast({
-          title: "Utilizadores carregados",
-          description: `Foram carregados ${data.total} email(s) da base de dados.`,
+          title: "Carregados com sucesso",
+          description: `Foram carregados ${data.total} ${label}.`,
         });
       } else {
         toast({
-          title: "Sem utilizadores",
-          description: "Não foram encontrados utilizadores na base de dados.",
+          title: "Sem resultados",
+          description: "Não foram encontrados utilizadores com esse filtro.",
           variant: "destructive",
         });
       }
