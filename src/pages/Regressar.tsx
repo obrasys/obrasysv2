@@ -122,8 +122,14 @@ export default function Regressar() {
             <Step
               number={3}
               title="Aplique o código promocional"
-              description="No checkout do Stripe, insira o código que lhe vamos enviar e confirme o pagamento."
+              description="No checkout, insira o código Trial30 e confirme o pagamento."
             />
+
+            <div className="bg-[#f0f7fb] border border-[#00679d]/20 rounded-lg p-4 text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">O seu código</p>
+              <p className="text-2xl font-bold text-[#00679d] tracking-widest select-all">Trial30</p>
+            </div>
+
             <Step
               number={4}
               title="Comece a usar!"
