@@ -7807,6 +7807,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          email_alertas: boolean
+          email_orcamentos: boolean
+          email_rdos: boolean
+          email_relatorios: boolean
+          id: string
+          push_alertas: boolean
+          push_enabled: boolean
+          push_tarefas: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_alertas?: boolean
+          email_orcamentos?: boolean
+          email_rdos?: boolean
+          email_relatorios?: boolean
+          id?: string
+          push_alertas?: boolean
+          push_enabled?: boolean
+          push_tarefas?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_alertas?: boolean
+          email_orcamentos?: boolean
+          email_rdos?: boolean
+          email_relatorios?: boolean
+          id?: string
+          push_alertas?: boolean
+          push_enabled?: boolean
+          push_tarefas?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workers: {
         Row: {
           active: boolean | null
