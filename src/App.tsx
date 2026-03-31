@@ -54,6 +54,7 @@ const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
 const PesquisaPage = lazy(() => import("./pages/Pesquisa"));
+const RegressarPage = lazy(() => import("./pages/Regressar"));
 const RecursosPage = lazy(() => import("./pages/recursos/Index"));
 const RelatoriosPage = lazy(() => import("./pages/relatorios/Index"));
 const VerMembroPage = lazy(() => import("./pages/recursos/VerMembro"));
