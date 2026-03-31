@@ -30,20 +30,21 @@ const ResetPassword = () => {
   });
 
   useEffect(() => {
-    // Check if we have a valid recovery session
+    // Listen for password recovery event FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("ResetPassword auth event:", event);
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setIsValidToken(true);
+        setCheckingToken(false);
+      }
+    });
+
+    // Then check for existing session (may already be established)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsValidToken(true);
       }
       setCheckingToken(false);
-    });
-
-    // Listen for password recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsValidToken(true);
-        setCheckingToken(false);
-      }
     });
 
     return () => subscription.unsubscribe();
