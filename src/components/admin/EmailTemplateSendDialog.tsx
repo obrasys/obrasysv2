@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Clock } from "lucide-react";
 
 function parseEmails(input: string): string[] {
   return input
