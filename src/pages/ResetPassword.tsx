@@ -51,14 +51,28 @@ const ResetPassword = () => {
 
   const handleSubmit = async (data: NewPasswordFormData) => {
     setIsLoading(true);
+    
+    // Ensure we have a valid session before attempting update
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Sessão expirada",
+        description: "O link de recuperação expirou. Por favor, solicite um novo link.",
+      });
+      return;
+    }
+
     const { error } = await updatePassword(data.password);
     setIsLoading(false);
 
     if (error) {
+      console.error("Password update error:", error.message, error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível atualizar a password. Tente novamente.",
+        description: error.message || "Não foi possível atualizar a password. Tente novamente.",
       });
       return;
     }
