@@ -627,7 +627,7 @@ export default function DefinicoesPage() {
               </CardHeader>
               <CardContent className="space-y-1">
                 <SettingRow
-                  icon={() => <AxiaIcon size={16} className="text-[#7C3AED]" />}
+                  icon={Bell}
                   label={t('enable_axia')}
                   description={t('enable_axia_desc')}
                   checked={axiaEnabled}
