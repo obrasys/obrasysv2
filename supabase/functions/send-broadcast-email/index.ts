@@ -147,6 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
           "{{logoUrl}}": logoUrl,
           "{{ano}}": ano,
           "{{pesquisaUrl}}": pesquisaUrl,
+          "{{token}}": tokenId ?? "",
         });
 
         const res = await fetch("https://api.resend.com/emails", {
