@@ -415,23 +415,67 @@ export default function DefinicoesPage() {
                     disabled={!userSettings.push_enabled}
                   />
 
-                  {/* Permission status */}
-                  <div className="pt-2">
-                    <div className={`flex items-center gap-2 p-3 rounded-lg text-xs ${
-                      pushPermission === 'granted' 
-                        ? 'bg-emerald-500/10 text-emerald-700' 
-                        : pushPermission === 'denied' 
-                          ? 'bg-destructive/10 text-destructive' 
-                          : 'bg-muted/50 text-muted-foreground'
-                    }`}>
-                      {pushPermission === 'granted' ? (
-                        <><CheckCircle className="w-3.5 h-3.5" /> Permissão concedida</>
-                      ) : pushPermission === 'denied' ? (
-                        <><AlertTriangle className="w-3.5 h-3.5" /> Permissão negada — altere nas definições do navegador</>
-                      ) : (
-                        <><Bell className="w-3.5 h-3.5" /> {t('push_permission_note')}</>
-                      )}
-                    </div>
+                  {/* Permission status & request */}
+                  <div className="pt-3">
+                    {pushPermission === 'granted' ? (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-700 text-xs">
+                        <CheckCircle className="w-4 h-4 shrink-0" />
+                        <span className="font-medium">Permissão concedida — as notificações push estão ativas.</span>
+                      </div>
+                    ) : pushPermission === 'denied' ? (
+                      <div className="flex flex-col gap-3 p-4 rounded-xl bg-destructive/5 border border-destructive/20">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <BellOff className="w-5 h-5 text-destructive" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-destructive">Permissão bloqueada</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              As notificações foram bloqueadas pelo navegador. Para reativar, siga os passos abaixo:
+                            </p>
+                          </div>
+                        </div>
+                        <div className="ml-[52px] space-y-1.5">
+                          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                            <span>Clique no ícone 🔒 na barra de endereços do navegador</span>
+                          </div>
+                          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                            <span>Procure <strong>"Notificações"</strong> e altere para <strong>"Permitir"</strong></span>
+                          </div>
+                          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                            <span>Recarregue a página e ative novamente aqui</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <BellRing className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Ativar notificações push</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Receba alertas importantes diretamente no seu navegador ou dispositivo, mesmo quando não estiver a usar a aplicação.
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={handleRequestPush} 
+                          className="ml-[52px] w-fit gap-2"
+                          size="sm"
+                        >
+                          <Bell className="w-4 h-4" />
+                          Permitir Notificações
+                        </Button>
+                        <p className="ml-[52px] text-[10px] text-muted-foreground">
+                          O navegador vai pedir a sua autorização. Pode desativar a qualquer momento.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
