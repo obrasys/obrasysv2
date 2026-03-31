@@ -194,10 +194,9 @@ export default function PerfilPage() {
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Profile Hero Card */}
-        <Card className="overflow-hidden">
-          <div className="h-28 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/10" />
-          <CardContent className="relative pb-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-14 sm:-mt-12">
+        <Card>
+          <CardContent className="pt-6 pb-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
               {/* Avatar */}
               <div className="relative group">
                 <Avatar className="w-24 h-24 border-4 border-background shadow-lg ring-2 ring-primary/20">
