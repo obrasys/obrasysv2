@@ -30,7 +30,16 @@ const ResetPassword = () => {
   });
 
   useEffect(() => {
-    // Check if we have a valid recovery session
+    // Listen for password recovery event FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("ResetPassword auth event:", event);
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setIsValidToken(true);
+        setCheckingToken(false);
+      }
+    });
+
+    // Then check for existing session (may already be established)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsValidToken(true);
@@ -38,27 +47,33 @@ const ResetPassword = () => {
       setCheckingToken(false);
     });
 
-    // Listen for password recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsValidToken(true);
-        setCheckingToken(false);
-      }
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (data: NewPasswordFormData) => {
     setIsLoading(true);
+    
+    // Ensure we have a valid session before attempting update
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Sessão expirada",
+        description: "O link de recuperação expirou. Por favor, solicite um novo link.",
+      });
+      return;
+    }
+
     const { error } = await updatePassword(data.password);
     setIsLoading(false);
 
     if (error) {
+      console.error("Password update error:", error.message, error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível atualizar a password. Tente novamente.",
+        description: error.message || "Não foi possível atualizar a password. Tente novamente.",
       });
       return;
     }
