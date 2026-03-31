@@ -24,67 +24,68 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Create client with user's JWT for permission check
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
+      global: { headers: { Authorization: authHeader } },
     });
 
-    // Check if user is super admin
-    const { data: isSuperAdmin, error: adminErr } = await supabase.rpc(
-      "is_super_admin"
-    );
-
-    if (adminErr) {
-      console.error("is_super_admin rpc error:", adminErr);
+    const { data: isSuperAdmin, error: adminErr } = await supabase.rpc("is_super_admin");
+    if (adminErr || !isSuperAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    if (!isSuperAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
+    // Parse optional filter
+    let filter = "all";
+    try {
+      const body = await req.json();
+      if (body?.filter) filter = body.filter;
+    } catch { /* no body = default "all" */ }
 
-    // Use service role client to access auth.users
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all users from auth.users
-    const { data: usersData, error: usersError } =
-      await serviceClient.auth.admin.listUsers({
-        perPage: 1000,
-      });
+    if (filter === "expired_trials") {
+      // Get expired trial users who are NOT subscribed
+      const { data: profiles, error: profilesErr } = await serviceClient
+        .from("profiles")
+        .select("email")
+        .lt("trial_end", new Date().toISOString())
+        .not("email", "is", null);
 
-    if (usersError) {
-      console.error("Error fetching users:", usersError);
-      return new Response(JSON.stringify({ error: usersError.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+      if (profilesErr) throw profilesErr;
+
+      // Exclude users with active subscriptions
+      const { data: subscribers } = await serviceClient
+        .from("subscribers")
+        .select("email")
+        .eq("subscribed", true);
+
+      const subscribedEmails = new Set((subscribers || []).map((s: any) => s.email));
+      const emails = (profiles || [])
+        .map((p: any) => p.email)
+        .filter((e: string) => e && !subscribedEmails.has(e));
+
+      return new Response(
+        JSON.stringify({ emails, total: emails.length }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    // Extract emails from users
+    // Default: all users from auth
+    const { data: usersData, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+    if (usersError) throw usersError;
+
     const emails = usersData.users
       .map((user) => user.email)
       .filter((email): email is string => !!email);
 
     return new Response(
       JSON.stringify({ emails, total: emails.length }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in get-all-user-emails:", errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

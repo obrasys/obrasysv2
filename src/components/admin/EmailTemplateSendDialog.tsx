@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Clock } from "lucide-react";
 
 function parseEmails(input: string): string[] {
   return input
@@ -53,23 +53,26 @@ export function EmailTemplateSendDialog({
     }
   };
 
-  const handleLoadAllUsers = async () => {
+  const handleLoadUsers = async (filter: "all" | "expired_trials") => {
     setIsLoadingUsers(true);
     try {
-      const { data, error } = await supabase.functions.invoke("get-all-user-emails");
+      const { data, error } = await supabase.functions.invoke("get-all-user-emails", {
+        body: { filter },
+      });
 
       if (error) throw error;
 
       if (data?.emails && data.emails.length > 0) {
         setRecipientsRaw(data.emails.join("\n"));
+        const label = filter === "expired_trials" ? "trials expirados" : "utilizadores";
         toast({
-          title: "Utilizadores carregados",
-          description: `Foram carregados ${data.total} email(s) da base de dados.`,
+          title: "Carregados com sucesso",
+          description: `Foram carregados ${data.total} ${label}.`,
         });
       } else {
         toast({
-          title: "Sem utilizadores",
-          description: "Não foram encontrados utilizadores na base de dados.",
+          title: "Sem resultados",
+          description: "Não foram encontrados utilizadores com esse filtro.",
           variant: "destructive",
         });
       }
@@ -145,23 +148,40 @@ export function EmailTemplateSendDialog({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
               <Label htmlFor="broadcast-to">Destinatários</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadAllUsers}
-                disabled={isLoadingUsers || isSending}
-                className="gap-2"
-              >
-                {isLoadingUsers ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Users className="h-4 w-4" />
-                )}
-                Carregar todos os utilizadores
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleLoadUsers("expired_trials")}
+                  disabled={isLoadingUsers || isSending}
+                  className="gap-2"
+                >
+                  {isLoadingUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                  Trials expirados
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleLoadUsers("all")}
+                  disabled={isLoadingUsers || isSending}
+                  className="gap-2"
+                >
+                  {isLoadingUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Users className="h-4 w-4" />
+                  )}
+                  Todos
+                </Button>
+              </div>
             </div>
             <Textarea
               id="broadcast-to"
