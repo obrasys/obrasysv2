@@ -145,23 +145,40 @@ export function EmailTemplateSendDialog({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
               <Label htmlFor="broadcast-to">Destinatários</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadAllUsers}
-                disabled={isLoadingUsers || isSending}
-                className="gap-2"
-              >
-                {isLoadingUsers ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Users className="h-4 w-4" />
-                )}
-                Carregar todos os utilizadores
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleLoadUsers("expired_trials")}
+                  disabled={isLoadingUsers || isSending}
+                  className="gap-2"
+                >
+                  {isLoadingUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                  Trials expirados
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleLoadUsers("all")}
+                  disabled={isLoadingUsers || isSending}
+                  className="gap-2"
+                >
+                  {isLoadingUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Users className="h-4 w-4" />
+                  )}
+                  Todos
+                </Button>
+              </div>
             </div>
             <Textarea
               id="broadcast-to"
