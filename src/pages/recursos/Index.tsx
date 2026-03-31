@@ -38,9 +38,11 @@ import {
   User,
   Briefcase,
   Euro,
+  Wallet,
 } from 'lucide-react';
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
+import { SalariosTab } from '@/components/recursos/SalariosTab';
 import {
   ESTADO_EQUIPAMENTO_CONFIG,
   TIPO_CONTRATO_CONFIG,
@@ -115,19 +117,22 @@ export default function RecursosPage() {
                   <TabsTrigger value="subempreiteiros" className="flex-1 md:flex-none"><HardHat className="h-4 w-4 mr-2 hidden md:inline" />Subempreiteiros</TabsTrigger>
                   <TabsTrigger value="equipamentos" className="flex-1 md:flex-none"><Wrench className="h-4 w-4 mr-2 hidden md:inline" />Equipamentos</TabsTrigger>
                   <TabsTrigger value="equipa" className="flex-1 md:flex-none"><Users className="h-4 w-4 mr-2 hidden md:inline" />Equipa</TabsTrigger>
+                  <TabsTrigger value="salarios" className="flex-1 md:flex-none"><Wallet className="h-4 w-4 mr-2 hidden md:inline" />Salários</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1 md:w-64">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input placeholder="Pesquisar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
                   </div>
-                  <Button size="sm" onClick={() => {
-                    if (activeTab === 'subempreiteiros') handleOpenSubForm();
-                    else if (activeTab === 'equipamentos') handleOpenEquipForm();
-                    else handleOpenMembroForm();
-                  }}>
-                    <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Adicionar</span>
-                  </Button>
+                  {activeTab !== 'salarios' && (
+                    <Button size="sm" onClick={() => {
+                      if (activeTab === 'subempreiteiros') handleOpenSubForm();
+                      else if (activeTab === 'equipamentos') handleOpenEquipForm();
+                      else handleOpenMembroForm();
+                    }}>
+                      <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Adicionar</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -304,6 +309,11 @@ export default function RecursosPage() {
                     ))}
                   </div>
                 )}
+              </TabsContent>
+
+              {/* Salários Tab */}
+              <TabsContent value="salarios" className="m-0">
+                <SalariosTab />
               </TabsContent>
             </CardContent>
           </Tabs>
