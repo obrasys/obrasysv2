@@ -4264,6 +4264,80 @@ export type Database = {
           },
         ]
       }
+      member_module_permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_update: boolean
+          can_view: boolean
+          id: string
+          member_id: string
+          module_code: string
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_update?: boolean
+          can_view?: boolean
+          id?: string
+          member_id: string
+          module_code: string
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_update?: boolean
+          can_view?: boolean
+          id?: string
+          member_id?: string
+          module_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_module_permissions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "organization_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_project_access: {
+        Row: {
+          access_level: string
+          id: string
+          member_id: string
+          obra_id: string
+        }
+        Insert: {
+          access_level?: string
+          id?: string
+          member_id: string
+          obra_id: string
+        }
+        Update: {
+          access_level?: string
+          id?: string
+          member_id?: string
+          obra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_project_access_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "organization_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_project_access_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migrated_users: {
         Row: {
           created_at: string
@@ -4701,6 +4775,11 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          invited_by: string | null
+          job_title: string | null
+          last_seen_at: string | null
+          member_status: string
+          obra_scope: string
           organization_id: string
           role: string
           user_id: string
@@ -4708,6 +4787,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          invited_by?: string | null
+          job_title?: string | null
+          last_seen_at?: string | null
+          member_status?: string
+          obra_scope?: string
           organization_id: string
           role?: string
           user_id: string
@@ -4715,6 +4799,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          invited_by?: string | null
+          job_title?: string | null
+          last_seen_at?: string | null
+          member_status?: string
+          obra_scope?: string
           organization_id?: string
           role?: string
           user_id?: string
@@ -7503,6 +7592,106 @@ export type Database = {
             columns: ["regime_id"]
             isOneToOne: false
             referencedRelation: "regimes_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invitation_module_permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_update: boolean
+          can_view: boolean
+          id: string
+          invitation_id: string
+          module_code: string
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_update?: boolean
+          can_view?: boolean
+          id?: string
+          invitation_id: string
+          module_code: string
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_update?: boolean
+          can_view?: boolean
+          id?: string
+          invitation_id?: string
+          module_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitation_module_permissions_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "team_invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          internal_note: string | null
+          invited_by_user_id: string
+          job_title: string | null
+          obra_scope: string
+          organization_id: string
+          phone: string | null
+          role_code: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          internal_note?: string | null
+          invited_by_user_id: string
+          job_title?: string | null
+          obra_scope?: string
+          organization_id: string
+          phone?: string | null
+          role_code?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          internal_note?: string | null
+          invited_by_user_id?: string
+          job_title?: string | null
+          obra_scope?: string
+          organization_id?: string
+          phone?: string | null
+          role_code?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
