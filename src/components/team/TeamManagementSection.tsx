@@ -92,7 +92,7 @@ export function TeamManagementSection() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: Users, label: 'Membros ativos', value: members.filter(m => m.member_status === 'active').length, color: 'text-emerald-600' },
-          { icon: Mail, label: 'Convites pendentes', value: pendingInvites.length, color: 'text-amber-600' },
+          { icon: Mail, label: 'Convites pendentes', value: pendingInvites.length, color: 'text-primary' },
           { icon: Shield, label: 'Perfis de acesso', value: 5, color: 'text-blue-600' },
         ].map(stat => (
           <Card key={stat.label}>

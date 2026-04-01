@@ -333,7 +333,7 @@ export function useTeamManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('obras')
-        .select('id, nome, estado')
+        .select('id, nome, status')
         .order('nome');
       if (error) throw error;
       return data || [];
