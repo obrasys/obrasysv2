@@ -7,6 +7,160 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+const mapRoleToProfileRole = (roleCode?: string | null) => {
+  switch (roleCode) {
+    case "admin":
+      return "admin";
+    case "manager":
+      return "gestor";
+    case "technician":
+      return "fiscal";
+    case "finance":
+      return "financeiro";
+    case "viewer":
+      return "gestor";
+    default:
+      return roleCode || "gestor";
+  }
+};
+
+const isEmailExistsError = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  (error as { code?: string }).code === "email_exists";
+
+async function syncMemberPermissions(serviceClient: any, memberId: string, modulePermissions?: any[]) {
+  if (!Array.isArray(modulePermissions)) return;
+
+  const { error: deleteError } = await serviceClient
+    .from("member_module_permissions")
+    .delete()
+    .eq("member_id", memberId);
+
+  if (deleteError) throw deleteError;
+  if (modulePermissions.length === 0) return;
+
+  const permissionRows = modulePermissions.map((permission: any) => ({
+    member_id: memberId,
+    module_code: permission.module_code,
+    can_view: permission.can_view ?? false,
+    can_create: permission.can_create ?? false,
+    can_update: permission.can_update ?? false,
+    can_delete: permission.can_delete ?? false,
+  }));
+
+  const { error: upsertError } = await serviceClient
+    .from("member_module_permissions")
+    .upsert(permissionRows, { onConflict: "member_id,module_code" });
+
+  if (upsertError) throw upsertError;
+}
+
+async function syncMemberProjectAccess(
+  serviceClient: any,
+  memberId: string,
+  obraScope?: string,
+  selectedObras?: string[],
+) {
+  if (!obraScope) return;
+
+  if (obraScope !== "assigned") {
+    const { error: deleteError } = await serviceClient
+      .from("member_project_access")
+      .delete()
+      .eq("member_id", memberId);
+
+    if (deleteError) throw deleteError;
+    return;
+  }
+
+  if (!Array.isArray(selectedObras)) return;
+
+  const { error: deleteError } = await serviceClient
+    .from("member_project_access")
+    .delete()
+    .eq("member_id", memberId);
+
+  if (deleteError) throw deleteError;
+  if (selectedObras.length === 0) return;
+
+  const accessRows = selectedObras.map((obraId: string) => ({
+    member_id: memberId,
+    obra_id: obraId,
+    access_level: "full",
+  }));
+
+  const { error: upsertError } = await serviceClient
+    .from("member_project_access")
+    .upsert(accessRows, { onConflict: "member_id,obra_id" });
+
+  if (upsertError) throw upsertError;
+}
+
+async function markInvitationAccepted(serviceClient: any, invitationId?: string, userId?: string) {
+  if (!invitationId || !userId) return;
+
+  const { error } = await serviceClient
+    .from("team_invitations")
+    .update({
+      status: "accepted",
+      accepted_at: new Date().toISOString(),
+      accepted_by_user_id: userId,
+    })
+    .eq("id", invitationId);
+
+  if (error) throw error;
+}
+
+async function attachUserToOrganization({
+  serviceClient,
+  organizationId,
+  userId,
+  role,
+  jobTitle,
+  invitedBy,
+  obraScope,
+  modulePermissions,
+  selectedObras,
+  invitationId,
+}: {
+  serviceClient: any;
+  organizationId: string;
+  userId: string;
+  role: string;
+  jobTitle?: string | null;
+  invitedBy?: string | null;
+  obraScope?: string;
+  modulePermissions?: any[];
+  selectedObras?: string[];
+  invitationId?: string;
+}) {
+  const { data: member, error: memberError } = await serviceClient
+    .from("organization_members")
+    .upsert({
+      organization_id: organizationId,
+      user_id: userId,
+      role,
+      member_status: "active",
+      job_title: jobTitle || null,
+      invited_by: invitedBy || null,
+      obra_scope: obraScope || "all",
+    }, { onConflict: "organization_id,user_id" })
+    .select()
+    .single();
+
+  if (memberError) throw memberError;
+
+  await syncMemberPermissions(serviceClient, member.id, modulePermissions);
+  await syncMemberProjectAccess(serviceClient, member.id, obraScope, selectedObras);
+  await markInvitationAccepted(serviceClient, invitationId, userId);
+
+  return member;
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -63,6 +217,8 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      const normalizedEmail = normalizeEmail(email);
+
       // Check if caller is super admin
       const { data: callerIsSuperAdmin } = await userClient.rpc("is_super_admin");
       
@@ -80,35 +236,61 @@ serve(async (req: Request): Promise<Response> => {
       // Generate a temporary random password
       const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
 
+      let targetUserId: string | null = null;
+      let createdNewUser = false;
+
       // Create user via Supabase Auth Admin
       const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-        email,
+        email: normalizedEmail,
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
-          nome: nome || email.split("@")[0],
+          nome: nome || normalizedEmail.split("@")[0],
           role: requestedRole,
           created_by: callingUser.id,
         },
       });
 
       if (createError) {
-        console.error("Create user error:", createError);
-        return new Response(JSON.stringify({ error: createError.message }), {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
+        if (!isEmailExistsError(createError)) {
+          console.error("Create user error:", createError);
+          return new Response(JSON.stringify({ error: createError.message }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        const { data: existingProfile, error: profileLookupError } = await serviceClient
+          .from("profiles")
+          .select("user_id")
+          .ilike("email", normalizedEmail)
+          .limit(1)
+          .maybeSingle();
+
+        if (profileLookupError || !existingProfile?.user_id) {
+          console.error("Existing user lookup error:", profileLookupError || createError);
+          return new Response(JSON.stringify({ error: "O utilizador já existe, mas não foi possível concluir o convite." }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
+        targetUserId = existingProfile.user_id;
+      } else {
+        targetUserId = newUser?.user?.id ?? null;
+        createdNewUser = Boolean(targetUserId);
       }
 
       // Update profile role and link to creator
-      if (newUser?.user?.id) {
+      if (targetUserId) {
         await serviceClient
           .from("profiles")
           .update({ 
             role: requestedRole, 
-            nome: nome || email.split("@")[0],
+            nome: nome || normalizedEmail.split("@")[0],
+            email: normalizedEmail,
           })
-          .eq("user_id", newUser.user.id);
+          .eq("user_id", targetUserId);
 
         // ─── ADD NEW USER TO INVITER'S ORGANIZATION ───
         // Cliente users should NOT be added to the inviter's organization
@@ -120,61 +302,40 @@ serve(async (req: Request): Promise<Response> => {
             .select("organization_id")
             .eq("user_id", callingUser.id)
             .limit(1)
-            .single();
+            .maybeSingle();
 
           if (inviterOrg?.organization_id) {
-            const { data: newMember } = await serviceClient
-              .from("organization_members")
-              .upsert({
-                organization_id: inviterOrg.organization_id,
-                user_id: newUser.user.id,
-                role: requestedRole,
-                member_status: "active",
-                job_title: body.job_title || null,
-                invited_by: callingUser.id,
-                obra_scope: obraScope || "all",
-              }, { onConflict: 'organization_id,user_id' })
-              .select()
-              .single();
+            await attachUserToOrganization({
+              serviceClient,
+              organizationId: inviterOrg.organization_id,
+              userId: targetUserId,
+              role: requestedRole,
+              jobTitle: body.job_title || null,
+              invitedBy: callingUser.id,
+              obraScope: obraScope || "all",
+              modulePermissions,
+              selectedObras,
+              invitationId,
+            });
             
-            console.log(`User ${newUser.user.id} added to organization ${inviterOrg.organization_id}`);
-
-            // Copy module permissions from invitation to member
-            if (newMember && modulePermissions && Array.isArray(modulePermissions)) {
-              const permRows = modulePermissions.map((p: any) => ({
-                member_id: newMember.id,
-                module_code: p.module_code,
-                can_view: p.can_view ?? false,
-                can_create: p.can_create ?? false,
-                can_update: p.can_update ?? false,
-                can_delete: p.can_delete ?? false,
-              }));
-              await serviceClient.from("member_module_permissions").insert(permRows);
-            }
-
-            // Create project access records for assigned obras
-            if (newMember && obraScope === "assigned" && selectedObras && Array.isArray(selectedObras)) {
-              const accessRows = selectedObras.map((obraId: string) => ({
-                member_id: newMember.id,
-                obra_id: obraId,
-                access_level: "full",
-              }));
-              await serviceClient.from("member_project_access").insert(accessRows);
-            }
-
-            // Update invitation status to accepted
-            if (invitationId) {
-              await serviceClient
-                .from("team_invitations")
-                .update({ status: "accepted", accepted_at: new Date().toISOString(), accepted_by_user_id: newUser.user.id })
-                .eq("id", invitationId);
-            }
+            console.log(`User ${targetUserId} added to organization ${inviterOrg.organization_id}`);
           } else {
+            const { data: existingOrg } = await serviceClient
+              .from("organizations")
+              .select("id")
+              .eq("owner_user_id", targetUserId)
+              .limit(1)
+              .maybeSingle();
+
             const { data: newOrg } = await serviceClient
               .from("organizations")
-              .insert({
-                nome: (nome || email.split("@")[0]) + " - Empresa",
-                owner_user_id: newUser.user.id,
+              .upsert(existingOrg?.id ? {
+                id: existingOrg.id,
+                nome: (nome || normalizedEmail.split("@")[0]) + " - Empresa",
+                owner_user_id: targetUserId,
+              } : {
+                nome: (nome || normalizedEmail.split("@")[0]) + " - Empresa",
+                owner_user_id: targetUserId,
               })
               .select()
               .single();
@@ -182,13 +343,21 @@ serve(async (req: Request): Promise<Response> => {
             if (newOrg) {
               await serviceClient
                 .from("organization_members")
-                .insert({
+                .upsert({
                   organization_id: newOrg.id,
-                  user_id: newUser.user.id,
+                  user_id: targetUserId,
                   role: requestedRole,
-                });
+                  member_status: "active",
+                  job_title: body.job_title || null,
+                  invited_by: callingUser.id,
+                  obra_scope: obraScope || "all",
+                }, { onConflict: 'organization_id,user_id' });
+
+              await markInvitationAccepted(serviceClient, invitationId, targetUserId);
             }
           }
+        } else {
+          await markInvitationAccepted(serviceClient, invitationId, targetUserId);
         }
       }
 
@@ -196,11 +365,15 @@ serve(async (req: Request): Promise<Response> => {
       const siteOrigin = req.headers.get("origin") || "https://app.obrasys.pt";
       const { data: resetData, error: resetError } = await serviceClient.auth.admin.generateLink({
         type: "recovery",
-        email,
+        email: normalizedEmail,
         options: {
           redirectTo: `${siteOrigin}/auth/reset-password`,
         },
       });
+
+      if (resetError) {
+        console.error("Generate recovery link error:", resetError);
+      }
 
       // Send welcome/access email via Resend
       const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -214,7 +387,7 @@ serve(async (req: Request): Promise<Response> => {
             },
             body: JSON.stringify({
               from: "ObraSys <noreply@obrasys.pt>",
-              to: [email],
+              to: [normalizedEmail],
               subject: "Bem-vindo ao ObraSys - Instruções de Acesso",
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -240,8 +413,8 @@ serve(async (req: Request): Promise<Response> => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: `Utilizador ${email} criado com sucesso. Email de acesso enviado.`,
-        userId: newUser?.user?.id,
+        message: `Utilizador ${normalizedEmail} ${createdNewUser ? "criado" : "associado"} com sucesso. Email de acesso enviado.`,
+        userId: targetUserId,
       }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -257,10 +430,69 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      const normalizedEmail = normalizeEmail(email);
+
+      if (invitationId) {
+        const [{ data: invitation, error: invitationError }, { data: existingProfile, error: profileLookupError }] = await Promise.all([
+          serviceClient
+            .from("team_invitations")
+            .select("id, organization_id, full_name, role_code, invited_by_user_id, job_title, obra_scope")
+            .eq("id", invitationId)
+            .limit(1)
+            .maybeSingle(),
+          serviceClient
+            .from("profiles")
+            .select("user_id")
+            .ilike("email", normalizedEmail)
+            .limit(1)
+            .maybeSingle(),
+        ]);
+
+        if (invitationError || profileLookupError) {
+          console.error("Invitation resend lookup error:", invitationError || profileLookupError);
+        }
+
+        if (invitation && existingProfile?.user_id) {
+          const { data: invitationPermissions, error: permissionsError } = await serviceClient
+            .from("team_invitation_module_permissions")
+            .select("module_code, can_view, can_create, can_update, can_delete")
+            .eq("invitation_id", invitation.id);
+
+          if (permissionsError) {
+            console.error("Invitation permissions lookup error:", permissionsError);
+            return new Response(JSON.stringify({ error: permissionsError.message }), {
+              status: 500,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+
+          await serviceClient
+            .from("profiles")
+            .update({
+              role: mapRoleToProfileRole(invitation.role_code),
+              nome: invitation.full_name || normalizedEmail.split("@")[0],
+              email: normalizedEmail,
+            })
+            .eq("user_id", existingProfile.user_id);
+
+          await attachUserToOrganization({
+            serviceClient,
+            organizationId: invitation.organization_id,
+            userId: existingProfile.user_id,
+            role: mapRoleToProfileRole(invitation.role_code),
+            jobTitle: invitation.job_title,
+            invitedBy: invitation.invited_by_user_id,
+            obraScope: invitation.obra_scope,
+            modulePermissions: invitationPermissions || [],
+            invitationId: invitation.id,
+          });
+        }
+      }
+
       const siteOrigin2 = req.headers.get("origin") || "https://app.obrasys.pt";
       const { data, error } = await serviceClient.auth.admin.generateLink({
         type: "recovery",
-        email,
+        email: normalizedEmail,
         options: {
           redirectTo: `${siteOrigin2}/auth/reset-password`,
         },
@@ -285,7 +517,7 @@ serve(async (req: Request): Promise<Response> => {
             },
             body: JSON.stringify({
               from: "ObraSys <noreply@obrasys.pt>",
-              to: [email],
+              to: [normalizedEmail],
               subject: "Redefinir a sua password - ObraSys",
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
