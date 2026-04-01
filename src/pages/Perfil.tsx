@@ -31,9 +31,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
-import { AddUserDialog } from '@/components/admin/AddUserDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
+import { TeamManagementSection } from '@/components/team';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
