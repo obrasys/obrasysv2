@@ -169,34 +169,75 @@ export function CapituloAccordion({
                 </div>
               )}
 
-              {filteredArtigos.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase border-b">
-                    <div className="col-span-1">Cód.</div>
-                    <div className="col-span-4">Descrição</div>
-                    <div className="col-span-1 text-center">Un.</div>
-                    <div className="col-span-2 text-right">Qtd.</div>
-                    <div className="col-span-2 text-right">P. Unit.</div>
-                    <div className="col-span-2 text-right">Total</div>
-                  </div>
-                  {filteredArtigos.map((artigo) => (
-                    <ArtigoRow
-                      key={artigo.id}
-                      artigo={artigo}
-                      onEdit={() => onEditArtigo(artigo.id)}
-                      onDelete={() => onDeleteArtigo(artigo.id)}
-                      isReadOnly={isReadOnly}
-                    />
-                  ))}
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 border-t mt-2">
-                    <div className="col-span-10 text-sm font-semibold text-right">
-                      Subtotal Capítulo:
+              {filteredArtigos.length > 0 ? (() => {
+                const hasItemsWithoutPrices = filteredArtigos.some(
+                  (a) => a.preco_unitario === 0 && (a.valor_total === 0 || a.valor_total === null)
+                );
+                const allWithoutPrices = filteredArtigos.every(
+                  (a) => a.preco_unitario === 0 && (a.valor_total === 0 || a.valor_total === null)
+                );
+                const showSimplified = allWithoutPrices || (hasItemsWithoutPrices && filteredArtigos.filter(a => a.preco_unitario === 0 && (a.valor_total === 0 || a.valor_total === null)).length > filteredArtigos.length / 2);
+
+                return showSimplified ? (
+                  <div className="space-y-1">
+                    <div className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase border-b">
+                      Descrição
                     </div>
-                    <div className="col-span-2 text-sm text-right font-semibold">
-                      {formatCurrency(capitulo.valor_total)}
+                    {filteredArtigos.map((artigo) => (
+                      <div
+                        key={artigo.id}
+                        className="group flex items-start gap-2 px-3 py-2 rounded-md hover:bg-muted/50 text-sm"
+                      >
+                        <span className="text-muted-foreground shrink-0">{artigo.codigo}</span>
+                        <span className="flex-1">{artigo.descricao}</span>
+                        {!isReadOnly && (
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-1 shrink-0">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditArtigo(artigo.id)}>
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDeleteArtigo(artigo.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex justify-end px-3 py-2 border-t mt-2">
+                      <span className="text-sm font-semibold">
+                        Subtotal Capítulo: {formatCurrency(capitulo.valor_total)}
+                      </span>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase border-b">
+                      <div className="col-span-1">Cód.</div>
+                      <div className="col-span-4">Descrição</div>
+                      <div className="col-span-1 text-center">Un.</div>
+                      <div className="col-span-2 text-right">Qtd.</div>
+                      <div className="col-span-2 text-right">P. Unit.</div>
+                      <div className="col-span-2 text-right">Total</div>
+                    </div>
+                    {filteredArtigos.map((artigo) => (
+                      <ArtigoRow
+                        key={artigo.id}
+                        artigo={artigo}
+                        onEdit={() => onEditArtigo(artigo.id)}
+                        onDelete={() => onDeleteArtigo(artigo.id)}
+                        isReadOnly={isReadOnly}
+                      />
+                    ))}
+                    <div className="grid grid-cols-12 gap-2 px-3 py-2 border-t mt-2">
+                      <div className="col-span-10 text-sm font-semibold text-right">
+                        Subtotal Capítulo:
+                      </div>
+                      <div className="col-span-2 text-sm text-right font-semibold">
+                        {formatCurrency(capitulo.valor_total)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchQuery ? 'Nenhum artigo encontrado' : 'Nenhum artigo neste capítulo'}
