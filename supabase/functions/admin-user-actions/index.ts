@@ -198,7 +198,7 @@ serve(async (req: Request): Promise<Response> => {
         type: "recovery",
         email,
         options: {
-          redirectTo: `${siteOrigin}/reset-password`,
+          redirectTo: `${siteOrigin}/auth/reset-password`,
         },
       });
 
