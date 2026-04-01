@@ -170,33 +170,25 @@ export function CapituloAccordion({
               )}
 
               {filteredArtigos.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase border-b">
-                      <div className="col-span-1">Cód.</div>
-                      <div className="col-span-4">Descrição</div>
-                      <div className="col-span-1 text-center">Un.</div>
-                      <div className="col-span-2 text-right">Qtd.</div>
-                      <div className="col-span-2 text-right">P. Unit.</div>
-                      <div className="col-span-2 text-right">Total</div>
-                    </div>
-                    {filteredArtigos.map((artigo) => (
-                      <ArtigoRow
-                        key={artigo.id}
-                        artigo={artigo}
-                        onEdit={() => onEditArtigo(artigo.id)}
-                        onDelete={() => onDeleteArtigo(artigo.id)}
-                        isReadOnly={isReadOnly}
-                      />
-                    ))}
-                    <div className="grid grid-cols-12 gap-2 px-3 py-2 border-t mt-2">
-                      <div className="col-span-10 text-sm font-semibold text-right">
-                        Subtotal Capítulo:
-                      </div>
-                      <div className="col-span-2 text-sm text-right font-semibold">
-                        {formatCurrency(capitulo.valor_total)}
-                      </div>
-                    </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase border-b">
+                    <div className="col-span-1">Cód.</div>
+                    <div className="col-span-4">Descrição</div>
+                    <div className="col-span-1 text-center">Un.</div>
+                    <div className="col-span-2 text-right">Qtd.</div>
+                    <div className="col-span-2 text-right">P. Unit.</div>
+                    <div className="col-span-2 text-right">Total</div>
                   </div>
+                  {filteredArtigos.map((artigo) => (
+                    <ArtigoRow
+                      key={artigo.id}
+                      artigo={artigo}
+                      onEdit={() => onEditArtigo(artigo.id)}
+                      onDelete={() => onDeleteArtigo(artigo.id)}
+                      isReadOnly={isReadOnly}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchQuery ? 'Nenhum artigo encontrado' : 'Nenhum artigo neste capítulo'}
