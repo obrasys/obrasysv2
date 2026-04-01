@@ -43,7 +43,6 @@ export default function PerfilPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
-  const [addUserOpen, setAddUserOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { tier } = useFeatureGate();
   
