@@ -39,7 +39,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { action, userId, email, nome, role } = body;
+    const { action, userId, email, nome, role, modulePermissions, obraScope, selectedObras, invitationId } = body;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Actions that require super admin
