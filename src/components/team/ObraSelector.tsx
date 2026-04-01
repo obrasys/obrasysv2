@@ -7,7 +7,7 @@ import { Search } from 'lucide-react';
 interface Obra {
   id: string;
   nome: string;
-  estado: string;
+  status: string;
 }
 
 interface Props {
