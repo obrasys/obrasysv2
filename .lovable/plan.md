@@ -1,127 +1,44 @@
 
 
-# Plano: Gestão de Equipa Completa no Perfil
+## Plano: Suporte a PDF e DOCX na Importação de Orçamentos
 
-## Resumo
+### Resumo
+Adicionar suporte para importação de ficheiros PDF e DOCX no modal de importação de orçamentos, mantendo o fluxo existente (upload → IA organiza → preview → confirmar).
 
-Criar um sistema completo de gestão de equipa dentro da secao Perfil, permitindo ao administrador convidar colaboradores para a sua conta organizacional existente, definir permissoes por modulo, controlar acesso a obras, e gerir membros/convites -- tudo sem nunca criar uma nova conta de empresa para o convidado.
+### Como Funciona
 
-## Estrutura Existente
+Para PDF e DOCX, não é possível usar o parser Excel. Em vez disso, o conteúdo será extraído como texto e enviado diretamente à Edge Function, que usará a IA para interpretar e estruturar o orçamento.
 
-O projeto ja tem:
-- Tabelas `organizations` e `organization_members` (com role)
-- Edge Function `admin-user-actions` que cria utilizadores e os associa a organizacao do convidador
-- `AddUserDialog` basico (nome, email, role)
-- Tab "Equipa" no Perfil (atualmente vazia, so empty state)
-- `useFeatureGate` para controlo de plano
+### Alterações
 
-## Plano de Implementacao
+**1. `src/components/importar/ImportOrcamentoModal.tsx`**
+- Expandir os formatos aceites no dropzone: adicionar `.pdf`, `.docx`
+- Atualizar texto de formatos aceites na UI
+- Alterar o `onDrop` para detetar o tipo de ficheiro:
+  - **Excel/CSV**: manter fluxo atual (parseExcelFile → enviar rows/headers)
+  - **PDF**: ler como base64 e enviar à edge function como `rawText` com prefixo `[PDF_BASE64]`
+  - **DOCX**: ler como texto usando a biblioteca `mammoth` (extrai texto limpo de DOCX) e enviar como `rawText`
+- Atualizar o ícone conforme o tipo de ficheiro (FileSpreadsheet → FileText para PDF/DOCX)
 
-### 1. Migracao de Base de Dados
+**2. `supabase/functions/organize-budget-import/index.ts`**
+- Aceitar um novo campo `rawText` no body (alternativo a `rows`/`headers`)
+- Quando `rawText` estiver presente, enviar o texto diretamente ao prompt da IA em vez dos dados tabulares
+- Para PDFs em base64, usar o modelo Gemini com suporte multimodal (enviar como `image_url` com `data:application/pdf;base64,...`)
+- Manter o mesmo formato de saída (capítulos + artigos)
 
-Criar 4 novas tabelas com RLS:
+**3. Dependência**
+- Instalar `mammoth` para extração de texto de DOCX no frontend
 
-**`team_invitations`** -- convites pendentes
-- `id`, `organization_id`, `email`, `full_name`, `phone`, `job_title`, `internal_note`, `role_code`, `obra_scope` (all/assigned/none), `invited_by_user_id`, `status` (pending/accepted/expired/revoked), `expires_at`, `accepted_at`, `accepted_by_user_id`, `created_at`
+### Detalhes Técnicos
 
-**`team_invitation_module_permissions`** -- permissoes por modulo no convite
-- `id`, `invitation_id` (FK), `module_code`, `can_view`, `can_create`, `can_update`, `can_delete`
+```text
+Fluxo PDF:
+  File → FileReader (ArrayBuffer → base64) → Edge Function → Gemini (multimodal PDF) → JSON estruturado
 
-**`member_module_permissions`** -- permissoes por modulo do membro ativo
-- `id`, `member_id` (FK organization_members), `module_code`, `can_view`, `can_create`, `can_update`, `can_delete`
+Fluxo DOCX:
+  File → mammoth.extractRawText() → texto limpo → Edge Function → Gemini (texto) → JSON estruturado
 
-**`member_project_access`** -- acesso a obras especificas
-- `id`, `member_id` (FK organization_members), `obra_id` (FK obras), `access_level` (full/read)
-
-Adicionar colunas a `organization_members`:
-- `member_status` (active/suspended/invited) default 'active'
-- `job_title`
-- `invited_by`
-- `last_seen_at`
-- `obra_scope` (all/assigned/none)
-
-RLS: todas as tabelas com politicas baseadas em `get_org_member_ids()` para leitura; escrita restrita a admin/owner da org.
-
-### 2. Componentes de UI (10+ novos ficheiros)
-
-Criar pasta `src/components/team/`:
-
-- **`TeamManagementSection.tsx`** -- Container principal com 3 tabs (Membros, Convites, Perfis de Acesso)
-- **`MembersTable.tsx`** -- Tabela de membros com filtros (nome, role, estado, modulo), badges de estado, acoes
-- **`InvitationsTable.tsx`** -- Tabela de convites pendentes com filtros e acoes (reenviar, revogar)
-- **`AccessProfilesPanel.tsx`** -- Presets de permissoes (Admin, Gestor de Obra, Tecnico, Financeiro, Leitor) com edicao
-- **`AddCollaboratorModal.tsx`** -- Modal/Drawer com 4 passos:
-  1. Dados do colaborador (nome, email, telemovel, cargo, nota)
-  2. Role base (admin, manager, technician, finance, viewer)
-  3. Permissoes por modulo (13 modulos x 4 acoes + scope)
-  4. Acesso a obras (todas / especificas / nenhuma)
-- **`EditPermissionsModal.tsx`** -- Editar permissoes de membro existente
-- **`ModulePermissionsGrid.tsx`** -- Componente reutilizavel com checkboxes por modulo/acao
-- **`ObraSelector.tsx`** -- Lista pesquisavel de obras para selecao multipla
-- **`MemberStatusBadge.tsx`** -- Badge visual para estados (active, suspended, invited, revoked)
-- **`ConfirmActionDialog.tsx`** -- Dialogo de confirmacao para suspender/remover/revogar
-
-### 3. Hook de Dados
-
-**`src/hooks/useTeamManagement.ts`**:
-- Query membros da organizacao (join profiles + module_permissions + project_access)
-- Query convites pendentes
-- Mutations: criar convite, reenviar, revogar, suspender membro, reativar, remover, editar permissoes
-- Dados mock iniciais para demo enquanto backend nao esta ligado
-
-### 4. Integracao no Perfil
-
-Substituir o empty state atual da tab "Equipa" em `Perfil.tsx` pelo novo `TeamManagementSection`. Manter o gate de plano (trial/starter mostra upgrade prompt).
-
-### 5. Edge Function Update
-
-Atualizar `admin-user-actions` para:
-- Aceitar `modulePermissions` e `obraScope` no payload de `create_user`
-- Criar registos em `team_invitations`, `team_invitation_module_permissions`
-- Ao aceitar convite, copiar permissoes para `member_module_permissions` e `member_project_access`
-
-### 6. Presets de Permissoes
-
-Definir no frontend (`src/config/accessProfiles.ts`) os 5 presets com permissoes padrao por modulo, usados como ponto de partida no step 2 do modal.
-
-## Modulos do Sistema (13)
-
-Orcamentos, Obras, Cronograma, RDO, Medicoes, Progresso, Documentos, Clientes, Fornecedores, Dashboards, Equipa, Configuracoes, Axia
-
-## Microcopy Obrigatoria
-
-- Titulo: "Gestao de Equipa"
-- Descricao: "Adicione colaboradores a sua conta para gerir obras em conjunto."
-- No modal: "Este colaborador sera adicionado a sua conta da empresa. Nao sera criada uma nova conta de empresa."
-
-## Ficheiros a Criar/Editar
-
-| Ficheiro | Acao |
-|---|---|
-| `supabase/migrations/...` | Criar tabelas + RLS |
-| `src/components/team/TeamManagementSection.tsx` | Criar |
-| `src/components/team/MembersTable.tsx` | Criar |
-| `src/components/team/InvitationsTable.tsx` | Criar |
-| `src/components/team/AccessProfilesPanel.tsx` | Criar |
-| `src/components/team/AddCollaboratorModal.tsx` | Criar |
-| `src/components/team/EditPermissionsModal.tsx` | Criar |
-| `src/components/team/ModulePermissionsGrid.tsx` | Criar |
-| `src/components/team/ObraSelector.tsx` | Criar |
-| `src/components/team/MemberStatusBadge.tsx` | Criar |
-| `src/components/team/ConfirmActionDialog.tsx` | Criar |
-| `src/components/team/index.ts` | Criar |
-| `src/config/accessProfiles.ts` | Criar |
-| `src/hooks/useTeamManagement.ts` | Criar |
-| `src/types/team.ts` | Criar |
-| `src/pages/Perfil.tsx` | Editar (substituir tab Equipa) |
-| `supabase/functions/admin-user-actions/index.ts` | Editar |
-
-## Notas de Seguranca
-
-- RLS em todas as tabelas novas baseada em org membership
-- Impedir convite duplicado para mesmo email na mesma org
-- Impedir remover ultimo owner
-- Validar modulos contra plano ativo via `planLimits`
-- Nao permitir roles viewer/technician/finance gerir equipa
-- Trigger para impedir auto-remocao do owner
+Fluxo Excel (inalterado):
+  File → parseExcelFile → rows/headers → Edge Function → Gemini (tool call) → JSON estruturado
+```
 
