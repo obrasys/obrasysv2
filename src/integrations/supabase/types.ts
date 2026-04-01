@@ -8241,6 +8241,7 @@ export type Database = {
       }
       get_user_org_id: { Args: never; Returns: string }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
+      is_org_admin: { Args: never; Returns: boolean }
       is_quote_request_owner: {
         Args: { _quote_request_id: string }
         Returns: boolean
