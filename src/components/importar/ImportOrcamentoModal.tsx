@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
+import mammoth from 'mammoth';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Loader2, CheckCircle2, Sparkles, ArrowRight, ArrowLeft, FileSpreadsheet } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Sparkles, ArrowRight, ArrowLeft, FileSpreadsheet, FileText } from 'lucide-react';
 import { parseExcelFile, type ParsedExcelData } from '@/lib/excel-budget-parser';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +42,34 @@ interface Props {
 }
 
 type Step = 'upload' | 'processing' | 'preview' | 'confirm';
+type FileType = 'excel' | 'pdf' | 'docx';
+
+const getFileType = (file: File): FileType => {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (['pdf'].includes(ext)) return 'pdf';
+  if (['docx'].includes(ext)) return 'docx';
+  return 'excel';
+};
+
+const readFileAsBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result as ArrayBuffer;
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      bytes.forEach((b) => (binary += String.fromCharCode(b)));
+      resolve(btoa(binary));
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+
+const readDocxAsText = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
 
 export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
@@ -66,6 +95,33 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
     onOpenChange(open);
   };
 
+  const processWithAI = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke('organize-budget-import', { body });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      toast.error('Erro ao processar o ficheiro com IA.');
+      setStep('upload');
+      return;
+    }
+
+    if (data?.error) {
+      toast.error(data.error);
+      setStep('upload');
+      return;
+    }
+
+    console.log('AI organized budget:', JSON.stringify(data, null, 2));
+    const budget = data as OrganizedBudget;
+    const artigosCount = budget.capitulos?.reduce((sum, c) => sum + (c.artigos?.length || 0), 0) ?? 0;
+    if (artigosCount === 0) {
+      toast.warning('A IA não encontrou artigos no ficheiro. Verifique se o ficheiro contém dados de orçamento.');
+    }
+    setOrganized(budget);
+    setTitulo(data.titulo_sugerido || file?.name.replace(/\.[^.]+$/, '') || 'Orçamento Importado');
+    setStep('preview');
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!acceptedFiles.length) return;
     const f = acceptedFiles[0];
@@ -73,40 +129,28 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
     setStep('processing');
 
     try {
-      const parsed: ParsedExcelData = await parseExcelFile(f);
+      const fileType = getFileType(f);
 
-      if (parsed.rows.length === 0) {
-        toast.error('O ficheiro não contém dados.');
-        setStep('upload');
-        return;
+      if (fileType === 'pdf') {
+        const base64 = await readFileAsBase64(f);
+        await processWithAI({ pdfBase64: base64, fileName: f.name });
+      } else if (fileType === 'docx') {
+        const rawText = await readDocxAsText(f);
+        if (!rawText.trim()) {
+          toast.error('O ficheiro DOCX não contém texto.');
+          setStep('upload');
+          return;
+        }
+        await processWithAI({ rawText, fileName: f.name });
+      } else {
+        const parsed: ParsedExcelData = await parseExcelFile(f);
+        if (parsed.rows.length === 0) {
+          toast.error('O ficheiro não contém dados.');
+          setStep('upload');
+          return;
+        }
+        await processWithAI({ rows: parsed.rows, headers: parsed.headers });
       }
-
-      const { data, error } = await supabase.functions.invoke('organize-budget-import', {
-        body: { rows: parsed.rows, headers: parsed.headers },
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        toast.error('Erro ao processar o ficheiro com IA.');
-        setStep('upload');
-        return;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        setStep('upload');
-        return;
-      }
-
-      console.log('AI organized budget:', JSON.stringify(data, null, 2));
-      const budget = data as OrganizedBudget;
-      const artigosCount = budget.capitulos?.reduce((sum, c) => sum + (c.artigos?.length || 0), 0) ?? 0;
-      if (artigosCount === 0) {
-        toast.warning('A IA não encontrou artigos no ficheiro. Verifique se o Excel contém dados de orçamento.');
-      }
-      setOrganized(budget);
-      setTitulo(data.titulo_sugerido || f.name.replace(/\.[^.]+$/, ''));
-      setStep('preview');
     } catch (err) {
       console.error(err);
       toast.error('Erro ao ler o ficheiro.');
@@ -120,6 +164,8 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls'],
       'text/csv': ['.csv'],
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
     },
     maxFiles: 1,
     multiple: false,
@@ -134,14 +180,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
   const parseNumeric = (value: unknown, fallback = 0) => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value !== 'string') return fallback;
-
-    const cleaned = value
-      .trim()
-      .replace(/\s/g, '')
-      .replace(/€|eur/gi, '')
-      .replace(/\.(?=\d{3}(\D|$))/g, '')
-      .replace(',', '.');
-
+    const cleaned = value.trim().replace(/\s/g, '').replace(/€|eur/gi, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
     const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : fallback;
   };
@@ -165,12 +204,8 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
     setIsSaving(true);
 
     try {
-      // Generate budget code
-      const { data: codigo } = await supabase.rpc('generate_orcamento_codigo', {
-        p_user_id: user.id,
-      });
+      const { data: codigo } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
 
-      // Insert budget
       const { data: orcamento, error: orcErr } = await supabase
         .from('orcamentos')
         .insert({
@@ -185,11 +220,8 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
         .select('id')
         .single();
 
-      if (orcErr || !orcamento) {
-        throw new Error(orcErr?.message || 'Erro ao criar orçamento');
-      }
+      if (orcErr || !orcamento) throw new Error(orcErr?.message || 'Erro ao criar orçamento');
 
-      // Insert chapters and articles
       let totalArtigosInseridos = 0;
       for (let i = 0; i < organized.capitulos.length; i++) {
         const cap = organized.capitulos[i];
@@ -206,7 +238,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           .single();
 
         if (capErr || !capitulo) {
-          console.error('Cap error:', capErr?.message, capErr?.details, capErr?.hint, capErr?.code);
+          console.error('Cap error:', capErr?.message);
           toast.error(`Erro ao criar capítulo "${cap.titulo}": ${capErr?.message || 'Erro desconhecido'}`);
           continue;
         }
@@ -215,11 +247,9 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           .map((art, idx) => {
             const descricao = String(art.descricao ?? '').trim();
             if (!descricao) return null;
-
             const quantidade = parseNumeric(art.quantidade, 1);
             const precoUnitario = parseNumeric(art.preco_unitario, 0);
             const unidade = normalizeUnit(art.unidade);
-
             return {
               capitulo_id: capitulo.id,
               codigo: (art.codigo && String(art.codigo).trim()) || `${capNumero}.${idx + 1}`,
@@ -237,22 +267,17 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
         if (artigosNormalizados.length === 0) continue;
 
-        const artigosToInsert = artigosNormalizados;
-
-        const { error: artErr } = await supabase
-          .from('artigos_orcamento')
-          .insert(artigosToInsert);
-
+        const { error: artErr } = await supabase.from('artigos_orcamento').insert(artigosNormalizados);
         if (artErr) {
           console.error('Artigos error for cap', cap.titulo, ':', artErr);
           toast.error(`Erro ao inserir artigos do capítulo "${cap.titulo}": ${artErr.message}`);
         } else {
-          totalArtigosInseridos += artigosToInsert.length;
+          totalArtigosInseridos += artigosNormalizados.length;
         }
       }
 
       if (totalArtigosInseridos === 0) {
-        toast.warning('Orçamento criado mas sem artigos. Verifique o ficheiro Excel.');
+        toast.warning('Orçamento criado mas sem artigos. Verifique o ficheiro.');
       }
 
       toast.success('Orçamento importado com sucesso!');
@@ -266,6 +291,9 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
     }
   };
 
+  const fileType = file ? getFileType(file) : null;
+  const FileIcon = fileType === 'excel' ? FileSpreadsheet : FileText;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -275,7 +303,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
             Importar Orçamento com IA
           </DialogTitle>
           <DialogDescription>
-            {step === 'upload' && 'Faça upload do seu ficheiro Excel e a IA organizará o orçamento automaticamente.'}
+            {step === 'upload' && 'Faça upload do seu ficheiro e a IA organizará o orçamento automaticamente.'}
             {step === 'processing' && 'A IA está a analisar e organizar o seu orçamento...'}
             {step === 'preview' && 'Revise o orçamento organizado pela IA antes de confirmar.'}
             {step === 'confirm' && 'Defina o título e margem de lucro do orçamento.'}
@@ -283,7 +311,6 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
-          {/* Step 1: Upload */}
           {step === 'upload' && (
             <div
               {...getRootProps()}
@@ -294,28 +321,27 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
               }`}
             >
               <input {...getInputProps()} />
-              <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium">
                 {isDragActive ? 'Solte o ficheiro aqui...' : 'Arraste o ficheiro ou clique para selecionar'}
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Formatos aceites: .xlsx, .xls, .csv — Máx. 500 linhas
+                Formatos aceites: .xlsx, .xls, .csv, .pdf, .docx
               </p>
             </div>
           )}
 
-          {/* Step 2: Processing */}
           {step === 'processing' && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
               <p className="text-lg font-medium">A IA está a organizar o orçamento...</p>
-              <p className="text-sm text-muted-foreground">
-                Ficheiro: {file?.name}
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <FileIcon className="w-4 h-4" />
+                {file?.name}
               </p>
             </div>
           )}
 
-          {/* Step 3: Preview */}
           {step === 'preview' && organized && (
             <div className="space-y-4">
               <div className="flex items-center gap-4 flex-wrap">
@@ -347,20 +373,12 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
                         <TableBody>
                           {cap.artigos.map((art, ai) => (
                             <TableRow key={ai}>
-                              <TableCell className="font-mono text-xs">
-                                {art.codigo || `${cap.numero}.${ai + 1}`}
-                              </TableCell>
+                              <TableCell className="font-mono text-xs">{art.codigo || `${cap.numero}.${ai + 1}`}</TableCell>
                               <TableCell className="text-sm">{art.descricao}</TableCell>
                               <TableCell className="text-xs">{art.unidade}</TableCell>
-                              <TableCell className="text-right text-sm">
-                                {art.quantidade}
-                              </TableCell>
-                              <TableCell className="text-right text-sm">
-                                €{art.preco_unitario.toFixed(2)}
-                              </TableCell>
-                              <TableCell className="text-right text-sm font-medium">
-                                €{(art.quantidade * art.preco_unitario).toFixed(2)}
-                              </TableCell>
+                              <TableCell className="text-right text-sm">{art.quantidade}</TableCell>
+                              <TableCell className="text-right text-sm">€{art.preco_unitario.toFixed(2)}</TableCell>
+                              <TableCell className="text-right text-sm font-medium">€{(art.quantidade * art.preco_unitario).toFixed(2)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -372,28 +390,15 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Step 4: Confirm */}
           {step === 'confirm' && (
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <Label htmlFor="titulo">Título do Orçamento</Label>
-                <Input
-                  id="titulo"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="Ex: Remodelação Apartamento T3"
-                />
+                <Input id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Remodelação Apartamento T3" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="margem">Margem de Lucro (%)</Label>
-                <Input
-                  id="margem"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={margemLucro}
-                  onChange={(e) => setMargemLucro(Number(e.target.value))}
-                />
+                <Input id="margem" type="number" min={0} max={100} value={margemLucro} onChange={(e) => setMargemLucro(Number(e.target.value))} />
               </div>
               <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-sm">
                 <p><strong>Capítulos:</strong> {organized?.capitulos.length}</p>
@@ -408,20 +413,17 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           {step === 'preview' && (
             <>
               <Button variant="outline" onClick={() => { reset(); }}>
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Novo ficheiro
+                <ArrowLeft className="w-4 h-4 mr-1" /> Novo ficheiro
               </Button>
               <Button onClick={() => setStep('confirm')}>
-                Continuar
-                <ArrowRight className="w-4 h-4 ml-1" />
+                Continuar <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </>
           )}
           {step === 'confirm' && (
             <>
               <Button variant="outline" onClick={() => setStep('preview')}>
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Voltar
+                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
               </Button>
               <Button onClick={handleSave} disabled={isSaving || !titulo.trim()}>
                 {isSaving ? (
