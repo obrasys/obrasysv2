@@ -237,8 +237,7 @@ export function CapituloAccordion({
                     </div>
                   </div>
                 );
-              })()
-              ) : (
+              })() : (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchQuery ? 'Nenhum artigo encontrado' : 'Nenhum artigo neste capítulo'}
                 </div>
