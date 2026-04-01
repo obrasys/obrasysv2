@@ -31,9 +31,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
-import { AddUserDialog } from '@/components/admin/AddUserDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
+import { TeamManagementSection } from '@/components/team';
 
 export default function PerfilPage() {
   const navigate = useNavigate();
@@ -43,7 +43,6 @@ export default function PerfilPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
-  const [addUserOpen, setAddUserOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { tier } = useFeatureGate();
   
@@ -479,34 +478,7 @@ export default function PerfilPage() {
 
           {/* Team Tab */}
           <TabsContent value="equipa">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-10">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <UserPlus className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-1">Gestão de Equipa</h3>
-                  <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
-                    Adicione colaboradores à sua conta para gerir obras em conjunto.
-                  </p>
-                  <Button
-                    onClick={() => {
-                      if (tier === 'starter' || tier === 'trial') {
-                        setShowUpgradeModal(true);
-                      } else {
-                        setAddUserOpen(true);
-                      }
-                    }}
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Adicionar Utilizador
-                    {(tier === 'starter' || tier === 'trial') && (
-                      <Badge variant="secondary" className="ml-2 text-[10px]">PRO</Badge>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TeamManagementSection />
           </TabsContent>
         </Tabs>
       </div>
@@ -514,10 +486,6 @@ export default function PerfilPage() {
       <EmpresaModal 
         open={empresaModalOpen} 
         onOpenChange={setEmpresaModalOpen} 
-      />
-      <AddUserDialog 
-        open={addUserOpen} 
-        onOpenChange={setAddUserOpen} 
       />
       <UpgradePromptModal
         open={showUpgradeModal}

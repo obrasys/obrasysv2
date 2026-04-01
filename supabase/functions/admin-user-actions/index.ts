@@ -39,7 +39,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { action, userId, email, nome, role } = body;
+    const { action, userId, email, nome, role, modulePermissions, obraScope, selectedObras, invitationId } = body;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Actions that require super admin
@@ -123,16 +123,52 @@ serve(async (req: Request): Promise<Response> => {
             .single();
 
           if (inviterOrg?.organization_id) {
-            await serviceClient
+            const { data: newMember } = await serviceClient
               .from("organization_members")
               .upsert({
                 organization_id: inviterOrg.organization_id,
                 user_id: newUser.user.id,
                 role: requestedRole,
+                member_status: "active",
+                job_title: body.job_title || null,
+                invited_by: callingUser.id,
+                obra_scope: obraScope || "all",
               }, { onConflict: 'organization_id,user_id' })
-              .select();
+              .select()
+              .single();
             
             console.log(`User ${newUser.user.id} added to organization ${inviterOrg.organization_id}`);
+
+            // Copy module permissions from invitation to member
+            if (newMember && modulePermissions && Array.isArray(modulePermissions)) {
+              const permRows = modulePermissions.map((p: any) => ({
+                member_id: newMember.id,
+                module_code: p.module_code,
+                can_view: p.can_view ?? false,
+                can_create: p.can_create ?? false,
+                can_update: p.can_update ?? false,
+                can_delete: p.can_delete ?? false,
+              }));
+              await serviceClient.from("member_module_permissions").insert(permRows);
+            }
+
+            // Create project access records for assigned obras
+            if (newMember && obraScope === "assigned" && selectedObras && Array.isArray(selectedObras)) {
+              const accessRows = selectedObras.map((obraId: string) => ({
+                member_id: newMember.id,
+                obra_id: obraId,
+                access_level: "full",
+              }));
+              await serviceClient.from("member_project_access").insert(accessRows);
+            }
+
+            // Update invitation status to accepted
+            if (invitationId) {
+              await serviceClient
+                .from("team_invitations")
+                .update({ status: "accepted", accepted_at: new Date().toISOString(), accepted_by_user_id: newUser.user.id })
+                .eq("id", invitationId);
+            }
           } else {
             const { data: newOrg } = await serviceClient
               .from("organizations")
