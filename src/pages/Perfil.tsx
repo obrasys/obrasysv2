@@ -487,10 +487,6 @@ export default function PerfilPage() {
         open={empresaModalOpen} 
         onOpenChange={setEmpresaModalOpen} 
       />
-      <AddUserDialog 
-        open={addUserOpen} 
-        onOpenChange={setAddUserOpen} 
-      />
       <UpgradePromptModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
