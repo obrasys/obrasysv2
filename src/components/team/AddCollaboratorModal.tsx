@@ -16,7 +16,7 @@ import { ChevronLeft, ChevronRight, Send, Info, User, Shield, LayoutGrid, Buildi
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  obras: { id: string; nome: string; estado: string }[];
+  obras: { id: string; nome: string; status: string }[];
   onSubmit: (data: InviteFormData) => void;
   isPending: boolean;
 }

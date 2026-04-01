@@ -13,7 +13,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   member: TeamMember | null;
-  obras: { id: string; nome: string; estado: string }[];
+  obras: { id: string; nome: string; status: string }[];
   onSave: (data: {
     memberId: string;
     permissions: ModulePermission[];

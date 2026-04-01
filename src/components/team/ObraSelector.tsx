@@ -55,7 +55,7 @@ export function ObraSelector({ obras, selected, onChange }: Props) {
               />
               <span className="text-sm flex-1 truncate">{obra.nome}</span>
               <Badge variant="outline" className="text-[10px] shrink-0">
-                {obra.estado}
+                {obra.status}
               </Badge>
             </label>
           ))
