@@ -188,6 +188,14 @@ export function CapituloAccordion({
                       isReadOnly={isReadOnly}
                     />
                   ))}
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 border-t mt-2">
+                    <div className="col-span-10 text-sm font-semibold text-right">
+                      Subtotal Capítulo:
+                    </div>
+                    <div className="col-span-2 text-sm text-right font-semibold">
+                      {formatCurrency(capitulo.valor_total)}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
