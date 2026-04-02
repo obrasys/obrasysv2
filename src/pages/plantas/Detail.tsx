@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileText, Image, Loader2, Table2 } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
-import { usePlanMeasurements, calculateLineLength } from "@/hooks/usePlanMeasurements";
+import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
 import { usePdfRenderer } from "@/hooks/usePdfRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
