@@ -121,7 +121,7 @@ export function PlanViewer({
 
     if (mode === "calibrate") {
       onCalibrationClick({ x: imgX, y: imgY });
-    } else if (mode === "measure_line" || mode === "measure_count") {
+    } else if (mode === "measure_line" || mode === "measure_count" || mode === "measure_area") {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
   }, [mode, zoom, position, onCalibrationClick, onMeasurementClick]);
