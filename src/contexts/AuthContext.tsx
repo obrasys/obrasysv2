@@ -110,23 +110,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let profileUserId: string | null = null;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer profile fetch to avoid deadlock
-        if (session?.user) {
+        if (event === "SIGNED_OUT") {
+          profileUserId = null;
+          setProfile(null);
+          setOrganization(null);
+          return;
+        }
+
+        // Only fetch profile if user actually changed (prevents refresh token loops)
+        if (session?.user && session.user.id !== profileUserId) {
+          profileUserId = session.user.id;
           setTimeout(() => {
             fetchProfile(session.user.id);
           }, 0);
-        } else {
-          setProfile(null);
-          setOrganization(null);
-        }
-
-        if (event === "SIGNED_OUT") {
+        } else if (!session?.user) {
+          profileUserId = null;
           setProfile(null);
           setOrganization(null);
         }
@@ -139,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        profileUserId = session.user.id;
         fetchProfile(session.user.id);
       }
       
