@@ -1,15 +1,16 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanMappingTable } from "@/components/plantas/PlanMappingTable";
 import { PlanQuantitativosReview } from "@/components/plantas/PlanQuantitativosReview";
 import { PlanBudgetGenerator } from "@/components/plantas/PlanBudgetGenerator";
+import { AxiaPlanSuggestionsPanel } from "@/components/plantas/AxiaPlanSuggestionsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Table2, ClipboardList } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
+import { useAxiaPlanSuggestions } from "@/hooks/useAxiaPlanSuggestions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,7 @@ export default function PlanQuantitativos() {
   const plan = plans.find((p) => p.id === planId);
   const { measurements, updateMeasurement } = usePlanMeasurements(planId);
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
+  const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
 
   // Load articles from base_precos_personalizada + default_articles
   const articlesQuery = useQuery({
@@ -37,6 +39,17 @@ export default function PlanQuantitativos() {
       return [...custom, ...defaults];
     },
   });
+
+  const handleRefreshAxia = () => {
+    if (!obraId) return;
+    const articles = articlesQuery.data ?? [];
+    fetchSuggestions({
+      obraId,
+      measurements,
+      mappings,
+      articles,
+    });
+  };
 
   if (plansLoading) {
     return (
@@ -83,52 +96,66 @@ export default function PlanQuantitativos() {
           />
         </div>
 
-        <Tabs defaultValue="mapping">
-          <TabsList>
-            <TabsTrigger value="mapping" className="gap-1.5">
-              <Table2 className="w-4 h-4" />
-              Mapeamento
-            </TabsTrigger>
-            <TabsTrigger value="review" className="gap-1.5">
-              <ClipboardList className="w-4 h-4" />
-              Revisão
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+          {/* Main content */}
+          <Tabs defaultValue="mapping">
+            <TabsList>
+              <TabsTrigger value="mapping" className="gap-1.5">
+                <Table2 className="w-4 h-4" />
+                Mapeamento
+              </TabsTrigger>
+              <TabsTrigger value="review" className="gap-1.5">
+                <ClipboardList className="w-4 h-4" />
+                Revisão
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="mapping" className="mt-4">
-            <PlanMappingTable
-              measurements={measurements}
-              mappings={mappings}
-              articles={articles}
-              onCreateMapping={(data) => createMapping.mutate(data)}
-              onUpdateMapping={(data) => updateMapping.mutate(data)}
-              onDeleteMapping={(id) => deleteMapping.mutate(id)}
-              onUpdateMeasurement={(id, updates) =>
-                updateMeasurement.mutate({
-                  id,
-                  valorAjustado: updates.valorAjustado,
-                  valorFinal: updates.valorFinal,
-                  estadoValidacao: updates.estadoValidacao as any,
-                })
-              }
-              isLoading={articlesQuery.isLoading}
-            />
-          </TabsContent>
+            <TabsContent value="mapping" className="mt-4">
+              <PlanMappingTable
+                measurements={measurements}
+                mappings={mappings}
+                articles={articles}
+                onCreateMapping={(data) => createMapping.mutate(data)}
+                onUpdateMapping={(data) => updateMapping.mutate(data)}
+                onDeleteMapping={(id) => deleteMapping.mutate(id)}
+                onUpdateMeasurement={(id, updates) =>
+                  updateMeasurement.mutate({
+                    id,
+                    valorAjustado: updates.valorAjustado,
+                    valorFinal: updates.valorFinal,
+                    estadoValidacao: updates.estadoValidacao as any,
+                  })
+                }
+                isLoading={articlesQuery.isLoading}
+              />
+            </TabsContent>
 
-          <TabsContent value="review" className="mt-4">
-            <PlanQuantitativosReview
-              measurements={measurements}
-              mappings={mappings}
-              articles={articles}
-              onValidateMeasurement={(id, estado) =>
-                updateMeasurement.mutate({ id, estadoValidacao: estado })
-              }
-              onUpdateFinal={(id, valorFinal) =>
-                updateMeasurement.mutate({ id, valorFinal })
-              }
+            <TabsContent value="review" className="mt-4">
+              <PlanQuantitativosReview
+                measurements={measurements}
+                mappings={mappings}
+                articles={articles}
+                onValidateMeasurement={(id, estado) =>
+                  updateMeasurement.mutate({ id, estadoValidacao: estado })
+                }
+                onUpdateFinal={(id, valorFinal) =>
+                  updateMeasurement.mutate({ id, valorFinal })
+                }
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Axia sidebar */}
+          <div className="space-y-4">
+            <AxiaPlanSuggestionsPanel
+              suggestions={suggestions}
+              loading={axiaLoading}
+              error={axiaError}
+              onRefresh={handleRefreshAxia}
+              onDismiss={dismissSuggestion}
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
