@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Minus, Hash, Trash2, Check, X, Pencil } from "lucide-react";
+import { Minus, Hash, Pentagon, Trash2, Check, X, Pencil } from "lucide-react";
 import type { PlanMeasurement } from "@/types/plan-measurements";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ interface PlanMeasurementsListProps {
 
 const TIPO_ICON: Record<string, typeof Minus> = {
   linha: Minus,
+  area: Pentagon,
   contagem: Hash,
 };
 
@@ -45,9 +46,11 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
   };
 
   const linhas = measurements.filter((m) => m.tipo === "linha");
+  const areas = measurements.filter((m) => m.tipo === "area");
   const contagens = measurements.filter((m) => m.tipo === "contagem");
 
   const totalLength = linhas.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
+  const totalArea = areas.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
   const totalCount = contagens.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
 
   return (
@@ -71,6 +74,11 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
               {linhas.length > 0 && (
                 <span className="text-muted-foreground">
                   <Minus className="w-3 h-3 inline mr-0.5" /> {totalLength.toFixed(2)} m
+                </span>
+              )}
+              {areas.length > 0 && (
+                <span className="text-muted-foreground">
+                  <Pentagon className="w-3 h-3 inline mr-0.5" /> {totalArea.toFixed(2)} m²
                 </span>
               )}
               {contagens.length > 0 && (

@@ -15,14 +15,14 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileText, Image, Loader2, Table2 } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
-import { usePlanMeasurements, calculateLineLength } from "@/hooks/usePlanMeasurements";
+import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
 import { usePdfRenderer } from "@/hooks/usePdfRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
 
-type ViewMode = "view" | "calibrate" | "measure_line" | "measure_count";
+type ViewMode = "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -79,7 +79,7 @@ export default function PlanDetail() {
 
   // Save dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
   const [saveEtiqueta, setSaveEtiqueta] = useState("");
   const [saveCamada, setSaveCamada] = useState("");
 
@@ -110,11 +110,10 @@ export default function PlanDetail() {
 
   const handleMeasurementClick = useCallback((point: { x: number; y: number }) => {
     if (mode === "measure_count") {
-      // Each click = one count item saved immediately
       const coords = [point];
       setPendingSave({ tipo: "contagem", coordinates: coords, valor: 1 });
       setShowSaveDialog(true);
-    } else if (mode === "measure_line") {
+    } else if (mode === "measure_line" || mode === "measure_area") {
       setActivePoints((prev) => [...prev, point]);
     }
   }, [mode]);
@@ -123,6 +122,10 @@ export default function PlanDetail() {
     if (mode === "measure_line" && activePoints.length >= 2 && pixelsPerMeter > 0) {
       const length = calculateLineLength(activePoints, pixelsPerMeter);
       setPendingSave({ tipo: "linha", coordinates: [...activePoints], valor: length });
+      setShowSaveDialog(true);
+    } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
+      const area = calculatePolygonArea(activePoints, pixelsPerMeter);
+      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area });
       setShowSaveDialog(true);
     }
   }, [mode, activePoints, pixelsPerMeter]);
@@ -134,7 +137,7 @@ export default function PlanDetail() {
       tipo: pendingSave.tipo,
       coordinates: pendingSave.coordinates,
       valorBruto: parseFloat(pendingSave.valor.toFixed(4)),
-      unidade: pendingSave.tipo === "contagem" ? "un" : "m",
+      unidade: pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m",
       camada: saveCamada || undefined,
       etiqueta: saveEtiqueta || undefined,
       cor,
@@ -145,7 +148,7 @@ export default function PlanDetail() {
     setShowSaveDialog(false);
     setSaveEtiqueta("");
     setSaveCamada("");
-    toast.success(`Medição guardada: ${pendingSave.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)} ${pendingSave.tipo === "contagem" ? "un" : "m"}`);
+    toast.success(`Medição guardada: ${pendingSave.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)} ${pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m"}`);
   };
 
   const handleCancelSave = () => {
@@ -153,7 +156,7 @@ export default function PlanDetail() {
     setPendingSave(null);
     setSaveEtiqueta("");
     setSaveCamada("");
-    if (mode === "measure_line") setActivePoints([]);
+    if (mode === "measure_line" || mode === "measure_area") setActivePoints([]);
   };
 
   const handleUndo = () => {
@@ -280,7 +283,7 @@ export default function PlanDetail() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">
-              {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : "Guardar Contagem"}
+              {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : pendingSave?.tipo === "area" ? "Guardar Medição de Área" : "Guardar Contagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -288,7 +291,7 @@ export default function PlanDetail() {
               <p className="text-2xl font-bold text-foreground">
                 {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
                 <span className="text-sm font-normal text-muted-foreground">
-                  {pendingSave?.tipo === "contagem" ? "un" : "m"}
+                  {pendingSave?.tipo === "contagem" ? "un" : pendingSave?.tipo === "area" ? "m²" : "m"}
                 </span>
               </p>
             </div>

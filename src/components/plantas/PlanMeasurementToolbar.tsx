@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MousePointer2, Minus, Hash, Undo2 } from "lucide-react";
+import { MousePointer2, Minus, Hash, Pentagon, Undo2 } from "lucide-react";
 
-type MeasureMode = "view" | "calibrate" | "measure_line" | "measure_count";
+type MeasureMode = "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
 
 interface PlanMeasurementToolbarProps {
   mode: MeasureMode;
@@ -22,6 +22,7 @@ export function PlanMeasurementToolbar({
   const tools: Array<{ id: MeasureMode; icon: typeof MousePointer2; label: string; tip: string }> = [
     { id: "view", icon: MousePointer2, label: "Navegar", tip: "Arrastar e zoom" },
     { id: "measure_line", icon: Minus, label: "Linha", tip: "Medir comprimentos (clique pontos, duplo-clique termina)" },
+    { id: "measure_area", icon: Pentagon, label: "Área", tip: "Medir áreas (clique vértices do polígono, duplo-clique fecha)" },
     { id: "measure_count", icon: Hash, label: "Contagem", tip: "Contar elementos (clique para marcar)" },
   ];
 

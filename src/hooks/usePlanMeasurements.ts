@@ -165,3 +165,19 @@ export function calculateLineLength(
   }
   return total / pixelsPerMeter;
 }
+
+/** Calculate polygon area in m² from coordinates using Shoelace formula */
+export function calculatePolygonArea(
+  coordinates: Array<{ x: number; y: number }>,
+  pixelsPerMeter: number
+): number {
+  if (coordinates.length < 3 || pixelsPerMeter <= 0) return 0;
+  let area = 0;
+  const n = coordinates.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += coordinates[i].x * coordinates[j].y;
+    area -= coordinates[j].x * coordinates[i].y;
+  }
+  return Math.abs(area) / 2 / (pixelsPerMeter * pixelsPerMeter);
+}

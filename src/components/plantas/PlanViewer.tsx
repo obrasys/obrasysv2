@@ -8,7 +8,7 @@ interface PlanViewerProps {
   imageDataUrl: string | null;
   dimensions: { width: number; height: number };
   isRendering: boolean;
-  mode: "view" | "calibrate" | "measure_line" | "measure_count";
+  mode: "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
   calibrationPoints: Array<{ x: number; y: number }>;
   onCalibrationClick: (point: { x: number; y: number }) => void;
   measurements?: Array<{
@@ -121,7 +121,7 @@ export function PlanViewer({
 
     if (mode === "calibrate") {
       onCalibrationClick({ x: imgX, y: imgY });
-    } else if (mode === "measure_line" || mode === "measure_count") {
+    } else if (mode === "measure_line" || mode === "measure_count" || mode === "measure_area") {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
   }, [mode, zoom, position, onCalibrationClick, onMeasurementClick]);
@@ -144,7 +144,7 @@ export function PlanViewer({
   };
 
   const getCursorStyle = () => {
-    if (mode === "calibrate" || mode === "measure_line" || mode === "measure_count") return "crosshair";
+    if (mode === "calibrate" || mode === "measure_line" || mode === "measure_count" || mode === "measure_area") return "crosshair";
     return "grab";
   };
 
@@ -181,6 +181,7 @@ export function PlanViewer({
           <Ruler className="w-3.5 h-3.5" />
           {mode === "calibrate" && `Calibração — Clique no ponto ${calibrationPoints.length + 1} de 2`}
           {mode === "measure_line" && "Medição de linha — Clique para marcar pontos, duplo-clique para terminar"}
+          {mode === "measure_area" && "Medição de área — Clique vértices do polígono, duplo-clique para fechar"}
           {mode === "measure_count" && "Contagem — Clique para marcar elementos"}
         </div>
       )}
@@ -197,7 +198,7 @@ export function PlanViewer({
           onWheel={handleWheel}
           onClick={handleStageClick}
           onDblClick={() => {
-            if (mode === "measure_line") onMeasurementComplete?.();
+            if (mode === "measure_line" || mode === "measure_area") onMeasurementComplete?.();
           }}
           draggable={mode === "view"}
           x={position.x}
@@ -254,6 +255,28 @@ export function PlanViewer({
                   </Group>
                 );
               }
+              if (m.tipo === "area" && m.coordinates.length >= 3) {
+                const flatPoints = m.coordinates.flatMap((c) => [c.x, c.y]);
+                const cx = m.coordinates.reduce((s, c) => s + c.x, 0) / m.coordinates.length;
+                const cy = m.coordinates.reduce((s, c) => s + c.y, 0) / m.coordinates.length;
+                return (
+                  <Group key={m.id}>
+                    <Line points={flatPoints} stroke={m.cor} strokeWidth={2 / zoom} closed fill={m.cor} opacity={0.2} />
+                    <Line points={flatPoints} stroke={m.cor} strokeWidth={2.5 / zoom} closed />
+                    {m.coordinates.map((c, i) => (
+                      <Circle key={i} x={c.x} y={c.y} radius={4 / zoom} fill={m.cor} stroke="white" strokeWidth={1.5 / zoom} />
+                    ))}
+                    <Text
+                      x={cx - 30 / zoom}
+                      y={cy - 6 / zoom}
+                      text={`${m.valor_bruto.toFixed(2)} ${m.unidade}${m.etiqueta ? ` (${m.etiqueta})` : ""}`}
+                      fontSize={12 / zoom}
+                      fill={m.cor}
+                      fontStyle="bold"
+                    />
+                  </Group>
+                );
+              }
               if (m.tipo === "contagem") {
                 return (
                   <Group key={m.id}>
@@ -280,6 +303,15 @@ export function PlanViewer({
                     lineCap="round"
                     lineJoin="round"
                     dash={[6 / zoom, 3 / zoom]}
+                    closed={mode === "measure_area"}
+                  />
+                )}
+                {mode === "measure_area" && activeMeasurementPoints.length >= 3 && (
+                  <Line
+                    points={activeMeasurementPoints.flatMap((c) => [c.x, c.y])}
+                    fill="hsl(var(--primary))"
+                    opacity={0.1}
+                    closed
                   />
                 )}
                 {activeMeasurementPoints.map((c, i) => (
