@@ -6,22 +6,31 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
-  const [sessionVerified, setSessionVerified] = useState(false);
+  const [sessionCheckDone, setSessionCheckDone] = useState(false);
   const [hasSession, setHasSession] = useState(true);
 
-  // Double-check session before redirecting away — prevents race condition loops
+  // Only verify session ONCE when user is null after loading completes
   useEffect(() => {
-    if (!loading && !user && !sessionVerified) {
+    if (!loading && !user && !sessionCheckDone) {
+      let cancelled = false;
       supabase.auth.getSession().then(({ data: { session } }) => {
-        setHasSession(!!session);
-        setSessionVerified(true);
+        if (!cancelled) {
+          setHasSession(!!session);
+          setSessionCheckDone(true);
+        }
       });
-    } else if (user) {
-      // User is present, reset verification state
-      setSessionVerified(false);
+      return () => { cancelled = true; };
+    }
+  }, [loading, user, sessionCheckDone]);
+
+  // Reset check only on explicit sign-out (user goes from truthy to null)
+  useEffect(() => {
+    if (user) {
+      // User is authenticated — mark session check as not needed
+      setSessionCheckDone(false);
       setHasSession(true);
     }
-  }, [loading, user, sessionVerified]);
+  }, [!!user]); // Only trigger when user presence changes (truthy/falsy), not on every render
 
   if (loading) {
     return (
@@ -31,25 +40,37 @@ export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If user is null, verify session before redirecting
-  if (!user) {
-    if (!sessionVerified) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-accent" />
-        </div>
-      );
+  // User is authenticated — proceed
+  if (user) {
+    // Check role-based redirects
+    if (profile?.role === "cliente") {
+      return <Navigate to="/portal" replace />;
     }
-    if (!hasSession) {
-      return <Navigate to="/auth" replace />;
+    if (profile?.role === "supplier") {
+      return <Navigate to="/fornecedor/dashboard" replace />;
     }
-    // Session exists but user state hasn't caught up yet — wait
+    return <>{children}</>;
+  }
+
+  // User is null — verify session before redirecting
+  if (!sessionCheckDone) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
   }
+
+  if (!hasSession) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Session exists but user state hasn't propagated yet — wait briefly
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-accent" />
+    </div>
+  );
 
   if (profile?.role === "cliente") {
     return <Navigate to="/portal" replace />;
