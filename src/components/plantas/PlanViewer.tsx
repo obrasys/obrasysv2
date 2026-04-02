@@ -303,6 +303,15 @@ export function PlanViewer({
                     lineCap="round"
                     lineJoin="round"
                     dash={[6 / zoom, 3 / zoom]}
+                    closed={mode === "measure_area"}
+                  />
+                )}
+                {mode === "measure_area" && activeMeasurementPoints.length >= 3 && (
+                  <Line
+                    points={activeMeasurementPoints.flatMap((c) => [c.x, c.y])}
+                    fill="hsl(var(--primary))"
+                    opacity={0.1}
+                    closed
                   />
                 )}
                 {activeMeasurementPoints.map((c, i) => (
