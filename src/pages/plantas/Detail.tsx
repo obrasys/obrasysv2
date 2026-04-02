@@ -49,8 +49,10 @@ export default function PlanDetail() {
 
   // PDF renderer
   const isPdf = plan?.file_type === "pdf";
-  const { dimensions, isRendering, imageDataUrl } = usePdfRenderer({
+  const [currentPage, setCurrentPage] = useState(1);
+  const { dimensions, isRendering, imageDataUrl, totalPages } = usePdfRenderer({
     url: isPdf ? fileUrlQuery.data ?? null : null,
+    page: currentPage,
   });
 
   // Image loader for non-PDF
