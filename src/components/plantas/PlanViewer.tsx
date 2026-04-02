@@ -1,14 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Stage, Layer, Image as KonvaImage, Line, Circle, Text, Group } from "react-konva";
+import { Stage, Layer, Image as KonvaImage, Line, Circle, Text, Group, Rect } from "react-konva";
 import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type Konva from "konva";
+import type { MeasureMode } from "./PlanMeasurementToolbar";
+
+const ROOM_COLORS = [
+  "#8b5cf6", "#06b6d4", "#f59e0b", "#22c55e", "#ec4899", "#ef4444", "#3b82f6",
+];
+
+const WALL_COLOR = "#a855f7";
 
 interface PlanViewerProps {
   imageDataUrl: string | null;
   dimensions: { width: number; height: number };
   isRendering: boolean;
-  mode: "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
+  mode: MeasureMode;
   calibrationPoints: Array<{ x: number; y: number }>;
   onCalibrationClick: (point: { x: number; y: number }) => void;
   measurements?: Array<{
@@ -20,6 +27,20 @@ interface PlanViewerProps {
     valor_bruto: number;
     unidade: string;
   }>;
+  rooms?: Array<{
+    id: string;
+    nome: string;
+    boundary_coords: Array<{ x: number; y: number }>;
+    area_m2: number;
+  }>;
+  walls?: Array<{
+    id: string;
+    start_point: { x: number; y: number };
+    end_point: { x: number; y: number };
+    espessura_cm: number;
+    comprimento_m: number;
+  }>;
+  selectedRoomId?: string;
   onMeasurementClick?: (point: { x: number; y: number }) => void;
   onMeasurementComplete?: () => void;
   activeMeasurementPoints?: Array<{ x: number; y: number }>;
@@ -37,6 +58,9 @@ export function PlanViewer({
   calibrationPoints,
   onCalibrationClick,
   measurements = [],
+  rooms = [],
+  walls = [],
+  selectedRoomId,
   onMeasurementClick,
   onMeasurementComplete,
   activeMeasurementPoints = [],
@@ -52,7 +76,6 @@ export function PlanViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
-  // Load image from data URL
   useEffect(() => {
     if (!imageDataUrl) return;
     const img = new window.Image();
@@ -60,7 +83,6 @@ export function PlanViewer({
     img.src = imageDataUrl;
   }, [imageDataUrl]);
 
-  // Responsive container
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -75,7 +97,6 @@ export function PlanViewer({
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // Fit image when loaded
   useEffect(() => {
     if (image && dimensions.width > 0) {
       const scaleX = containerSize.width / dimensions.width;
@@ -93,20 +114,16 @@ export function PlanViewer({
     e.evt.preventDefault();
     const stage = stageRef.current;
     if (!stage) return;
-
     const oldScale = zoom;
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
-
     const scaleBy = 1.1;
     const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
     const clampedScale = Math.max(0.1, Math.min(5, newScale));
-
     const mousePointTo = {
       x: (pointer.x - position.x) / oldScale,
       y: (pointer.y - position.y) / oldScale,
     };
-
     setZoom(clampedScale);
     setPosition({
       x: pointer.x - mousePointTo.x * clampedScale,
@@ -120,14 +137,12 @@ export function PlanViewer({
     if (!stage) return;
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
-
-    // Convert to image coordinates
     const imgX = (pointer.x - position.x) / zoom;
     const imgY = (pointer.y - position.y) / zoom;
 
     if (mode === "calibrate") {
       onCalibrationClick({ x: imgX, y: imgY });
-    } else if (mode === "measure_line" || mode === "measure_count" || mode === "measure_area") {
+    } else {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
   }, [mode, zoom, position, onCalibrationClick, onMeasurementClick]);
@@ -150,8 +165,21 @@ export function PlanViewer({
   };
 
   const getCursorStyle = () => {
-    if (mode === "calibrate" || mode === "measure_line" || mode === "measure_count" || mode === "measure_area") return "crosshair";
+    if (mode !== "view") return "crosshair";
     return "grab";
+  };
+
+  const getModeLabel = () => {
+    switch (mode) {
+      case "calibrate": return `Calibração — Clique no ponto ${calibrationPoints.length + 1} de 2`;
+      case "measure_line": return "Medição de linha — Clique para marcar pontos, duplo-clique para terminar";
+      case "measure_area": return "Medição de área — Clique vértices, duplo-clique para fechar";
+      case "measure_count": return "Contagem — Clique para marcar elementos";
+      case "draw_room": return "Compartimento — Clique vértices do polígono, duplo-clique para fechar";
+      case "draw_wall": return "Parede — Clique ponto inicial e ponto final (2 cliques)";
+      case "draw_opening": return "Vão — Clique na posição sobre uma parede";
+      default: return "";
+    }
   };
 
   if (isRendering) {
@@ -199,10 +227,7 @@ export function PlanViewer({
       {mode !== "view" && (
         <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm flex items-center gap-1.5">
           <Ruler className="w-3.5 h-3.5" />
-          {mode === "calibrate" && `Calibração — Clique no ponto ${calibrationPoints.length + 1} de 2`}
-          {mode === "measure_line" && "Medição de linha — Clique para marcar pontos, duplo-clique para terminar"}
-          {mode === "measure_area" && "Medição de área — Clique vértices do polígono, duplo-clique para fechar"}
-          {mode === "measure_count" && "Contagem — Clique para marcar elementos"}
+          {getModeLabel()}
         </div>
       )}
 
@@ -218,7 +243,9 @@ export function PlanViewer({
           onWheel={handleWheel}
           onClick={handleStageClick}
           onDblClick={() => {
-            if (mode === "measure_line" || mode === "measure_area") onMeasurementComplete?.();
+            if (mode === "measure_line" || mode === "measure_area" || mode === "draw_room") {
+              onMeasurementComplete?.();
+            }
           }}
           draggable={mode === "view"}
           x={position.x}
@@ -228,21 +255,95 @@ export function PlanViewer({
           onDragEnd={handleDragEnd}
         >
           <Layer>
-            {/* PDF Image */}
             {image && <KonvaImage image={image} x={0} y={0} />}
+
+            {/* Rooms */}
+            {rooms.map((r, idx) => {
+              if (r.boundary_coords.length < 3) return null;
+              const color = ROOM_COLORS[idx % ROOM_COLORS.length];
+              const isSelected = selectedRoomId === r.id;
+              const flatPoints = r.boundary_coords.flatMap((c) => [c.x, c.y]);
+              const cx = r.boundary_coords.reduce((s, c) => s + c.x, 0) / r.boundary_coords.length;
+              const cy = r.boundary_coords.reduce((s, c) => s + c.y, 0) / r.boundary_coords.length;
+              return (
+                <Group key={`room-${r.id}`}>
+                  <Line
+                    points={flatPoints}
+                    fill={color}
+                    opacity={isSelected ? 0.25 : 0.1}
+                    closed
+                  />
+                  <Line
+                    points={flatPoints}
+                    stroke={color}
+                    strokeWidth={(isSelected ? 3 : 2) / zoom}
+                    closed
+                    dash={[8 / zoom, 4 / zoom]}
+                  />
+                  <Text
+                    x={cx - 40 / zoom}
+                    y={cy - 14 / zoom}
+                    text={r.nome}
+                    fontSize={13 / zoom}
+                    fill={color}
+                    fontStyle="bold"
+                    align="center"
+                    width={80 / zoom}
+                  />
+                  <Text
+                    x={cx - 30 / zoom}
+                    y={cy + 2 / zoom}
+                    text={`${r.area_m2.toFixed(2)} m²`}
+                    fontSize={11 / zoom}
+                    fill={color}
+                    align="center"
+                    width={60 / zoom}
+                  />
+                </Group>
+              );
+            })}
+
+            {/* Walls */}
+            {walls.map((w) => (
+              <Group key={`wall-${w.id}`}>
+                <Line
+                  points={[w.start_point.x, w.start_point.y, w.end_point.x, w.end_point.y]}
+                  stroke={WALL_COLOR}
+                  strokeWidth={Math.max(4, (w.espessura_cm / 5)) / zoom}
+                  lineCap="round"
+                />
+                <Circle
+                  x={w.start_point.x}
+                  y={w.start_point.y}
+                  radius={4 / zoom}
+                  fill={WALL_COLOR}
+                  stroke="white"
+                  strokeWidth={1.5 / zoom}
+                />
+                <Circle
+                  x={w.end_point.x}
+                  y={w.end_point.y}
+                  radius={4 / zoom}
+                  fill={WALL_COLOR}
+                  stroke="white"
+                  strokeWidth={1.5 / zoom}
+                />
+                <Text
+                  x={(w.start_point.x + w.end_point.x) / 2 - 20 / zoom}
+                  y={(w.start_point.y + w.end_point.y) / 2 - 16 / zoom}
+                  text={`${w.comprimento_m.toFixed(2)} m`}
+                  fontSize={10 / zoom}
+                  fill={WALL_COLOR}
+                  fontStyle="bold"
+                />
+              </Group>
+            ))}
 
             {/* Calibration points and line */}
             {calibrationPoints.map((pt, i) => (
               <Group key={`cal-${i}`}>
                 <Circle x={pt.x} y={pt.y} radius={6 / zoom} fill="hsl(var(--destructive))" stroke="white" strokeWidth={2 / zoom} />
-                <Text
-                  x={pt.x + 10 / zoom}
-                  y={pt.y - 8 / zoom}
-                  text={`P${i + 1}`}
-                  fontSize={14 / zoom}
-                  fill="hsl(var(--destructive))"
-                  fontStyle="bold"
-                />
+                <Text x={pt.x + 10 / zoom} y={pt.y - 8 / zoom} text={`P${i + 1}`} fontSize={14 / zoom} fill="hsl(var(--destructive))" fontStyle="bold" />
               </Group>
             ))}
             {calibrationPoints.length === 2 && (
@@ -312,30 +413,38 @@ export function PlanViewer({
               return null;
             })}
 
-            {/* Active measurement being drawn */}
+            {/* Active measurement/drawing being drawn */}
             {activeMeasurementPoints.length > 0 && (
               <Group>
                 {activeMeasurementPoints.length >= 2 && (
                   <Line
                     points={activeMeasurementPoints.flatMap((c) => [c.x, c.y])}
-                    stroke="hsl(var(--primary))"
+                    stroke={mode === "draw_room" ? "#8b5cf6" : mode === "draw_wall" ? WALL_COLOR : "hsl(var(--primary))"}
                     strokeWidth={3 / zoom}
                     lineCap="round"
                     lineJoin="round"
                     dash={[6 / zoom, 3 / zoom]}
-                    closed={mode === "measure_area"}
+                    closed={mode === "measure_area" || mode === "draw_room"}
                   />
                 )}
-                {mode === "measure_area" && activeMeasurementPoints.length >= 3 && (
+                {(mode === "measure_area" || mode === "draw_room") && activeMeasurementPoints.length >= 3 && (
                   <Line
                     points={activeMeasurementPoints.flatMap((c) => [c.x, c.y])}
-                    fill="hsl(var(--primary))"
+                    fill={mode === "draw_room" ? "#8b5cf6" : "hsl(var(--primary))"}
                     opacity={0.1}
                     closed
                   />
                 )}
                 {activeMeasurementPoints.map((c, i) => (
-                  <Circle key={i} x={c.x} y={c.y} radius={5 / zoom} fill="hsl(var(--primary))" stroke="white" strokeWidth={2 / zoom} />
+                  <Circle
+                    key={i}
+                    x={c.x}
+                    y={c.y}
+                    radius={5 / zoom}
+                    fill={mode === "draw_room" ? "#8b5cf6" : mode === "draw_wall" ? WALL_COLOR : "hsl(var(--primary))"}
+                    stroke="white"
+                    strokeWidth={2 / zoom}
+                  />
                 ))}
               </Group>
             )}
