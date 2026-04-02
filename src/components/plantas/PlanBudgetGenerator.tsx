@@ -159,7 +159,19 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
       });
 
       // 4. Create artigos_orcamento
-      const artigoInserts: Array<Record<string, any>> = [];
+      const artigoInserts: Array<{
+        capitulo_id: string;
+        codigo: string;
+        descricao: string;
+        unidade: string;
+        quantidade: number;
+        preco_unitario: number;
+        valor_total: number;
+        ordem: number;
+        quantity_source: string;
+        linked_element_id: string | null;
+        margem_lucro_artigo: number;
+      }> = [];
       chapters.forEach(([cat, items]) => {
         const capituloId = chapterIdByCategory.get(cat);
         if (!capituloId) return;
