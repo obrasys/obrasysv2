@@ -5243,6 +5243,220 @@ export type Database = {
           },
         ]
       }
+      plan_openings: {
+        Row: {
+          altura_m: number
+          created_at: string
+          id: string
+          largura_m: number
+          observacao: string | null
+          origem: string
+          peitoril_m: number | null
+          posicao_na_parede: Json | null
+          tipo: string
+          updated_at: string
+          user_id: string
+          wall_id: string
+        }
+        Insert: {
+          altura_m?: number
+          created_at?: string
+          id?: string
+          largura_m?: number
+          observacao?: string | null
+          origem?: string
+          peitoril_m?: number | null
+          posicao_na_parede?: Json | null
+          tipo?: string
+          updated_at?: string
+          user_id: string
+          wall_id: string
+        }
+        Update: {
+          altura_m?: number
+          created_at?: string
+          id?: string
+          largura_m?: number
+          observacao?: string | null
+          origem?: string
+          peitoril_m?: number | null
+          posicao_na_parede?: Json | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          wall_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_openings_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "plan_walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_room_measurements: {
+        Row: {
+          created_at: string
+          id: string
+          measurement_id: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measurement_id: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measurement_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_room_measurements_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "plan_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_room_measurements_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "plan_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_rooms: {
+        Row: {
+          area_m2: number
+          boundary_coords: Json
+          created_at: string
+          estado_validacao: string
+          id: string
+          nome: string
+          observacao: string | null
+          origem: string
+          pe_direito_m: number
+          perimetro_m: number
+          plan_import_id: string
+          tipo_compartimento: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area_m2?: number
+          boundary_coords?: Json
+          created_at?: string
+          estado_validacao?: string
+          id?: string
+          nome: string
+          observacao?: string | null
+          origem?: string
+          pe_direito_m?: number
+          perimetro_m?: number
+          plan_import_id: string
+          tipo_compartimento?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area_m2?: number
+          boundary_coords?: Json
+          created_at?: string
+          estado_validacao?: string
+          id?: string
+          nome?: string
+          observacao?: string | null
+          origem?: string
+          pe_direito_m?: number
+          perimetro_m?: number
+          plan_import_id?: string
+          tipo_compartimento?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_rooms_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_walls: {
+        Row: {
+          comprimento_m: number
+          created_at: string
+          end_point: Json
+          espessura_cm: number
+          id: string
+          material: string
+          observacao: string | null
+          origem: string
+          plan_import_id: string
+          room_id: string | null
+          start_point: Json
+          tipo_funcional: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comprimento_m?: number
+          created_at?: string
+          end_point?: Json
+          espessura_cm?: number
+          id?: string
+          material?: string
+          observacao?: string | null
+          origem?: string
+          plan_import_id: string
+          room_id?: string | null
+          start_point?: Json
+          tipo_funcional?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comprimento_m?: number
+          created_at?: string
+          end_point?: Json
+          espessura_cm?: number
+          id?: string
+          material?: string
+          observacao?: string | null
+          origem?: string
+          plan_import_id?: string
+          room_id?: string | null
+          start_point?: Json
+          tipo_funcional?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_walls_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_walls_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "plan_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_audit_log: {
         Row: {
           acao: string
