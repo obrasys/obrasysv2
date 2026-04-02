@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MousePointer2, Minus, Hash, Undo2 } from "lucide-react";
+import { MousePointer2, Minus, Hash, Pentagon, Undo2 } from "lucide-react";
 
-type MeasureMode = "view" | "calibrate" | "measure_line" | "measure_count";
+type MeasureMode = "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
 
 interface PlanMeasurementToolbarProps {
   mode: MeasureMode;
