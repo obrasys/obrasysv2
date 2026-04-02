@@ -110,11 +110,10 @@ export default function PlanDetail() {
 
   const handleMeasurementClick = useCallback((point: { x: number; y: number }) => {
     if (mode === "measure_count") {
-      // Each click = one count item saved immediately
       const coords = [point];
       setPendingSave({ tipo: "contagem", coordinates: coords, valor: 1 });
       setShowSaveDialog(true);
-    } else if (mode === "measure_line") {
+    } else if (mode === "measure_line" || mode === "measure_area") {
       setActivePoints((prev) => [...prev, point]);
     }
   }, [mode]);
