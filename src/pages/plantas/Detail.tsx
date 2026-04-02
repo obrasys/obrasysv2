@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
 
-type ViewMode = "view" | "calibrate" | "measure_line" | "measure_count";
+type ViewMode = "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
