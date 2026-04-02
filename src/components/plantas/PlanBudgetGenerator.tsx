@@ -1,0 +1,355 @@
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FileSpreadsheet, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+
+interface Article {
+  id: string;
+  codigo: string;
+  descricao: string;
+  unidade: string;
+  preco_unitario: number;
+  categoria: string;
+}
+
+interface ConsolidatedItem {
+  artigoId: string;
+  article: Article;
+  categoria: string;
+  quantidade: number;
+  valorTotal: number;
+  measurementIds: string[];
+}
+
+interface Props {
+  obraId: string;
+  planId: string;
+  planName: string;
+  measurements: PlanMeasurement[];
+  mappings: PlanMeasurementMapping[];
+  articles: Article[];
+}
+
+export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles }: Props) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showDialog, setShowDialog] = useState(false);
+  const [titulo, setTitulo] = useState(`Pré-Orçamento — ${planName}`);
+  const [margemLucro, setMargemLucro] = useState("15");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const articleById = useMemo(() => {
+    const map = new Map<string, Article>();
+    articles.forEach((a) => map.set(a.id, a));
+    return map;
+  }, [articles]);
+
+  const measurementById = useMemo(() => {
+    const map = new Map<string, PlanMeasurement>();
+    measurements.forEach((m) => map.set(m.id, m));
+    return map;
+  }, [measurements]);
+
+  // Consolidate mapped measurements by article, grouped by category
+  const consolidated = useMemo(() => {
+    const byArticle = new Map<string, ConsolidatedItem>();
+
+    mappings
+      .filter((m) => m.estado === "mapeado" && m.artigo_base_id)
+      .forEach((mapping) => {
+        const measurement = measurementById.get(mapping.measurement_id);
+        const article = articleById.get(mapping.artigo_base_id!);
+        if (!measurement || !article) return;
+
+        const qtd = (measurement.valor_ajustado ?? measurement.valor_bruto) * mapping.coeficiente * mapping.fator_desperdicio;
+
+        if (!byArticle.has(article.id)) {
+          byArticle.set(article.id, {
+            artigoId: article.id,
+            article,
+            categoria: article.categoria,
+            quantidade: 0,
+            valorTotal: 0,
+            measurementIds: [],
+          });
+        }
+        const row = byArticle.get(article.id)!;
+        row.quantidade += qtd;
+        row.valorTotal += qtd * article.preco_unitario;
+        row.measurementIds.push(measurement.id);
+      });
+
+    return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
+  }, [mappings, measurementById, articleById]);
+
+  // Group by category for chapters
+  const chapters = useMemo(() => {
+    const map = new Map<string, ConsolidatedItem[]>();
+    consolidated.forEach((item) => {
+      if (!map.has(item.categoria)) map.set(item.categoria, []);
+      map.get(item.categoria)!.push(item);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [consolidated]);
+
+  const totalGeral = useMemo(
+    () => consolidated.reduce((acc, r) => acc + r.valorTotal, 0),
+    [consolidated]
+  );
+
+  const unmappedCount = measurements.filter((m) => {
+    const mapping = mappings.find((mp) => mp.measurement_id === m.id);
+    return !mapping || mapping.estado !== "mapeado";
+  }).length;
+
+  const handleGenerate = async () => {
+    if (!user) return;
+    setIsGenerating(true);
+
+    try {
+      // 1. Generate orcamento code
+      const { data: codigo, error: codeErr } = await supabase.rpc("generate_orcamento_codigo", { p_user_id: user.id });
+      if (codeErr) throw codeErr;
+
+      // 2. Create orcamento
+      const { data: orcamento, error: orcErr } = await supabase
+        .from("orcamentos")
+        .insert({
+          user_id: user.id,
+          titulo,
+          codigo,
+          obra_id: obraId,
+          margem_lucro: parseFloat(margemLucro) || 0,
+          estado: "rascunho",
+        })
+        .select()
+        .single();
+      if (orcErr) throw orcErr;
+
+      // 3. Create chapters (one per category)
+      const chapterInserts = chapters.map(([cat], idx) => ({
+        orcamento_id: orcamento.id,
+        numero: idx + 1,
+        titulo: cat.charAt(0).toUpperCase() + cat.slice(1),
+        ordem: idx + 1,
+      }));
+
+      const { data: createdChapters, error: chapErr } = await supabase
+        .from("capitulos_orcamento")
+        .insert(chapterInserts)
+        .select();
+      if (chapErr) throw chapErr;
+
+      // Map category → chapter ID
+      const chapterIdByCategory = new Map<string, string>();
+      createdChapters.forEach((ch, idx) => {
+        const [cat] = chapters[idx];
+        chapterIdByCategory.set(cat, ch.id);
+      });
+
+      // 4. Create artigos_orcamento
+      const artigoInserts: Array<Record<string, any>> = [];
+      chapters.forEach(([cat, items]) => {
+        const capituloId = chapterIdByCategory.get(cat);
+        if (!capituloId) return;
+
+        items.forEach((item, idx) => {
+          artigoInserts.push({
+            capitulo_id: capituloId,
+            codigo: item.article.codigo,
+            descricao: item.article.descricao,
+            unidade: item.article.unidade,
+            quantidade: parseFloat(item.quantidade.toFixed(2)),
+            preco_unitario: item.article.preco_unitario,
+            valor_total: parseFloat(item.valorTotal.toFixed(2)),
+            ordem: idx + 1,
+            quantity_source: "plan_measurement",
+            linked_element_id: null,
+            margem_lucro_artigo: 0,
+          });
+        });
+      });
+
+      if (artigoInserts.length > 0) {
+        const { error: artErr } = await supabase.from("artigos_orcamento").insert(artigoInserts);
+        if (artErr) throw artErr;
+      }
+
+      // 5. Create plan_budget_links
+      const linkInserts: Array<Record<string, any>> = [];
+      consolidated.forEach((item) => {
+        item.measurementIds.forEach((mId) => {
+          linkInserts.push({
+            measurement_id: mId,
+            user_id: user.id,
+            orcamento_id: orcamento.id,
+            artigo_orcamento_id: orcamento.id, // placeholder - will be linked properly
+          });
+        });
+      });
+
+      if (linkInserts.length > 0) {
+        const { error: linkErr } = await supabase.from("plan_budget_links").insert(linkInserts);
+        if (linkErr) {
+          console.warn("Budget links creation warning:", linkErr.message);
+        }
+      }
+
+      // 6. Update plan status
+      await supabase.from("plan_imports").update({ status: "validada" }).eq("id", planId);
+
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["plan-imports"] });
+
+      toast.success(`Pré-orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`);
+      setShowDialog(false);
+      navigate(`/orcamentos/${orcamento.id}`);
+    } catch (err: any) {
+      toast.error("Erro ao gerar pré-orçamento: " + err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const canGenerate = consolidated.length > 0;
+
+  return (
+    <>
+      <Button
+        onClick={() => setShowDialog(true)}
+        disabled={!canGenerate}
+        className="gap-1.5"
+      >
+        <FileSpreadsheet className="w-4 h-4" />
+        Gerar Pré-Orçamento
+      </Button>
+
+      <Dialog open={showDialog} onOpenChange={(open) => !isGenerating && setShowDialog(open)}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerar Pré-Orçamento a partir da Planta</DialogTitle>
+            <DialogDescription>
+              Consolidar medições mapeadas e criar um orçamento com capítulos e artigos automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Warnings */}
+            {unmappedCount > 0 && (
+              <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {unmappedCount} medição(ões) não mapeadas serão excluídas do pré-orçamento.
+                </p>
+              </div>
+            )}
+
+            {/* Config */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Título do Orçamento</Label>
+                <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Margem de Lucro (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                  value={margemLucro}
+                  onChange={(e) => setMargemLucro(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-lg font-bold">{chapters.length}</p>
+                <p className="text-[10px] text-muted-foreground">Capítulos</p>
+              </div>
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-lg font-bold">{consolidated.length}</p>
+                <p className="text-[10px] text-muted-foreground">Artigos</p>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-primary">
+                  {totalGeral.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}
+                </p>
+                <p className="text-[10px] text-muted-foreground">Valor Base</p>
+              </div>
+            </div>
+
+            {/* Preview table */}
+            <div className="border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
+                    <TableHead>Un.</TableHead>
+                    <TableHead className="text-right">P.Unit.</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {chapters.map(([cat, items]) => (
+                    <>
+                      <TableRow key={`cap-${cat}`} className="bg-muted/50">
+                        <TableCell colSpan={6} className="font-medium text-xs py-1.5">
+                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        </TableCell>
+                      </TableRow>
+                      {items.map((item) => (
+                        <TableRow key={item.artigoId}>
+                          <TableCell className="font-mono text-[11px]">{item.article.codigo}</TableCell>
+                          <TableCell className="text-xs max-w-48 truncate">{item.article.descricao}</TableCell>
+                          <TableCell className="text-right font-mono text-xs">{item.quantidade.toFixed(2)}</TableCell>
+                          <TableCell className="text-xs">{item.article.unidade}</TableCell>
+                          <TableCell className="text-right font-mono text-xs">{item.article.preco_unitario.toFixed(2)} €</TableCell>
+                          <TableCell className="text-right font-mono text-xs font-medium">{item.valorTotal.toFixed(2)} €</TableCell>
+                        </TableRow>
+                      ))}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)} disabled={isGenerating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleGenerate} disabled={isGenerating || !titulo.trim()}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  A gerar...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                  Gerar Orçamento
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
