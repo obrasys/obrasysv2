@@ -5,6 +5,7 @@ import { PlanViewer } from "@/components/plantas/PlanViewer";
 import { PlanCalibrationTool } from "@/components/plantas/PlanCalibrationTool";
 import { PlanMeasurementToolbar } from "@/components/plantas/PlanMeasurementToolbar";
 import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList";
+import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
