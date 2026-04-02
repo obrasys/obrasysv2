@@ -78,7 +78,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
           </div>
         ) : (
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            {isPdf ? <FileText className="w-8 h-8 text-red-500" /> : <Image className="w-8 h-8 text-blue-500" />}
+            {isPdf ? <FileText className="w-8 h-8 text-destructive" /> : <Image className="w-8 h-8 text-primary" />}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>
               <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>

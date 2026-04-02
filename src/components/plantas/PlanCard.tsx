@@ -31,9 +31,9 @@ export function PlanCard({ plan, onOpen, onDelete }: PlanCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             {isPdf ? (
-              <FileText className="w-8 h-8 text-red-500 shrink-0" />
+              <FileText className="w-8 h-8 text-destructive shrink-0" />
             ) : (
-              <Image className="w-8 h-8 text-blue-500 shrink-0" />
+              <Image className="w-8 h-8 text-primary shrink-0" />
             )}
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate text-foreground">{plan.nome_ficheiro}</p>
