@@ -8,7 +8,7 @@ interface PlanViewerProps {
   imageDataUrl: string | null;
   dimensions: { width: number; height: number };
   isRendering: boolean;
-  mode: "view" | "calibrate" | "measure_line" | "measure_count";
+  mode: "view" | "calibrate" | "measure_line" | "measure_area" | "measure_count";
   calibrationPoints: Array<{ x: number; y: number }>;
   onCalibrationClick: (point: { x: number; y: number }) => void;
   measurements?: Array<{
