@@ -11,7 +11,6 @@ interface UsePdfRendererOptions {
 }
 
 export function usePdfRenderer({ url, page = 1, scale = 1.5 }: UsePdfRendererOptions) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [totalPages, setTotalPages] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
@@ -25,9 +24,8 @@ export function usePdfRenderer({ url, page = 1, scale = 1.5 }: UsePdfRendererOpt
       const pdfPage = await pdfDocRef.current.getPage(pageNum);
       const viewport = pdfPage.getViewport({ scale: renderScale });
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
+      // Use an offscreen canvas — no DOM element needed
+      const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
@@ -67,7 +65,6 @@ export function usePdfRenderer({ url, page = 1, scale = 1.5 }: UsePdfRendererOpt
   }, [url, page, scale, renderPage]);
 
   return {
-    canvasRef,
     dimensions,
     totalPages,
     isRendering,
