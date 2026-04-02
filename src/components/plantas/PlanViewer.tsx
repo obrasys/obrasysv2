@@ -24,6 +24,9 @@ interface PlanViewerProps {
   onMeasurementComplete?: () => void;
   activeMeasurementPoints?: Array<{ x: number; y: number }>;
   pixelsPerMeter?: number;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export function PlanViewer({
