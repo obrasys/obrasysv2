@@ -199,14 +199,29 @@ export default function PlanDetail() {
           </div>
 
           {/* Measurement toolbar */}
-          <PlanMeasurementToolbar
-            mode={mode === "calibrate" ? "view" : mode}
-            onModeChange={handleModeChange}
-            canMeasure={canMeasure}
-            onUndo={handleUndo}
-            hasActivePoints={activePoints.length > 0}
-          />
-        </div>
+          <div className="flex items-center gap-2">
+            <PlanMeasurementToolbar
+              mode={mode === "calibrate" ? "view" : mode}
+              onModeChange={handleModeChange}
+              canMeasure={canMeasure}
+              onUndo={handleUndo}
+              hasActivePoints={activePoints.length > 0}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={measurements.length === 0}
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                >
+                  <Table2 className="w-4 h-4 mr-1" />
+                  Quantitativos
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Mapear medições para artigos</TooltipContent>
+            </Tooltip>
+          </div>
 
         {/* Main content */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
