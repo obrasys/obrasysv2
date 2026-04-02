@@ -41,6 +41,9 @@ export function PlanViewer({
   onMeasurementComplete,
   activeMeasurementPoints = [],
   pixelsPerMeter,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
 }: PlanViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
