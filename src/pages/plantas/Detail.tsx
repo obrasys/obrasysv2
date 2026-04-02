@@ -283,7 +283,7 @@ export default function PlanDetail() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">
-              {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : "Guardar Contagem"}
+              {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : pendingSave?.tipo === "area" ? "Guardar Medição de Área" : "Guardar Contagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
