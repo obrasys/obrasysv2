@@ -167,6 +167,20 @@ export function PlanViewer({
     <div className="relative" ref={containerRef}>
       {/* Toolbar */}
       <div className="absolute top-2 right-2 z-10 flex gap-1 bg-background/90 backdrop-blur border rounded-lg p-1 shadow-sm">
+        {totalPages > 1 && (
+          <>
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage <= 1} onClick={() => onPageChange?.(currentPage - 1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center px-1.5 text-xs text-muted-foreground whitespace-nowrap">
+              {currentPage}/{totalPages}
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages} onClick={() => onPageChange?.(currentPage + 1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <div className="w-px bg-border" />
+          </>
+        )}
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(z => Math.min(5, z * 1.2))}>
           <ZoomIn className="w-4 h-4" />
         </Button>
