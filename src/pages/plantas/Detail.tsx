@@ -222,6 +222,7 @@ export default function PlanDetail() {
               <TooltipContent>Mapear medições para artigos</TooltipContent>
             </Tooltip>
           </div>
+        </div>
 
         {/* Main content */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
