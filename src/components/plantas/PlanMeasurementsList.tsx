@@ -15,6 +15,7 @@ interface PlanMeasurementsListProps {
 
 const TIPO_ICON: Record<string, typeof Minus> = {
   linha: Minus,
+  area: Pentagon,
   contagem: Hash,
 };
 
