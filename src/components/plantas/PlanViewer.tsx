@@ -144,7 +144,7 @@ export function PlanViewer({
   };
 
   const getCursorStyle = () => {
-    if (mode === "calibrate" || mode === "measure_line" || mode === "measure_count") return "crosshair";
+    if (mode === "calibrate" || mode === "measure_line" || mode === "measure_count" || mode === "measure_area") return "crosshair";
     return "grab";
   };
 
