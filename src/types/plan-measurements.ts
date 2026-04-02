@@ -92,3 +92,97 @@ export const CAMADA_OPTIONS = [
   'paredes', 'pavimentos', 'tetos', 'cobertura', 'fachada',
   'instalacoes', 'estrutura', 'vãos', 'outra'
 ];
+
+// ── Room / Compartment types ──
+export type TipoCompartimento = 'habitacao' | 'servico' | 'circulacao' | 'tecnico';
+export type OrigemDado = 'manual' | 'ia_inferida';
+
+export interface PlanRoom {
+  id: string;
+  plan_import_id: string;
+  user_id: string;
+  nome: string;
+  tipo_compartimento: TipoCompartimento;
+  boundary_coords: Array<{ x: number; y: number }>;
+  area_m2: number;
+  perimetro_m: number;
+  pe_direito_m: number;
+  observacao: string | null;
+  estado_validacao: ValidationState;
+  origem: OrigemDado;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanRoomMeasurement {
+  id: string;
+  room_id: string;
+  measurement_id: string;
+  created_at: string;
+}
+
+// ── Wall types ──
+export type TipoFuncionalParede = 'exterior' | 'interior_divisoria' | 'interior_estrutural';
+export type MaterialParede = 'alvenaria' | 'betao' | 'gesso_cartonado' | 'outro';
+
+export interface PlanWall {
+  id: string;
+  plan_import_id: string;
+  user_id: string;
+  room_id: string | null;
+  start_point: { x: number; y: number };
+  end_point: { x: number; y: number };
+  comprimento_m: number;
+  espessura_cm: number;
+  tipo_funcional: TipoFuncionalParede;
+  material: MaterialParede;
+  observacao: string | null;
+  origem: OrigemDado;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Opening types ──
+export type TipoVao = 'porta' | 'janela' | 'portada' | 'claraboia';
+
+export interface PlanOpening {
+  id: string;
+  wall_id: string;
+  user_id: string;
+  tipo: TipoVao;
+  largura_m: number;
+  altura_m: number;
+  peitoril_m: number | null;
+  posicao_na_parede: { x: number; y: number } | null;
+  observacao: string | null;
+  origem: OrigemDado;
+  created_at: string;
+  updated_at: string;
+}
+
+export const TIPO_COMPARTIMENTO_OPTIONS: { value: TipoCompartimento; label: string }[] = [
+  { value: 'habitacao', label: 'Habitação' },
+  { value: 'servico', label: 'Serviço' },
+  { value: 'circulacao', label: 'Circulação' },
+  { value: 'tecnico', label: 'Técnico' },
+];
+
+export const TIPO_FUNCIONAL_OPTIONS: { value: TipoFuncionalParede; label: string }[] = [
+  { value: 'exterior', label: 'Exterior' },
+  { value: 'interior_divisoria', label: 'Interior Divisória' },
+  { value: 'interior_estrutural', label: 'Interior Estrutural' },
+];
+
+export const MATERIAL_PAREDE_OPTIONS: { value: MaterialParede; label: string }[] = [
+  { value: 'alvenaria', label: 'Alvenaria' },
+  { value: 'betao', label: 'Betão' },
+  { value: 'gesso_cartonado', label: 'Gesso Cartonado' },
+  { value: 'outro', label: 'Outro' },
+];
+
+export const TIPO_VAO_OPTIONS: { value: TipoVao; label: string }[] = [
+  { value: 'porta', label: 'Porta' },
+  { value: 'janela', label: 'Janela' },
+  { value: 'portada', label: 'Portada' },
+  { value: 'claraboia', label: 'Clarabóia' },
+];
