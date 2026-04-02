@@ -66,11 +66,21 @@ export default function PlanQuantitativos() {
   return (
     <AppLayout title={`Quantitativos — ${plan.nome_ficheiro}`} subtitle={`Rev. ${plan.revision_number}`}>
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas/${planId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Planta
-          </Button>
-          <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas/${planId}`)}>
+              <ArrowLeft className="w-4 h-4 mr-1" /> Planta
+            </Button>
+            <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
+          </div>
+          <PlanBudgetGenerator
+            obraId={obraId!}
+            planId={planId!}
+            planName={plan.nome_ficheiro}
+            measurements={measurements}
+            mappings={mappings}
+            articles={articles}
+          />
         </div>
 
         <Tabs defaultValue="mapping">
