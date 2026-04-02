@@ -135,6 +135,7 @@ const App = () => (
                   <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos/:cadernoId/validar" element={<ManagerRoute><ValidarCadernoPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ManagerRoute><ResumoCadernoPage /></ManagerRoute>} />
+                  <Route path="/obras/:id/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />
                   <Route path="/clientes/criar" element={<ManagerRoute><CriarClientePage /></ManagerRoute>} />
                   <Route path="/clientes/:id" element={<ManagerRoute><VerClientePage /></ManagerRoute>} />
