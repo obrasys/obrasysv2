@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2 } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength } from "@/hooks/usePlanMeasurements";
