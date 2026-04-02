@@ -15,23 +15,12 @@ export default function PlantasIndex() {
 
   return (
     <AppLayout title="Medição Assistida por Planta" subtitle="Importe plantas, meça quantitativos e gere pré-orçamentos">
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/obras/${obraId}`)}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <MapPin className="w-6 h-6 text-primary" />
-                Medição Assistida por Planta
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Importe plantas, meça quantitativos e gere pré-orçamentos
-              </p>
-            </div>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à obra
+          </Button>
           <Button onClick={() => setShowUpload(true)}>
             Importar Planta
           </Button>
