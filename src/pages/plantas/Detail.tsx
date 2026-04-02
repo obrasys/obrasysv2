@@ -123,6 +123,10 @@ export default function PlanDetail() {
       const length = calculateLineLength(activePoints, pixelsPerMeter);
       setPendingSave({ tipo: "linha", coordinates: [...activePoints], valor: length });
       setShowSaveDialog(true);
+    } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
+      const area = calculatePolygonArea(activePoints, pixelsPerMeter);
+      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area });
+      setShowSaveDialog(true);
     }
   }, [mode, activePoints, pixelsPerMeter]);
 
