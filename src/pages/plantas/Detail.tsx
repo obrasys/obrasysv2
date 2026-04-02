@@ -137,7 +137,7 @@ export default function PlanDetail() {
       tipo: pendingSave.tipo,
       coordinates: pendingSave.coordinates,
       valorBruto: parseFloat(pendingSave.valor.toFixed(4)),
-      unidade: pendingSave.tipo === "contagem" ? "un" : "m",
+      unidade: pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m",
       camada: saveCamada || undefined,
       etiqueta: saveEtiqueta || undefined,
       cor,
