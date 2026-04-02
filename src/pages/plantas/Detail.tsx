@@ -251,6 +251,9 @@ export default function PlanDetail() {
             onMeasurementComplete={handleMeasurementComplete}
             activeMeasurementPoints={activePoints}
             pixelsPerMeter={pixelsPerMeter}
+            currentPage={currentPage}
+            totalPages={isPdf ? totalPages : 1}
+            onPageChange={setCurrentPage}
           />
 
           {/* Side panel */}
