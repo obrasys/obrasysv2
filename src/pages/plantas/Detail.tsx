@@ -259,6 +259,14 @@ export default function PlanDetail() {
 
           {/* Side panel */}
           <div className="space-y-4">
+            <PlanAIAnalysis
+              imageDataUrl={effectiveImageUrl}
+              calibration={calibration ? {
+                pixels_per_meter: calibration.pixels_per_meter,
+                real_distance: calibration.real_distance,
+                unidade: calibration.unidade,
+              } : null}
+            />
             <PlanCalibrationTool
               points={calibrationPoints}
               isCalibrating={mode === "calibrate"}
