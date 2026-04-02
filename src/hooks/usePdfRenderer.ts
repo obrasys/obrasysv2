@@ -65,7 +65,6 @@ export function usePdfRenderer({ url, page = 1, scale = 1.5 }: UsePdfRendererOpt
   }, [url, page, scale, renderPage]);
 
   return {
-    canvasRef,
     dimensions,
     totalPages,
     isRendering,
