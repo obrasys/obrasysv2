@@ -46,9 +46,11 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
   };
 
   const linhas = measurements.filter((m) => m.tipo === "linha");
+  const areas = measurements.filter((m) => m.tipo === "area");
   const contagens = measurements.filter((m) => m.tipo === "contagem");
 
   const totalLength = linhas.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
+  const totalArea = areas.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
   const totalCount = contagens.reduce((s, m) => s + (m.valor_final ?? m.valor_bruto), 0);
 
   return (
