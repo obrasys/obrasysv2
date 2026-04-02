@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2 } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength } from "@/hooks/usePlanMeasurements";
@@ -198,13 +199,29 @@ export default function PlanDetail() {
           </div>
 
           {/* Measurement toolbar */}
-          <PlanMeasurementToolbar
-            mode={mode === "calibrate" ? "view" : mode}
-            onModeChange={handleModeChange}
-            canMeasure={canMeasure}
-            onUndo={handleUndo}
-            hasActivePoints={activePoints.length > 0}
-          />
+          <div className="flex items-center gap-2">
+            <PlanMeasurementToolbar
+              mode={mode === "calibrate" ? "view" : mode}
+              onModeChange={handleModeChange}
+              canMeasure={canMeasure}
+              onUndo={handleUndo}
+              hasActivePoints={activePoints.length > 0}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={measurements.length === 0}
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                >
+                  <Table2 className="w-4 h-4 mr-1" />
+                  Quantitativos
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Mapear medições para artigos</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         {/* Main content */}

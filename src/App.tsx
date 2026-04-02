@@ -78,6 +78,7 @@ const ValidarCadernoPage = lazy(() => import("./pages/cadernos/Validar"));
 const ResumoCadernoPage = lazy(() => import("./pages/cadernos/Resumo"));
 const PlantasPage = lazy(() => import("./pages/plantas/Index"));
 const PlantaDetailPage = lazy(() => import("./pages/plantas/Detail"));
+const PlantaQuantitativosPage = lazy(() => import("./pages/plantas/Quantitativos"));
 const AdminDashboard = lazy(() => import("./pages/admin/Index"));
 const AdminUtilizadores = lazy(() => import("./pages/admin/Utilizadores"));
 const AdminFinanceiroGlobal = lazy(() => import("./pages/admin/FinanceiroGlobal"));
@@ -138,6 +139,7 @@ const App = () => (
                   <Route path="/obras/:id/cadernos/:cadernoId/resumo" element={<ManagerRoute><ResumoCadernoPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
+                  <Route path="/obras/:id/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />
                   <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />
                   <Route path="/clientes/criar" element={<ManagerRoute><CriarClientePage /></ManagerRoute>} />
                   <Route path="/clientes/:id" element={<ManagerRoute><VerClientePage /></ManagerRoute>} />
