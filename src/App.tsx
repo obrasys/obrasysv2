@@ -78,6 +78,7 @@ const ValidarCadernoPage = lazy(() => import("./pages/cadernos/Validar"));
 const ResumoCadernoPage = lazy(() => import("./pages/cadernos/Resumo"));
 const PlantasPage = lazy(() => import("./pages/plantas/Index"));
 const PlantaDetailPage = lazy(() => import("./pages/plantas/Detail"));
+const PlantaQuantitativosPage = lazy(() => import("./pages/plantas/Quantitativos"));
 const AdminDashboard = lazy(() => import("./pages/admin/Index"));
 const AdminUtilizadores = lazy(() => import("./pages/admin/Utilizadores"));
 const AdminFinanceiroGlobal = lazy(() => import("./pages/admin/FinanceiroGlobal"));
