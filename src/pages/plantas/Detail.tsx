@@ -156,7 +156,7 @@ export default function PlanDetail() {
     setPendingSave(null);
     setSaveEtiqueta("");
     setSaveCamada("");
-    if (mode === "measure_line") setActivePoints([]);
+    if (mode === "measure_line" || mode === "measure_area") setActivePoints([]);
   };
 
   const handleUndo = () => {
