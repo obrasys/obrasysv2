@@ -199,7 +199,12 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
       }
 
       // 5. Create plan_budget_links
-      const linkInserts: Array<Record<string, any>> = [];
+      const linkInserts: Array<{
+        measurement_id: string;
+        user_id: string;
+        orcamento_id: string;
+        artigo_orcamento_id: string;
+      }> = [];
       consolidated.forEach((item) => {
         item.measurementIds.forEach((mId) => {
           linkInserts.push({
