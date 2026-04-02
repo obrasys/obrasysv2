@@ -148,7 +148,7 @@ export default function PlanDetail() {
     setShowSaveDialog(false);
     setSaveEtiqueta("");
     setSaveCamada("");
-    toast.success(`Medição guardada: ${pendingSave.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)} ${pendingSave.tipo === "contagem" ? "un" : "m"}`);
+    toast.success(`Medição guardada: ${pendingSave.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)} ${pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m"}`);
   };
 
   const handleCancelSave = () => {
