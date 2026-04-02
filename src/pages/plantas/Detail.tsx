@@ -49,8 +49,10 @@ export default function PlanDetail() {
 
   // PDF renderer
   const isPdf = plan?.file_type === "pdf";
-  const { dimensions, isRendering, imageDataUrl } = usePdfRenderer({
+  const [currentPage, setCurrentPage] = useState(1);
+  const { dimensions, isRendering, imageDataUrl, totalPages } = usePdfRenderer({
     url: isPdf ? fileUrlQuery.data ?? null : null,
+    page: currentPage,
   });
 
   // Image loader for non-PDF
@@ -249,6 +251,9 @@ export default function PlanDetail() {
             onMeasurementComplete={handleMeasurementComplete}
             activeMeasurementPoints={activePoints}
             pixelsPerMeter={pixelsPerMeter}
+            currentPage={currentPage}
+            totalPages={isPdf ? totalPages : 1}
+            onPageChange={setCurrentPage}
           />
 
           {/* Side panel */}
