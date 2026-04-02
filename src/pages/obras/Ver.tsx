@@ -536,6 +536,22 @@ export default function VerObraPage() {
               </CardContent>
             </Card>
 
+            {/* Plantas & Medição Quick Access */}
+            <Card className="border-dashed">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Plantas & Medição Assistida</p>
+                    <p className="text-xs text-muted-foreground">Importe plantas, meça quantitativos e gere pré-orçamentos</p>
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => navigate(`/obras/${id}/plantas`)}>
+                  Abrir Plantas
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Two-column layout for Cadernos and RDOs */}
             <div className="grid lg:grid-cols-2 gap-4">
               {/* Cadernos de Encargos */}
