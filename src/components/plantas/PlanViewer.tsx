@@ -255,6 +255,28 @@ export function PlanViewer({
                   </Group>
                 );
               }
+              if (m.tipo === "area" && m.coordinates.length >= 3) {
+                const flatPoints = m.coordinates.flatMap((c) => [c.x, c.y]);
+                const cx = m.coordinates.reduce((s, c) => s + c.x, 0) / m.coordinates.length;
+                const cy = m.coordinates.reduce((s, c) => s + c.y, 0) / m.coordinates.length;
+                return (
+                  <Group key={m.id}>
+                    <Line points={flatPoints} stroke={m.cor} strokeWidth={2 / zoom} closed fill={m.cor} opacity={0.2} />
+                    <Line points={flatPoints} stroke={m.cor} strokeWidth={2.5 / zoom} closed />
+                    {m.coordinates.map((c, i) => (
+                      <Circle key={i} x={c.x} y={c.y} radius={4 / zoom} fill={m.cor} stroke="white" strokeWidth={1.5 / zoom} />
+                    ))}
+                    <Text
+                      x={cx - 30 / zoom}
+                      y={cy - 6 / zoom}
+                      text={`${m.valor_bruto.toFixed(2)} ${m.unidade}${m.etiqueta ? ` (${m.etiqueta})` : ""}`}
+                      fontSize={12 / zoom}
+                      fill={m.cor}
+                      fontStyle="bold"
+                    />
+                  </Group>
+                );
+              }
               if (m.tipo === "contagem") {
                 return (
                   <Group key={m.id}>
