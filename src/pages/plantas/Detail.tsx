@@ -79,7 +79,7 @@ export default function PlanDetail() {
 
   // Save dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
   const [saveEtiqueta, setSaveEtiqueta] = useState("");
   const [saveCamada, setSaveCamada] = useState("");
 
