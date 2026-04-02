@@ -76,6 +76,11 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
                   <Minus className="w-3 h-3 inline mr-0.5" /> {totalLength.toFixed(2)} m
                 </span>
               )}
+              {areas.length > 0 && (
+                <span className="text-muted-foreground">
+                  <Pentagon className="w-3 h-3 inline mr-0.5" /> {totalArea.toFixed(2)} m²
+                </span>
+              )}
               {contagens.length > 0 && (
                 <span className="text-muted-foreground">
                   <Hash className="w-3 h-3 inline mr-0.5" /> {totalCount} un
