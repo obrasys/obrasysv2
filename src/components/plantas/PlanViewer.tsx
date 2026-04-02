@@ -181,6 +181,7 @@ export function PlanViewer({
           <Ruler className="w-3.5 h-3.5" />
           {mode === "calibrate" && `Calibração — Clique no ponto ${calibrationPoints.length + 1} de 2`}
           {mode === "measure_line" && "Medição de linha — Clique para marcar pontos, duplo-clique para terminar"}
+          {mode === "measure_area" && "Medição de área — Clique vértices do polígono, duplo-clique para fechar"}
           {mode === "measure_count" && "Contagem — Clique para marcar elementos"}
         </div>
       )}
