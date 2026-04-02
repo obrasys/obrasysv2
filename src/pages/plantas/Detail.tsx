@@ -291,7 +291,7 @@ export default function PlanDetail() {
               <p className="text-2xl font-bold text-foreground">
                 {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
                 <span className="text-sm font-normal text-muted-foreground">
-                  {pendingSave?.tipo === "contagem" ? "un" : "m"}
+                  {pendingSave?.tipo === "contagem" ? "un" : pendingSave?.tipo === "area" ? "m²" : "m"}
                 </span>
               </p>
             </div>
