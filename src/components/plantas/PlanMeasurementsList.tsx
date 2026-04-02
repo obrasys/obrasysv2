@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Minus, Hash, Trash2, Check, X, Pencil } from "lucide-react";
+import { Minus, Hash, Pentagon, Trash2, Check, X, Pencil } from "lucide-react";
 import type { PlanMeasurement } from "@/types/plan-measurements";
 import { useState } from "react";
 
