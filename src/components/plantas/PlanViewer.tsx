@@ -198,7 +198,7 @@ export function PlanViewer({
           onWheel={handleWheel}
           onClick={handleStageClick}
           onDblClick={() => {
-            if (mode === "measure_line") onMeasurementComplete?.();
+            if (mode === "measure_line" || mode === "measure_area") onMeasurementComplete?.();
           }}
           draggable={mode === "view"}
           x={position.x}
