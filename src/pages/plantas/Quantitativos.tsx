@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanMappingTable } from "@/components/plantas/PlanMappingTable";
 import { PlanQuantitativosReview } from "@/components/plantas/PlanQuantitativosReview";
+import { PlanBudgetGenerator } from "@/components/plantas/PlanBudgetGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Table2, ClipboardList } from "lucide-react";
