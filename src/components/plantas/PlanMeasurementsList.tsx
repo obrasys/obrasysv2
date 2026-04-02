@@ -10,7 +10,7 @@ import { useState } from "react";
 interface PlanMeasurementsListProps {
   measurements: PlanMeasurement[];
   onDelete: (id: string) => void;
-  onUpdate: (id: string, updates: { etiqueta?: string; valor_ajustado?: number; estado_validacao?: string }) => void;
+  onUpdate: (id: string, updates: { etiqueta?: string; valor_ajustado?: number; estado_validacao?: string; camada?: string }) => void;
 }
 
 const TIPO_ICON: Record<string, typeof Minus> = {
