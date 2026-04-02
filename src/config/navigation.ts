@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Home,
   Mail,
+  MapPin,
   Network,
   Plug,
   Settings,

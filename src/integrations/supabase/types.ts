@@ -4956,6 +4956,293 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_budget_links: {
+        Row: {
+          artigo_orcamento_id: string
+          created_at: string
+          id: string
+          measurement_id: string
+          orcamento_id: string
+          user_id: string
+        }
+        Insert: {
+          artigo_orcamento_id: string
+          created_at?: string
+          id?: string
+          measurement_id: string
+          orcamento_id: string
+          user_id: string
+        }
+        Update: {
+          artigo_orcamento_id?: string
+          created_at?: string
+          id?: string
+          measurement_id?: string
+          orcamento_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_budget_links_artigo_orcamento_id_fkey"
+            columns: ["artigo_orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "artigos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_budget_links_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "plan_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_budget_links_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_calibrations: {
+        Row: {
+          created_at: string
+          id: string
+          pixels_per_meter: number
+          plan_import_id: string
+          point1: Json
+          point2: Json
+          real_distance: number
+          status: string
+          unidade: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pixels_per_meter?: number
+          plan_import_id: string
+          point1?: Json
+          point2?: Json
+          real_distance?: number
+          status?: string
+          unidade?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pixels_per_meter?: number
+          plan_import_id?: string
+          point1?: Json
+          point2?: Json
+          real_distance?: number
+          status?: string
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_calibrations_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_imports: {
+        Row: {
+          created_at: string
+          data_planta: string | null
+          disciplina: string
+          file_path: string
+          file_type: string
+          id: string
+          nome_ficheiro: string
+          obra_id: string
+          observacoes: string | null
+          revision_number: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_planta?: string | null
+          disciplina?: string
+          file_path: string
+          file_type?: string
+          id?: string
+          nome_ficheiro: string
+          obra_id: string
+          observacoes?: string | null
+          revision_number?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_planta?: string | null
+          disciplina?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          nome_ficheiro?: string
+          obra_id?: string
+          observacoes?: string | null
+          revision_number?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_imports_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_measurement_mappings: {
+        Row: {
+          artigo_base_id: string | null
+          capitulo_id: string | null
+          coeficiente: number
+          created_at: string
+          estado: string
+          fator_desperdicio: number
+          formula_conversao: string | null
+          id: string
+          measurement_id: string
+          unidade_artigo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artigo_base_id?: string | null
+          capitulo_id?: string | null
+          coeficiente?: number
+          created_at?: string
+          estado?: string
+          fator_desperdicio?: number
+          formula_conversao?: string | null
+          id?: string
+          measurement_id: string
+          unidade_artigo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artigo_base_id?: string | null
+          capitulo_id?: string | null
+          coeficiente?: number
+          created_at?: string
+          estado?: string
+          fator_desperdicio?: number
+          formula_conversao?: string | null
+          id?: string
+          measurement_id?: string
+          unidade_artigo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_measurement_mappings_artigo_base_id_fkey"
+            columns: ["artigo_base_id"]
+            isOneToOne: false
+            referencedRelation: "base_precos_personalizada"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_measurement_mappings_capitulo_id_fkey"
+            columns: ["capitulo_id"]
+            isOneToOne: false
+            referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_measurement_mappings_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "plan_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_measurements: {
+        Row: {
+          camada: string | null
+          coordinates: Json
+          cor: string | null
+          created_at: string
+          estado_validacao: string
+          etiqueta: string | null
+          id: string
+          observacao: string | null
+          plan_import_id: string
+          tipo: string
+          unidade: string
+          updated_at: string
+          user_id: string
+          valor_ajustado: number | null
+          valor_bruto: number
+          valor_final: number | null
+        }
+        Insert: {
+          camada?: string | null
+          coordinates?: Json
+          cor?: string | null
+          created_at?: string
+          estado_validacao?: string
+          etiqueta?: string | null
+          id?: string
+          observacao?: string | null
+          plan_import_id: string
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+          user_id: string
+          valor_ajustado?: number | null
+          valor_bruto?: number
+          valor_final?: number | null
+        }
+        Update: {
+          camada?: string | null
+          coordinates?: Json
+          cor?: string | null
+          created_at?: string
+          estado_validacao?: string
+          etiqueta?: string | null
+          id?: string
+          observacao?: string | null
+          plan_import_id?: string
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+          valor_ajustado?: number | null
+          valor_bruto?: number
+          valor_final?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_measurements_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_audit_log: {
         Row: {
           acao: string
