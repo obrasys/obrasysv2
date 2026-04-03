@@ -238,6 +238,14 @@ export default function PlanQuantitativos() {
               onRefresh={handleRefreshAxia}
               onDismiss={dismissSuggestion}
             />
+            <PlanCrossValidationPanel
+              alerts={alerts}
+              loading={cvLoading}
+              error={cvError}
+              onRefresh={handleCrossValidation}
+              onDismiss={dismissAlert}
+            />
+            <PlanRoomTemplatesPanel />
           </div>
         </div>
       </div>
