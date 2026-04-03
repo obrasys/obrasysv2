@@ -68,7 +68,7 @@ export function PlanInfraScenariosPanel({
     new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
 
   const confidenceColor = (c: number) =>
-    c >= 0.7 ? "text-green-600" : c >= 0.4 ? "text-yellow-600" : "text-red-600";
+    c >= 0.7 ? "text-primary" : c >= 0.4 ? "text-accent-foreground" : "text-destructive";
 
   return (
     <div className="space-y-4">

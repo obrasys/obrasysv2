@@ -214,6 +214,10 @@ export default function PlanQuantitativos() {
                 planName={plan.nome_ficheiro}
               />
             </TabsContent>
+
+            <TabsContent value="infra" className="mt-4">
+              <PlanInfraTab obraId={obraId!} />
+            </TabsContent>
           </Tabs>
 
           {/* Axia sidebar */}
