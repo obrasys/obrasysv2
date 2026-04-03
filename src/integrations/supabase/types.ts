@@ -5111,6 +5111,158 @@ export type Database = {
           },
         ]
       }
+      plan_infra_budget_links: {
+        Row: {
+          artigo_orcamento_id: string
+          created_at: string
+          id: string
+          infra_item_id: string
+          orcamento_id: string
+          user_id: string
+        }
+        Insert: {
+          artigo_orcamento_id: string
+          created_at?: string
+          id?: string
+          infra_item_id: string
+          orcamento_id: string
+          user_id: string
+        }
+        Update: {
+          artigo_orcamento_id?: string
+          created_at?: string
+          id?: string
+          infra_item_id?: string
+          orcamento_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_infra_budget_links_artigo_orcamento_id_fkey"
+            columns: ["artigo_orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "artigos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_infra_budget_links_infra_item_id_fkey"
+            columns: ["infra_item_id"]
+            isOneToOne: false
+            referencedRelation: "plan_infra_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_infra_budget_links_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_infra_items: {
+        Row: {
+          artigo_base_id: string | null
+          created_at: string
+          descricao: string
+          formula_origem: string | null
+          id: string
+          preco_unitario: number
+          quantidade: number
+          scenario_id: string
+          unidade: string
+          valor_total: number
+        }
+        Insert: {
+          artigo_base_id?: string | null
+          created_at?: string
+          descricao: string
+          formula_origem?: string | null
+          id?: string
+          preco_unitario?: number
+          quantidade?: number
+          scenario_id: string
+          unidade?: string
+          valor_total?: number
+        }
+        Update: {
+          artigo_base_id?: string | null
+          created_at?: string
+          descricao?: string
+          formula_origem?: string | null
+          id?: string
+          preco_unitario?: number
+          quantidade?: number
+          scenario_id?: string
+          unidade?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_infra_items_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "plan_infra_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_infra_scenarios: {
+        Row: {
+          axia_confidence: number | null
+          axia_reasoning: string | null
+          created_at: string
+          custo_estimado: number | null
+          descricao: string | null
+          id: string
+          nome: string
+          parametros: Json | null
+          selecionado: boolean | null
+          site_condition_id: string
+          tipo_fundacao: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          axia_confidence?: number | null
+          axia_reasoning?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          parametros?: Json | null
+          selecionado?: boolean | null
+          site_condition_id: string
+          tipo_fundacao?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          axia_confidence?: number | null
+          axia_reasoning?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          parametros?: Json | null
+          selecionado?: boolean | null
+          site_condition_id?: string
+          tipo_fundacao?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_infra_scenarios_site_condition_id_fkey"
+            columns: ["site_condition_id"]
+            isOneToOne: false
+            referencedRelation: "plan_site_conditions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_measurement_mappings: {
         Row: {
           artigo_base_id: string | null
@@ -5387,6 +5539,62 @@ export type Database = {
             columns: ["plan_import_id"]
             isOneToOne: false
             referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_site_conditions: {
+        Row: {
+          area_implantacao_m2: number | null
+          capacidade_portante_kpa: number | null
+          created_at: string
+          id: string
+          nivel_freatico_m: number | null
+          numero_pisos: number | null
+          obra_id: string
+          observacoes: string | null
+          tipo_solo: string
+          topografia: string | null
+          updated_at: string
+          user_id: string
+          zona_sismica: string | null
+        }
+        Insert: {
+          area_implantacao_m2?: number | null
+          capacidade_portante_kpa?: number | null
+          created_at?: string
+          id?: string
+          nivel_freatico_m?: number | null
+          numero_pisos?: number | null
+          obra_id: string
+          observacoes?: string | null
+          tipo_solo?: string
+          topografia?: string | null
+          updated_at?: string
+          user_id: string
+          zona_sismica?: string | null
+        }
+        Update: {
+          area_implantacao_m2?: number | null
+          capacidade_portante_kpa?: number | null
+          created_at?: string
+          id?: string
+          nivel_freatico_m?: number | null
+          numero_pisos?: number | null
+          obra_id?: string
+          observacoes?: string | null
+          tipo_solo?: string
+          topografia?: string | null
+          updated_at?: string
+          user_id?: string
+          zona_sismica?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_site_conditions_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: true
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
         ]
