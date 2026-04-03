@@ -255,7 +255,32 @@ export function PlanViewer({
           onDragEnd={handleDragEnd}
         >
           <Layer>
-            {image && <KonvaImage image={image} x={0} y={0} />}
+            {/* Page margin / shadow behind the plan */}
+            {image && (
+              <>
+                {/* Drop shadow */}
+                <Rect
+                  x={4}
+                  y={4}
+                  width={image.width}
+                  height={image.height}
+                  fill="#00000022"
+                  cornerRadius={2}
+                />
+                {/* White page background with border */}
+                <Rect
+                  x={0}
+                  y={0}
+                  width={image.width}
+                  height={image.height}
+                  fill="#ffffff"
+                  stroke="#d1d5db"
+                  strokeWidth={1 / zoom}
+                  cornerRadius={1}
+                />
+                <KonvaImage image={image} x={0} y={0} />
+              </>
+            )}
 
             {/* Rooms */}
             {rooms.map((r, idx) => {
