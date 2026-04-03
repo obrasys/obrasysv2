@@ -33,6 +33,7 @@ export default function PlanQuantitativos() {
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
   const { rooms, roomMeasurements } = usePlanRooms(planId);
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
+  const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
   // Load articles from base_precos_personalizada + default_articles
   const articlesQuery = useQuery({
