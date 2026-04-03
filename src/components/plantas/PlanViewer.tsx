@@ -155,7 +155,7 @@ export function PlanViewer({
     if (image && dimensions.width > 0) {
       const scaleX = containerSize.width / dimensions.width;
       const scaleY = containerSize.height / dimensions.height;
-      const fitScale = Math.min(scaleX, scaleY, 1) * 0.9;
+      const fitScale = Math.min(scaleX, scaleY, 1) * 0.85;
       setZoom(fitScale);
       setPosition({
         x: (containerSize.width - dimensions.width * fitScale) / 2,
