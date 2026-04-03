@@ -229,6 +229,20 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                         </div>
                       </div>
                     ))}
+                    {onConvertDimensions && result.dimensions.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onConvertDimensions(result.dimensions);
+                        }}
+                      >
+                        <Ruler className="w-3 h-3 mr-1.5" />
+                        Converter {result.dimensions.length} cotas em medições pendentes
+                      </Button>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               )}
