@@ -233,7 +233,7 @@ export function PlanViewer({
 
       {/* Canvas */}
       <div
-        className="border rounded-lg overflow-hidden bg-muted/30"
+        className="border rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-800"
         style={{ cursor: getCursorStyle(), height: containerSize.height }}
       >
         <Stage
