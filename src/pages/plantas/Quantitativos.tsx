@@ -6,10 +6,11 @@ import { PlanQuantitativosByRoom } from "@/components/plantas/PlanQuantitativosB
 import { PlanBulkValidation } from "@/components/plantas/PlanBulkValidation";
 import { PlanExportableMap } from "@/components/plantas/PlanExportableMap";
 import { PlanBudgetGenerator } from "@/components/plantas/PlanBudgetGenerator";
+import { PlanInfraTab } from "@/components/plantas/PlanInfraTab";
 import { AxiaPlanSuggestionsPanel } from "@/components/plantas/AxiaPlanSuggestionsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
@@ -143,6 +144,10 @@ export default function PlanQuantitativos() {
                 <FileDown className="w-4 h-4" />
                 Mapa
               </TabsTrigger>
+              <TabsTrigger value="infra" className="gap-1.5">
+                <HardHat className="w-4 h-4" />
+                Infraestrutura
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="byRoom" className="mt-4">
@@ -208,6 +213,10 @@ export default function PlanQuantitativos() {
                 roomMeasurements={roomMeasurements}
                 planName={plan.nome_ficheiro}
               />
+            </TabsContent>
+
+            <TabsContent value="infra" className="mt-4">
+              <PlanInfraTab obraId={obraId!} />
             </TabsContent>
           </Tabs>
 
