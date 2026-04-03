@@ -62,6 +62,11 @@ export default function PlanQuantitativos() {
     });
   };
 
+  const handleCrossValidation = () => {
+    if (!obraId) return;
+    runCrossValidation({ obraId, measurements, mappings, rooms });
+  };
+
   const handleBulkValidate = (ids: string[], estado: "validado" | "rejeitado" | "pendente") => {
     let completed = 0;
     ids.forEach((id) => {
