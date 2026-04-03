@@ -6,6 +6,7 @@ import { PlanQuantitativosByRoom } from "@/components/plantas/PlanQuantitativosB
 import { PlanBulkValidation } from "@/components/plantas/PlanBulkValidation";
 import { PlanExportableMap } from "@/components/plantas/PlanExportableMap";
 import { PlanBudgetGenerator } from "@/components/plantas/PlanBudgetGenerator";
+import { PlanInfraTab } from "@/components/plantas/PlanInfraTab";
 import { AxiaPlanSuggestionsPanel } from "@/components/plantas/AxiaPlanSuggestionsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
