@@ -144,6 +144,10 @@ export default function PlanQuantitativos() {
                 <FileDown className="w-4 h-4" />
                 Mapa
               </TabsTrigger>
+              <TabsTrigger value="infra" className="gap-1.5">
+                <HardHat className="w-4 h-4" />
+                Infraestrutura
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="byRoom" className="mt-4">
