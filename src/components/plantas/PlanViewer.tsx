@@ -101,7 +101,7 @@ export function PlanViewer({
     if (image && dimensions.width > 0) {
       const scaleX = containerSize.width / dimensions.width;
       const scaleY = containerSize.height / dimensions.height;
-      const fitScale = Math.min(scaleX, scaleY, 1) * 0.9;
+      const fitScale = Math.min(scaleX, scaleY, 1) * 0.85;
       setZoom(fitScale);
       setPosition({
         x: (containerSize.width - dimensions.width * fitScale) / 2,
@@ -155,7 +155,7 @@ export function PlanViewer({
     if (image && dimensions.width > 0) {
       const scaleX = containerSize.width / dimensions.width;
       const scaleY = containerSize.height / dimensions.height;
-      const fitScale = Math.min(scaleX, scaleY, 1) * 0.9;
+      const fitScale = Math.min(scaleX, scaleY, 1) * 0.85;
       setZoom(fitScale);
       setPosition({
         x: (containerSize.width - dimensions.width * fitScale) / 2,
@@ -233,7 +233,7 @@ export function PlanViewer({
 
       {/* Canvas */}
       <div
-        className="border rounded-lg overflow-hidden bg-muted/30"
+        className="border rounded-lg overflow-hidden bg-muted"
         style={{ cursor: getCursorStyle(), height: containerSize.height }}
       >
         <Stage
@@ -255,7 +255,32 @@ export function PlanViewer({
           onDragEnd={handleDragEnd}
         >
           <Layer>
-            {image && <KonvaImage image={image} x={0} y={0} />}
+            {/* Page margin / shadow behind the plan */}
+            {image && (
+              <>
+                {/* Drop shadow */}
+                <Rect
+                  x={4}
+                  y={4}
+                  width={image.width}
+                  height={image.height}
+                  fill="#00000022"
+                  cornerRadius={2}
+                />
+                {/* White page background with border */}
+                <Rect
+                  x={0}
+                  y={0}
+                  width={image.width}
+                  height={image.height}
+                  fill="#ffffff"
+                  stroke="#d1d5db"
+                  strokeWidth={1 / zoom}
+                  cornerRadius={1}
+                />
+                <KonvaImage image={image} x={0} y={0} />
+              </>
+            )}
 
             {/* Rooms */}
             {rooms.map((r, idx) => {
