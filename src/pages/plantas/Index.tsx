@@ -15,7 +15,7 @@ export default function PlantasIndex() {
 
   return (
     <AppLayout title="Medição Assistida por Planta" subtitle="Importe plantas, meça quantitativos e gere pré-orçamentos">
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
