@@ -57,6 +57,14 @@ interface PlanAIAnalysisProps {
     unidade: string;
   } | null;
   onHighlightPosition?: (x: number, y: number) => void;
+  onConvertDimensions?: (dimensions: Array<{
+    value: number;
+    unit: string;
+    label: string;
+    position_x: number;
+    position_y: number;
+    confidence: number;
+  }>) => void;
 }
 
 export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition }: PlanAIAnalysisProps) {
