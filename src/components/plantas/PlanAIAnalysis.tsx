@@ -57,9 +57,17 @@ interface PlanAIAnalysisProps {
     unidade: string;
   } | null;
   onHighlightPosition?: (x: number, y: number) => void;
+  onConvertDimensions?: (dimensions: Array<{
+    value: number;
+    unit: string;
+    label: string;
+    position_x: number;
+    position_y: number;
+    confidence: number;
+  }>) => void;
 }
 
-export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition }: PlanAIAnalysisProps) {
+export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<PlanAnalysisResult | null>(null);
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -221,6 +229,20 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition 
                         </div>
                       </div>
                     ))}
+                    {onConvertDimensions && result.dimensions.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onConvertDimensions(result.dimensions);
+                        }}
+                      >
+                        <Ruler className="w-3 h-3 mr-1.5" />
+                        Converter {result.dimensions.length} cotas em medições pendentes
+                      </Button>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               )}

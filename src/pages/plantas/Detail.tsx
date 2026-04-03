@@ -411,6 +411,37 @@ export default function PlanDetail() {
                 real_distance: calibration.real_distance,
                 unidade: calibration.unidade,
               } : null}
+              onConvertDimensions={(dims) => {
+                if (!calibration) {
+                  toast.error("Calibre a planta antes de converter cotas em medições.");
+                  return;
+                }
+                let created = 0;
+                dims.forEach((dim) => {
+                  const valueInMeters = dim.unit === "cm" ? dim.value / 100
+                    : dim.unit === "mm" ? dim.value / 1000
+                    : dim.value;
+                  addMeasurement.mutate({
+                    tipo: "linha",
+                    coordinates: [
+                      { x: dim.position_x * 1000, y: dim.position_y * 1000 },
+                      { x: dim.position_x * 1000 + valueInMeters * calibration.pixels_per_meter, y: dim.position_y * 1000 },
+                    ],
+                    valorBruto: valueInMeters,
+                    unidade: "m",
+                    etiqueta: dim.label,
+                    cor: "#f59e0b",
+                    observacao: `OCR (confiança ${Math.round(dim.confidence * 100)}%)`,
+                  }, {
+                    onSuccess: () => {
+                      created++;
+                      if (created === dims.length) {
+                        toast.success(`${created} medição(ões) criadas a partir de cotas OCR (pendentes de validação)`);
+                      }
+                    },
+                  });
+                });
+              }}
             />
             <PlanCalibrationTool
               points={calibrationPoints}

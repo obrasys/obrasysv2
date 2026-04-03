@@ -8,6 +8,8 @@ import { PlanExportableMap } from "@/components/plantas/PlanExportableMap";
 import { PlanBudgetGenerator } from "@/components/plantas/PlanBudgetGenerator";
 import { PlanInfraTab } from "@/components/plantas/PlanInfraTab";
 import { AxiaPlanSuggestionsPanel } from "@/components/plantas/AxiaPlanSuggestionsPanel";
+import { PlanCrossValidationPanel } from "@/components/plantas/PlanCrossValidationPanel";
+import { PlanRoomTemplatesPanel } from "@/components/plantas/PlanRoomTemplatesPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat } from "lucide-react";
@@ -16,6 +18,7 @@ import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
 import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { useAxiaPlanSuggestions } from "@/hooks/useAxiaPlanSuggestions";
+import { useAxiaCrossValidation } from "@/hooks/useAxiaCrossValidation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,6 +33,7 @@ export default function PlanQuantitativos() {
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
   const { rooms, roomMeasurements } = usePlanRooms(planId);
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
+  const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
   // Load articles from base_precos_personalizada + default_articles
   const articlesQuery = useQuery({
@@ -56,6 +60,11 @@ export default function PlanQuantitativos() {
       mappings,
       articles,
     });
+  };
+
+  const handleCrossValidation = () => {
+    if (!obraId) return;
+    runCrossValidation({ obraId, measurements, mappings, rooms });
   };
 
   const handleBulkValidate = (ids: string[], estado: "validado" | "rejeitado" | "pendente") => {
@@ -229,6 +238,14 @@ export default function PlanQuantitativos() {
               onRefresh={handleRefreshAxia}
               onDismiss={dismissSuggestion}
             />
+            <PlanCrossValidationPanel
+              alerts={alerts}
+              loading={cvLoading}
+              error={cvError}
+              onRefresh={handleCrossValidation}
+              onDismiss={dismissAlert}
+            />
+            <PlanRoomTemplatesPanel />
           </div>
         </div>
       </div>

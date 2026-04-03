@@ -5484,6 +5484,39 @@ export type Database = {
           },
         ]
       }
+      plan_room_templates: {
+        Row: {
+          artigos: Json
+          created_at: string
+          id: string
+          nome: string
+          pe_direito_m: number
+          tipo_compartimento: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artigos?: Json
+          created_at?: string
+          id?: string
+          nome: string
+          pe_direito_m?: number
+          tipo_compartimento?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artigos?: Json
+          created_at?: string
+          id?: string
+          nome?: string
+          pe_direito_m?: number
+          tipo_compartimento?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_rooms: {
         Row: {
           area_m2: number
