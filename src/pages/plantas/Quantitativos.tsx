@@ -111,7 +111,7 @@ export default function PlanQuantitativos() {
 
   return (
     <AppLayout title={`Quantitativos — ${plan.nome_ficheiro}`} subtitle={`Rev. ${plan.revision_number}`}>
-      <div className="space-y-4">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas/${planId}`)}>

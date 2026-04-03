@@ -297,7 +297,7 @@ export default function PlanDetail() {
 
   return (
     <AppLayout title={plan.nome_ficheiro} subtitle={`Rev. ${plan.revision_number}`}>
-      <div className="space-y-4">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
