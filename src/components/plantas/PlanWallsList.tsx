@@ -78,7 +78,7 @@ export function PlanWallsList({
               </p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[300px]">
+            <ScrollArea className="max-h-[400px]">
               <div className="divide-y">
                 {walls.map((w, idx) => {
                   const wallOpenings = openings.filter((o) => o.wall_id === w.id);
