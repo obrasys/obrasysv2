@@ -362,14 +362,14 @@ export default function PlanDetail() {
         )}
 
         {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
           <PlanViewer
             imageDataUrl={effectiveImageUrl}
             dimensions={effectiveDimensions}
             isRendering={isRendering || imageQuery.isLoading}
             mode={mode}
             calibrationPoints={calibrationPoints}
-            onCalibrationClick={() => {}}
+            onCalibrationClick={handleCalibrationClick}
             measurements={measurements.map((m) => ({
               id: m.id,
               tipo: m.tipo,
