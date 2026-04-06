@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Minus, Hash, Pentagon, Trash2, Check, X, Pencil } from "lucide-react";
 import type { PlanMeasurement } from "@/types/plan-measurements";
 import { useState } from "react";
@@ -69,7 +68,6 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
           </div>
         ) : (
           <>
-            {/* Summary */}
             <div className="px-4 pb-2 flex gap-3 text-xs">
               {linhas.length > 0 && (
                 <span className="text-muted-foreground">
@@ -88,7 +86,7 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
               )}
             </div>
 
-            <ScrollArea className="max-h-[400px]">
+            <div className="max-h-[55vh] overflow-y-auto overscroll-contain pr-1 xl:max-h-[400px]">
               <div className="divide-y">
                 {measurements.map((m, idx) => {
                   const Icon = TIPO_ICON[m.tipo] ?? Minus;
@@ -147,7 +145,7 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
                   );
                 })}
               </div>
-            </ScrollArea>
+            </div>
           </>
         )}
       </CardContent>
