@@ -403,7 +403,7 @@ export default function PlanDetail() {
           />
 
           {/* Side panel */}
-          <div className="space-y-4 xl:max-h-[calc(100vh-200px)] xl:overflow-y-auto xl:pr-1 scrollbar-hide">
+          <div className="space-y-4 max-h-[60vh] xl:max-h-[calc(100vh-200px)] overflow-y-auto pr-1 scrollbar-hide">
             <PlanAIAnalysis
               imageDataUrl={effectiveImageUrl}
               calibration={calibration ? {
