@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { SquareDashed, Trash2, Edit2, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,7 +67,7 @@ export function PlanRoomsList({ rooms, onDelete, onUpdate, selectedRoomId, onSel
             </p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[300px]">
+          <div className="max-h-[55vh] overflow-y-auto overscroll-contain pr-1 xl:max-h-[300px]">
             <div className="divide-y">
               {rooms.map((r, idx) => {
                 const color = ROOM_COLORS[idx % ROOM_COLORS.length];
@@ -154,7 +153,7 @@ export function PlanRoomsList({ rooms, onDelete, onUpdate, selectedRoomId, onSel
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </CardContent>
     </Card>

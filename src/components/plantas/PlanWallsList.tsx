@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wallpaper, Trash2, DoorOpen, Plus } from "lucide-react";
 import type { PlanWall, PlanOpening, PlanRoom } from "@/types/plan-measurements";
@@ -78,7 +77,7 @@ export function PlanWallsList({
               </p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[400px]">
+            <div className="max-h-[55vh] overflow-y-auto overscroll-contain pr-1 xl:max-h-[400px]">
               <div className="divide-y">
                 {walls.map((w, idx) => {
                   const wallOpenings = openings.filter((o) => o.wall_id === w.id);
@@ -128,7 +127,6 @@ export function PlanWallsList({
                           </Button>
                         </div>
                       </div>
-                      {/* Wall openings */}
                       {wallOpenings.length > 0 && (
                         <div className="mt-1.5 ml-3 space-y-1">
                           {wallOpenings.map((o) => (
@@ -159,12 +157,11 @@ export function PlanWallsList({
                   );
                 })}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Add opening dialog */}
       <Dialog open={!!openingDialog} onOpenChange={(open) => !open && setOpeningDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
