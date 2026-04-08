@@ -68,7 +68,7 @@ interface PlanAIAnalysisProps {
   onAnalysisComplete?: () => void;
 }
 
-export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions }: PlanAIAnalysisProps) {
+export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions, onAnalysisComplete }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<PlanAnalysisResult | null>(null);
   const [sectionsOpen, setSectionsOpen] = useState({
