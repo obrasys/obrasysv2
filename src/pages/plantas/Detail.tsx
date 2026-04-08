@@ -436,104 +436,143 @@ export default function PlanDetail() {
             onPageChange={setCurrentPage}
           />
 
-          {/* Side panel */}
-          <div className="space-y-4 xl:max-h-[calc(100vh-200px)] xl:overflow-y-auto xl:pr-1">
-            <PlanAIAnalysis
-              imageDataUrl={effectiveImageUrl}
-              calibration={calibration ? {
-                pixels_per_meter: calibration.pixels_per_meter,
-                real_distance: calibration.real_distance,
-                unidade: calibration.unidade,
-              } : null}
-              onConvertDimensions={(dims) => {
-                if (!calibration) {
-                  toast.error("Calibre a planta antes de converter cotas em medições.");
-                  return;
-                }
-                let created = 0;
-                dims.forEach((dim) => {
-                  const valueInMeters = dim.unit === "cm" ? dim.value / 100
-                    : dim.unit === "mm" ? dim.value / 1000
-                    : dim.value;
-                  addMeasurement.mutate({
-                    tipo: "linha",
-                    coordinates: [
-                      { x: dim.position_x * 1000, y: dim.position_y * 1000 },
-                      { x: dim.position_x * 1000 + valueInMeters * calibration.pixels_per_meter, y: dim.position_y * 1000 },
-                    ],
-                    valorBruto: valueInMeters,
-                    unidade: "m",
-                    etiqueta: dim.label,
-                    cor: "#f59e0b",
-                    observacao: `OCR (confiança ${Math.round(dim.confidence * 100)}%)`,
-                  }, {
-                    onSuccess: () => {
-                      created++;
-                      if (created === dims.length) {
-                        toast.success(`${created} medição(ões) criadas a partir de cotas OCR (pendentes de validação)`);
-                      }
-                    },
-                  });
-                });
-              }}
-            />
-            <PlanCalibrationTool
-              points={calibrationPoints}
-              isCalibrating={mode === "calibrate"}
-              onStartCalibration={handleStartCalibration}
-              onSaveCalibration={handleSaveCalibration}
-              onReset={handleResetCalibration}
-              currentCalibration={calibration}
-              isSaving={saveCalibration.isPending}
-            />
+          {/* Side panel - contextual based on step */}
+          <div className="space-y-4 xl:max-h-[calc(100vh-280px)] xl:overflow-y-auto xl:pr-1">
+            {/* Always show calibration when on calibrate step or not yet calibrated */}
+            {(effectiveStep === "calibrate" || !canMeasure) && (
+              <PlanCalibrationTool
+                points={calibrationPoints}
+                isCalibrating={mode === "calibrate"}
+                onStartCalibration={handleStartCalibration}
+                onSaveCalibration={handleSaveCalibration}
+                onReset={handleResetCalibration}
+                currentCalibration={calibration}
+                isSaving={saveCalibration.isPending}
+              />
+            )}
 
-            <Tabs defaultValue="measurements" className="w-full">
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="measurements" className="text-xs gap-1">
-                  <Minus className="w-3 h-3" /> Medições
-                </TabsTrigger>
-                <TabsTrigger value="rooms" className="text-xs gap-1">
-                  <SquareDashed className="w-3 h-3" /> Comp.
-                </TabsTrigger>
-                <TabsTrigger value="walls" className="text-xs gap-1">
-                  <Wallpaper className="w-3 h-3" /> Paredes
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="measurements" className="mt-2">
-                <PlanMeasurementsList
-                  measurements={measurements}
-                  onDelete={(id) => deleteMeasurement.mutate(id)}
-                  onUpdate={(id, updates) =>
-                    updateMeasurement.mutate({
-                      id,
-                      etiqueta: updates.etiqueta,
-                      camada: updates.camada as any,
-                      estadoValidacao: updates.estado_validacao as any,
-                    })
+            {/* Show Axia analysis prominently on analyze step, or compact on others */}
+            {(effectiveStep === "analyze" || canMeasure) && (
+              <PlanAIAnalysis
+                imageDataUrl={effectiveImageUrl}
+                calibration={calibration ? {
+                  pixels_per_meter: calibration.pixels_per_meter,
+                  real_distance: calibration.real_distance,
+                  unidade: calibration.unidade,
+                } : null}
+                onConvertDimensions={(dims) => {
+                  if (!calibration) {
+                    toast.error("Calibre a planta antes de converter cotas em medições.");
+                    return;
                   }
-                />
-              </TabsContent>
-              <TabsContent value="rooms" className="mt-2">
-                <PlanRoomsList
-                  rooms={rooms}
-                  selectedRoomId={selectedRoomId}
-                  onSelectRoom={setSelectedRoomId}
-                  onDelete={(id) => deleteRoom.mutate(id)}
-                  onUpdate={(id, updates) => updateRoom.mutate({ id, ...updates } as any)}
-                />
-              </TabsContent>
-              <TabsContent value="walls" className="mt-2">
-                <PlanWallsList
-                  walls={walls}
-                  openings={openings}
-                  rooms={rooms}
-                  onDeleteWall={(id) => deleteWall.mutate(id)}
-                  onUpdateWall={(id, updates) => updateWall.mutate({ id, ...updates } as any)}
-                  onAddOpening={(data) => addOpening.mutate(data as any)}
-                  onDeleteOpening={(id) => deleteOpening.mutate(id)}
-                />
-              </TabsContent>
-            </Tabs>
+                  let created = 0;
+                  dims.forEach((dim) => {
+                    const valueInMeters = dim.unit === "cm" ? dim.value / 100
+                      : dim.unit === "mm" ? dim.value / 1000
+                      : dim.value;
+                    addMeasurement.mutate({
+                      tipo: "linha",
+                      coordinates: [
+                        { x: dim.position_x * 1000, y: dim.position_y * 1000 },
+                        { x: dim.position_x * 1000 + valueInMeters * calibration.pixels_per_meter, y: dim.position_y * 1000 },
+                      ],
+                      valorBruto: valueInMeters,
+                      unidade: "m",
+                      etiqueta: dim.label,
+                      cor: "#f59e0b",
+                      observacao: `OCR (confiança ${Math.round(dim.confidence * 100)}%)`,
+                    }, {
+                      onSuccess: () => {
+                        created++;
+                        if (created === dims.length) {
+                          toast.success(`${created} medição(ões) criadas a partir de cotas OCR (pendentes de validação)`);
+                        }
+                      },
+                    });
+                  });
+                }}
+                onAnalysisComplete={() => {
+                  setHasAnalysis(true);
+                  setWorkflowStep("analyze");
+                }}
+              />
+            )}
+
+            {/* Calibration compact view when already calibrated and not on calibrate step */}
+            {canMeasure && effectiveStep !== "calibrate" && (
+              <PlanCalibrationTool
+                points={calibrationPoints}
+                isCalibrating={mode === "calibrate"}
+                onStartCalibration={handleStartCalibration}
+                onSaveCalibration={handleSaveCalibration}
+                onReset={handleResetCalibration}
+                currentCalibration={calibration}
+                isSaving={saveCalibration.isPending}
+              />
+            )}
+
+            {/* Measurements/Rooms/Walls tabs - show on measure step or when there's data */}
+            {(effectiveStep === "measure" || measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
+              <Tabs defaultValue="measurements" className="w-full">
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="measurements" className="text-xs gap-1">
+                    <Minus className="w-3 h-3" /> Medições {measurements.length > 0 && <Badge variant="secondary" className="text-[9px] px-1 ml-1">{measurements.length}</Badge>}
+                  </TabsTrigger>
+                  <TabsTrigger value="rooms" className="text-xs gap-1">
+                    <SquareDashed className="w-3 h-3" /> Comp. {rooms.length > 0 && <Badge variant="secondary" className="text-[9px] px-1 ml-1">{rooms.length}</Badge>}
+                  </TabsTrigger>
+                  <TabsTrigger value="walls" className="text-xs gap-1">
+                    <Wallpaper className="w-3 h-3" /> Paredes {walls.length > 0 && <Badge variant="secondary" className="text-[9px] px-1 ml-1">{walls.length}</Badge>}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="measurements" className="mt-2">
+                  <PlanMeasurementsList
+                    measurements={measurements}
+                    onDelete={(id) => deleteMeasurement.mutate(id)}
+                    onUpdate={(id, updates) =>
+                      updateMeasurement.mutate({
+                        id,
+                        etiqueta: updates.etiqueta,
+                        camada: updates.camada as any,
+                        estadoValidacao: updates.estado_validacao as any,
+                      })
+                    }
+                  />
+                </TabsContent>
+                <TabsContent value="rooms" className="mt-2">
+                  <PlanRoomsList
+                    rooms={rooms}
+                    selectedRoomId={selectedRoomId}
+                    onSelectRoom={setSelectedRoomId}
+                    onDelete={(id) => deleteRoom.mutate(id)}
+                    onUpdate={(id, updates) => updateRoom.mutate({ id, ...updates } as any)}
+                  />
+                </TabsContent>
+                <TabsContent value="walls" className="mt-2">
+                  <PlanWallsList
+                    walls={walls}
+                    openings={openings}
+                    rooms={rooms}
+                    onDeleteWall={(id) => deleteWall.mutate(id)}
+                    onUpdateWall={(id, updates) => updateWall.mutate({ id, ...updates } as any)}
+                    onAddOpening={(data) => addOpening.mutate(data as any)}
+                    onDeleteOpening={(id) => deleteOpening.mutate(id)}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
+
+            {/* Budget action on budget step */}
+            {effectiveStep === "budget" && (
+              <Button
+                className="w-full"
+                onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                disabled={measurements.length === 0 && rooms.length === 0}
+              >
+                <Table2 className="w-4 h-4 mr-2" />
+                Abrir Quantitativos e Orçamentação
+              </Button>
+            )}
           </div>
         </div>
       </div>
