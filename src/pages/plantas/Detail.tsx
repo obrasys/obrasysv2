@@ -325,8 +325,8 @@ export default function PlanDetail() {
 
   return (
     <AppLayout title={plan.nome_ficheiro} subtitle={`Rev. ${plan.revision_number}`}>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Top bar */}
+      <div className="p-4 md:p-6 space-y-3 md:space-y-4">
+        {/* Top bar - simplified */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas`)}>
@@ -338,7 +338,7 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {effectiveStep === "measure" && (
             <PlanMeasurementToolbar
               mode={mode === "calibrate" ? "view" : mode}
               onModeChange={handleModeChange}
@@ -346,22 +346,28 @@ export default function PlanDetail() {
               onUndo={handleUndo}
               hasActivePoints={activePoints.length > 0}
             />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={measurements.length === 0}
-                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
-                >
-                  <Table2 className="w-4 h-4 mr-1" />
-                  Quantitativos
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Mapear medições para artigos</TooltipContent>
-            </Tooltip>
-          </div>
+          )}
         </div>
+
+        {/* Workflow Stepper */}
+        <PlanWorkflowStepper
+          currentStep={effectiveStep}
+          completedSteps={completedSteps}
+          onStepClick={handleStepClick}
+        />
+
+        {/* Contextual Guide */}
+        <PlanContextualGuide
+          step={effectiveStep}
+          isCalibrated={canMeasure}
+          measurementCount={measurements.length + rooms.length + walls.length}
+          hasAnalysis={hasAnalysis}
+          onAction={() => {
+            if (effectiveStep === "calibrate") handleStartCalibration();
+            if (effectiveStep === "analyze") {/* AI analysis triggered from panel */}
+            if (effectiveStep === "budget") navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`);
+          }}
+        />
 
         {/* Summary bar */}
         {(measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
