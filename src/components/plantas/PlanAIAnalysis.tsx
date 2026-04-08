@@ -65,9 +65,10 @@ interface PlanAIAnalysisProps {
     position_y: number;
     confidence: number;
   }>) => void;
+  onAnalysisComplete?: () => void;
 }
 
-export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions }: PlanAIAnalysisProps) {
+export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions, onAnalysisComplete }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<PlanAnalysisResult | null>(null);
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -126,6 +127,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
         const dimCount = data.analysis.dimensions?.length ?? 0;
         const roomCount = data.analysis.rooms?.length ?? 0;
         toast.success(`Análise concluída: ${dimCount} cotas, ${roomCount} compartimentos identificados`);
+        onAnalysisComplete?.();
       } else {
         toast.warning("A IA não conseguiu analisar esta planta.");
       }
