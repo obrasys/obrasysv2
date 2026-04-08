@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanViewer } from "@/components/plantas/PlanViewer";
@@ -9,6 +9,8 @@ import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList"
 import { PlanRoomsList } from "@/components/plantas/PlanRoomsList";
 import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
+import { PlanWorkflowStepper, type WorkflowStep } from "@/components/plantas/PlanWorkflowStepper";
+import { PlanContextualGuide } from "@/components/plantas/PlanContextualGuide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
