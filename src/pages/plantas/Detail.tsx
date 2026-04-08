@@ -113,6 +113,32 @@ export default function PlanDetail() {
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
+  // Workflow stepper state
+  const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("calibrate");
+  const [hasAnalysis, setHasAnalysis] = useState(false);
+
+  const completedSteps = useMemo(() => {
+    const completed: WorkflowStep[] = [];
+    if (canMeasure) completed.push("calibrate");
+    if (measurements.length > 0 || rooms.length > 0 || walls.length > 0) completed.push("measure");
+    if (hasAnalysis) completed.push("analyze");
+    return completed;
+  }, [canMeasure, measurements.length, rooms.length, walls.length, hasAnalysis]);
+
+  // Auto-advance workflow step
+  const effectiveStep = useMemo(() => {
+    if (!canMeasure) return "calibrate";
+    if (workflowStep === "calibrate" && canMeasure) return "measure";
+    return workflowStep;
+  }, [workflowStep, canMeasure]);
+
+  const handleStepClick = (step: WorkflowStep) => {
+    setWorkflowStep(step);
+    if (step === "calibrate" && !canMeasure) {
+      handleStartCalibration();
+    }
+  };
+
   // Calibration handlers
   const handleCalibrationClick = useCallback((point: { x: number; y: number }) => {
     if (calibrationPoints.length < 2) setCalibrationPoints((prev) => [...prev, point]);
