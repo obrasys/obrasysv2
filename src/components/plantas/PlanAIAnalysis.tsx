@@ -65,6 +65,7 @@ interface PlanAIAnalysisProps {
     position_y: number;
     confidence: number;
   }>) => void;
+  onAnalysisComplete?: () => void;
 }
 
 export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions }: PlanAIAnalysisProps) {
