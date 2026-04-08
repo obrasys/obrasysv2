@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MousePointer2, Minus, Hash, Pentagon, Undo2, SquareDashed, Wallpaper, DoorOpen } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 export type MeasureMode =
   | "view"
@@ -20,6 +21,17 @@ interface PlanMeasurementToolbarProps {
   onUndo: () => void;
   hasActivePoints: boolean;
 }
+
+const MODE_HINTS: Record<MeasureMode, string> = {
+  view: "Arraste para mover, scroll para zoom",
+  calibrate: "",
+  measure_line: "Clique nos pontos da linha · Duplo-clique para finalizar",
+  measure_area: "Clique nos vértices da área · Duplo-clique para fechar",
+  measure_count: "Clique para marcar cada elemento",
+  draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar",
+  draw_wall: "Clique no início e fim da parede (2 pontos)",
+  draw_opening: "Selecione sobre uma parede existente",
+};
 
 export function PlanMeasurementToolbar({
   mode,
@@ -41,54 +53,67 @@ export function PlanMeasurementToolbar({
     { id: "draw_opening", icon: DoorOpen, label: "Vão", tip: "Marcar porta/janela sobre parede" },
   ];
 
+  const hint = MODE_HINTS[mode];
+
   return (
-    <div className="flex items-center gap-1 bg-background border rounded-lg p-1 shadow-sm">
-      {measureTools.map((tool) => (
-        <Tooltip key={tool.id}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={mode === tool.id ? "default" : "ghost"}
-              size="sm"
-              className="h-8 px-2.5 text-xs"
-              onClick={() => onModeChange(tool.id)}
-              disabled={tool.id !== "view" && !canMeasure}
-            >
-              <tool.icon className="w-3.5 h-3.5 mr-1" />
-              {tool.label}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            {!canMeasure && tool.id !== "view" ? "Calibre a escala primeiro" : tool.tip}
-          </TooltipContent>
-        </Tooltip>
-      ))}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1 bg-background border rounded-lg p-1 shadow-sm">
+        {measureTools.map((tool) => (
+          <Tooltip key={tool.id}>
+            <TooltipTrigger asChild>
+              <Button
+                variant={mode === tool.id ? "default" : "ghost"}
+                size="sm"
+                className="h-8 px-2.5 text-xs"
+                onClick={() => onModeChange(tool.id)}
+                disabled={tool.id !== "view" && !canMeasure}
+              >
+                <tool.icon className="w-3.5 h-3.5 mr-1" />
+                {tool.label}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {!canMeasure && tool.id !== "view" ? "Calibre a escala primeiro" : tool.tip}
+            </TooltipContent>
+          </Tooltip>
+        ))}
 
-      <Separator orientation="vertical" className="h-6 mx-0.5" />
+        <Separator orientation="vertical" className="h-6 mx-0.5" />
 
-      {drawTools.map((tool) => (
-        <Tooltip key={tool.id}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={mode === tool.id ? "default" : "ghost"}
-              size="sm"
-              className="h-8 px-2.5 text-xs"
-              onClick={() => onModeChange(tool.id)}
-              disabled={!canMeasure}
-            >
-              <tool.icon className="w-3.5 h-3.5 mr-1" />
-              {tool.label}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            {!canMeasure ? "Calibre a escala primeiro" : tool.tip}
-          </TooltipContent>
-        </Tooltip>
-      ))}
+        {drawTools.map((tool) => (
+          <Tooltip key={tool.id}>
+            <TooltipTrigger asChild>
+              <Button
+                variant={mode === tool.id ? "default" : "ghost"}
+                size="sm"
+                className="h-8 px-2.5 text-xs"
+                onClick={() => onModeChange(tool.id)}
+                disabled={!canMeasure}
+              >
+                <tool.icon className="w-3.5 h-3.5 mr-1" />
+                {tool.label}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {!canMeasure ? "Calibre a escala primeiro" : tool.tip}
+            </TooltipContent>
+          </Tooltip>
+        ))}
 
-      {hasActivePoints && (
-        <Button variant="ghost" size="icon" className="h-8 w-8 ml-1" onClick={onUndo}>
-          <Undo2 className="w-3.5 h-3.5" />
-        </Button>
+        {hasActivePoints && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 ml-1" onClick={onUndo}>
+            <Undo2 className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+
+      {/* Active mode hint */}
+      {mode !== "view" && hint && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground bg-accent/30 animate-in fade-in duration-200">
+            💡 {hint}
+          </Badge>
+        </div>
       )}
     </div>
   );
