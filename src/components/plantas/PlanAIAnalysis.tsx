@@ -127,6 +127,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
         const dimCount = data.analysis.dimensions?.length ?? 0;
         const roomCount = data.analysis.rooms?.length ?? 0;
         toast.success(`Análise concluída: ${dimCount} cotas, ${roomCount} compartimentos identificados`);
+        onAnalysisComplete?.();
       } else {
         toast.warning("A IA não conseguiu analisar esta planta.");
       }
