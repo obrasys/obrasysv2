@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowRightLeft,
   BarChart3,
   BrainCircuit,
   Building2,
@@ -15,17 +14,16 @@ import {
   HelpCircle,
   Home,
   Mail,
-  MapPin,
-  Network,
   Plug,
   Settings,
   Shield,
-  ShieldCheck,
   Store,
   TicketCheck,
   Upload,
   Users,
   Wallet,
+  ArrowRightLeft,
+  Network,
 } from "lucide-react";
 
 export type NavItem = {
@@ -47,35 +45,40 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Operação",
-    items: [
-      { icon: Building2, label: "Obras", href: "/obras" },
-      { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
-      { icon: Calendar, label: "Tarefas", href: "/tarefas" },
-      { icon: ClipboardList, label: "RDOs", href: "/rdos" },
-      { icon: Clock, label: "Livro de Ponto", href: "/livro-ponto" },
-      { icon: ClipboardCheck, label: "Autos de Medição", href: "/autos-medicao" },
-      { icon: ShieldCheck, label: "Conformidade", href: "/conformidade" },
-    ],
-  },
-  {
     label: "Comercial",
     items: [
       { icon: Users, label: "Clientes", href: "/clientes" },
-      { icon: Network, label: "Fornecedores", href: "/rede-fornecedores" },
+      { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
       { icon: Database, label: "Base de Preços", href: "/base-precos" },
     ],
   },
   {
-    label: "Recursos & Financeiro",
+    label: "Obras",
     items: [
-      { icon: Wallet, label: "Financeiro", href: "/financeiro" },
-      { icon: HardHat, label: "Recursos", href: "/recursos" },
-      { icon: Plug, label: "Instalações", href: "/instalacoes" },
+      { icon: Building2, label: "Todas as Obras", href: "/obras" },
+      { icon: Calendar, label: "Tarefas", href: "/tarefas" },
+      { icon: ClipboardList, label: "RDOs", href: "/rdos" },
+      { icon: ClipboardCheck, label: "Autos de Medição", href: "/autos-medicao" },
+      { icon: Clock, label: "Livro de Ponto", href: "/livro-ponto" },
+      { icon: Shield, label: "Conformidade", href: "/conformidade" },
     ],
   },
   {
-    label: "Relatórios & IA",
+    label: "Recursos",
+    items: [
+      { icon: HardHat, label: "Equipas", href: "/recursos" },
+      { icon: Plug, label: "Instalações", href: "/instalacoes" },
+      { icon: Network, label: "Fornecedores", href: "/rede-fornecedores" },
+    ],
+  },
+  {
+    label: "Financeiro",
+    items: [
+      { icon: Wallet, label: "Financeiro", href: "/financeiro" },
+    ],
+  },
+  {
+    label: "Documentos & IA",
     items: [
       { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
       { icon: BrainCircuit, label: "Axia", href: "/axia" },
@@ -83,7 +86,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Conta & Suporte",
+    label: "Conta",
     items: [
       { icon: CreditCard, label: "Subscrição", href: "/subscricao" },
       { icon: Settings, label: "Definições", href: "/definicoes" },

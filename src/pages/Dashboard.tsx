@@ -3,28 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Building2,
-  ClipboardList,
-  FileText,
-  ListChecks,
-  Plus,
-  Loader2,
-  Sparkles,
-  Upload,
-} from 'lucide-react';
+import { Building2, Loader2, Sparkles, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useOrcamentos } from '@/hooks/useOrcamentos';
 import { useTarefas } from '@/hooks/useTarefas';
-import { useEquipaMembros } from '@/hooks/useRecursos';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useNotifications } from '@/hooks/useNotifications';
 import { OnboardingWizard, OnboardingProgressPanel, OnboardingCompletionModal } from '@/components/onboarding';
 import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
-import { DashboardCharts, DashboardMetrics, DashboardStats, ObrasSummaryTable } from '@/components/dashboard';
+import {
+  DashboardWelcome,
+  DashboardKPIStrip,
+  DashboardPriorities,
+  DashboardObrasActive,
+  DashboardFlowNav,
+  DashboardAgendaPerformance,
+} from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 
 const Dashboard = () => {
@@ -32,11 +28,9 @@ const Dashboard = () => {
   const { profile } = useAuth();
   const { obras, isLoading: loadingObras } = useObras();
   const { rdos, isLoading: loadingRDOs } = useRDOs();
-  const { orcamentos, isLoading: loadingOrcamentos } = useOrcamentos();
-  const { tarefas, isLoading: loadingTarefas } = useTarefas();
-  const { membros, loading: loadingMembros } = useEquipaMembros();
+  const { orcamentos } = useOrcamentos();
+  const { tarefas } = useTarefas();
   const { activeState, dismissMessage } = useEngagement();
-  const { notifications: userNotifications, markAsRead: markNotifRead } = useNotifications();
   const {
     progress: onboardingProgress,
     showWizard,
@@ -59,21 +53,28 @@ const Dashboard = () => {
     if (activeState === 'B') setShowBudgetModal(true);
   }, [activeState]);
 
-  // Show company completion prompt after onboarding wizard is done and company data is incomplete
   const companyIncomplete = profile && !profile.empresa_morada && !profile.empresa_cidade;
   const showCompanyPrompt = !showWizard && !empresaPromptDismissed && companyIncomplete && (
     onboardingProgress?.wizard_status === 'completed' || onboardingProgress?.wizard_status === 'skipped'
   );
 
-  // KPI counts
-  const kpis = useMemo(() => ({
-    totalObras: obras?.length || 0,
-    totalRDOs: rdos?.length || 0,
-    totalOrcamentos: orcamentos?.length || 0,
-    totalTarefas: tarefas?.length || 0,
-  }), [obras, rdos, orcamentos, tarefas]);
+  // Computed KPIs
+  const kpis = useMemo(() => {
+    const obrasAtivas = obras?.filter(o => o.status === 'em_curso').length || 0;
+    const obrasPausadas = obras?.filter(o => o.status === 'pausada').length || 0;
+    const obrasSemProgresso = obras?.filter(o => o.status === 'em_curso' && (o.progresso || 0) === 0).length || 0;
+    const obrasEmRisco = obrasPausadas + obrasSemProgresso;
+    const rdosPendentes = rdos?.filter((r: any) => r.status === 'rascunho' || r.status === 'pendente').length || 0;
+    const tarefasPendentes = tarefas?.filter((t: any) => t.status === 'pendente' || t.status === 'em_progresso').length || 0;
+    // Placeholder for financial — real hook can be added later
+    const receberSemana = 0;
+    const medicoesPendentes = 0;
+
+    return { obrasAtivas, obrasEmRisco, receberSemana, medicoesPendentes, rdosPendentes, tarefasPendentes };
+  }, [obras, rdos, tarefas]);
 
   const isLoading = loadingObras || loadingRDOs;
+  const hasData = (obras?.length || 0) > 0 || (rdos?.length || 0) > 0;
 
   if (isLoading) {
     return (
@@ -85,19 +86,10 @@ const Dashboard = () => {
     );
   }
 
-  const hasData = kpis.totalObras > 0 || kpis.totalRDOs > 0;
-
-  const kpiCards = [
-    { label: 'Obras', value: kpis.totalObras, icon: Building2, bg: 'bg-primary/10', color: 'text-primary' },
-    { label: 'RDOs', value: kpis.totalRDOs, icon: ClipboardList, bg: 'bg-emerald-100', color: 'text-emerald-600' },
-    { label: 'Orçamentos', value: kpis.totalOrcamentos, icon: FileText, bg: 'bg-amber-100', color: 'text-amber-600' },
-    { label: 'Tarefas', value: kpis.totalTarefas, icon: ListChecks, bg: 'bg-purple-100', color: 'text-purple-600' },
-  ];
-
   return (
     <AppLayout title="Dashboard">
-      <div className="p-4 md:p-6 space-y-5">
-        {/* Wizard — full-width section above everything */}
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Onboarding Wizard */}
         {showWizard && onboardingProgress && (
           <OnboardingWizard
             initialStep={onboardingProgress.wizard_current_step || 0}
@@ -109,45 +101,14 @@ const Dashboard = () => {
           />
         )}
 
-        {/* Header */}
         {!showWizard && (
           <>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
-                    Olá, {profile?.nome?.split(' ')[0] || 'Utilizador'}!
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {hasData
-                      ? 'Aqui está o resumo do acompanhamento das suas obras.'
-                      : 'Bem-vindo ao ObraSys. Comece criando a sua primeira obra.'}
-                  </p>
-                </div>
-                {activeState === 'D' && <EngagementActiveBadge />}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate('/rdos/criar')}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Novo </span>RDO
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate('/importar')}>
-                  <Upload className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Importar </span>Excel
-                </Button>
-                <Button size="sm" onClick={() => navigate('/clientes/criar')}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Novo </span>Cliente
-                </Button>
-              </div>
-            </div>
-
             {/* Engagement */}
             {activeState === 'A' && <EngagementBanner onDismiss={dismissMessage} />}
             <EngagementBudgetModal open={showBudgetModal} onClose={() => { setShowBudgetModal(false); dismissMessage(); }} />
             {activeState === 'C' && <EngagementNotification onDismiss={dismissMessage} />}
 
-            {/* Onboarding progress panel OR success state */}
+            {/* Onboarding progress */}
             {(showProgressPanel || showSuccessState) && (
               <OnboardingProgressPanel
                 steps={orderedSteps}
@@ -157,7 +118,7 @@ const Dashboard = () => {
               />
             )}
 
-            {/* Company completion prompt */}
+            {/* Company prompt */}
             {showCompanyPrompt && (
               <Card className="border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700/30">
                 <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -167,19 +128,11 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm">Complete os dados da sua empresa</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Preencha morada, contactos e logotipo para usar nos seus orçamentos e documentos.
-                      </p>
+                      <p className="text-xs text-muted-foreground">Preencha morada, contactos e logotipo para usar nos seus orçamentos e documentos.</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEmpresaPromptDismissed(true)}
-                    >
-                      Mais tarde
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setEmpresaPromptDismissed(true)}>Mais tarde</Button>
                     <Button size="sm" onClick={() => setShowEmpresaModal(true)}>
                       <Building2 className="w-4 h-4 mr-1" /> Completar agora
                     </Button>
@@ -187,18 +140,11 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             )}
-
-            {/* Empresa Modal */}
-            <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => {
-              setShowEmpresaModal(open);
-              if (!open) setEmpresaPromptDismissed(true);
-            }} />
-
-            {/* Completion modal */}
+            <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => { setShowEmpresaModal(open); if (!open) setEmpresaPromptDismissed(true); }} />
             <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
 
-            {/* Quick Action - Orçamento Essencial */}
-            <Card className="border-primary/20 bg-primary/5">
+            {/* Quick budget CTA */}
+            <Card className="border-primary/20 bg-primary/5 rounded-xl">
               <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-base">Criar Orçamento em 3 Passos</h3>
@@ -208,55 +154,47 @@ const Dashboard = () => {
                   <Button size="sm" onClick={() => navigate('/orcamentos/essencial/novo')}>
                     <Sparkles className="w-4 h-4 mr-1" /> Criar Agora
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/orcamentos/criar')}>
-                    Avançado
-                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/orcamentos/criar')}>Avançado</Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {kpiCards.map((kpi) => (
-                <Card key={kpi.label} className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-5 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${kpi.bg}`}>
-                        <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{kpi.value.toLocaleString('pt-PT')}</p>
-                        <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {/* === NEW DASHBOARD STRUCTURE === */}
 
-            {hasData ? (
-              <>
-                <DashboardCharts rdos={rdos || []} obras={obras || []} />
-                <DashboardMetrics obras={obras || []} rdos={rdos || []} orcamentos={orcamentos || []} />
-                <DashboardStats obras={obras || []} tarefas={tarefas || []} membros={membros || []} />
-                <ObrasSummaryTable obras={obras || []} />
-              </>
-            ) : (
-              <Card className="p-12 text-center">
-                <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
-                  <Building2 className="w-10 h-10 text-accent" />
-                </div>
-                <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                  Comece a sua primeira obra
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Crie a sua primeira obra para começar a gerir orçamentos, relatórios diários e acompanhar o progresso.
-                </p>
-                <Button onClick={() => navigate('/obras/criar')} size="lg">
-                  <Plus className="w-4 h-4 mr-2" /> Criar Obra
-                </Button>
-              </Card>
-            )}
+            {/* 1. Welcome + Quick Actions */}
+            <DashboardWelcome
+              obrasEmRisco={kpis.obrasEmRisco}
+              acoesPrioritarias={kpis.tarefasPendentes}
+              medicoesPendentes={kpis.medicoesPendentes}
+            />
+
+            {/* 2. KPI Executive Strip */}
+            <DashboardKPIStrip
+              obrasAtivas={kpis.obrasAtivas}
+              obrasEmRisco={kpis.obrasEmRisco}
+              receberSemana={kpis.receberSemana}
+              medicoesPendentes={kpis.medicoesPendentes}
+            />
+
+            {/* 3. Priorities + Alerts */}
+            <DashboardPriorities
+              obras={obras || []}
+              tarefasPendentes={kpis.tarefasPendentes}
+              rdosPendentes={kpis.rdosPendentes}
+              medicoesPendentes={kpis.medicoesPendentes}
+            />
+
+            {/* 4. Active Works — hero section */}
+            <DashboardObrasActive obras={obras || []} />
+
+            {/* 5. Flow Navigation */}
+            <DashboardFlowNav />
+
+            {/* 6. Agenda + Performance */}
+            <DashboardAgendaPerformance
+              obras={obras || []}
+              tarefasPendentes={kpis.tarefasPendentes}
+            />
           </>
         )}
       </div>
