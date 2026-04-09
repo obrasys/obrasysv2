@@ -586,6 +586,63 @@ serve(async (req: Request): Promise<Response> => {
         })
         .eq("user_id", userId);
 
+      // Send trial renewal email
+      const resendKeyTrial = Deno.env.get("RESEND_API_KEY");
+      if (resendKeyTrial) {
+        const { data: profileData } = await serviceClient
+          .from("profiles")
+          .select("email, nome")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (profileData?.email) {
+          const trialEndFormatted = newTrialEnd.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
+          try {
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${resendKeyTrial}`,
+              },
+              body: JSON.stringify({
+                from: "ObraSys <noreply@obrasys.pt>",
+                to: [profileData.email],
+                subject: "O seu trial foi renovado por mais 30 dias! 🎉",
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                      <h1 style="color: #1a1a2e; margin: 0;">ObraSys</h1>
+                    </div>
+                    <h2 style="color: #1a1a2e;">Olá${profileData.nome ? `, ${profileData.nome}` : ""}! 👋</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                      Temos boas notícias! O seu período de trial no <strong>ObraSys</strong> foi renovado por mais <strong>30 dias</strong>.
+                    </p>
+                    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px 20px; margin: 20px 0; border-radius: 4px;">
+                      <p style="margin: 0; color: #1e40af; font-size: 15px;">
+                        <strong>Nova data de expiração:</strong> ${trialEndFormatted}
+                      </p>
+                    </div>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                      Continue a explorar todas as funcionalidades da plataforma. Estamos aqui para ajudar no que precisar!
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="https://obrasysv2.lovable.app" style="background: #3b82f6; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">Aceder ao ObraSys</a>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                    <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                      © ${new Date().getFullYear()} ObraSys. Todos os direitos reservados.
+                    </p>
+                  </div>
+                `,
+              }),
+            });
+            console.log("Trial renewal email sent to:", profileData.email);
+          } catch (emailErr) {
+            console.error("Failed to send trial renewal email:", emailErr);
+          }
+        }
+      }
+
       return new Response(JSON.stringify({ success: true, message: "Trial renovado por 30 dias" }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
