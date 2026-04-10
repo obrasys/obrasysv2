@@ -77,7 +77,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
             <div className="h-full bg-sidebar flex flex-col min-h-0">
               {/* Company logo */}
               <div className="p-6 border-b border-sidebar-border flex flex-col items-center">
-                <Avatar className="h-16 w-16 border-2 border-sidebar-foreground/20">
+                <Avatar className="h-16 w-16 border-2 border-sidebar-foreground/20 bg-white">
                   <AvatarImage src={profile?.empresa_logo_url || undefined} alt={profile?.empresa_nome || 'Empresa'} className="object-contain" />
                   <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xl font-bold">
                     {(profile?.empresa_nome || profile?.empresa || 'E').charAt(0).toUpperCase()}
