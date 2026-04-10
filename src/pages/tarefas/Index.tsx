@@ -346,6 +346,14 @@ export default function TarefasPage() {
             )}
           </TabsContent>
 
+          <TabsContent value="agenda" className="space-y-4">
+            <AgendaView
+              tarefas={filteredTarefas || []}
+              onEdit={handleEditTarefa}
+              onToggleComplete={handleToggleComplete}
+            />
+          </TabsContent>
+
           <TabsContent value="cronograma" className="space-y-4">
             <div className="flex justify-end">
               <Button onClick={handleCreateCronograma}>
