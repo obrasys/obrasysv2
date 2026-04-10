@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Loader2, Sparkles, Plus } from 'lucide-react';
+import { Building2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
@@ -146,21 +146,6 @@ const Dashboard = () => {
             <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => { setShowEmpresaModal(open); if (!open) setEmpresaPromptDismissed(true); }} />
             <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
 
-            {/* Quick budget CTA */}
-            <Card className="border-primary/20 bg-primary/5 rounded-xl">
-              <CardContent className="py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-base">Criar Orçamento em 3 Passos</h3>
-                  <p className="text-xs text-muted-foreground">Demora menos de 5 minutos</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => navigate('/orcamentos/essencial/novo')}>
-                    <Sparkles className="w-4 h-4 mr-1" /> Criar Agora
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/orcamentos/criar')}>Avançado</Button>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* === NEW DASHBOARD STRUCTURE === */}
 
