@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useObraAlerts } from '@/hooks/useObraAlerts';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Clock,
   LogOut,
@@ -13,8 +14,8 @@ import {
   Settings,
   CreditCard,
   HelpCircle,
+  Building2,
 } from 'lucide-react';
-import logo from '@/assets/logo.png';
 import {
   Sheet,
   SheetContent,
@@ -74,16 +75,18 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
               <SheetDescription>Navegação principal</SheetDescription>
             </SheetHeader>
             <div className="h-full bg-sidebar flex flex-col min-h-0">
-              {/* Logo */}
-              <div className="p-6 border-b border-sidebar-border">
-                <a href="/" className="flex items-center">
-                  <img
-                    src={logo}
-                    alt="ObraSys"
-                    className="h-10 w-auto brightness-0 invert"
-                  />
-                </a>
-                <p className="text-[10px] text-sidebar-foreground/50 mt-1">
+              {/* Company logo */}
+              <div className="p-6 border-b border-sidebar-border flex flex-col items-center">
+                <Avatar className="h-16 w-16 border-2 border-sidebar-foreground/20">
+                  <AvatarImage src={profile?.empresa_logo_url || undefined} alt={profile?.empresa_nome || 'Empresa'} className="object-contain" />
+                  <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xl font-bold">
+                    {(profile?.empresa_nome || profile?.empresa || 'E').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">
+                  {profile?.empresa_nome || profile?.empresa || 'Empresa'}
+                </p>
+                <p className="text-[10px] text-sidebar-foreground/50">
                   Versão {APP_VERSION}
                 </p>
               </div>
@@ -94,7 +97,12 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         </Sheet>
 
         <div className="lg:hidden shrink-0">
-          <img src={logo} alt="ObraSys" className="h-7 md:h-8 w-auto" />
+          <Avatar className="h-8 w-8 border border-border">
+            <AvatarImage src={profile?.empresa_logo_url || undefined} alt={profile?.empresa_nome || 'Empresa'} className="object-contain" />
+            <AvatarFallback className="bg-accent/10 text-accent text-xs font-bold">
+              {(profile?.empresa_nome || profile?.empresa || 'E').charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         <div className="min-w-0 flex-1">
