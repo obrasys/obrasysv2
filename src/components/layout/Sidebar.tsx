@@ -40,7 +40,7 @@ export function Sidebar() {
           </AvatarFallback>
         </Avatar>
         <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
-        <p className="text-[10px] text-sidebar-foreground/50">Versão {APP_VERSION}</p>
+        <p className="text-[10px] text-sidebar-foreground/50">ObraSys - Versão {APP_VERSION}</p>
       </div>
 
       {/* Navigation — with scroll */}
