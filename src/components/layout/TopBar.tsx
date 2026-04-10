@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useObraAlerts } from '@/hooks/useObraAlerts';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Clock,
   LogOut,
@@ -13,8 +14,8 @@ import {
   Settings,
   CreditCard,
   HelpCircle,
+  Building2,
 } from 'lucide-react';
-import logo from '@/assets/logo.png';
 import {
   Sheet,
   SheetContent,

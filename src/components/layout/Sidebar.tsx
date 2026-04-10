@@ -33,9 +33,9 @@ export function Sidebar() {
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
       {/* Company Logo */}
       <div className="px-5 pt-5 pb-4 flex flex-col items-center">
-        <Avatar className="h-28 w-28 border-2 border-sidebar-foreground/20">
+        <Avatar className="h-36 w-36 border-2 border-sidebar-foreground/20">
           <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} className="object-contain" />
-          <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-3xl font-bold">
+          <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-4xl font-bold">
             {empresaInitial}
           </AvatarFallback>
         </Avatar>
