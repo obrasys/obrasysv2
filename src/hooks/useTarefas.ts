@@ -70,6 +70,7 @@ export function useTarefas(obraId?: string) {
           prioridade: formData.prioridade,
           categoria: formData.categoria || null,
           data_agendada: formData.data_agendada || null,
+          hora_agendada: formData.hora_agendada || null,
           responsavel_id: formData.responsavel_id || null,
           user_id: user?.id,
           dependencias: formData.dependencias || [],
@@ -99,6 +100,7 @@ export function useTarefas(obraId?: string) {
         prioridade: formData.prioridade,
         categoria: formData.categoria || null,
         data_agendada: formData.data_agendada || null,
+        hora_agendada: formData.hora_agendada || null,
         responsavel_id: formData.responsavel_id || null,
       };
       

@@ -59,6 +59,7 @@ export interface TarefaFormData {
   prioridade: TarefaPrioridade;
   categoria?: string;
   data_agendada?: string;
+  hora_agendada?: string;
   responsavel_id?: string;
   dependencias?: string[];
 }
