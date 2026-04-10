@@ -2,10 +2,26 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ClientRouteProps {
   children: ReactNode;
+}
+
+function PortalLoader() {
+  return (
+    <div className="min-h-screen bg-muted/30 flex flex-col">
+      <div className="h-14 bg-card border-b border-border" />
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ClientRoute({ children }: ClientRouteProps) {
@@ -20,13 +36,11 @@ export function ClientRoute({ children }: ClientRouteProps) {
         return;
       }
 
-      // Users with role 'cliente' always have portal access
       if (profile?.role === 'cliente') {
         setHasPortalAccess(true);
         return;
       }
 
-      // For other roles, check if they have active client_obra_access records
       const { data, error } = await supabase
         .from('client_obra_access')
         .select('id')
@@ -61,11 +75,7 @@ export function ClientRoute({ children }: ClientRouteProps) {
   }, [user, hasPortalAccess, loading, navigate]);
 
   if (loading || hasPortalAccess === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    );
+    return <PortalLoader />;
   }
 
   if (!user || !hasPortalAccess) {
