@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useObraAlerts } from '@/hooks/useObraAlerts';
@@ -14,7 +14,7 @@ import {
   Settings,
   CreditCard,
   HelpCircle,
-  Building2,
+  ChevronDown,
 } from 'lucide-react';
 import {
   Sheet,
@@ -114,10 +114,8 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
-        {/* Actions - hidden on mobile, shown in topbar on desktop */}
         {actions && <div className="hidden md:flex items-center gap-2">{actions}</div>}
 
-        {/* Trial badge - hidden on mobile */}
         {trialDaysRemaining > 0 && trialDaysRemaining <= 7 && (
           <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
             <Clock className="w-4 h-4" />
@@ -149,7 +147,6 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
               )}
             </div>
             <div className="max-h-96 overflow-y-auto">
-              {/* Quote response notifications */}
               {notifications.length > 0 && (
                 <div className="divide-y">
                   {notifications.slice(0, 10).map((n) => (
@@ -175,7 +172,6 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
                   ))}
                 </div>
               )}
-              {/* Obra alerts */}
               {hasAlerts && (
                 <div className="p-3 border-t">
                   <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Alertas de Obra</p>
@@ -237,7 +233,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   );
 }
 
-// Mobile navigation component (inline)
+// Mobile navigation component with collapsible groups
 function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -249,39 +245,118 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
     return location.pathname.startsWith(href);
   };
 
+  const getActiveGroups = useCallback(() => {
+    const active = new Set<string>();
+    NAV_GROUPS.forEach((group) => {
+      if (group.items.length > 1 && group.items.some((item) => {
+        if (item.href === '/dashboard') return location.pathname === '/dashboard';
+        return location.pathname.startsWith(item.href);
+      })) {
+        active.add(group.label);
+      }
+    });
+    return active;
+  }, [location.pathname]);
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(getActiveGroups);
+
+  useEffect(() => {
+    const activeGroups = getActiveGroups();
+    if (activeGroups.size > 0) {
+      setOpenGroups((prev) => {
+        const next = new Set(prev);
+        activeGroups.forEach((g) => next.add(g));
+        return next;
+      });
+    }
+  }, [getActiveGroups]);
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
+
   const go = (href: string) => {
     navigate(href);
     onNavigate?.();
   };
 
   return (
-    <nav className="flex-1 min-h-0 p-4 space-y-4 overflow-y-auto">
-      {NAV_GROUPS.map((group) => (
-        <div key={group.label}>
-          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
-            {group.label}
-          </p>
-          <div className="space-y-0.5">
-            {group.items.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => go(item.href)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    active
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 shrink-0" />
-                  <span className="text-sm">{item.label}</span>
-                </button>
-              );
-            })}
+    <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
+      {NAV_GROUPS.map((group) => {
+        const isSingleItem = group.items.length === 1;
+        const isOpen = openGroups.has(group.label);
+        const groupHasActive = group.items.some((item) => isActive(item.href));
+
+        if (isSingleItem) {
+          const item = group.items[0];
+          const active = isActive(item.href);
+          return (
+            <button
+              key={group.label}
+              onClick={() => go(item.href)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                active
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+              }`}
+            >
+              <item.icon className="w-5 h-5 shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          );
+        }
+
+        return (
+          <div key={group.label}>
+            <button
+              onClick={() => toggleGroup(group.label)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                groupHasActive && !isOpen
+                  ? 'text-sidebar-accent-foreground font-semibold'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+              }`}
+            >
+              <group.icon className="w-5 h-5 shrink-0" />
+              <span className="flex-1 text-left">{group.label}</span>
+              <ChevronDown
+                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                  isOpen ? 'rotate-0' : '-rotate-90'
+                }`}
+              />
+            </button>
+            <div
+              className={`overflow-hidden transition-all duration-200 ${
+                isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="pl-5 space-y-0.5 pt-0.5">
+                {group.items.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => go(item.href)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-[13px] ${
+                        active
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                          : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {isSuperAdmin && (
         <div>
