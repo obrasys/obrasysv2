@@ -38,6 +38,7 @@ const formSchema = z.object({
   prioridade: z.enum(['baixa', 'media', 'alta', 'urgente']),
   categoria: z.string().optional(),
   data_agendada: z.string().optional(),
+  hora_agendada: z.string().optional(),
   responsavel_id: z.string().optional(),
 });
 
@@ -71,6 +72,7 @@ export function TarefaForm({
       prioridade: tarefa?.prioridade || 'media',
       categoria: tarefa?.categoria || '',
       data_agendada: tarefa?.data_agendada || '',
+      hora_agendada: (tarefa as any)?.hora_agendada || '',
       responsavel_id: tarefa?.responsavel_id || '',
     },
   });
@@ -237,6 +239,20 @@ export function TarefaForm({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="hora_agendada"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hora</FormLabel>
+                  <FormControl>
+                    <Input type="time" placeholder="HH:MM" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-end gap-3 pt-4">
               <Button
