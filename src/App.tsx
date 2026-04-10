@@ -11,7 +11,7 @@ import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import { ClientRoute } from "./components/portal/ClientRoute";
 import { ManagerRoute } from "./components/portal/ManagerRoute";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
-import { Loader2 } from "lucide-react";
+
 
 // Landing + Auth (keep eager for initial load)
 import Index from "./pages/Index";
@@ -99,8 +99,46 @@ const FornecedorPrecos = lazy(() => import("./pages/fornecedor/Precos"));
 const FornecedorPerfil = lazy(() => import("./pages/fornecedor/Perfil"));
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <Loader2 className="w-8 h-8 animate-spin text-accent" />
+  <div className="min-h-screen bg-background flex">
+    {/* Skeleton sidebar — mirrors real Sidebar dimensions */}
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
+      <div className="px-5 pt-5 pb-4">
+        <div className="h-8 w-24 bg-sidebar-accent/30 rounded animate-pulse" />
+        <div className="h-3 w-16 bg-sidebar-accent/20 rounded mt-2 animate-pulse" />
+      </div>
+      <div className="flex-1 px-3 space-y-4 mt-2">
+        {[5, 4, 3, 2].map((count, gi) => (
+          <div key={gi} className="space-y-1">
+            <div className="h-2.5 w-14 bg-sidebar-accent/15 rounded ml-2 mb-1 animate-pulse" />
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="h-8 bg-sidebar-accent/20 rounded-md animate-pulse" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </aside>
+    {/* Content area skeleton */}
+    <div className="flex-1 flex flex-col min-w-0">
+      {/* Skeleton topbar */}
+      <div className="h-14 border-b border-border bg-card flex items-center px-6 gap-4">
+        <div className="h-5 w-40 bg-muted rounded animate-pulse" />
+        <div className="flex-1" />
+        <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+        <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+      </div>
+      {/* Skeleton page content */}
+      <div className="flex-1 p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-48 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 bg-card border border-border rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 bg-card border border-border rounded-xl animate-pulse" />
+      </div>
+    </div>
   </div>
 );
 

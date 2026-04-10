@@ -1,15 +1,20 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { ContentLoader } from "@/components/layout/ContentLoader";
 
 export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
 
-  // Still loading auth state — show spinner
+  // Still loading auth state — show app shell with content skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      <div className="min-h-screen bg-background flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-14 border-b border-border bg-card" />
+          <ContentLoader />
+        </div>
       </div>
     );
   }
@@ -19,11 +24,15 @@ export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // User exists but profile not yet loaded — wait briefly
+  // User exists but profile not yet loaded — show shell with skeleton
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      <div className="min-h-screen bg-background flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-14 border-b border-border bg-card" />
+          <ContentLoader />
+        </div>
       </div>
     );
   }
