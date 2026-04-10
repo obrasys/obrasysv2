@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Briefcase,
   BrainCircuit,
   Building2,
   Calendar,
@@ -24,6 +25,7 @@ import {
   Wallet,
   ArrowRightLeft,
   Network,
+  UserCog,
 } from "lucide-react";
 
 export type NavItem = {
@@ -34,18 +36,21 @@ export type NavItem = {
 
 export type NavGroup = {
   label: string;
+  icon: LucideIcon;
   items: NavItem[];
 };
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Visão Geral",
+    icon: Home,
     items: [
       { icon: Home, label: "Dashboard", href: "/dashboard" },
     ],
   },
   {
     label: "Comercial",
+    icon: Briefcase,
     items: [
       { icon: Users, label: "Clientes", href: "/clientes" },
       { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
@@ -54,6 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Obras",
+    icon: Building2,
     items: [
       { icon: Building2, label: "Todas as Obras", href: "/obras" },
       { icon: Calendar, label: "Tarefas", href: "/tarefas" },
@@ -65,6 +71,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Recursos",
+    icon: HardHat,
     items: [
       { icon: HardHat, label: "Equipas", href: "/recursos" },
       { icon: Plug, label: "Instalações", href: "/instalacoes" },
@@ -73,12 +80,14 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Financeiro",
+    icon: Wallet,
     items: [
       { icon: Wallet, label: "Financeiro", href: "/financeiro" },
     ],
   },
   {
     label: "Documentos & IA",
+    icon: BrainCircuit,
     items: [
       { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
       { icon: BrainCircuit, label: "Axia", href: "/axia" },
@@ -87,6 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Conta",
+    icon: UserCog,
     items: [
       { icon: CreditCard, label: "Subscrição", href: "/subscricao" },
       { icon: Settings, label: "Definições", href: "/definicoes" },
