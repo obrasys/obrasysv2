@@ -11,7 +11,7 @@ import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import { ClientRoute } from "./components/portal/ClientRoute";
 import { ManagerRoute } from "./components/portal/ManagerRoute";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
-import { Loader2 } from "lucide-react";
+
 
 // Landing + Auth (keep eager for initial load)
 import Index from "./pages/Index";
