@@ -32,19 +32,15 @@ export function Sidebar() {
   return (
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
       {/* Company Logo */}
-      <div className="px-5 pt-5 pb-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border-2 border-sidebar-foreground/20">
-            <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} />
-            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-sm font-bold">
-              {empresaInitial}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-sidebar-foreground truncate">{empresaNome}</p>
-            <p className="text-[10px] text-sidebar-foreground/50">Versão {APP_VERSION}</p>
-          </div>
-        </div>
+      <div className="px-5 pt-5 pb-4 flex flex-col items-center">
+        <Avatar className="h-20 w-20 border-2 border-sidebar-foreground/20">
+          <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} />
+          <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-2xl font-bold">
+            {empresaInitial}
+          </AvatarFallback>
+        </Avatar>
+        <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
+        <p className="text-[10px] text-sidebar-foreground/50">Versão {APP_VERSION}</p>
       </div>
 
       {/* Navigation — with scroll */}
