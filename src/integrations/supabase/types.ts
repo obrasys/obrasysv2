@@ -7989,6 +7989,7 @@ export type Database = {
           data_conclusao: string | null
           dependencias: string[] | null
           descricao: string | null
+          hora_agendada: string | null
           id: string
           obra_id: string
           ordem: number | null
@@ -8006,6 +8007,7 @@ export type Database = {
           data_conclusao?: string | null
           dependencias?: string[] | null
           descricao?: string | null
+          hora_agendada?: string | null
           id?: string
           obra_id: string
           ordem?: number | null
@@ -8023,6 +8025,7 @@ export type Database = {
           data_conclusao?: string | null
           dependencias?: string[] | null
           descricao?: string | null
+          hora_agendada?: string | null
           id?: string
           obra_id?: string
           ordem?: number | null
