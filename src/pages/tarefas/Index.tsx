@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { TarefaCard, TarefaForm, CronogramaTimeline, CronogramaForm } from '@/components/tarefas';
+import { TarefaCard, TarefaForm, CronogramaTimeline, CronogramaForm, AgendaView } from '@/components/tarefas';
 import { useTarefas } from '@/hooks/useTarefas';
 import { useObras } from '@/hooks/useObras';
 import type { Tarefa, TarefaCronograma, TarefaFormData, CronogramaFormData } from '@/types/tarefas';
@@ -288,6 +288,10 @@ export default function TarefasPage() {
               <TabsTrigger value="tarefas" className="gap-2">
                 <ListTodo className="h-4 w-4" />
                 Tarefas
+              </TabsTrigger>
+              <TabsTrigger value="agenda" className="gap-2">
+                <Clock className="h-4 w-4" />
+                Agenda
               </TabsTrigger>
               <TabsTrigger value="cronograma" className="gap-2">
                 <Calendar className="h-4 w-4" />
