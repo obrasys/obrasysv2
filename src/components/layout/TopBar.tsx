@@ -87,7 +87,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
                   {profile?.empresa_nome || profile?.empresa || 'Empresa'}
                 </p>
                 <p className="text-[10px] text-sidebar-foreground/50">
-                  Versão {APP_VERSION}
+                  ObraSys - Versão {APP_VERSION}
                 </p>
               </div>
               {/* Use inline nav for mobile sheet */}
