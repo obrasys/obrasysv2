@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, FileText, ClipboardList } from 'lucide-react';
+import { Plus, Calendar, FileText, ClipboardList, Sparkles, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 
 interface DashboardWelcomeProps {
   obrasEmRisco: number;
@@ -13,6 +15,7 @@ export function DashboardWelcome({ obrasEmRisco, acoesPrioritarias, medicoesPend
   const navigate = useNavigate();
   const { profile } = useAuth();
   const firstName = profile?.nome?.split(' ')[0] || 'Utilizador';
+  const [open, setOpen] = useState(false);
 
   const summaryParts: string[] = [];
   if (obrasEmRisco > 0) summaryParts.push(`${obrasEmRisco} obra${obrasEmRisco > 1 ? 's' : ''} em risco`);
@@ -36,10 +39,39 @@ export function DashboardWelcome({ obrasEmRisco, acoesPrioritarias, medicoesPend
           <Plus className="w-4 h-4 mr-1.5" />
           Nova Obra
         </Button>
-        <Button size="sm" variant="outline" onClick={() => navigate('/orcamentos/essencial/novo')}>
-          <FileText className="w-4 h-4 mr-1.5" />
-          Novo Orçamento
-        </Button>
+
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline">
+              <FileText className="w-4 h-4 mr-1.5" />
+              Novo Orçamento
+              <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-60" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-64 p-1.5">
+            <button
+              onClick={() => { setOpen(false); navigate('/orcamentos/essencial/novo'); }}
+              className="w-full flex items-start gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors text-left"
+            >
+              <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+              <div>
+                <span className="text-sm font-medium text-foreground">Essencial</span>
+                <p className="text-xs text-muted-foreground">~5 minutos</p>
+              </div>
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigate('/orcamentos/criar'); }}
+              className="w-full flex items-start gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors text-left"
+            >
+              <FileText className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+              <div>
+                <span className="text-sm font-medium text-foreground">Avançado</span>
+                <p className="text-xs text-muted-foreground">~15 minutos</p>
+              </div>
+            </button>
+          </PopoverContent>
+        </Popover>
+
         <Button size="sm" variant="outline" onClick={() => navigate('/rdos/criar')}>
           <ClipboardList className="w-4 h-4 mr-1.5" />
           Nova RDO
