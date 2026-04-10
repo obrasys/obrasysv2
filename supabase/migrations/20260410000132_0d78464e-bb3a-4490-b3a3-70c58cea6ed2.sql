@@ -1,0 +1,1 @@
+ALTER TABLE public.tarefas ADD COLUMN hora_agendada TEXT DEFAULT NULL;
