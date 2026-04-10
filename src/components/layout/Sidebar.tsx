@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import logo from '@/assets/logo.png';
-import { LogOut, ExternalLink } from 'lucide-react';
+import { LogOut, ExternalLink, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useClientAccess } from '@/hooks/useClientAccess';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export function Sidebar() {
   const location = useLocation();
@@ -26,14 +26,25 @@ export function Sidebar() {
     navigate('/auth');
   };
 
+  const empresaNome = profile?.empresa_nome || profile?.empresa || 'Empresa';
+  const empresaInitial = empresaNome?.charAt(0)?.toUpperCase() || 'E';
+
   return (
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
-      {/* Logo */}
+      {/* Company Logo */}
       <div className="px-5 pt-5 pb-4">
-        <a href="/" className="flex items-center">
-          <img src={logo} alt="ObraSys" className="h-8 w-auto brightness-0 invert" />
-        </a>
-        <p className="text-[10px] text-sidebar-foreground/50 mt-1 px-0.5">Versão {APP_VERSION}</p>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 border-2 border-sidebar-foreground/20">
+            <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} />
+            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-sm font-bold">
+              {empresaInitial}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-sidebar-foreground truncate">{empresaNome}</p>
+            <p className="text-[10px] text-sidebar-foreground/50">Versão {APP_VERSION}</p>
+          </div>
+        </div>
       </div>
 
       {/* Navigation — with scroll */}
