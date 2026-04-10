@@ -171,6 +171,16 @@ const Dashboard = () => {
               medicoesPendentes={kpis.medicoesPendentes}
             />
 
+            {/* 1.5. Setup Progress */}
+            <DashboardSetupProgress
+              hasLogo={!!profile?.empresa_logo_url}
+              hasAddress={!!(profile?.empresa_morada && profile?.empresa_cidade)}
+              hasObra={(obras?.length || 0) > 0}
+              hasOrcamento={(orcamentos?.length || 0) > 0}
+              hasRDO={(rdos?.length || 0) > 0}
+              hasEquipa={(equipaMembros?.length || 0) > 0}
+            />
+
             {/* 2. KPI Executive Strip */}
             <DashboardKPIStrip
               obrasAtivas={kpis.obrasAtivas}
