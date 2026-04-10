@@ -16,34 +16,38 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
     {
       label: 'Obras Ativas',
       value: String(obrasAtivas).padStart(2, '0'),
-      subtitle: 'em execução',
+      subtitle: obrasAtivas === 0 ? 'Crie a sua primeira obra para começar' : 'em execução',
       icon: Building2,
-      iconBg: 'bg-primary/10',
-      iconColor: 'text-primary',
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600',
+      emptyPositive: false,
     },
     {
       label: 'Obras em Risco',
       value: String(obrasEmRisco).padStart(2, '0'),
-      subtitle: obrasEmRisco > 0 ? 'atenção imediata' : 'tudo em ordem',
+      subtitle: obrasEmRisco > 0 ? 'atenção imediata' : 'Excelente! Nenhuma obra em risco',
       icon: AlertTriangle,
-      iconBg: obrasEmRisco > 0 ? 'bg-destructive/10' : 'bg-muted',
-      iconColor: obrasEmRisco > 0 ? 'text-destructive' : 'text-muted-foreground',
+      iconBg: obrasEmRisco > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: obrasEmRisco > 0 ? 'text-red-600' : 'text-emerald-600',
+      emptyPositive: obrasEmRisco === 0,
     },
     {
       label: 'Receber Esta Semana',
       value: formatCurrency(receberSemana),
-      subtitle: 'a cobrar',
+      subtitle: receberSemana === 0 ? 'Sem cobranças esta semana' : 'a cobrar',
       icon: Wallet,
       iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
       iconColor: 'text-emerald-600',
+      emptyPositive: false,
     },
     {
       label: 'Medições Pendentes',
       value: String(medicoesPendentes).padStart(2, '0'),
-      subtitle: medicoesPendentes > 0 ? 'aguardando validação' : 'nenhuma pendente',
+      subtitle: medicoesPendentes === 0 ? 'Tudo validado. Bom trabalho!' : 'aguardando validação',
       icon: ClipboardCheck,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-      iconColor: 'text-amber-600',
+      iconBg: medicoesPendentes > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: medicoesPendentes > 0 ? 'text-amber-600' : 'text-emerald-600',
+      emptyPositive: medicoesPendentes === 0,
     },
   ];
 
@@ -56,7 +60,9 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{kpi.label}</p>
                 <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                <p className="text-xs text-muted-foreground">{kpi.subtitle}</p>
+                <p className={`text-xs ${kpi.emptyPositive ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                  {kpi.subtitle}
+                </p>
               </div>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${kpi.iconBg}`}>
                 <kpi.icon className={`w-5 h-5 ${kpi.iconColor}`} />

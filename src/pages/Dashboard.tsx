@@ -13,6 +13,7 @@ import { useEngagement } from '@/hooks/useEngagement';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { OnboardingWizard, OnboardingProgressPanel, OnboardingCompletionModal } from '@/components/onboarding';
 import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
+import { useEquipaMembros } from '@/hooks/useRecursos';
 import {
   DashboardWelcome,
   DashboardKPIStrip,
@@ -20,6 +21,7 @@ import {
   DashboardObrasActive,
   DashboardFlowNav,
   DashboardAgendaPerformance,
+  DashboardSetupProgress,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 
@@ -30,6 +32,7 @@ const Dashboard = () => {
   const { rdos, isLoading: loadingRDOs } = useRDOs();
   const { orcamentos } = useOrcamentos();
   const { tarefas } = useTarefas();
+  const { membros: equipaMembros } = useEquipaMembros();
   const { activeState, dismissMessage } = useEngagement();
   const {
     progress: onboardingProgress,
@@ -166,6 +169,16 @@ const Dashboard = () => {
               obrasEmRisco={kpis.obrasEmRisco}
               acoesPrioritarias={kpis.tarefasPendentes}
               medicoesPendentes={kpis.medicoesPendentes}
+            />
+
+            {/* 1.5. Setup Progress */}
+            <DashboardSetupProgress
+              hasLogo={!!profile?.empresa_logo_url}
+              hasAddress={!!(profile?.empresa_morada && profile?.empresa_cidade)}
+              hasObra={(obras?.length || 0) > 0}
+              hasOrcamento={(orcamentos?.length || 0) > 0}
+              hasRDO={(rdos?.length || 0) > 0}
+              hasEquipa={(equipaMembros?.length || 0) > 0}
             />
 
             {/* 2. KPI Executive Strip */}
