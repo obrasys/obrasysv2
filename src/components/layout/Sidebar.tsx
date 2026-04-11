@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ExternalLink, ChevronDown } from 'lucide-react';
+import { LogOut, ExternalLink, ChevronDown, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useClientAccess } from '@/hooks/useClientAccess';
