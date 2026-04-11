@@ -35,7 +35,7 @@ const flows = [
       { icon: Clock, label: 'Livro de Ponto', href: '/livro-ponto' },
     ],
     cta: { label: 'Abrir execução', href: '/obras' },
-    accent: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30',
+    accent: 'bg-success/5 border-success/10',
   },
   {
     title: 'Fluxo Financeiro',
@@ -44,7 +44,7 @@ const flows = [
       { icon: Wallet, label: 'Financeiro', href: '/financeiro' },
     ],
     cta: { label: 'Abrir financeiro', href: '/financeiro' },
-    accent: 'bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900/30',
+    accent: 'bg-warning/5 border-warning/10',
   },
 ];
 
@@ -56,7 +56,7 @@ export function DashboardFlowNav() {
       <h2 className="font-display text-lg font-semibold text-foreground">Navegação por Fluxo</h2>
       <div className="grid md:grid-cols-3 gap-4">
         {flows.map((flow) => (
-          <Card key={flow.title} className={`rounded-xl shadow-sm border ${flow.accent}`}>
+          <Card key={flow.title} className={`rounded-xl shadow-card border ${flow.accent}`}>
             <CardContent className="pt-5 pb-4 space-y-4">
               <div>
                 <h3 className="font-semibold text-sm text-foreground">{flow.title}</h3>
