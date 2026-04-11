@@ -135,9 +135,9 @@ export function Sidebar() {
                       <button
                         key={item.href}
                         onClick={() => navigate(item.href)}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-colors text-[12px] ${
+                        className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl transition-all duration-200 text-[12px] ${
                           active
-                            ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                            ? 'bg-[hsl(192,40%,18%)] text-white font-semibold shadow-md shadow-black/10'
                             : 'text-white/50 hover:bg-white/8 hover:text-white/80'
                         }`}
                       >
