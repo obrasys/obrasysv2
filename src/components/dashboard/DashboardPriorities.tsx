@@ -46,14 +46,14 @@ export function DashboardPriorities({ obras, tarefasPendentes, rdosPendentes, me
 
   const severityColor = (s: string) => {
     if (s === 'high') return 'text-destructive';
-    if (s === 'medium') return 'text-warning';
+    if (s === 'medium') return 'text-amber-600';
     return 'text-muted-foreground';
   };
 
   return (
     <div className="grid md:grid-cols-2 gap-4">
       {/* Prioridades */}
-      <Card className="rounded-xl shadow-card">
+      <Card className="rounded-xl shadow-sm border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -79,13 +79,13 @@ export function DashboardPriorities({ obras, tarefasPendentes, rdosPendentes, me
       </Card>
 
       {/* Alertas / Insights */}
-      <Card className="rounded-xl shadow-card">
+      <Card className="rounded-xl shadow-sm border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             {hasRealAlerts ? (
-              <><AlertTriangle className="w-4 h-4 text-warning" /> Alertas Importantes</>
+              <><AlertTriangle className="w-4 h-4 text-amber-500" /> Alertas Importantes</>
             ) : (
-              <><Lightbulb className="w-4 h-4 text-warning" /> Insight do Dia</>
+              <><Lightbulb className="w-4 h-4 text-amber-500" /> Insight do Dia</>
             )}
           </CardTitle>
         </CardHeader>
@@ -103,8 +103,8 @@ export function DashboardPriorities({ obras, tarefasPendentes, rdosPendentes, me
               </Button>
             </>
           ) : (
-            <div className="flex items-start gap-3 px-3 py-4 rounded-lg bg-info">
-              <Lightbulb className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 px-3 py-4 rounded-lg bg-primary/5">
+              <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm text-foreground font-medium">{getDailyInsight()}</p>
                 <p className="text-xs text-muted-foreground">Sem alertas no momento — tudo a correr bem!</p>
