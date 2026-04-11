@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ExternalLink, ChevronDown } from 'lucide-react';
+import { LogOut, ExternalLink, ChevronDown, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useClientAccess } from '@/hooks/useClientAccess';
@@ -69,12 +69,29 @@ export function Sidebar() {
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
       {/* Company Logo */}
       <div className="px-5 pt-5 pb-4 flex flex-col items-center">
-        <Avatar className="h-36 w-36 border-2 border-white/15 bg-white">
-          <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} className="object-contain" />
-          <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-4xl font-bold">
-            {empresaInitial}
-          </AvatarFallback>
-        </Avatar>
+        <div
+          className="relative group cursor-pointer"
+          onClick={() => navigate('/perfil')}
+        >
+          <div
+            className="rounded-full p-[3px] transition-all"
+            style={{
+              background: (profile?.empresa_nome && profile?.empresa_morada && profile?.empresa_nif && profile?.empresa_email)
+                ? '#7de578'
+                : 'rgba(255,255,255,0.15)',
+            }}
+          >
+            <Avatar className="h-36 w-36 border-2 border-background bg-white">
+              <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} className="object-contain" />
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-4xl font-bold">
+                {empresaInitial}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Camera className="w-8 h-8 text-white" />
+          </div>
+        </div>
         <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
         <p className="text-[10px] text-white/40">ObraSys - Versão {APP_VERSION}</p>
       </div>
