@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, X, Rocket } from 'lucide-react';
 
@@ -24,12 +23,7 @@ interface DashboardSetupProgressProps {
 const DISMISS_KEY = 'dashboard_setup_dismissed';
 
 export function DashboardSetupProgress({
-  hasLogo,
-  hasAddress,
-  hasObra,
-  hasOrcamento,
-  hasRDO,
-  hasEquipa,
+  hasLogo, hasAddress, hasObra, hasOrcamento, hasRDO, hasEquipa,
 }: DashboardSetupProgressProps) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === 'true');
@@ -57,7 +51,7 @@ export function DashboardSetupProgress({
   const pendingSteps = steps.filter(s => !s.done);
 
   return (
-    <Card className="rounded-xl border-primary/20 bg-primary/5 shadow-sm">
+    <Card className="rounded-xl border-primary/20 bg-info shadow-card">
       <CardContent className="pt-5 pb-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -88,7 +82,7 @@ export function DashboardSetupProgress({
           ))}
           {steps.filter(s => s.done).slice(0, 2).map((step) => (
             <div key={step.label} className="flex items-center gap-3 px-3 py-2 rounded-lg opacity-60">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
               <span className="text-sm text-foreground line-through">{step.label}</span>
             </div>
           ))}

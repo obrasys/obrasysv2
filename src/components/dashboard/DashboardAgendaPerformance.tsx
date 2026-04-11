@@ -12,7 +12,6 @@ interface DashboardAgendaPerformanceProps {
 export function DashboardAgendaPerformance({ obras, tarefasPendentes }: DashboardAgendaPerformanceProps) {
   const navigate = useNavigate();
 
-  // Performance calculation
   const obrasAtivas = obras.filter(o => o.status === 'em_curso');
   const progressoMedio = obrasAtivas.length > 0
     ? Math.round(obrasAtivas.reduce((s, o) => s + (o.progresso || 0), 0) / obrasAtivas.length)
@@ -22,8 +21,7 @@ export function DashboardAgendaPerformance({ obras, tarefasPendentes }: Dashboar
 
   return (
     <div className="grid md:grid-cols-2 gap-4">
-      {/* Agenda */}
-      <Card className="rounded-xl shadow-sm border-border/50">
+      <Card className="rounded-xl shadow-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Calendar className="w-4 h-4 text-primary" />
@@ -66,8 +64,7 @@ export function DashboardAgendaPerformance({ obras, tarefasPendentes }: Dashboar
         </CardContent>
       </Card>
 
-      {/* Desempenho */}
-      <Card className="rounded-xl shadow-sm border-border/50">
+      <Card className="rounded-xl shadow-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary" />
@@ -82,10 +79,10 @@ export function DashboardAgendaPerformance({ obras, tarefasPendentes }: Dashboar
             </div>
             <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted/30">
               <span className="text-sm text-foreground flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-success" />
                 Obras dentro do prazo
               </span>
-              <span className="text-sm font-semibold text-emerald-600">{obrasAdiantadas}</span>
+              <span className="text-sm font-semibold text-success">{obrasAdiantadas}</span>
             </div>
             <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted/30">
               <span className="text-sm text-foreground flex items-center gap-2">

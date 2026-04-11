@@ -42,13 +42,13 @@ function MetricCard({
 }) {
   const trendPositive = trend >= 0;
   return (
-    <Card>
+    <Card className="rounded-xl shadow-card">
       <CardContent className="pt-5 pb-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}>
             <Icon className={`w-4 h-4 ${iconColor}`} />
           </div>
-          <span className={`text-xs font-semibold ${trendPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+          <span className={`text-xs font-semibold ${trendPositive ? 'text-success' : 'text-destructive'}`}>
             {trendPositive ? '+' : ''}{trend.toFixed(1)}%
           </span>
         </div>
@@ -73,12 +73,7 @@ export function DashboardMetrics({ obras, rdos, orcamentos }: DashboardMetricsPr
     
     const rdosComFotos = rdos?.filter((r: any) => r.fotos && r.fotos.length > 0).length || 0;
 
-    return {
-      alertas,
-      valorTotal,
-      valorOrcamentos,
-      rdosComFotos,
-    };
+    return { alertas, valorTotal, valorOrcamentos, rdosComFotos };
   }, [obras, rdos, orcamentos]);
 
   const formatCurrency = (value: number) =>
@@ -88,28 +83,28 @@ export function DashboardMetrics({ obras, rdos, orcamentos }: DashboardMetricsPr
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         icon={AlertTriangle}
-        iconBg="bg-amber-100"
-        iconColor="text-amber-600"
+        iconBg="bg-warning/10"
+        iconColor="text-warning"
         label="Alertas"
         value={String(metrics.alertas)}
         trend={metrics.alertas > 0 ? -5.2 : 0}
         sparkData={[3, 5, 2, 8, 4, 6, metrics.alertas]}
-        sparkColor="hsl(38 92% 50%)"
+        sparkColor="hsl(32 95% 44%)"
       />
       <MetricCard
         icon={Wallet}
-        iconBg="bg-emerald-100"
-        iconColor="text-emerald-600"
+        iconBg="bg-success/10"
+        iconColor="text-success"
         label="Valor Obras"
         value={formatCurrency(metrics.valorTotal)}
         trend={12.4}
         sparkData={[20, 35, 28, 45, 42, 55, 60]}
-        sparkColor="hsl(142 71% 45%)"
+        sparkColor="hsl(146 50% 36%)"
       />
       <MetricCard
         icon={FileText}
-        iconBg="bg-blue-100"
-        iconColor="text-blue-600"
+        iconBg="bg-primary/10"
+        iconColor="text-primary"
         label="Orçamentos"
         value={formatCurrency(metrics.valorOrcamentos)}
         trend={8.1}
@@ -118,13 +113,13 @@ export function DashboardMetrics({ obras, rdos, orcamentos }: DashboardMetricsPr
       />
       <MetricCard
         icon={Camera}
-        iconBg="bg-purple-100"
-        iconColor="text-purple-600"
+        iconBg="bg-secondary/10"
+        iconColor="text-secondary"
         label="RDOs c/ Evidências"
         value={String(metrics.rdosComFotos)}
         trend={3.7}
         sparkData={[2, 4, 3, 6, 5, 7, metrics.rdosComFotos]}
-        sparkColor="hsl(270 60% 55%)"
+        sparkColor="hsl(195 63% 28%)"
       />
     </div>
   );

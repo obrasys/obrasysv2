@@ -18,8 +18,8 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(obrasAtivas).padStart(2, '0'),
       subtitle: obrasAtivas === 0 ? 'Crie a sua primeira obra para começar' : 'em execução',
       icon: Building2,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600',
+      iconBg: 'bg-primary/10',
+      iconColor: 'text-primary',
       emptyPositive: false,
     },
     {
@@ -27,8 +27,8 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(obrasEmRisco).padStart(2, '0'),
       subtitle: obrasEmRisco > 0 ? 'atenção imediata' : 'Excelente! Nenhuma obra em risco',
       icon: AlertTriangle,
-      iconBg: obrasEmRisco > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: obrasEmRisco > 0 ? 'text-red-600' : 'text-emerald-600',
+      iconBg: obrasEmRisco > 0 ? 'bg-destructive/10' : 'bg-success/10',
+      iconColor: obrasEmRisco > 0 ? 'text-destructive' : 'text-success',
       emptyPositive: obrasEmRisco === 0,
     },
     {
@@ -36,8 +36,8 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: formatCurrency(receberSemana),
       subtitle: receberSemana === 0 ? 'Sem cobranças esta semana' : 'a cobrar',
       icon: Wallet,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: 'text-emerald-600',
+      iconBg: 'bg-success/10',
+      iconColor: 'text-success',
       emptyPositive: false,
     },
     {
@@ -45,8 +45,8 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(medicoesPendentes).padStart(2, '0'),
       subtitle: medicoesPendentes === 0 ? 'Tudo validado. Bom trabalho!' : 'aguardando validação',
       icon: ClipboardCheck,
-      iconBg: medicoesPendentes > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: medicoesPendentes > 0 ? 'text-amber-600' : 'text-emerald-600',
+      iconBg: medicoesPendentes > 0 ? 'bg-warning/10' : 'bg-success/10',
+      iconColor: medicoesPendentes > 0 ? 'text-warning' : 'text-success',
       emptyPositive: medicoesPendentes === 0,
     },
   ];
@@ -54,13 +54,13 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi) => (
-        <Card key={kpi.label} className="rounded-xl shadow-sm hover:shadow-md transition-shadow border-border/50">
+        <Card key={kpi.label} className="rounded-xl shadow-card hover:shadow-card-hover transition-shadow">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{kpi.label}</p>
                 <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                <p className={`text-xs ${kpi.emptyPositive ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                <p className={`text-xs ${kpi.emptyPositive ? 'text-success font-medium' : 'text-muted-foreground'}`}>
                   {kpi.subtitle}
                 </p>
               </div>

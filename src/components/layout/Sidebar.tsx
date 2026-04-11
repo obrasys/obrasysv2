@@ -140,7 +140,7 @@ export function Sidebar() {
                         onClick={() => navigate(item.href)}
                         className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors text-[12px] ${
                           active
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold border-l-2 border-sidebar-primary'
                             : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                         }`}
                       >
