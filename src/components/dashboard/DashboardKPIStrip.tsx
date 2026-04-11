@@ -18,8 +18,10 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(obrasAtivas).padStart(2, '0'),
       subtitle: obrasAtivas === 0 ? 'Crie a sua primeira obra para começar' : 'em execução',
       icon: Building2,
-      iconBg: 'bg-primary/10',
-      iconColor: 'text-primary',
+      bg: 'bg-[hsl(192,73%,21%)]',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
+      subtitleColor: 'text-white/70',
       emptyPositive: false,
     },
     {
@@ -27,8 +29,10 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(obrasEmRisco).padStart(2, '0'),
       subtitle: obrasEmRisco > 0 ? 'atenção imediata' : 'Excelente! Nenhuma obra em risco',
       icon: AlertTriangle,
-      iconBg: obrasEmRisco > 0 ? 'bg-destructive/10' : 'bg-success/10',
-      iconColor: obrasEmRisco > 0 ? 'text-destructive' : 'text-success',
+      bg: obrasEmRisco > 0 ? 'bg-[hsl(20,88%,40%)]' : 'bg-[hsl(146,50%,36%)]',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
+      subtitleColor: 'text-white/70',
       emptyPositive: obrasEmRisco === 0,
     },
     {
@@ -36,8 +40,10 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: formatCurrency(receberSemana),
       subtitle: receberSemana === 0 ? 'Sem cobranças esta semana' : 'a cobrar',
       icon: Wallet,
-      iconBg: 'bg-success/10',
-      iconColor: 'text-success',
+      bg: 'bg-[hsl(195,62%,28%)]',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
+      subtitleColor: 'text-white/70',
       emptyPositive: false,
     },
     {
@@ -45,8 +51,10 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       value: String(medicoesPendentes).padStart(2, '0'),
       subtitle: medicoesPendentes === 0 ? 'Tudo validado. Bom trabalho!' : 'aguardando validação',
       icon: ClipboardCheck,
-      iconBg: medicoesPendentes > 0 ? 'bg-warning/10' : 'bg-success/10',
-      iconColor: medicoesPendentes > 0 ? 'text-warning' : 'text-success',
+      bg: medicoesPendentes > 0 ? 'bg-[hsl(38,92%,44%)]' : 'bg-[hsl(146,50%,36%)]',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
+      subtitleColor: 'text-white/70',
       emptyPositive: medicoesPendentes === 0,
     },
   ];
@@ -54,18 +62,18 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi) => (
-        <Card key={kpi.label} className="rounded-xl shadow-card hover:shadow-card-hover transition-shadow">
+        <Card key={kpi.label} className={`rounded-xl shadow-card hover:shadow-card-hover transition-shadow border-0 ${kpi.bg}`}>
           <CardContent className="pt-5 pb-4">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{kpi.label}</p>
-                <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                <p className={`text-xs ${kpi.emptyPositive ? 'text-success font-medium' : 'text-muted-foreground'}`}>
+                <p className={`text-xs font-medium uppercase tracking-wide ${kpi.subtitleColor}`}>{kpi.label}</p>
+                <p className={`text-3xl font-bold ${kpi.textColor}`}>{kpi.value}</p>
+                <p className={`text-xs ${kpi.subtitleColor}`}>
                   {kpi.subtitle}
                 </p>
               </div>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${kpi.iconBg}`}>
-                <kpi.icon className={`w-5 h-5 ${kpi.iconColor}`} />
+                <kpi.icon className={`w-5 h-5 ${kpi.textColor}`} />
               </div>
             </div>
           </CardContent>
