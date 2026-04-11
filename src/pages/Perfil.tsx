@@ -198,12 +198,15 @@ export default function PerfilPage() {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
               {/* Avatar */}
               <div className="relative group">
-                <Avatar className="w-24 h-24 border-4 border-muted shadow-lg">
-                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.nome} />
-                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold">
-                    {getInitials(profile.nome)}
-                  </AvatarFallback>
-                </Avatar>
+                {/* Green ring indicating profile is complete */}
+                <div className="rounded-full p-[3px]" style={{ background: completionPercentage === 100 ? '#7de578' : 'hsl(var(--muted))' }}>
+                  <Avatar className="w-24 h-24 border-2 border-background shadow-lg">
+                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.nome} />
+                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold">
+                      {getInitials(profile.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
                 <button
                   className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   onClick={handleAvatarClick}
