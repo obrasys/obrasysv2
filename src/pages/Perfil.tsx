@@ -199,7 +199,7 @@ export default function PerfilPage() {
               {/* Avatar */}
               <div className="relative group">
                 {/* Green ring indicating profile is complete */}
-                <div className="rounded-full p-[3px]" style={{ background: completionPercentage === 100 ? '#7de578' : 'hsl(var(--muted))' }}>
+                <div className="rounded-full p-[3px]" style={{ background: completionPercent === 100 ? '#7de578' : 'hsl(var(--muted))' }}>
                   <Avatar className="w-24 h-24 border-2 border-background shadow-lg">
                     <AvatarImage src={profile.avatar_url || undefined} alt={profile.nome} />
                     <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold">
