@@ -296,18 +296,18 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
           const item = group.items[0];
           const active = isActive(item.href);
           return (
-            <button
-              key={group.label}
-              onClick={() => go(item.href)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-                active
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-              }`}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              <span>{item.label}</span>
-            </button>
+              <button
+                key={group.label}
+                onClick={() => go(item.href)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                  active
+                    ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                    : 'text-white/65 hover:bg-white/8 hover:text-white/90'
+                }`}
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                <span>{item.label}</span>
+              </button>
           );
         }
 
@@ -317,8 +317,8 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
               onClick={() => toggleGroup(group.label)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                 groupHasActive && !isOpen
-                  ? 'text-sidebar-accent-foreground font-semibold'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  ? 'text-white font-semibold'
+                  : 'text-white/65 hover:bg-white/8 hover:text-white/90'
               }`}
             >
               <group.icon className="w-5 h-5 shrink-0" />
@@ -343,8 +343,8 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
                       onClick={() => go(item.href)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-[13px] ${
                         active
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                          : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                          ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                          : 'text-white/50 hover:bg-white/8 hover:text-white/80'
                       }`}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
@@ -360,7 +360,7 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {isSuperAdmin && (
         <div>
-          <p className="px-3 mb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest">
+          <p className="px-3 mb-1 text-[10px] font-semibold text-white/30 uppercase tracking-widest">
             Administração
           </p>
           <div className="space-y-0.5">
@@ -372,8 +372,8 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={() => go(item.href)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     active
-                      ? 'bg-primary/20 text-primary font-semibold'
-                      : 'text-sidebar-foreground/70 hover:bg-primary/10 hover:text-primary'
+                      ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                      : 'text-white/65 hover:bg-white/8 hover:text-white/90'
                   }`}
                 >
                   <item.icon className="w-5 h-5 shrink-0" />
