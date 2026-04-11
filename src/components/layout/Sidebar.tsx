@@ -109,7 +109,7 @@ export function Sidebar() {
             <div key={group.label}>
               <button
                 onClick={() => toggleGroup(group.label)}
-                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[15px] ${
                   groupHasActive && !isOpen
                     ? 'text-white font-semibold'
                     : 'text-white/65 hover:bg-white/8 hover:text-white/90'
