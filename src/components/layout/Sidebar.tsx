@@ -22,7 +22,6 @@ export function Sidebar() {
     return location.pathname.startsWith(href);
   };
 
-  // Determine which groups should be open based on active route
   const getActiveGroups = useCallback(() => {
     const active = new Set<string>();
     NAV_GROUPS.forEach((group) => {
@@ -70,24 +69,23 @@ export function Sidebar() {
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
       {/* Company Logo */}
       <div className="px-5 pt-5 pb-4 flex flex-col items-center">
-        <Avatar className="h-36 w-36 border-2 border-sidebar-foreground/20 bg-white">
+        <Avatar className="h-36 w-36 border-2 border-white/15 bg-white">
           <AvatarImage src={profile?.empresa_logo_url || undefined} alt={empresaNome} className="object-contain" />
           <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-4xl font-bold">
             {empresaInitial}
           </AvatarFallback>
         </Avatar>
         <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
-        <p className="text-[10px] text-sidebar-foreground/50">ObraSys - Versão {APP_VERSION}</p>
+        <p className="text-[10px] text-white/40">ObraSys - Versão {APP_VERSION}</p>
       </div>
 
-      {/* Navigation — with scroll */}
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 space-y-1">
         {NAV_GROUPS.map((group) => {
           const isSingleItem = group.items.length === 1;
           const isOpen = openGroups.has(group.label);
           const groupHasActive = group.items.some((item) => isActive(item.href));
 
-          // Single-item groups render as direct link
           if (isSingleItem) {
             const item = group.items[0];
             const active = isActive(item.href);
@@ -95,10 +93,10 @@ export function Sidebar() {
               <button
                 key={group.label}
                 onClick={() => navigate(item.href)}
-                className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
                   active
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                    ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                    : 'text-white/65 hover:bg-white/8 hover:text-white/90'
                 }`}
               >
                 <item.icon className="w-4 h-4 shrink-0" />
@@ -107,15 +105,14 @@ export function Sidebar() {
             );
           }
 
-          // Multi-item groups render as collapsible
           return (
             <div key={group.label}>
               <button
                 onClick={() => toggleGroup(group.label)}
-                className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
                   groupHasActive && !isOpen
-                    ? 'text-sidebar-accent-foreground font-semibold'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                    ? 'text-white font-semibold'
+                    : 'text-white/65 hover:bg-white/8 hover:text-white/90'
                 }`}
               >
                 <group.icon className="w-4 h-4 shrink-0" />
@@ -138,10 +135,10 @@ export function Sidebar() {
                       <button
                         key={item.href}
                         onClick={() => navigate(item.href)}
-                        className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors text-[12px] ${
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-colors text-[12px] ${
                           active
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                            ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                            : 'text-white/50 hover:bg-white/8 hover:text-white/80'
                         }`}
                       >
                         <item.icon className="w-3.5 h-3.5 shrink-0" />
@@ -158,7 +155,7 @@ export function Sidebar() {
         {/* Super Admin Section */}
         {isSuperAdmin && (
           <div>
-            <p className="px-2 mb-1 text-[9px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.12em]">
+            <p className="px-2.5 mb-1 text-[9px] font-bold text-white/30 uppercase tracking-[0.12em]">
               Administração
             </p>
             <div className="space-y-0.5">
@@ -168,10 +165,10 @@ export function Sidebar() {
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
                       active
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                        ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                        : 'text-white/65 hover:bg-white/8 hover:text-white/90'
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" />
@@ -184,15 +181,15 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Portal do Cliente link for multi-role users */}
+      {/* Portal do Cliente */}
       {showPortalLink && (
         <div className="px-3 pt-2">
           <button
             onClick={() => navigate('/portal')}
-            className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-[13px] ${
+            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
               isActive('/portal')
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
+                : 'text-white/65 hover:bg-white/8 hover:text-white/90'
             }`}
           >
             <ExternalLink className="w-4 h-4 shrink-0" />
@@ -205,7 +202,7 @@ export function Sidebar() {
       <div className="px-3 pb-4 pt-2">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2.5 px-2 py-2 text-[13px] text-sidebar-foreground/60 hover:text-destructive transition-colors"
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] text-white/40 hover:text-red-300 transition-colors"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           <span>Sair</span>
