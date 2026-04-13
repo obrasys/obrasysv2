@@ -51,6 +51,15 @@ interface PlanViewerProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  // Element insertion
+  placedElements?: PlacedPlantElement[];
+  activeInsertSymbolId?: string | null;
+  insertedCount?: number;
+  onInsertFinish?: () => void;
+  onInsertUndo?: () => void;
+  onInsertChangeType?: () => void;
+  onInsertCancel?: () => void;
+  onElementClick?: (element: PlacedPlantElement) => void;
 }
 
 export function PlanViewer({
