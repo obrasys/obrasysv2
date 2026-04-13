@@ -428,13 +428,16 @@ export default function PlanDetail() {
             </div>
           </div>
           {effectiveStep === "measure" && (
-            <PlanMeasurementToolbar
-              mode={mode === "calibrate" ? "view" : mode}
-              onModeChange={handleModeChange}
-              canMeasure={canMeasure}
-              onUndo={handleUndo}
-              hasActivePoints={activePoints.length > 0}
-            />
+            <div className="flex items-center gap-2">
+              <PlanMeasurementToolbar
+                mode={mode === "calibrate" ? "view" : mode}
+                onModeChange={handleModeChange}
+                canMeasure={canMeasure}
+                onUndo={handleUndo}
+                hasActivePoints={activePoints.length > 0}
+              />
+              <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} />
+            </div>
           )}
         </div>
 
@@ -523,6 +526,14 @@ export default function PlanDetail() {
             currentPage={currentPage}
             totalPages={isPdf ? totalPages : 1}
             onPageChange={setCurrentPage}
+            placedElements={placedElements}
+            activeInsertSymbolId={insertTool.symbolTypeId}
+            insertedCount={insertTool.insertedCount}
+            onInsertFinish={handleInsertFinish}
+            onInsertUndo={handleInsertUndo}
+            onInsertChangeType={handleInsertChangeType}
+            onInsertCancel={handleInsertCancel}
+            onElementClick={handleElementClick}
           />
 
           {/* Side panel - contextual based on step */}
