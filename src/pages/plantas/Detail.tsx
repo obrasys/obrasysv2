@@ -263,23 +263,17 @@ export default function PlanDetail() {
 
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
+      const sym = (await import("@/types/plan-symbols")).getSymbolById(insertTool.symbolTypeId);
       const newEl: PlacedPlantElement = {
         id: crypto.randomUUID(),
         symbolTypeId: insertTool.symbolTypeId,
-        category: "instalacoes",
-        subcategory: undefined,
+        category: sym?.category ?? "instalacoes",
+        subcategory: sym?.subcategory,
         x: point.x,
         y: point.y,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      // Get subcategory from symbol
-      const { getSymbolById } = require("@/types/plan-symbols");
-      const sym = getSymbolById(insertTool.symbolTypeId);
-      if (sym) {
-        newEl.category = sym.category;
-        newEl.subcategory = sym.subcategory;
-      }
       setPlacedElements((prev) => [...prev, newEl]);
       setInsertTool((prev) => ({ ...prev, insertedCount: prev.insertedCount + 1 }));
       if (!insertTool.continuous) {
