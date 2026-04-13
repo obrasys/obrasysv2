@@ -202,7 +202,7 @@ export default function PlanDetail() {
 
   const handleInsertUndo = () => {
     if (placedElements.length === 0) return;
-    setPlacedElements((prev) => prev.slice(0, -1));
+    deleteLastElement.mutate();
     setInsertTool((prev) => ({ ...prev, insertedCount: Math.max(0, prev.insertedCount - 1) }));
   };
 
@@ -223,12 +223,11 @@ export default function PlanDetail() {
   };
 
   const handleUpdateElement = (id: string, updates: Partial<PlacedPlantElement>) => {
-    setPlacedElements((prev) => prev.map((el) => el.id === id ? { ...el, ...updates } : el));
+    updateElementDb.mutate({ id, ...updates });
   };
 
   const handleDeleteElement = (id: string) => {
-    setPlacedElements((prev) => prev.filter((el) => el.id !== id));
-    toast.success("Elemento removido");
+    deleteElementDb.mutate(id);
   };
 
   // Click handler – routes to correct logic based on mode
@@ -266,17 +265,15 @@ export default function PlanDetail() {
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
       const sym = getSymbolById(insertTool.symbolTypeId);
-      const newEl: PlacedPlantElement = {
+      const newEl = {
         id: crypto.randomUUID(),
         symbolTypeId: insertTool.symbolTypeId,
         category: sym?.category ?? "instalacoes",
         subcategory: sym?.subcategory,
         x: point.x,
         y: point.y,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
-      setPlacedElements((prev) => [...prev, newEl]);
+      addElement.mutate(newEl as any);
       setInsertTool((prev) => ({ ...prev, insertedCount: prev.insertedCount + 1 }));
       if (!insertTool.continuous) {
         handleInsertFinish();
