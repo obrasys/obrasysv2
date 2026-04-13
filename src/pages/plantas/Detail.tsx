@@ -484,6 +484,11 @@ export default function PlanDetail() {
                 <Wallpaper className="w-3 h-3" /> {walls.length} paredes
               </span>
             )}
+            {placedElements.length > 0 && (
+              <span className="flex items-center gap-1">
+                <Plug className="w-3 h-3" /> {placedElements.length} elementos
+              </span>
+            )}
           </div>
         )}
 
