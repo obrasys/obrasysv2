@@ -146,14 +146,14 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
   };
 
   return (
-    <Card className="flex flex-col max-h-[70vh]">
+    <Card className="flex min-h-0 max-h-[70vh] flex-col overflow-hidden">
       <CardHeader className="pb-3 shrink-0">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-4 h-4" style={{ color: "#00679d" }} />
           <span style={{ color: "#00679d" }}>Axia™</span> Análise Visual
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 overflow-y-auto">
+      <CardContent className="flex min-h-0 flex-1 flex-col space-y-3 overflow-hidden">
         {!result ? (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
@@ -179,7 +179,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
             </Button>
           </div>
         ) : (
-          <ScrollArea className="max-h-[400px]">
+          <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-3 pr-2">
               {/* Summary */}
               <div className="bg-muted rounded-lg p-2.5">
