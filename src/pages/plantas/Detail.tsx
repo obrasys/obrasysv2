@@ -118,8 +118,8 @@ export default function PlanDetail() {
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
-  // Element insertion state
-  const [placedElements, setPlacedElements] = useState<PlacedPlantElement[]>([]);
+  // Element insertion state - persisted via hook
+  const { elements: placedElements, addElement, updateElement: updateElementDb, deleteElement: deleteElementDb, deleteLastElement } = usePlanPlacedElements(planId);
   const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
   const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
   const [showElementProps, setShowElementProps] = useState(false);
