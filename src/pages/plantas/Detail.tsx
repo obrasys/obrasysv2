@@ -677,6 +677,11 @@ export default function PlanDetail() {
                 Abrir Quantitativos e Orçamentação
               </Button>
             )}
+
+            {/* Export placed elements to budget */}
+            {placedElements.length > 0 && obraId && (
+              <PlanElementsExportBudget elements={placedElements} obraId={obraId} />
+            )}
           </div>
         </div>
       </div>
