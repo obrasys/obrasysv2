@@ -198,6 +198,10 @@ export function PlanViewer({
       case "draw_room": return "Compartimento — Clique vértices do polígono, duplo-clique para fechar";
       case "draw_wall": return "Parede — Clique ponto inicial e ponto final (2 cliques)";
       case "draw_opening": return "Vão — Clique na posição sobre uma parede";
+      case "insert_element": {
+        const sym = activeInsertSymbolId ? getSymbolById(activeInsertSymbolId) : null;
+        return sym ? `Inserir: ${sym.name} — Clique na planta` : "Selecione um tipo de elemento";
+      }
       default: return "";
     }
   };
