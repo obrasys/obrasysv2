@@ -30,9 +30,9 @@ export function DashboardKPIStrip({ obrasAtivas, obrasEmRisco, receberSemana, me
       emptyPositive: obrasEmRisco === 0,
     },
     {
-      label: 'Cobros Previstos',
+      label: 'Pagamentos',
       value: formatCurrency(receberSemana),
-      subtitle: receberSemana === 0 ? 'Sem cobros esta semana.' : 'a cobrar',
+      subtitle: receberSemana === 0 ? 'Sem pagamentos esta semana.' : 'a pagar',
       icon: Wallet,
       bg: 'bg-[hsl(38,85%,50%)]',
       emptyPositive: false,
