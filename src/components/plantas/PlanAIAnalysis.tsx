@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Brain,
@@ -146,14 +145,14 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
   };
 
   return (
-    <Card className="flex min-h-0 max-h-[70vh] flex-col overflow-hidden">
+    <Card>
       <CardHeader className="pb-3 shrink-0">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-4 h-4" style={{ color: "#00679d" }} />
           <span style={{ color: "#00679d" }}>Axia™</span> Análise Visual
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col space-y-3 overflow-hidden">
+      <CardContent className="space-y-3">
         {!result ? (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
@@ -179,8 +178,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
             </Button>
           </div>
         ) : (
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="space-y-3 pr-2">
+          <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
               {/* Summary */}
               <div className="bg-muted rounded-lg p-2.5">
                 <p className="text-xs text-muted-foreground">{result.summary}</p>
@@ -344,7 +342,6 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                 Reanalisar
               </Button>
             </div>
-          </ScrollArea>
         )}
       </CardContent>
     </Card>
