@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { UserUsageMap } from "@/components/admin/UserUsageMap";
 import { KpiCard } from "@/components/relatorios/KpiCard";
 import {
   Users, Building2, FileText, Wallet, AlertTriangle, UserCheck,
@@ -224,6 +225,14 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             )}
+
+            {/* User Usage Map */}
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Mapa de Utilização
+              </h2>
+              <UserUsageMap />
+            </div>
           </>
         )}
       </div>
