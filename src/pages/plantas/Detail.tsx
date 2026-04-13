@@ -821,6 +821,15 @@ export default function PlanDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Element properties dialog */}
+      <PlanElementProperties
+        element={selectedElement}
+        open={showElementProps}
+        onClose={() => { setShowElementProps(false); setSelectedElement(null); }}
+        onUpdate={handleUpdateElement}
+        onDelete={handleDeleteElement}
+      />
     </AppLayout>
   );
 }
