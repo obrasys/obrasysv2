@@ -497,9 +497,87 @@ export function PlanViewer({
                 ))}
               </Group>
             )}
+
+            {/* Placed elements (symbols) */}
+            {placedElements.map((el) => {
+              const sym = getSymbolById(el.symbolTypeId);
+              if (!sym) return null;
+              const s = sym.shape;
+              const scale = (el.scale ?? 1) / zoom;
+              return (
+                <Group
+                  key={`el-${el.id}`}
+                  x={el.x}
+                  y={el.y}
+                  rotation={el.rotation ?? 0}
+                  onClick={(e) => {
+                    e.cancelBubble = true;
+                    onElementClick?.(el);
+                  }}
+                >
+                  {s.type === "circle" && (
+                    <Circle radius={s.radius * scale} fill={s.fill} stroke={s.stroke} strokeWidth={1.5 / zoom} />
+                  )}
+                  {s.type === "rect" && (
+                    <Rect x={-s.width * scale / 2} y={-s.height * scale / 2} width={s.width * scale} height={s.height * scale} fill={s.fill} stroke={s.stroke} strokeWidth={1.5 / zoom} cornerRadius={1} />
+                  )}
+                  {s.type === "cross" && (
+                    <>
+                      <Line points={[-s.size * scale, 0, s.size * scale, 0]} stroke={s.stroke} strokeWidth={2 / zoom} lineCap="round" />
+                      <Line points={[0, -s.size * scale, 0, s.size * scale]} stroke={s.stroke} strokeWidth={2 / zoom} lineCap="round" />
+                    </>
+                  )}
+                  {s.type === "triangle" && (
+                    <Line
+                      points={[0, -s.size * scale, -s.size * scale, s.size * scale * 0.7, s.size * scale, s.size * scale * 0.7]}
+                      fill={s.fill} stroke={s.stroke} strokeWidth={1.5 / zoom} closed
+                    />
+                  )}
+                  {s.type === "diamond" && (
+                    <Line
+                      points={[0, -s.size * scale, s.size * scale, 0, 0, s.size * scale, -s.size * scale, 0]}
+                      fill={s.fill} stroke={s.stroke} strokeWidth={1.5 / zoom} closed
+                    />
+                  )}
+                  {s.type === "star" && (() => {
+                    const pts: number[] = [];
+                    const outer = s.size * scale;
+                    const inner = outer * 0.4;
+                    for (let i = 0; i < 5; i++) {
+                      const oa = -Math.PI / 2 + (2 * Math.PI * i) / 5;
+                      const ia = oa + Math.PI / 5;
+                      pts.push(outer * Math.cos(oa), outer * Math.sin(oa));
+                      pts.push(inner * Math.cos(ia), inner * Math.sin(ia));
+                    }
+                    return <Line points={pts} fill={s.fill} stroke={s.stroke} strokeWidth={1 / zoom} closed />;
+                  })()}
+                  <Text
+                    x={-20 / zoom}
+                    y={(s.type === "circle" ? s.radius : s.type === "rect" ? s.height / 2 : 10) * scale + 2 / zoom}
+                    text={sym.label}
+                    fontSize={9 / zoom}
+                    fill={s.stroke}
+                    align="center"
+                    width={40 / zoom}
+                  />
+                </Group>
+              );
+            })}
           </Layer>
         </Stage>
       </div>
+
+      {/* Continuous insertion toolbar */}
+      {mode === "insert_element" && activeInsertSymbolId && (
+        <PlanInsertToolbar
+          symbolTypeId={activeInsertSymbolId}
+          insertedCount={insertedCount}
+          onFinish={onInsertFinish ?? (() => {})}
+          onUndo={onInsertUndo ?? (() => {})}
+          onChangeType={onInsertChangeType ?? (() => {})}
+          onCancel={onInsertCancel ?? (() => {})}
+        />
+      )}
     </div>
   );
 }
