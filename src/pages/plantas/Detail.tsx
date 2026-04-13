@@ -116,6 +116,23 @@ export default function PlanDetail() {
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
+  // Element insertion state
+  const [placedElements, setPlacedElements] = useState<PlacedPlantElement[]>([]);
+  const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+  const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
+  const [showElementProps, setShowElementProps] = useState(false);
+
+  // ESC key to exit insert mode
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && insertTool.mode === "inserting") {
+        handleInsertCancel();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [insertTool.mode]);
+
   // Workflow stepper state
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("calibrate");
   const [hasAnalysis, setHasAnalysis] = useState(false);
@@ -160,8 +177,56 @@ export default function PlanDetail() {
   const handleModeChange = (newMode: MeasureMode) => {
     if (newMode !== mode) {
       setActivePoints([]);
+      if (insertTool.mode === "inserting") handleInsertFinish();
       setMode(newMode);
     }
+  };
+
+  // Element insertion handlers
+  const handleSelectSymbol = (symbol: PlantSymbolType) => {
+    setInsertTool({ symbolTypeId: symbol.id, mode: "inserting", continuous: symbol.insertMode === "continuous", insertedCount: 0 });
+    setActivePoints([]);
+    setMode("insert_element");
+    toast.info(`Modo de inserção: ${symbol.name}`);
+  };
+
+  const handleInsertFinish = () => {
+    if (insertTool.insertedCount > 0) {
+      toast.success(`${insertTool.insertedCount} elemento(s) inserido(s)`);
+    }
+    setInsertTool({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+    setMode("view");
+  };
+
+  const handleInsertUndo = () => {
+    if (placedElements.length === 0) return;
+    setPlacedElements((prev) => prev.slice(0, -1));
+    setInsertTool((prev) => ({ ...prev, insertedCount: Math.max(0, prev.insertedCount - 1) }));
+  };
+
+  const handleInsertChangeType = () => {
+    // Reset but stay ready — the picker popover will open
+    handleInsertFinish();
+  };
+
+  const handleInsertCancel = () => {
+    setInsertTool({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+    setMode("view");
+  };
+
+  const handleElementClick = (el: PlacedPlantElement) => {
+    if (mode === "insert_element") return; // Don't open props during insertion
+    setSelectedElement(el);
+    setShowElementProps(true);
+  };
+
+  const handleUpdateElement = (id: string, updates: Partial<PlacedPlantElement>) => {
+    setPlacedElements((prev) => prev.map((el) => el.id === id ? { ...el, ...updates } : el));
+  };
+
+  const handleDeleteElement = (id: string) => {
+    setPlacedElements((prev) => prev.filter((el) => el.id !== id));
+    toast.success("Elemento removido");
   };
 
   // Click handler – routes to correct logic based on mode
