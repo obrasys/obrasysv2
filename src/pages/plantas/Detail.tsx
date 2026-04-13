@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanViewer } from "@/components/plantas/PlanViewer";
@@ -11,6 +11,8 @@ import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
 import { PlanWorkflowStepper, type WorkflowStep } from "@/components/plantas/PlanWorkflowStepper";
 import { PlanContextualGuide } from "@/components/plantas/PlanContextualGuide";
+import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
+import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
@@ -31,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
+import { getSymbolById, type PlacedPlantElement, type PlantSymbolType, type ActiveInsertTool } from "@/types/plan-symbols";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -113,6 +116,23 @@ export default function PlanDetail() {
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
+  // Element insertion state
+  const [placedElements, setPlacedElements] = useState<PlacedPlantElement[]>([]);
+  const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+  const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
+  const [showElementProps, setShowElementProps] = useState(false);
+
+  // ESC key to exit insert mode
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && insertTool.mode === "inserting") {
+        handleInsertCancel();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [insertTool.mode]);
+
   // Workflow stepper state
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("calibrate");
   const [hasAnalysis, setHasAnalysis] = useState(false);
@@ -157,8 +177,56 @@ export default function PlanDetail() {
   const handleModeChange = (newMode: MeasureMode) => {
     if (newMode !== mode) {
       setActivePoints([]);
+      if (insertTool.mode === "inserting") handleInsertFinish();
       setMode(newMode);
     }
+  };
+
+  // Element insertion handlers
+  const handleSelectSymbol = (symbol: PlantSymbolType) => {
+    setInsertTool({ symbolTypeId: symbol.id, mode: "inserting", continuous: symbol.insertMode === "continuous", insertedCount: 0 });
+    setActivePoints([]);
+    setMode("insert_element");
+    toast.info(`Modo de inserção: ${symbol.name}`);
+  };
+
+  const handleInsertFinish = () => {
+    if (insertTool.insertedCount > 0) {
+      toast.success(`${insertTool.insertedCount} elemento(s) inserido(s)`);
+    }
+    setInsertTool({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+    setMode("view");
+  };
+
+  const handleInsertUndo = () => {
+    if (placedElements.length === 0) return;
+    setPlacedElements((prev) => prev.slice(0, -1));
+    setInsertTool((prev) => ({ ...prev, insertedCount: Math.max(0, prev.insertedCount - 1) }));
+  };
+
+  const handleInsertChangeType = () => {
+    // Reset but stay ready — the picker popover will open
+    handleInsertFinish();
+  };
+
+  const handleInsertCancel = () => {
+    setInsertTool({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
+    setMode("view");
+  };
+
+  const handleElementClick = (el: PlacedPlantElement) => {
+    if (mode === "insert_element") return; // Don't open props during insertion
+    setSelectedElement(el);
+    setShowElementProps(true);
+  };
+
+  const handleUpdateElement = (id: string, updates: Partial<PlacedPlantElement>) => {
+    setPlacedElements((prev) => prev.map((el) => el.id === id ? { ...el, ...updates } : el));
+  };
+
+  const handleDeleteElement = (id: string) => {
+    setPlacedElements((prev) => prev.filter((el) => el.id !== id));
+    toast.success("Elemento removido");
   };
 
   // Click handler – routes to correct logic based on mode
@@ -192,7 +260,28 @@ export default function PlanDetail() {
       });
       return;
     }
-  }, [mode, handleCalibrationClick]);
+
+    // Element insertion mode
+    if (mode === "insert_element" && insertTool.symbolTypeId) {
+      const sym = getSymbolById(insertTool.symbolTypeId);
+      const newEl: PlacedPlantElement = {
+        id: crypto.randomUUID(),
+        symbolTypeId: insertTool.symbolTypeId,
+        category: sym?.category ?? "instalacoes",
+        subcategory: sym?.subcategory,
+        x: point.x,
+        y: point.y,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setPlacedElements((prev) => [...prev, newEl]);
+      setInsertTool((prev) => ({ ...prev, insertedCount: prev.insertedCount + 1 }));
+      if (!insertTool.continuous) {
+        handleInsertFinish();
+      }
+      return;
+    }
+  }, [mode, handleCalibrationClick, insertTool]);
 
   // Complete handler (double-click)
   const handleCanvasComplete = useCallback(() => {
@@ -339,13 +428,16 @@ export default function PlanDetail() {
             </div>
           </div>
           {effectiveStep === "measure" && (
-            <PlanMeasurementToolbar
-              mode={mode === "calibrate" ? "view" : mode}
-              onModeChange={handleModeChange}
-              canMeasure={canMeasure}
-              onUndo={handleUndo}
-              hasActivePoints={activePoints.length > 0}
-            />
+            <div className="flex items-center gap-2">
+              <PlanMeasurementToolbar
+                mode={mode === "calibrate" ? "view" : mode}
+                onModeChange={handleModeChange}
+                canMeasure={canMeasure}
+                onUndo={handleUndo}
+                hasActivePoints={activePoints.length > 0}
+              />
+              <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} />
+            </div>
           )}
         </div>
 
@@ -370,7 +462,7 @@ export default function PlanDetail() {
         />
 
         {/* Summary bar */}
-        {(measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
+        {(measurements.length > 0 || rooms.length > 0 || walls.length > 0 || placedElements.length > 0) && (
           <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 rounded-lg text-xs text-muted-foreground">
             {measurements.length > 0 && (
               <span className="flex items-center gap-1">
@@ -390,6 +482,11 @@ export default function PlanDetail() {
             {walls.length > 0 && (
               <span className="flex items-center gap-1">
                 <Wallpaper className="w-3 h-3" /> {walls.length} paredes
+              </span>
+            )}
+            {placedElements.length > 0 && (
+              <span className="flex items-center gap-1">
+                <Plug className="w-3 h-3" /> {placedElements.length} elementos
               </span>
             )}
           </div>
@@ -434,6 +531,14 @@ export default function PlanDetail() {
             currentPage={currentPage}
             totalPages={isPdf ? totalPages : 1}
             onPageChange={setCurrentPage}
+            placedElements={placedElements}
+            activeInsertSymbolId={insertTool.symbolTypeId}
+            insertedCount={insertTool.insertedCount}
+            onInsertFinish={handleInsertFinish}
+            onInsertUndo={handleInsertUndo}
+            onInsertChangeType={handleInsertChangeType}
+            onInsertCancel={handleInsertCancel}
+            onElementClick={handleElementClick}
           />
 
           {/* Side panel - contextual based on step */}
@@ -716,6 +821,15 @@ export default function PlanDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Element properties dialog */}
+      <PlanElementProperties
+        element={selectedElement}
+        open={showElementProps}
+        onClose={() => { setShowElementProps(false); setSelectedElement(null); }}
+        onUpdate={handleUpdateElement}
+        onDelete={handleDeleteElement}
+      />
     </AppLayout>
   );
 }

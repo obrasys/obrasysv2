@@ -12,7 +12,8 @@ export type MeasureMode =
   | "measure_count"
   | "draw_room"
   | "draw_wall"
-  | "draw_opening";
+  | "draw_opening"
+  | "insert_element";
 
 interface PlanMeasurementToolbarProps {
   mode: MeasureMode;
@@ -31,6 +32,7 @@ const MODE_HINTS: Record<MeasureMode, string> = {
   draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar",
   draw_wall: "Clique no início e fim da parede (2 pontos)",
   draw_opening: "Selecione sobre uma parede existente",
+  insert_element: "Clique na planta para inserir elementos · ESC para terminar",
 };
 
 export function PlanMeasurementToolbar({
