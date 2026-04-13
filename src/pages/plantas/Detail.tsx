@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { getSymbolById, type PlacedPlantElement, type PlantSymbolType, type ActiveInsertTool } from "@/types/plan-symbols";
 import { usePlanPlacedElements } from "@/hooks/usePlanPlacedElements";
 import { PlanElementsExportBudget } from "@/components/plantas/PlanElementsExportBudget";
+import { PlanElectricalAnalysis } from "@/components/plantas/PlanElectricalAnalysis";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -664,6 +665,18 @@ export default function PlanDetail() {
                   />
                 </TabsContent>
               </Tabs>
+            )}
+
+            {/* Electrical Analysis */}
+            {effectiveStep === "analyze" && (
+              <PlanElectricalAnalysis
+                imageDataUrl={effectiveImageUrl}
+                calibration={calibration ? {
+                  pixels_per_meter: calibration.pixels_per_meter,
+                  real_distance: calibration.real_distance,
+                  unidade: calibration.unidade,
+                } : null}
+              />
             )}
 
             {/* Budget action on budget step */}
