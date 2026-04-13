@@ -49,6 +49,7 @@ export interface PlacedPlantElement {
   y: number;
   rotation?: number;
   scale?: number;
+  quantity?: number;
   note?: string;
   environment?: string;
   createdAt: string;
