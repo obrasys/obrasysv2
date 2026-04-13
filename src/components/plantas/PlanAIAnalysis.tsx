@@ -146,14 +146,14 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="flex flex-col max-h-[70vh]">
+      <CardHeader className="pb-3 shrink-0">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-4 h-4" style={{ color: "#00679d" }} />
           <span style={{ color: "#00679d" }}>Axia™</span> Análise Visual
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 overflow-y-auto">
         {!result ? (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
