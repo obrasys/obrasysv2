@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanViewer } from "@/components/plantas/PlanViewer";
@@ -11,6 +11,8 @@ import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
 import { PlanWorkflowStepper, type WorkflowStep } from "@/components/plantas/PlanWorkflowStepper";
 import { PlanContextualGuide } from "@/components/plantas/PlanContextualGuide";
+import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
+import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
@@ -31,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
+import type { PlacedPlantElement, PlantSymbolType, ActiveInsertTool } from "@/types/plan-symbols";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
