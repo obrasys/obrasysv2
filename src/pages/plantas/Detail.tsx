@@ -462,7 +462,7 @@ export default function PlanDetail() {
         />
 
         {/* Summary bar */}
-        {(measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
+        {(measurements.length > 0 || rooms.length > 0 || walls.length > 0 || placedElements.length > 0) && (
           <div className="flex items-center gap-4 px-3 py-2 bg-muted/50 rounded-lg text-xs text-muted-foreground">
             {measurements.length > 0 && (
               <span className="flex items-center gap-1">
