@@ -33,7 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
-import type { PlacedPlantElement, PlantSymbolType, ActiveInsertTool } from "@/types/plan-symbols";
+import { getSymbolById, type PlacedPlantElement, type PlantSymbolType, type ActiveInsertTool } from "@/types/plan-symbols";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -263,7 +263,7 @@ export default function PlanDetail() {
 
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
-      const sym = (await import("@/types/plan-symbols")).getSymbolById(insertTool.symbolTypeId);
+      const sym = getSymbolById(insertTool.symbolTypeId);
       const newEl: PlacedPlantElement = {
         id: crypto.randomUUID(),
         symbolTypeId: insertTool.symbolTypeId,
