@@ -167,7 +167,7 @@ const Auth = () => {
           <h1 className="font-display text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
             Gestão de Obras
             <br />
-            <span className="text-gradient">Simplificada</span>
+            <span style={{ color: '#D97706' }}>Simplificada</span>
           </h1>
           
           <p className="text-lg text-primary-foreground/70 mb-8 max-w-md">
