@@ -5448,6 +5448,68 @@ export type Database = {
           },
         ]
       }
+      plan_placed_elements: {
+        Row: {
+          category: string
+          created_at: string
+          environment: string | null
+          id: string
+          note: string | null
+          plan_import_id: string
+          quantity: number | null
+          rotation: number | null
+          scale: number | null
+          subcategory: string | null
+          symbol_type_id: string
+          updated_at: string
+          user_id: string
+          x: number
+          y: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          note?: string | null
+          plan_import_id: string
+          quantity?: number | null
+          rotation?: number | null
+          scale?: number | null
+          subcategory?: string | null
+          symbol_type_id: string
+          updated_at?: string
+          user_id: string
+          x?: number
+          y?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          note?: string | null
+          plan_import_id?: string
+          quantity?: number | null
+          rotation?: number | null
+          scale?: number | null
+          subcategory?: string | null
+          symbol_type_id?: string
+          updated_at?: string
+          user_id?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_placed_elements_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_room_measurements: {
         Row: {
           created_at: string

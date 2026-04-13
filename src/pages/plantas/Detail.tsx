@@ -34,6 +34,8 @@ import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
 import { toast } from "sonner";
 import { getSymbolById, type PlacedPlantElement, type PlantSymbolType, type ActiveInsertTool } from "@/types/plan-symbols";
+import { usePlanPlacedElements } from "@/hooks/usePlanPlacedElements";
+import { PlanElementsExportBudget } from "@/components/plantas/PlanElementsExportBudget";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -116,8 +118,8 @@ export default function PlanDetail() {
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
-  // Element insertion state
-  const [placedElements, setPlacedElements] = useState<PlacedPlantElement[]>([]);
+  // Element insertion state - persisted via hook
+  const { elements: placedElements, addElement, updateElement: updateElementDb, deleteElement: deleteElementDb, deleteLastElement } = usePlanPlacedElements(planId);
   const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
   const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
   const [showElementProps, setShowElementProps] = useState(false);
@@ -200,7 +202,7 @@ export default function PlanDetail() {
 
   const handleInsertUndo = () => {
     if (placedElements.length === 0) return;
-    setPlacedElements((prev) => prev.slice(0, -1));
+    deleteLastElement.mutate();
     setInsertTool((prev) => ({ ...prev, insertedCount: Math.max(0, prev.insertedCount - 1) }));
   };
 
@@ -221,12 +223,11 @@ export default function PlanDetail() {
   };
 
   const handleUpdateElement = (id: string, updates: Partial<PlacedPlantElement>) => {
-    setPlacedElements((prev) => prev.map((el) => el.id === id ? { ...el, ...updates } : el));
+    updateElementDb.mutate({ id, ...updates });
   };
 
   const handleDeleteElement = (id: string) => {
-    setPlacedElements((prev) => prev.filter((el) => el.id !== id));
-    toast.success("Elemento removido");
+    deleteElementDb.mutate(id);
   };
 
   // Click handler – routes to correct logic based on mode
@@ -264,17 +265,15 @@ export default function PlanDetail() {
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
       const sym = getSymbolById(insertTool.symbolTypeId);
-      const newEl: PlacedPlantElement = {
+      const newEl = {
         id: crypto.randomUUID(),
         symbolTypeId: insertTool.symbolTypeId,
         category: sym?.category ?? "instalacoes",
         subcategory: sym?.subcategory,
         x: point.x,
         y: point.y,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
-      setPlacedElements((prev) => [...prev, newEl]);
+      addElement.mutate(newEl as any);
       setInsertTool((prev) => ({ ...prev, insertedCount: prev.insertedCount + 1 }));
       if (!insertTool.continuous) {
         handleInsertFinish();
@@ -677,6 +676,11 @@ export default function PlanDetail() {
                 <Table2 className="w-4 h-4 mr-2" />
                 Abrir Quantitativos e Orçamentação
               </Button>
+            )}
+
+            {/* Export placed elements to budget */}
+            {placedElements.length > 0 && obraId && (
+              <PlanElementsExportBudget elements={placedElements} obraId={obraId} />
             )}
           </div>
         </div>
