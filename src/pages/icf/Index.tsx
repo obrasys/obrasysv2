@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Settings, Layers, Box, BarChart3, Trash2 } from 'lucide-react';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig } from '@/hooks/useIcfData';
-import { IcfAxiaAlerts } from '@/components/icf/IcfAxiaAlerts';
+import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
@@ -118,8 +118,8 @@ const IcfIndex = () => {
               </div>
             )}
 
-            {/* Axia Alerts */}
-            <IcfAxiaAlerts configId={activeConfig.id} />
+            {/* Axia Analysis Panel */}
+            <IcfAxiaAnalysisPanel configId={activeConfig.id} />
 
             {/* Quick navigation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
