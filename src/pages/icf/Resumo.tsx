@@ -103,6 +103,7 @@ const IcfResumo = () => {
 
             {/* Axia contextual */}
             <IcfAxiaContextual context="resumo" config={config} resumo={r} />
+          </>
         )}
       </div>
     </AppLayout>
