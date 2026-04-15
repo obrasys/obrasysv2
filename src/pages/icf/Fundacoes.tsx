@@ -90,12 +90,12 @@ const IcfFundacoes = () => {
                 </div>
                 <div><Label>Referência</Label><Input value={form.referencia} onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))} placeholder="Ex: F01" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => setForm(f => ({ ...f, comprimento: +e.target.value }))} /></div>
-                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => setForm(f => ({ ...f, largura: +e.target.value }))} /></div>
-                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm(f => ({ ...f, altura: +e.target.value }))} /></div>
-                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => setForm(f => ({ ...f, quantidade: +e.target.value }))} /></div>
+                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => updateFormWithAco({ comprimento: +e.target.value })} /></div>
+                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => updateFormWithAco({ largura: +e.target.value })} /></div>
+                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => updateFormWithAco({ altura: +e.target.value })} /></div>
+                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => updateFormWithAco({ quantidade: +e.target.value })} /></div>
                 </div>
-                <div><Label>Aço Estimado (kg)</Label><Input type="number" step="0.1" value={form.aco_estimado_kg} onChange={e => setForm(f => ({ ...f, aco_estimado_kg: +e.target.value }))} /></div>
+                <div><Label>Aço Estimado (kg) <span className="text-xs text-muted-foreground ml-1">• Axia™ auto</span></Label><Input type="number" step="0.1" value={form.aco_estimado_kg} onChange={e => setForm(f => ({ ...f, aco_estimado_kg: +e.target.value }))} /></div>
                 <p className="text-xs text-muted-foreground">Vol. estimado: {(form.comprimento * form.largura * form.altura * form.quantidade).toFixed(3)} m³</p>
                 <Button onClick={handleAdd} disabled={createFundacao.isPending} className="w-full">Adicionar</Button>
               </div>
