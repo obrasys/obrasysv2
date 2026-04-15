@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Trash2, Layers } from 'lucide-react';
 import { useIcfPanos, useCreateIcfPano, useDeleteIcfPano, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { ICF_ARMADURA_PRESETS } from '@/types/icf';
 import { IcfVaosDialog } from '@/components/icf/IcfVaosDialog';
+import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 
 const IcfPanos = () => {
   const { configId } = useParams();
@@ -162,6 +163,9 @@ const IcfPanos = () => {
             <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Nº Panos</p><p className="text-lg font-bold">{filtered.length}</p></CardContent></Card>
           </div>
         )}
+
+        {/* Axia contextual */}
+        <IcfAxiaContextual context="panos" config={config} panos={filtered} />
 
         {/* Vaos dialog */}
         <IcfVaosDialog panoId={selectedPanoId} onClose={() => setSelectedPanoId(null)} />

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useIcfFundacoes, useCreateIcfFundacao, useDeleteIcfFundacao, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { ICF_FUNDACAO_PRESETS } from '@/types/icf';
+import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 
 const IcfFundacoes = () => {
   const { configId } = useParams();
@@ -119,6 +120,9 @@ const IcfFundacoes = () => {
           <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Volume Total Fundações</p><p className="text-lg font-bold">{totalVolume.toFixed(3)} m³</p></CardContent></Card>
           <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Aço Total Fundações</p><p className="text-lg font-bold">{totalAco.toFixed(1)} kg</p></CardContent></Card>
         </div>
+
+        {/* Axia contextual */}
+        <IcfAxiaContextual context="fundacoes" config={config} fundacoes={fundacoes ?? []} />
       </div>
     </AppLayout>
   );
