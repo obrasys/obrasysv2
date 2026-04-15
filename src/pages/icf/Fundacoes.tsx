@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Plus, Trash2, Calculator, Pencil } from 'lucide-react';
 import { useIcfFundacoes, useCreateIcfFundacao, useUpdateIcfFundacao, useDeleteIcfFundacao, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { ICF_FUNDACAO_PRESETS } from '@/types/icf';
@@ -21,7 +22,64 @@ import {
   type RebarDiameter,
   type RebarSpacing,
   type SteelBreakdown,
+  type LayerBreakdown,
 } from '@/utils/icfSteelCalculation';
+
+const RebarSelect = ({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) => (
+  <div>
+    <Label className="text-xs">{label}</Label>
+    <Select value={String(value)} onValueChange={v => onChange(+v)}>
+      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {REBAR_DIAMETERS.map(d => (
+          <SelectItem key={d} value={String(d)}>Ø{d} ({REBAR_WEIGHT_PER_METER[d]} kg/m)</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
+const SpacingSelect = ({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) => (
+  <div>
+    <Label className="text-xs">{label}</Label>
+    <Select value={String(value)} onValueChange={v => onChange(+v)}>
+      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {REBAR_SPACINGS.map(s => (
+          <SelectItem key={s} value={String(s)}>{s} cm</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
+const LayerRow = ({ label, layer }: { label: string; layer: LayerBreakdown }) => {
+  if (layer.num_bars === 0) return null;
+  return (
+    <>
+      <span className="text-muted-foreground">{label}: Ø{layer.diameter}/{layer.spacing} — {layer.num_bars} barras × {layer.bar_length}m</span>
+      <span className="text-right font-medium">{layer.weight_kg} kg</span>
+    </>
+  );
+};
+
+interface FundacaoForm {
+  referencia: string;
+  comprimento: number;
+  largura: number;
+  altura: number;
+  quantidade: number;
+  diam_long_inf: RebarDiameter;
+  espac_long_inf: RebarSpacing;
+  usar_arm_sup: boolean;
+  diam_long_sup: RebarDiameter;
+  espac_long_sup: RebarSpacing;
+  diam_trans_inf: RebarDiameter;
+  espac_trans_inf: RebarSpacing;
+  usar_trans_sup: boolean;
+  diam_trans_sup: RebarDiameter;
+  espac_trans_sup: RebarSpacing;
+}
 
 const IcfFundacoes = () => {
   const { configId } = useParams();
@@ -35,19 +93,6 @@ const IcfFundacoes = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tipo, setTipo] = useState<'sapata_continua' | 'sapata_isolada'>('sapata_continua');
 
-  interface FundacaoForm {
-    referencia: string;
-    comprimento: number;
-    largura: number;
-    altura: number;
-    quantidade: number;
-    aco_estimado_kg: number;
-    diam_long: RebarDiameter;
-    espac_long: RebarSpacing;
-    diam_trans: RebarDiameter;
-    espac_trans: RebarSpacing;
-  }
-
   const defaultForm = (): FundacaoForm => {
     const p = ICF_FUNDACAO_PRESETS['sapata_continua'];
     return {
@@ -56,17 +101,26 @@ const IcfFundacoes = () => {
       largura: p.largura,
       altura: p.altura,
       quantidade: 1,
-      aco_estimado_kg: 0,
-      diam_long: 12,
-      espac_long: 20,
-      diam_trans: 10,
-      espac_trans: 20,
+      diam_long_inf: 12,
+      espac_long_inf: 20,
+      usar_arm_sup: false,
+      diam_long_sup: 10,
+      espac_long_sup: 20,
+      diam_trans_inf: 10,
+      espac_trans_inf: 20,
+      usar_trans_sup: false,
+      diam_trans_sup: 8,
+      espac_trans_sup: 20,
     };
   };
 
   const [form, setForm] = useState<FundacaoForm>(defaultForm);
 
-  // Cálculo detalhado do aço
+  const getFatorDecimal = (val: number | undefined, fallback: number) => {
+    const v = val ?? fallback;
+    return v > 1 ? v / 100 : v;
+  };
+
   const breakdown = useMemo<SteelBreakdown>(() => {
     return calcFundacaoSteel({
       tipo,
@@ -75,16 +129,21 @@ const IcfFundacoes = () => {
       altura: form.altura,
       quantidade: form.quantidade,
       recobrimento_mm: config?.recobrimento_mm ?? 25,
-      diam_long: form.diam_long,
-      espac_long: form.espac_long,
-      diam_trans: form.diam_trans,
-      espac_trans: form.espac_trans,
-      fator_perdas: ((config?.fator_perdas ?? 5) > 1 ? (config?.fator_perdas ?? 5) / 100 : config?.fator_perdas ?? 0.05),
-      fator_transpasse: ((config?.fator_transpasse ?? 10) > 1 ? (config?.fator_transpasse ?? 10) / 100 : config?.fator_transpasse ?? 0.10),
+      diam_long_inf: form.diam_long_inf,
+      espac_long_inf: form.espac_long_inf,
+      usar_arm_sup: form.usar_arm_sup,
+      diam_long_sup: form.diam_long_sup,
+      espac_long_sup: form.espac_long_sup,
+      diam_trans_inf: form.diam_trans_inf,
+      espac_trans_inf: form.espac_trans_inf,
+      usar_trans_sup: form.usar_trans_sup,
+      diam_trans_sup: form.diam_trans_sup,
+      espac_trans_sup: form.espac_trans_sup,
+      fator_perdas: getFatorDecimal(config?.fator_perdas, 0.05),
+      fator_transpasse: getFatorDecimal(config?.fator_transpasse, 0.10),
     });
   }, [tipo, form, config]);
 
-  // Sync breakdown total to form
   const acoTotal = breakdown.total_all_qty_kg;
 
   const applyPreset = (t: 'sapata_continua' | 'sapata_isolada') => {
@@ -95,38 +154,24 @@ const IcfFundacoes = () => {
       comprimento: p.comprimento,
       largura: p.largura,
       altura: p.altura,
-      diam_long: t === 'sapata_isolada' ? 12 : 12,
-      espac_long: 20,
-      diam_trans: t === 'sapata_isolada' ? 12 : 10,
-      espac_trans: 20,
     }));
   };
 
   const handleAdd = () => {
     if (!configId || !config) return;
+    const payload: any = {
+      tipo_fundacao: tipo,
+      referencia: form.referencia,
+      comprimento: form.comprimento,
+      largura: form.largura,
+      altura: form.altura,
+      quantidade: form.quantidade,
+      aco_estimado_kg: acoTotal,
+    };
     if (editingId) {
-      updateFundacao.mutate({
-        id: editingId,
-        tipo_fundacao: tipo,
-        referencia: form.referencia,
-        comprimento: form.comprimento,
-        largura: form.largura,
-        altura: form.altura,
-        quantidade: form.quantidade,
-        aco_estimado_kg: acoTotal,
-      } as any, { onSuccess: () => { setShowAdd(false); setEditingId(null); setForm(defaultForm()); } });
+      updateFundacao.mutate({ id: editingId, ...payload }, { onSuccess: () => { setShowAdd(false); setEditingId(null); setForm(defaultForm()); } });
     } else {
-      createFundacao.mutate({
-        obra_id: config.obra_id,
-        configuracao_id: configId,
-        tipo_fundacao: tipo,
-        referencia: form.referencia,
-        comprimento: form.comprimento,
-        largura: form.largura,
-        altura: form.altura,
-        quantidade: form.quantidade,
-        aco_estimado_kg: acoTotal,
-      } as any, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
+      createFundacao.mutate({ obra_id: config.obra_id, configuracao_id: configId, ...payload }, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
     }
   };
 
@@ -139,17 +184,27 @@ const IcfFundacoes = () => {
       largura: f.largura,
       altura: f.altura,
       quantidade: f.quantidade,
-      aco_estimado_kg: f.aco_estimado_kg ?? 0,
-      diam_long: 12,
-      espac_long: 20,
-      diam_trans: 10,
-      espac_trans: 20,
+      diam_long_inf: 12,
+      espac_long_inf: 20,
+      usar_arm_sup: false,
+      diam_long_sup: 10,
+      espac_long_sup: 20,
+      diam_trans_inf: 10,
+      espac_trans_inf: 20,
+      usar_trans_sup: false,
+      diam_trans_sup: 8,
+      espac_trans_sup: 20,
     });
     setShowAdd(true);
   };
 
   const totalVolume = fundacoes?.reduce((s, f) => s + (f.volume_betao ?? 0), 0) ?? 0;
   const totalAco = fundacoes?.reduce((s, f) => s + (f.aco_estimado_kg ?? 0), 0) ?? 0;
+
+  const perdasPct = getFatorDecimal(config?.fator_perdas, 0.05) * 100;
+  const transPct = getFatorDecimal(config?.fator_transpasse, 0.10) * 100;
+
+  const upd = (patch: Partial<FundacaoForm>) => setForm(f => ({ ...f, ...patch }));
 
   return (
     <AppLayout title="Fundações ICF" subtitle={config?.nome}>
@@ -173,15 +228,15 @@ const IcfFundacoes = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div><Label>Referência</Label><Input value={form.referencia} onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))} placeholder="Ex: F01" /></div>
+                  <div><Label>Referência</Label><Input value={form.referencia} onChange={e => upd({ referencia: e.target.value })} placeholder="Ex: F01" /></div>
                 </div>
 
                 {/* Dimensões */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => setForm(f => ({ ...f, comprimento: +e.target.value }))} /></div>
-                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => setForm(f => ({ ...f, largura: +e.target.value }))} /></div>
-                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm(f => ({ ...f, altura: +e.target.value }))} /></div>
-                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => setForm(f => ({ ...f, quantidade: +e.target.value }))} /></div>
+                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => upd({ comprimento: +e.target.value })} /></div>
+                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => upd({ largura: +e.target.value })} /></div>
+                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => upd({ altura: +e.target.value })} /></div>
+                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => upd({ quantidade: +e.target.value })} /></div>
                 </div>
 
                 {/* Armadura */}
@@ -191,68 +246,64 @@ const IcfFundacoes = () => {
                     <span className="text-sm font-semibold">Cálculo de Aço — Axia™</span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground">Armadura Longitudinal (inferior)</p>
+                  {/* ── Armadura Longitudinal Inferior ── */}
+                  <p className="text-xs font-semibold text-primary">Armadura Longitudinal — Inferior</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">Diâmetro (Ø mm)</Label>
-                      <Select value={String(form.diam_long)} onValueChange={v => setForm(f => ({ ...f, diam_long: +v as RebarDiameter }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {REBAR_DIAMETERS.map(d => (
-                            <SelectItem key={d} value={String(d)}>Ø{d} ({REBAR_WEIGHT_PER_METER[d]} kg/m)</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label className="text-xs">Espaçamento (cm)</Label>
-                      <Select value={String(form.espac_long)} onValueChange={v => setForm(f => ({ ...f, espac_long: +v as RebarSpacing }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {REBAR_SPACINGS.map(s => (
-                            <SelectItem key={s} value={String(s)}>{s} cm</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_inf} onChange={v => upd({ diam_long_inf: v as RebarDiameter })} />
+                    <SpacingSelect label="Espaçamento (cm)" value={form.espac_long_inf} onChange={v => upd({ espac_long_inf: v as RebarSpacing })} />
                   </div>
 
-                  <p className="text-xs text-muted-foreground">Armadura Transversal</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">Diâmetro (Ø mm)</Label>
-                      <Select value={String(form.diam_trans)} onValueChange={v => setForm(f => ({ ...f, diam_trans: +v as RebarDiameter }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {REBAR_DIAMETERS.map(d => (
-                            <SelectItem key={d} value={String(d)}>Ø{d} ({REBAR_WEIGHT_PER_METER[d]} kg/m)</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label className="text-xs">Espaçamento (cm)</Label>
-                      <Select value={String(form.espac_trans)} onValueChange={v => setForm(f => ({ ...f, espac_trans: +v as RebarSpacing }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {REBAR_SPACINGS.map(s => (
-                            <SelectItem key={s} value={String(s)}>{s} cm</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {/* ── Armadura Longitudinal Superior ── */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-primary">Armadura Longitudinal — Superior</p>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Ativar</Label>
+                      <Switch checked={form.usar_arm_sup} onCheckedChange={v => upd({ usar_arm_sup: v })} />
                     </div>
                   </div>
+                  {form.usar_arm_sup && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_sup} onChange={v => upd({ diam_long_sup: v as RebarDiameter })} />
+                      <SpacingSelect label="Espaçamento (cm)" value={form.espac_long_sup} onChange={v => upd({ espac_long_sup: v as RebarSpacing })} />
+                    </div>
+                  )}
+
+                  {/* ── Armadura Transversal Inferior ── */}
+                  <p className="text-xs font-semibold text-primary">Armadura Transversal — Inferior</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_inf} onChange={v => upd({ diam_trans_inf: v as RebarDiameter })} />
+                    <SpacingSelect label="Espaçamento (cm)" value={form.espac_trans_inf} onChange={v => upd({ espac_trans_inf: v as RebarSpacing })} />
+                  </div>
+
+                  {/* ── Armadura Transversal Superior ── */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-primary">Armadura Transversal — Superior</p>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Ativar</Label>
+                      <Switch checked={form.usar_trans_sup} onCheckedChange={v => upd({ usar_trans_sup: v })} />
+                    </div>
+                  </div>
+                  {form.usar_trans_sup && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_sup} onChange={v => upd({ diam_trans_sup: v as RebarDiameter })} />
+                      <SpacingSelect label="Espaçamento (cm)" value={form.espac_trans_sup} onChange={v => upd({ espac_trans_sup: v as RebarSpacing })} />
+                    </div>
+                  )}
 
                   {/* Breakdown */}
                   <div className="border-t pt-2 space-y-1 text-xs">
-                    <div className="grid grid-cols-2 gap-x-4">
-                      <span className="text-muted-foreground">Long: {breakdown.long_num_bars} barras × {breakdown.long_bar_length}m</span>
-                      <span className="text-right font-medium">{breakdown.long_weight_kg} kg</span>
-                      <span className="text-muted-foreground">Trans: {breakdown.trans_num_bars} barras × {breakdown.trans_bar_length}m</span>
-                      <span className="text-right font-medium">{breakdown.trans_weight_kg} kg</span>
+                    <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                      <LayerRow label="Long. Inf" layer={breakdown.long_inf} />
+                      <LayerRow label="Long. Sup" layer={breakdown.long_sup} />
+                      <LayerRow label="Trans. Inf" layer={breakdown.trans_inf} />
+                      <LayerRow label="Trans. Sup" layer={breakdown.trans_sup} />
                     </div>
                     <div className="border-t pt-1 grid grid-cols-2 gap-x-4">
                       <span className="text-muted-foreground">Subtotal (1 un.)</span>
                       <span className="text-right">{breakdown.subtotal_kg} kg</span>
-                      <span className="text-muted-foreground">+ Perdas ({(config?.fator_perdas ?? 5) > 1 ? (config?.fator_perdas ?? 5).toFixed(0) : ((config?.fator_perdas ?? 0.05) * 100).toFixed(0)}%)</span>
+                      <span className="text-muted-foreground">+ Perdas ({perdasPct.toFixed(0)}%)</span>
                       <span className="text-right">{breakdown.perdas_kg} kg</span>
-                      <span className="text-muted-foreground">+ Amarração ({(config?.fator_transpasse ?? 10) > 1 ? (config?.fator_transpasse ?? 10).toFixed(0) : ((config?.fator_transpasse ?? 0.10) * 100).toFixed(0)}%)</span>
+                      <span className="text-muted-foreground">+ Amarração ({transPct.toFixed(0)}%)</span>
                       <span className="text-right">{breakdown.transpasse_kg} kg</span>
                     </div>
                     <div className="border-t pt-1 grid grid-cols-2 gap-x-4">
@@ -319,7 +370,6 @@ const IcfFundacoes = () => {
           <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Aço Total Fundações</p><p className="text-lg font-bold">{totalAco.toFixed(1)} kg</p></CardContent></Card>
         </div>
 
-        {/* Axia */}
         <IcfAxiaContextual context="fundacoes" config={config} fundacoes={fundacoes ?? []} />
         {configId && <IcfAxiaAnalysisPanel configId={configId} />}
       </div>
