@@ -23,12 +23,34 @@ const IcfFundacoes = () => {
   const deleteFundacao = useDeleteIcfFundacao();
   const [showAdd, setShowAdd] = useState(false);
   const [tipo, setTipo] = useState<'sapata_continua' | 'sapata_isolada'>('sapata_continua');
-  const [form, setForm] = useState({ referencia: '', comprimento: 0.70, largura: 0.70, altura: 0.45, quantidade: 1, aco_estimado_kg: 0 });
+  // Rácios paramétricos típicos de aço por m³ de betão (ICF)
+  const ACO_RATIO: Record<string, number> = { sapata_continua: 85, sapata_isolada: 100 };
+
+  const estimarAco = (t: string, comp: number, larg: number, alt: number, qtd: number) => {
+    const vol = comp * larg * alt * qtd;
+    const ratio = ACO_RATIO[t] ?? 90;
+    return Math.round(vol * ratio * 10) / 10;
+  };
+
+  const [form, setForm] = useState(() => {
+    const p = ICF_FUNDACAO_PRESETS['sapata_continua'];
+    const aco = estimarAco('sapata_continua', p.comprimento, p.largura, p.altura, 1);
+    return { referencia: '', comprimento: p.comprimento, largura: p.largura, altura: p.altura, quantidade: 1, aco_estimado_kg: aco };
+  });
+
+  const updateFormWithAco = (updates: Partial<typeof form>, tipoOverride?: string) => {
+    setForm(f => {
+      const next = { ...f, ...updates };
+      const t = tipoOverride ?? tipo;
+      next.aco_estimado_kg = estimarAco(t, next.comprimento, next.largura, next.altura, next.quantidade);
+      return next;
+    });
+  };
 
   const applyPreset = (t: 'sapata_continua' | 'sapata_isolada') => {
     setTipo(t);
     const p = ICF_FUNDACAO_PRESETS[t];
-    setForm(f => ({ ...f, comprimento: p.comprimento, largura: p.largura, altura: p.altura }));
+    updateFormWithAco({ comprimento: p.comprimento, largura: p.largura, altura: p.altura }, t);
   };
 
   const handleAdd = () => {
