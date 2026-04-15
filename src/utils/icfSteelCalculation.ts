@@ -38,6 +38,7 @@ export interface FundacaoArmaduraParams {
   espac_long_sup: RebarSpacing;
 
   // Armadura transversal inferior
+  usar_trans_inf: boolean;
   diam_trans_inf: RebarDiameter;
   espac_trans_inf: RebarSpacing;
 

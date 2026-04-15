@@ -158,6 +158,7 @@ const IcfFundacoes = () => {
       usar_arm_sup: form.usar_arm_sup,
       diam_long_sup: form.diam_long_sup,
       espac_long_sup: form.espac_long_sup,
+      usar_trans_inf: form.usar_trans_inf,
       diam_trans_inf: form.diam_trans_inf,
       espac_trans_inf: form.espac_trans_inf,
       usar_trans_sup: form.usar_trans_sup,
