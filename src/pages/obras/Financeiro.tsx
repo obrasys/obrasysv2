@@ -518,6 +518,23 @@ export default function ObraFinanceiroPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Adjudicação Wizard */}
+        {obra && (
+          <ObraAdjudicacaoWizard
+            open={adjudicarOpen}
+            onOpenChange={setAdjudicarOpen}
+            obraId={obra.id}
+            obraNome={obra.nome}
+            orcamentos={(obra.orcamentos || []).map(o => ({
+              id: o.id,
+              titulo: o.titulo,
+              valor_total: o.valor_total,
+              status: o.status,
+              cliente_id: (o as any).cliente_id ?? null,
+            }))}
+          />
+        )}
       </div>
     </AppLayout>
   );
