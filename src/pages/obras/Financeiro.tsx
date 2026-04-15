@@ -154,6 +154,12 @@ export default function ObraFinanceiroPage() {
             <Wallet className="w-4 h-4 mr-1" />
             Global
           </Button>
+          {orcamentosAprovados.length === 0 && (obra?.orcamentos?.length ?? 0) > 0 && (
+            <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAdjudicarOpen(true)}>
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Adjudicar
+            </Button>
+          )}
           <Button size="sm" onClick={() => { setEditingConta(null); setFormOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" />
             Nova Conta
