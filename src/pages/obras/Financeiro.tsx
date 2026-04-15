@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { 
-  ArrowLeft, Plus, Loader2, FileText, ExternalLink,
+  ArrowLeft, Plus, Loader2, FileText, ExternalLink, CheckCircle,
   TrendingUp, TrendingDown, Wallet, Users, Package,
   MoreHorizontal, Search, Link as LinkIcon, Bell,
   CircleDollarSign, AlertTriangle, Clock, ArrowUpRight,
@@ -24,6 +24,7 @@ import {
 import { ContaCard, ContaForm, ReceivableAlertsCard } from '@/components/financeiro';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { ObraCustosExtrasTab } from '@/components/obras/ObraCustosExtrasTab';
+import { ObraAdjudicacaoWizard } from '@/components/obras/ObraAdjudicacaoWizard';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
@@ -49,6 +50,7 @@ export default function ObraFinanceiroPage() {
   const [editingConta, setEditingConta] = useState<ContaFinanceira | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
+  const [adjudicarOpen, setAdjudicarOpen] = useState(false);
 
   const { obra, isLoading: loadingObra } = useObra(id);
   const { data: laborSummary } = useObraLaborSummary(id);
@@ -152,6 +154,12 @@ export default function ObraFinanceiroPage() {
             <Wallet className="w-4 h-4 mr-1" />
             Global
           </Button>
+          {orcamentosAprovados.length === 0 && (obra?.orcamentos?.length ?? 0) > 0 && (
+            <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAdjudicarOpen(true)}>
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Adjudicar
+            </Button>
+          )}
           <Button size="sm" onClick={() => { setEditingConta(null); setFormOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" />
             Nova Conta
@@ -510,6 +518,23 @@ export default function ObraFinanceiroPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Adjudicação Wizard */}
+        {obra && (
+          <ObraAdjudicacaoWizard
+            open={adjudicarOpen}
+            onOpenChange={setAdjudicarOpen}
+            obraId={obra.id}
+            obraNome={obra.nome}
+            orcamentos={(obra.orcamentos || []).map(o => ({
+              id: o.id,
+              titulo: o.titulo,
+              valor_total: o.valor_total,
+              status: o.status,
+              cliente_id: (o as any).cliente_id ?? null,
+            }))}
+          />
+        )}
       </div>
     </AppLayout>
   );
