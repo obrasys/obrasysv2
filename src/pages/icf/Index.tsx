@@ -95,6 +95,16 @@ const IcfIndex = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={statusColor(activeConfig.status)}>{activeConfig.status}</Badge>
+                  {activeConfig.status === 'rascunho' && (
+                    <Button variant="default" size="sm" onClick={() => handleChangeStatus(activeConfig.id, 'validado')}>
+                      <CheckCircle className="h-4 w-4 mr-1" />Validar
+                    </Button>
+                  )}
+                  {activeConfig.status === 'validado' && (
+                    <Button variant="secondary" size="sm" onClick={() => handleChangeStatus(activeConfig.id, 'congelado')}>
+                      <Lock className="h-4 w-4 mr-1" />Congelar
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => navigate(`/icf/configuracao/${activeConfig.id}`)}>
                     <Settings className="h-4 w-4 mr-1" />Editar
                   </Button>
