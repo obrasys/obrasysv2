@@ -24,6 +24,7 @@ import {
 import { ContaCard, ContaForm, ReceivableAlertsCard } from '@/components/financeiro';
 import { ObraLaborCostsTab } from '@/components/obras/ObraLaborCostsTab';
 import { ObraCustosExtrasTab } from '@/components/obras/ObraCustosExtrasTab';
+import { ObraAdjudicacaoWizard } from '@/components/obras/ObraAdjudicacaoWizard';
 import { useObra } from '@/hooks/useObras';
 import { useObraLaborSummary } from '@/hooks/useObraLaborCosts';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
