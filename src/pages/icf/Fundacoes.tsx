@@ -157,10 +157,10 @@ const IcfFundacoes = () => {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
           <div className="flex-1" />
-          <Dialog open={showAdd} onOpenChange={setShowAdd}>
+          <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setEditingId(null); setForm(defaultForm()); } }}>
             <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Adicionar</Button></DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Nova Fundação</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingId ? 'Editar Fundação' : 'Nova Fundação'}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 {/* Tipo + Referência */}
                 <div className="grid grid-cols-2 gap-3">
