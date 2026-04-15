@@ -138,7 +138,6 @@ export function useGenerateIcfBudget() {
         unidade: a.unidade,
         quantidade: a.quantidade,
         preco_unitario: a.preco_unitario,
-        valor_total: Math.round(a.quantidade * a.preco_unitario * 100) / 100,
         ordem: i + 1,
         quantity_source: 'icf_parametric',
       }));
