@@ -111,7 +111,7 @@ const IcfConfiguracao = () => {
               <div><Label>Recobrimento (mm)</Label><Input type="number" value={form.recobrimento_mm} onChange={e => setForm(f => ({ ...f, recobrimento_mm: +e.target.value }))} disabled={isLocked} /></div>
               <div><Label>Altura Piso Padrão (m)</Label><Input type="number" step="0.01" value={form.altura_piso_padrao} onChange={e => setForm(f => ({ ...f, altura_piso_padrao: +e.target.value }))} disabled={isLocked} /></div>
               <div><Label>Fator Perdas (%)</Label><Input type="number" step="0.01" value={form.fator_perdas} onChange={e => setForm(f => ({ ...f, fator_perdas: +e.target.value }))} disabled={isLocked} /></div>
-              <div><Label>Fator Transpasse (%)</Label><Input type="number" step="0.01" value={form.fator_transpasse} onChange={e => setForm(f => ({ ...f, fator_transpasse: +e.target.value }))} disabled={isLocked} /></div>
+              <div><Label>Fator de Amarração (%)</Label><Input type="number" step="0.01" value={form.fator_transpasse} onChange={e => setForm(f => ({ ...f, fator_transpasse: +e.target.value }))} disabled={isLocked} /></div>
             </div>
             <div><Label>Notas Técnicas</Label><Textarea value={form.notas_tecnicas} onChange={e => setForm(f => ({ ...f, notas_tecnicas: e.target.value }))} disabled={isLocked} rows={3} /></div>
 
