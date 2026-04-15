@@ -136,10 +136,10 @@ export function calcFundacaoSteel(p: FundacaoArmaduraParams): SteelBreakdown {
     : { ...EMPTY_LAYER };
 
   // ── Estribos (cintas) ──
-  // Perímetro do estribo: 2×(largura_util + altura_util) + ganchos (~0.20m)
+  // Perímetro: 2×(largura_util + altura_util) + ganchos (~0.10m)
   let estribos: LayerBreakdown = { ...EMPTY_LAYER };
   if (p.usar_estribos) {
-    const perimetro_estribo = 2 * (larg_util + alt_util) + 0.20;
+    const perimetro_estribo = 2 * (larg_util + alt_util) + 0.10;
     estribos = calcLayer(p.diam_estribo, p.espac_estribo, comp_util, perimetro_estribo);
   }
 
