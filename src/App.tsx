@@ -97,6 +97,12 @@ const FornecedorPedidos = lazy(() => import("./pages/fornecedor/Pedidos"));
 const FornecedorPedidoDetalhe = lazy(() => import("./pages/fornecedor/PedidoDetalhe"));
 const FornecedorPrecos = lazy(() => import("./pages/fornecedor/Precos"));
 const FornecedorPerfil = lazy(() => import("./pages/fornecedor/Perfil"));
+const IcfIndex = lazy(() => import("./pages/icf/Index"));
+const IcfConfiguracao = lazy(() => import("./pages/icf/Configuracao"));
+const IcfPanos = lazy(() => import("./pages/icf/Panos"));
+const IcfFundacoes = lazy(() => import("./pages/icf/Fundacoes"));
+const IcfLajes = lazy(() => import("./pages/icf/Lajes"));
+const IcfResumo = lazy(() => import("./pages/icf/Resumo"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
@@ -218,6 +224,12 @@ const App = () => (
                   <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
                   <Route path="/axia" element={<ManagerRoute><AxiaPage /></ManagerRoute>} />
                   <Route path="/importar" element={<ManagerRoute><ImportarPage /></ManagerRoute>} />
+                  <Route path="/icf" element={<ManagerRoute><IcfIndex /></ManagerRoute>} />
+                  <Route path="/icf/configuracao/:id" element={<ManagerRoute><IcfConfiguracao /></ManagerRoute>} />
+                  <Route path="/icf/panos/:configId" element={<ManagerRoute><IcfPanos /></ManagerRoute>} />
+                  <Route path="/icf/fundacoes/:configId" element={<ManagerRoute><IcfFundacoes /></ManagerRoute>} />
+                  <Route path="/icf/lajes/:configId" element={<ManagerRoute><IcfLajes /></ManagerRoute>} />
+                  <Route path="/icf/resumo/:configId" element={<ManagerRoute><IcfResumo /></ManagerRoute>} />
                   <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
                   <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
                   <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />
