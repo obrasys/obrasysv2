@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useIcfResumo, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 
 const IcfResumo = () => {
   const { configId } = useParams();
@@ -99,6 +100,9 @@ const IcfResumo = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Axia contextual */}
+            <IcfAxiaContextual context="resumo" config={config} resumo={r} />
           </>
         )}
       </div>
