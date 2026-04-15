@@ -34,6 +34,11 @@ const IcfIndex = () => {
   const { data: resumo } = useIcfResumo(activeConfig?.id);
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
+  const updateConfig = useUpdateIcfConfig();
+
+  const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
+    updateConfig.mutate({ id: configId, status: newStatus } as any);
+  };
 
   const statusColor = (s: string) => {
     if (s === 'congelado') return 'secondary';
