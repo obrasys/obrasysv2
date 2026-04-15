@@ -55,7 +55,7 @@ function buildArticles(resumo: IcfResumo, config: IcfConfiguracao): IcfBudgetArt
   // 4. Aço fundações (kg)
   if (resumo.aco_total_fundacoes > 0) {
     articles.push({
-      descricao: `Aço ${config.classe_aco} para armaduras de fundações, cortado, dobrado e colocado (incl. perdas ${((config.fator_perdas ?? 0.05) * 100).toFixed(0)}% e amarração ${((config.fator_transpasse ?? 0.10) * 100).toFixed(0)}%)`,
+      descricao: `Aço ${config.classe_aco} para armaduras de fundações, cortado, dobrado e colocado (incl. perdas ${(config.fator_perdas ?? 5) > 1 ? (config.fator_perdas ?? 5).toFixed(0) : ((config.fator_perdas ?? 0.05) * 100).toFixed(0)}% e amarração ${(config.fator_transpasse ?? 10) > 1 ? (config.fator_transpasse ?? 10).toFixed(0) : ((config.fator_transpasse ?? 0.10) * 100).toFixed(0)}%)`,
       unidade: 'kg',
       quantidade: Math.round(resumo.aco_total_fundacoes * 10) / 10,
       preco_unitario: PRECOS_REF.aco_kg,
