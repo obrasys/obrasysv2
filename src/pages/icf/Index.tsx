@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,24 @@ import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAlerts } from '@/components/icf/IcfAxiaAlerts';
 
+const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
+
 const IcfIndex = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { obras } = useObras();
-  const [selectedObraId, setSelectedObraId] = useState<string>('');
+
+  // Restore last obra: query param > localStorage
+  const [selectedObraId, setSelectedObraId] = useState<string>(() => {
+    return searchParams.get('obra') || localStorage.getItem(ICF_LAST_OBRA_KEY) || '';
+  });
+
+  // Persist selection
+  useEffect(() => {
+    if (selectedObraId) {
+      localStorage.setItem(ICF_LAST_OBRA_KEY, selectedObraId);
+    }
+  }, [selectedObraId]);
   const { data: configs, isLoading } = useIcfConfiguracoes(selectedObraId);
   const activeConfig = configs?.find(c => c.ativo);
   const { data: resumo } = useIcfResumo(activeConfig?.id);
