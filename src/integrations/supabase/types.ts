@@ -3650,6 +3650,427 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_audit_log: {
+        Row: {
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          empresa_id: string
+          entidade_id: string | null
+          entidade_tipo: string
+          evento: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          empresa_id?: string
+          entidade_id?: string | null
+          entidade_tipo: string
+          evento: string
+          id?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          empresa_id?: string
+          entidade_id?: string | null
+          entidade_tipo?: string
+          evento?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      icf_configuracoes: {
+        Row: {
+          altura_piso_padrao: number | null
+          ativo: boolean
+          classe_aco: string
+          classe_betao: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          espessura_nucleo: number
+          fator_perdas: number
+          fator_transpasse: number
+          id: string
+          nome: string
+          notas_tecnicas: string | null
+          obra_id: string
+          recobrimento_mm: number | null
+          regras_desconto_vaos: Json | null
+          status: string
+          tipologia_fundacao: string | null
+          tipologia_laje: string | null
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          altura_piso_padrao?: number | null
+          ativo?: boolean
+          classe_aco?: string
+          classe_betao?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          espessura_nucleo?: number
+          fator_perdas?: number
+          fator_transpasse?: number
+          id?: string
+          nome: string
+          notas_tecnicas?: string | null
+          obra_id: string
+          recobrimento_mm?: number | null
+          regras_desconto_vaos?: Json | null
+          status?: string
+          tipologia_fundacao?: string | null
+          tipologia_laje?: string | null
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          altura_piso_padrao?: number | null
+          ativo?: boolean
+          classe_aco?: string
+          classe_betao?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          espessura_nucleo?: number
+          fator_perdas?: number
+          fator_transpasse?: number
+          id?: string
+          nome?: string
+          notas_tecnicas?: string | null
+          obra_id?: string
+          recobrimento_mm?: number | null
+          regras_desconto_vaos?: Json | null
+          status?: string
+          tipologia_fundacao?: string | null
+          tipologia_laje?: string | null
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_configuracoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_fundacoes: {
+        Row: {
+          aco_estimado_kg: number | null
+          altura: number
+          comprimento: number
+          configuracao_id: string
+          created_at: string
+          empresa_id: string
+          id: string
+          largura: number
+          obra_id: string
+          observacoes: string | null
+          quantidade: number
+          referencia: string | null
+          tensao_admissivel_terreno: number | null
+          tensao_calculo: number | null
+          tipo_fundacao: string
+          updated_at: string
+          volume_betao: number | null
+        }
+        Insert: {
+          aco_estimado_kg?: number | null
+          altura?: number
+          comprimento?: number
+          configuracao_id: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          largura?: number
+          obra_id: string
+          observacoes?: string | null
+          quantidade?: number
+          referencia?: string | null
+          tensao_admissivel_terreno?: number | null
+          tensao_calculo?: number | null
+          tipo_fundacao?: string
+          updated_at?: string
+          volume_betao?: number | null
+        }
+        Update: {
+          aco_estimado_kg?: number | null
+          altura?: number
+          comprimento?: number
+          configuracao_id?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          largura?: number
+          obra_id?: string
+          observacoes?: string | null
+          quantidade?: number
+          referencia?: string | null
+          tensao_admissivel_terreno?: number | null
+          tensao_calculo?: number | null
+          tipo_fundacao?: string
+          updated_at?: string
+          volume_betao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_fundacoes_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_configuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_fundacoes_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_resumo_obra"
+            referencedColumns: ["configuracao_id"]
+          },
+          {
+            foreignKeyName: "icf_fundacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_lajes: {
+        Row: {
+          aco_estimado_kg: number | null
+          area: number
+          configuracao_id: string
+          created_at: string
+          empresa_id: string
+          espessura_total: number | null
+          id: string
+          obra_id: string
+          observacoes: string | null
+          peso_proprio_kn_m2: number | null
+          piso: string | null
+          referencia: string | null
+          tipologia_laje: string | null
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          aco_estimado_kg?: number | null
+          area: number
+          configuracao_id: string
+          created_at?: string
+          empresa_id?: string
+          espessura_total?: number | null
+          id?: string
+          obra_id: string
+          observacoes?: string | null
+          peso_proprio_kn_m2?: number | null
+          piso?: string | null
+          referencia?: string | null
+          tipologia_laje?: string | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          aco_estimado_kg?: number | null
+          area?: number
+          configuracao_id?: string
+          created_at?: string
+          empresa_id?: string
+          espessura_total?: number | null
+          id?: string
+          obra_id?: string
+          observacoes?: string | null
+          peso_proprio_kn_m2?: number | null
+          piso?: string | null
+          referencia?: string | null
+          tipologia_laje?: string | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_lajes_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_configuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_lajes_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_resumo_obra"
+            referencedColumns: ["configuracao_id"]
+          },
+          {
+            foreignKeyName: "icf_lajes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_panos_parede: {
+        Row: {
+          altura_util: number
+          area_bruta: number | null
+          area_liquida: number | null
+          area_vaos: number
+          armadura_horizontal: string | null
+          armadura_vertical: string | null
+          comprimento: number
+          configuracao_id: string
+          created_at: string
+          empresa_id: string
+          espessura_nucleo: number
+          fator_cumprimento: number
+          id: string
+          obra_id: string
+          observacoes: string | null
+          ordem: number | null
+          piso_final: string | null
+          piso_inicial: string | null
+          referencia: string
+          reforco_transversal: string | null
+          tipo_armadura: string | null
+          updated_at: string
+          volume_betao: number | null
+        }
+        Insert: {
+          altura_util: number
+          area_bruta?: number | null
+          area_liquida?: number | null
+          area_vaos?: number
+          armadura_horizontal?: string | null
+          armadura_vertical?: string | null
+          comprimento: number
+          configuracao_id: string
+          created_at?: string
+          empresa_id?: string
+          espessura_nucleo?: number
+          fator_cumprimento?: number
+          id?: string
+          obra_id: string
+          observacoes?: string | null
+          ordem?: number | null
+          piso_final?: string | null
+          piso_inicial?: string | null
+          referencia: string
+          reforco_transversal?: string | null
+          tipo_armadura?: string | null
+          updated_at?: string
+          volume_betao?: number | null
+        }
+        Update: {
+          altura_util?: number
+          area_bruta?: number | null
+          area_liquida?: number | null
+          area_vaos?: number
+          armadura_horizontal?: string | null
+          armadura_vertical?: string | null
+          comprimento?: number
+          configuracao_id?: string
+          created_at?: string
+          empresa_id?: string
+          espessura_nucleo?: number
+          fator_cumprimento?: number
+          id?: string
+          obra_id?: string
+          observacoes?: string | null
+          ordem?: number | null
+          piso_final?: string | null
+          piso_inicial?: string | null
+          referencia?: string
+          reforco_transversal?: string | null
+          tipo_armadura?: string | null
+          updated_at?: string
+          volume_betao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_panos_parede_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_configuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_panos_parede_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_resumo_obra"
+            referencedColumns: ["configuracao_id"]
+          },
+          {
+            foreignKeyName: "icf_panos_parede_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_vaos: {
+        Row: {
+          altura: number
+          area_total: number | null
+          created_at: string
+          empresa_id: string
+          id: string
+          largura: number
+          observacoes: string | null
+          pano_id: string
+          quantidade: number
+          tipo_vao: string | null
+        }
+        Insert: {
+          altura: number
+          area_total?: number | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          largura: number
+          observacoes?: string | null
+          pano_id: string
+          quantidade?: number
+          tipo_vao?: string | null
+        }
+        Update: {
+          altura?: number
+          area_total?: number | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          largura?: number
+          observacoes?: string | null
+          pano_id?: string
+          quantidade?: number
+          tipo_vao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_vaos_pano_id_fkey"
+            columns: ["pano_id"]
+            isOneToOne: false
+            referencedRelation: "icf_panos_parede"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       installations_catalog_items: {
         Row: {
           base_qty_type: string
@@ -8937,6 +9358,37 @@ export type Database = {
       }
     }
     Views: {
+      icf_resumo_obra: {
+        Row: {
+          aco_total_fundacoes: number | null
+          aco_total_lajes: number | null
+          area_estrutural_total: number | null
+          area_liquida_total: number | null
+          area_total_paredes: number | null
+          area_total_vaos: number | null
+          comprimento_total_paredes: number | null
+          config_nome: string | null
+          config_status: string | null
+          configuracao_id: string | null
+          empresa_id: string | null
+          indice_kg_m2: number | null
+          indice_m3_m2: number | null
+          obra_id: string | null
+          volume_total_fundacoes: number | null
+          volume_total_lajes: number | null
+          volume_total_obra: number | null
+          volume_total_paredes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_configuracoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscription: {
         Row: {
           created_at: string | null
