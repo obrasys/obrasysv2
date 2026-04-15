@@ -32,13 +32,15 @@ const IcfFundacoes = () => {
     return Math.round(vol * ratio * 10) / 10;
   };
 
-  const [form, setForm] = useState(() => {
+  interface FundacaoForm { referencia: string; comprimento: number; largura: number; altura: number; quantidade: number; aco_estimado_kg: number; }
+
+  const [form, setForm] = useState<FundacaoForm>(() => {
     const p = ICF_FUNDACAO_PRESETS['sapata_continua'];
     const aco = estimarAco('sapata_continua', p.comprimento, p.largura, p.altura, 1);
     return { referencia: '', comprimento: p.comprimento, largura: p.largura, altura: p.altura, quantidade: 1, aco_estimado_kg: aco };
   });
 
-  const updateFormWithAco = (updates: Partial<typeof form>, tipoOverride?: string) => {
+  const updateFormWithAco = (updates: Partial<FundacaoForm>, tipoOverride?: string) => {
     setForm(f => {
       const next = { ...f, ...updates };
       const t = tipoOverride ?? tipo;
