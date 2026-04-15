@@ -77,8 +77,8 @@ const IcfFundacoes = () => {
       espac_long: form.espac_long,
       diam_trans: form.diam_trans,
       espac_trans: form.espac_trans,
-      fator_perdas: config?.fator_perdas ?? 0.05,
-      fator_transpasse: config?.fator_transpasse ?? 0.10,
+      fator_perdas: ((config?.fator_perdas ?? 5) > 1 ? (config?.fator_perdas ?? 5) / 100 : config?.fator_perdas ?? 0.05),
+      fator_transpasse: ((config?.fator_transpasse ?? 10) > 1 ? (config?.fator_transpasse ?? 10) / 100 : config?.fator_transpasse ?? 0.10),
     });
   }, [tipo, form, config]);
 
