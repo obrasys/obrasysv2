@@ -103,27 +103,28 @@ export function useIcfPlantAnalysis() {
       // Create paredes
       for (let i = 0; i < result.paredes.length; i++) {
         const p = result.paredes[i];
-        const areaBruta = p.comprimento * p.altura_util;
         const vaosArea = (p.vaos || []).reduce((sum, v) => sum + v.largura * v.altura * v.quantidade, 0);
-        const areaLiquida = Math.max(0, areaBruta - vaosArea);
+
+        // Build insert payload explicitly — area_bruta is GENERATED ALWAYS, must not be included
+        const panoPayload: Record<string, unknown> = {
+          empresa_id: empresaId,
+          obra_id: obraId,
+          configuracao_id: configuracaoId,
+          referencia: p.referencia,
+          piso_inicial: p.piso_inicial || null,
+          piso_final: p.piso_final || null,
+          altura_util: p.altura_util,
+          comprimento: p.comprimento,
+          espessura_nucleo: p.espessura_nucleo || espessuraNucleo,
+          area_vaos: vaosArea,
+          fator_cumprimento: 1,
+          ordem: i + 1,
+          observacoes: 'Gerado por Axia™ — análise de planta',
+        };
 
         const { data: pano, error: panoErr } = await supabase
           .from('icf_panos_parede')
-          .insert({
-            empresa_id: empresaId,
-            obra_id: obraId,
-            configuracao_id: configuracaoId,
-            referencia: p.referencia,
-            piso_inicial: p.piso_inicial || null,
-            piso_final: p.piso_final || null,
-            altura_util: p.altura_util,
-            comprimento: p.comprimento,
-            espessura_nucleo: p.espessura_nucleo || espessuraNucleo,
-            area_vaos: vaosArea,
-            fator_cumprimento: 1,
-            ordem: i + 1,
-            observacoes: 'Gerado por Axia™ — análise de planta',
-          } as any)
+          .insert(panoPayload as any)
           .select()
           .single();
         if (panoErr) throw panoErr;
