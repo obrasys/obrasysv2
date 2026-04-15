@@ -49,6 +49,7 @@ export default function ObraFinanceiroPage() {
   const [editingConta, setEditingConta] = useState<ContaFinanceira | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadConta, setUploadConta] = useState<ContaFinanceira | null>(null);
+  const [adjudicarOpen, setAdjudicarOpen] = useState(false);
 
   const { obra, isLoading: loadingObra } = useObra(id);
   const { data: laborSummary } = useObraLaborSummary(id);
