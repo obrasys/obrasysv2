@@ -98,8 +98,8 @@ export function IcfAxiaAlerts({ configId }: Props) {
 
   const icon = (type: string) => {
     if (type === 'error') return <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />;
-    if (type === 'warning') return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;
-    return <Info className="h-4 w-4 text-blue-500 shrink-0" />;
+    if (type === 'warning') return <AlertTriangle className="h-4 w-4 text-accent-foreground shrink-0" />;
+    return <Info className="h-4 w-4 text-primary shrink-0" />;
   };
 
   return (
