@@ -63,6 +63,16 @@ const LayerRow = ({ label, layer }: { label: string; layer: LayerBreakdown }) =>
   );
 };
 
+const SectionToggle = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
+  <div className="flex items-center justify-between">
+    <p className="text-xs font-semibold text-primary">{label}</p>
+    <div className="flex items-center gap-2">
+      <Label className="text-xs text-muted-foreground">Ativar</Label>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  </div>
+);
+
 interface FundacaoForm {
   referencia: string;
   comprimento: number;
@@ -79,6 +89,12 @@ interface FundacaoForm {
   usar_trans_sup: boolean;
   diam_trans_sup: RebarDiameter;
   espac_trans_sup: RebarSpacing;
+  usar_estribos: boolean;
+  diam_estribo: RebarDiameter;
+  espac_estribo: RebarSpacing;
+  usar_barras_laterais: boolean;
+  diam_lateral: RebarDiameter;
+  espac_lateral: RebarSpacing;
 }
 
 const IcfFundacoes = () => {
@@ -111,6 +127,12 @@ const IcfFundacoes = () => {
       usar_trans_sup: false,
       diam_trans_sup: 8,
       espac_trans_sup: 20,
+      usar_estribos: true,
+      diam_estribo: 8,
+      espac_estribo: 20,
+      usar_barras_laterais: false,
+      diam_lateral: 8,
+      espac_lateral: 20,
     };
   };
 
@@ -139,6 +161,12 @@ const IcfFundacoes = () => {
       usar_trans_sup: form.usar_trans_sup,
       diam_trans_sup: form.diam_trans_sup,
       espac_trans_sup: form.espac_trans_sup,
+      usar_estribos: form.usar_estribos,
+      diam_estribo: form.diam_estribo,
+      espac_estribo: form.espac_estribo,
+      usar_barras_laterais: form.usar_barras_laterais,
+      diam_lateral: form.diam_lateral,
+      espac_lateral: form.espac_lateral,
       fator_perdas: getFatorDecimal(config?.fator_perdas, 0.05),
       fator_transpasse: getFatorDecimal(config?.fator_transpasse, 0.10),
     });
@@ -149,12 +177,7 @@ const IcfFundacoes = () => {
   const applyPreset = (t: 'sapata_continua' | 'sapata_isolada') => {
     setTipo(t);
     const p = ICF_FUNDACAO_PRESETS[t];
-    setForm(f => ({
-      ...f,
-      comprimento: p.comprimento,
-      largura: p.largura,
-      altura: p.altura,
-    }));
+    setForm(f => ({ ...f, comprimento: p.comprimento, largura: p.largura, altura: p.altura }));
   };
 
   const handleAdd = () => {
@@ -179,21 +202,12 @@ const IcfFundacoes = () => {
     setEditingId(f.id);
     setTipo(f.tipo_fundacao as any);
     setForm({
+      ...defaultForm(),
       referencia: f.referencia ?? '',
       comprimento: f.comprimento,
       largura: f.largura,
       altura: f.altura,
       quantidade: f.quantidade,
-      diam_long_inf: 12,
-      espac_long_inf: 20,
-      usar_arm_sup: false,
-      diam_long_sup: 10,
-      espac_long_sup: 20,
-      diam_trans_inf: 10,
-      espac_trans_inf: 20,
-      usar_trans_sup: false,
-      diam_trans_sup: 8,
-      espac_trans_sup: 20,
     });
     setShowAdd(true);
   };
@@ -239,28 +253,22 @@ const IcfFundacoes = () => {
                   <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => upd({ quantidade: +e.target.value })} /></div>
                 </div>
 
-                {/* Armadura */}
+                {/* ══ Armadura ══ */}
                 <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
                   <div className="flex items-center gap-2">
                     <Calculator className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold">Cálculo de Aço — Axia™</span>
                   </div>
 
-                  {/* ── Armadura Longitudinal Inferior ── */}
+                  {/* Longitudinal Inferior */}
                   <p className="text-xs font-semibold text-primary">Armadura Longitudinal — Inferior</p>
                   <div className="grid grid-cols-2 gap-3">
                     <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_inf} onChange={v => upd({ diam_long_inf: v as RebarDiameter })} />
                     <SpacingSelect label="Espaçamento (cm)" value={form.espac_long_inf} onChange={v => upd({ espac_long_inf: v as RebarSpacing })} />
                   </div>
 
-                  {/* ── Armadura Longitudinal Superior ── */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-primary">Armadura Longitudinal — Superior</p>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Ativar</Label>
-                      <Switch checked={form.usar_arm_sup} onCheckedChange={v => upd({ usar_arm_sup: v })} />
-                    </div>
-                  </div>
+                  {/* Longitudinal Superior */}
+                  <SectionToggle label="Armadura Longitudinal — Superior" checked={form.usar_arm_sup} onChange={v => upd({ usar_arm_sup: v })} />
                   {form.usar_arm_sup && (
                     <div className="grid grid-cols-2 gap-3">
                       <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_sup} onChange={v => upd({ diam_long_sup: v as RebarDiameter })} />
@@ -268,21 +276,15 @@ const IcfFundacoes = () => {
                     </div>
                   )}
 
-                  {/* ── Armadura Transversal Inferior ── */}
+                  {/* Transversal Inferior */}
                   <p className="text-xs font-semibold text-primary">Armadura Transversal — Inferior</p>
                   <div className="grid grid-cols-2 gap-3">
                     <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_inf} onChange={v => upd({ diam_trans_inf: v as RebarDiameter })} />
                     <SpacingSelect label="Espaçamento (cm)" value={form.espac_trans_inf} onChange={v => upd({ espac_trans_inf: v as RebarSpacing })} />
                   </div>
 
-                  {/* ── Armadura Transversal Superior ── */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-primary">Armadura Transversal — Superior</p>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Ativar</Label>
-                      <Switch checked={form.usar_trans_sup} onCheckedChange={v => upd({ usar_trans_sup: v })} />
-                    </div>
-                  </div>
+                  {/* Transversal Superior */}
+                  <SectionToggle label="Armadura Transversal — Superior" checked={form.usar_trans_sup} onChange={v => upd({ usar_trans_sup: v })} />
                   {form.usar_trans_sup && (
                     <div className="grid grid-cols-2 gap-3">
                       <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_sup} onChange={v => upd({ diam_trans_sup: v as RebarDiameter })} />
@@ -290,13 +292,33 @@ const IcfFundacoes = () => {
                     </div>
                   )}
 
-                  {/* Breakdown */}
+                  {/* ── Estribos (Cintas) ── */}
+                  <SectionToggle label="Estribos (Cintas Laterais)" checked={form.usar_estribos} onChange={v => upd({ usar_estribos: v })} />
+                  {form.usar_estribos && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_estribo} onChange={v => upd({ diam_estribo: v as RebarDiameter })} />
+                      <SpacingSelect label="Espaçamento (cm)" value={form.espac_estribo} onChange={v => upd({ espac_estribo: v as RebarSpacing })} />
+                    </div>
+                  )}
+
+                  {/* ── Barras Verticais Laterais ── */}
+                  <SectionToggle label="Barras Verticais Laterais" checked={form.usar_barras_laterais} onChange={v => upd({ usar_barras_laterais: v })} />
+                  {form.usar_barras_laterais && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_lateral} onChange={v => upd({ diam_lateral: v as RebarDiameter })} />
+                      <SpacingSelect label="Espaçamento (cm)" value={form.espac_lateral} onChange={v => upd({ espac_lateral: v as RebarSpacing })} />
+                    </div>
+                  )}
+
+                  {/* ── Breakdown ── */}
                   <div className="border-t pt-2 space-y-1 text-xs">
                     <div className="grid grid-cols-[1fr_auto] gap-x-4">
                       <LayerRow label="Long. Inf" layer={breakdown.long_inf} />
                       <LayerRow label="Long. Sup" layer={breakdown.long_sup} />
                       <LayerRow label="Trans. Inf" layer={breakdown.trans_inf} />
                       <LayerRow label="Trans. Sup" layer={breakdown.trans_sup} />
+                      <LayerRow label="Estribos" layer={breakdown.estribos} />
+                      <LayerRow label="Barras Lat." layer={breakdown.barras_laterais} />
                     </div>
                     <div className="border-t pt-1 grid grid-cols-2 gap-x-4">
                       <span className="text-muted-foreground">Subtotal (1 un.)</span>
