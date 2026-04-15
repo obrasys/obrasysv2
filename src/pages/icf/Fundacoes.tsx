@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Trash2, Calculator } from 'lucide-react';
-import { useIcfFundacoes, useCreateIcfFundacao, useDeleteIcfFundacao, useIcfConfiguracao } from '@/hooks/useIcfData';
+import { ArrowLeft, Plus, Trash2, Calculator, Pencil } from 'lucide-react';
+import { useIcfFundacoes, useCreateIcfFundacao, useUpdateIcfFundacao, useDeleteIcfFundacao, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { ICF_FUNDACAO_PRESETS } from '@/types/icf';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
@@ -29,8 +29,10 @@ const IcfFundacoes = () => {
   const { data: config } = useIcfConfiguracao(configId);
   const { data: fundacoes } = useIcfFundacoes(configId);
   const createFundacao = useCreateIcfFundacao();
+  const updateFundacao = useUpdateIcfFundacao();
   const deleteFundacao = useDeleteIcfFundacao();
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [tipo, setTipo] = useState<'sapata_continua' | 'sapata_isolada'>('sapata_continua');
 
   interface FundacaoForm {
@@ -102,17 +104,48 @@ const IcfFundacoes = () => {
 
   const handleAdd = () => {
     if (!configId || !config) return;
-    createFundacao.mutate({
-      obra_id: config.obra_id,
-      configuracao_id: configId,
-      tipo_fundacao: tipo,
-      referencia: form.referencia,
-      comprimento: form.comprimento,
-      largura: form.largura,
-      altura: form.altura,
-      quantidade: form.quantidade,
-      aco_estimado_kg: acoTotal,
-    } as any, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
+    if (editingId) {
+      updateFundacao.mutate({
+        id: editingId,
+        tipo_fundacao: tipo,
+        referencia: form.referencia,
+        comprimento: form.comprimento,
+        largura: form.largura,
+        altura: form.altura,
+        quantidade: form.quantidade,
+        aco_estimado_kg: acoTotal,
+      } as any, { onSuccess: () => { setShowAdd(false); setEditingId(null); setForm(defaultForm()); } });
+    } else {
+      createFundacao.mutate({
+        obra_id: config.obra_id,
+        configuracao_id: configId,
+        tipo_fundacao: tipo,
+        referencia: form.referencia,
+        comprimento: form.comprimento,
+        largura: form.largura,
+        altura: form.altura,
+        quantidade: form.quantidade,
+        aco_estimado_kg: acoTotal,
+      } as any, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
+    }
+  };
+
+  const handleEdit = (f: any) => {
+    setEditingId(f.id);
+    setTipo(f.tipo_fundacao as any);
+    setForm({
+      referencia: f.referencia ?? '',
+      comprimento: f.comprimento,
+      largura: f.largura,
+      altura: f.altura,
+      quantidade: f.quantidade,
+      aco_estimado_kg: f.aco_estimado_kg ?? 0,
+      diam_long: 12,
+      espac_long: 20,
+      diam_trans: 10,
+      espac_trans: 20,
+    });
+    setShowAdd(true);
   };
 
   const totalVolume = fundacoes?.reduce((s, f) => s + (f.volume_betao ?? 0), 0) ?? 0;
@@ -124,10 +157,10 @@ const IcfFundacoes = () => {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
           <div className="flex-1" />
-          <Dialog open={showAdd} onOpenChange={setShowAdd}>
+          <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) { setEditingId(null); setForm(defaultForm()); } }}>
             <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Adicionar</Button></DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Nova Fundação</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingId ? 'Editar Fundação' : 'Nova Fundação'}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 {/* Tipo + Referência */}
                 <div className="grid grid-cols-2 gap-3">
@@ -236,7 +269,7 @@ const IcfFundacoes = () => {
                   </div>
                 </div>
 
-                <Button onClick={handleAdd} disabled={createFundacao.isPending} className="w-full">Adicionar</Button>
+                <Button onClick={handleAdd} disabled={createFundacao.isPending || updateFundacao.isPending} className="w-full">{editingId ? 'Guardar Alterações' : 'Adicionar'}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -268,7 +301,8 @@ const IcfFundacoes = () => {
                   <TableCell className="text-right">{f.quantidade}</TableCell>
                   <TableCell className="text-right font-bold">{f.volume_betao?.toFixed(3)}</TableCell>
                   <TableCell className="text-right">{f.aco_estimado_kg ?? '—'}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(f)}><Pencil className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteFundacao.mutate(f.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
