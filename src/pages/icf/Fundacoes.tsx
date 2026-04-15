@@ -29,8 +29,10 @@ const IcfFundacoes = () => {
   const { data: config } = useIcfConfiguracao(configId);
   const { data: fundacoes } = useIcfFundacoes(configId);
   const createFundacao = useCreateIcfFundacao();
+  const updateFundacao = useUpdateIcfFundacao();
   const deleteFundacao = useDeleteIcfFundacao();
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [tipo, setTipo] = useState<'sapata_continua' | 'sapata_isolada'>('sapata_continua');
 
   interface FundacaoForm {
