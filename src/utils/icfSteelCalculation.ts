@@ -1,6 +1,7 @@
 /**
  * ICF Steel (Aço) Calculation Engine
  * Calculates reinforcement weight based on rebar diameter, spacing, and geometry.
+ * Supports inferior (bottom) and superior (top) longitudinal reinforcement.
  */
 
 // Peso linear por diâmetro (kg/m) — norma EN 10080
@@ -28,28 +29,71 @@ export interface FundacaoArmaduraParams {
   quantidade: number;
   recobrimento_mm: number; // mm
 
-  // Armadura longitudinal (inferior)
-  diam_long: RebarDiameter;
-  espac_long: RebarSpacing; // cm
+  // Armadura longitudinal inferior
+  diam_long_inf: RebarDiameter;
+  espac_long_inf: RebarSpacing; // cm
 
-  // Armadura transversal
-  diam_trans: RebarDiameter;
-  espac_trans: RebarSpacing; // cm
+  // Armadura longitudinal superior
+  usar_arm_sup: boolean;
+  diam_long_sup: RebarDiameter;
+  espac_long_sup: RebarSpacing; // cm
+
+  // Armadura transversal inferior
+  diam_trans_inf: RebarDiameter;
+  espac_trans_inf: RebarSpacing; // cm
+
+  // Armadura transversal superior
+  usar_trans_sup: boolean;
+  diam_trans_sup: RebarDiameter;
+  espac_trans_sup: RebarSpacing; // cm
 
   // Fatores da configuração
   fator_perdas: number;      // ex: 0.05 = 5%
   fator_transpasse: number;  // ex: 0.10 = 10%
 }
 
-export interface SteelBreakdown {
-  long_num_bars: number;
-  long_bar_length: number; // m
-  long_total_length: number; // m
-  long_weight_kg: number;
+// Backward compat alias
+export interface FundacaoArmaduraParamsLegacy {
+  tipo: 'sapata_continua' | 'sapata_isolada';
+  comprimento: number;
+  largura: number;
+  altura: number;
+  quantidade: number;
+  recobrimento_mm: number;
+  diam_long: RebarDiameter;
+  espac_long: RebarSpacing;
+  diam_trans: RebarDiameter;
+  espac_trans: RebarSpacing;
+  fator_perdas: number;
+  fator_transpasse: number;
+}
 
+export interface LayerBreakdown {
+  num_bars: number;
+  bar_length: number; // m
+  total_length: number; // m
+  weight_kg: number;
+  diameter: number;
+  spacing: number;
+}
+
+export interface SteelBreakdown {
+  // Inferior
+  long_inf: LayerBreakdown;
+  trans_inf: LayerBreakdown;
+
+  // Superior (can be zero)
+  long_sup: LayerBreakdown;
+  trans_sup: LayerBreakdown;
+
+  // Legacy compat fields
+  long_num_bars: number;
+  long_bar_length: number;
+  long_total_length: number;
+  long_weight_kg: number;
   trans_num_bars: number;
-  trans_bar_length: number; // m
-  trans_total_length: number; // m
+  trans_bar_length: number;
+  trans_total_length: number;
   trans_weight_kg: number;
 
   subtotal_kg: number;
@@ -60,39 +104,50 @@ export interface SteelBreakdown {
   ratio_kg_m3: number;
 }
 
+function calcLayer(
+  diam: RebarDiameter,
+  espac_cm: RebarSpacing,
+  distribuicao_m: number, // dimension along which bars are distributed
+  comprimento_barra_m: number, // length of each bar
+): LayerBreakdown {
+  const espac_m = espac_cm / 100;
+  const num = Math.max(2, Math.floor(distribuicao_m / espac_m) + 1);
+  const total = num * comprimento_barra_m;
+  const w = total * (REBAR_WEIGHT_PER_METER[diam] ?? 0);
+  return {
+    num_bars: num,
+    bar_length: Math.round(comprimento_barra_m * 1000) / 1000,
+    total_length: Math.round(total * 100) / 100,
+    weight_kg: Math.round(w * 10) / 10,
+    diameter: diam,
+    spacing: espac_cm,
+  };
+}
+
+const EMPTY_LAYER: LayerBreakdown = { num_bars: 0, bar_length: 0, total_length: 0, weight_kg: 0, diameter: 0, spacing: 0 };
+
 export function calcFundacaoSteel(p: FundacaoArmaduraParams): SteelBreakdown {
-  const rec = p.recobrimento_mm / 1000; // m
+  const rec = p.recobrimento_mm / 1000;
   const comp_util = p.comprimento - 2 * rec;
   const larg_util = p.largura - 2 * rec;
 
-  // ── Armadura Longitudinal (ao longo do comprimento) ──
-  // Barras paralelas ao comprimento, distribuídas na largura
-  const espac_long_m = p.espac_long / 100;
-  const long_num = Math.max(2, Math.floor(larg_util / espac_long_m) + 1);
-  const long_bar_len = comp_util;
-  const long_total = long_num * long_bar_len;
-  const long_w = long_total * (REBAR_WEIGHT_PER_METER[p.diam_long] ?? 0);
+  // ── Armadura Inferior ──
+  // Longitudinal inferior: barras ao longo do comprimento, distribuídas na largura
+  const long_inf = calcLayer(p.diam_long_inf, p.espac_long_inf, larg_util, comp_util);
 
-  // ── Armadura Transversal (ao longo da largura) ──
-  // Barras paralelas à largura, distribuídas no comprimento
-  const espac_trans_m = p.espac_trans / 100;
-  let trans_num: number;
-  let trans_bar_len: number;
+  // Transversal inferior: barras ao longo da largura, distribuídas no comprimento
+  const trans_inf = calcLayer(p.diam_trans_inf, p.espac_trans_inf, comp_util, larg_util);
 
-  if (p.tipo === 'sapata_continua') {
-    // Sapata contínua: transversais distribuídas ao longo do comprimento
-    trans_num = Math.max(2, Math.floor(comp_util / espac_trans_m) + 1);
-    trans_bar_len = larg_util;
-  } else {
-    // Sapata isolada: armadura em ambas as direções (malha)
-    trans_num = Math.max(2, Math.floor(comp_util / espac_trans_m) + 1);
-    trans_bar_len = larg_util;
-  }
+  // ── Armadura Superior ──
+  const long_sup = p.usar_arm_sup
+    ? calcLayer(p.diam_long_sup, p.espac_long_sup, larg_util, comp_util)
+    : { ...EMPTY_LAYER };
 
-  const trans_total = trans_num * trans_bar_len;
-  const trans_w = trans_total * (REBAR_WEIGHT_PER_METER[p.diam_trans] ?? 0);
+  const trans_sup = p.usar_trans_sup
+    ? calcLayer(p.diam_trans_sup, p.espac_trans_sup, comp_util, larg_util)
+    : { ...EMPTY_LAYER };
 
-  const subtotal = long_w + trans_w;
+  const subtotal = long_inf.weight_kg + trans_inf.weight_kg + long_sup.weight_kg + trans_sup.weight_kg;
   const perdas = subtotal * p.fator_perdas;
   const transpasse = subtotal * p.fator_transpasse;
   const total = subtotal + perdas + transpasse;
@@ -102,15 +157,20 @@ export function calcFundacaoSteel(p: FundacaoArmaduraParams): SteelBreakdown {
   const vol_total = vol_unit * p.quantidade;
 
   return {
-    long_num_bars: long_num,
-    long_bar_length: Math.round(long_bar_len * 1000) / 1000,
-    long_total_length: Math.round(long_total * 100) / 100,
-    long_weight_kg: Math.round(long_w * 10) / 10,
+    long_inf,
+    trans_inf,
+    long_sup,
+    trans_sup,
 
-    trans_num_bars: trans_num,
-    trans_bar_length: Math.round(trans_bar_len * 1000) / 1000,
-    trans_total_length: Math.round(trans_total * 100) / 100,
-    trans_weight_kg: Math.round(trans_w * 10) / 10,
+    // Legacy compat
+    long_num_bars: long_inf.num_bars + long_sup.num_bars,
+    long_bar_length: long_inf.bar_length,
+    long_total_length: long_inf.total_length + long_sup.total_length,
+    long_weight_kg: Math.round((long_inf.weight_kg + long_sup.weight_kg) * 10) / 10,
+    trans_num_bars: trans_inf.num_bars + trans_sup.num_bars,
+    trans_bar_length: trans_inf.bar_length,
+    trans_total_length: trans_inf.total_length + trans_sup.total_length,
+    trans_weight_kg: Math.round((trans_inf.weight_kg + trans_sup.weight_kg) * 10) / 10,
 
     subtotal_kg: Math.round(subtotal * 10) / 10,
     perdas_kg: Math.round(perdas * 10) / 10,
