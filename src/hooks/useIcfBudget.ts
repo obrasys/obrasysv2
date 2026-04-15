@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import type { IcfResumo, IcfConfiguracao } from '@/types/icf';
 
 interface IcfBudgetArticle {
