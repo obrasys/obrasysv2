@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useIcfFundacoes, useCreateIcfFundacao, useDeleteIcfFundacao, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { ICF_FUNDACAO_PRESETS } from '@/types/icf';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
+import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const IcfFundacoes = () => {
   const { configId } = useParams();
@@ -121,8 +122,9 @@ const IcfFundacoes = () => {
           <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Aço Total Fundações</p><p className="text-lg font-bold">{totalAco.toFixed(1)} kg</p></CardContent></Card>
         </div>
 
-        {/* Axia contextual */}
+        {/* Axia */}
         <IcfAxiaContextual context="fundacoes" config={config} fundacoes={fundacoes ?? []} />
+        {configId && <IcfAxiaAnalysisPanel configId={configId} />}
       </div>
     </AppLayout>
   );

@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useIcfResumo, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
+import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const IcfResumo = () => {
   const { configId } = useParams();
@@ -101,8 +102,9 @@ const IcfResumo = () => {
               </Card>
             </div>
 
-            {/* Axia contextual */}
+            {/* Axia */}
             <IcfAxiaContextual context="resumo" config={config} resumo={r} />
+            {configId && <IcfAxiaAnalysisPanel configId={configId} />}
           </>
         )}
       </div>

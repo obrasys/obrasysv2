@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useIcfLajes, useCreateIcfLaje, useDeleteIcfLaje, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
+import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const IcfLajes = () => {
   const { configId } = useParams();
@@ -101,8 +102,9 @@ const IcfLajes = () => {
           <Card><CardContent className="pt-3"><p className="text-xs text-muted-foreground">Volume Total</p><p className="text-lg font-bold">{totalVol.toFixed(3)} m³</p></CardContent></Card>
         </div>
 
-        {/* Axia contextual */}
+        {/* Axia */}
         <IcfAxiaContextual context="lajes" config={config} lajes={lajes ?? []} />
+        {configId && <IcfAxiaAnalysisPanel configId={configId} />}
       </div>
     </AppLayout>
   );
