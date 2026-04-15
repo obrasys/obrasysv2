@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Settings, Layers, Box, BarChart3, Trash2 } from 'lucide-react';
+import { Plus, Settings, Layers, Box, BarChart3, Trash2, CheckCircle, Lock } from 'lucide-react';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
-import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig } from '@/hooks/useIcfData';
+import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
@@ -34,6 +34,11 @@ const IcfIndex = () => {
   const { data: resumo } = useIcfResumo(activeConfig?.id);
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
+  const updateConfig = useUpdateIcfConfig();
+
+  const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
+    updateConfig.mutate({ id: configId, status: newStatus } as any);
+  };
 
   const statusColor = (s: string) => {
     if (s === 'congelado') return 'secondary';
@@ -90,6 +95,16 @@ const IcfIndex = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={statusColor(activeConfig.status)}>{activeConfig.status}</Badge>
+                  {activeConfig.status === 'rascunho' && (
+                    <Button variant="default" size="sm" onClick={() => handleChangeStatus(activeConfig.id, 'validado')}>
+                      <CheckCircle className="h-4 w-4 mr-1" />Validar
+                    </Button>
+                  )}
+                  {activeConfig.status === 'validado' && (
+                    <Button variant="secondary" size="sm" onClick={() => handleChangeStatus(activeConfig.id, 'congelado')}>
+                      <Lock className="h-4 w-4 mr-1" />Congelar
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => navigate(`/icf/configuracao/${activeConfig.id}`)}>
                     <Settings className="h-4 w-4 mr-1" />Editar
                   </Button>
