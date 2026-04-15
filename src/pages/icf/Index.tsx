@@ -122,6 +122,15 @@ const IcfIndex = () => {
             {/* Axia Analysis Panel */}
             <IcfAxiaAnalysisPanel configId={activeConfig.id} />
 
+            {/* Axia Plant Analyzer */}
+            <IcfPlantAnalyzer
+              obraId={selectedObraId}
+              configuracaoId={activeConfig.id}
+              espessuraNucleo={activeConfig.espessura_nucleo}
+              classeBetao={activeConfig.classe_betao}
+              classeAco={activeConfig.classe_aco}
+            />
+
             {/* Quick navigation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
