@@ -104,17 +104,48 @@ const IcfFundacoes = () => {
 
   const handleAdd = () => {
     if (!configId || !config) return;
-    createFundacao.mutate({
-      obra_id: config.obra_id,
-      configuracao_id: configId,
-      tipo_fundacao: tipo,
-      referencia: form.referencia,
-      comprimento: form.comprimento,
-      largura: form.largura,
-      altura: form.altura,
-      quantidade: form.quantidade,
-      aco_estimado_kg: acoTotal,
-    } as any, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
+    if (editingId) {
+      updateFundacao.mutate({
+        id: editingId,
+        tipo_fundacao: tipo,
+        referencia: form.referencia,
+        comprimento: form.comprimento,
+        largura: form.largura,
+        altura: form.altura,
+        quantidade: form.quantidade,
+        aco_estimado_kg: acoTotal,
+      } as any, { onSuccess: () => { setShowAdd(false); setEditingId(null); setForm(defaultForm()); } });
+    } else {
+      createFundacao.mutate({
+        obra_id: config.obra_id,
+        configuracao_id: configId,
+        tipo_fundacao: tipo,
+        referencia: form.referencia,
+        comprimento: form.comprimento,
+        largura: form.largura,
+        altura: form.altura,
+        quantidade: form.quantidade,
+        aco_estimado_kg: acoTotal,
+      } as any, { onSuccess: () => { setShowAdd(false); setForm(defaultForm()); } });
+    }
+  };
+
+  const handleEdit = (f: any) => {
+    setEditingId(f.id);
+    setTipo(f.tipo_fundacao as any);
+    setForm({
+      referencia: f.referencia ?? '',
+      comprimento: f.comprimento,
+      largura: f.largura,
+      altura: f.altura,
+      quantidade: f.quantidade,
+      aco_estimado_kg: f.aco_estimado_kg ?? 0,
+      diam_long: 12,
+      espac_long: 20,
+      diam_trans: 10,
+      espac_trans: 20,
+    });
+    setShowAdd(true);
   };
 
   const totalVolume = fundacoes?.reduce((s, f) => s + (f.volume_betao ?? 0), 0) ?? 0;
