@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Settings, Layers, Box, BarChart3, Trash2 } from 'lucide-react';
+import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
@@ -120,6 +121,15 @@ const IcfIndex = () => {
 
             {/* Axia Analysis Panel */}
             <IcfAxiaAnalysisPanel configId={activeConfig.id} />
+
+            {/* Axia Plant Analyzer */}
+            <IcfPlantAnalyzer
+              obraId={selectedObraId}
+              configuracaoId={activeConfig.id}
+              espessuraNucleo={activeConfig.espessura_nucleo}
+              classeBetao={activeConfig.classe_betao}
+              classeAco={activeConfig.classe_aco}
+            />
 
             {/* Quick navigation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
