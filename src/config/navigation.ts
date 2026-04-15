@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Blocks,
   Briefcase,
   BrainCircuit,
   Building2,
@@ -67,6 +68,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { icon: ClipboardCheck, label: "Autos de Medição", href: "/autos-medicao" },
       { icon: Clock, label: "Livro de Ponto", href: "/livro-ponto" },
       { icon: Shield, label: "Conformidade", href: "/conformidade" },
+      { icon: Blocks, label: "ICF", href: "/icf" },
     ],
   },
   {
