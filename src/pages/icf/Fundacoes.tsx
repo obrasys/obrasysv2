@@ -217,9 +217,9 @@ const IcfFundacoes = () => {
                     <div className="border-t pt-1 grid grid-cols-2 gap-x-4">
                       <span className="text-muted-foreground">Subtotal (1 un.)</span>
                       <span className="text-right">{breakdown.subtotal_kg} kg</span>
-                      <span className="text-muted-foreground">+ Perdas ({((config?.fator_perdas ?? 0.05) * 100).toFixed(0)}%)</span>
+                      <span className="text-muted-foreground">+ Perdas ({(config?.fator_perdas ?? 5) > 1 ? (config?.fator_perdas ?? 5).toFixed(0) : ((config?.fator_perdas ?? 0.05) * 100).toFixed(0)}%)</span>
                       <span className="text-right">{breakdown.perdas_kg} kg</span>
-                      <span className="text-muted-foreground">+ Amarração ({((config?.fator_transpasse ?? 0.10) * 100).toFixed(0)}%)</span>
+                      <span className="text-muted-foreground">+ Amarração ({(config?.fator_transpasse ?? 10) > 1 ? (config?.fator_transpasse ?? 10).toFixed(0) : ((config?.fator_transpasse ?? 0.10) * 100).toFixed(0)}%)</span>
                       <span className="text-right">{breakdown.transpasse_kg} kg</span>
                     </div>
                     <div className="border-t pt-1 grid grid-cols-2 gap-x-4">
