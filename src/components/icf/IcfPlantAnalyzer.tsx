@@ -25,7 +25,7 @@ export function IcfPlantAnalyzer({
   classeBetao,
   classeAco,
 }: IcfPlantAnalyzerProps) {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const { toast } = useToast();
   const { plans, isLoading: plansLoading } = usePlanImports(obraId);
   const {
@@ -41,7 +41,7 @@ export function IcfPlantAnalyzer({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const empresaId = user?.id || '';
+  const empresaId = organization?.id || '';
 
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
@@ -50,7 +50,6 @@ export function IcfPlantAnalyzer({
       filePath: plan.file_path,
       obraId,
       configuracaoId,
-      empresaId,
       espessuraNucleo,
       classeBetao,
       classeAco,
@@ -72,7 +71,6 @@ export function IcfPlantAnalyzer({
         filePath,
         obraId,
         configuracaoId,
-        empresaId,
         espessuraNucleo,
         classeBetao,
         classeAco,
@@ -91,7 +89,6 @@ export function IcfPlantAnalyzer({
       result: analysisResult,
       obraId,
       configuracaoId,
-      empresaId,
       espessuraNucleo,
     });
   };
@@ -128,7 +125,7 @@ export function IcfPlantAnalyzer({
               </Select>
               <Button
                 onClick={handleSelectExisting}
-                disabled={!selectedPlanId || isAnalyzing}
+                disabled={!selectedPlanId || isAnalyzing || !empresaId}
                 size="sm"
               >
                 {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -148,7 +145,7 @@ export function IcfPlantAnalyzer({
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isAnalyzing}
+                disabled={isUploading || isAnalyzing || !empresaId}
               >
                 {isUploading || isAnalyzing ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -220,6 +217,12 @@ export function IcfPlantAnalyzer({
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span>A criar registos de paredes, fundações e lajes...</span>
           </div>
+        )}
+
+        {!empresaId && (
+          <p className="text-sm text-destructive">
+            Não foi possível identificar a organização ativa para guardar os registos ICF.
+          </p>
         )}
       </CardContent>
     </Card>

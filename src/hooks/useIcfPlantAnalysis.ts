@@ -49,7 +49,6 @@ interface AnalyzeParams {
   filePath: string;
   obraId: string;
   configuracaoId: string;
-  empresaId: string;
   espessuraNucleo: number;
   classeBetao: string;
   classeAco: string;
@@ -57,7 +56,7 @@ interface AnalyzeParams {
 
 export function useIcfPlantAnalysis() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { organization } = useAuth();
   const qc = useQueryClient();
   const [analysisResult, setAnalysisResult] = useState<IcfPlantAnalysisResult | null>(null);
 
@@ -95,10 +94,14 @@ export function useIcfPlantAnalysis() {
       result: IcfPlantAnalysisResult;
       obraId: string;
       configuracaoId: string;
-      empresaId: string;
       espessuraNucleo: number;
     }) => {
-      const { result, obraId, configuracaoId, empresaId, espessuraNucleo } = params;
+      const { result, obraId, configuracaoId, espessuraNucleo } = params;
+      const empresaId = organization?.id;
+
+      if (!empresaId) {
+        throw new Error('Organização não encontrada para criar os registos ICF.');
+      }
 
       // Create paredes
       for (let i = 0; i < result.paredes.length; i++) {
