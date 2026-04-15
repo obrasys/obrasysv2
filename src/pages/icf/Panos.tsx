@@ -13,6 +13,7 @@ import { useIcfPanos, useCreateIcfPano, useDeleteIcfPano, useIcfConfiguracao } f
 import { ICF_ARMADURA_PRESETS } from '@/types/icf';
 import { IcfVaosDialog } from '@/components/icf/IcfVaosDialog';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
+import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 
 const IcfPanos = () => {
   const { configId } = useParams();
@@ -164,8 +165,9 @@ const IcfPanos = () => {
           </div>
         )}
 
-        {/* Axia contextual */}
+        {/* Axia contextual + analysis */}
         <IcfAxiaContextual context="panos" config={config} panos={filtered} />
+        {configId && <IcfAxiaAnalysisPanel configId={configId} />}
 
         {/* Vaos dialog */}
         <IcfVaosDialog panoId={selectedPanoId} onClose={() => setSelectedPanoId(null)} />
