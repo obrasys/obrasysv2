@@ -2,8 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileSpreadsheet } from 'lucide-react';
 import { useIcfResumo, useIcfConfiguracao } from '@/hooks/useIcfData';
+import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
@@ -13,6 +14,7 @@ const IcfResumo = () => {
   const navigate = useNavigate();
   const { data: config } = useIcfConfiguracao(configId);
   const { data: r } = useIcfResumo(configId);
+  const generateBudget = useGenerateIcfBudget();
 
   const volumeData = r ? [
     { name: 'Paredes', value: r.volume_total_paredes },
@@ -22,10 +24,26 @@ const IcfResumo = () => {
 
   const colors = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--muted-foreground))'];
 
+  const handleGenerateBudget = () => {
+    if (!r || !config) return;
+    generateBudget.mutate(
+      { resumo: r, config, obraId: config.obra_id },
+      { onSuccess: (orc) => navigate(`/orcamentos/${orc.id}`) }
+    );
+  };
+
   return (
     <AppLayout title="Resumo Global ICF" subtitle={config?.nome}>
       <div className="p-4 md:p-6 space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
+          {r && config && (
+            <Button onClick={handleGenerateBudget} disabled={generateBudget.isPending}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              {generateBudget.isPending ? 'A gerar...' : 'Gerar Orçamento ICF'}
+            </Button>
+          )}
+        </div>
 
         {!r && <Card><CardContent className="py-12 text-center text-muted-foreground">Sem dados para resumo.</CardContent></Card>}
 
