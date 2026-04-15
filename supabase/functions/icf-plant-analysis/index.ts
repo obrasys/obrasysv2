@@ -45,9 +45,16 @@ serve(async (req) => {
       throw new Error(`Erro ao descarregar ficheiro: ${dlErr?.message || "ficheiro não encontrado"}`);
     }
 
-    // Convert to base64
+    // Convert to base64 (chunk-safe for large files)
     const arrayBuf = await fileData.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
+    const bytes = new Uint8Array(arrayBuf);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    const base64 = btoa(binary);
     const mimeType = file_path.endsWith(".pdf") ? "application/pdf"
       : file_path.endsWith(".png") ? "image/png"
       : "image/jpeg";
