@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { 
-  ArrowLeft, Plus, Loader2, FileText, ExternalLink,
+  ArrowLeft, Plus, Loader2, FileText, ExternalLink, CheckCircle,
   TrendingUp, TrendingDown, Wallet, Users, Package,
   MoreHorizontal, Search, Link as LinkIcon, Bell,
   CircleDollarSign, AlertTriangle, Clock, ArrowUpRight,
