@@ -66,10 +66,10 @@ const IcfPanos = () => {
           <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
           <div className="flex-1" />
           {pisos.length > 0 && (
-            <Select value={pisoFilter} onValueChange={setPisoFilter}>
+            <Select value={pisoFilter || "__all__"} onValueChange={v => setPisoFilter(v === "__all__" ? "" : v)}>
               <SelectTrigger className="w-40"><SelectValue placeholder="Filtrar piso" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="__all__">Todos</SelectItem>
                 {pisos.map(p => <SelectItem key={p} value={p!}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
