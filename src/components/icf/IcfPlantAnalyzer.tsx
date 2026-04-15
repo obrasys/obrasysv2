@@ -172,19 +172,19 @@ export function IcfPlantAnalyzer({
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <ResultCard
-                icon={<Layers className="h-5 w-5 text-blue-500" />}
+                icon={<Layers className="h-5 w-5 text-primary" />}
                 label="Paredes"
                 count={analysisResult.paredes.length}
                 details={analysisResult.paredes.map(p => `${p.referencia}: ${p.comprimento}m × ${p.altura_util}m`)}
               />
               <ResultCard
-                icon={<Box className="h-5 w-5 text-amber-500" />}
+                icon={<Box className="h-5 w-5 text-primary" />}
                 label="Fundações"
                 count={analysisResult.fundacoes.length}
                 details={analysisResult.fundacoes.map(f => `${f.referencia || f.tipo_fundacao}: ${f.comprimento}×${f.largura}×${f.altura}m`)}
               />
               <ResultCard
-                icon={<LayoutGrid className="h-5 w-5 text-green-500" />}
+                icon={<LayoutGrid className="h-5 w-5 text-primary" />}
                 label="Lajes"
                 count={analysisResult.lajes.length}
                 details={analysisResult.lajes.map(l => `${l.referencia || 'Laje'}: ${l.area}m² (${l.espessura_total}m)`)}
