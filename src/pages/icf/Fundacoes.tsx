@@ -84,6 +84,7 @@ interface FundacaoForm {
   usar_arm_sup: boolean;
   diam_long_sup: RebarDiameter;
   espac_long_sup: RebarSpacing;
+  usar_trans_inf: boolean;
   diam_trans_inf: RebarDiameter;
   espac_trans_inf: RebarSpacing;
   usar_trans_sup: boolean;
@@ -122,6 +123,7 @@ const IcfFundacoes = () => {
       usar_arm_sup: false,
       diam_long_sup: 10,
       espac_long_sup: 20,
+      usar_trans_inf: true,
       diam_trans_inf: 10,
       espac_trans_inf: 20,
       usar_trans_sup: false,
@@ -156,6 +158,7 @@ const IcfFundacoes = () => {
       usar_arm_sup: form.usar_arm_sup,
       diam_long_sup: form.diam_long_sup,
       espac_long_sup: form.espac_long_sup,
+      usar_trans_inf: form.usar_trans_inf,
       diam_trans_inf: form.diam_trans_inf,
       espac_trans_inf: form.espac_trans_inf,
       usar_trans_sup: form.usar_trans_sup,
@@ -277,11 +280,13 @@ const IcfFundacoes = () => {
                   )}
 
                   {/* Transversal Inferior */}
-                  <p className="text-xs font-semibold text-primary">Armadura Transversal — Inferior</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_inf} onChange={v => upd({ diam_trans_inf: v as RebarDiameter })} />
-                    <SpacingSelect label="Espaçamento (cm)" value={form.espac_trans_inf} onChange={v => upd({ espac_trans_inf: v as RebarSpacing })} />
-                  </div>
+                  <SectionToggle label="Armadura Transversal — Inferior" checked={form.usar_trans_inf} onChange={v => upd({ usar_trans_inf: v })} />
+                  {form.usar_trans_inf && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_inf} onChange={v => upd({ diam_trans_inf: v as RebarDiameter })} />
+                      <SpacingSelect label="Espaçamento (cm)" value={form.espac_trans_inf} onChange={v => upd({ espac_trans_inf: v as RebarSpacing })} />
+                    </div>
+                  )}
 
                   {/* Transversal Superior */}
                   <SectionToggle label="Armadura Transversal — Superior" checked={form.usar_trans_sup} onChange={v => upd({ usar_trans_sup: v })} />

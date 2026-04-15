@@ -38,6 +38,7 @@ export interface FundacaoArmaduraParams {
   espac_long_sup: RebarSpacing;
 
   // Armadura transversal inferior
+  usar_trans_inf: boolean;
   diam_trans_inf: RebarDiameter;
   espac_trans_inf: RebarSpacing;
 
@@ -125,7 +126,9 @@ export function calcFundacaoSteel(p: FundacaoArmaduraParams): SteelBreakdown {
 
   // ── Armadura Inferior ──
   const long_inf = calcLayer(p.diam_long_inf, p.espac_long_inf, larg_util, comp_util);
-  const trans_inf = calcLayer(p.diam_trans_inf, p.espac_trans_inf, comp_util, larg_util);
+  const trans_inf = p.usar_trans_inf
+    ? calcLayer(p.diam_trans_inf, p.espac_trans_inf, comp_util, larg_util)
+    : { ...EMPTY_LAYER };
 
   // ── Armadura Superior ──
   const long_sup = p.usar_arm_sup
