@@ -143,14 +143,16 @@ export function calcFundacaoSteel(p: FundacaoArmaduraParams): SteelBreakdown {
     estribos = calcLayer(p.diam_estribo, p.espac_estribo, comp_util, perimetro_estribo);
   }
 
-  // ── Barras Verticais Laterais ──
-  // Barras nas 2 faces laterais (ao longo do comprimento), comprimento = altura útil
+  // ── Barras Laterais (horizontais nas faces laterais) ──
+  // Distribuídas ao longo da altura, correm ao longo do comprimento.
+  // Desconta 4 cantos (2 por face) já contabilizados nas camadas inf/sup.
+  // Ex: h=0.50, esp=0.10 → 50/10=5 por face × 2 = 10 − 4 = 6 barras
   let barras_laterais: LayerBreakdown = { ...EMPTY_LAYER };
   if (p.usar_barras_laterais) {
     const espac_m = p.espac_lateral / 100;
-    const num_por_face = Math.max(1, Math.floor(comp_util / espac_m) + 1);
-    const num_total = num_por_face * 2; // 2 faces
-    const bar_len = alt_util;
+    const num_por_face = Math.floor(p.altura / espac_m); // posições excluindo a base (0)
+    const num_total = Math.max(0, num_por_face * 2 - 4); // 2 faces, menos 4 cantos
+    const bar_len = comp_util; // barras correm ao longo do comprimento
     const total_len = num_total * bar_len;
     const w = total_len * (REBAR_WEIGHT_PER_METER[p.diam_lateral] ?? 0);
     barras_laterais = {
