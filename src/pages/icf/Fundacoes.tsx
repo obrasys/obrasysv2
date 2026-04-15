@@ -123,6 +123,7 @@ const IcfFundacoes = () => {
       usar_arm_sup: false,
       diam_long_sup: 10,
       espac_long_sup: 20,
+      usar_trans_inf: true,
       diam_trans_inf: 10,
       espac_trans_inf: 20,
       usar_trans_sup: false,
