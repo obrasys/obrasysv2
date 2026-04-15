@@ -23,12 +23,36 @@ const IcfFundacoes = () => {
   const deleteFundacao = useDeleteIcfFundacao();
   const [showAdd, setShowAdd] = useState(false);
   const [tipo, setTipo] = useState<'sapata_continua' | 'sapata_isolada'>('sapata_continua');
-  const [form, setForm] = useState({ referencia: '', comprimento: 0.70, largura: 0.70, altura: 0.45, quantidade: 1, aco_estimado_kg: 0 });
+  // Rácios paramétricos típicos de aço por m³ de betão (ICF)
+  const ACO_RATIO: Record<string, number> = { sapata_continua: 85, sapata_isolada: 100 };
+
+  const estimarAco = (t: string, comp: number, larg: number, alt: number, qtd: number) => {
+    const vol = comp * larg * alt * qtd;
+    const ratio = ACO_RATIO[t] ?? 90;
+    return Math.round(vol * ratio * 10) / 10;
+  };
+
+  interface FundacaoForm { referencia: string; comprimento: number; largura: number; altura: number; quantidade: number; aco_estimado_kg: number; }
+
+  const [form, setForm] = useState<FundacaoForm>(() => {
+    const p = ICF_FUNDACAO_PRESETS['sapata_continua'];
+    const aco = estimarAco('sapata_continua', p.comprimento, p.largura, p.altura, 1);
+    return { referencia: '', comprimento: p.comprimento, largura: p.largura, altura: p.altura, quantidade: 1, aco_estimado_kg: aco };
+  });
+
+  const updateFormWithAco = (updates: Partial<FundacaoForm>, tipoOverride?: string) => {
+    setForm(f => {
+      const next = { ...f, ...updates };
+      const t = tipoOverride ?? tipo;
+      next.aco_estimado_kg = estimarAco(t, next.comprimento, next.largura, next.altura, next.quantidade);
+      return next;
+    });
+  };
 
   const applyPreset = (t: 'sapata_continua' | 'sapata_isolada') => {
     setTipo(t);
     const p = ICF_FUNDACAO_PRESETS[t];
-    setForm(f => ({ ...f, comprimento: p.comprimento, largura: p.largura, altura: p.altura }));
+    updateFormWithAco({ comprimento: p.comprimento, largura: p.largura, altura: p.altura }, t);
   };
 
   const handleAdd = () => {
@@ -66,12 +90,12 @@ const IcfFundacoes = () => {
                 </div>
                 <div><Label>Referência</Label><Input value={form.referencia} onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))} placeholder="Ex: F01" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => setForm(f => ({ ...f, comprimento: +e.target.value }))} /></div>
-                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => setForm(f => ({ ...f, largura: +e.target.value }))} /></div>
-                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm(f => ({ ...f, altura: +e.target.value }))} /></div>
-                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => setForm(f => ({ ...f, quantidade: +e.target.value }))} /></div>
+                  <div><Label>Comprimento (m)</Label><Input type="number" step="0.01" value={form.comprimento} onChange={e => updateFormWithAco({ comprimento: +e.target.value })} /></div>
+                  <div><Label>Largura (m)</Label><Input type="number" step="0.01" value={form.largura} onChange={e => updateFormWithAco({ largura: +e.target.value })} /></div>
+                  <div><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => updateFormWithAco({ altura: +e.target.value })} /></div>
+                  <div><Label>Quantidade</Label><Input type="number" value={form.quantidade} onChange={e => updateFormWithAco({ quantidade: +e.target.value })} /></div>
                 </div>
-                <div><Label>Aço Estimado (kg)</Label><Input type="number" step="0.1" value={form.aco_estimado_kg} onChange={e => setForm(f => ({ ...f, aco_estimado_kg: +e.target.value }))} /></div>
+                <div><Label>Aço Estimado (kg) <span className="text-xs text-muted-foreground ml-1">• Axia™ auto</span></Label><Input type="number" step="0.1" value={form.aco_estimado_kg} onChange={e => setForm(f => ({ ...f, aco_estimado_kg: +e.target.value }))} /></div>
                 <p className="text-xs text-muted-foreground">Vol. estimado: {(form.comprimento * form.largura * form.altura * form.quantidade).toFixed(3)} m³</p>
                 <Button onClick={handleAdd} disabled={createFundacao.isPending} className="w-full">Adicionar</Button>
               </div>
