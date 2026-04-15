@@ -269,7 +269,7 @@ const IcfFundacoes = () => {
                   </div>
                 </div>
 
-                <Button onClick={handleAdd} disabled={createFundacao.isPending} className="w-full">Adicionar</Button>
+                <Button onClick={handleAdd} disabled={createFundacao.isPending || updateFundacao.isPending} className="w-full">{editingId ? 'Guardar Alterações' : 'Adicionar'}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -301,7 +301,8 @@ const IcfFundacoes = () => {
                   <TableCell className="text-right">{f.quantidade}</TableCell>
                   <TableCell className="text-right font-bold">{f.volume_betao?.toFixed(3)}</TableCell>
                   <TableCell className="text-right">{f.aco_estimado_kg ?? '—'}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(f)}><Pencil className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteFundacao.mutate(f.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
