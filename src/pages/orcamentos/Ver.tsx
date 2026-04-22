@@ -73,7 +73,15 @@ export default function VerOrcamentoPage() {
     (orcamento.custos_indiretos?.seguros || 0) +
     (orcamento.custos_indiretos?.licenciamento || 0);
 
-  const subtotalArtigos = orcamento.valor_total;
+  const subtotalArtigos = (orcamento.capitulos || []).reduce(
+    (sum, cap) =>
+      sum +
+      (cap.artigos || []).reduce(
+        (s, a) => s + (a.valor_total ?? a.quantidade * a.preco_unitario),
+        0
+      ),
+    0
+  );
   const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
   const margemDecimal = orcamento.margem_lucro / 100;
   const valorBase = margemDecimal > 0 && margemDecimal < 1
