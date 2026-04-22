@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
+import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -486,6 +487,14 @@ export default function VerOrcamentoPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Auditoria do Orçamento */}
+                  <OrcamentoAuditPanel
+                    orcamento={orcamento}
+                    margemDecimal={margemDecimal}
+                    taxaIVA={taxaIVA}
+                    custosIndiretosTotal={custosIndiretosTotal}
+                  />
 
                   {/* Axia Alerts */}
                   <Card className="border-primary/10">
