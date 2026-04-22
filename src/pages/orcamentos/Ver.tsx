@@ -73,7 +73,15 @@ export default function VerOrcamentoPage() {
     (orcamento.custos_indiretos?.seguros || 0) +
     (orcamento.custos_indiretos?.licenciamento || 0);
 
-  const subtotalArtigos = orcamento.valor_total;
+  const subtotalArtigos = (orcamento.capitulos || []).reduce(
+    (sum, cap) =>
+      sum +
+      (cap.artigos || []).reduce(
+        (s, a) => s + (a.valor_total ?? a.quantidade * a.preco_unitario),
+        0
+      ),
+    0
+  );
   const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
   const margemDecimal = orcamento.margem_lucro / 100;
   const valorBase = margemDecimal > 0 && margemDecimal < 1
@@ -336,9 +344,13 @@ export default function VerOrcamentoPage() {
                   {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
                     orcamento.capitulos.map((capitulo) => {
                       const isOpen = expandedChapters.has(capitulo.id);
+                      const capRaw = (capitulo.artigos || []).reduce(
+                        (acc, a) => acc + (a.valor_total ?? a.quantidade * a.preco_unitario),
+                        0
+                      );
                       const capValor = margemDecimal > 0 && margemDecimal < 1
-                        ? (capitulo.valor_total || 0) / (1 - margemDecimal)
-                        : (capitulo.valor_total || 0);
+                        ? capRaw / (1 - margemDecimal)
+                        : capRaw;
 
                       return (
                         <Collapsible key={capitulo.id} open={isOpen} onOpenChange={() => toggleChapter(capitulo.id)}>
