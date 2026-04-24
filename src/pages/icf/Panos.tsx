@@ -314,7 +314,7 @@ const IcfPanos = () => {
                   <div><Label>Altura Útil (m)</Label><Input type="number" step="0.01" value={editPano.altura_util} onChange={e => setEditPano((f: any) => ({ ...f, altura_util: +e.target.value }))} /></div>
                 </div>
                 <ArmaduraFields data={editPano} onChange={setEditPano} />
-                <Button onClick={handleSaveEdit} disabled={createPano.isPending} className="w-full">Guardar Alterações</Button>
+                <Button onClick={handleSaveEdit} disabled={updatePano.isPending} className="w-full">Guardar Alterações</Button>
               </div>
             )}
           </DialogContent>
