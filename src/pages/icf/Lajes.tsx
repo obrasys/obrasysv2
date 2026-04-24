@@ -85,13 +85,16 @@ const IcfLajes = () => {
 
   const handleAdd = () => {
     if (!configId || !config) return;
+    // Persistir layers como JSON no início de observacoes para restauro fiel na edição
+    const armJson = `__ARM__:${JSON.stringify(layers)}|`;
+    const detalheTxt = acoCalc.detalhe.join(' | ');
     const payload = {
       obra_id: config.obra_id,
       configuracao_id: configId,
       tipologia_laje: 'vigotas_in_situ',
       ...form,
       aco_estimado_kg: acoCalc.total_kg,
-      observacoes: acoCalc.detalhe.join(' | '),
+      observacoes: armJson + detalheTxt,
     };
     if (editingId) {
       updateLaje.mutate({ id: editingId, ...payload } as any, { onSuccess: () => { setShowAdd(false); resetForm(); } });
@@ -103,8 +106,23 @@ const IcfLajes = () => {
   const handleEdit = (l: any) => {
     setEditingId(l.id);
     setForm({ referencia: l.referencia ?? '', piso: l.piso ?? 'Piso 0', area: l.area, espessura_total: l.espessura_total, peso_proprio_kn_m2: l.peso_proprio_kn_m2 ?? 2.53 });
-    // Parse observacoes to restore layers if possible, otherwise default
-    setLayers([{ ...DEFAULT_LAYER }]);
+    // Restaurar layers a partir do prefixo JSON em observacoes
+    const obs: string = l.observacoes ?? '';
+    const m = obs.match(/^__ARM__:(\[.*?\])\|/s);
+    if (m) {
+      try {
+        const parsed = JSON.parse(m[1]) as ArmaduraLayer[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLayers(parsed);
+        } else {
+          setLayers([{ ...DEFAULT_LAYER }]);
+        }
+      } catch {
+        setLayers([{ ...DEFAULT_LAYER }]);
+      }
+    } else {
+      setLayers([{ ...DEFAULT_LAYER }]);
+    }
     setShowAdd(true);
   };
 
