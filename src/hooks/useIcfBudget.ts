@@ -117,44 +117,50 @@ function buildChapters(
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 2 — LAJE INFERIOR
+  // CAPÍTULO 2 — LAJES (agrupadas por piso/referência reais)
   // ═══════════════════════════════════════════════════════════
-  // Heurística: dividir lajes em inferior/superior por igual quando não há separação
-  const areaLajeTotal = resumo.area_estrutural_total > 0 ? resumo.area_estrutural_total : 0;
-  const volLajeTotal = resumo.volume_total_lajes;
-  const acoLajeTotal = resumo.aco_total_lajes;
-  const areaLajeInf = areaLajeTotal / 2;
-  const volLajeInf = volLajeTotal / 2;
-  const acoLajeInf = acoLajeTotal / 2;
+  // Estratégia: se houver lajes registadas, gerar 1 capítulo por piso (ou "Geral").
+  // Caso contrário, fallback para um único capítulo "Lajes" usando os totais do resumo.
+  type LajeGroup = { piso: string; area: number; volume: number; aco: number };
+  const groups: LajeGroup[] = [];
+  if (lajes.length > 0) {
+    const map = new Map<string, LajeGroup>();
+    for (const l of lajes) {
+      const key = (l.piso ?? 'Geral').trim() || 'Geral';
+      const g = map.get(key) ?? { piso: key, area: 0, volume: 0, aco: 0 };
+      g.area += l.area ?? 0;
+      g.volume += l.volume ?? 0;
+      g.aco += l.aco_estimado_kg ?? 0;
+      map.set(key, g);
+    }
+    groups.push(...Array.from(map.values()));
+  } else if (resumo.area_estrutural_total > 0 || resumo.volume_total_lajes > 0) {
+    groups.push({
+      piso: 'Lajes',
+      area: resumo.area_estrutural_total,
+      volume: resumo.volume_total_lajes,
+      aco: resumo.aco_total_lajes,
+    });
+  }
 
-  if (areaLajeInf > 0 || volLajeInf > 0) {
+  let lajeChapterNumber = 2;
+  for (const g of groups) {
+    if (g.area <= 0 && g.volume <= 0) continue;
     const artigos: IcfBudgetArticle[] = [];
-    const qtdAbobadilhas = Math.ceil(areaLajeInf / 2); // 1 abobadilha ≈ 2m²
-    const qtdMalha = areaLajeInf; // m²
-    const mlTrelicas = areaLajeInf * 1.6; // ~1.6 ml/m²
+    const qtdAbobadilhas = Math.ceil(g.area / 2);
+    const qtdMalha = g.area;
+    const mlTrelicas = g.area * 1.6;
 
-    if (qtdAbobadilhas > 0) {
-      artigos.push(art('Abobadilha 2000x1000x170', 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
-    }
-    if (qtdMalha > 0) {
-      artigos.push(art('Malha electrosoldada para laje', 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
-    }
-    if (mlTrelicas > 0) {
-      artigos.push(art('Treliças (vigotas) para laje', 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
-    }
-    if (volLajeInf > 0) {
-      artigos.push(art(`Betão ${config.classe_betao} para laje inferior`, 'm³', volLajeInf, FALLBACK.betao_m3, ['betao']));
-    }
-    if (acoLajeInf > 0) {
-      artigos.push(art(`Aço ${config.classe_aco} para laje inferior`, 'kg', acoLajeInf, FALLBACK.aco_kg, ['aco', 'armadura']));
-    }
-    if (areaLajeInf > 0) {
-      artigos.push(art('Mão de obra — execução de laje inferior', 'm²', areaLajeInf, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
-    }
+    if (qtdAbobadilhas > 0) artigos.push(art(`Abobadilha 2000x1000x170 — ${g.piso}`, 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
+    if (qtdMalha > 0) artigos.push(art(`Malha electrosoldada — ${g.piso}`, 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
+    if (mlTrelicas > 0) artigos.push(art(`Treliças (vigotas) — ${g.piso}`, 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
+    if (g.volume > 0) artigos.push(art(`Betão ${config.classe_betao} — ${g.piso}`, 'm³', g.volume, FALLBACK.betao_m3, ['betao']));
+    if (g.aco > 0) artigos.push(art(`Aço ${config.classe_aco} — ${g.piso}`, 'kg', g.aco, FALLBACK.aco_kg, ['aco', 'armadura']));
+    if (g.area > 0) artigos.push(art(`Mão de obra — execução de laje (${g.piso})`, 'm²', g.area, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
 
     chapters.push({
-      numero: 2,
-      titulo: 'Laje Inferior',
+      numero: lajeChapterNumber++,
+      titulo: `Laje — ${g.piso}`,
       descricao: 'Laje aligeirada com abobadilha, treliças e malha',
       artigos,
     });
