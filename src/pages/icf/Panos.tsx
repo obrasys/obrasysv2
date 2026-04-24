@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Plus, Trash2, Layers, Pencil } from 'lucide-react';
-import { useIcfPanos, useCreateIcfPano, useDeleteIcfPano, useIcfConfiguracao } from '@/hooks/useIcfData';
+import { useIcfPanos, useCreateIcfPano, useDeleteIcfPano, useUpdateIcfPano, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { IcfVaosDialog } from '@/components/icf/IcfVaosDialog';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
@@ -25,6 +25,7 @@ const IcfPanos = () => {
   const { data: config } = useIcfConfiguracao(configId);
   const { data: panos, isLoading } = useIcfPanos(configId);
   const createPano = useCreateIcfPano();
+  const updatePano = useUpdateIcfPano();
   const deletePano = useDeleteIcfPano();
   const [showAdd, setShowAdd] = useState(false);
   const [selectedPanoId, setSelectedPanoId] = useState<string | null>(null);
@@ -107,9 +108,9 @@ const IcfPanos = () => {
       ? formatArmadura(editPano.diam_transversal, editPano.esp_transversal)
       : null;
 
-    createPano.mutate({
-      obra_id: config.obra_id,
-      configuracao_id: configId,
+    // UPDATE in-place — preserva vãos associados (cascade-safe)
+    updatePano.mutate({
+      id: editPano.id,
       referencia: editPano.referencia,
       piso_inicial: editPano.piso_inicial,
       altura_util: editPano.altura_util,
@@ -120,11 +121,7 @@ const IcfPanos = () => {
       armadura_horizontal: armH,
       reforco_transversal: reforco,
     } as any, {
-      onSuccess: () => {
-        // Delete old and keep new
-        deletePano.mutate(editPano.id);
-        setEditPano(null);
-      },
+      onSuccess: () => setEditPano(null),
     });
   };
 
