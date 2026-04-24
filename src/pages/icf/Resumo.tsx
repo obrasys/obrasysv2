@@ -52,7 +52,7 @@ const IcfResumo = () => {
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
           {r && config && (
-            <Button onClick={handleGenerateBudget} disabled={generateBudget.isPending}>
+            <Button onClick={handleOpenBudget} disabled={generateBudget.isPending}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />
               {generateBudget.isPending ? 'A gerar...' : 'Gerar Orçamento ICF'}
             </Button>
