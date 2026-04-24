@@ -11,6 +11,7 @@ import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
+import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
