@@ -283,11 +283,18 @@ export function useGenerateIcfBudget() {
       const chapters = buildChapters(resumo, config, precos);
       if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
-      // 3. Generate code
+      // 3. Calcular subtotal e custos indiretos absolutos
+      const subtotalArtigos = chapters.reduce(
+        (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
+        0,
+      );
+      const estaleiroAbs = Math.round(subtotalArtigos * (custos_indiretos_percent / 100) * 100) / 100;
+
+      // 4. Generate code
       const { data: codigo, error: codErr } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
       if (codErr) throw codErr;
 
-      // 4. Create orçamento
+      // 5. Create orçamento
       const { data: orc, error: orcErr } = await supabase
         .from('orcamentos')
         .insert({
@@ -295,7 +302,14 @@ export function useGenerateIcfBudget() {
           titulo: `Estrutura ICF — ${config.nome}`,
           codigo,
           obra_id: obraId,
-          margem_lucro: 15,
+          margem_lucro,
+          custos_indiretos: {
+            estaleiro: estaleiroAbs,
+            seguros: 0,
+            licenciamento: 0,
+            iva_percent,
+            indiretos_percent: custos_indiretos_percent,
+          },
           status: 'rascunho',
         } as any)
         .select()
