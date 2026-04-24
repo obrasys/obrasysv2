@@ -11,6 +11,7 @@ import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
+import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
@@ -42,12 +43,20 @@ const IcfIndex = () => {
     updateConfig.mutate({ id: configId, status: newStatus } as any);
   };
 
-  const handleGenerateBudget = () => {
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+
+  const handleOpenBudgetDialog = () => {
+    if (!activeConfig || !resumo || !selectedObraId) return;
+    setBudgetDialogOpen(true);
+  };
+
+  const handleConfirmGenerateBudget = (values: IcfBudgetFinancials) => {
     if (!activeConfig || !resumo || !selectedObraId) return;
     generateBudget.mutate(
-      { resumo, config: activeConfig, obraId: selectedObraId },
+      { resumo, config: activeConfig, obraId: selectedObraId, ...values },
       {
         onSuccess: (orc) => {
+          setBudgetDialogOpen(false);
           navigate(`/orcamentos/${orc.id}`);
         },
       },
@@ -122,7 +131,7 @@ const IcfIndex = () => {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={handleGenerateBudget}
+                    onClick={handleOpenBudgetDialog}
                     disabled={generateBudget.isPending || !resumo}
                   >
                     {generateBudget.isPending ? (
@@ -219,6 +228,13 @@ const IcfIndex = () => {
           </Card>
         )}
       </div>
+
+      <IcfBudgetConfigDialog
+        open={budgetDialogOpen}
+        onOpenChange={setBudgetDialogOpen}
+        onConfirm={handleConfirmGenerateBudget}
+        isPending={generateBudget.isPending}
+      />
     </AppLayout>
   );
 };
