@@ -3686,6 +3686,42 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_budget_presets: {
+        Row: {
+          created_at: string
+          custos_indiretos_percent: number
+          id: string
+          is_default: boolean
+          iva_percent: number
+          margem_lucro: number
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custos_indiretos_percent?: number
+          id?: string
+          is_default?: boolean
+          iva_percent?: number
+          margem_lucro?: number
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custos_indiretos_percent?: number
+          id?: string
+          is_default?: boolean
+          iva_percent?: number
+          margem_lucro?: number
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       icf_configuracoes: {
         Row: {
           altura_piso_padrao: number | null
