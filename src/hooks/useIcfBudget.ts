@@ -67,6 +67,7 @@ function buildChapters(
   resumo: IcfResumo,
   config: IcfConfiguracao,
   precos: Array<{ codigo: string; descricao: string; unidade: string; preco_unitario: number; categoria: string }>,
+  lajes: IcfLaje[],
 ): IcfBudgetChapter[] {
   const chapters: IcfBudgetChapter[] = [];
   const espNucleoCm = config.espessura_nucleo * 100;
