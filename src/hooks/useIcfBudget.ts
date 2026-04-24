@@ -238,11 +238,29 @@ export function useGenerateIcfBudget() {
         .eq('user_id', user.id);
       const precos = precosData ?? [];
 
-      // 2. Construir capítulos
-      const chapters = buildChapters(resumo, config, precos);
-      if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+      // 1b. Carregar lajes reais para agrupamento por piso
+      const { data: lajesData } = await supabase
+        .from('icf_lajes')
+        .select('*')
+        .eq('configuracao_id', config.id);
+      const lajes = (lajesData ?? []) as unknown as IcfLaje[];
 
-      // 3. Calcular subtotal e custos indiretos absolutos
+      // 2. Construir capítulos (com preços de custo)
+      const chaptersCost = buildChapters(resumo, config, precos, lajes);
+      if (chaptersCost.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+
+      // 2b. Aplicar margem de lucro real (PV = Custo / (1 - Margem%)) a cada preço unitário
+      // Garante que as linhas do PDF batem com o total final.
+      const chapters = chaptersCost.map((cap) => ({
+        ...cap,
+        artigos: cap.artigos.map((a) => ({
+          ...a,
+          preco_base: a.preco_unitario,
+          preco_unitario: calcPrecoVenda(a.preco_unitario, margem_lucro),
+        })),
+      }));
+
+      // 3. Calcular subtotal (já com margem) e custos indiretos absolutos
       const subtotalArtigos = chapters.reduce(
         (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
         0,
@@ -275,7 +293,7 @@ export function useGenerateIcfBudget() {
         .single();
       if (orcErr) throw orcErr;
 
-      // 5. Criar capítulos + artigos
+      // 6. Criar capítulos + artigos
       for (const cap of chapters) {
         const { data: capRow, error: capErr } = await supabase
           .from('capitulos_orcamento')
@@ -299,6 +317,7 @@ export function useGenerateIcfBudget() {
             unidade: a.unidade,
             quantidade: a.quantidade,
             preco_unitario: a.preco_unitario,
+            preco_base: (a as any).preco_base,
             ordem: i + 1,
             quantity_source: 'icf_parametric',
           }));
@@ -313,7 +332,7 @@ export function useGenerateIcfBudget() {
       qc.invalidateQueries({ queryKey: ['orcamentos'] });
       toast({
         title: 'Orçamento ICF gerado',
-        description: `${orc.codigo} criado com 4 capítulos (Sapatas, Laje Inferior, Paredes, Laje Superior)`,
+        description: `${orc.codigo} criado a partir do módulo ICF`,
       });
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
