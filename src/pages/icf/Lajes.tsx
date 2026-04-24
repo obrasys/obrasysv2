@@ -12,12 +12,12 @@ import { ArrowLeft, Plus, Trash2, Pencil } from 'lucide-react';
 import { useIcfLajes, useCreateIcfLaje, useDeleteIcfLaje, useUpdateIcfLaje, useIcfConfiguracao } from '@/hooks/useIcfData';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
+import { REBAR_WEIGHT_PER_METER } from '@/utils/icfSteelCalculation';
 
-/** Peso linear dos varões (kg/m) */
-const PESO_VARAO: Record<string, number> = {
-  '6': 0.222, '8': 0.395, '10': 0.617, '12': 0.888,
-  '16': 1.578, '20': 2.466, '25': 3.854, '32': 6.313,
-};
+/** Peso linear dos varões (kg/m) — fonte centralizada */
+const PESO_VARAO: Record<string, number> = Object.fromEntries(
+  Object.entries(REBAR_WEIGHT_PER_METER).map(([k, v]) => [k, v]),
+);
 
 const DIAMETROS = Object.keys(PESO_VARAO);
 
