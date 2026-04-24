@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Settings, Layers, Box, BarChart3, Trash2, CheckCircle, Lock } from 'lucide-react';
+import { Plus, Settings, Layers, Box, BarChart3, Trash2, CheckCircle, Lock, FileText, Loader2 } from 'lucide-react';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
+import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
