@@ -43,12 +43,20 @@ const IcfIndex = () => {
     updateConfig.mutate({ id: configId, status: newStatus } as any);
   };
 
-  const handleGenerateBudget = () => {
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+
+  const handleOpenBudgetDialog = () => {
+    if (!activeConfig || !resumo || !selectedObraId) return;
+    setBudgetDialogOpen(true);
+  };
+
+  const handleConfirmGenerateBudget = (values: IcfBudgetFinancials) => {
     if (!activeConfig || !resumo || !selectedObraId) return;
     generateBudget.mutate(
-      { resumo, config: activeConfig, obraId: selectedObraId },
+      { resumo, config: activeConfig, obraId: selectedObraId, ...values },
       {
         onSuccess: (orc) => {
+          setBudgetDialogOpen(false);
           navigate(`/orcamentos/${orc.id}`);
         },
       },
