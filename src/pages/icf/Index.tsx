@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Settings, Layers, Box, BarChart3, Trash2, CheckCircle, Lock } from 'lucide-react';
+import { Plus, Settings, Layers, Box, BarChart3, Trash2, CheckCircle, Lock, FileText, Loader2 } from 'lucide-react';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
+import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
@@ -35,9 +36,22 @@ const IcfIndex = () => {
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
+  const generateBudget = useGenerateIcfBudget();
 
   const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
     updateConfig.mutate({ id: configId, status: newStatus } as any);
+  };
+
+  const handleGenerateBudget = () => {
+    if (!activeConfig || !resumo || !selectedObraId) return;
+    generateBudget.mutate(
+      { resumo, config: activeConfig, obraId: selectedObraId },
+      {
+        onSuccess: (orc) => {
+          navigate(`/orcamentos/${orc.id}`);
+        },
+      },
+    );
   };
 
   const statusColor = (s: string) => {
@@ -105,6 +119,19 @@ const IcfIndex = () => {
                       <Lock className="h-4 w-4 mr-1" />Congelar
                     </Button>
                   )}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleGenerateBudget}
+                    disabled={generateBudget.isPending || !resumo}
+                  >
+                    {generateBudget.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4 mr-1" />
+                    )}
+                    Gerar Orçamento
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/icf/configuracao/${activeConfig.id}`)}>
                     <Settings className="h-4 w-4 mr-1" />Editar
                   </Button>
