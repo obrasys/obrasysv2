@@ -89,7 +89,9 @@ export default function VerOrcamentoPage() {
     ? subtotalComIndiretos / (1 - margemDecimal)
     : subtotalComIndiretos;
 
-  const taxaIVA = contextoFiscal?.taxa_iva ?? 23;
+  // Prioridade: IVA configurado no orçamento (ex: ICF) → contexto fiscal → 23% padrão
+  const ivaConfigurado = (orcamento.custos_indiretos as any)?.iva_percent;
+  const taxaIVA = typeof ivaConfigurado === 'number' ? ivaConfigurado : (contextoFiscal?.taxa_iva ?? 23);
   const valorIVA = valorBase * (taxaIVA / 100);
   const valorFinal = valorBase + valorIVA;
   const lucroEstimado = valorBase - subtotalComIndiretos;
