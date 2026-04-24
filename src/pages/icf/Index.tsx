@@ -131,7 +131,7 @@ const IcfIndex = () => {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={handleGenerateBudget}
+                    onClick={handleOpenBudgetDialog}
                     disabled={generateBudget.isPending || !resumo}
                   >
                     {generateBudget.isPending ? (
