@@ -119,6 +119,19 @@ const IcfIndex = () => {
                       <Lock className="h-4 w-4 mr-1" />Congelar
                     </Button>
                   )}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleGenerateBudget}
+                    disabled={generateBudget.isPending || !resumo}
+                  >
+                    {generateBudget.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4 mr-1" />
+                    )}
+                    Gerar Orçamento
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/icf/configuracao/${activeConfig.id}`)}>
                     <Settings className="h-4 w-4 mr-1" />Editar
                   </Button>
