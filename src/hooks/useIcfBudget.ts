@@ -117,10 +117,49 @@ function buildChapters(
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 2 — LAJES (agrupadas por piso/referência reais)
+  // CAPÍTULO 2 — PANO DE PAREDES (ICF)
   // ═══════════════════════════════════════════════════════════
-  // Estratégia: se houver lajes registadas, gerar 1 capítulo por piso (ou "Geral").
-  // Caso contrário, fallback para um único capítulo "Lajes" usando os totais do resumo.
+  if (resumo.area_liquida_total > 0) {
+    const artigos: IcfBudgetArticle[] = [];
+    const qtdPaineis = estimarPaineis(resumo.area_liquida_total);
+    const qtdTopos = Math.ceil(qtdPaineis * 0.15);
+    const qtdEspacadores = qtdPaineis * 6;
+    const qtdCantosC3 = Math.ceil(resumo.comprimento_total_paredes * 0.2);
+    const qtdCantosC4 = Math.ceil(resumo.comprimento_total_paredes * 0.1);
+    const qtdPadieiras = resumo.area_total_vaos > 0 ? Math.ceil(resumo.area_total_vaos / 3) : 0;
+
+    artigos.push(art(`Painel grafitado H27 D${espNucleoCm} — ICF`, 'un', qtdPaineis, FALLBACK.painel_grafitado_un, ['painel', 'grafitado']));
+    if (qtdPadieiras > 0) {
+      artigos.push(art('Padieiras para vãos (vergas)', 'un', qtdPadieiras, FALLBACK.padieira_un, ['padieira']));
+    }
+    artigos.push(art(`Topos ${is22 ? '22' : '15'}cm`, 'un', qtdTopos, FALLBACK.topo_un, ['topo']));
+    artigos.push(art('Cantos C3', 'un', qtdCantosC3, FALLBACK.canto_c3_un, ['canto', 'c3']));
+    artigos.push(art('Cantos C4', 'un', qtdCantosC4, FALLBACK.canto_c4_un, ['canto', 'c4']));
+    artigos.push(art(`Espaçadores ${is22 ? '22' : '15'}cm`, 'un', qtdEspacadores, FALLBACK.espacador_un, ['espacador']));
+
+    // Aço para paredes (estimativa: 35 kg/m³ de betão de enchimento)
+    const acoParedes = resumo.volume_total_paredes * 35;
+    if (acoParedes > 0) {
+      artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
+    }
+
+    if (resumo.volume_total_paredes > 0) {
+      artigos.push(art(`Betão ${config.classe_betao} para enchimento ICF (bombeado)`, 'm³', resumo.volume_total_paredes, FALLBACK.betao_m3, ['betao']));
+    }
+
+    artigos.push(art('Mão de obra — montagem de painéis ICF', 'm²', resumo.area_liquida_total, FALLBACK.mao_obra_m2, ['mao de obra', 'icf']));
+
+    chapters.push({
+      numero: 2,
+      titulo: 'Pano de Paredes',
+      descricao: `Sistema ICF — núcleo ${espNucleoCm}cm — Fornecedor de referência: ${FORNECEDOR_ICF}`,
+      artigos,
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CAPÍTULOS 3+ — LAJES (agrupadas por piso real)
+  // ═══════════════════════════════════════════════════════════
   type LajeGroup = { piso: string; area: number; volume: number; aco: number };
   const groups: LajeGroup[] = [];
   if (lajes.length > 0) {
@@ -143,7 +182,7 @@ function buildChapters(
     });
   }
 
-  let lajeChapterNumber = 2;
+  let lajeChapterNumber = 3;
   for (const g of groups) {
     if (g.area <= 0 && g.volume <= 0) continue;
     const artigos: IcfBudgetArticle[] = [];
@@ -162,94 +201,6 @@ function buildChapters(
       numero: lajeChapterNumber++,
       titulo: `Laje — ${g.piso}`,
       descricao: 'Laje aligeirada com abobadilha, treliças e malha',
-      artigos,
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 3 — PANO DE PAREDES (ICF)
-  // ═══════════════════════════════════════════════════════════
-  if (resumo.area_liquida_total > 0) {
-    const artigos: IcfBudgetArticle[] = [];
-    const qtdPaineis = estimarPaineis(resumo.area_liquida_total);
-    const qtdTopos = Math.ceil(qtdPaineis * 0.15);
-    const qtdEspacadores = qtdPaineis * 6;
-    const qtdCantosC3 = Math.ceil(resumo.comprimento_total_paredes * 0.2);
-    const qtdCantosC4 = Math.ceil(resumo.comprimento_total_paredes * 0.1);
-    const qtdPadieiras = resumo.area_total_vaos > 0 ? Math.ceil(resumo.area_total_vaos / 3) : 0;
-
-    artigos.push(art(`Painel grafitado H27 D${espNucleoCm} — ICF`, 'un', qtdPaineis, FALLBACK.painel_grafitado_un, ['painel', 'grafitado']));
-    if (qtdPadieiras > 0) {
-      artigos.push(art('Padieiras para vãos (vergas)', 'un', qtdPadieiras, FALLBACK.padieira_un, ['padieira']));
-    }
-    artigos.push(art(`Topos ${is22 ? '22' : '15'}cm`, 'un', qtdTopos, FALLBACK.topo_un, ['topo']));
-    artigos.push(art('Cantos C3', 'un', qtdCantosC3, FALLBACK.canto_c3_un, ['canto', 'c3']));
-    artigos.push(art('Cantos C4', 'un', qtdCantosC4, FALLBACK.canto_c4_un, ['canto', 'c4']));
-    artigos.push(art(`Espaçadores ${is22 ? '22' : '15'}cm`, 'un', qtdEspacadores, FALLBACK.espacador_un, ['espacador']));
-
-    if (resumo.aco_total_fundacoes === 0) {
-      // Aço para paredes (estimativa: 35 kg/m³ de betão)
-      const acoParedes = resumo.volume_total_paredes * 35;
-      if (acoParedes > 0) {
-        artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
-      }
-    } else {
-      const acoParedes = resumo.volume_total_paredes * 35;
-      if (acoParedes > 0) {
-        artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
-      }
-    }
-
-    if (resumo.volume_total_paredes > 0) {
-      artigos.push(art(`Betão ${config.classe_betao} para enchimento ICF (bombeado)`, 'm³', resumo.volume_total_paredes, FALLBACK.betao_m3, ['betao']));
-    }
-
-    artigos.push(art('Mão de obra — montagem de painéis ICF', 'm²', resumo.area_liquida_total, FALLBACK.mao_obra_m2, ['mao de obra', 'icf']));
-
-    chapters.push({
-      numero: 3,
-      titulo: 'Pano de Paredes',
-      descricao: `Sistema ICF — núcleo ${espNucleoCm}cm — Fornecedor de referência: ${FORNECEDOR_ICF}`,
-      artigos,
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 4 — LAJE SUPERIOR (Cobertura)
-  // ═══════════════════════════════════════════════════════════
-  const areaLajeSup = areaLajeTotal / 2;
-  const volLajeSup = volLajeTotal / 2;
-  const acoLajeSup = acoLajeTotal / 2;
-
-  if (areaLajeSup > 0 || volLajeSup > 0) {
-    const artigos: IcfBudgetArticle[] = [];
-    const qtdAbobadilhas = Math.ceil(areaLajeSup / 2);
-    const qtdMalha = areaLajeSup;
-    const mlTrelicas = areaLajeSup * 1.6;
-
-    if (qtdAbobadilhas > 0) {
-      artigos.push(art('Abobadilha 2000x1000x170 (cobertura)', 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
-    }
-    if (qtdMalha > 0) {
-      artigos.push(art('Malha electrosoldada para cobertura', 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
-    }
-    if (mlTrelicas > 0) {
-      artigos.push(art('Treliças (vigotas) para cobertura', 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
-    }
-    if (volLajeSup > 0) {
-      artigos.push(art(`Betão ${config.classe_betao} para laje superior`, 'm³', volLajeSup, FALLBACK.betao_m3, ['betao']));
-    }
-    if (acoLajeSup > 0) {
-      artigos.push(art(`Aço ${config.classe_aco} para laje superior`, 'kg', acoLajeSup, FALLBACK.aco_kg, ['aco', 'armadura']));
-    }
-    if (areaLajeSup > 0) {
-      artigos.push(art('Mão de obra — execução de cobertura', 'm²', areaLajeSup, FALLBACK.mao_obra_m2, ['mao de obra', 'cobertura']));
-    }
-
-    chapters.push({
-      numero: 4,
-      titulo: 'Laje Superior (Cobertura)',
-      descricao: 'Cobertura aligeirada com abobadilha, treliças e malha',
       artigos,
     });
   }
