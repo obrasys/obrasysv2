@@ -228,6 +228,13 @@ const IcfIndex = () => {
           </Card>
         )}
       </div>
+
+      <IcfBudgetConfigDialog
+        open={budgetDialogOpen}
+        onOpenChange={setBudgetDialogOpen}
+        onConfirm={handleConfirmGenerateBudget}
+        isPending={generateBudget.isPending}
+      />
     </AppLayout>
   );
 };
