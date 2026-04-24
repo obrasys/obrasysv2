@@ -36,9 +36,22 @@ const IcfIndex = () => {
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
+  const generateBudget = useGenerateIcfBudget();
 
   const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
     updateConfig.mutate({ id: configId, status: newStatus } as any);
+  };
+
+  const handleGenerateBudget = () => {
+    if (!activeConfig || !resumo || !selectedObraId) return;
+    generateBudget.mutate(
+      { resumo, config: activeConfig, obraId: selectedObraId },
+      {
+        onSuccess: (orc) => {
+          navigate(`/orcamentos/${orc.id}`);
+        },
+      },
+    );
   };
 
   const statusColor = (s: string) => {
