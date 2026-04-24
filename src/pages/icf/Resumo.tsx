@@ -140,6 +140,13 @@ const IcfResumo = () => {
           </>
         )}
       </div>
+
+      <IcfBudgetConfigDialog
+        open={budgetDialogOpen}
+        onOpenChange={setBudgetDialogOpen}
+        onConfirm={handleConfirmBudget}
+        isPending={generateBudget.isPending}
+      />
     </AppLayout>
   );
 };
