@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
+import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
 
 const IcfResumo = () => {
   const { configId } = useParams();
@@ -24,11 +26,23 @@ const IcfResumo = () => {
 
   const colors = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--muted-foreground))'];
 
-  const handleGenerateBudget = () => {
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+
+  const handleOpenBudget = () => {
+    if (!r || !config) return;
+    setBudgetDialogOpen(true);
+  };
+
+  const handleConfirmBudget = (values: IcfBudgetFinancials) => {
     if (!r || !config) return;
     generateBudget.mutate(
-      { resumo: r, config, obraId: config.obra_id },
-      { onSuccess: (orc) => navigate(`/orcamentos/${orc.id}`) }
+      { resumo: r, config, obraId: config.obra_id, ...values },
+      {
+        onSuccess: (orc) => {
+          setBudgetDialogOpen(false);
+          navigate(`/orcamentos/${orc.id}`);
+        },
+      },
     );
   };
 
@@ -38,7 +52,7 @@ const IcfResumo = () => {
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => navigate('/icf')}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
           {r && config && (
-            <Button onClick={handleGenerateBudget} disabled={generateBudget.isPending}>
+            <Button onClick={handleOpenBudget} disabled={generateBudget.isPending}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />
               {generateBudget.isPending ? 'A gerar...' : 'Gerar Orçamento ICF'}
             </Button>
@@ -126,6 +140,13 @@ const IcfResumo = () => {
           </>
         )}
       </div>
+
+      <IcfBudgetConfigDialog
+        open={budgetDialogOpen}
+        onOpenChange={setBudgetDialogOpen}
+        onConfirm={handleConfirmBudget}
+        isPending={generateBudget.isPending}
+      />
     </AppLayout>
   );
 };

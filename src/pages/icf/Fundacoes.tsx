@@ -185,6 +185,16 @@ const IcfFundacoes = () => {
 
   const handleAdd = () => {
     if (!configId || !config) return;
+    // Persistir config de armadura completa em observacoes (prefixo JSON parseável)
+    const armSnapshot = {
+      diam_long_inf: form.diam_long_inf, espac_long_inf: form.espac_long_inf,
+      usar_arm_sup: form.usar_arm_sup, diam_long_sup: form.diam_long_sup, espac_long_sup: form.espac_long_sup,
+      usar_trans_inf: form.usar_trans_inf, diam_trans_inf: form.diam_trans_inf, espac_trans_inf: form.espac_trans_inf,
+      usar_trans_sup: form.usar_trans_sup, diam_trans_sup: form.diam_trans_sup, espac_trans_sup: form.espac_trans_sup,
+      usar_estribos: form.usar_estribos, diam_estribo: form.diam_estribo, espac_estribo: form.espac_estribo,
+      usar_barras_laterais: form.usar_barras_laterais, diam_lateral: form.diam_lateral, espac_lateral: form.espac_lateral,
+    };
+    const observacoes = `__ARM__:${JSON.stringify(armSnapshot)}|`;
     const payload: any = {
       tipo_fundacao: tipo,
       referencia: form.referencia,
@@ -193,6 +203,7 @@ const IcfFundacoes = () => {
       altura: form.altura,
       quantidade: form.quantidade,
       aco_estimado_kg: acoTotal,
+      observacoes,
     };
     if (editingId) {
       updateFundacao.mutate({ id: editingId, ...payload }, { onSuccess: () => { setShowAdd(false); setEditingId(null); setForm(defaultForm()); } });
@@ -204,8 +215,16 @@ const IcfFundacoes = () => {
   const handleEdit = (f: any) => {
     setEditingId(f.id);
     setTipo(f.tipo_fundacao as any);
+    // Restaurar config de armadura a partir de observacoes
+    const obs: string = f.observacoes ?? '';
+    const m = obs.match(/^__ARM__:(\{.*?\})\|/s);
+    let armRestored: Partial<FundacaoForm> = {};
+    if (m) {
+      try { armRestored = JSON.parse(m[1]); } catch { /* ignore */ }
+    }
     setForm({
       ...defaultForm(),
+      ...armRestored,
       referencia: f.referencia ?? '',
       comprimento: f.comprimento,
       largura: f.largura,

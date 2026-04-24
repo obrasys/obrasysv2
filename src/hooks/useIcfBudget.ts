@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import type { IcfResumo, IcfConfiguracao } from '@/types/icf';
+import { calcPrecoVenda } from '@/lib/margin';
+import type { IcfResumo, IcfConfiguracao, IcfLaje } from '@/types/icf';
 
 interface IcfBudgetArticle {
   codigo?: string;
@@ -66,6 +67,7 @@ function buildChapters(
   resumo: IcfResumo,
   config: IcfConfiguracao,
   precos: Array<{ codigo: string; descricao: string; unidade: string; preco_unitario: number; categoria: string }>,
+  lajes: IcfLaje[],
 ): IcfBudgetChapter[] {
   const chapters: IcfBudgetChapter[] = [];
   const espNucleoCm = config.espessura_nucleo * 100;
@@ -115,51 +117,7 @@ function buildChapters(
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 2 — LAJE INFERIOR
-  // ═══════════════════════════════════════════════════════════
-  // Heurística: dividir lajes em inferior/superior por igual quando não há separação
-  const areaLajeTotal = resumo.area_estrutural_total > 0 ? resumo.area_estrutural_total : 0;
-  const volLajeTotal = resumo.volume_total_lajes;
-  const acoLajeTotal = resumo.aco_total_lajes;
-  const areaLajeInf = areaLajeTotal / 2;
-  const volLajeInf = volLajeTotal / 2;
-  const acoLajeInf = acoLajeTotal / 2;
-
-  if (areaLajeInf > 0 || volLajeInf > 0) {
-    const artigos: IcfBudgetArticle[] = [];
-    const qtdAbobadilhas = Math.ceil(areaLajeInf / 2); // 1 abobadilha ≈ 2m²
-    const qtdMalha = areaLajeInf; // m²
-    const mlTrelicas = areaLajeInf * 1.6; // ~1.6 ml/m²
-
-    if (qtdAbobadilhas > 0) {
-      artigos.push(art('Abobadilha 2000x1000x170', 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
-    }
-    if (qtdMalha > 0) {
-      artigos.push(art('Malha electrosoldada para laje', 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
-    }
-    if (mlTrelicas > 0) {
-      artigos.push(art('Treliças (vigotas) para laje', 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
-    }
-    if (volLajeInf > 0) {
-      artigos.push(art(`Betão ${config.classe_betao} para laje inferior`, 'm³', volLajeInf, FALLBACK.betao_m3, ['betao']));
-    }
-    if (acoLajeInf > 0) {
-      artigos.push(art(`Aço ${config.classe_aco} para laje inferior`, 'kg', acoLajeInf, FALLBACK.aco_kg, ['aco', 'armadura']));
-    }
-    if (areaLajeInf > 0) {
-      artigos.push(art('Mão de obra — execução de laje inferior', 'm²', areaLajeInf, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
-    }
-
-    chapters.push({
-      numero: 2,
-      titulo: 'Laje Inferior',
-      descricao: 'Laje aligeirada com abobadilha, treliças e malha',
-      artigos,
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 3 — PANO DE PAREDES (ICF)
+  // CAPÍTULO 2 — PANO DE PAREDES (ICF)
   // ═══════════════════════════════════════════════════════════
   if (resumo.area_liquida_total > 0) {
     const artigos: IcfBudgetArticle[] = [];
@@ -179,17 +137,10 @@ function buildChapters(
     artigos.push(art('Cantos C4', 'un', qtdCantosC4, FALLBACK.canto_c4_un, ['canto', 'c4']));
     artigos.push(art(`Espaçadores ${is22 ? '22' : '15'}cm`, 'un', qtdEspacadores, FALLBACK.espacador_un, ['espacador']));
 
-    if (resumo.aco_total_fundacoes === 0) {
-      // Aço para paredes (estimativa: 35 kg/m³ de betão)
-      const acoParedes = resumo.volume_total_paredes * 35;
-      if (acoParedes > 0) {
-        artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
-      }
-    } else {
-      const acoParedes = resumo.volume_total_paredes * 35;
-      if (acoParedes > 0) {
-        artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
-      }
+    // Aço para paredes (estimativa: 35 kg/m³ de betão de enchimento)
+    const acoParedes = resumo.volume_total_paredes * 35;
+    if (acoParedes > 0) {
+      artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
     }
 
     if (resumo.volume_total_paredes > 0) {
@@ -199,7 +150,7 @@ function buildChapters(
     artigos.push(art('Mão de obra — montagem de painéis ICF', 'm²', resumo.area_liquida_total, FALLBACK.mao_obra_m2, ['mao de obra', 'icf']));
 
     chapters.push({
-      numero: 3,
+      numero: 2,
       titulo: 'Pano de Paredes',
       descricao: `Sistema ICF — núcleo ${espNucleoCm}cm — Fornecedor de referência: ${FORNECEDOR_ICF}`,
       artigos,
@@ -207,41 +158,49 @@ function buildChapters(
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 4 — LAJE SUPERIOR (Cobertura)
+  // CAPÍTULOS 3+ — LAJES (agrupadas por piso real)
   // ═══════════════════════════════════════════════════════════
-  const areaLajeSup = areaLajeTotal / 2;
-  const volLajeSup = volLajeTotal / 2;
-  const acoLajeSup = acoLajeTotal / 2;
+  type LajeGroup = { piso: string; area: number; volume: number; aco: number };
+  const groups: LajeGroup[] = [];
+  if (lajes.length > 0) {
+    const map = new Map<string, LajeGroup>();
+    for (const l of lajes) {
+      const key = (l.piso ?? 'Geral').trim() || 'Geral';
+      const g = map.get(key) ?? { piso: key, area: 0, volume: 0, aco: 0 };
+      g.area += l.area ?? 0;
+      g.volume += l.volume ?? 0;
+      g.aco += l.aco_estimado_kg ?? 0;
+      map.set(key, g);
+    }
+    groups.push(...Array.from(map.values()));
+  } else if (resumo.area_estrutural_total > 0 || resumo.volume_total_lajes > 0) {
+    groups.push({
+      piso: 'Lajes',
+      area: resumo.area_estrutural_total,
+      volume: resumo.volume_total_lajes,
+      aco: resumo.aco_total_lajes,
+    });
+  }
 
-  if (areaLajeSup > 0 || volLajeSup > 0) {
+  let lajeChapterNumber = 3;
+  for (const g of groups) {
+    if (g.area <= 0 && g.volume <= 0) continue;
     const artigos: IcfBudgetArticle[] = [];
-    const qtdAbobadilhas = Math.ceil(areaLajeSup / 2);
-    const qtdMalha = areaLajeSup;
-    const mlTrelicas = areaLajeSup * 1.6;
+    const qtdAbobadilhas = Math.ceil(g.area / 2);
+    const qtdMalha = g.area;
+    const mlTrelicas = g.area * 1.6;
 
-    if (qtdAbobadilhas > 0) {
-      artigos.push(art('Abobadilha 2000x1000x170 (cobertura)', 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
-    }
-    if (qtdMalha > 0) {
-      artigos.push(art('Malha electrosoldada para cobertura', 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
-    }
-    if (mlTrelicas > 0) {
-      artigos.push(art('Treliças (vigotas) para cobertura', 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
-    }
-    if (volLajeSup > 0) {
-      artigos.push(art(`Betão ${config.classe_betao} para laje superior`, 'm³', volLajeSup, FALLBACK.betao_m3, ['betao']));
-    }
-    if (acoLajeSup > 0) {
-      artigos.push(art(`Aço ${config.classe_aco} para laje superior`, 'kg', acoLajeSup, FALLBACK.aco_kg, ['aco', 'armadura']));
-    }
-    if (areaLajeSup > 0) {
-      artigos.push(art('Mão de obra — execução de cobertura', 'm²', areaLajeSup, FALLBACK.mao_obra_m2, ['mao de obra', 'cobertura']));
-    }
+    if (qtdAbobadilhas > 0) artigos.push(art(`Abobadilha 2000x1000x170 — ${g.piso}`, 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
+    if (qtdMalha > 0) artigos.push(art(`Malha electrosoldada — ${g.piso}`, 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
+    if (mlTrelicas > 0) artigos.push(art(`Treliças (vigotas) — ${g.piso}`, 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
+    if (g.volume > 0) artigos.push(art(`Betão ${config.classe_betao} — ${g.piso}`, 'm³', g.volume, FALLBACK.betao_m3, ['betao']));
+    if (g.aco > 0) artigos.push(art(`Aço ${config.classe_aco} — ${g.piso}`, 'kg', g.aco, FALLBACK.aco_kg, ['aco', 'armadura']));
+    if (g.area > 0) artigos.push(art(`Mão de obra — execução de laje (${g.piso})`, 'm²', g.area, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
 
     chapters.push({
-      numero: 4,
-      titulo: 'Laje Superior (Cobertura)',
-      descricao: 'Cobertura aligeirada com abobadilha, treliças e malha',
+      numero: lajeChapterNumber++,
+      titulo: `Laje — ${g.piso}`,
+      descricao: 'Laje aligeirada com abobadilha, treliças e malha',
       artigos,
     });
   }
@@ -279,11 +238,29 @@ export function useGenerateIcfBudget() {
         .eq('user_id', user.id);
       const precos = precosData ?? [];
 
-      // 2. Construir capítulos
-      const chapters = buildChapters(resumo, config, precos);
-      if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+      // 1b. Carregar lajes reais para agrupamento por piso
+      const { data: lajesData } = await supabase
+        .from('icf_lajes')
+        .select('*')
+        .eq('configuracao_id', config.id);
+      const lajes = (lajesData ?? []) as unknown as IcfLaje[];
 
-      // 3. Calcular subtotal e custos indiretos absolutos
+      // 2. Construir capítulos (com preços de custo)
+      const chaptersCost = buildChapters(resumo, config, precos, lajes);
+      if (chaptersCost.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+
+      // 2b. Aplicar margem de lucro real (PV = Custo / (1 - Margem%)) a cada preço unitário
+      // Garante que as linhas do PDF batem com o total final.
+      const chapters = chaptersCost.map((cap) => ({
+        ...cap,
+        artigos: cap.artigos.map((a) => ({
+          ...a,
+          preco_base: a.preco_unitario,
+          preco_unitario: calcPrecoVenda(a.preco_unitario, margem_lucro),
+        })),
+      }));
+
+      // 3. Calcular subtotal (já com margem) e custos indiretos absolutos
       const subtotalArtigos = chapters.reduce(
         (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
         0,
@@ -316,7 +293,7 @@ export function useGenerateIcfBudget() {
         .single();
       if (orcErr) throw orcErr;
 
-      // 5. Criar capítulos + artigos
+      // 6. Criar capítulos + artigos
       for (const cap of chapters) {
         const { data: capRow, error: capErr } = await supabase
           .from('capitulos_orcamento')
@@ -340,6 +317,7 @@ export function useGenerateIcfBudget() {
             unidade: a.unidade,
             quantidade: a.quantidade,
             preco_unitario: a.preco_unitario,
+            preco_base: (a as any).preco_base,
             ordem: i + 1,
             quantity_source: 'icf_parametric',
           }));
@@ -354,7 +332,7 @@ export function useGenerateIcfBudget() {
       qc.invalidateQueries({ queryKey: ['orcamentos'] });
       toast({
         title: 'Orçamento ICF gerado',
-        description: `${orc.codigo} criado com 4 capítulos (Sapatas, Laje Inferior, Paredes, Laje Superior)`,
+        description: `${orc.codigo} criado a partir do módulo ICF`,
       });
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
