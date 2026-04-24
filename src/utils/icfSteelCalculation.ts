@@ -12,6 +12,7 @@ export const REBAR_WEIGHT_PER_METER: Record<number, number> = {
   16: 1.578,
   20: 2.466,
   25: 3.854,
+  32: 6.313,
 };
 
 export const REBAR_DIAMETERS = [6, 8, 10, 12, 16, 20, 25] as const;
