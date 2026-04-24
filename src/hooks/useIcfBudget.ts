@@ -255,7 +255,21 @@ export function useGenerateIcfBudget() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ resumo, config, obraId }: { resumo: IcfResumo; config: IcfConfiguracao; obraId: string }) => {
+    mutationFn: async ({
+      resumo,
+      config,
+      obraId,
+      margem_lucro = 15,
+      iva_percent = 23,
+      custos_indiretos_percent = 0,
+    }: {
+      resumo: IcfResumo;
+      config: IcfConfiguracao;
+      obraId: string;
+      margem_lucro?: number;
+      iva_percent?: number;
+      custos_indiretos_percent?: number;
+    }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
       // 1. Carregar base de preços do utilizador
