@@ -24,6 +24,8 @@ import {
   DashboardSetupProgress,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
+import { DashboardAlertsWidget } from '@/components/axia/DashboardAlertsWidget';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
 const Dashboard = () => {
   const navigate = useNavigate();
