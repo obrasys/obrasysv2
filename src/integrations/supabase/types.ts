@@ -910,6 +910,81 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_intake_items: {
+        Row: {
+          axia_questions: Json
+          confidence: number
+          created_at: string
+          extracted_data: Json
+          id: string
+          item_type: string
+          missing_fields: Json
+          obra_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          summary: string | null
+          target_entity_id: string | null
+          target_entity_type: string | null
+          title: string
+          user_id: string
+          voice_command_id: string | null
+        }
+        Insert: {
+          axia_questions?: Json
+          confidence?: number
+          created_at?: string
+          extracted_data?: Json
+          id?: string
+          item_type: string
+          missing_fields?: Json
+          obra_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          summary?: string | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          title: string
+          user_id: string
+          voice_command_id?: string | null
+        }
+        Update: {
+          axia_questions?: Json
+          confidence?: number
+          created_at?: string
+          extracted_data?: Json
+          id?: string
+          item_type?: string
+          missing_fields?: Json
+          obra_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          summary?: string | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          title?: string
+          user_id?: string
+          voice_command_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "axia_intake_items_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "axia_intake_items_voice_command_id_fkey"
+            columns: ["voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       axia_item_dictionary: {
         Row: {
           canonical_label: string
@@ -934,6 +1009,57 @@ export type Database = {
           id?: string
           locale?: string
           raw_text?: string
+        }
+        Relationships: []
+      }
+      axia_processing_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          input_summary: string | null
+          latency_ms: number | null
+          model_used: string | null
+          output_summary: string | null
+          process_type: string
+          prompt_version: string | null
+          rule_version: string | null
+          source_entity_id: string | null
+          source_entity_type: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_summary?: string | null
+          latency_ms?: number | null
+          model_used?: string | null
+          output_summary?: string | null
+          process_type: string
+          prompt_version?: string | null
+          rule_version?: string | null
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_summary?: string | null
+          latency_ms?: number | null
+          model_used?: string | null
+          output_summary?: string | null
+          process_type?: string
+          prompt_version?: string | null
+          rule_version?: string | null
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1967,15 +2093,19 @@ export type Database = {
           colaborador_id: string | null
           comprovante_url: string | null
           created_at: string
+          created_from: string
           data_pagamento: string | null
           data_vencimento: string
           descricao: string | null
           fornecedor_id: string | null
           id: string
+          intake_status: string | null
           obra_id: string | null
           orcamento_id: string | null
           origem: string
           pago: boolean
+          source_axia_intake_item_id: string | null
+          source_voice_command_id: string | null
           tipo: string
           updated_at: string
           user_id: string
@@ -1987,15 +2117,19 @@ export type Database = {
           colaborador_id?: string | null
           comprovante_url?: string | null
           created_at?: string
+          created_from?: string
           data_pagamento?: string | null
           data_vencimento: string
           descricao?: string | null
           fornecedor_id?: string | null
           id?: string
+          intake_status?: string | null
           obra_id?: string | null
           orcamento_id?: string | null
           origem: string
           pago?: boolean
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
           tipo: string
           updated_at?: string
           user_id: string
@@ -2007,15 +2141,19 @@ export type Database = {
           colaborador_id?: string | null
           comprovante_url?: string | null
           created_at?: string
+          created_from?: string
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string | null
           fornecedor_id?: string | null
           id?: string
+          intake_status?: string | null
           obra_id?: string | null
           orcamento_id?: string | null
           origem?: string
           pago?: boolean
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
           tipo?: string
           updated_at?: string
           user_id?: string
@@ -2064,6 +2202,20 @@ export type Database = {
             referencedRelation: "orcamentos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contas_financeiras_source_axia_intake_item_id_fkey"
+            columns: ["source_axia_intake_item_id"]
+            isOneToOne: false
+            referencedRelation: "axia_intake_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_source_voice_command_id_fkey"
+            columns: ["source_voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
+            referencedColumns: ["id"]
+          },
         ]
       }
       customer_assignments: {
@@ -2105,6 +2257,7 @@ export type Database = {
           actual_percent_before_rdo: number | null
           actual_productivity_day: number | null
           average_productivity_task: number | null
+          confidence: number | null
           created_at: string
           criticality: string | null
           daily_deviation: number | null
@@ -2125,11 +2278,13 @@ export type Database = {
           requires_replanning: boolean | null
           schedule_performance_index: number | null
           schedule_task_id: string | null
+          source: string
           task_status: string | null
           total_planned_quantity: number | null
           unit: string | null
           updated_at: string
           user_id: string
+          voice_command_id: string | null
           wbs_code: string | null
           work_area: string | null
         }
@@ -2139,6 +2294,7 @@ export type Database = {
           actual_percent_before_rdo?: number | null
           actual_productivity_day?: number | null
           average_productivity_task?: number | null
+          confidence?: number | null
           created_at?: string
           criticality?: string | null
           daily_deviation?: number | null
@@ -2159,11 +2315,13 @@ export type Database = {
           requires_replanning?: boolean | null
           schedule_performance_index?: number | null
           schedule_task_id?: string | null
+          source?: string
           task_status?: string | null
           total_planned_quantity?: number | null
           unit?: string | null
           updated_at?: string
           user_id: string
+          voice_command_id?: string | null
           wbs_code?: string | null
           work_area?: string | null
         }
@@ -2173,6 +2331,7 @@ export type Database = {
           actual_percent_before_rdo?: number | null
           actual_productivity_day?: number | null
           average_productivity_task?: number | null
+          confidence?: number | null
           created_at?: string
           criticality?: string | null
           daily_deviation?: number | null
@@ -2193,11 +2352,13 @@ export type Database = {
           requires_replanning?: boolean | null
           schedule_performance_index?: number | null
           schedule_task_id?: string | null
+          source?: string
           task_status?: string | null
           total_planned_quantity?: number | null
           unit?: string | null
           updated_at?: string
           user_id?: string
+          voice_command_id?: string | null
           wbs_code?: string | null
           work_area?: string | null
         }
@@ -2221,6 +2382,13 @@ export type Database = {
             columns: ["schedule_task_id"]
             isOneToOne: false
             referencedRelation: "project_schedule_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_activities_voice_command_id_fkey"
+            columns: ["voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
             referencedColumns: ["id"]
           },
         ]
@@ -2506,6 +2674,73 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_report_material_needs: {
+        Row: {
+          created_at: string
+          daily_report_id: string
+          id: string
+          material_name: string
+          quantity: number | null
+          related_supplier_id: string | null
+          source: string
+          status: string
+          unit: string | null
+          urgency: string
+          user_id: string
+          voice_command_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          daily_report_id: string
+          id?: string
+          material_name: string
+          quantity?: number | null
+          related_supplier_id?: string | null
+          source?: string
+          status?: string
+          unit?: string | null
+          urgency?: string
+          user_id: string
+          voice_command_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          daily_report_id?: string
+          id?: string
+          material_name?: string
+          quantity?: number | null
+          related_supplier_id?: string | null
+          source?: string
+          status?: string
+          unit?: string | null
+          urgency?: string
+          user_id?: string
+          voice_command_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_material_needs_daily_report_id_fkey"
+            columns: ["daily_report_id"]
+            isOneToOne: false
+            referencedRelation: "relatorios_diarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_material_needs_related_supplier_id_fkey"
+            columns: ["related_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_report_material_needs_voice_command_id_fkey"
+            columns: ["voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
             referencedColumns: ["id"]
           },
         ]
@@ -2892,6 +3127,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_reports_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_alerts: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          obra_id: string | null
+          resolved_at: string | null
+          severity: string
+          source_entity_id: string | null
+          source_entity_type: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          obra_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          obra_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_alerts_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -6217,6 +6511,167 @@ export type Database = {
           },
         ]
       }
+      pre_budget_items: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          description: string
+          id: string
+          needs_review: boolean
+          ordem: number
+          pre_budget_id: string
+          quantity: number | null
+          source: string
+          total_price: number | null
+          unit: string | null
+          unit_price: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          needs_review?: boolean
+          ordem?: number
+          pre_budget_id: string
+          quantity?: number | null
+          source?: string
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          needs_review?: boolean
+          ordem?: number
+          pre_budget_id?: string
+          quantity?: number | null
+          source?: string
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_budget_items_pre_budget_id_fkey"
+            columns: ["pre_budget_id"]
+            isOneToOne: false
+            referencedRelation: "pre_budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pre_budgets: {
+        Row: {
+          axia_assumptions: Json
+          axia_missing_info: Json
+          axia_summary: string | null
+          cliente_id: string | null
+          confidence: number | null
+          converted_orcamento_id: string | null
+          created_at: string
+          created_from: string
+          currency: string
+          description: string | null
+          estimated_total: number | null
+          id: string
+          obra_id: string | null
+          reviewed_by: string | null
+          source_axia_intake_item_id: string | null
+          source_voice_command_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          axia_assumptions?: Json
+          axia_missing_info?: Json
+          axia_summary?: string | null
+          cliente_id?: string | null
+          confidence?: number | null
+          converted_orcamento_id?: string | null
+          created_at?: string
+          created_from?: string
+          currency?: string
+          description?: string | null
+          estimated_total?: number | null
+          id?: string
+          obra_id?: string | null
+          reviewed_by?: string | null
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          axia_assumptions?: Json
+          axia_missing_info?: Json
+          axia_summary?: string | null
+          cliente_id?: string | null
+          confidence?: number | null
+          converted_orcamento_id?: string | null
+          created_at?: string
+          created_from?: string
+          currency?: string
+          description?: string | null
+          estimated_total?: number | null
+          id?: string
+          obra_id?: string | null
+          reviewed_by?: string | null
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_budgets_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_budgets_converted_orcamento_id_fkey"
+            columns: ["converted_orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_budgets_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_budgets_source_axia_intake_item_id_fkey"
+            columns: ["source_axia_intake_item_id"]
+            isOneToOne: false
+            referencedRelation: "axia_intake_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_budgets_source_voice_command_id_fkey"
+            columns: ["source_voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_audit_log: {
         Row: {
           acao: string
@@ -7732,6 +8187,7 @@ export type Database = {
           aprovado_por: string | null
           condicoes_meteorologicas: string | null
           created_at: string
+          created_from: string
           criado_por: string | null
           data: string
           fotos: string[] | null
@@ -7740,6 +8196,8 @@ export type Database = {
           obra_id: string
           observacoes: string | null
           ocorrencias: string | null
+          source_axia_intake_item_id: string | null
+          source_voice_command_id: string | null
           status: string
           trabalhos_executados: string | null
           trabalhos_quantificados: Json | null
@@ -7751,6 +8209,7 @@ export type Database = {
           aprovado_por?: string | null
           condicoes_meteorologicas?: string | null
           created_at?: string
+          created_from?: string
           criado_por?: string | null
           data: string
           fotos?: string[] | null
@@ -7759,6 +8218,8 @@ export type Database = {
           obra_id: string
           observacoes?: string | null
           ocorrencias?: string | null
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
           status?: string
           trabalhos_executados?: string | null
           trabalhos_quantificados?: Json | null
@@ -7770,6 +8231,7 @@ export type Database = {
           aprovado_por?: string | null
           condicoes_meteorologicas?: string | null
           created_at?: string
+          created_from?: string
           criado_por?: string | null
           data?: string
           fotos?: string[] | null
@@ -7778,6 +8240,8 @@ export type Database = {
           obra_id?: string
           observacoes?: string | null
           ocorrencias?: string | null
+          source_axia_intake_item_id?: string | null
+          source_voice_command_id?: string | null
           status?: string
           trabalhos_executados?: string | null
           trabalhos_quantificados?: Json | null
@@ -7790,6 +8254,20 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_diarios_source_axia_intake_item_id_fkey"
+            columns: ["source_axia_intake_item_id"]
+            isOneToOne: false
+            referencedRelation: "axia_intake_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_diarios_source_voice_command_id_fkey"
+            columns: ["source_voice_command_id"]
+            isOneToOne: false
+            referencedRelation: "voice_commands"
             referencedColumns: ["id"]
           },
         ]
@@ -9301,6 +9779,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voice_commands: {
+        Row: {
+          audio_file_path: string | null
+          axia_result: Json | null
+          confidence: number | null
+          created_at: string
+          detected_intent: string | null
+          error_message: string | null
+          id: string
+          language: string
+          obra_id: string | null
+          processed_at: string | null
+          processing_status: string
+          source_context: string
+          transcript: string
+          user_id: string
+        }
+        Insert: {
+          audio_file_path?: string | null
+          axia_result?: Json | null
+          confidence?: number | null
+          created_at?: string
+          detected_intent?: string | null
+          error_message?: string | null
+          id?: string
+          language?: string
+          obra_id?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          source_context?: string
+          transcript: string
+          user_id: string
+        }
+        Update: {
+          audio_file_path?: string | null
+          axia_result?: Json | null
+          confidence?: number | null
+          created_at?: string
+          detected_intent?: string | null
+          error_message?: string | null
+          id?: string
+          language?: string
+          obra_id?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          source_context?: string
+          transcript?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_commands_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workers: {
         Row: {
