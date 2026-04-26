@@ -153,6 +153,29 @@ export function VoiceCommandButton({
     }
   };
 
+  if (!voiceEnabled) {
+    return (
+      <>
+        <Button
+          variant={variant}
+          size={size}
+          className="gap-2"
+          onClick={() => setUpgradeOpen(true)}
+        >
+          <Sparkles className="h-4 w-4" />
+          {label}
+        </Button>
+        <UpgradePromptModal
+          open={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          title="Comando de voz Axia"
+          description="O suporte de comando de voz está disponível no plano Professional. Faça upgrade para registar ações por voz."
+          requiredPlan="Professional"
+        />
+      </>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
