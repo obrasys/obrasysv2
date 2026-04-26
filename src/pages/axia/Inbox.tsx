@@ -28,24 +28,68 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "Rejeitado",
 };
 
-const targetUrl = (it: IntakeItem) => {
-  if (!it.target_entity_id) return null;
-  switch (it.target_entity_type) {
-    case "rdo":
-      return `/rdos/${it.target_entity_id}`;
-    case "financial_record":
-      return `/financeiro`;
-    case "pre_budget":
-      return `/axia/inbox`; // editor dedicado próximo passo
-    default:
-      return null;
-  }
+const ACTION_LABEL: Record<string, { label: string; icon: typeof CheckCircle2; cls: string }> = {
+  accepted: { label: "Aceite", icon: CheckCircle2, cls: "text-emerald-600" },
+  rejected: { label: "Rejeitado", icon: XCircle, cls: "text-destructive" },
+  converted: { label: "Convertido", icon: CheckCircle2, cls: "text-primary" },
+  marked_needs_info: { label: "Pediu mais info", icon: History, cls: "text-yellow-600" },
+  opened: { label: "Aberto", icon: Eye, cls: "text-muted-foreground" },
+  status_changed: { label: "Estado alterado", icon: History, cls: "text-muted-foreground" },
 };
+
+function HistoryTimeline({ itemId }: { itemId: string }) {
+  const { data, isLoading } = useIntakeItemHistory(itemId);
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+        <Loader2 className="h-3 w-3 animate-spin" /> A carregar histórico...
+      </div>
+    );
+  }
+  const entries = data ?? [];
+  if (entries.length === 0) {
+    return <p className="text-xs text-muted-foreground py-2">Sem ações registadas ainda.</p>;
+  }
+  return (
+    <ol className="space-y-2 border-l border-border pl-4 ml-1 mt-2">
+      {entries.map((e: IntakeHistoryEntry) => {
+        const meta = ACTION_LABEL[e.action] ?? { label: e.action, icon: History, cls: "text-muted-foreground" };
+        const Icon = meta.icon;
+        const who = e.actor?.nome || e.actor?.email || "Utilizador";
+        return (
+          <li key={e.id} className="relative">
+            <span className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-primary" />
+            <div className="flex items-center gap-2 text-sm">
+              <Icon className={`h-3.5 w-3.5 ${meta.cls}`} />
+              <span className="font-medium">{meta.label}</span>
+              <span className="text-muted-foreground">por {who}</span>
+            </div>
+            <div className="text-xs text-muted-foreground" title={format(new Date(e.created_at), "dd/MM/yyyy HH:mm:ss")}>
+              {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: pt })}
+              {e.from_status && e.to_status && e.from_status !== e.to_status && (
+                <> · {e.from_status} → {e.to_status}</>
+              )}
+            </div>
+            {e.notes && <p className="text-xs mt-0.5">{e.notes}</p>}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: string } | null } }) {
   const update = useUpdateIntakeStatus();
+  const log = useLogIntakeAction();
   const url = targetUrl(item);
   const conf = Math.round((item.confidence ?? 0) * 100);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const toggleHistory = () => {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next) log.mutate({ itemId: item.id, action: "opened" });
+  };
 
   return (
     <Card className="p-4 rounded-2xl space-y-3">
@@ -75,7 +119,13 @@ function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: str
       </div>
       <div className="flex flex-wrap gap-2">
         {url && (
-          <Button asChild size="sm" variant="outline" className="gap-1">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => log.mutate({ itemId: item.id, action: "opened", metadata: { target_url: url } })}
+          >
             <Link to={url}><ExternalLink className="h-3.5 w-3.5" /> Abrir</Link>
           </Button>
         )}
@@ -84,7 +134,7 @@ function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: str
             size="sm"
             variant="default"
             className="gap-1"
-            onClick={() => update.mutate({ id: item.id, status: "approved" })}
+            onClick={() => update.mutate({ id: item.id, status: "approved", fromStatus: item.status })}
             disabled={update.isPending}
           >
             <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
@@ -95,13 +145,19 @@ function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: str
             size="sm"
             variant="ghost"
             className="gap-1 text-destructive"
-            onClick={() => update.mutate({ id: item.id, status: "rejected" })}
+            onClick={() => update.mutate({ id: item.id, status: "rejected", fromStatus: item.status })}
             disabled={update.isPending}
           >
             <XCircle className="h-3.5 w-3.5" /> Rejeitar
           </Button>
         )}
+        <Button size="sm" variant="ghost" className="gap-1 ml-auto" onClick={toggleHistory}>
+          <History className="h-3.5 w-3.5" />
+          Histórico
+          {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </Button>
       </div>
+      {showHistory && <HistoryTimeline itemId={item.id} />}
     </Card>
   );
 }
