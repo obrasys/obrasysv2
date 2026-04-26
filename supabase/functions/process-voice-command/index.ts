@@ -275,7 +275,12 @@ Deno.serve(async (req) => {
 
       // Criar entidade-rascunho conforme regras
       if (item.type === "financial_record") {
-        const amount = Number(item.data?.amount ?? 0);
+        let amount = Number(item.data?.amount ?? 0);
+        // Fallback: extrair valor do transcript se a IA não o devolveu
+        if (!amount || isNaN(amount)) {
+          const m = cmd.transcript.match(/(\d+(?:[.,]\d+)?)\s*(?:€|eur|euros?)/i);
+          if (m) amount = Number(m[1].replace(",", "."));
+        }
         if (amount > 0) {
           const intake_status = !itemObraId ? "missing_project" : "pending_review";
           const { data: cf, error: cfErr } = await admin
