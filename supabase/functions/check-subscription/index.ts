@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "npm:stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  getSubscriptionPeriodEndISO,
+  getSubscriptionProductId,
+} from "../_shared/stripe-helpers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
