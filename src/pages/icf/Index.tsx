@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2, Inbox } from 'lucide-react';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
@@ -31,9 +31,9 @@ const IcfIndex = () => {
     if (selectedObraId) localStorage.setItem(ICF_LAST_OBRA_KEY, selectedObraId);
   }, [selectedObraId]);
 
-  const { data: configs } = useIcfConfiguracoes(selectedObraId);
+  const { data: configs, isLoading: configsLoading } = useIcfConfiguracoes(selectedObraId);
   const activeConfig = configs?.find(c => c.ativo);
-  const { data: resumo } = useIcfResumo(activeConfig?.id);
+  const { data: resumo, isLoading: resumoLoading } = useIcfResumo(activeConfig?.id);
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
@@ -92,7 +92,25 @@ const IcfIndex = () => {
 
         {!selectedObraId && (
           <Card><CardContent className="py-12 text-center text-muted-foreground">
+            <Inbox className="h-10 w-10 mx-auto mb-3 opacity-50" />
             Selecione uma obra para iniciar o módulo ICF.
+          </CardContent></Card>
+        )}
+
+        {selectedObraId && configsLoading && (
+          <Card><CardContent className="py-12 text-center text-muted-foreground">
+            <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
+            A carregar configurações ICF…
+          </CardContent></Card>
+        )}
+
+        {selectedObraId && !configsLoading && !activeConfig && (
+          <Card><CardContent className="py-12 text-center text-muted-foreground space-y-3">
+            <Inbox className="h-10 w-10 mx-auto opacity-50" />
+            <p>Ainda não existe nenhuma configuração ICF ativa para esta obra.</p>
+            <Button onClick={handleCreateConfig} disabled={createConfig.isPending}>
+              <Plus className="h-4 w-4 mr-2" />Criar primeira configuração
+            </Button>
           </CardContent></Card>
         )}
 
@@ -107,7 +125,18 @@ const IcfIndex = () => {
               onEdit={() => navigate(`/icf/configuracao/${activeConfig.id}`)}
             />
 
-            {resumo && <IcfKpiGrid resumo={resumo} />}
+            {resumoLoading ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin" />
+                A calcular resumo paramétrico…
+              </CardContent></Card>
+            ) : resumo ? (
+              <IcfKpiGrid resumo={resumo} />
+            ) : (
+              <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">
+                Sem resumo disponível. Adicione panos, fundações ou lajes para calcular quantitativos.
+              </CardContent></Card>
+            )}
 
             <IcfAxiaAnalysisPanel configId={activeConfig.id} />
 
@@ -123,7 +152,7 @@ const IcfIndex = () => {
           </>
         )}
 
-        {selectedObraId && configs && configs.length > 0 && (
+        {selectedObraId && !configsLoading && configs && configs.length > 0 && (
           <IcfConfigsList configs={configs} onDelete={(id) => deleteConfig.mutate(id)} />
         )}
       </div>
