@@ -47,7 +47,7 @@ export function VoiceCommandButton({
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  const { hasFeature } = useFeatureGate();
+  const { hasFeature, tier } = useFeatureGate();
   const voiceEnabled = hasFeature("comandoVoz");
 
   const recognitionRef = useRef<any>(null);
