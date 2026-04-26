@@ -355,6 +355,12 @@ export default function ObrasPage() {
         title="Limite de obras atingido"
         description={`O plano ${tier === 'starter' ? 'Starter' : 'atual'} permite até ${limits.maxObrasAtivas} obra(s) ativa(s). Faça upgrade para o plano Professional para obras ilimitadas.`}
         requiredPlan="Professional"
+        currentTier={tier}
+        usage={{
+          label: 'Obras ativas',
+          current: obrasAtivas,
+          limit: limits.maxObrasAtivas || '∞',
+        }}
       />
     </AppLayout>
   );
