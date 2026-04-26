@@ -72,17 +72,7 @@ serve(async (req) => {
     logStep("Fetched payment intents", { count: paymentIntents.data.length });
 
     // Format invoices for frontend
-    const formattedInvoices = invoices.data.map((invoice: {
-      id: string;
-      number: string | null;
-      created: number | null;
-      amount_paid: number;
-      currency: string | null;
-      status: string | null;
-      lines?: { data?: Array<{ description?: string }> };
-      hosted_invoice_url: string | null;
-      invoice_pdf: string | null;
-    }) => ({
+    const formattedInvoices = invoices.data.map((invoice: any) => ({
       id: invoice.id,
       number: invoice.number,
       date: invoice.created ? new Date(invoice.created * 1000).toISOString() : null,

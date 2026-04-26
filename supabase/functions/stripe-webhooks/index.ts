@@ -74,7 +74,7 @@ serve(async (req) => {
 
           const productId = subscription.items.data[0].price.product as string;
           const tier = PRODUCT_TIERS[productId] || "starter";
-          const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          const subscriptionEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
 
           // Find user by email
           const { data: users } = await supabaseClient.auth.admin.listUsers();
@@ -114,7 +114,7 @@ serve(async (req) => {
 
         const productId = subscription.items.data[0].price.product as string;
         const tier = PRODUCT_TIERS[productId] || "starter";
-        const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const subscriptionEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
 
         const { data: users } = await supabaseClient.auth.admin.listUsers();
         const user = users.users.find(u => u.email === customer.email);
