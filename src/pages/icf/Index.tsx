@@ -42,9 +42,6 @@ const IcfIndex = () => {
 
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
 
-  const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
-    updateConfig.mutate({ id: configId, status: newStatus } as any);
-  };
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo || !selectedObraId) return;
