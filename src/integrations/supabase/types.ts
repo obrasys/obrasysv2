@@ -910,6 +910,50 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_intake_item_history: {
+        Row: {
+          action: string
+          created_at: string
+          from_status: string | null
+          id: string
+          intake_item_id: string
+          metadata: Json
+          notes: string | null
+          to_status: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          intake_item_id: string
+          metadata?: Json
+          notes?: string | null
+          to_status?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          intake_item_id?: string
+          metadata?: Json
+          notes?: string | null
+          to_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "axia_intake_item_history_intake_item_id_fkey"
+            columns: ["intake_item_id"]
+            isOneToOne: false
+            referencedRelation: "axia_intake_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       axia_intake_items: {
         Row: {
           axia_questions: Json
