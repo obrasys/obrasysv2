@@ -224,6 +224,8 @@ const IcfIndex = () => {
         {selectedObraId && !configsLoading && !configsError && configs && configs.length > 0 && (
           <IcfConfigsList configs={configs} onDelete={handleDeleteConfig} />
         )}
+        </>
+        )}
       </div>
 
       <IcfBudgetConfigDialog
