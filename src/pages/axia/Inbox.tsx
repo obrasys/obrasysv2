@@ -28,6 +28,20 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "Rejeitado",
 };
 
+const targetUrl = (it: IntakeItem) => {
+  if (!it.target_entity_id) return null;
+  switch (it.target_entity_type) {
+    case "rdo":
+      return `/rdos/${it.target_entity_id}`;
+    case "financial_record":
+      return `/financeiro`;
+    case "pre_budget":
+      return `/axia/inbox`;
+    default:
+      return null;
+  }
+};
+
 const ACTION_LABEL: Record<string, { label: string; icon: typeof CheckCircle2; cls: string }> = {
   accepted: { label: "Aceite", icon: CheckCircle2, cls: "text-emerald-600" },
   rejected: { label: "Rejeitado", icon: XCircle, cls: "text-destructive" },
