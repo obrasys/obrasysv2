@@ -88,6 +88,26 @@ const IcfIndex = () => {
   return (
     <AppLayout title="Sistema Construtivo ICF" subtitle="Motor paramétrico para obras ICF">
       <div className="p-4 md:p-6 space-y-6">
+        {!icfEnabled ? (
+          <Card className="border-primary/30">
+            <CardContent className="py-12 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <Lock className="w-7 h-7 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">Cálculos ICF e LSF automáticos</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Esta funcionalidade está incluída no plano Professional. O seu plano atual ({tier}) não permite aceder ao motor paramétrico ICF/LSF.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/planos')} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Fazer upgrade para Professional
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
         {/* Obra selector */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <Select value={selectedObraId} onValueChange={setSelectedObraId}>
