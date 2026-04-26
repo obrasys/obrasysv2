@@ -224,6 +224,7 @@ const App = () => (
                   <Route path="/instalacoes/configurar" element={<ManagerRoute><ConfigurarInstalacoesPage /></ManagerRoute>} />
                   <Route path="/rede-fornecedores" element={<ManagerRoute><RedeFornecedoresPage /></ManagerRoute>} />
                   <Route path="/axia" element={<ManagerRoute><AxiaPage /></ManagerRoute>} />
+                  <Route path="/axia/inbox" element={<ManagerRoute><AxiaInboxPage /></ManagerRoute>} />
                   <Route path="/importar" element={<ManagerRoute><ImportarPage /></ManagerRoute>} />
                   <Route path="/icf" element={<ManagerRoute><IcfIndex /></ManagerRoute>} />
                   <Route path="/icf/configuracao/:id" element={<ManagerRoute><IcfConfiguracao /></ManagerRoute>} />

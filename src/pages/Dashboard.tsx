@@ -24,6 +24,8 @@ import {
   DashboardSetupProgress,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
+import { DashboardAlertsWidget } from '@/components/axia/DashboardAlertsWidget';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -175,12 +177,17 @@ const Dashboard = () => {
             />
 
             {/* 3. Priorities + Alerts */}
-            <DashboardPriorities
-              obras={obras || []}
-              tarefasPendentes={kpis.tarefasPendentes}
-              rdosPendentes={kpis.rdosPendentes}
-              medicoesPendentes={kpis.medicoesPendentes}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <DashboardPriorities
+                  obras={obras || []}
+                  tarefasPendentes={kpis.tarefasPendentes}
+                  rdosPendentes={kpis.rdosPendentes}
+                  medicoesPendentes={kpis.medicoesPendentes}
+                />
+              </div>
+              <DashboardAlertsWidget />
+            </div>
 
             {/* 4. Active Works — hero section */}
             <DashboardObrasActive obras={obras || []} />
@@ -195,6 +202,9 @@ const Dashboard = () => {
             />
           </>
         )}
+      </div>
+      <div className="fixed bottom-6 right-6 z-40">
+        <VoiceCommandButton sourceContext="global" />
       </div>
     </AppLayout>
   );
