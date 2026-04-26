@@ -19,7 +19,7 @@ import { UserPlus, Users, Mail, Shield, Loader2 } from 'lucide-react';
 
 export function TeamManagementSection() {
   const { user } = useAuth();
-  const { tier } = useFeatureGate();
+  const { tier, limits } = useFeatureGate();
   const isRestricted = tier === 'trial' || tier === 'starter';
 
   const {
