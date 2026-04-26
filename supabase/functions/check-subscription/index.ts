@@ -196,7 +196,27 @@ serve(async (req) => {
 
       subscriptionEnd = validation.periodEndISO;
       productId = validation.productId;
-      subscriptionTier = PRODUCT_TIERS[productId] || "starter";
+      const mappedTier = PRODUCT_TIERS[productId];
+      if (!mappedTier) {
+        logStep("ERROR: Unknown Stripe product ID, refusing silent fallback", {
+          subscriptionId: validation.subscriptionId,
+          productId,
+          priceId: validation.priceId,
+        });
+        return new Response(
+          JSON.stringify({
+            error: "unknown_product_id",
+            message: "O produto Stripe não está mapeado para nenhum tier conhecido.",
+            product_id: productId,
+            subscription_id: validation.subscriptionId,
+          }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      subscriptionTier = mappedTier;
       subscriptionStatus = "active";
       logStep("Active subscription found", {
         subscriptionId: subscription.id,
