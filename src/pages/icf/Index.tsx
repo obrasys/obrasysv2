@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
@@ -16,6 +16,7 @@ import { IcfConfigHeader } from '@/components/icf/IcfConfigHeader';
 import { IcfKpiGrid } from '@/components/icf/IcfKpiGrid';
 import { IcfQuickNav } from '@/components/icf/IcfQuickNav';
 import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
@@ -23,6 +24,8 @@ const IcfIndex = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { obras } = useObras();
+  const { hasFeature, tier } = useFeatureGate();
+  const icfEnabled = hasFeature('calculosIcfLsfAutomatico');
 
   const [selectedObraId, setSelectedObraId] = useState<string>(() => {
     return searchParams.get('obra') || localStorage.getItem(ICF_LAST_OBRA_KEY) || '';
@@ -85,6 +88,26 @@ const IcfIndex = () => {
   return (
     <AppLayout title="Sistema Construtivo ICF" subtitle="Motor paramétrico para obras ICF">
       <div className="p-4 md:p-6 space-y-6">
+        {!icfEnabled ? (
+          <Card className="border-primary/30">
+            <CardContent className="py-12 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <Lock className="w-7 h-7 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">Cálculos ICF e LSF automáticos</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Esta funcionalidade está incluída no plano Professional. O seu plano atual ({tier}) não permite aceder ao motor paramétrico ICF/LSF.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/planos')} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Fazer upgrade para Professional
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
         {/* Obra selector */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <Select value={selectedObraId} onValueChange={setSelectedObraId}>
@@ -200,6 +223,8 @@ const IcfIndex = () => {
 
         {selectedObraId && !configsLoading && !configsError && configs && configs.length > 0 && (
           <IcfConfigsList configs={configs} onDelete={handleDeleteConfig} />
+        )}
+        </>
         )}
       </div>
 

@@ -13,6 +13,8 @@ import { Mic, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "luc
 import { useCreateAndProcessVoiceCommand } from "@/hooks/useAxiaVoiceIntake";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { UpgradePromptModal } from "@/components/subscription/UpgradePromptModal";
 
 type Props = {
   obraId?: string | null;
@@ -38,11 +40,15 @@ export function VoiceCommandButton({
   label = "Comando Axia",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [transcript, setTranscript] = useState("");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+
+  const { hasFeature } = useFeatureGate();
+  const voiceEnabled = hasFeature("comandoVoz");
 
   const recognitionRef = useRef<any>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -146,6 +152,29 @@ export function VoiceCommandButton({
       setPhase("error");
     }
   };
+
+  if (!voiceEnabled) {
+    return (
+      <>
+        <Button
+          variant={variant}
+          size={size}
+          className="gap-2"
+          onClick={() => setUpgradeOpen(true)}
+        >
+          <Sparkles className="h-4 w-4" />
+          {label}
+        </Button>
+        <UpgradePromptModal
+          open={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          title="Comando de voz Axia"
+          description="O suporte de comando de voz está disponível no plano Professional. Faça upgrade para registar ações por voz."
+          requiredPlan="Professional"
+        />
+      </>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
