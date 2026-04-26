@@ -66,7 +66,23 @@ const IcfIndex = () => {
 
   const handleCreateConfig = () => {
     if (!selectedObraId) return;
-    createConfig.mutate({ obra_id: selectedObraId, nome: 'Configuração ICF v1' } as any);
+    createConfig.mutate(
+      { obra_id: selectedObraId, nome: 'Configuração ICF v1' } as any,
+      { onError: (e: any) => toast.error('Não foi possível criar a configuração', { description: e?.message }) },
+    );
+  };
+
+  const handleDeleteConfig = (id: string) => {
+    deleteConfig.mutate(id, {
+      onError: (e: any) => toast.error('Não foi possível eliminar', { description: e?.message }),
+    });
+  };
+
+  const handleChangeStatusSafe = (configId: string, newStatus: 'validado' | 'congelado') => {
+    updateConfig.mutate(
+      { id: configId, status: newStatus } as any,
+      { onError: (e: any) => toast.error('Não foi possível atualizar o estado', { description: e?.message }) },
+    );
   };
 
   return (
