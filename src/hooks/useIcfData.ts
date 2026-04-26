@@ -291,11 +291,16 @@ export function useIcfResumo(configId?: string) {
   return useQuery({
     queryKey: ['icf-resumo', configId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('icf_resumo_obra' as any).select('*').eq('configuracao_id', configId!).single();
+      const { data, error } = await supabase
+        .from('icf_resumo_obra' as any)
+        .select('*')
+        .eq('configuracao_id', configId!)
+        .maybeSingle();
       if (error) throw error;
-      return data as unknown as IcfResumo;
+      return (data ?? null) as unknown as IcfResumo | null;
     },
     enabled: !!configId,
+    retry: 1,
   });
 }
 
