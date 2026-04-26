@@ -59,3 +59,49 @@ export function unixToISO(ts: unknown): string | null {
     return null;
   }
 }
+
+export interface SubscriptionValidationResult {
+  valid: boolean;
+  missing: string[];
+  productId: string | null;
+  priceId: string | null;
+  periodEndISO: string | null;
+  status: string | null;
+  subscriptionId: string | null;
+}
+
+/**
+ * Validate a Stripe Subscription object and report which expected fields
+ * are missing. Never throws — callers can decide to log/skip/fail-soft.
+ */
+export function validateStripeSubscription(
+  subscription: any,
+): SubscriptionValidationResult {
+  const missing: string[] = [];
+  const subscriptionId =
+    typeof subscription?.id === "string" ? subscription.id : null;
+  if (!subscriptionId) missing.push("id");
+
+  const status =
+    typeof subscription?.status === "string" ? subscription.status : null;
+  if (!status) missing.push("status");
+
+  const productId = getSubscriptionProductId(subscription);
+  if (!productId) missing.push("items.data[0].price.product");
+
+  const priceId = getSubscriptionPriceId(subscription);
+  if (!priceId) missing.push("items.data[0].price.id");
+
+  const periodEndISO = getSubscriptionPeriodEndISO(subscription);
+  if (!periodEndISO) missing.push("current_period_end");
+
+  return {
+    valid: missing.length === 0,
+    missing,
+    productId,
+    priceId,
+    periodEndISO,
+    status,
+    subscriptionId,
+  };
+}
