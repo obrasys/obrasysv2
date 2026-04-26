@@ -54,7 +54,7 @@ function KpiCard({ index, label, value, suffix }: { index: number; label: string
 export default function ObrasPage() {
   const navigate = useNavigate();
   const { obras, obrasArquivadas, isLoading, archiveObra, deleteObra } = useObras();
-  const { canCreateObra, limits, tier } = useFeatureGate();
+  const { canCreateObra, limits, tier, obrasAtivas } = useFeatureGate();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [search, setSearch] = useState('');
