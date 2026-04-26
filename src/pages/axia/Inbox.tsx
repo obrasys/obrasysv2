@@ -118,6 +118,24 @@ export default function AxiaInboxPage() {
   const { data, isLoading } = useIntakeItems();
   const items = data ?? [];
   const filtered = items.filter(TABS.find((t) => t.value === tab)?.filter ?? (() => true));
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("axia-intake-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "axia_intake_items" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["axia-intake-items"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-alerts"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   return (
     <div className="container max-w-5xl mx-auto px-4 py-6 space-y-6">
