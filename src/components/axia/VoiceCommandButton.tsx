@@ -13,6 +13,8 @@ import { Mic, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "luc
 import { useCreateAndProcessVoiceCommand } from "@/hooks/useAxiaVoiceIntake";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { UpgradePromptModal } from "@/components/subscription/UpgradePromptModal";
 
 type Props = {
   obraId?: string | null;
