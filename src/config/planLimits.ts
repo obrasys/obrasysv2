@@ -16,6 +16,8 @@ export interface PlanLimits {
     basePrecos: boolean;
     conformidade: boolean;
     gestaoFinanceira: boolean;
+    calculosIcfLsfAutomatico: boolean;
+    comandoVoz: boolean;
   };
 }
 
@@ -34,6 +36,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       basePrecos: false,
       conformidade: false,
       gestaoFinanceira: false,
+      calculosIcfLsfAutomatico: false,
+      comandoVoz: false,
     },
   },
   starter: {
@@ -50,6 +54,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       basePrecos: false,
       conformidade: false,
       gestaoFinanceira: false,
+      calculosIcfLsfAutomatico: false,
+      comandoVoz: false,
     },
   },
   professional: {
@@ -66,6 +72,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       basePrecos: true,
       conformidade: true,
       gestaoFinanceira: true,
+      calculosIcfLsfAutomatico: true,
+      comandoVoz: true,
     },
   },
   enterprise: {
@@ -82,6 +90,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       basePrecos: true,
       conformidade: true,
       gestaoFinanceira: true,
+      calculosIcfLsfAutomatico: true,
+      comandoVoz: true,
     },
   },
   founder: {
@@ -98,6 +108,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       basePrecos: true,
       conformidade: true,
       gestaoFinanceira: true,
+      calculosIcfLsfAutomatico: true,
+      comandoVoz: true,
     },
   },
 };
@@ -115,4 +127,6 @@ export const PLAN_FEATURE_LABELS: Record<PlanFeature, string> = {
   basePrecos: 'Base de preços avançada',
   conformidade: 'Controlo de conformidade',
   gestaoFinanceira: 'Gestão financeira completa',
+  calculosIcfLsfAutomatico: 'Cálculos ICF e LSF automáticos',
+  comandoVoz: 'Suporte de comando de voz',
 };

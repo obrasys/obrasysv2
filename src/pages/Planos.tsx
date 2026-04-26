@@ -36,6 +36,8 @@ const PLANS = [
       "Tudo do plano Starter",
       "Gestão de equipas avançada",
       "Relatórios personalizados",
+      "Cálculos ICF e LSF automáticos",
+      "Suporte de comando de voz",
       "Suporte prioritário",
     ],
     stripePriceIdMonthly: "price_1T6YkuP3LW226r1jYq5OMNbU",
