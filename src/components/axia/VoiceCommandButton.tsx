@@ -171,6 +171,7 @@ export function VoiceCommandButton({
           title="Comando de voz Axia"
           description="O suporte de comando de voz está disponível no plano Professional. Faça upgrade para registar ações por voz."
           requiredPlan="Professional"
+          currentTier={tier}
         />
       </>
     );
