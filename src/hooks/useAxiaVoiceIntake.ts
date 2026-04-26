@@ -113,19 +113,94 @@ export function useIntakeItems(filters?: { type?: string; status?: string }) {
 export function useUpdateIntakeStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: IntakeItem["status"] }) => {
+    mutationFn: async ({ id, status, fromStatus }: { id: string; status: IntakeItem["status"]; fromStatus?: IntakeItem["status"] }) => {
       const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
       const { error } = await supabase
         .from("axia_intake_items")
-        .update({ status, reviewed_at: new Date().toISOString(), reviewed_by: userData.user?.id })
+        .update({ status, reviewed_at: new Date().toISOString(), reviewed_by: userId })
         .eq("id", id);
       if (error) throw error;
+
+      const action =
+        status === "approved" ? "accepted" :
+        status === "rejected" ? "rejected" :
+        status === "converted" ? "converted" :
+        status === "needs_more_info" ? "marked_needs_info" : "status_changed";
+
+      if (userId) {
+        await (supabase.from as any)("axia_intake_item_history").insert({
+          intake_item_id: id,
+          user_id: userId,
+          action,
+          from_status: fromStatus ?? null,
+          to_status: status,
+        });
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["axia-intake-items"] });
       qc.invalidateQueries({ queryKey: ["dashboard-alerts"] });
+      qc.invalidateQueries({ queryKey: ["axia-intake-history", vars.id] });
     },
     onError: (e: Error) => toast.error("Erro", { description: e.message }),
+  });
+}
+
+export type IntakeHistoryEntry = {
+  id: string;
+  intake_item_id: string;
+  user_id: string;
+  action: string;
+  from_status: string | null;
+  to_status: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  actor?: { nome: string | null; email: string | null } | null;
+};
+
+export function useIntakeItemHistory(itemId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["axia-intake-history", itemId],
+    enabled: !!itemId && enabled,
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("axia_intake_item_history")
+        .select("*")
+        .eq("intake_item_id", itemId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const rows = (data ?? []) as IntakeHistoryEntry[];
+      const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
+      if (userIds.length === 0) return rows;
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, nome, email")
+        .in("user_id", userIds);
+      const map = new Map((profiles ?? []).map((p: any) => [p.user_id, { nome: p.nome, email: p.email }]));
+      return rows.map((r) => ({ ...r, actor: map.get(r.user_id) ?? null }));
+    },
+  });
+}
+
+export function useLogIntakeAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemId, action, notes, metadata }: { itemId: string; action: string; notes?: string; metadata?: Record<string, unknown> }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+      await (supabase.from as any)("axia_intake_item_history").insert({
+        intake_item_id: itemId,
+        user_id: userId,
+        action,
+        notes: notes ?? null,
+        metadata: metadata ?? {},
+      });
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["axia-intake-history", vars.itemId] });
+    },
   });
 }
 
