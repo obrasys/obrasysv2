@@ -4,7 +4,8 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, Inbox } from 'lucide-react';
+import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
@@ -31,9 +32,9 @@ const IcfIndex = () => {
     if (selectedObraId) localStorage.setItem(ICF_LAST_OBRA_KEY, selectedObraId);
   }, [selectedObraId]);
 
-  const { data: configs, isLoading: configsLoading } = useIcfConfiguracoes(selectedObraId);
+  const { data: configs, isLoading: configsLoading, error: configsError, refetch: refetchConfigs, isFetching: configsFetching } = useIcfConfiguracoes(selectedObraId);
   const activeConfig = configs?.find(c => c.ativo);
-  const { data: resumo, isLoading: resumoLoading } = useIcfResumo(activeConfig?.id);
+  const { data: resumo, isLoading: resumoLoading, error: resumoError, refetch: refetchResumo, isFetching: resumoFetching } = useIcfResumo(activeConfig?.id);
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
@@ -41,9 +42,6 @@ const IcfIndex = () => {
 
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
 
-  const handleChangeStatus = (configId: string, newStatus: 'validado' | 'congelado') => {
-    updateConfig.mutate({ id: configId, status: newStatus } as any);
-  };
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo || !selectedObraId) return;
@@ -65,7 +63,23 @@ const IcfIndex = () => {
 
   const handleCreateConfig = () => {
     if (!selectedObraId) return;
-    createConfig.mutate({ obra_id: selectedObraId, nome: 'Configuração ICF v1' } as any);
+    createConfig.mutate(
+      { obra_id: selectedObraId, nome: 'Configuração ICF v1' } as any,
+      { onError: (e: any) => toast.error('Não foi possível criar a configuração', { description: e?.message }) },
+    );
+  };
+
+  const handleDeleteConfig = (id: string) => {
+    deleteConfig.mutate(id, {
+      onError: (e: any) => toast.error('Não foi possível eliminar', { description: e?.message }),
+    });
+  };
+
+  const handleChangeStatusSafe = (configId: string, newStatus: 'validado' | 'congelado') => {
+    updateConfig.mutate(
+      { id: configId, status: newStatus } as any,
+      { onError: (e: any) => toast.error('Não foi possível atualizar o estado', { description: e?.message }) },
+    );
   };
 
   return (
@@ -104,7 +118,24 @@ const IcfIndex = () => {
           </CardContent></Card>
         )}
 
-        {selectedObraId && !configsLoading && !activeConfig && (
+        {selectedObraId && configsError && (
+          <Card className="border-destructive/40">
+            <CardContent className="py-8 text-center space-y-3">
+              <AlertTriangle className="h-8 w-8 mx-auto text-destructive" />
+              <p className="text-sm text-muted-foreground">
+                Não foi possível carregar as configurações ICF.
+                <br />
+                <span className="text-xs opacity-70">{(configsError as any)?.message}</span>
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchConfigs()} disabled={configsFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${configsFetching ? 'animate-spin' : ''}`} />
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedObraId && !configsLoading && !configsError && !activeConfig && (
           <Card><CardContent className="py-12 text-center text-muted-foreground space-y-3">
             <Inbox className="h-10 w-10 mx-auto opacity-50" />
             <p>Ainda não existe nenhuma configuração ICF ativa para esta obra.</p>
@@ -120,7 +151,7 @@ const IcfIndex = () => {
               config={activeConfig}
               hasResumo={!!resumo}
               isGenerating={generateBudget.isPending}
-              onChangeStatus={handleChangeStatus}
+              onChangeStatus={handleChangeStatusSafe}
               onOpenBudget={handleOpenBudgetDialog}
               onEdit={() => navigate(`/icf/configuracao/${activeConfig.id}`)}
             />
@@ -130,6 +161,21 @@ const IcfIndex = () => {
                 <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin" />
                 A calcular resumo paramétrico…
               </CardContent></Card>
+            ) : resumoError ? (
+              <Card className="border-destructive/40">
+                <CardContent className="py-8 text-center space-y-3">
+                  <AlertTriangle className="h-8 w-8 mx-auto text-destructive" />
+                  <p className="text-sm text-muted-foreground">
+                    Não foi possível calcular o resumo paramétrico.
+                    <br />
+                    <span className="text-xs opacity-70">{(resumoError as any)?.message}</span>
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => refetchResumo()} disabled={resumoFetching}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${resumoFetching ? 'animate-spin' : ''}`} />
+                    Tentar novamente
+                  </Button>
+                </CardContent>
+              </Card>
             ) : resumo ? (
               <IcfKpiGrid resumo={resumo} />
             ) : (
@@ -152,8 +198,8 @@ const IcfIndex = () => {
           </>
         )}
 
-        {selectedObraId && !configsLoading && configs && configs.length > 0 && (
-          <IcfConfigsList configs={configs} onDelete={(id) => deleteConfig.mutate(id)} />
+        {selectedObraId && !configsLoading && !configsError && configs && configs.length > 0 && (
+          <IcfConfigsList configs={configs} onDelete={handleDeleteConfig} />
         )}
       </div>
 
