@@ -2,8 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "npm:stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
-  getSubscriptionPeriodEndISO,
-  getSubscriptionProductId,
+  validateStripeSubscription,
 } from "../_shared/stripe-helpers.ts";
 
 const corsHeaders = {
@@ -76,9 +75,31 @@ serve(async (req) => {
           const customerId = session.customer as string;
           const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
 
-          const productId = getSubscriptionProductId(subscription) ?? "";
-          const tier = (productId && PRODUCT_TIERS[productId]) || "starter";
-          const subscriptionEnd = getSubscriptionPeriodEndISO(subscription);
+          const validation = validateStripeSubscription(subscription);
+          if (!validation.valid) {
+            logStep("WARNING: subscription payload missing fields", {
+              subscriptionId: validation.subscriptionId,
+              missing: validation.missing,
+            });
+          }
+          if (!validation.productId || !validation.periodEndISO) {
+            logStep("SKIP checkout.session.completed: critical fields missing", {
+              subscriptionId: validation.subscriptionId,
+              missing: validation.missing,
+            });
+            return new Response(
+              JSON.stringify({
+                received: true,
+                skipped: "stripe_subscription_incomplete",
+                missing: validation.missing,
+              }),
+              { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+          }
+
+          const productId = validation.productId;
+          const tier = PRODUCT_TIERS[productId] || "starter";
+          const subscriptionEnd = validation.periodEndISO;
 
           // Find user by email
           const { data: users } = await supabaseClient.auth.admin.listUsers();
