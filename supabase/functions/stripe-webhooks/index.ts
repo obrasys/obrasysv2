@@ -76,9 +76,9 @@ serve(async (req) => {
           const customerId = session.customer as string;
           const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
 
-          const productId = subscription.items.data[0].price.product as string;
-          const tier = PRODUCT_TIERS[productId] || "starter";
-          const subscriptionEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
+          const productId = getSubscriptionProductId(subscription) ?? "";
+          const tier = (productId && PRODUCT_TIERS[productId]) || "starter";
+          const subscriptionEnd = getSubscriptionPeriodEndISO(subscription);
 
           // Find user by email
           const { data: users } = await supabaseClient.auth.admin.listUsers();
@@ -116,9 +116,9 @@ serve(async (req) => {
         const customerId = subscription.customer as string;
         const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
 
-        const productId = subscription.items.data[0].price.product as string;
-        const tier = PRODUCT_TIERS[productId] || "starter";
-        const subscriptionEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
+        const productId = getSubscriptionProductId(subscription) ?? "";
+        const tier = (productId && PRODUCT_TIERS[productId]) || "starter";
+        const subscriptionEnd = getSubscriptionPeriodEndISO(subscription);
 
         const { data: users } = await supabaseClient.auth.admin.listUsers();
         const user = users.users.find(u => u.email === customer.email);
