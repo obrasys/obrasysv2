@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Inbox, CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, History, ChevronDown, ChevronUp, Eye } from "lucide-react";
 import { useIntakeItems, useUpdateIntakeStatus, useIntakeItemHistory, useLogIntakeAction, type IntakeItem, type IntakeHistoryEntry } from "@/hooks/useAxiaVoiceIntake";
+import { useAxiaIntakeRealtimeNotifications } from "@/hooks/useAxiaIntakeRealtimeNotifications";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
 import { pt } from "date-fns/locale";
