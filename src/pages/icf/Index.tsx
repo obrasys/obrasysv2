@@ -24,6 +24,8 @@ const IcfIndex = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { obras } = useObras();
+  const { hasFeature, tier } = useFeatureGate();
+  const icfEnabled = hasFeature('calculosIcfLsfAutomatico');
 
   const [selectedObraId, setSelectedObraId] = useState<string>(() => {
     return searchParams.get('obra') || localStorage.getItem(ICF_LAST_OBRA_KEY) || '';
