@@ -78,6 +78,12 @@ export default function CriarObraPage() {
         title="Limite de obras atingido"
         description={upgradeDescription}
         requiredPlan="Professional"
+        currentTier={tier}
+        usage={{
+          label: 'Obras ativas',
+          current: obrasAtivas,
+          limit: limits.maxObrasAtivas || '∞',
+        }}
       />
     </AppLayout>
   );
