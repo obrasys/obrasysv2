@@ -13,7 +13,7 @@ import type { ObraFormData } from '@/types/obras';
 export default function CriarObraPage() {
   const navigate = useNavigate();
   const { createObra } = useObras();
-  const { canCreateObra, limits, tier } = useFeatureGate();
+  const { canCreateObra, limits, tier, obrasAtivas } = useFeatureGate();
   const [showUpgrade, setShowUpgrade] = useState(!canCreateObra);
 
   const handleSubmit = async (data: ObraFormData) => {
@@ -78,6 +78,12 @@ export default function CriarObraPage() {
         title="Limite de obras atingido"
         description={upgradeDescription}
         requiredPlan="Professional"
+        currentTier={tier}
+        usage={{
+          label: 'Obras ativas',
+          current: obrasAtivas,
+          limit: limits.maxObrasAtivas || '∞',
+        }}
       />
     </AppLayout>
   );

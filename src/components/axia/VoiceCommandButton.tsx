@@ -47,7 +47,7 @@ export function VoiceCommandButton({
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  const { hasFeature } = useFeatureGate();
+  const { hasFeature, tier } = useFeatureGate();
   const voiceEnabled = hasFeature("comandoVoz");
 
   const recognitionRef = useRef<any>(null);
@@ -171,6 +171,7 @@ export function VoiceCommandButton({
           title="Comando de voz Axia"
           description="O suporte de comando de voz está disponível no plano Professional. Faça upgrade para registar ações por voz."
           requiredPlan="Professional"
+          currentTier={tier}
         />
       </>
     );

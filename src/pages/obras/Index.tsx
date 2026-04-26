@@ -54,7 +54,7 @@ function KpiCard({ index, label, value, suffix }: { index: number; label: string
 export default function ObrasPage() {
   const navigate = useNavigate();
   const { obras, obrasArquivadas, isLoading, archiveObra, deleteObra } = useObras();
-  const { canCreateObra, limits, tier } = useFeatureGate();
+  const { canCreateObra, limits, tier, obrasAtivas } = useFeatureGate();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [search, setSearch] = useState('');
@@ -355,6 +355,12 @@ export default function ObrasPage() {
         title="Limite de obras atingido"
         description={`O plano ${tier === 'starter' ? 'Starter' : 'atual'} permite até ${limits.maxObrasAtivas} obra(s) ativa(s). Faça upgrade para o plano Professional para obras ilimitadas.`}
         requiredPlan="Professional"
+        currentTier={tier}
+        usage={{
+          label: 'Obras ativas',
+          current: obrasAtivas,
+          limit: limits.maxObrasAtivas || '∞',
+        }}
       />
     </AppLayout>
   );

@@ -19,7 +19,7 @@ import { UserPlus, Users, Mail, Shield, Loader2 } from 'lucide-react';
 
 export function TeamManagementSection() {
   const { user } = useAuth();
-  const { tier } = useFeatureGate();
+  const { tier, limits } = useFeatureGate();
   const isRestricted = tier === 'trial' || tier === 'starter';
 
   const {
@@ -223,6 +223,12 @@ export function TeamManagementSection() {
         title="Gestão de Equipa — Plano Professional"
         description="Para adicionar colaboradores e gerir permissões, faça upgrade para o plano Professional que inclui até 10 utilizadores."
         requiredPlan="Professional"
+        currentTier={tier}
+        usage={{
+          label: 'Utilizadores',
+          current: members.length + pendingInvites.length,
+          limit: limits.maxUtilizadores || '∞',
+        }}
       />
     </div>
   );

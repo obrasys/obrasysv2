@@ -94,11 +94,19 @@ const IcfIndex = () => {
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                 <Lock className="w-7 h-7 text-primary" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Cálculos ICF e LSF automáticos</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Esta funcionalidade está incluída no plano Professional. O seu plano atual ({tier}) não permite aceder ao motor paramétrico ICF/LSF.
+                  O motor paramétrico ICF/LSF está incluído no plano Professional.
                 </p>
+                <div className="flex items-center justify-center gap-2 pt-1 text-xs">
+                  <span className="px-2 py-1 rounded-md bg-muted text-muted-foreground">
+                    Plano atual: <strong className="capitalize">{tier}</strong>
+                  </span>
+                  <span className="px-2 py-1 rounded-md bg-primary/10 text-primary">
+                    Disponível em: <strong>Professional</strong>
+                  </span>
+                </div>
               </div>
               <Button onClick={() => navigate('/planos')} className="gap-2">
                 <Sparkles className="w-4 h-4" />
