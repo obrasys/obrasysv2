@@ -71,6 +71,7 @@ const TelecomPage = lazy(() => import("./pages/instalacoes/Telecom"));
 const ConfigurarInstalacoesPage = lazy(() => import("./pages/instalacoes/Configurar"));
 const RedeFornecedoresPage = lazy(() => import("./pages/rede-fornecedores/Index"));
 const AxiaPage = lazy(() => import("./pages/axia/Index"));
+const AxiaInboxPage = lazy(() => import("./pages/axia/Inbox"));
 const ImportarPage = lazy(() => import("./pages/importar/Index"));
 const CadernosPage = lazy(() => import("./pages/cadernos/Index"));
 const ImportarCadernoPage = lazy(() => import("./pages/cadernos/Importar"));
