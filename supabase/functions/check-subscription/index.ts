@@ -4,6 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   getSubscriptionPeriodEndISO,
   getSubscriptionProductId,
+  validateStripeSubscription,
 } from "../_shared/stripe-helpers.ts";
 
 const corsHeaders = {
@@ -154,14 +155,44 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = getSubscriptionPeriodEndISO(subscription);
-      productId = getSubscriptionProductId(subscription) ?? "";
-      subscriptionTier = (productId && PRODUCT_TIERS[productId]) || "starter";
+      const validation = validateStripeSubscription(subscription);
+
+      if (!validation.valid) {
+        logStep("WARNING: Stripe subscription missing fields", {
+          subscriptionId: validation.subscriptionId,
+          missing: validation.missing,
+        });
+      }
+
+      // Critical fields: without product + period end we cannot trust the state.
+      if (!validation.productId || !validation.periodEndISO) {
+        logStep("ERROR: Critical Stripe fields missing, returning controlled error", {
+          subscriptionId: validation.subscriptionId,
+          missing: validation.missing,
+        });
+        return new Response(
+          JSON.stringify({
+            error: "stripe_subscription_incomplete",
+            message: "A subscrição Stripe não devolveu todos os campos obrigatórios.",
+            missing: validation.missing,
+            subscription_id: validation.subscriptionId,
+          }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      subscriptionEnd = validation.periodEndISO;
+      productId = validation.productId;
+      subscriptionTier = PRODUCT_TIERS[productId] || "starter";
       subscriptionStatus = "active";
-      logStep("Active subscription found", { 
-        subscriptionId: subscription.id, 
+      logStep("Active subscription found", {
+        subscriptionId: subscription.id,
         endDate: subscriptionEnd,
-        tier: subscriptionTier 
+        tier: subscriptionTier,
+        priceId: validation.priceId,
       });
 
       // Update local subscriber record
