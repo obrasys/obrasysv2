@@ -693,7 +693,7 @@ serve(async (req) => {
             client,
             userId,
             budgetId,
-            rulesResult.findings,
+            rulesResult.findings ?? [],
             rulesResult.orcamento,
             rulesResult.settings
           );
@@ -709,7 +709,7 @@ serve(async (req) => {
 
         result = {
           insights: allInsights || [],
-          deterministic_count: rulesResult.findings.length,
+          deterministic_count: rulesResult.findings?.length ?? 0,
           llm_count: llmInsights.length,
         };
         break;
