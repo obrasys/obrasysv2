@@ -121,7 +121,24 @@ const IcfIndex = () => {
           </CardContent></Card>
         )}
 
-        {selectedObraId && !configsLoading && !activeConfig && (
+        {selectedObraId && configsError && (
+          <Card className="border-destructive/40">
+            <CardContent className="py-8 text-center space-y-3">
+              <AlertTriangle className="h-8 w-8 mx-auto text-destructive" />
+              <p className="text-sm text-muted-foreground">
+                Não foi possível carregar as configurações ICF.
+                <br />
+                <span className="text-xs opacity-70">{(configsError as any)?.message}</span>
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchConfigs()} disabled={configsFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${configsFetching ? 'animate-spin' : ''}`} />
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedObraId && !configsLoading && !configsError && !activeConfig && (
           <Card><CardContent className="py-12 text-center text-muted-foreground space-y-3">
             <Inbox className="h-10 w-10 mx-auto opacity-50" />
             <p>Ainda não existe nenhuma configuração ICF ativa para esta obra.</p>
@@ -137,7 +154,7 @@ const IcfIndex = () => {
               config={activeConfig}
               hasResumo={!!resumo}
               isGenerating={generateBudget.isPending}
-              onChangeStatus={handleChangeStatus}
+              onChangeStatus={handleChangeStatusSafe}
               onOpenBudget={handleOpenBudgetDialog}
               onEdit={() => navigate(`/icf/configuracao/${activeConfig.id}`)}
             />
@@ -147,6 +164,21 @@ const IcfIndex = () => {
                 <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin" />
                 A calcular resumo paramétrico…
               </CardContent></Card>
+            ) : resumoError ? (
+              <Card className="border-destructive/40">
+                <CardContent className="py-8 text-center space-y-3">
+                  <AlertTriangle className="h-8 w-8 mx-auto text-destructive" />
+                  <p className="text-sm text-muted-foreground">
+                    Não foi possível calcular o resumo paramétrico.
+                    <br />
+                    <span className="text-xs opacity-70">{(resumoError as any)?.message}</span>
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => refetchResumo()} disabled={resumoFetching}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${resumoFetching ? 'animate-spin' : ''}`} />
+                    Tentar novamente
+                  </Button>
+                </CardContent>
+              </Card>
             ) : resumo ? (
               <IcfKpiGrid resumo={resumo} />
             ) : (
@@ -169,8 +201,8 @@ const IcfIndex = () => {
           </>
         )}
 
-        {selectedObraId && !configsLoading && configs && configs.length > 0 && (
-          <IcfConfigsList configs={configs} onDelete={(id) => deleteConfig.mutate(id)} />
+        {selectedObraId && !configsLoading && !configsError && configs && configs.length > 0 && (
+          <IcfConfigsList configs={configs} onDelete={handleDeleteConfig} />
         )}
       </div>
 
