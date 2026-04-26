@@ -70,7 +70,7 @@ Regras obrigatórias:
 7. Se o comando misturar vários assuntos, crie múltiplos items.
 8. Para pré-orçamentos, extraia serviços, áreas, quantidades, unidades e info em falta.
 9. Para RDOs, extraia atividades executadas, materiais em falta, ocorrências.
-10. Para financeiro, extraia valor (numérico), moeda (default EUR), categoria, descrição, tipo (expense/income), e obra.
+10. Para financeiro, é OBRIGATÓRIO preencher data.amount (numérico em EUR, sem símbolos), data.description (string curta), data.category (ex: "combustivel", "material", "mao_de_obra", "outros"), data.tipo ("expense" ou "income"). Se algum destes faltar no transcript, adicione ao missing_fields.
 11. Devolva APENAS JSON válido conforme a ferramenta.`;
 
 const TOOL_SCHEMA = {
