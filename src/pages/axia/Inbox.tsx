@@ -192,6 +192,7 @@ export default function AxiaInboxPage() {
   const items = data ?? [];
   const filtered = items.filter(TABS.find((t) => t.value === tab)?.filter ?? (() => true));
   const qc = useQueryClient();
+  useAxiaIntakeRealtimeNotifications();
 
   useEffect(() => {
     const channel = supabase
