@@ -19,8 +19,18 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// Map Stripe product IDs to subscription tiers
+// Map Stripe product IDs to subscription tiers.
+// Keep legacy IDs to avoid breaking historical subscriptions.
 const PRODUCT_TIERS: Record<string, string> = {
+  // Current live products
+  "prod_U4iBFoVt8KJkb6": "starter",
+  "prod_U4iBLTVrZfpcur": "professional",
+  // Legacy products (kept for backwards compatibility)
+  "prod_U3W0HMMzDBs3qE": "starter",
+  "prod_U3W0WqSNNwnQh6": "professional",
+  "prod_TgF6cwzue5IPml": "starter",
+  "prod_TgF74GN6KuQlUw": "professional",
+  "prod_Tg9sLUiIZZUwzp": "starter",
   "prod_TpRPnhC1KKSanw": "starter",
   "prod_TpRSmJ7vZTK4qf": "professional",
 };
