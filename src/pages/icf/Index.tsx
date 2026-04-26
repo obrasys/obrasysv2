@@ -32,9 +32,9 @@ const IcfIndex = () => {
     if (selectedObraId) localStorage.setItem(ICF_LAST_OBRA_KEY, selectedObraId);
   }, [selectedObraId]);
 
-  const { data: configs, isLoading: configsLoading } = useIcfConfiguracoes(selectedObraId);
+  const { data: configs, isLoading: configsLoading, error: configsError, refetch: refetchConfigs, isFetching: configsFetching } = useIcfConfiguracoes(selectedObraId);
   const activeConfig = configs?.find(c => c.ativo);
-  const { data: resumo, isLoading: resumoLoading } = useIcfResumo(activeConfig?.id);
+  const { data: resumo, isLoading: resumoLoading, error: resumoError, refetch: refetchResumo, isFetching: resumoFetching } = useIcfResumo(activeConfig?.id);
   const createConfig = useCreateIcfConfig();
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
