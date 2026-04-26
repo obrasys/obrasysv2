@@ -40,11 +40,15 @@ export function VoiceCommandButton({
   label = "Comando Axia",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [transcript, setTranscript] = useState("");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+
+  const { hasFeature } = useFeatureGate();
+  const voiceEnabled = hasFeature("comandoVoz");
 
   const recognitionRef = useRef<any>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
