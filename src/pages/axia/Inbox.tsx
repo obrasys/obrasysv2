@@ -5,9 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Inbox, CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles } from "lucide-react";
-import { useIntakeItems, useUpdateIntakeStatus, type IntakeItem } from "@/hooks/useAxiaVoiceIntake";
+import { Inbox, CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, History, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { useIntakeItems, useUpdateIntakeStatus, useIntakeItemHistory, useLogIntakeAction, type IntakeItem, type IntakeHistoryEntry } from "@/hooks/useAxiaVoiceIntake";
 import { Link } from "react-router-dom";
+import { formatDistanceToNow, format } from "date-fns";
+import { pt } from "date-fns/locale";
 
 const TYPE_LABEL: Record<string, string> = {
   pre_budget: "Pré-Orçamento",
