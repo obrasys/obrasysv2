@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   useUpdateIntakeStatus,
+  useUpdateIntakeData,
   useIntakeItemHistory,
   useLogIntakeAction,
   type IntakeItem,
@@ -29,6 +30,10 @@ import {
 import { Link } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Save } from "lucide-react";
 
 const TYPE_LABEL: Record<string, string> = {
   pre_budget: "Pré-Orçamento",
