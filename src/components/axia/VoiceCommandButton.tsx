@@ -282,7 +282,11 @@ export function VoiceCommandButton({
               </Button>
             )}
             {(phase === "idle" || phase === "review" || phase === "error") && (
-              <Button onClick={send} disabled={!transcript.trim() || mutation.isPending} className="gap-2">
+              <Button
+                onClick={send}
+                disabled={(!transcript.trim() && !(audioBlob && audioBlob.size > 0)) || mutation.isPending}
+                className="gap-2"
+              >
                 {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Enviar para Axia
               </Button>
