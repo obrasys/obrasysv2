@@ -63,7 +63,7 @@ function findPrice(
   return best?.preco_unitario ?? null;
 }
 
-function buildChapters(
+export function buildChapters(
   resumo: IcfResumo,
   config: IcfConfiguracao,
   precos: Array<{ codigo: string; descricao: string; unidade: string; preco_unitario: number; categoria: string }>,
