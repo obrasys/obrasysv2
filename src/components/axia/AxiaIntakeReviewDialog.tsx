@@ -204,6 +204,7 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
 
   const data = (current?.extracted_data ?? {}) as Record<string, any>;
   const transcript =
+    (voiceCmd?.transcript ?? "") ||
     (data.transcript as string) ||
     (data.original_command as string) ||
     (data.command as string) ||
