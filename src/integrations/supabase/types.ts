@@ -10102,6 +10102,67 @@ export type Database = {
         Args: { p_obra_id: string }
         Returns: undefined
       }
+      get_my_supplier_profile: {
+        Args: never
+        Returns: {
+          aceita_comunicacoes: boolean | null
+          aceita_pedidos_plataforma: boolean | null
+          aceita_termos: boolean | null
+          ano_fundacao: number | null
+          atualizacao_precos: string | null
+          cae_principal: string | null
+          cae_secundario: string | null
+          categoria_principal: string | null
+          certificacoes: string[] | null
+          codigo_postal: string | null
+          created_at: string
+          delivery_capability: string | null
+          desconto_volume: boolean | null
+          distritos_atuacao: string[] | null
+          email_comercial: string | null
+          frequencia_atualizacao: string | null
+          id: string
+          is_certified: boolean
+          legal_name: string
+          localidade: string | null
+          location_district: string | null
+          location_municipality: string | null
+          logo_url: string | null
+          min_order_value: number | null
+          morada_completa: string | null
+          nif: string | null
+          num_colaboradores: string | null
+          pais: string | null
+          payment_terms: string | null
+          permite_api: boolean | null
+          phone: string | null
+          prazo_medio_entrega: string | null
+          prazo_pagamento_padrao: string | null
+          raio_atuacao_km: number | null
+          rating_avg: number | null
+          rating_count: number | null
+          responsavel_nome: string | null
+          service_areas: string | null
+          sla_response_hours: number | null
+          status: Database["public"]["Enums"]["supplier_status_enum"]
+          subcategorias: string[] | null
+          telefone_fixo: string | null
+          telemovel: string | null
+          tipo_fornecimento: string[] | null
+          trabalha_credito: boolean | null
+          trade_name: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+          zona_atuacao: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "supplier_profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_next_auto_number: { Args: { p_obra_id: string }; Returns: number }
       get_org_member_ids: { Args: never; Returns: string[] }
       get_price_stats: {
@@ -10113,6 +10174,45 @@ export type Database = {
           sample_count: number
           stddev_price: number
           unidade: string
+        }[]
+      }
+      get_public_supplier_profiles: {
+        Args: never
+        Returns: {
+          ano_fundacao: number
+          cae_principal: string
+          cae_secundario: string
+          categoria_principal: string
+          certificacoes: string[]
+          created_at: string
+          delivery_capability: string
+          desconto_volume: boolean
+          distritos_atuacao: string[]
+          id: string
+          is_certified: boolean
+          legal_name: string
+          location_district: string
+          location_municipality: string
+          logo_url: string
+          min_order_value: number
+          nif: string
+          num_colaboradores: string
+          payment_terms: string
+          prazo_medio_entrega: string
+          prazo_pagamento_padrao: string
+          raio_atuacao_km: number
+          rating_avg: number
+          rating_count: number
+          service_areas: string
+          sla_response_hours: number
+          status: Database["public"]["Enums"]["supplier_status_enum"]
+          subcategorias: string[]
+          tipo_fornecimento: string[]
+          trabalha_credito: boolean
+          trade_name: string
+          updated_at: string
+          website: string
+          zona_atuacao: string
         }[]
       }
       get_user_org_id: { Args: never; Returns: string }
