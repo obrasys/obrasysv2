@@ -5,8 +5,33 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Inbox, CheckCircle2, XCircle, ExternalLink, Loader2, Sparkles, History, ChevronDown, ChevronUp, Eye } from "lucide-react";
-import { useIntakeItems, useUpdateIntakeStatus, useIntakeItemHistory, useLogIntakeAction, type IntakeItem, type IntakeHistoryEntry } from "@/hooks/useAxiaVoiceIntake";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Inbox,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Loader2,
+  Sparkles,
+  History,
+  Eye,
+  ChevronRight,
+} from "lucide-react";
+import {
+  useIntakeItems,
+  useUpdateIntakeStatus,
+  useIntakeItemHistory,
+  useLogIntakeAction,
+  type IntakeItem,
+  type IntakeHistoryEntry,
+} from "@/hooks/useAxiaVoiceIntake";
 import { useAxiaIntakeRealtimeNotifications } from "@/hooks/useAxiaIntakeRealtimeNotifications";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
@@ -27,6 +52,14 @@ const STATUS_LABEL: Record<string, string> = {
   approved: "Aprovado",
   converted: "Convertido",
   rejected: "Rejeitado",
+};
+
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+  pending_review: "secondary",
+  needs_more_info: "outline",
+  approved: "default",
+  converted: "default",
+  rejected: "destructive",
 };
 
 const targetUrl = (it: IntakeItem) => {
@@ -79,7 +112,10 @@ function HistoryTimeline({ itemId }: { itemId: string }) {
               <span className="font-medium">{meta.label}</span>
               <span className="text-muted-foreground">por {who}</span>
             </div>
-            <div className="text-xs text-muted-foreground" title={format(new Date(e.created_at), "dd/MM/yyyy HH:mm:ss")}>
+            <div
+              className="text-xs text-muted-foreground"
+              title={format(new Date(e.created_at), "dd/MM/yyyy HH:mm:ss")}
+            >
               {formatDistanceToNow(new Date(e.created_at), { addSuffix: true, locale: pt })}
               {e.from_status && e.to_status && e.from_status !== e.to_status && (
                 <> · {e.from_status} → {e.to_status}</>
@@ -93,13 +129,81 @@ function HistoryTimeline({ itemId }: { itemId: string }) {
   );
 }
 
-function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: string } | null } }) {
+type ItemWithObra = IntakeItem & { obra: { id: string; nome: string } | null };
+
+function ItemRow({ item, onOpen }: { item: ItemWithObra; onOpen: () => void }) {
+  const conf = Math.round((item.confidence ?? 0) * 100);
+  const needsAttention = item.status === "pending_review" || item.status === "needs_more_info";
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-full text-left rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors px-4 py-3 flex items-center gap-3"
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 mb-0.5">
+          <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+            {TYPE_LABEL[item.item_type] ?? item.item_type}
+          </Badge>
+          <Badge
+            variant={STATUS_VARIANT[item.status] ?? "outline"}
+            className="text-[10px] py-0 px-1.5"
+          >
+            {STATUS_LABEL[item.status] ?? item.status}
+          </Badge>
+          {conf > 0 && (
+            <span className="text-[11px] text-muted-foreground">{conf}%</span>
+          )}
+          {item.obra?.nome && (
+            <span className="text-[11px] text-muted-foreground truncate">
+              · {item.obra.nome}
+            </span>
+          )}
+        </div>
+        <p className="font-medium text-sm truncate">{item.title}</p>
+      </div>
+      {needsAttention && (
+        <span className="hidden sm:inline text-xs text-muted-foreground">Rever</span>
+      )}
+      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+    </button>
+  );
+}
+
+function ReviewDialog({
+  item,
+  open,
+  onOpenChange,
+}: {
+  item: ItemWithObra | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   const update = useUpdateIntakeStatus();
   const log = useLogIntakeAction();
-  const url = targetUrl(item);
-  const conf = Math.round((item.confidence ?? 0) * 100);
   const [showHistory, setShowHistory] = useState(false);
 
+  useEffect(() => {
+    if (!open) setShowHistory(false);
+  }, [open]);
+
+  if (!item) return null;
+  const conf = Math.round((item.confidence ?? 0) * 100);
+  const url = targetUrl(item);
+
+  const handleApprove = () => {
+    update.mutate(
+      { id: item.id, status: "approved", fromStatus: item.status },
+      { onSuccess: () => onOpenChange(false) }
+    );
+  };
+  const handleReject = () => {
+    update.mutate(
+      { id: item.id, status: "rejected", fromStatus: item.status },
+      { onSuccess: () => onOpenChange(false) }
+    );
+  };
   const toggleHistory = () => {
     const next = !showHistory;
     setShowHistory(next);
@@ -107,73 +211,103 @@ function ItemCard({ item }: { item: IntakeItem & { obra: { id: string; nome: str
   };
 
   return (
-    <Card className="p-4 rounded-2xl space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
             <Badge variant="secondary">{TYPE_LABEL[item.item_type] ?? item.item_type}</Badge>
-            <Badge variant="outline">{STATUS_LABEL[item.status] ?? item.status}</Badge>
-            {conf > 0 && <span className="text-xs text-muted-foreground">{conf}% confiança</span>}
+            <Badge variant={STATUS_VARIANT[item.status] ?? "outline"}>
+              {STATUS_LABEL[item.status] ?? item.status}
+            </Badge>
+            {conf > 0 && (
+              <span className="text-xs text-muted-foreground">{conf}% confiança</span>
+            )}
           </div>
-          <h4 className="font-medium truncate">{item.title}</h4>
-          {item.summary && <p className="text-sm text-muted-foreground line-clamp-2">{item.summary}</p>}
+          <DialogTitle className="text-left">{item.title}</DialogTitle>
+          {item.summary && (
+            <DialogDescription className="text-left">{item.summary}</DialogDescription>
+          )}
+        </DialogHeader>
+
+        <div className="space-y-3 text-sm">
           {item.obra?.nome && (
-            <p className="text-xs text-muted-foreground mt-1">Obra: {item.obra.nome}</p>
+            <div className="text-xs text-muted-foreground">Obra: {item.obra.nome}</div>
           )}
           {item.missing_fields?.length > 0 && (
-            <p className="text-xs text-yellow-600 mt-1">
-              Em falta: {item.missing_fields.join(", ")}
-            </p>
+            <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-800">
+              <span className="font-medium">Em falta:</span> {item.missing_fields.join(", ")}
+            </div>
           )}
           {item.axia_questions?.length > 0 && (
-            <ul className="text-xs text-muted-foreground mt-1 list-disc pl-4">
-              {item.axia_questions.map((q, i) => <li key={i}>{q}</li>)}
-            </ul>
+            <div className="rounded-lg bg-muted/50 px-3 py-2">
+              <p className="text-xs font-medium mb-1">Perguntas da Axia:</p>
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                {item.axia_questions.map((q, i) => (
+                  <li key={i}>{q}</li>
+                ))}
+              </ul>
+            </div>
           )}
+
+          <div>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-1 px-2 h-7 text-xs"
+              onClick={toggleHistory}
+            >
+              <History className="h-3.5 w-3.5" />
+              {showHistory ? "Ocultar histórico" : "Ver histórico"}
+            </Button>
+            {showHistory && <HistoryTimeline itemId={item.id} />}
+          </div>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {url && (
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="gap-1"
-            onClick={() => log.mutate({ itemId: item.id, action: "opened", metadata: { target_url: url } })}
-          >
-            <Link to={url}><ExternalLink className="h-3.5 w-3.5" /> Abrir</Link>
-          </Button>
-        )}
-        {item.status !== "approved" && item.status !== "converted" && (
-          <Button
-            size="sm"
-            variant="default"
-            className="gap-1"
-            onClick={() => update.mutate({ id: item.id, status: "approved", fromStatus: item.status })}
-            disabled={update.isPending}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
-          </Button>
-        )}
-        {item.status !== "rejected" && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="gap-1 text-destructive"
-            onClick={() => update.mutate({ id: item.id, status: "rejected", fromStatus: item.status })}
-            disabled={update.isPending}
-          >
-            <XCircle className="h-3.5 w-3.5" /> Rejeitar
-          </Button>
-        )}
-        <Button size="sm" variant="ghost" className="gap-1 ml-auto" onClick={toggleHistory}>
-          <History className="h-3.5 w-3.5" />
-          Histórico
-          {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        </Button>
-      </div>
-      {showHistory && <HistoryTimeline itemId={item.id} />}
-    </Card>
+
+        <DialogFooter className="flex-row flex-wrap gap-2 sm:justify-between">
+          <div className="flex gap-2">
+            {url && (
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() =>
+                  log.mutate({ itemId: item.id, action: "opened", metadata: { target_url: url } })
+                }
+              >
+                <Link to={url}>
+                  <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                </Link>
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 ml-auto">
+            {item.status !== "rejected" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-1 text-destructive"
+                onClick={handleReject}
+                disabled={update.isPending}
+              >
+                <XCircle className="h-3.5 w-3.5" /> Rejeitar
+              </Button>
+            )}
+            {item.status !== "approved" && item.status !== "converted" && (
+              <Button
+                size="sm"
+                variant="default"
+                className="gap-1"
+                onClick={handleApprove}
+                disabled={update.isPending}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
+              </Button>
+            )}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -188,6 +322,8 @@ const TABS = [
 
 export default function AxiaInboxPage() {
   const [tab, setTab] = useState("all");
+  const [selected, setSelected] = useState<ItemWithObra | null>(null);
+  const [open, setOpen] = useState(false);
   const { data, isLoading } = useIntakeItems();
   const items = data ?? [];
   const filtered = items.filter(TABS.find((t) => t.value === tab)?.filter ?? (() => true));
@@ -211,6 +347,11 @@ export default function AxiaInboxPage() {
     };
   }, [qc]);
 
+  const handleOpen = (item: ItemWithObra) => {
+    setSelected(item);
+    setOpen(true);
+  };
+
   return (
     <div className="container max-w-5xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -218,7 +359,9 @@ export default function AxiaInboxPage() {
           <Sparkles className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold">Caixa Axia</h1>
-            <p className="text-sm text-muted-foreground">Itens criados por voz a aguardar revisão.</p>
+            <p className="text-sm text-muted-foreground">
+              Itens criados por voz a aguardar revisão. Clique para rever cada item.
+            </p>
           </div>
         </div>
       </div>
@@ -231,19 +374,25 @@ export default function AxiaInboxPage() {
             </TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value={tab} className="mt-4 space-y-3">
+        <TabsContent value={tab} className="mt-4 space-y-2">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> A carregar...</div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
+            </div>
           ) : filtered.length === 0 ? (
             <Card className="p-10 flex flex-col items-center text-center text-muted-foreground rounded-2xl">
               <Inbox className="h-10 w-10 mb-2 opacity-50" />
               <p>Sem itens nesta categoria.</p>
             </Card>
           ) : (
-            filtered.map((it) => <ItemCard key={it.id} item={it} />)
+            filtered.map((it) => (
+              <ItemRow key={it.id} item={it} onOpen={() => handleOpen(it)} />
+            ))
           )}
         </TabsContent>
       </Tabs>
+
+      <ReviewDialog item={selected} open={open} onOpenChange={setOpen} />
     </div>
   );
 }
