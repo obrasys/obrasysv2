@@ -48,7 +48,8 @@ export function VoiceCommandButton({
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
   const { hasFeature, tier } = useFeatureGate();
-  const voiceEnabled = hasFeature("comandoVoz");
+  // Durante o trial, o comando de voz fica disponível para todos os utilizadores experimentarem.
+  const voiceEnabled = tier === "trial" || hasFeature("comandoVoz");
 
   const recognitionRef = useRef<any>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
