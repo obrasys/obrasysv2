@@ -188,9 +188,79 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
     if (next) log.mutate({ itemId: current.id, action: "opened" });
   };
 
+  const data = (current?.extracted_data ?? {}) as Record<string, any>;
+  const transcript =
+    (data.transcript as string) ||
+    (data.original_command as string) ||
+    (data.command as string) ||
+    "";
+  const explanation = (data.explanation as string) || (data.reasoning as string) || "";
+
+  const renderExtracted = () => {
+    if (!current) return null;
+    const rows: { label: string; value: string }[] = [];
+    if (current.item_type === "financial_record") {
+      if (data.amount != null) rows.push({ label: "Valor", value: `${data.amount}` });
+      if (data.currency) rows.push({ label: "Moeda", value: String(data.currency) });
+      if (data.category) rows.push({ label: "Categoria", value: String(data.category) });
+      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
+      if (data.date) rows.push({ label: "Data", value: String(data.date) });
+      if (data.description) rows.push({ label: "Descrição", value: String(data.description) });
+    } else if (current.item_type === "rdo") {
+      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
+      if (data.date) rows.push({ label: "Data", value: String(data.date) });
+      if (Array.isArray(data.activities))
+        rows.push({ label: "Atividades", value: data.activities.join(", ") || "—" });
+      if (Array.isArray(data.missing_materials))
+        rows.push({
+          label: "Materiais em falta",
+          value: data.missing_materials.join(", ") || "—",
+        });
+      if (data.notes) rows.push({ label: "Observações", value: String(data.notes) });
+    } else if (current.item_type === "pre_budget") {
+      if (data.title) rows.push({ label: "Título", value: String(data.title) });
+      if (data.area) rows.push({ label: "Área", value: String(data.area) });
+      if (Array.isArray(data.services))
+        rows.push({ label: "Serviços", value: data.services.join(", ") || "—" });
+    } else {
+      Object.entries(data).forEach(([k, v]) => {
+        if (["transcript", "explanation", "reasoning", "command", "original_command"].includes(k))
+          return;
+        if (v == null || typeof v === "object") return;
+        rows.push({ label: k, value: String(v) });
+      });
+    }
+    if (rows.length === 0) {
+      return (
+        <p className="text-xs text-muted-foreground italic">
+          Sem dados estruturados extraídos.
+        </p>
+      );
+    }
+    return (
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+        {rows.map((r) => (
+          <div key={r.label} className="flex flex-col">
+            <dt className="text-muted-foreground capitalize">{r.label}</dt>
+            <dd className="font-medium text-foreground break-words">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  };
+
+  const finalLabel =
+    current?.item_type === "financial_record"
+      ? "Finalizar despesa"
+      : current?.item_type === "rdo"
+        ? "Finalizar RDO"
+        : current?.item_type === "pre_budget"
+          ? "Converter em orçamento"
+          : "Finalizar";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {isLoading || !current ? (
           <div className="flex items-center gap-2 py-10 justify-center text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
@@ -199,7 +269,9 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
           <>
             <DialogHeader>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <Badge variant="secondary">{TYPE_LABEL[current.item_type] ?? current.item_type}</Badge>
+                <Badge variant="secondary">
+                  {TYPE_LABEL[current.item_type] ?? current.item_type}
+                </Badge>
                 <Badge variant={STATUS_VARIANT[current.status] ?? "outline"}>
                   {STATUS_LABEL[current.status] ?? current.status}
                 </Badge>
@@ -207,19 +279,65 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                   <span className="text-xs text-muted-foreground">{conf}% confiança</span>
                 )}
               </div>
-              <DialogTitle className="text-left">{current.title}</DialogTitle>
+              <DialogTitle className="text-left flex items-center gap-2">
+                <span className="text-primary">Revisão Axia</span>
+                <span className="text-muted-foreground font-normal">·</span>
+                <span className="font-semibold">{current.title}</span>
+              </DialogTitle>
               {current.summary && (
                 <DialogDescription className="text-left">{current.summary}</DialogDescription>
               )}
             </DialogHeader>
 
-            <div className="space-y-3 text-sm">
-              {current.obra?.nome && (
-                <div className="text-xs text-muted-foreground">Obra: {current.obra.nome}</div>
-              )}
+            <div className="space-y-4 text-sm">
+              {/* 1. Comando original */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Comando original
+                </h3>
+                <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm italic text-foreground">
+                  {transcript ? `"${transcript}"` : (
+                    <span className="text-muted-foreground not-italic">
+                      Transcrição não disponível.
+                    </span>
+                  )}
+                </div>
+              </section>
+
+              {/* 2. Interpretação da Axia */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Interpretação da Axia
+                </h3>
+                <div className="rounded-lg border px-3 py-2 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">Tipo identificado:</span>
+                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                      {TYPE_LABEL[current.item_type] ?? current.item_type}
+                    </Badge>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">Confiança:</span>
+                    <span className="font-medium">{conf}%</span>
+                  </div>
+                  {explanation && (
+                    <p className="text-xs text-foreground/90">{explanation}</p>
+                  )}
+                </div>
+              </section>
+
+              {/* 3. Dados extraídos */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                  Dados extraídos
+                </h3>
+                <div className="rounded-lg border px-3 py-2.5">{renderExtracted()}</div>
+              </section>
+
+              {/* Faltas e perguntas */}
               {current.missing_fields?.length > 0 && (
-                <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-800">
-                  <span className="font-medium">Em falta:</span> {current.missing_fields.join(", ")}
+                <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
+                  <span className="font-medium">Em falta:</span>{" "}
+                  {current.missing_fields.join(", ")}
                 </div>
               )}
               {current.axia_questions?.length > 0 && (
@@ -233,6 +351,7 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                 </div>
               )}
 
+              {/* Histórico */}
               <div>
                 <Button
                   size="sm"
@@ -241,14 +360,27 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                   onClick={toggleHistory}
                 >
                   <History className="h-3.5 w-3.5" />
-                  {showHistory ? "Ocultar histórico" : "Ver histórico"}
+                  {showHistory ? "Ocultar histórico" : "Ver histórico de ações"}
                 </Button>
                 {showHistory && <HistoryTimeline itemId={current.id} />}
               </div>
             </div>
 
-            <DialogFooter className="flex-row flex-wrap gap-2 sm:justify-between">
+            <DialogFooter className="flex-row flex-wrap gap-2 sm:justify-between border-t pt-3">
               <div className="flex gap-2">
+                {current.status !== "rejected" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="gap-1 text-destructive"
+                    onClick={handleReject}
+                    disabled={update.isPending}
+                  >
+                    <XCircle className="h-3.5 w-3.5" /> Rejeitar
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2 ml-auto flex-wrap">
                 {url && (
                   <Button
                     asChild
@@ -264,21 +396,8 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                     }
                   >
                     <Link to={url}>
-                      <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                      <ExternalLink className="h-3.5 w-3.5" /> Abrir entidade
                     </Link>
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-2 ml-auto">
-                {current.status !== "rejected" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="gap-1 text-destructive"
-                    onClick={handleReject}
-                    disabled={update.isPending}
-                  >
-                    <XCircle className="h-3.5 w-3.5" /> Rejeitar
                   </Button>
                 )}
                 {current.status !== "approved" && current.status !== "converted" && (
@@ -289,7 +408,7 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                     onClick={handleApprove}
                     disabled={update.isPending}
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {finalLabel}
                   </Button>
                 )}
               </div>
