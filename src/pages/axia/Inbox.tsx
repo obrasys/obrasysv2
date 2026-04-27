@@ -493,7 +493,7 @@ export default function AxiaInboxPage() {
               <History className="h-4 w-4" /> Ver histórico
             </Link>
           </Button>
-          <VoiceCommandButton label="Novo comando Axia" size="sm" />
+          <VoiceCommandButton  size="sm" />
         </div>
       </div>
 
@@ -610,7 +610,7 @@ export default function AxiaInboxPage() {
                     por voz, eles aparecerão aqui para revisão.
                   </p>
                 </div>
-                <VoiceCommandButton label="Novo comando Axia" size="sm" />
+                <VoiceCommandButton  size="sm" />
               </div>
             </Card>
           ) : (

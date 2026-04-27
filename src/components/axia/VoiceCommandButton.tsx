@@ -9,7 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Mic, Mic2, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useCreateAndProcessVoiceCommand } from "@/hooks/useAxiaVoiceIntake";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,7 @@ export function VoiceCommandButton({
   sourceContext = "global",
   variant = "default",
   size = "default",
-  label = "Comando Axia",
+  label = "Registar por Voz",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -156,23 +157,50 @@ export function VoiceCommandButton({
     }
   };
 
+  const isRecording = phase === "recording";
+  const isProcessing = phase === "processing";
+  const isDone = phase === "done";
+
+  const pillClasses = cn(
+    "group relative inline-flex items-center gap-2 rounded-full px-4 sm:px-5 h-10",
+    "bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.85)]",
+    "text-primary-foreground font-medium",
+    "shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30",
+    "transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
+    isRecording && "animate-pulse ring-2 ring-destructive/60",
+    isDone && "ring-2 ring-emerald-400/60",
+  );
+
+  const renderIcon = () => {
+    if (isProcessing) return <Loader2 className="h-4 w-4 animate-spin" />;
+    if (isDone) return <CheckCircle2 className="h-4 w-4" />;
+    return (
+      <span className="relative inline-flex">
+        <Mic2 className="h-4 w-4" />
+        <Sparkles className="h-2.5 w-2.5 absolute -top-1 -right-1.5 text-amber-200 drop-shadow-[0_0_4px_rgba(255,200,80,0.7)]" />
+      </span>
+    );
+  };
+
   if (!voiceEnabled) {
     return (
       <>
-        <Button
-          variant={variant}
-          size={size}
-          className="gap-2"
+        <button
+          type="button"
           onClick={() => setUpgradeOpen(true)}
+          className={pillClasses}
+          aria-label="Registar por Voz"
+          title="Criar RDO, pré-orçamento ou registo financeiro por voz"
         >
-          <Sparkles className="h-4 w-4" />
-          {label}
-        </Button>
+          {renderIcon()}
+          <span className="hidden sm:inline">{label}</span>
+        </button>
         <UpgradePromptModal
           open={upgradeOpen}
           onClose={() => setUpgradeOpen(false)}
-          title="Comando de voz Axia"
-          description="O suporte de comando de voz está disponível no plano Professional. Faça upgrade para registar ações por voz."
+          title="Registar por Voz"
+          description="O registo por voz está disponível no plano Professional. Faça upgrade para registar RDOs, pré-orçamentos e registos financeiros por voz."
           requiredPlan="Professional"
           currentTier={tier}
         />
@@ -183,16 +211,27 @@ export function VoiceCommandButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant} size={size} className="gap-2">
-          <Sparkles className="h-4 w-4" />
-          {label}
-        </Button>
+        <button
+          type="button"
+          className={pillClasses}
+          aria-label="Registar por Voz"
+          title="Criar RDO, pré-orçamento ou registo financeiro por voz"
+        >
+          {renderIcon()}
+          <span className="hidden sm:inline">{label}</span>
+          {isRecording && (
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+            </span>
+          )}
+        </button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Comando Axia
+            <Mic2 className="h-5 w-5 text-primary" />
+            Registar por Voz
           </DialogTitle>
           <DialogDescription>
             Fale o que aconteceu na obra, o que quer registar ou orçamentar. A Axia cria um rascunho para revisão.
