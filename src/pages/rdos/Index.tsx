@@ -112,10 +112,13 @@ export default function RDOsPage() {
       title="Relatórios Diários"
       subtitle="Gestão de RDOs das suas obras"
       actions={
-        <Button onClick={() => navigate('/rdos/criar')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo RDO
-        </Button>
+        <div className="flex items-center gap-2">
+          <VoiceCommandButton sourceContext="rdo" variant="outline" size="default" label="Comando Axia" />
+          <Button onClick={() => navigate('/rdos/criar')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo RDO
+          </Button>
+        </div>
       }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-5">
