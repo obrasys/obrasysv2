@@ -32,6 +32,7 @@ import { useReceivableAlerts } from '@/hooks/useReceivableAlerts';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
@@ -160,6 +161,7 @@ export default function ObraFinanceiroPage() {
               Adjudicar
             </Button>
           )}
+          <VoiceCommandButton sourceContext="financial" obraId={id} variant="outline" size="sm" label="Comando Axia" />
           <Button size="sm" onClick={() => { setEditingConta(null); setFormOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" />
             Nova Conta

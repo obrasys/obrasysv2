@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Search, Loader2, Users, Tags } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
@@ -125,7 +126,10 @@ const FinanceiroIndex = () => {
   }
 
   return (
-    <AppLayout title="Financeiro">
+    <AppLayout
+      title="Financeiro"
+      actions={<VoiceCommandButton sourceContext="financial" variant="outline" size="default" label="Comando Axia" />}
+    >
       <div className="p-4 md:p-6 space-y-6">
         {/* Global KPIs */}
         <FinanceiroGlobalKPIs data={dashboard} isLoading={loadingDashboard} />
