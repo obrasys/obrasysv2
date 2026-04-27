@@ -16,6 +16,15 @@ const SEVERITY_STYLE: Record<string, string> = {
 const isIntakeAlert = (a: DashboardAlert) =>
   a.source_entity_type === "axia_intake_item" && !!a.source_entity_id;
 
+// Rotas válidas existentes para alertas de origem voice/Axia
+const KNOWN_ROUTES = ["/axia/inbox", "/rdos", "/financeiro", "/orcamentos", "/obras"];
+const resolveActionUrl = (url: string | null) => {
+  if (!url) return "/axia/inbox";
+  // Se a rota não bate com nenhuma rota conhecida, manda para a Caixa Axia
+  if (!KNOWN_ROUTES.some((r) => url.startsWith(r))) return "/axia/inbox";
+  return url;
+};
+
 export function DashboardAlertsWidget() {
   const { data: alerts, isLoading } = useDashboardAlerts();
   const dismiss = useDismissAlert();
@@ -26,7 +35,7 @@ export function DashboardAlertsWidget() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Pendências Axia</h3>
+          <h3 className="font-semibold">Registos pendentes</h3>
           {alerts && alerts.length > 0 && (
             <Badge variant="secondary">{alerts.length}</Badge>
           )}
@@ -41,7 +50,7 @@ export function DashboardAlertsWidget() {
       ) : !alerts || alerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
           <Inbox className="h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Sem pendências da Axia.</p>
+          <p className="text-sm">Sem registos pendentes.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -74,9 +83,9 @@ export function DashboardAlertsWidget() {
                       {a.action_label || "Rever"}
                     </Button>
                   ) : (
-                    a.action_url && a.action_label && (
+                    a.action_label && (
                       <Button asChild size="sm" variant="outline">
-                        <Link to={a.action_url}>{a.action_label}</Link>
+                        <Link to={resolveActionUrl(a.action_url)}>{a.action_label}</Link>
                       </Button>
                     )
                   )}
