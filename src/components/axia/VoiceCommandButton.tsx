@@ -38,7 +38,7 @@ export function VoiceCommandButton({
   sourceContext = "global",
   variant = "default",
   size = "default",
-  label = "Comando Axia",
+  label = "Registar por Voz",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
