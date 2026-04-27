@@ -230,7 +230,12 @@ export function VoiceCommandButton({
               />
               {!SpeechRecognitionImpl && (
                 <p className="text-xs text-muted-foreground">
-                  O seu navegador não suporta transcrição automática. Pode escrever o comando manualmente.
+                  O seu navegador não transcreve em tempo real. Pode gravar o áudio e a Axia transcreve automaticamente, ou escrever o comando.
+                </p>
+              )}
+              {phase === "review" && !transcript.trim() && audioBlob && (
+                <p className="text-xs text-primary">
+                  Áudio gravado ({Math.round((audioBlob.size / 1024))} KB). A Axia vai transcrever ao enviar.
                 </p>
               )}
               {errMsg && <p className="text-xs text-destructive">{errMsg}</p>}
