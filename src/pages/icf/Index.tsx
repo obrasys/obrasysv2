@@ -16,6 +16,7 @@ import { IcfConfigHeader } from '@/components/icf/IcfConfigHeader';
 import { IcfKpiGrid } from '@/components/icf/IcfKpiGrid';
 import { IcfQuickNav } from '@/components/icf/IcfQuickNav';
 import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
+import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
@@ -133,6 +134,9 @@ const IcfIndex = () => {
               <Plus className="h-4 w-4 mr-2" />Nova Configuração ICF
             </Button>
           )}
+          <div className="sm:ml-auto">
+            <IcfConstantsDialog />
+          </div>
         </div>
 
         {!selectedObraId && (

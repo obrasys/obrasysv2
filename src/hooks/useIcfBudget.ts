@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type { IcfResumo, IcfConfiguracao, IcfLaje } from '@/types/icf';
+import { ICF_DEFAULT_CONSTANTS, type IcfCalculationConstants } from '@/hooks/useIcfCalculationConstants';
 
 interface IcfBudgetArticle {
   codigo?: string;
@@ -39,9 +40,9 @@ const FALLBACK = {
   mao_obra_m2: 25, // valor de referência do anexo
 };
 
-/** Painel ICF padrão: 1.2m x 0.3m = 0.36 m² */
-function estimarPaineis(areaLiquida: number): number {
-  return Math.ceil(areaLiquida / 0.36);
+/** Painel ICF — área configurável por utilizador */
+function estimarPaineis(areaLiquida: number, painelArea: number): number {
+  return Math.ceil(areaLiquida / Math.max(painelArea, 0.01));
 }
 
 /** Procura preço unitário na base de preços personalizada do utilizador. */
@@ -67,6 +68,7 @@ function buildChapters(
   config: IcfConfiguracao,
   precos: Array<{ codigo: string; descricao: string; unidade: string; preco_unitario: number; categoria: string }>,
   lajes: IcfLaje[],
+  K: IcfCalculationConstants,
 ): IcfBudgetChapter[] {
   const chapters: IcfBudgetChapter[] = [];
   const espNucleoCm = config.espessura_nucleo * 100;
@@ -95,7 +97,7 @@ function buildChapters(
   // ═══════════════════════════════════════════════════════════
   if (resumo.volume_total_fundacoes > 0 || resumo.aco_total_fundacoes > 0) {
     const artigos: IcfBudgetArticle[] = [];
-    const areaSapatas = resumo.volume_total_fundacoes / 0.45; // estimativa: altura média 0.45m
+    const areaSapatas = resumo.volume_total_fundacoes / Math.max(K.altura_media_sapata_m, 0.01);
 
     if (resumo.aco_total_fundacoes > 0) {
       artigos.push(art(`Aço ${config.classe_aco} para armaduras de sapatas`, 'kg', resumo.aco_total_fundacoes, FALLBACK.aco_kg, ['aco', 'armadura']));
@@ -120,12 +122,14 @@ function buildChapters(
   // ═══════════════════════════════════════════════════════════
   if (resumo.area_liquida_total > 0) {
     const artigos: IcfBudgetArticle[] = [];
-    const qtdPaineis = estimarPaineis(resumo.area_liquida_total);
-    const qtdTopos = Math.ceil(qtdPaineis * 0.15);
-    const qtdEspacadores = qtdPaineis * 6;
-    const qtdCantosC3 = Math.ceil(resumo.comprimento_total_paredes * 0.2);
-    const qtdCantosC4 = Math.ceil(resumo.comprimento_total_paredes * 0.1);
-    const qtdPadieiras = resumo.area_total_vaos > 0 ? Math.ceil(resumo.area_total_vaos / 3) : 0;
+    const qtdPaineis = estimarPaineis(resumo.area_liquida_total, K.painel_area_m2);
+    const qtdTopos = Math.ceil(qtdPaineis * K.fator_topos);
+    const qtdEspacadores = qtdPaineis * K.espacadores_por_painel;
+    const qtdCantosC3 = Math.ceil(resumo.comprimento_total_paredes * K.fator_cantos_c3);
+    const qtdCantosC4 = Math.ceil(resumo.comprimento_total_paredes * K.fator_cantos_c4);
+    const qtdPadieiras = resumo.area_total_vaos > 0
+      ? Math.ceil(resumo.area_total_vaos / Math.max(K.vaos_por_padieira, 0.01))
+      : 0;
 
     artigos.push(art(`Painel grafitado H27 D${espNucleoCm} — ICF`, 'un', qtdPaineis, FALLBACK.painel_grafitado_un, ['painel', 'grafitado']));
     if (qtdPadieiras > 0) {
@@ -136,8 +140,8 @@ function buildChapters(
     artigos.push(art('Cantos C4', 'un', qtdCantosC4, FALLBACK.canto_c4_un, ['canto', 'c4']));
     artigos.push(art(`Espaçadores ${is22 ? '22' : '15'}cm`, 'un', qtdEspacadores, FALLBACK.espacador_un, ['espacador']));
 
-    // Aço para paredes (estimativa: 35 kg/m³ de betão de enchimento)
-    const acoParedes = resumo.volume_total_paredes * 35;
+    // Aço para paredes (kg por m³ de betão de enchimento — configurável)
+    const acoParedes = resumo.volume_total_paredes * K.aco_kg_por_m3_paredes;
     if (acoParedes > 0) {
       artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
     }
@@ -185,9 +189,9 @@ function buildChapters(
   for (const g of groups) {
     if (g.area <= 0 && g.volume <= 0) continue;
     const artigos: IcfBudgetArticle[] = [];
-    const qtdAbobadilhas = Math.ceil(g.area / 2);
+    const qtdAbobadilhas = Math.ceil(g.area * K.abobadilhas_por_m2);
     const qtdMalha = g.area;
-    const mlTrelicas = g.area * 1.6;
+    const mlTrelicas = g.area * K.trelicas_ml_por_m2;
 
     if (qtdAbobadilhas > 0) artigos.push(art(`Abobadilha 2000x1000x170 — ${g.piso}`, 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
     if (qtdMalha > 0) artigos.push(art(`Malha electrosoldada — ${g.piso}`, 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
@@ -244,12 +248,33 @@ export function useGenerateIcfBudget() {
         .eq('configuracao_id', config.id);
       const lajes = (lajesData ?? []) as unknown as IcfLaje[];
 
+      // 1c. Carregar constantes de cálculo personalizadas (fallback para defaults)
+      const { data: constsData } = await (supabase as any)
+        .from('icf_calculation_constants')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const K: IcfCalculationConstants = constsData
+        ? {
+            aco_kg_por_m3_paredes: Number(constsData.aco_kg_por_m3_paredes),
+            painel_area_m2: Number(constsData.painel_area_m2),
+            fator_topos: Number(constsData.fator_topos),
+            fator_cantos_c3: Number(constsData.fator_cantos_c3),
+            fator_cantos_c4: Number(constsData.fator_cantos_c4),
+            espacadores_por_painel: Number(constsData.espacadores_por_painel),
+            abobadilhas_por_m2: Number(constsData.abobadilhas_por_m2),
+            trelicas_ml_por_m2: Number(constsData.trelicas_ml_por_m2),
+            altura_media_sapata_m: Number(constsData.altura_media_sapata_m),
+            vaos_por_padieira: Number(constsData.vaos_por_padieira),
+          }
+        : ICF_DEFAULT_CONSTANTS;
+
       // 2. Construir capítulos com preços de CUSTO.
       // IMPORTANTE: persistimos sempre o custo em preco_unitario.
       // A margem é aplicada apenas pela camada de leitura (Ver.tsx / orcamento-pdf.ts)
       // através da fórmula PV = Custo / (1 - margem%). Persistir o custo evita
       // dupla aplicação de margem e mantém o orçamento auditável.
-      const chapters = buildChapters(resumo, config, precos, lajes);
+      const chapters = buildChapters(resumo, config, precos, lajes, K);
       if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
       // 3. Subtotal de custo + custos indiretos absolutos (também a custo).
