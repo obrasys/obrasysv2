@@ -158,6 +158,20 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
   const { data: fetched, isLoading } = useIntakeItemById(effectiveId, item);
   const current: IntakeItemWithObra | null = item ?? fetched ?? null;
 
+  const { data: voiceCmd } = useQuery({
+    queryKey: ["voice-command-for-intake", current?.voice_command_id],
+    enabled: !!current?.voice_command_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("voice_commands")
+        .select("transcript, source_context, language")
+        .eq("id", current!.voice_command_id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { transcript: string | null; source_context: string | null; language: string | null } | null;
+    },
+  });
+
   useEffect(() => {
     if (!open) setShowHistory(false);
   }, [open]);
