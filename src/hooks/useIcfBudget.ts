@@ -248,12 +248,33 @@ export function useGenerateIcfBudget() {
         .eq('configuracao_id', config.id);
       const lajes = (lajesData ?? []) as unknown as IcfLaje[];
 
+      // 1c. Carregar constantes de cálculo personalizadas (fallback para defaults)
+      const { data: constsData } = await (supabase as any)
+        .from('icf_calculation_constants')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const K: IcfCalculationConstants = constsData
+        ? {
+            aco_kg_por_m3_paredes: Number(constsData.aco_kg_por_m3_paredes),
+            painel_area_m2: Number(constsData.painel_area_m2),
+            fator_topos: Number(constsData.fator_topos),
+            fator_cantos_c3: Number(constsData.fator_cantos_c3),
+            fator_cantos_c4: Number(constsData.fator_cantos_c4),
+            espacadores_por_painel: Number(constsData.espacadores_por_painel),
+            abobadilhas_por_m2: Number(constsData.abobadilhas_por_m2),
+            trelicas_ml_por_m2: Number(constsData.trelicas_ml_por_m2),
+            altura_media_sapata_m: Number(constsData.altura_media_sapata_m),
+            vaos_por_padieira: Number(constsData.vaos_por_padieira),
+          }
+        : ICF_DEFAULT_CONSTANTS;
+
       // 2. Construir capítulos com preços de CUSTO.
       // IMPORTANTE: persistimos sempre o custo em preco_unitario.
       // A margem é aplicada apenas pela camada de leitura (Ver.tsx / orcamento-pdf.ts)
       // através da fórmula PV = Custo / (1 - margem%). Persistir o custo evita
       // dupla aplicação de margem e mantém o orçamento auditável.
-      const chapters = buildChapters(resumo, config, precos, lajes);
+      const chapters = buildChapters(resumo, config, precos, lajes, K);
       if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
       // 3. Subtotal de custo + custos indiretos absolutos (também a custo).
