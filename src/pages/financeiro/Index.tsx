@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Search, Loader2, Users, Tags } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
