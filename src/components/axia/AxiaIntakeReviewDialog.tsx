@@ -280,56 +280,134 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
     "";
   const explanation = (data.explanation as string) || (data.reasoning as string) || "";
 
+  // Define os campos editáveis para cada tipo de item
+  type FieldDef = { key: string; label: string; type: "text" | "number" | "date" | "textarea" | "list" };
+  const fieldsByType: Record<string, FieldDef[]> = {
+    financial_record: [
+      { key: "amount", label: "Valor", type: "number" },
+      { key: "currency", label: "Moeda", type: "text" },
+      { key: "category", label: "Categoria", type: "text" },
+      { key: "date", label: "Data", type: "date" },
+      { key: "description", label: "Descrição", type: "textarea" },
+    ],
+    rdo: [
+      { key: "date", label: "Data", type: "date" },
+      { key: "activities", label: "Atividades", type: "list" },
+      { key: "missing_materials", label: "Materiais em falta", type: "list" },
+      { key: "notes", label: "Observações", type: "textarea" },
+    ],
+    pre_budget: [
+      { key: "title", label: "Título", type: "text" },
+      { key: "area", label: "Área (m²)", type: "number" },
+      { key: "quantity", label: "Quantidade", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "services", label: "Serviços", type: "list" },
+      { key: "description", label: "Descrição", type: "textarea" },
+    ],
+    material_need: [
+      { key: "material", label: "Material", type: "text" },
+      { key: "quantity", label: "Quantidade", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+    ],
+    task: [
+      { key: "title", label: "Título", type: "text" },
+      { key: "description", label: "Descrição", type: "textarea" },
+      { key: "date", label: "Data", type: "date" },
+    ],
+  };
+
+  const renderField = (f: FieldDef) => {
+    const v = data[f.key];
+    const isMissing = (current?.missing_fields ?? []).includes(f.key);
+    const baseLabel = (
+      <Label className="text-xs text-muted-foreground capitalize flex items-center gap-1.5">
+        {f.label}
+        {isMissing && <span className="text-[10px] text-orange-600 font-medium">• em falta</span>}
+      </Label>
+    );
+    if (f.type === "textarea") {
+      return (
+        <div key={f.key} className="flex flex-col gap-1 sm:col-span-2">
+          {baseLabel}
+          <Textarea
+            value={v ?? ""}
+            onChange={(e) => setField(f.key, e.target.value)}
+            rows={2}
+            className="text-sm"
+          />
+        </div>
+      );
+    }
+    if (f.type === "list") {
+      const arr = Array.isArray(v) ? v : (typeof v === "string" && v ? v.split(",").map((s) => s.trim()) : []);
+      return (
+        <div key={f.key} className="flex flex-col gap-1 sm:col-span-2">
+          {baseLabel}
+          <Input
+            value={arr.join(", ")}
+            onChange={(e) =>
+              setField(
+                f.key,
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+            placeholder="separar por vírgulas"
+            className="text-sm"
+          />
+        </div>
+      );
+    }
+    return (
+      <div key={f.key} className="flex flex-col gap-1">
+        {baseLabel}
+        <Input
+          type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+          value={v ?? ""}
+          onChange={(e) =>
+            setField(
+              f.key,
+              f.type === "number"
+                ? e.target.value === ""
+                  ? null
+                  : Number(e.target.value)
+                : e.target.value
+            )
+          }
+          className="text-sm"
+        />
+      </div>
+    );
+  };
+
   const renderExtracted = () => {
     if (!current) return null;
-    const rows: { label: string; value: string }[] = [];
-    if (current.item_type === "financial_record") {
-      if (data.amount != null) rows.push({ label: "Valor", value: `${data.amount}` });
-      if (data.currency) rows.push({ label: "Moeda", value: String(data.currency) });
-      if (data.category) rows.push({ label: "Categoria", value: String(data.category) });
-      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
-      if (data.date) rows.push({ label: "Data", value: String(data.date) });
-      if (data.description) rows.push({ label: "Descrição", value: String(data.description) });
-    } else if (current.item_type === "rdo") {
-      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
-      if (data.date) rows.push({ label: "Data", value: String(data.date) });
-      if (Array.isArray(data.activities))
-        rows.push({ label: "Atividades", value: data.activities.join(", ") || "—" });
-      if (Array.isArray(data.missing_materials))
-        rows.push({
-          label: "Materiais em falta",
-          value: data.missing_materials.join(", ") || "—",
-        });
-      if (data.notes) rows.push({ label: "Observações", value: String(data.notes) });
-    } else if (current.item_type === "pre_budget") {
-      if (data.title) rows.push({ label: "Título", value: String(data.title) });
-      if (data.area) rows.push({ label: "Área", value: String(data.area) });
-      if (Array.isArray(data.services))
-        rows.push({ label: "Serviços", value: data.services.join(", ") || "—" });
-    } else {
-      Object.entries(data).forEach(([k, v]) => {
-        if (["transcript", "explanation", "reasoning", "command", "original_command"].includes(k))
-          return;
-        if (v == null || typeof v === "object") return;
-        rows.push({ label: k, value: String(v) });
-      });
-    }
-    if (rows.length === 0) {
+    const fields = fieldsByType[current.item_type] ?? [];
+    // Inclui também chaves desconhecidas presentes nos dados (texto/número simples)
+    const known = new Set(fields.map((f) => f.key));
+    const extras: FieldDef[] = Object.entries(data)
+      .filter(
+        ([k, v]) =>
+          !known.has(k) &&
+          !["transcript", "explanation", "reasoning", "command", "original_command"].includes(k) &&
+          v != null &&
+          (typeof v === "string" || typeof v === "number")
+      )
+      .map(([k]) => ({ key: k, label: k, type: typeof data[k] === "number" ? "number" : "text" }));
+    const all = [...fields, ...extras];
+    if (all.length === 0) {
       return (
         <p className="text-xs text-muted-foreground italic">
-          Sem dados estruturados extraídos.
+          Sem dados estruturados. Use os botões abaixo para adicionar valores em falta.
         </p>
       );
     }
     return (
-      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-        {rows.map((r) => (
-          <div key={r.label} className="flex flex-col">
-            <dt className="text-muted-foreground capitalize">{r.label}</dt>
-            <dd className="font-medium text-foreground break-words">{r.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {all.map(renderField)}
+      </div>
     );
   };
 
