@@ -9,7 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Mic, Mic2, Square, Loader2, Sparkles, CheckCircle2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useCreateAndProcessVoiceCommand } from "@/hooks/useAxiaVoiceIntake";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
