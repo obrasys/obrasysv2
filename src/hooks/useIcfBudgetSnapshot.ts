@@ -33,8 +33,8 @@ export function useIcfBudgetSnapshot(orcamentoId?: string) {
     queryKey: ['icf-budget-snapshot', orcamentoId],
     enabled: !!orcamentoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('icf_budget_snapshots' as any)
+      const { data, error } = await (supabase as any)
+        .from('icf_budget_snapshots')
         .select('*')
         .eq('orcamento_id', orcamentoId!)
         .maybeSingle();
