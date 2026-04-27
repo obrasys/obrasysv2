@@ -83,9 +83,9 @@ export function DashboardAlertsWidget() {
                       {a.action_label || "Rever"}
                     </Button>
                   ) : (
-                    a.action_url && a.action_label && (
+                    a.action_label && (
                       <Button asChild size="sm" variant="outline">
-                        <Link to={a.action_url}>{a.action_label}</Link>
+                        <Link to={resolveActionUrl(a.action_url)}>{a.action_label}</Link>
                       </Button>
                     )
                   )}
