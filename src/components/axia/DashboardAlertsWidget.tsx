@@ -50,7 +50,7 @@ export function DashboardAlertsWidget() {
       ) : !alerts || alerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
           <Inbox className="h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Sem pendências da Axia.</p>
+          <p className="text-sm">Sem registos pendentes.</p>
         </div>
       ) : (
         <div className="space-y-2">
