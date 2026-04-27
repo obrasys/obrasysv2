@@ -230,8 +230,8 @@ export function VoiceCommandButton({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Comando Axia
+            <Mic2 className="h-5 w-5 text-primary" />
+            Registar por Voz
           </DialogTitle>
           <DialogDescription>
             Fale o que aconteceu na obra, o que quer registar ou orçamentar. A Axia cria um rascunho para revisão.
