@@ -261,70 +261,39 @@ export function useGenerateIcfBudget() {
       );
       const estaleiroAbs = Math.round(subtotalCusto * (custos_indiretos_percent / 100) * 100) / 100;
 
-      // 4. Generate code
-      const { data: codigo, error: codErr } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
-      if (codErr) throw codErr;
-
-      // 5. Create orçamento
-      const { data: orc, error: orcErr } = await supabase
-        .from('orcamentos')
-        .insert({
-          user_id: user.id,
-          titulo: `Estrutura ICF — ${config.nome}`,
-          codigo,
-          obra_id: obraId,
-          margem_lucro,
-          custos_indiretos: {
+      // 4. Geração transacional via RPC (atómica + auditada).
+      // Toda a criação (orçamento + capítulos + artigos + log) ocorre numa
+      // única transação SQL — se algum passo falhar, nada é gravado.
+      const { data: result, error: rpcErr } = await supabase.rpc(
+        'generate_icf_budget_transactional',
+        {
+          p_obra_id: obraId,
+          p_configuracao_id: config.id,
+          p_titulo: `Estrutura ICF — ${config.nome}`,
+          p_margem_lucro: margem_lucro,
+          p_custos_indiretos: {
             estaleiro: estaleiroAbs,
             seguros: 0,
             licenciamento: 0,
             iva_percent,
             indiretos_percent: custos_indiretos_percent,
           },
-          status: 'rascunho',
-        } as any)
-        .select()
-        .single();
-      if (orcErr) throw orcErr;
+          p_chapters: chapters as any,
+          p_config_snapshot: {
+            id: config.id,
+            nome: config.nome,
+            versao: config.versao,
+            espessura_nucleo: config.espessura_nucleo,
+            classe_betao: config.classe_betao,
+            classe_aco: config.classe_aco,
+          } as any,
+          p_resumo_snapshot: resumo as any,
+        } as any,
+      );
+      if (rpcErr) throw rpcErr;
 
-      // 6. Criar capítulos + artigos
-      for (const cap of chapters) {
-        const { data: capRow, error: capErr } = await supabase
-          .from('capitulos_orcamento')
-          .insert({
-            orcamento_id: orc.id,
-            numero: cap.numero,
-            ordem: cap.numero,
-            titulo: cap.titulo,
-            descricao: cap.descricao,
-          } as any)
-          .select()
-          .single();
-        if (capErr) throw capErr;
-
-        if (cap.artigos.length > 0) {
-          const codePrefix = cap.titulo.replace(/[^A-Z0-9]/gi, '').slice(0, 4).toUpperCase();
-          const artigos = cap.artigos.map((a, i) => ({
-            capitulo_id: capRow.id,
-            codigo: `ICF.${codePrefix}.${String(i + 1).padStart(2, '0')}`,
-            descricao: a.descricao,
-            unidade: a.unidade,
-            quantidade: a.quantidade,
-            // preco_unitario = CUSTO. preco_base mantém o mesmo custo
-            // como referência imutável (snapshot) para auditoria/regeneração.
-            preco_unitario: a.preco_unitario,
-            preco_base: a.preco_unitario,
-            ordem: i + 1,
-            quantity_source: 'icf_parametric',
-          }));
-          // valor_total é calculado automaticamente por trigger SQL
-          // (calc_artigo_valor_total) — não é necessário enviar.
-          const { error: artErr } = await supabase.from('artigos_orcamento').insert(artigos as any);
-          if (artErr) throw artErr;
-        }
-      }
-
-      return orc;
+      const out = result as { orcamento_id: string; codigo: string };
+      return { id: out.orcamento_id, codigo: out.codigo };
     },
     onSuccess: (orc) => {
       qc.invalidateQueries({ queryKey: ['orcamentos'] });
