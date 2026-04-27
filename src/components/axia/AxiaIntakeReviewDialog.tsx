@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   useUpdateIntakeStatus,
+  useUpdateIntakeData,
   useIntakeItemHistory,
   useLogIntakeAction,
   type IntakeItem,
@@ -29,6 +30,10 @@ import {
 import { Link } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Save } from "lucide-react";
 
 const TYPE_LABEL: Record<string, string> = {
   pre_budget: "Pré-Orçamento",
@@ -151,12 +156,28 @@ interface Props {
 
 export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Props) {
   const update = useUpdateIntakeStatus();
+  const updateData = useUpdateIntakeData();
   const log = useLogIntakeAction();
   const [showHistory, setShowHistory] = useState(false);
 
   const effectiveId = item?.id ?? itemId ?? null;
   const { data: fetched, isLoading } = useIntakeItemById(effectiveId, item);
   const current: IntakeItemWithObra | null = item ?? fetched ?? null;
+
+  // Estado editável local
+  const [editTitle, setEditTitle] = useState("");
+  const [editSummary, setEditSummary] = useState("");
+  const [editData, setEditData] = useState<Record<string, any>>({});
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (current) {
+      setEditTitle(current.title ?? "");
+      setEditSummary(current.summary ?? "");
+      setEditData({ ...((current.extracted_data as Record<string, any>) ?? {}) });
+      setDirty(false);
+    }
+  }, [current?.id]);
 
   const { data: voiceCmd } = useQuery({
     queryKey: ["voice-command-for-intake", current?.voice_command_id],
@@ -181,12 +202,60 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
   const conf = current ? Math.round((current.confidence ?? 0) * 100) : 0;
   const url = current ? targetUrl(current) : null;
 
+  const setField = (key: string, value: any) => {
+    setEditData((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
+  };
+
+  const handleSave = () => {
+    if (!current) return;
+    // Limpar missing_fields que agora têm valor
+    const stillMissing = (current.missing_fields ?? []).filter((f) => {
+      const v = editData[f];
+      return v == null || v === "" || (Array.isArray(v) && v.length === 0);
+    });
+    updateData.mutate(
+      {
+        id: current.id,
+        patch: {
+          title: editTitle,
+          summary: editSummary || null,
+          extracted_data: editData,
+          missing_fields: stillMissing,
+        },
+      },
+      { onSuccess: () => setDirty(false) }
+    );
+  };
+
   const handleApprove = () => {
     if (!current) return;
-    update.mutate(
-      { id: current.id, status: "approved", fromStatus: current.status },
-      { onSuccess: () => onOpenChange(false) }
-    );
+    const doApprove = () =>
+      update.mutate(
+        { id: current.id, status: "approved", fromStatus: current.status },
+        { onSuccess: () => onOpenChange(false) }
+      );
+    if (dirty) {
+      // Guardar antes de aprovar
+      const stillMissing = (current.missing_fields ?? []).filter((f) => {
+        const v = editData[f];
+        return v == null || v === "" || (Array.isArray(v) && v.length === 0);
+      });
+      updateData.mutate(
+        {
+          id: current.id,
+          patch: {
+            title: editTitle,
+            summary: editSummary || null,
+            extracted_data: editData,
+            missing_fields: stillMissing,
+          },
+        },
+        { onSuccess: doApprove }
+      );
+    } else {
+      doApprove();
+    }
   };
   const handleReject = () => {
     if (!current) return;
@@ -202,7 +271,7 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
     if (next) log.mutate({ itemId: current.id, action: "opened" });
   };
 
-  const data = (current?.extracted_data ?? {}) as Record<string, any>;
+  const data = editData;
   const transcript =
     (voiceCmd?.transcript ?? "") ||
     (data.transcript as string) ||
@@ -211,56 +280,134 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
     "";
   const explanation = (data.explanation as string) || (data.reasoning as string) || "";
 
+  // Define os campos editáveis para cada tipo de item
+  type FieldDef = { key: string; label: string; type: "text" | "number" | "date" | "textarea" | "list" };
+  const fieldsByType: Record<string, FieldDef[]> = {
+    financial_record: [
+      { key: "amount", label: "Valor", type: "number" },
+      { key: "currency", label: "Moeda", type: "text" },
+      { key: "category", label: "Categoria", type: "text" },
+      { key: "date", label: "Data", type: "date" },
+      { key: "description", label: "Descrição", type: "textarea" },
+    ],
+    rdo: [
+      { key: "date", label: "Data", type: "date" },
+      { key: "activities", label: "Atividades", type: "list" },
+      { key: "missing_materials", label: "Materiais em falta", type: "list" },
+      { key: "notes", label: "Observações", type: "textarea" },
+    ],
+    pre_budget: [
+      { key: "title", label: "Título", type: "text" },
+      { key: "area", label: "Área (m²)", type: "number" },
+      { key: "quantity", label: "Quantidade", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "services", label: "Serviços", type: "list" },
+      { key: "description", label: "Descrição", type: "textarea" },
+    ],
+    material_need: [
+      { key: "material", label: "Material", type: "text" },
+      { key: "quantity", label: "Quantidade", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+    ],
+    task: [
+      { key: "title", label: "Título", type: "text" },
+      { key: "description", label: "Descrição", type: "textarea" },
+      { key: "date", label: "Data", type: "date" },
+    ],
+  };
+
+  const renderField = (f: FieldDef) => {
+    const v = data[f.key];
+    const isMissing = (current?.missing_fields ?? []).includes(f.key);
+    const baseLabel = (
+      <Label className="text-xs text-muted-foreground capitalize flex items-center gap-1.5">
+        {f.label}
+        {isMissing && <span className="text-[10px] text-orange-600 font-medium">• em falta</span>}
+      </Label>
+    );
+    if (f.type === "textarea") {
+      return (
+        <div key={f.key} className="flex flex-col gap-1 sm:col-span-2">
+          {baseLabel}
+          <Textarea
+            value={v ?? ""}
+            onChange={(e) => setField(f.key, e.target.value)}
+            rows={2}
+            className="text-sm"
+          />
+        </div>
+      );
+    }
+    if (f.type === "list") {
+      const arr = Array.isArray(v) ? v : (typeof v === "string" && v ? v.split(",").map((s) => s.trim()) : []);
+      return (
+        <div key={f.key} className="flex flex-col gap-1 sm:col-span-2">
+          {baseLabel}
+          <Input
+            value={arr.join(", ")}
+            onChange={(e) =>
+              setField(
+                f.key,
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+            placeholder="separar por vírgulas"
+            className="text-sm"
+          />
+        </div>
+      );
+    }
+    return (
+      <div key={f.key} className="flex flex-col gap-1">
+        {baseLabel}
+        <Input
+          type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+          value={v ?? ""}
+          onChange={(e) =>
+            setField(
+              f.key,
+              f.type === "number"
+                ? e.target.value === ""
+                  ? null
+                  : Number(e.target.value)
+                : e.target.value
+            )
+          }
+          className="text-sm"
+        />
+      </div>
+    );
+  };
+
   const renderExtracted = () => {
     if (!current) return null;
-    const rows: { label: string; value: string }[] = [];
-    if (current.item_type === "financial_record") {
-      if (data.amount != null) rows.push({ label: "Valor", value: `${data.amount}` });
-      if (data.currency) rows.push({ label: "Moeda", value: String(data.currency) });
-      if (data.category) rows.push({ label: "Categoria", value: String(data.category) });
-      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
-      if (data.date) rows.push({ label: "Data", value: String(data.date) });
-      if (data.description) rows.push({ label: "Descrição", value: String(data.description) });
-    } else if (current.item_type === "rdo") {
-      if (current.obra?.nome) rows.push({ label: "Obra", value: current.obra.nome });
-      if (data.date) rows.push({ label: "Data", value: String(data.date) });
-      if (Array.isArray(data.activities))
-        rows.push({ label: "Atividades", value: data.activities.join(", ") || "—" });
-      if (Array.isArray(data.missing_materials))
-        rows.push({
-          label: "Materiais em falta",
-          value: data.missing_materials.join(", ") || "—",
-        });
-      if (data.notes) rows.push({ label: "Observações", value: String(data.notes) });
-    } else if (current.item_type === "pre_budget") {
-      if (data.title) rows.push({ label: "Título", value: String(data.title) });
-      if (data.area) rows.push({ label: "Área", value: String(data.area) });
-      if (Array.isArray(data.services))
-        rows.push({ label: "Serviços", value: data.services.join(", ") || "—" });
-    } else {
-      Object.entries(data).forEach(([k, v]) => {
-        if (["transcript", "explanation", "reasoning", "command", "original_command"].includes(k))
-          return;
-        if (v == null || typeof v === "object") return;
-        rows.push({ label: k, value: String(v) });
-      });
-    }
-    if (rows.length === 0) {
+    const fields = fieldsByType[current.item_type] ?? [];
+    // Inclui também chaves desconhecidas presentes nos dados (texto/número simples)
+    const known = new Set(fields.map((f) => f.key));
+    const extras: FieldDef[] = Object.entries(data)
+      .filter(
+        ([k, v]) =>
+          !known.has(k) &&
+          !["transcript", "explanation", "reasoning", "command", "original_command"].includes(k) &&
+          v != null &&
+          (typeof v === "string" || typeof v === "number")
+      )
+      .map(([k]) => ({ key: k, label: k, type: typeof data[k] === "number" ? "number" : "text" }));
+    const all = [...fields, ...extras];
+    if (all.length === 0) {
       return (
         <p className="text-xs text-muted-foreground italic">
-          Sem dados estruturados extraídos.
+          Sem dados estruturados. Use os botões abaixo para adicionar valores em falta.
         </p>
       );
     }
     return (
-      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-        {rows.map((r) => (
-          <div key={r.label} className="flex flex-col">
-            <dt className="text-muted-foreground capitalize">{r.label}</dt>
-            <dd className="font-medium text-foreground break-words">{r.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {all.map(renderField)}
+      </div>
     );
   };
 
@@ -294,14 +441,30 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                   <span className="text-xs text-muted-foreground">{conf}% confiança</span>
                 )}
               </div>
-              <DialogTitle className="text-left flex items-center gap-2">
+              <DialogTitle className="text-left flex items-center gap-2 flex-wrap">
                 <span className="text-primary">Revisão Axia</span>
                 <span className="text-muted-foreground font-normal">·</span>
-                <span className="font-semibold">{current.title}</span>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value);
+                    setDirty(true);
+                  }}
+                  className="font-semibold flex-1 min-w-[200px] h-9"
+                />
               </DialogTitle>
-              {current.summary && (
-                <DialogDescription className="text-left">{current.summary}</DialogDescription>
-              )}
+              <DialogDescription asChild>
+                <Textarea
+                  value={editSummary}
+                  onChange={(e) => {
+                    setEditSummary(e.target.value);
+                    setDirty(true);
+                  }}
+                  rows={2}
+                  placeholder="Resumo (opcional)"
+                  className="text-left text-sm mt-2"
+                />
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 text-sm">
@@ -392,6 +555,22 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                     disabled={update.isPending}
                   >
                     <XCircle className="h-3.5 w-3.5" /> Rejeitar
+                  </Button>
+                )}
+                {dirty && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1"
+                    onClick={handleSave}
+                    disabled={updateData.isPending}
+                  >
+                    {updateData.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5" />
+                    )}
+                    Guardar alterações
                   </Button>
                 )}
               </div>
