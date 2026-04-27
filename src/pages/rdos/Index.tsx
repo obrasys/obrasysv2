@@ -24,6 +24,7 @@ import {
 import { RDOCard } from '@/components/rdos';
 import { KpiCard } from '@/components/relatorios/KpiCard';
 import { useRDOs } from '@/hooks/useRDOs';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 import { useObras } from '@/hooks/useObras';
 import type { RelatorioDiario } from '@/types/rdos';
 import { 
