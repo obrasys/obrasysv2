@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { calcPrecoVenda } from '@/lib/margin';
 import type { IcfResumo, IcfConfiguracao, IcfLaje } from '@/types/icf';
 
 interface IcfBudgetArticle {
@@ -245,27 +244,22 @@ export function useGenerateIcfBudget() {
         .eq('configuracao_id', config.id);
       const lajes = (lajesData ?? []) as unknown as IcfLaje[];
 
-      // 2. Construir capítulos (com preços de custo)
-      const chaptersCost = buildChapters(resumo, config, precos, lajes);
-      if (chaptersCost.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+      // 2. Construir capítulos com preços de CUSTO.
+      // IMPORTANTE: persistimos sempre o custo em preco_unitario.
+      // A margem é aplicada apenas pela camada de leitura (Ver.tsx / orcamento-pdf.ts)
+      // através da fórmula PV = Custo / (1 - margem%). Persistir o custo evita
+      // dupla aplicação de margem e mantém o orçamento auditável.
+      const chapters = buildChapters(resumo, config, precos, lajes);
+      if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
-      // 2b. Aplicar margem de lucro real (PV = Custo / (1 - Margem%)) a cada preço unitário
-      // Garante que as linhas do PDF batem com o total final.
-      const chapters = chaptersCost.map((cap) => ({
-        ...cap,
-        artigos: cap.artigos.map((a) => ({
-          ...a,
-          preco_base: a.preco_unitario,
-          preco_unitario: calcPrecoVenda(a.preco_unitario, margem_lucro),
-        })),
-      }));
-
-      // 3. Calcular subtotal (já com margem) e custos indiretos absolutos
-      const subtotalArtigos = chapters.reduce(
+      // 3. Subtotal de custo + custos indiretos absolutos (também a custo).
+      // O custo indireto é uma despesa real e não deve ser inflada novamente
+      // — também passa pela margem na camada de leitura.
+      const subtotalCusto = chapters.reduce(
         (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
         0,
       );
-      const estaleiroAbs = Math.round(subtotalArtigos * (custos_indiretos_percent / 100) * 100) / 100;
+      const estaleiroAbs = Math.round(subtotalCusto * (custos_indiretos_percent / 100) * 100) / 100;
 
       // 4. Generate code
       const { data: codigo, error: codErr } = await supabase.rpc('generate_orcamento_codigo', { p_user_id: user.id });
@@ -316,11 +310,15 @@ export function useGenerateIcfBudget() {
             descricao: a.descricao,
             unidade: a.unidade,
             quantidade: a.quantidade,
+            // preco_unitario = CUSTO. preco_base mantém o mesmo custo
+            // como referência imutável (snapshot) para auditoria/regeneração.
             preco_unitario: a.preco_unitario,
-            preco_base: (a as any).preco_base,
+            preco_base: a.preco_unitario,
             ordem: i + 1,
             quantity_source: 'icf_parametric',
           }));
+          // valor_total é calculado automaticamente por trigger SQL
+          // (calc_artigo_valor_total) — não é necessário enviar.
           const { error: artErr } = await supabase.from('artigos_orcamento').insert(artigos as any);
           if (artErr) throw artErr;
         }
