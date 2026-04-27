@@ -156,12 +156,28 @@ interface Props {
 
 export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Props) {
   const update = useUpdateIntakeStatus();
+  const updateData = useUpdateIntakeData();
   const log = useLogIntakeAction();
   const [showHistory, setShowHistory] = useState(false);
 
   const effectiveId = item?.id ?? itemId ?? null;
   const { data: fetched, isLoading } = useIntakeItemById(effectiveId, item);
   const current: IntakeItemWithObra | null = item ?? fetched ?? null;
+
+  // Estado editável local
+  const [editTitle, setEditTitle] = useState("");
+  const [editSummary, setEditSummary] = useState("");
+  const [editData, setEditData] = useState<Record<string, any>>({});
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (current) {
+      setEditTitle(current.title ?? "");
+      setEditSummary(current.summary ?? "");
+      setEditData({ ...((current.extracted_data as Record<string, any>) ?? {}) });
+      setDirty(false);
+    }
+  }, [current?.id]);
 
   const { data: voiceCmd } = useQuery({
     queryKey: ["voice-command-for-intake", current?.voice_command_id],
@@ -186,12 +202,60 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
   const conf = current ? Math.round((current.confidence ?? 0) * 100) : 0;
   const url = current ? targetUrl(current) : null;
 
+  const setField = (key: string, value: any) => {
+    setEditData((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
+  };
+
+  const handleSave = () => {
+    if (!current) return;
+    // Limpar missing_fields que agora têm valor
+    const stillMissing = (current.missing_fields ?? []).filter((f) => {
+      const v = editData[f];
+      return v == null || v === "" || (Array.isArray(v) && v.length === 0);
+    });
+    updateData.mutate(
+      {
+        id: current.id,
+        patch: {
+          title: editTitle,
+          summary: editSummary || null,
+          extracted_data: editData,
+          missing_fields: stillMissing,
+        },
+      },
+      { onSuccess: () => setDirty(false) }
+    );
+  };
+
   const handleApprove = () => {
     if (!current) return;
-    update.mutate(
-      { id: current.id, status: "approved", fromStatus: current.status },
-      { onSuccess: () => onOpenChange(false) }
-    );
+    const doApprove = () =>
+      update.mutate(
+        { id: current.id, status: "approved", fromStatus: current.status },
+        { onSuccess: () => onOpenChange(false) }
+      );
+    if (dirty) {
+      // Guardar antes de aprovar
+      const stillMissing = (current.missing_fields ?? []).filter((f) => {
+        const v = editData[f];
+        return v == null || v === "" || (Array.isArray(v) && v.length === 0);
+      });
+      updateData.mutate(
+        {
+          id: current.id,
+          patch: {
+            title: editTitle,
+            summary: editSummary || null,
+            extracted_data: editData,
+            missing_fields: stillMissing,
+          },
+        },
+        { onSuccess: doApprove }
+      );
+    } else {
+      doApprove();
+    }
   };
   const handleReject = () => {
     if (!current) return;
@@ -207,7 +271,7 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
     if (next) log.mutate({ itemId: current.id, action: "opened" });
   };
 
-  const data = (current?.extracted_data ?? {}) as Record<string, any>;
+  const data = editData;
   const transcript =
     (voiceCmd?.transcript ?? "") ||
     (data.transcript as string) ||
