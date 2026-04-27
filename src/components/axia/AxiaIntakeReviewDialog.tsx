@@ -557,6 +557,22 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                     <XCircle className="h-3.5 w-3.5" /> Rejeitar
                   </Button>
                 )}
+                {dirty && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1"
+                    onClick={handleSave}
+                    disabled={updateData.isPending}
+                  >
+                    {updateData.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5" />
+                    )}
+                    Guardar alterações
+                  </Button>
+                )}
               </div>
               <div className="flex gap-2 ml-auto flex-wrap">
                 {url && (
