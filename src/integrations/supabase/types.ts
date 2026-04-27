@@ -4111,6 +4111,45 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_budget_snapshots: {
+        Row: {
+          chapters_snapshot: Json
+          config_snapshot: Json
+          configuracao_id: string
+          created_at: string
+          id: string
+          obra_id: string
+          orcamento_id: string
+          parametros: Json
+          resumo_snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          chapters_snapshot?: Json
+          config_snapshot?: Json
+          configuracao_id: string
+          created_at?: string
+          id?: string
+          obra_id: string
+          orcamento_id: string
+          parametros?: Json
+          resumo_snapshot?: Json
+          user_id: string
+        }
+        Update: {
+          chapters_snapshot?: Json
+          config_snapshot?: Json
+          configuracao_id?: string
+          created_at?: string
+          id?: string
+          obra_id?: string
+          orcamento_id?: string
+          parametros?: Json
+          resumo_snapshot?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       icf_configuracoes: {
         Row: {
           altura_piso_padrao: number | null
