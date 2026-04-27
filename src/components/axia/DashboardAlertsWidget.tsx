@@ -35,7 +35,7 @@ export function DashboardAlertsWidget() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Pendências Axia</h3>
+          <h3 className="font-semibold">Registos pendentes</h3>
           {alerts && alerts.length > 0 && (
             <Badge variant="secondary">{alerts.length}</Badge>
           )}
