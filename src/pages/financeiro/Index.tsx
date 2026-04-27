@@ -126,7 +126,10 @@ const FinanceiroIndex = () => {
   }
 
   return (
-    <AppLayout title="Financeiro">
+    <AppLayout
+      title="Financeiro"
+      actions={<VoiceCommandButton sourceContext="financial" variant="outline" size="default" label="Comando Axia" />}
+    >
       <div className="p-4 md:p-6 space-y-6">
         {/* Global KPIs */}
         <FinanceiroGlobalKPIs data={dashboard} isLoading={loadingDashboard} />
