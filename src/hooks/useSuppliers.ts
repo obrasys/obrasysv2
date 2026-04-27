@@ -39,13 +39,20 @@ export function useSupplierProfile() {
     queryKey: ['supplier-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('supplier_profiles')
-        .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Owner self-read uses a SECURITY DEFINER function so PII columns
+      // (email_comercial, telemovel, etc.) remain readable for the owner
+      // even though they are revoked from `authenticated` at the column level.
+      const { data: rows, error } = await supabase.rpc('get_my_supplier_profile');
       if (error) throw error;
-      return data as SupplierProfile | null;
+      const profile = (rows as any[] | null)?.[0] ?? null;
+      if (!profile) return null;
+
+      const { data: cats } = await supabase
+        .from('supplier_category_link')
+        .select('category_id, supplier_categories(id, name, slug)')
+        .eq('supplier_id', profile.id);
+
+      return { ...profile, supplier_category_link: cats || [] } as SupplierProfile;
     },
     enabled: !!user?.id,
   });
