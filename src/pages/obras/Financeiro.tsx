@@ -161,6 +161,7 @@ export default function ObraFinanceiroPage() {
               Adjudicar
             </Button>
           )}
+          <VoiceCommandButton sourceContext="financial" obraId={id} variant="outline" size="sm" label="Comando Axia" />
           <Button size="sm" onClick={() => { setEditingConta(null); setFormOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" />
             Nova Conta
