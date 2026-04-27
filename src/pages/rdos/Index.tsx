@@ -113,7 +113,7 @@ export default function RDOsPage() {
       subtitle="Gestão de RDOs das suas obras"
       actions={
         <div className="flex items-center gap-2">
-          <VoiceCommandButton sourceContext="rdo" variant="outline" size="default" label="Comando Axia" />
+          <VoiceCommandButton sourceContext="rdo" variant="outline" size="default"  />
           <Button onClick={() => navigate('/rdos/criar')}>
             <Plus className="mr-2 h-4 w-4" />
             Novo RDO
