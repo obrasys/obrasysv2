@@ -134,7 +134,9 @@ export function VoiceCommandButton({
   };
 
   const send = async () => {
-    if (!transcript.trim()) {
+    const hasText = !!transcript.trim();
+    const hasAudio = !!audioBlob && audioBlob.size > 0;
+    if (!hasText && !hasAudio) {
       setErrMsg("Insira ou grave um comando antes de enviar.");
       return;
     }
