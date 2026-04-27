@@ -193,6 +193,74 @@ Deno.serve(async (req) => {
 
     await admin.from("voice_commands").update({ processing_status: "processing" }).eq("id", cmd.id);
 
+    // Se não houver transcript mas houver áudio, transcrever via Gemini multimodal
+    let effectiveTranscript: string = (cmd.transcript ?? "").trim();
+    if (!effectiveTranscript && cmd.audio_file_path) {
+      try {
+        const { data: signed } = await admin.storage
+          .from("voice-intake")
+          .createSignedUrl(cmd.audio_file_path, 120);
+        if (signed?.signedUrl) {
+          const audioResp = await fetch(signed.signedUrl);
+          const audioBuf = new Uint8Array(await audioResp.arrayBuffer());
+          // base64 encode
+          let bin = "";
+          for (let i = 0; i < audioBuf.length; i++) bin += String.fromCharCode(audioBuf[i]);
+          const b64 = btoa(bin);
+
+          const trResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "Transcreva o áudio em PT-PT de forma literal e concisa. Devolva apenas o texto transcrito, sem comentários, sem aspas, sem pontuação extra.",
+                },
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: "Transcreve este áudio:" },
+                    {
+                      type: "input_audio",
+                      input_audio: { data: b64, format: "webm" },
+                    },
+                  ],
+                },
+              ],
+            }),
+          });
+          if (trResp.ok) {
+            const trJson = await trResp.json();
+            const txt = trJson?.choices?.[0]?.message?.content;
+            if (typeof txt === "string" && txt.trim()) {
+              effectiveTranscript = txt.trim();
+              await admin
+                .from("voice_commands")
+                .update({ transcript: effectiveTranscript })
+                .eq("id", cmd.id);
+            }
+          } else {
+            console.warn("audio transcription failed", trResp.status, await trResp.text());
+          }
+        }
+      } catch (audioErr) {
+        console.warn("audio transcription error", audioErr);
+      }
+    }
+
+    if (!effectiveTranscript) {
+      throw new Error("Não foi possível transcrever o áudio. Tente gravar novamente ou escrever o comando.");
+    }
+
+    // Use effectiveTranscript daqui para a frente
+    cmd.transcript = effectiveTranscript;
+
     // Carregar contexto
     const { data: orgIds } = await admin.rpc("get_org_member_ids");
     const memberIds: string[] = (orgIds as string[]) ?? [userId];

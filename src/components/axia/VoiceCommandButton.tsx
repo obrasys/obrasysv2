@@ -134,7 +134,9 @@ export function VoiceCommandButton({
   };
 
   const send = async () => {
-    if (!transcript.trim()) {
+    const hasText = !!transcript.trim();
+    const hasAudio = !!audioBlob && audioBlob.size > 0;
+    if (!hasText && !hasAudio) {
       setErrMsg("Insira ou grave um comando antes de enviar.");
       return;
     }
@@ -228,7 +230,12 @@ export function VoiceCommandButton({
               />
               {!SpeechRecognitionImpl && (
                 <p className="text-xs text-muted-foreground">
-                  O seu navegador não suporta transcrição automática. Pode escrever o comando manualmente.
+                  O seu navegador não transcreve em tempo real. Pode gravar o áudio e a Axia transcreve automaticamente, ou escrever o comando.
+                </p>
+              )}
+              {phase === "review" && !transcript.trim() && audioBlob && (
+                <p className="text-xs text-primary">
+                  Áudio gravado ({Math.round((audioBlob.size / 1024))} KB). A Axia vai transcrever ao enviar.
                 </p>
               )}
               {errMsg && <p className="text-xs text-destructive">{errMsg}</p>}
@@ -280,7 +287,11 @@ export function VoiceCommandButton({
               </Button>
             )}
             {(phase === "idle" || phase === "review" || phase === "error") && (
-              <Button onClick={send} disabled={!transcript.trim() || mutation.isPending} className="gap-2">
+              <Button
+                onClick={send}
+                disabled={(!transcript.trim() && !(audioBlob && audioBlob.size > 0)) || mutation.isPending}
+                className="gap-2"
+              >
                 {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Enviar para Axia
               </Button>
