@@ -32,6 +32,7 @@ import { useReceivableAlerts } from '@/hooks/useReceivableAlerts';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
 import type { ContaFinanceira, ContaFinanceiraFormData } from '@/types/financeiro';
+import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
