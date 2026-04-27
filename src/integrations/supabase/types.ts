@@ -4024,6 +4024,57 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_budget_audit_log: {
+        Row: {
+          config_snapshot: Json
+          configuracao_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          obra_id: string
+          orcamento_id: string | null
+          parametros: Json
+          resumo_snapshot: Json
+          status: string
+          subtotal_custo: number
+          total_artigos: number
+          total_capitulos: number
+          user_id: string
+        }
+        Insert: {
+          config_snapshot?: Json
+          configuracao_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          obra_id: string
+          orcamento_id?: string | null
+          parametros?: Json
+          resumo_snapshot?: Json
+          status?: string
+          subtotal_custo?: number
+          total_artigos?: number
+          total_capitulos?: number
+          user_id: string
+        }
+        Update: {
+          config_snapshot?: Json
+          configuracao_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          obra_id?: string
+          orcamento_id?: string | null
+          parametros?: Json
+          resumo_snapshot?: Json
+          status?: string
+          subtotal_custo?: number
+          total_artigos?: number
+          total_capitulos?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       icf_budget_presets: {
         Row: {
           created_at: string
@@ -10089,6 +10140,19 @@ export type Database = {
           p_rule_id: string
         }
         Returns: number
+      }
+      generate_icf_budget_transactional: {
+        Args: {
+          p_chapters: Json
+          p_config_snapshot: Json
+          p_configuracao_id: string
+          p_custos_indiretos: Json
+          p_margem_lucro: number
+          p_obra_id: string
+          p_resumo_snapshot: Json
+          p_titulo: string
+        }
+        Returns: Json
       }
       generate_orcamento_codigo: {
         Args: { p_user_id: string }
