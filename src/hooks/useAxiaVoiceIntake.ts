@@ -147,6 +147,48 @@ export function useUpdateIntakeStatus() {
   });
 }
 
+export function useUpdateIntakeData() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<{
+        title: string;
+        summary: string | null;
+        extracted_data: Record<string, unknown>;
+        missing_fields: string[];
+      }>;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      const { error } = await (supabase as any)
+        .from("axia_intake_items")
+        .update({ ...patch, reviewed_at: new Date().toISOString(), reviewed_by: userId })
+        .eq("id", id);
+      if (error) throw error;
+
+      if (userId) {
+        await (supabase.from as any)("axia_intake_item_history").insert({
+          intake_item_id: id,
+          user_id: userId,
+          action: "edited",
+          notes: "Dados editados manualmente",
+        });
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["axia-intake-items"] });
+      qc.invalidateQueries({ queryKey: ["axia-intake-item", vars.id] });
+      qc.invalidateQueries({ queryKey: ["axia-intake-history", vars.id] });
+      toast.success("Alterações guardadas");
+    },
+    onError: (e: Error) => toast.error("Erro ao guardar", { description: e.message }),
+  });
+}
+
 export type IntakeHistoryEntry = {
   id: string;
   intake_item_id: string;
