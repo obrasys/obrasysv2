@@ -4150,6 +4150,57 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_calculation_constants: {
+        Row: {
+          abobadilhas_por_m2: number
+          aco_kg_por_m3_paredes: number
+          altura_media_sapata_m: number
+          created_at: string
+          espacadores_por_painel: number
+          fator_cantos_c3: number
+          fator_cantos_c4: number
+          fator_topos: number
+          id: string
+          painel_area_m2: number
+          trelicas_ml_por_m2: number
+          updated_at: string
+          user_id: string
+          vaos_por_padieira: number
+        }
+        Insert: {
+          abobadilhas_por_m2?: number
+          aco_kg_por_m3_paredes?: number
+          altura_media_sapata_m?: number
+          created_at?: string
+          espacadores_por_painel?: number
+          fator_cantos_c3?: number
+          fator_cantos_c4?: number
+          fator_topos?: number
+          id?: string
+          painel_area_m2?: number
+          trelicas_ml_por_m2?: number
+          updated_at?: string
+          user_id: string
+          vaos_por_padieira?: number
+        }
+        Update: {
+          abobadilhas_por_m2?: number
+          aco_kg_por_m3_paredes?: number
+          altura_media_sapata_m?: number
+          created_at?: string
+          espacadores_por_painel?: number
+          fator_cantos_c3?: number
+          fator_cantos_c4?: number
+          fator_topos?: number
+          id?: string
+          painel_area_m2?: number
+          trelicas_ml_por_m2?: number
+          updated_at?: string
+          user_id?: string
+          vaos_por_padieira?: number
+        }
+        Relationships: []
+      }
       icf_configuracoes: {
         Row: {
           altura_piso_padrao: number | null
