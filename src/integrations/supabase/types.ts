@@ -10261,6 +10261,45 @@ export type Database = {
           unidade: string
         }[]
       }
+      get_public_supplier_profiles: {
+        Args: never
+        Returns: {
+          ano_fundacao: number
+          cae_principal: string
+          cae_secundario: string
+          categoria_principal: string
+          certificacoes: string[]
+          created_at: string
+          delivery_capability: string
+          desconto_volume: boolean
+          distritos_atuacao: string[]
+          id: string
+          is_certified: boolean
+          legal_name: string
+          location_district: string
+          location_municipality: string
+          logo_url: string
+          min_order_value: number
+          nif: string
+          num_colaboradores: string
+          payment_terms: string
+          prazo_medio_entrega: string
+          prazo_pagamento_padrao: string
+          raio_atuacao_km: number
+          rating_avg: number
+          rating_count: number
+          service_areas: string
+          sla_response_hours: number
+          status: Database["public"]["Enums"]["supplier_status_enum"]
+          subcategorias: string[]
+          tipo_fornecimento: string[]
+          trabalha_credito: boolean
+          trade_name: string
+          updated_at: string
+          website: string
+          zona_atuacao: string
+        }[]
+      }
       get_user_org_id: { Args: never; Returns: string }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_org_admin: { Args: never; Returns: boolean }
