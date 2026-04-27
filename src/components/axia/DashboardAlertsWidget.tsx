@@ -16,6 +16,15 @@ const SEVERITY_STYLE: Record<string, string> = {
 const isIntakeAlert = (a: DashboardAlert) =>
   a.source_entity_type === "axia_intake_item" && !!a.source_entity_id;
 
+// Rotas válidas existentes para alertas de origem voice/Axia
+const KNOWN_ROUTES = ["/axia/inbox", "/rdos", "/financeiro", "/orcamentos", "/obras"];
+const resolveActionUrl = (url: string | null) => {
+  if (!url) return "/axia/inbox";
+  // Se a rota não bate com nenhuma rota conhecida, manda para a Caixa Axia
+  if (!KNOWN_ROUTES.some((r) => url.startsWith(r))) return "/axia/inbox";
+  return url;
+};
+
 export function DashboardAlertsWidget() {
   const { data: alerts, isLoading } = useDashboardAlerts();
   const dismiss = useDismissAlert();
