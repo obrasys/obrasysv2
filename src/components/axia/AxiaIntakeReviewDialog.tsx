@@ -441,14 +441,30 @@ export function AxiaIntakeReviewDialog({ open, onOpenChange, item, itemId }: Pro
                   <span className="text-xs text-muted-foreground">{conf}% confiança</span>
                 )}
               </div>
-              <DialogTitle className="text-left flex items-center gap-2">
+              <DialogTitle className="text-left flex items-center gap-2 flex-wrap">
                 <span className="text-primary">Revisão Axia</span>
                 <span className="text-muted-foreground font-normal">·</span>
-                <span className="font-semibold">{current.title}</span>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value);
+                    setDirty(true);
+                  }}
+                  className="font-semibold flex-1 min-w-[200px] h-9"
+                />
               </DialogTitle>
-              {current.summary && (
-                <DialogDescription className="text-left">{current.summary}</DialogDescription>
-              )}
+              <DialogDescription asChild>
+                <Textarea
+                  value={editSummary}
+                  onChange={(e) => {
+                    setEditSummary(e.target.value);
+                    setDirty(true);
+                  }}
+                  rows={2}
+                  placeholder="Resumo (opcional)"
+                  className="text-left text-sm mt-2"
+                />
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 text-sm">
