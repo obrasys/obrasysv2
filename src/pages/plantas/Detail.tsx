@@ -554,7 +554,12 @@ export default function PlanDetail() {
             if (effectiveStep === "calibrate") handleStartCalibration();
             if (effectiveStep === "budget") navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`);
           }}
-          rightSlot={canMeasure ? <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} /> : null}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              <PlanGripPreferences />
+              {canMeasure ? <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} /> : null}
+            </div>
+          }
         />
 
         {/* Summary bar */}
