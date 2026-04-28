@@ -922,6 +922,54 @@ export default function PlanDetail() {
         </DialogContent>
       </Dialog>
 
+      {/* Opening (vão) dialog – triggered by clicking near a wall in draw_opening mode */}
+      <Dialog open={showOpeningDialog} onOpenChange={(open) => !open && handleCancelOpening()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Adicionar Vão à Parede</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-muted rounded-lg p-2 text-center text-xs text-muted-foreground">
+              Vão posicionado sobre a parede mais próxima
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={openingTipo} onValueChange={setOpeningTipo}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="porta">Porta</SelectItem>
+                  <SelectItem value="janela">Janela</SelectItem>
+                  <SelectItem value="portada">Portada</SelectItem>
+                  <SelectItem value="claraboia">Clarabóia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Largura (m)</Label>
+                <Input value={openingLargura} onChange={(e) => setOpeningLargura(e.target.value)} type="number" step="0.01" min="0.1" autoFocus />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Altura (m)</Label>
+                <Input value={openingAltura} onChange={(e) => setOpeningAltura(e.target.value)} type="number" step="0.01" min="0.1" />
+              </div>
+            </div>
+            {(openingTipo === "janela" || openingTipo === "claraboia") && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Peitoril (m) — opcional</Label>
+                <Input value={openingPeitoril} onChange={(e) => setOpeningPeitoril(e.target.value)} type="number" step="0.01" placeholder="1.10" />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelOpening}>Cancelar</Button>
+            <Button onClick={handleConfirmOpening} disabled={addOpening.isPending}>
+              {addOpening.isPending ? "A guardar..." : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Element properties dialog */}
       <PlanElementProperties
         element={selectedElement}
