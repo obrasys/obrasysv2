@@ -194,7 +194,7 @@ export function PlanViewer({
       .map((b) => ({ x: b.x, y: b.y, count: b.wallIds.size }));
   }, [walls]);
 
-  const showGrips = mode === "select" || mode === "draw_wall" || mode === "draw_opening";
+  const showGrips = mode === "view" || mode === "draw_wall" || mode === "draw_opening";
 
   const snapToGrip = useCallback(
     (x: number, y: number) => {
