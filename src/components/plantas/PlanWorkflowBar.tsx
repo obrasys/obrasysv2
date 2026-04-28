@@ -314,6 +314,34 @@ export function PlanWorkflowBar({
         )}
       </div>
 
+      {/* Row 1.5: Blocking checklist for current step (when there are pending requirements) */}
+      {(() => {
+        const currentChecklist = buildChecklist(currentStep, ctx);
+        const pendingItems = currentChecklist.filter((c) => !c.done);
+        if (pendingItems.length === 0) return null;
+        return (
+          <div className="px-3 py-2 bg-amber-500/5 border-b border-amber-500/20 flex items-start gap-2 text-xs">
+            <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-amber-700 font-medium mb-1">
+                Para concluir este passo, falta:
+              </p>
+              <ul className="space-y-0.5">
+                {pendingItems.map((item, idx) => (
+                  <li key={idx} className="text-muted-foreground flex items-start gap-1.5">
+                    <span className="text-amber-600 shrink-0">•</span>
+                    <span>
+                      <span className="text-foreground">{item.label}.</span>
+                      {item.hint && <span className="text-muted-foreground ml-1">{item.hint}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Row 2: Toolbar (only when measuring step or already calibrated) */}
       {canMeasure && (
         <div className="flex items-center gap-1 px-3 py-2 flex-wrap">
