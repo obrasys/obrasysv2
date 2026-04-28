@@ -209,7 +209,7 @@ export function PlanViewer({
       }
       return best ? { x: best.x, y: best.y } : { x, y };
     },
-    [wallGrips]
+    [wallGrips, GRIP_SNAP_TOLERANCE_PX]
   );
 
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
