@@ -234,8 +234,8 @@ export default function PlanQuantitativos() {
                 measurements={measurements}
                 mappings={mappings}
                 articles={articles}
-                onCreateMapping={(data) => createMapping.mutate(data)}
-                onUpdateMapping={(data) => updateMapping.mutate(data)}
+                onCreateMapping={handleCreateMapping}
+                onUpdateMapping={handleUpdateMapping}
                 onDeleteMapping={(id) => deleteMapping.mutate(id)}
                 onUpdateMeasurement={(id, updates) =>
                   updateMeasurement.mutate({
