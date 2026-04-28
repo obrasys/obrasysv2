@@ -3,11 +3,15 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useObras } from '@/hooks/useObras';
 import { PLAN_LIMITS, type PlanFeature } from '@/config/planLimits';
 
+// Planos vitalícios / ilimitados que nunca devem ver prompts de upgrade
+const UNLIMITED_TIERS = new Set(['founder', 'enterprise']);
+
 export function useFeatureGate() {
-  const { subscription } = useSubscription();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
   const { obras } = useObras();
 
   const tier = subscription?.subscription_tier || 'trial';
+  const isUnlimited = UNLIMITED_TIERS.has(tier) || subscription?.is_founder === true;
   const limits = useMemo(() => PLAN_LIMITS[tier] || PLAN_LIMITS.trial, [tier]);
 
   const hasFeature = useCallback(
