@@ -510,7 +510,11 @@ export default function PlanDetail() {
           canMeasure={canMeasure}
           onUndo={handleUndo}
           hasActivePoints={activePoints.length > 0}
-          measurementCount={measurements.length + rooms.length + walls.length}
+          measurementCount={measurements.length}
+          roomCount={rooms.length}
+          wallCount={walls.length}
+          openingCount={openings.length}
+          placedElementsCount={placedElements.length}
           hasAnalysis={hasAnalysis}
           onPrimaryAction={() => {
             if (effectiveStep === "calibrate") handleStartCalibration();
