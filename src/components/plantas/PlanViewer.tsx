@@ -43,6 +43,14 @@ interface PlanViewerProps {
     espessura_cm: number;
     comprimento_m: number;
   }>;
+  openings?: Array<{
+    id: string;
+    wall_id: string;
+    tipo: string;
+    largura_m: number;
+    altura_m: number;
+    posicao_na_parede?: { x: number; y: number } | null;
+  }>;
   selectedRoomId?: string;
   onMeasurementClick?: (point: { x: number; y: number }) => void;
   onMeasurementComplete?: () => void;
@@ -72,6 +80,7 @@ export function PlanViewer({
   measurements = [],
   rooms = [],
   walls = [],
+  openings = [],
   selectedRoomId,
   onMeasurementClick,
   onMeasurementComplete,
