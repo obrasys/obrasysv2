@@ -430,6 +430,33 @@ export default function PlanDetail() {
   };
 
   const handleUndo = () => setActivePoints((prev) => prev.slice(0, -1));
+  const handleCancelDrawing = () => { setActivePoints([]); toast.info("Desenho cancelado"); };
+
+  const handleConfirmOpening = async () => {
+    if (!pendingOpening) return;
+    const largura = parseFloat(openingLargura) || 0.8;
+    const altura = parseFloat(openingAltura) || 2.1;
+    await addOpening.mutateAsync({
+      wall_id: pendingOpening.wallId,
+      tipo: openingTipo as any,
+      largura_m: largura,
+      altura_m: altura,
+      peitoril_m: openingPeitoril ? parseFloat(openingPeitoril) : undefined,
+      posicao_na_parede: { x: pendingOpening.x, y: pendingOpening.y },
+    } as any);
+    setShowOpeningDialog(false);
+    setPendingOpening(null);
+    setOpeningTipo("porta");
+    setOpeningLargura("0.80");
+    setOpeningAltura("2.10");
+    setOpeningPeitoril("");
+  };
+
+  const handleCancelOpening = () => {
+    setShowOpeningDialog(false);
+    setPendingOpening(null);
+    setOpeningPeitoril("");
+  };
 
   // Loading states
   if (plansLoading || fileUrlQuery.isLoading) {
