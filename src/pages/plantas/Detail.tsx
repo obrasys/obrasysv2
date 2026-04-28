@@ -116,6 +116,14 @@ export default function PlanDetail() {
   const [wallTipo, setWallTipo] = useState("interior_divisoria");
   const [wallMaterial, setWallMaterial] = useState("alvenaria");
 
+  // Opening (vão) dialog state
+  const [showOpeningDialog, setShowOpeningDialog] = useState(false);
+  const [pendingOpening, setPendingOpening] = useState<{ wallId: string; x: number; y: number } | null>(null);
+  const [openingTipo, setOpeningTipo] = useState("porta");
+  const [openingLargura, setOpeningLargura] = useState("0.80");
+  const [openingAltura, setOpeningAltura] = useState("2.10");
+  const [openingPeitoril, setOpeningPeitoril] = useState("");
+
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
@@ -231,6 +239,28 @@ export default function PlanDetail() {
     deleteElementDb.mutate(id);
   };
 
+  // Helper: find closest wall to a point and project the point onto the wall segment
+  const snapToNearestWall = useCallback((point: { x: number; y: number }) => {
+    if (walls.length === 0) return null;
+    let best: { wallId: string; px: number; py: number; dist: number } | null = null;
+    for (const w of walls) {
+      const ax = w.start_point.x;
+      const ay = w.start_point.y;
+      const bx = w.end_point.x;
+      const by = w.end_point.y;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const len2 = dx * dx + dy * dy;
+      if (len2 === 0) continue;
+      const t = Math.max(0, Math.min(1, ((point.x - ax) * dx + (point.y - ay) * dy) / len2));
+      const px = ax + t * dx;
+      const py = ay + t * dy;
+      const d = Math.hypot(point.x - px, point.y - py);
+      if (!best || d < best.dist) best = { wallId: w.id, px, py, dist: d };
+    }
+    return best;
+  }, [walls]);
+
   // Click handler – routes to correct logic based on mode
   const handleCanvasClick = useCallback((point: { x: number; y: number }) => {
     if (mode === "calibrate") {
@@ -263,6 +293,22 @@ export default function PlanDetail() {
       return;
     }
 
+    if (mode === "draw_opening") {
+      const snap = snapToNearestWall(point);
+      if (!snap) {
+        toast.error("Crie uma parede primeiro para poder inserir um vão.");
+        return;
+      }
+      // Tolerance: ~30 px in image space (covers fingers/touch)
+      if (snap.dist > 40) {
+        toast.warning("Clique mais próximo de uma parede para inserir o vão.");
+        return;
+      }
+      setPendingOpening({ wallId: snap.wallId, x: snap.px, y: snap.py });
+      setShowOpeningDialog(true);
+      return;
+    }
+
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
       const sym = getSymbolById(insertTool.symbolTypeId);
@@ -281,7 +327,7 @@ export default function PlanDetail() {
       }
       return;
     }
-  }, [mode, handleCalibrationClick, insertTool]);
+  }, [mode, handleCalibrationClick, insertTool, snapToNearestWall]);
 
   // Complete handler (double-click)
   const handleCanvasComplete = useCallback(() => {
@@ -384,6 +430,33 @@ export default function PlanDetail() {
   };
 
   const handleUndo = () => setActivePoints((prev) => prev.slice(0, -1));
+  const handleCancelDrawing = () => { setActivePoints([]); toast.info("Desenho cancelado"); };
+
+  const handleConfirmOpening = async () => {
+    if (!pendingOpening) return;
+    const largura = parseFloat(openingLargura) || 0.8;
+    const altura = parseFloat(openingAltura) || 2.1;
+    await addOpening.mutateAsync({
+      wall_id: pendingOpening.wallId,
+      tipo: openingTipo as any,
+      largura_m: largura,
+      altura_m: altura,
+      peitoril_m: openingPeitoril ? parseFloat(openingPeitoril) : undefined,
+      posicao_na_parede: { x: pendingOpening.x, y: pendingOpening.y },
+    } as any);
+    setShowOpeningDialog(false);
+    setPendingOpening(null);
+    setOpeningTipo("porta");
+    setOpeningLargura("0.80");
+    setOpeningAltura("2.10");
+    setOpeningPeitoril("");
+  };
+
+  const handleCancelOpening = () => {
+    setShowOpeningDialog(false);
+    setPendingOpening(null);
+    setOpeningPeitoril("");
+  };
 
   // Loading states
   if (plansLoading || fileUrlQuery.isLoading) {
@@ -427,8 +500,9 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
-          {effectiveStep === "measure" && (
-            <div className="flex items-center gap-2">
+          {/* Toolbar always visible once calibrated, regardless of workflow step */}
+          {canMeasure && (
+            <div className="flex items-center gap-2 flex-wrap">
               <PlanMeasurementToolbar
                 mode={mode === "calibrate" ? "view" : mode}
                 onModeChange={handleModeChange}
@@ -523,6 +597,14 @@ export default function PlanDetail() {
               espessura_cm: w.espessura_cm,
               comprimento_m: w.comprimento_m,
             }))}
+            openings={openings.map((o) => ({
+              id: o.id,
+              wall_id: o.wall_id,
+              tipo: o.tipo,
+              largura_m: o.largura_m,
+              altura_m: o.altura_m,
+              posicao_na_parede: o.posicao_na_parede,
+            }))}
             selectedRoomId={selectedRoomId}
             onMeasurementClick={handleCanvasClick}
             onMeasurementComplete={handleCanvasComplete}
@@ -539,6 +621,7 @@ export default function PlanDetail() {
             onInsertChangeType={handleInsertChangeType}
             onInsertCancel={handleInsertCancel}
             onElementClick={handleElementClick}
+            onCancelDrawing={handleCancelDrawing}
           />
 
           {/* Side panel - contextual based on step */}
@@ -834,6 +917,54 @@ export default function PlanDetail() {
             <Button variant="outline" onClick={handleCancelWall}>Cancelar</Button>
             <Button onClick={handleConfirmWall} disabled={addWall.isPending}>
               {addWall.isPending ? "A guardar..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Opening (vão) dialog – triggered by clicking near a wall in draw_opening mode */}
+      <Dialog open={showOpeningDialog} onOpenChange={(open) => !open && handleCancelOpening()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Adicionar Vão à Parede</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-muted rounded-lg p-2 text-center text-xs text-muted-foreground">
+              Vão posicionado sobre a parede mais próxima
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={openingTipo} onValueChange={setOpeningTipo}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="porta">Porta</SelectItem>
+                  <SelectItem value="janela">Janela</SelectItem>
+                  <SelectItem value="portada">Portada</SelectItem>
+                  <SelectItem value="claraboia">Clarabóia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Largura (m)</Label>
+                <Input value={openingLargura} onChange={(e) => setOpeningLargura(e.target.value)} type="number" step="0.01" min="0.1" autoFocus />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Altura (m)</Label>
+                <Input value={openingAltura} onChange={(e) => setOpeningAltura(e.target.value)} type="number" step="0.01" min="0.1" />
+              </div>
+            </div>
+            {(openingTipo === "janela" || openingTipo === "claraboia") && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Peitoril (m) — opcional</Label>
+                <Input value={openingPeitoril} onChange={(e) => setOpeningPeitoril(e.target.value)} type="number" step="0.01" placeholder="1.10" />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelOpening}>Cancelar</Button>
+            <Button onClick={handleConfirmOpening} disabled={addOpening.isPending}>
+              {addOpening.isPending ? "A guardar..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>
