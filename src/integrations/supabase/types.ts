@@ -5998,6 +5998,7 @@ export type Database = {
           disciplina: string
           file_path: string
           file_type: string
+          has_analysis: boolean
           id: string
           nome_ficheiro: string
           obra_id: string
@@ -6006,6 +6007,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          workflow_step: string
         }
         Insert: {
           created_at?: string
@@ -6013,6 +6015,7 @@ export type Database = {
           disciplina?: string
           file_path: string
           file_type?: string
+          has_analysis?: boolean
           id?: string
           nome_ficheiro: string
           obra_id: string
@@ -6021,6 +6024,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          workflow_step?: string
         }
         Update: {
           created_at?: string
@@ -6028,6 +6032,7 @@ export type Database = {
           disciplina?: string
           file_path?: string
           file_type?: string
+          has_analysis?: boolean
           id?: string
           nome_ficheiro?: string
           obra_id?: string
@@ -6036,6 +6041,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          workflow_step?: string
         }
         Relationships: [
           {
