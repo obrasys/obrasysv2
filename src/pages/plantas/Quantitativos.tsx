@@ -109,6 +109,63 @@ export default function PlanQuantitativos() {
 
   const articles = articlesQuery.data ?? [];
 
+  // Ensure the selected article exists in base_precos_personalizada (FK target).
+  // If user picked a default_articles row, clone it into the user's custom price base.
+  const resolveArticleId = async (artigoBaseId?: string): Promise<string | undefined> => {
+    if (!artigoBaseId) return undefined;
+    const art = articles.find((a) => a.id === artigoBaseId);
+    if (!art) return artigoBaseId;
+    if ((art as any)._source === "custom") return artigoBaseId;
+
+    // Clone default article into base_precos_personalizada
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) throw new Error("Não autenticado");
+
+    // Reuse if already cloned (match by codigo for this user)
+    const { data: existing } = await supabase
+      .from("base_precos_personalizada")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("codigo", art.codigo)
+      .maybeSingle();
+    if (existing?.id) return existing.id;
+
+    const { data: inserted, error } = await supabase
+      .from("base_precos_personalizada")
+      .insert({
+        user_id: userId,
+        codigo: art.codigo,
+        descricao: art.descricao,
+        unidade: art.unidade,
+        preco_unitario: art.preco_unitario,
+        categoria: art.categoria,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return inserted.id;
+  };
+
+  const handleCreateMapping = async (data: Parameters<typeof createMapping.mutate>[0]) => {
+    try {
+      const resolved = await resolveArticleId(data.artigoBaseId);
+      createMapping.mutate({ ...data, artigoBaseId: resolved });
+    } catch (e: any) {
+      toast.error("Erro ao adicionar o artigo: " + e.message);
+    }
+  };
+
+  const handleUpdateMapping = async (data: Parameters<typeof updateMapping.mutate>[0]) => {
+    try {
+      const resolved = await resolveArticleId(data.artigoBaseId);
+      updateMapping.mutate({ ...data, artigoBaseId: resolved });
+    } catch (e: any) {
+      toast.error("Erro ao atualizar o artigo: " + e.message);
+    }
+  };
+
+
   return (
     <AppLayout title={`Quantitativos — ${plan.nome_ficheiro}`} subtitle={`Rev. ${plan.revision_number}`}>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
