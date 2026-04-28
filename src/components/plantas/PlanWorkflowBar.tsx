@@ -66,7 +66,7 @@ interface ToolDef {
 }
 
 const TOOLS: ToolDef[] = [
-  { id: "view", icon: Cursor, label: "Navegar", tip: "Arrastar e zoom", group: "nav" },
+  { id: "view", icon: MousePointer2, label: "Navegar", tip: "Arrastar e zoom", group: "nav" },
   { id: "measure_line", icon: Minus, label: "Linha", tip: "Medir comprimentos", group: "measure" },
   { id: "measure_area", icon: Pentagon, label: "Área", tip: "Medir áreas", group: "measure" },
   { id: "measure_count", icon: Hash, label: "Contagem", tip: "Contar elementos", group: "measure" },
