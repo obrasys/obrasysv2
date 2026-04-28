@@ -98,9 +98,16 @@ export default function PlanDetail() {
 
   // Save measurement dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number; perimetro?: number } | null>(null);
   const [saveEtiqueta, setSaveEtiqueta] = useState("");
   const [saveCamada, setSaveCamada] = useState("");
+
+  // Wall/openings calculator (only for area-type save)
+  const [peDireito, setPeDireito] = useState("2.70");
+  type AberturaTipo = "janela" | "porta";
+  type AberturaCalc = { id: string; tipo: AberturaTipo; largura: string; altura: string };
+  const [aberturas, setAberturas] = useState<AberturaCalc[]>([]);
+  const [includeWallsAsMeasurement, setIncludeWallsAsMeasurement] = useState(true);
 
   // Save room dialog
   const [showRoomDialog, setShowRoomDialog] = useState(false);
