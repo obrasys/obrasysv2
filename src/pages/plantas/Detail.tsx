@@ -597,6 +597,14 @@ export default function PlanDetail() {
               espessura_cm: w.espessura_cm,
               comprimento_m: w.comprimento_m,
             }))}
+            openings={openings.map((o) => ({
+              id: o.id,
+              wall_id: o.wall_id,
+              tipo: o.tipo,
+              largura_m: o.largura_m,
+              altura_m: o.altura_m,
+              posicao_na_parede: o.posicao_na_parede,
+            }))}
             selectedRoomId={selectedRoomId}
             onMeasurementClick={handleCanvasClick}
             onMeasurementComplete={handleCanvasComplete}
@@ -613,6 +621,7 @@ export default function PlanDetail() {
             onInsertChangeType={handleInsertChangeType}
             onInsertCancel={handleInsertCancel}
             onElementClick={handleElementClick}
+            onCancelDrawing={handleCancelDrawing}
           />
 
           {/* Side panel - contextual based on step */}
