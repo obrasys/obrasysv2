@@ -204,29 +204,95 @@ export function PlanWorkflowBar({
         {STEPS.map((step, i) => {
           const isCompleted = completedSteps.includes(step.id);
           const isCurrent = currentStep === step.id;
-          const isClickable = isCompleted || isCurrent || (i > 0 && completedSteps.includes(STEPS[i - 1].id));
+          const unlocked = isStepUnlocked(step.id, ctx);
+          const isClickable = isCompleted || isCurrent || unlocked;
+          const checklist = buildChecklist(step.id, ctx);
+          const pending = checklist.filter((c) => !c.done).length;
+
           return (
             <div key={step.id} className="flex items-center">
-              <button
-                onClick={() => isClickable && onStepClick(step.id)}
-                disabled={!isClickable}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all text-xs",
-                  isCurrent && "bg-primary text-primary-foreground font-medium shadow-sm",
-                  !isCurrent && isClickable && "hover:bg-muted text-foreground",
-                  !isClickable && "opacity-40 cursor-not-allowed text-muted-foreground"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center justify-center w-5 h-5 rounded-full shrink-0",
-                  isCurrent && "bg-primary-foreground/20",
-                  !isCurrent && isCompleted && "bg-primary text-primary-foreground",
-                  !isCurrent && !isCompleted && "bg-muted-foreground/20"
-                )}>
-                  {isCompleted && !isCurrent ? <Check className="w-3 h-3" /> : <step.icon className="w-3 h-3" />}
+              <Popover>
+                <div className="relative flex items-center">
+                  <button
+                    onClick={() => isClickable && onStepClick(step.id)}
+                    disabled={!isClickable}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all text-xs",
+                      isCurrent && "bg-primary text-primary-foreground font-medium shadow-sm",
+                      !isCurrent && isClickable && "hover:bg-muted text-foreground",
+                      !isClickable && "opacity-60 cursor-not-allowed text-muted-foreground"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex items-center justify-center w-5 h-5 rounded-full shrink-0",
+                      isCurrent && "bg-primary-foreground/20",
+                      !isCurrent && isCompleted && "bg-primary text-primary-foreground",
+                      !isCurrent && !isCompleted && unlocked && "bg-muted-foreground/20",
+                      !isCurrent && !isCompleted && !unlocked && "bg-muted-foreground/10"
+                    )}>
+                      {!unlocked && !isCompleted ? (
+                        <Lock className="w-3 h-3" />
+                      ) : isCompleted && !isCurrent ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <step.icon className="w-3 h-3" />
+                      )}
+                    </div>
+                    <span className="hidden sm:inline">{step.label}</span>
+                  </button>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={`Requisitos do passo ${step.label}`}
+                      className={cn(
+                        "ml-1 flex items-center justify-center w-4 h-4 rounded-full transition-colors",
+                        pending > 0
+                          ? "bg-amber-500/15 text-amber-600 hover:bg-amber-500/25"
+                          : "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25"
+                      )}
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  </PopoverTrigger>
                 </div>
-                <span className="hidden sm:inline">{step.label}</span>
-              </button>
+                <PopoverContent align="start" className="w-72 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <step.icon className="w-3.5 h-3.5 text-primary" />
+                      {STEP_HINTS[step.id].title}
+                    </p>
+                    {pending === 0 ? (
+                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        Pronto
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        {pending} pendente{pending > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {checklist.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs">
+                        <div className={cn(
+                          "mt-0.5 flex items-center justify-center w-4 h-4 rounded-full shrink-0",
+                          item.done ? "bg-emerald-500 text-white" : "bg-muted border border-border"
+                        )}>
+                          {item.done ? <Check className="w-2.5 h-2.5" /> : <X className="w-2.5 h-2.5 text-muted-foreground" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className={cn(item.done ? "text-muted-foreground line-through" : "text-foreground font-medium")}>
+                            {item.label}
+                          </p>
+                          {!item.done && item.hint && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">{item.hint}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
               {i < STEPS.length - 1 && <ChevronRight className="w-3 h-3 text-muted-foreground/50 mx-0.5" />}
             </div>
           );
