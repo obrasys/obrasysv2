@@ -142,9 +142,42 @@ export default function PlanDetail() {
     return () => window.removeEventListener("keydown", handler);
   }, [insertTool.mode]);
 
-  // Workflow stepper state
+  // Workflow stepper state — hydrated from plan record so checklist persists across reloads
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("calibrate");
   const [hasAnalysis, setHasAnalysis] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate from DB once the plan loads
+  useEffect(() => {
+    if (!plan || hydrated) return;
+    const persistedStep = (plan as any).workflow_step as WorkflowStep | undefined;
+    const persistedAnalysis = (plan as any).has_analysis as boolean | undefined;
+    if (persistedStep && ["calibrate", "measure", "analyze", "budget"].includes(persistedStep)) {
+      setWorkflowStep(persistedStep);
+    }
+    if (typeof persistedAnalysis === "boolean") {
+      setHasAnalysis(persistedAnalysis);
+    }
+    setHydrated(true);
+  }, [plan, hydrated]);
+
+  // Persist workflow_step + has_analysis to DB (debounced)
+  useEffect(() => {
+    if (!hydrated || !planId) return;
+    const persistedStep = (plan as any)?.workflow_step;
+    const persistedAnalysis = (plan as any)?.has_analysis;
+    if (persistedStep === workflowStep && persistedAnalysis === hasAnalysis) return;
+    const t = setTimeout(() => {
+      supabase
+        .from("plan_imports")
+        .update({ workflow_step: workflowStep, has_analysis: hasAnalysis } as any)
+        .eq("id", planId)
+        .then(({ error }) => {
+          if (error) console.warn("Falha a guardar progresso da planta:", error.message);
+        });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [workflowStep, hasAnalysis, hydrated, planId, plan]);
 
   const completedSteps = useMemo(() => {
     const completed: WorkflowStep[] = [];
