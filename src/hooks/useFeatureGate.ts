@@ -38,24 +38,27 @@ export function useFeatureGate() {
 
   const canInviteUser = useCallback(
     (currentMemberCount: number): boolean => {
+      if (isUnlimited) return true;
       if (limits.maxUtilizadores === 0) return true; // unlimited
       return currentMemberCount < limits.maxUtilizadores;
     },
-    [limits.maxUtilizadores]
+    [limits.maxUtilizadores, isUnlimited]
   );
 
   const requiresUpgrade = useCallback(
     (feature: PlanFeature): string | null => {
+      if (isUnlimited) return null;
       if (hasFeature(feature)) return null;
       if (tier === 'starter') return 'Professional';
       return 'Starter';
     },
-    [hasFeature, tier]
+    [hasFeature, tier, isUnlimited]
   );
 
   return {
     tier,
     limits,
+    isUnlimited,
     hasFeature,
     canCreateObra,
     obrasAtivas,
