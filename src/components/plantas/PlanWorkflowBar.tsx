@@ -46,6 +46,68 @@ const STEP_HINTS: Record<WorkflowStep, { title: string; getMessage: (count: numb
   },
 };
 
+export interface ChecklistItem {
+  label: string;
+  done: boolean;
+  hint?: string;
+}
+
+interface ChecklistContext {
+  canMeasure: boolean;
+  measurementCount: number;
+  roomCount: number;
+  wallCount: number;
+  openingCount: number;
+  hasAnalysis: boolean;
+  placedElementsCount: number;
+}
+
+function buildChecklist(step: WorkflowStep, ctx: ChecklistContext): ChecklistItem[] {
+  switch (step) {
+    case "calibrate":
+      return [
+        { label: "Planta carregada e visível", done: true },
+        { label: "Calibração da escala guardada", done: ctx.canMeasure, hint: "Use 'Iniciar Calibração' e selecione 2 pontos com distância conhecida." },
+      ];
+    case "measure":
+      return [
+        { label: "Escala calibrada", done: ctx.canMeasure, hint: "Volte ao passo Calibrar para definir a escala." },
+        {
+          label: "Pelo menos 1 medição/compartimento/parede",
+          done: ctx.measurementCount + ctx.roomCount + ctx.wallCount > 0,
+          hint: "Use a barra de ferramentas (Linha, Área, Compart., Parede).",
+        },
+      ];
+    case "analyze":
+      return [
+        { label: "Escala calibrada", done: ctx.canMeasure },
+        { label: "Análise Axia™ executada", done: ctx.hasAnalysis, hint: "Clique em 'Analisar com Axia™' no painel à direita." },
+      ];
+    case "budget":
+      return [
+        { label: "Escala calibrada", done: ctx.canMeasure },
+        {
+          label: "Tem medições ou compartimentos",
+          done: ctx.measurementCount + ctx.roomCount > 0,
+          hint: "Sem dados a quantificar, o orçamento ficará vazio.",
+        },
+      ];
+  }
+}
+
+function isStepUnlocked(step: WorkflowStep, ctx: ChecklistContext): boolean {
+  switch (step) {
+    case "calibrate":
+      return true;
+    case "measure":
+      return ctx.canMeasure;
+    case "analyze":
+      return ctx.canMeasure;
+    case "budget":
+      return ctx.canMeasure && ctx.measurementCount + ctx.roomCount > 0;
+  }
+}
+
 const MODE_HINTS: Record<MeasureMode, string> = {
   view: "Arraste para mover · scroll para zoom",
   calibrate: "Selecione 2 pontos de uma distância conhecida",
