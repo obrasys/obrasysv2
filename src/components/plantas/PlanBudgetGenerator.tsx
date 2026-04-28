@@ -172,7 +172,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
           codigo,
           obra_id: obraId,
           margem_lucro: parseFloat(margemLucro) || 0,
-          estado: "rascunho",
+          status: "rascunho",
         })
         .select()
         .single();
