@@ -9,8 +9,7 @@ import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList"
 import { PlanRoomsList } from "@/components/plantas/PlanRoomsList";
 import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
-import { PlanWorkflowStepper, type WorkflowStep } from "@/components/plantas/PlanWorkflowStepper";
-import { PlanContextualGuide } from "@/components/plantas/PlanContextualGuide";
+import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWorkflowBar";
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { Button } from "@/components/ui/button";
