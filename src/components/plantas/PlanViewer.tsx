@@ -373,7 +373,7 @@ export function PlanViewer({
       case "measure_area": return "Medição de área — Clique vértices, duplo-clique para fechar";
       case "measure_count": return "Contagem — Clique para marcar elementos";
       case "draw_room": return "Compartimento — Clique vértices do polígono, duplo-clique para fechar";
-      case "draw_wall": return "Parede — Clique ponto inicial e ponto final (2 cliques)";
+      case "draw_wall": return "Parede — Clique início e fim · alinhamento automático (Shift = livre)";
       case "draw_opening": return "Vão — Clique na posição sobre uma parede";
       case "insert_element": {
         const sym = activeInsertSymbolId ? getSymbolById(activeInsertSymbolId) : null;
