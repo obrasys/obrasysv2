@@ -609,6 +609,9 @@ export default function PlanDetail() {
   const totalLinhas = measurements.filter((m) => m.tipo === "linha").reduce((s, m) => s + m.valor_bruto, 0);
   const totalAreas = measurements.filter((m) => m.tipo === "area").reduce((s, m) => s + m.valor_bruto, 0);
   const totalRoomsArea = rooms.reduce((s, r) => s + r.area_m2, 0);
+  const totalRodape = measurements
+    .filter((m) => m.tipo === "linha" && (m.etiqueta ?? "").toLowerCase().includes("rodapé"))
+    .reduce((s, m) => s + m.valor_bruto, 0);
 
   return (
     <AppLayout title={plan.nome_ficheiro} subtitle={`Rev. ${plan.revision_number}`}>
@@ -666,6 +669,11 @@ export default function PlanDetail() {
             {totalAreas > 0 && (
               <span className="flex items-center gap-1">
                 <Pentagon className="w-3 h-3" /> {totalAreas.toFixed(2)} m²
+              </span>
+            )}
+            {totalRodape > 0 && (
+              <span className="flex items-center gap-1">
+                <Minus className="w-3 h-3" /> Rodapé: {totalRodape.toFixed(2)} m
               </span>
             )}
             {rooms.length > 0 && (
