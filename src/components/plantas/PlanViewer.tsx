@@ -474,6 +474,8 @@ export function PlanViewer({
           height={containerSize.height}
           onWheel={handleWheel}
           onClick={handleStageClick}
+          onMouseMove={handleStageMouseMove}
+          onMouseLeave={() => setHoverPoint(null)}
           onDblClick={() => {
             if (mode === "measure_line" || mode === "measure_area" || mode === "draw_room") {
               onMeasurementComplete?.();
