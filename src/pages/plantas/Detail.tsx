@@ -885,24 +885,43 @@ export default function PlanDetail() {
 
       {/* Save measurement dialog */}
       <Dialog open={showSaveDialog} onOpenChange={(open) => !open && handleCancelSave()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base">
               {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : pendingSave?.tipo === "area" ? "Guardar Medição de Área" : "Guardar Contagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="bg-muted rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">
-                {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  {pendingSave?.tipo === "contagem" ? "un" : pendingSave?.tipo === "area" ? "m²" : "m"}
-                </span>
-              </p>
-            </div>
+            {/* Headline metrics */}
+            {pendingSave?.tipo === "area" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Área</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {pendingSave.valor.toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m²</span>
+                  </p>
+                </div>
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Perímetro</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {(pendingSave.perimetro ?? 0).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">
+                  {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {pendingSave?.tipo === "contagem" ? "un" : "m"}
+                  </span>
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label className="text-xs">Etiqueta (opcional)</Label>
-              <Input value={saveEtiqueta} onChange={(e) => setSaveEtiqueta(e.target.value)} placeholder="Ex: Parede sala, Tomadas quarto..." />
+              <Input value={saveEtiqueta} onChange={(e) => setSaveEtiqueta(e.target.value)} placeholder="Ex: Sala, Cozinha, Quarto 1..." />
             </div>
             <div className="space-y-2">
               <Label className="text-xs">Camada</Label>
@@ -915,6 +934,131 @@ export default function PlanDetail() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Wall calculator – only for closed polygons (area) */}
+            {pendingSave?.tipo === "area" && (pendingSave.perimetro ?? 0) > 0 && (
+              <div className="border rounded-lg p-3 space-y-3 bg-card">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">Cálculo de Paredes</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Perímetro × pé direito − aberturas
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeWallsAsMeasurement}
+                      onChange={(e) => setIncludeWallsAsMeasurement(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-primary"
+                    />
+                    Guardar como medição
+                  </label>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Pé direito h (m)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={peDireito}
+                    onChange={(e) => setPeDireito(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Aberturas list */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Aberturas (a subtrair)</Label>
+                    <div className="flex gap-1">
+                      <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => addAbertura("janela")}>
+                        + Janela
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => addAbertura("porta")}>
+                        + Porta
+                      </Button>
+                    </div>
+                  </div>
+
+                  {aberturas.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground italic">Sem aberturas. Adicione janelas ou portas a subtrair.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {aberturas.map((a) => {
+                        const l = parseFloat(a.largura) || 0;
+                        const h = parseFloat(a.altura) || 0;
+                        const area = l * h;
+                        return (
+                          <div key={a.id} className="grid grid-cols-[70px_1fr_1fr_70px_28px] items-end gap-2">
+                            <div className="text-[11px] font-medium pb-2">
+                              {a.tipo === "janela" ? "Janela" : "Porta"}
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground">L (m)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={a.largura}
+                                onChange={(e) => updateAbertura(a.id, { largura: e.target.value })}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground">A (m)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={a.altura}
+                                onChange={(e) => updateAbertura(a.id, { altura: e.target.value })}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="text-[11px] text-right pb-2 font-medium tabular-nums">
+                              {area.toFixed(2)} m²
+                            </div>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-7"
+                              onClick={() => removeAbertura(a.id)}
+                              aria-label="Remover abertura"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Summary */}
+                <div className="rounded-md bg-muted/60 p-2.5 text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Paredes (bruto)</span>
+                    <span className="tabular-nums">
+                      {(pendingSave.perimetro ?? 0).toFixed(2)} × {peDireitoNum.toFixed(2)} = <strong>{paredesAreaBruta.toFixed(2)} m²</strong>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">− Aberturas</span>
+                    <span className="tabular-nums">{aberturasAreaTotal.toFixed(2)} m²</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-1 mt-1">
+                    <span className="font-semibold">Paredes (líquido)</span>
+                    <span className="font-bold text-primary tabular-nums">{paredesAreaLiquida.toFixed(2)} m²</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-1">
+                    Útil para pinturas, revestimentos e coberturas. A área da planta ({pendingSave.valor.toFixed(2)} m²) serve para pisos.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelSave}>Cancelar</Button>
