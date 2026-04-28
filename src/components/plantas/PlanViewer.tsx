@@ -190,8 +190,10 @@ export function PlanViewer({
       add(w.start_point.x, w.start_point.y, w.id);
       add(w.end_point.x, w.end_point.y, w.id);
     });
+    // Mostramos TODOS os endpoints como grips (mesmo com 1 só parede)
+    // para permitir snap imediato após importar uma planta. Distinguimos
+    // visualmente endpoints soltos vs cantos/junções/cruzamentos.
     return Array.from(buckets.values())
-      .filter((b) => b.wallIds.size >= 2)
       .map((b) => ({ x: b.x, y: b.y, count: b.wallIds.size }));
   }, [walls, GRIP_SNAP_TOLERANCE_PX]);
 
@@ -486,11 +488,13 @@ export function PlanViewer({
 
             {/* Wall intersection grips — destacam cantos (L), junções (T) e cruzamentos (X) */}
             {showGrips && wallGrips.map((g, i) => {
+              // 1 parede = endpoint solto (mais discreto), 2 = canto, 3 = T, 4+ = cruzamento
               const fill =
                 g.count >= 4 ? "hsl(var(--primary))" :
                 g.count === 3 ? "#F59E0B" :
-                "#0F4C5C";
-              const size = GRIP_SIZE_PX / zoom;
+                g.count === 2 ? "#0F4C5C" :
+                "#94A3B8"; // endpoint solto
+              const size = (g.count <= 1 ? GRIP_SIZE_PX * 0.75 : GRIP_SIZE_PX) / zoom;
               return (
                 <Rect
                   key={`grip-${i}`}
@@ -501,6 +505,7 @@ export function PlanViewer({
                   fill={fill}
                   stroke="white"
                   strokeWidth={1.5 / zoom}
+                  opacity={g.count <= 1 ? 0.85 : 1}
                   listening={false}
                 />
               );
