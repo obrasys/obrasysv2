@@ -1301,6 +1301,15 @@ export default function PlanDetail() {
         </DialogContent>
       </Dialog>
 
+      {/* Segment dialog (parede isolada com ações construtivas) */}
+      <PlanSegmentDialog
+        open={showSegmentDialog}
+        onClose={handleCancelSegment}
+        comprimentoMetros={pendingSegment?.comprimento ?? 0}
+        onConfirm={handleConfirmSegment}
+        isSaving={addMeasurement.isPending}
+      />
+
       {/* Element properties dialog */}
       <PlanElementProperties
         element={selectedElement}
