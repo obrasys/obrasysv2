@@ -376,7 +376,10 @@ export default function PlanDetail() {
       setShowSaveDialog(true);
     } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
       const area = calculatePolygonArea(activePoints, pixelsPerMeter);
-      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area });
+      const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
+      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area, perimetro });
+      setAberturas([]);
+      setPeDireito("2.70");
       setShowSaveDialog(true);
     } else if (mode === "draw_room" && activePoints.length >= 3) {
       setPendingRoomCoords([...activePoints]);
