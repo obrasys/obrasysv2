@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanViewer } from "@/components/plantas/PlanViewer";
 import { PlanCalibrationTool } from "@/components/plantas/PlanCalibrationTool";
-import { PlanMeasurementToolbar } from "@/components/plantas/PlanMeasurementToolbar";
 import type { MeasureMode } from "@/components/plantas/PlanMeasurementToolbar";
 import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList";
 import { PlanRoomsList } from "@/components/plantas/PlanRoomsList";
 import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
-import { PlanWorkflowStepper, type WorkflowStep } from "@/components/plantas/PlanWorkflowStepper";
-import { PlanContextualGuide } from "@/components/plantas/PlanContextualGuide";
+import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWorkflowBar";
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { Button } from "@/components/ui/button";
@@ -500,39 +498,25 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
-          {/* Toolbar always visible once calibrated, regardless of workflow step */}
-          {canMeasure && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <PlanMeasurementToolbar
-                mode={mode === "calibrate" ? "view" : mode}
-                onModeChange={handleModeChange}
-                canMeasure={canMeasure}
-                onUndo={handleUndo}
-                hasActivePoints={activePoints.length > 0}
-              />
-              <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} />
-            </div>
-          )}
         </div>
 
-        {/* Workflow Stepper */}
-        <PlanWorkflowStepper
+        {/* Unified workflow bar (stepper + guide + toolbar + active hint) */}
+        <PlanWorkflowBar
           currentStep={effectiveStep}
           completedSteps={completedSteps}
           onStepClick={handleStepClick}
-        />
-
-        {/* Contextual Guide */}
-        <PlanContextualGuide
-          step={effectiveStep}
-          isCalibrated={canMeasure}
+          mode={mode === "calibrate" ? "view" : mode}
+          onModeChange={handleModeChange}
+          canMeasure={canMeasure}
+          onUndo={handleUndo}
+          hasActivePoints={activePoints.length > 0}
           measurementCount={measurements.length + rooms.length + walls.length}
           hasAnalysis={hasAnalysis}
-          onAction={() => {
+          onPrimaryAction={() => {
             if (effectiveStep === "calibrate") handleStartCalibration();
-            if (effectiveStep === "analyze") {/* AI analysis triggered from panel */}
             if (effectiveStep === "budget") navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`);
           }}
+          rightSlot={canMeasure ? <PlanSymbolPicker disabled={!canMeasure} onSelectSymbol={handleSelectSymbol} /> : null}
         />
 
         {/* Summary bar */}
