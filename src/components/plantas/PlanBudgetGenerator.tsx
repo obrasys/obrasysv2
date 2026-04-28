@@ -61,24 +61,31 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     return map;
   }, [measurements]);
 
-  // Consolidate mapped measurements by article, grouped by category
+  // Consolidate mapped measurements by article, grouped by category.
+  // Fallback: if a measurement is not mapped to an article, create a
+  // placeholder article grouped by tipo/etiqueta so the budget is never empty.
   const consolidated = useMemo(() => {
     const byArticle = new Map<string, ConsolidatedItem>();
+    const mappingByMeasurement = new Map<string, PlanMeasurementMapping>();
+    mappings.forEach((mp) => mappingByMeasurement.set(mp.measurement_id, mp));
 
-    mappings
-      .filter((m) => m.estado === "mapeado" && m.artigo_base_id)
-      .forEach((mapping) => {
-        const measurement = measurementById.get(mapping.measurement_id);
-        const article = articleById.get(mapping.artigo_base_id!);
-        if (!measurement || !article) return;
+    measurements.forEach((measurement) => {
+      const mapping = mappingByMeasurement.get(measurement.id);
+      const isMapped = mapping?.estado === "mapeado" && !!mapping?.artigo_base_id;
 
-        const qtd = (measurement.valor_ajustado ?? measurement.valor_bruto) * mapping.coeficiente * mapping.fator_desperdicio;
+      if (isMapped) {
+        const article = articleById.get(mapping!.artigo_base_id!);
+        if (!article) return;
+        const qtd =
+          (measurement.valor_ajustado ?? measurement.valor_bruto) *
+          (mapping!.coeficiente ?? 1) *
+          (mapping!.fator_desperdicio ?? 1);
 
         if (!byArticle.has(article.id)) {
           byArticle.set(article.id, {
             artigoId: article.id,
             article,
-            categoria: article.categoria,
+            categoria: article.categoria || "Geral",
             quantidade: 0,
             valorTotal: 0,
             measurementIds: [],
@@ -88,10 +95,43 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         row.quantidade += qtd;
         row.valorTotal += qtd * article.preco_unitario;
         row.measurementIds.push(measurement.id);
-      });
+      } else {
+        // Placeholder article grouped by etiqueta (or tipo)
+        const etiqueta =
+          measurement.etiqueta?.trim() ||
+          (measurement.tipo === "area"
+            ? "Áreas a definir"
+            : measurement.tipo === "linha"
+            ? "Lineares a definir"
+            : "Contagens a definir");
+        const placeholderId = `placeholder::${measurement.tipo}::${etiqueta}`;
+        const qtd = measurement.valor_ajustado ?? measurement.valor_bruto ?? 0;
+
+        if (!byArticle.has(placeholderId)) {
+          byArticle.set(placeholderId, {
+            artigoId: placeholderId,
+            article: {
+              id: placeholderId,
+              codigo: "A DEFINIR",
+              descricao: etiqueta,
+              unidade: measurement.unidade || (measurement.tipo === "area" ? "m²" : measurement.tipo === "linha" ? "ml" : "un"),
+              preco_unitario: 0,
+              categoria: "A definir (revisão manual)",
+            },
+            categoria: "A definir (revisão manual)",
+            quantidade: 0,
+            valorTotal: 0,
+            measurementIds: [],
+          });
+        }
+        const row = byArticle.get(placeholderId)!;
+        row.quantidade += qtd;
+        row.measurementIds.push(measurement.id);
+      }
+    });
 
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
-  }, [mappings, measurementById, articleById]);
+  }, [mappings, measurements, measurementById, articleById]);
 
   // Group by category for chapters
   const chapters = useMemo(() => {
