@@ -163,9 +163,10 @@ export function PlanViewer({
     });
   }, [zoom, position]);
 
-  // ===== Grips: agregação de endpoints de paredes que partilham o mesmo ponto =====
-  const GRIP_SNAP_TOLERANCE_PX = 6; // tolerância em coordenadas da imagem
-  const GRIP_SIZE_PX = 8;           // tamanho visual (dividido por zoom no render)
+  // Preferências do utilizador (persistidas entre sessões via localStorage por user)
+  const { prefs: gripPrefs } = useGripPreferences();
+  const GRIP_SNAP_TOLERANCE_PX = gripPrefs.toleranceImagePx;
+  const GRIP_SIZE_PX = gripPrefs.sizeScreenPx;
 
   const wallGrips = useMemo(() => {
     const buckets = new Map<string, { x: number; y: number; wallIds: Set<string> }>();
@@ -179,7 +180,6 @@ export function PlanViewer({
       const existing = buckets.get(k);
       if (existing) {
         existing.wallIds.add(wallId);
-        // média ponderada simples para estabilizar a posição
         existing.x = (existing.x + x) / 2;
         existing.y = (existing.y + y) / 2;
       } else {
@@ -193,9 +193,10 @@ export function PlanViewer({
     return Array.from(buckets.values())
       .filter((b) => b.wallIds.size >= 2)
       .map((b) => ({ x: b.x, y: b.y, count: b.wallIds.size }));
-  }, [walls]);
+  }, [walls, GRIP_SNAP_TOLERANCE_PX]);
 
-  const showGrips = mode === "view" || mode === "draw_wall" || mode === "draw_opening";
+  const showGrips =
+    gripPrefs.show && (mode === "view" || mode === "draw_wall" || mode === "draw_opening");
 
   const snapToGrip = useCallback(
     (x: number, y: number) => {
