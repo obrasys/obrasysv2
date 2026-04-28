@@ -500,8 +500,9 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
-          {effectiveStep === "measure" && (
-            <div className="flex items-center gap-2">
+          {/* Toolbar always visible once calibrated, regardless of workflow step */}
+          {canMeasure && (
+            <div className="flex items-center gap-2 flex-wrap">
               <PlanMeasurementToolbar
                 mode={mode === "calibrate" ? "view" : mode}
                 onModeChange={handleModeChange}
