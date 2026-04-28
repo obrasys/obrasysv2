@@ -280,7 +280,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     }
   };
 
-  const canGenerate = consolidated.length > 0;
+  const canGenerate = consolidated.length > 0 || measurements.length > 0;
 
   return (
     <>
