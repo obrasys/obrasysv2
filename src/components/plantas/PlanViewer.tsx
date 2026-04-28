@@ -68,6 +68,7 @@ interface PlanViewerProps {
   onInsertChangeType?: () => void;
   onInsertCancel?: () => void;
   onElementClick?: (element: PlacedPlantElement) => void;
+  onCancelDrawing?: () => void;
 }
 
 export function PlanViewer({
@@ -97,6 +98,7 @@ export function PlanViewer({
   onInsertChangeType,
   onInsertCancel,
   onElementClick,
+  onCancelDrawing,
 }: PlanViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
