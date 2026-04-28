@@ -154,6 +154,11 @@ interface Props {
   onPrimaryAction?: () => void;
   // Right slot (e.g. symbol picker)
   rightSlot?: React.ReactNode;
+  // Checklist context
+  roomCount?: number;
+  wallCount?: number;
+  openingCount?: number;
+  placedElementsCount?: number;
 }
 
 export function PlanWorkflowBar({
@@ -169,7 +174,20 @@ export function PlanWorkflowBar({
   hasAnalysis,
   onPrimaryAction,
   rightSlot,
+  roomCount = 0,
+  wallCount = 0,
+  openingCount = 0,
+  placedElementsCount = 0,
 }: Props) {
+  const ctx: ChecklistContext = {
+    canMeasure,
+    measurementCount,
+    roomCount,
+    wallCount,
+    openingCount,
+    hasAnalysis,
+    placedElementsCount,
+  };
   const guide = STEP_HINTS[currentStep];
   const message = guide.getMessage(measurementCount, hasAnalysis);
   const showAction = guide.actionLabel && onPrimaryAction && (
