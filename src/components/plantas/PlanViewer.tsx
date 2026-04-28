@@ -107,6 +107,8 @@ export function PlanViewer({
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
+  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
+  const [shiftHeld, setShiftHeld] = useState(false);
 
   useEffect(() => {
     if (!imageDataUrl) return;
@@ -214,6 +216,115 @@ export function PlanViewer({
     [wallGrips, GRIP_SNAP_TOLERANCE_PX]
   );
 
+  // Snap angular relativo a um ponto âncora (0°, 45°, 90°, ...). Shift = livre.
+  const snapAngular = useCallback((anchor: { x: number; y: number }, x: number, y: number) => {
+    const dx = x - anchor.x;
+    const dy = y - anchor.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 1) return { x, y };
+    const angle = Math.atan2(dy, dx);
+    const step = Math.PI / 4; // 45°
+    const snapped = Math.round(angle / step) * step;
+    return { x: anchor.x + Math.cos(snapped) * dist, y: anchor.y + Math.sin(snapped) * dist };
+  }, []);
+
+  // Alinhamento por eixo: snap X/Y a coordenadas existentes (grips/endpoints)
+  const alignToAxes = useCallback(
+    (x: number, y: number) => {
+      let snapX = x;
+      let snapY = y;
+      let guideX: number | null = null;
+      let guideY: number | null = null;
+      let bestDX = GRIP_SNAP_TOLERANCE_PX * 1.5;
+      let bestDY = GRIP_SNAP_TOLERANCE_PX * 1.5;
+      for (const g of wallGrips) {
+        const dX = Math.abs(g.x - x);
+        const dY = Math.abs(g.y - y);
+        if (dX < bestDX) { bestDX = dX; snapX = g.x; guideX = g.x; }
+        if (dY < bestDY) { bestDY = dY; snapY = g.y; guideY = g.y; }
+      }
+      return { x: snapX, y: snapY, guideX, guideY };
+    },
+    [wallGrips, GRIP_SNAP_TOLERANCE_PX]
+  );
+
+  // Função consolidada de alinhamento durante o desenho
+  const computeAlignedPoint = useCallback(
+    (rawX: number, rawY: number) => {
+      // 1) Snap a grip existente tem prioridade absoluta
+      const gripped = snapToGrip(rawX, rawY);
+      const grippedDist = Math.hypot(gripped.x - rawX, gripped.y - rawY);
+      const grippedHit = grippedDist < GRIP_SNAP_TOLERANCE_PX * 2 && (gripped.x !== rawX || gripped.y !== rawY);
+
+      let x = rawX;
+      let y = rawY;
+      let guideX: number | null = null;
+      let guideY: number | null = null;
+      let snappedToGripPoint: { x: number; y: number } | null = null;
+
+      if (grippedHit) {
+        x = gripped.x;
+        y = gripped.y;
+        snappedToGripPoint = { x, y };
+      } else {
+        // 2) Alinhamento por eixo X/Y a outros grips
+        const aligned = alignToAxes(rawX, rawY);
+        x = aligned.x;
+        y = aligned.y;
+        guideX = aligned.guideX;
+        guideY = aligned.guideY;
+      }
+
+      // 3) Snap angular a partir do ponto âncora (último ponto do desenho ativo)
+      const anchor = activeMeasurementPoints[activeMeasurementPoints.length - 1];
+      if (anchor && !shiftHeld && !snappedToGripPoint) {
+        const ang = snapAngular(anchor, x, y);
+        x = ang.x;
+        y = ang.y;
+      }
+
+      return { x, y, guideX, guideY, snappedToGripPoint };
+    },
+    [snapToGrip, alignToAxes, snapAngular, activeMeasurementPoints, shiftHeld, GRIP_SNAP_TOLERANCE_PX]
+  );
+
+  // Tracking de Shift para desativar snap angular temporariamente
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(true); };
+    const up = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(false); };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, []);
+
+  const isDrawingMode =
+    mode === "draw_wall" ||
+    mode === "measure_line" ||
+    mode === "measure_area" ||
+    mode === "draw_room";
+
+  const handleStageMouseMove = useCallback(() => {
+    if (!isDrawingMode) {
+      if (hoverPoint) setHoverPoint(null);
+      return;
+    }
+    const stage = stageRef.current;
+    if (!stage) return;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const imgX = (pointer.x - position.x) / zoom;
+    const imgY = (pointer.y - position.y) / zoom;
+    setHoverPoint({ x: imgX, y: imgY });
+  }, [isDrawingMode, position, zoom, hoverPoint]);
+
+  const alignedHover = useMemo(() => {
+    if (!hoverPoint || !isDrawingMode) return null;
+    return computeAlignedPoint(hoverPoint.x, hoverPoint.y);
+  }, [hoverPoint, isDrawingMode, computeAlignedPoint]);
+
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (mode === "view") return;
     const stage = stageRef.current;
@@ -225,14 +336,13 @@ export function PlanViewer({
 
     if (mode === "calibrate") {
       onCalibrationClick({ x: imgX, y: imgY });
-    } else if (mode === "draw_wall") {
-      // Snap ao grip mais próximo para fechar interseções perfeitamente
-      const snapped = snapToGrip(imgX, imgY);
-      onMeasurementClick?.(snapped);
+    } else if (isDrawingMode) {
+      const aligned = computeAlignedPoint(imgX, imgY);
+      onMeasurementClick?.({ x: aligned.x, y: aligned.y });
     } else {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
-  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, snapToGrip]);
+  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, computeAlignedPoint, isDrawingMode]);
 
   const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
     setPosition({ x: e.target.x(), y: e.target.y() });
@@ -263,7 +373,7 @@ export function PlanViewer({
       case "measure_area": return "Medição de área — Clique vértices, duplo-clique para fechar";
       case "measure_count": return "Contagem — Clique para marcar elementos";
       case "draw_room": return "Compartimento — Clique vértices do polígono, duplo-clique para fechar";
-      case "draw_wall": return "Parede — Clique ponto inicial e ponto final (2 cliques)";
+      case "draw_wall": return "Parede — Clique início e fim · alinhamento automático (Shift = livre)";
       case "draw_opening": return "Vão — Clique na posição sobre uma parede";
       case "insert_element": {
         const sym = activeInsertSymbolId ? getSymbolById(activeInsertSymbolId) : null;
@@ -364,6 +474,8 @@ export function PlanViewer({
           height={containerSize.height}
           onWheel={handleWheel}
           onClick={handleStageClick}
+          onMouseMove={handleStageMouseMove}
+          onMouseLeave={() => setHoverPoint(null)}
           onDblClick={() => {
             if (mode === "measure_line" || mode === "measure_area" || mode === "draw_room") {
               onMeasurementComplete?.();
@@ -692,6 +804,64 @@ export function PlanViewer({
                     strokeWidth={2 / zoom}
                   />
                 ))}
+              </Group>
+            )}
+
+            {/* Alignment preview & guides while drawing */}
+            {isDrawingMode && alignedHover && (
+              <Group listening={false}>
+                {activeMeasurementPoints.length > 0 && (
+                  <Line
+                    points={[
+                      activeMeasurementPoints[activeMeasurementPoints.length - 1].x,
+                      activeMeasurementPoints[activeMeasurementPoints.length - 1].y,
+                      alignedHover.x,
+                      alignedHover.y,
+                    ]}
+                    stroke={mode === "draw_room" ? "#8b5cf6" : mode === "draw_wall" ? WALL_COLOR : "hsl(var(--primary))"}
+                    strokeWidth={2 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.6}
+                  />
+                )}
+                {alignedHover.guideX !== null && (
+                  <Line
+                    points={[alignedHover.guideX, 0, alignedHover.guideX, (image?.height ?? 4000)]}
+                    stroke="#F59E0B"
+                    strokeWidth={1 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.7}
+                  />
+                )}
+                {alignedHover.guideY !== null && (
+                  <Line
+                    points={[0, alignedHover.guideY, (image?.width ?? 4000), alignedHover.guideY]}
+                    stroke="#F59E0B"
+                    strokeWidth={1 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.7}
+                  />
+                )}
+                <Circle
+                  x={alignedHover.x}
+                  y={alignedHover.y}
+                  radius={(alignedHover.snappedToGripPoint ? 8 : 5) / zoom}
+                  stroke={alignedHover.snappedToGripPoint ? "hsl(var(--primary))" : "#F59E0B"}
+                  strokeWidth={2 / zoom}
+                  fill="white"
+                  opacity={0.9}
+                />
+                {alignedHover.snappedToGripPoint && (
+                  <Rect
+                    x={alignedHover.x - 6 / zoom}
+                    y={alignedHover.y - 6 / zoom}
+                    width={12 / zoom}
+                    height={12 / zoom}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={1.5 / zoom}
+                    dash={[2 / zoom, 2 / zoom]}
+                  />
+                )}
               </Group>
             )}
 
