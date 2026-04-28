@@ -387,26 +387,88 @@ export default function PlanDetail() {
     }
   }, [mode, activePoints, pixelsPerMeter]);
 
+  // Derived calc for area dialog (perimeter × pé direito − aberturas)
+  const peDireitoNum = Math.max(0, parseFloat(peDireito) || 0);
+  const aberturasAreaTotal = aberturas.reduce((s, a) => {
+    const l = parseFloat(a.largura) || 0;
+    const h = parseFloat(a.altura) || 0;
+    return s + l * h;
+  }, 0);
+  const paredesAreaBruta = (pendingSave?.perimetro ?? 0) * peDireitoNum;
+  const paredesAreaLiquida = Math.max(0, paredesAreaBruta - aberturasAreaTotal);
+
+  const addAbertura = (tipo: AberturaTipo) => {
+    setAberturas((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        tipo,
+        largura: tipo === "porta" ? "0.80" : "1.20",
+        altura: tipo === "porta" ? "2.10" : "1.20",
+      },
+    ]);
+  };
+  const updateAbertura = (id: string, patch: Partial<AberturaCalc>) => {
+    setAberturas((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  };
+  const removeAbertura = (id: string) => {
+    setAberturas((prev) => prev.filter((a) => a.id !== id));
+  };
+
   // Save measurement
   const handleConfirmSave = async () => {
     if (!pendingSave) return;
     const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
+    const baseEtiqueta = saveEtiqueta?.trim() || (pendingSave.tipo === "area" ? "Área" : pendingSave.tipo === "linha" ? "Linha" : "Contagem");
+
+    // 1) Main measurement (the polygon area / line length / count)
     await addMeasurement.mutateAsync({
       tipo: pendingSave.tipo,
       coordinates: pendingSave.coordinates,
       valorBruto: parseFloat(pendingSave.valor.toFixed(4)),
       unidade: pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m",
       camada: saveCamada || undefined,
-      etiqueta: saveEtiqueta || undefined,
+      etiqueta: baseEtiqueta,
       cor,
     });
+
+    // 2) For closed polygons (area), also persist perimeter + wall areas if user opted in
+    if (pendingSave.tipo === "area" && pendingSave.perimetro && pendingSave.perimetro > 0) {
+      // Perimeter as a 'linha' measurement so it can be reused (rodapés, contornos…)
+      await addMeasurement.mutateAsync({
+        tipo: "linha",
+        coordinates: [...pendingSave.coordinates, pendingSave.coordinates[0]],
+        valorBruto: parseFloat(pendingSave.perimetro.toFixed(4)),
+        unidade: "m",
+        camada: saveCamada || undefined,
+        etiqueta: `${baseEtiqueta} — Perímetro`,
+        cor,
+      });
+
+      if (includeWallsAsMeasurement && peDireitoNum > 0 && paredesAreaLiquida > 0) {
+        const obs = `Paredes (líquido): perímetro ${pendingSave.perimetro.toFixed(2)} m × pé direito ${peDireitoNum.toFixed(2)} m = ${paredesAreaBruta.toFixed(2)} m² − aberturas ${aberturasAreaTotal.toFixed(2)} m²`;
+        await addMeasurement.mutateAsync({
+          tipo: "area",
+          coordinates: pendingSave.coordinates,
+          valorBruto: parseFloat(paredesAreaLiquida.toFixed(4)),
+          unidade: "m²",
+          camada: saveCamada || undefined,
+          etiqueta: `${baseEtiqueta} — Paredes (h=${peDireitoNum.toFixed(2)} m)`,
+          cor,
+          observacao: obs,
+        } as any);
+      }
+    }
+
     setColorIndex((i) => i + 1);
     setActivePoints([]);
     setPendingSave(null);
     setShowSaveDialog(false);
     setSaveEtiqueta("");
     setSaveCamada("");
-    toast.success(`Medição guardada`);
+    setAberturas([]);
+    setPeDireito("2.70");
+    toast.success("Medição guardada");
   };
 
   const handleCancelSave = () => {
@@ -414,6 +476,8 @@ export default function PlanDetail() {
     setPendingSave(null);
     setSaveEtiqueta("");
     setSaveCamada("");
+    setAberturas([]);
+    setPeDireito("2.70");
     setActivePoints([]);
   };
 
