@@ -51,18 +51,30 @@ export function useGripPreferences() {
     setPrefs(readFromStorage(userId));
   }, [userId]);
 
-  // Sincronizar entre abas/janelas: se o utilizador mudar as preferências
-  // noutra aba e depois abrir/importar um novo plano aqui, refletimos imediatamente.
+  // Sincronizar entre abas/janelas E entre instâncias na mesma aba.
+  // - "storage" cobre alterações vindas de outra aba/janela.
+  // - "grip-prefs:changed" (custom) cobre alterações na MESMA aba: assim, ao
+  //   importar/abrir um novo plano (que monta novo PlanViewer) ou ao mudar as
+  //   prefs no popover, todas as instâncias do hook refletem imediatamente,
+  //   sem precisar recarregar a página.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const expectedKey = userId ? `${KEY_PREFIX}${userId}` : `${KEY_PREFIX}anon`;
     const onStorage = (e: StorageEvent) => {
-      if (e.key === expectedKey) {
-        setPrefs(readFromStorage(userId));
-      }
+      if (e.key === expectedKey) setPrefs(readFromStorage(userId));
+    };
+    const onCustom = () => setPrefs(readFromStorage(userId));
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") setPrefs(readFromStorage(userId));
     };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("grip-prefs:changed", onCustom as EventListener);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("grip-prefs:changed", onCustom as EventListener);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [userId]);
 
   const update = useCallback(
@@ -76,6 +88,10 @@ export function useGripPreferences() {
         try {
           const key = userId ? `${KEY_PREFIX}${userId}` : `${KEY_PREFIX}anon`;
           localStorage.setItem(key, JSON.stringify(next));
+          // Notifica outras instâncias do hook na mesma aba.
+          window.dispatchEvent(
+            new CustomEvent("grip-prefs:changed", { detail: { userId, prefs: next } })
+          );
         } catch {
           /* ignore quota errors */
         }
