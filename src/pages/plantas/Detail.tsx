@@ -375,10 +375,24 @@ export default function PlanDetail() {
 
   // Complete handler (double-click)
   const handleCanvasComplete = useCallback(() => {
-    if (mode === "measure_line" && activePoints.length >= 2 && pixelsPerMeter > 0) {
-      const length = calculateLineLength(activePoints, pixelsPerMeter);
-      setPendingSave({ tipo: "linha", coordinates: [...activePoints], valor: length });
-      setShowSaveDialog(true);
+    if (mode === "measure_line" && pixelsPerMeter > 0) {
+      // 2 pontos → segmento de parede isolada (ações construtivas)
+      // 3+ pontos → polígono fechado (área + rodapé)
+      if (activePoints.length === 2) {
+        const length = calculateLineLength(activePoints, pixelsPerMeter);
+        setPendingSegment({ coordinates: [...activePoints], comprimento: length });
+        setShowSegmentDialog(true);
+        return;
+      }
+      if (activePoints.length >= 3) {
+        const area = calculatePolygonArea(activePoints, pixelsPerMeter);
+        const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
+        setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area, perimetro });
+        setAberturas([]);
+        setPeDireito("2.70");
+        setShowSaveDialog(true);
+        return;
+      }
     } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
       const area = calculatePolygonArea(activePoints, pixelsPerMeter);
       const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
