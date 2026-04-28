@@ -150,8 +150,9 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
 
   const unmappedCount = measurements.filter((m) => {
     const mapping = mappings.find((mp) => mp.measurement_id === m.id);
-    return !mapping || mapping.estado !== "mapeado";
+    return !mapping || mapping.estado !== "mapeado" || !mapping.artigo_base_id;
   }).length;
+  const placeholderItemsCount = consolidated.filter((c) => c.artigoId.startsWith("placeholder::")).length;
 
   const handleGenerate = async () => {
     if (!user) return;
