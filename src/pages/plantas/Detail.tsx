@@ -116,6 +116,14 @@ export default function PlanDetail() {
   const [wallTipo, setWallTipo] = useState("interior_divisoria");
   const [wallMaterial, setWallMaterial] = useState("alvenaria");
 
+  // Opening (vão) dialog state
+  const [showOpeningDialog, setShowOpeningDialog] = useState(false);
+  const [pendingOpening, setPendingOpening] = useState<{ wallId: string; x: number; y: number } | null>(null);
+  const [openingTipo, setOpeningTipo] = useState("porta");
+  const [openingLargura, setOpeningLargura] = useState("0.80");
+  const [openingAltura, setOpeningAltura] = useState("2.10");
+  const [openingPeitoril, setOpeningPeitoril] = useState("");
+
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
