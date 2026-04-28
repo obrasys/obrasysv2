@@ -961,7 +961,7 @@ export default function PlanDetail() {
                   <div>
                     <p className="text-sm font-semibold">Cálculo de Paredes</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Perímetro × pé direito − aberturas
+                      Rodapé × pé direito − aberturas
                     </p>
                   </div>
                   <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
