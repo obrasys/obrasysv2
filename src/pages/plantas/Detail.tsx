@@ -231,6 +231,28 @@ export default function PlanDetail() {
     deleteElementDb.mutate(id);
   };
 
+  // Helper: find closest wall to a point and project the point onto the wall segment
+  const snapToNearestWall = useCallback((point: { x: number; y: number }) => {
+    if (walls.length === 0) return null;
+    let best: { wallId: string; px: number; py: number; dist: number } | null = null;
+    for (const w of walls) {
+      const ax = w.start_point.x;
+      const ay = w.start_point.y;
+      const bx = w.end_point.x;
+      const by = w.end_point.y;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const len2 = dx * dx + dy * dy;
+      if (len2 === 0) continue;
+      const t = Math.max(0, Math.min(1, ((point.x - ax) * dx + (point.y - ay) * dy) / len2));
+      const px = ax + t * dx;
+      const py = ay + t * dy;
+      const d = Math.hypot(point.x - px, point.y - py);
+      if (!best || d < best.dist) best = { wallId: w.id, px, py, dist: d };
+    }
+    return best;
+  }, [walls]);
+
   // Click handler – routes to correct logic based on mode
   const handleCanvasClick = useCallback((point: { x: number; y: number }) => {
     if (mode === "calibrate") {
@@ -263,6 +285,22 @@ export default function PlanDetail() {
       return;
     }
 
+    if (mode === "draw_opening") {
+      const snap = snapToNearestWall(point);
+      if (!snap) {
+        toast.error("Crie uma parede primeiro para poder inserir um vão.");
+        return;
+      }
+      // Tolerance: ~30 px in image space (covers fingers/touch)
+      if (snap.dist > 40) {
+        toast.warning("Clique mais próximo de uma parede para inserir o vão.");
+        return;
+      }
+      setPendingOpening({ wallId: snap.wallId, x: snap.px, y: snap.py });
+      setShowOpeningDialog(true);
+      return;
+    }
+
     // Element insertion mode
     if (mode === "insert_element" && insertTool.symbolTypeId) {
       const sym = getSymbolById(insertTool.symbolTypeId);
@@ -281,7 +319,7 @@ export default function PlanDetail() {
       }
       return;
     }
-  }, [mode, handleCalibrationClick, insertTool]);
+  }, [mode, handleCalibrationClick, insertTool, snapToNearestWall]);
 
   // Complete handler (double-click)
   const handleCanvasComplete = useCallback(() => {
