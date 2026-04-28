@@ -482,6 +482,28 @@ export function PlanViewer({
               </Group>
             ))}
 
+            {/* Wall intersection grips — destacam cantos (L), junções (T) e cruzamentos (X) */}
+            {showGrips && wallGrips.map((g, i) => {
+              const fill =
+                g.count >= 4 ? "hsl(var(--primary))" :
+                g.count === 3 ? "#F59E0B" :
+                "#0F4C5C";
+              const size = GRIP_SIZE_PX / zoom;
+              return (
+                <Rect
+                  key={`grip-${i}`}
+                  x={g.x - size / 2}
+                  y={g.y - size / 2}
+                  width={size}
+                  height={size}
+                  fill={fill}
+                  stroke="white"
+                  strokeWidth={1.5 / zoom}
+                  listening={false}
+                />
+              );
+            })}
+
             {/* Openings (vãos) – drawn perpendicular to wall, centered at posicao_na_parede */}
             {openings.map((o) => {
               const wall = walls.find((w) => w.id === o.wall_id);
