@@ -460,7 +460,7 @@ export default function PlanDetail() {
         valorBruto: parseFloat(pendingSave.perimetro.toFixed(4)),
         unidade: "m",
         camada: saveCamada || undefined,
-        etiqueta: `${baseEtiqueta} — Perímetro`,
+        etiqueta: `${baseEtiqueta} — Rodapé`,
         cor,
       });
 
@@ -921,7 +921,7 @@ export default function PlanDetail() {
                   </p>
                 </div>
                 <div className="bg-muted rounded-lg p-3 text-center">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Perímetro</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Rodapé (perímetro)</p>
                   <p className="text-xl font-bold text-foreground">
                     {(pendingSave.perimetro ?? 0).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m</span>
                   </p>
