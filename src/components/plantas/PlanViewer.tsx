@@ -190,8 +190,10 @@ export function PlanViewer({
       add(w.start_point.x, w.start_point.y, w.id);
       add(w.end_point.x, w.end_point.y, w.id);
     });
+    // Mostramos TODOS os endpoints como grips (mesmo com 1 só parede)
+    // para permitir snap imediato após importar uma planta. Distinguimos
+    // visualmente endpoints soltos vs cantos/junções/cruzamentos.
     return Array.from(buckets.values())
-      .filter((b) => b.wallIds.size >= 2)
       .map((b) => ({ x: b.x, y: b.y, count: b.wallIds.size }));
   }, [walls, GRIP_SNAP_TOLERANCE_PX]);
 
