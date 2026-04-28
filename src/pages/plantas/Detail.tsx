@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanViewer } from "@/components/plantas/PlanViewer";
 import { PlanCalibrationTool } from "@/components/plantas/PlanCalibrationTool";
-import { PlanMeasurementToolbar } from "@/components/plantas/PlanMeasurementToolbar";
 import type { MeasureMode } from "@/components/plantas/PlanMeasurementToolbar";
 import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList";
 import { PlanRoomsList } from "@/components/plantas/PlanRoomsList";
