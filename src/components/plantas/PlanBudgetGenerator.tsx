@@ -272,7 +272,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
 
       toast.success(`Pré-orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`);
       setShowDialog(false);
-      navigate(`/orcamentos/${orcamento.id}`);
+      navigate(`/orcamentos/${orcamento.id}/editar`);
     } catch (err: any) {
       toast.error("Erro ao gerar pré-orçamento: " + err.message);
     } finally {
