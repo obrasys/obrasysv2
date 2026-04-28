@@ -111,7 +111,7 @@ function isStepUnlocked(step: WorkflowStep, ctx: ChecklistContext): boolean {
 const MODE_HINTS: Record<MeasureMode, string> = {
   view: "Arraste para mover · scroll para zoom",
   calibrate: "Selecione 2 pontos de uma distância conhecida",
-  measure_line: "Clique nos pontos da linha · Duplo-clique para finalizar",
+  measure_line: "Segmento: 2 cliques = parede isolada · 3+ cliques + duplo-clique = polígono fechado (área + rodapé)",
   measure_area: "Clique nos vértices da área · Duplo-clique para fechar",
   measure_count: "Clique para marcar cada elemento",
   draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar",
@@ -130,12 +130,8 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   { id: "view", icon: MousePointer2, label: "Navegar", tip: "Arrastar e zoom", group: "nav" },
-  { id: "measure_line", icon: Minus, label: "Linha", tip: "Medir comprimentos", group: "measure" },
-  { id: "measure_area", icon: Pentagon, label: "Área", tip: "Medir áreas", group: "measure" },
+  { id: "measure_line", icon: Wallpaper, label: "Segmento", tip: "Segmento de parede ou polígono fechado (área + rodapé)", group: "measure" },
   { id: "measure_count", icon: Hash, label: "Contagem", tip: "Contar elementos", group: "measure" },
-  { id: "draw_room", icon: SquareDashed, label: "Compart.", tip: "Marcar compartimento (polígono)", group: "draw" },
-  { id: "draw_wall", icon: Wallpaper, label: "Parede", tip: "Marcar parede (2 pontos)", group: "draw" },
-  { id: "draw_opening", icon: DoorOpen, label: "Vão", tip: "Inserir porta/janela sobre parede", group: "draw" },
 ];
 
 interface Props {

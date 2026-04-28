@@ -1,50 +1,104 @@
-# Grips nas Interseções de Paredes — Módulo Plantas
-
 ## Objetivo
-Adicionar marcadores visuais ("grips") nos pontos onde linhas de paredes se cruzam ou se encontram (cantos em L, junções em T, cruzamentos em X), facilitando a leitura da estrutura e servindo de base para futura edição por arrasto.
 
-## O que muda para o utilizador
+Refinar o módulo Plantas com 3 alterações:
 
-- Sempre que duas ou mais paredes partilharem o mesmo ponto (ou pontos muito próximos, dentro de uma tolerância de snap), um **grip** quadrado aparece sobre essa interseção.
-- Cores do grip indicam o tipo de junção:
-  - **Cinza/Teal** — canto simples (2 paredes, em L)
-  - **Âmbar** — junção em T (3 paredes)
-  - **Vermelho/Primário forte** — cruzamento em X (4+ paredes)
-- Hover no grip mostra tooltip com o nº de paredes e o tipo de junção.
-- Durante o desenho de uma nova parede (`draw_wall`), aproximar-se de um grip existente faz **snap** ao ponto exato (já existe lógica de snap para vértices de room; estendemos para wall endpoints).
-- Os grips só aparecem nos modos **select / draw_wall / draw_opening** (escondem-se em modos não relevantes para não poluir).
+1. Rótulo "Perímetro" passa a aparecer como **"Rodapé"** no resumo de dimensões e nas medições derivadas (já é calculado como soma das arestas do polígono — só muda o label).
+2. Reduzir a barra de leitura da planta a **dois botões**: `Segmento` e `Contagem` (remover Linha, Área, Compartimento, Parede, Vão da barra principal — a lógica de área de polígono passa a ser acionada **dentro do Segmento** quando o utilizador fecha um polígono).
+3. Adicionar ao Segmento um painel de **ação construtiva** com 5 opções (Demolir / Construir / Barrar / Pintar / Revestir) e campos contextuais (espessura, material).
 
-## Implementação técnica
+---
 
-### 1. `src/components/plantas/PlanViewer.tsx`
-- Após o bloco que renderiza `walls` (linha ~431), adicionar um novo bloco `{/* Wall intersection grips */}`.
-- Construir, via `useMemo`, um mapa `Map<string, { x, y, wallIds: string[] }>` onde a chave é o ponto arredondado (tolerância ~4px no espaço da imagem) e o valor agrega todos os endpoints de paredes que ali coincidem.
-- Filtrar entradas com `wallIds.length >= 2` → são interseções reais.
-- Renderizar para cada uma um `<Rect>` do Konva (8/zoom px de lado, centrado), com `stroke="white"` e `fill` consoante o tipo:
-  - 2 → `#0F4C5C` (Deep Teal)
-  - 3 → `#F59E0B` (âmbar)
-  - 4+ → `hsl(var(--primary))`
-- Envolver em `<Group>` com `listening={mode === "select"}` para permitir hover/tooltip apenas no modo seleção.
-- Visibilidade controlada por `mode` (esconder em `calibrate`, `draw_room`, `count`).
+## 1. Renomear "Perímetro" → "Rodapé"
 
-### 2. Snap durante desenho de parede
-- No handler de clique do canvas (lógica `draw_wall`), antes de aceitar o ponto clicado, verificar se está dentro da tolerância de algum grip e, se sim, substituir pelas coordenadas exatas do grip. Isto garante que novas paredes "fecham" perfeitamente nas interseções.
+**Ficheiro:** `src/pages/plantas/Detail.tsx`
 
-### 3. Constantes
-- Adicionar no topo do ficheiro:
-  ```
-  const GRIP_SNAP_TOLERANCE_PX = 6;   // em coordenadas da imagem
-  const GRIP_SIZE_PX = 8;             // dividido por zoom no render
-  ```
+- Na função `handleConfirmSave` (linha ~444): a etiqueta auto-gerada para o registo de perímetro passa a ser `${baseEtiqueta} — Rodapé` em vez de `— Perímetro`.
+- No `Dialog` de gravação de área: o label visível "Perímetro" passa a "Rodapé (perímetro)" para manter clareza técnica mas alinhar a terminologia pedida.
+- No bloco de resumo (`Summary bar`, linha ~641): adicionar um chip dedicado "Rodapé: X m" (soma das medições com etiqueta a terminar em "— Rodapé").
+- O cálculo continua a ser `calculatePolygonPerimeter` (já soma todas as arestas, incluindo a de fecho) — sem alteração de lógica.
 
-## Fora do âmbil (não incluído nesta entrega)
-- Arrastar grips para mover/editar a interseção de várias paredes simultaneamente (pode vir numa fase 2).
-- Persistência da “junção” como entidade separada na base de dados — os grips são derivados em runtime a partir dos endpoints das paredes.
+---
 
-## Ficheiros alterados
-- `src/components/plantas/PlanViewer.tsx` (única alteração)
+## 2. Simplificar a barra de leitura
 
-## Critério de aceitação
-- Carregar uma planta com paredes desenhadas em L, T e cruz → ver 3 cores distintas de grip nos pontos certos.
-- Iniciar desenho de nova parede e aproximar o cursor de um grip → ponto encaixa exatamente sobre ele.
-- Mudar para modo `draw_room` → grips desaparecem; voltar a `select` → reaparecem.
+**Ficheiro:** `src/components/plantas/PlanMeasurementToolbar.tsx`
+
+A toolbar atual expõe 7 modos. Vamos reduzi-la a **2 botões visíveis**:
+
+- **Segmento** (`measure_line` reaproveitado e renomeado) — passa a ser a ferramenta única de desenho. Comportamento:
+  - 2 cliques → segmento de parede isolada (abre painel de ação construtiva).
+  - 3+ cliques + duplo-clique → fecha polígono → abre o diálogo já existente com Área + Rodapé + Paredes (mantém todo o cálculo atual de aberturas/pé-direito).
+- **Contagem** (`measure_count`) — mantém-se como está.
+
+Botões removidos da UI (mas modos preservados internamente para retrocompatibilidade com medições já guardadas): `measure_line` separado, `measure_area` separado, `draw_room`, `draw_wall`, `draw_opening`. Esses fluxos deixam de ser acessíveis a partir da barra principal — o "Segmento" cobre os dois casos (linha simples vs polígono fechado) consoante o utilizador faz duplo-clique ou pára em 2 pontos.
+
+**Ficheiro:** `src/pages/plantas/Detail.tsx` (handler `handleCanvasComplete`)
+- Quando `activePoints.length === 2` no modo Segmento → abrir o **novo diálogo de Segmento** (ver secção 3) em vez do diálogo genérico de linha.
+- Quando `activePoints.length >= 3` → comportamento atual (diálogo de área com Rodapé/Paredes).
+
+---
+
+## 3. Diálogo de Segmento (parede isolada) com ações construtivas
+
+**Novo componente:** `src/components/plantas/PlanSegmentDialog.tsx`
+
+Aberto quando o utilizador conclui um segmento de 2 pontos. Mostra:
+
+- **Comprimento** (m) — calculado a partir dos 2 pontos e do `pixelsPerMeter`.
+- **Pé direito** (m) — campo editável, default `2.70`.
+- **Área da parede** (m²) — calculada em tempo real (`comprimento × pé direito`).
+- Bloco "Aberturas" (Janela / Porta) — reaproveitado da lógica já existente em `Detail.tsx`, subtrai à área bruta.
+- **Ação construtiva** — `RadioGroup` com 5 opções:
+  - `demolir` → mostra campo **Espessura da parede (cm)** → calcula e mostra **Volume a remover (m³)** = `comprimento × pé direito × espessura/100`.
+  - `construir` → mostra `Select` **Material**, populado a partir da tabela `materials` da Base de Preços (categoria filtrada por keywords: "tijolo", "bloco", "pladur", "gesso cartonado", "madeira"…), com fallback a uma lista estática se nenhum material existir. Mostra também espessura.
+  - `barrar` / `pintar` / `revestir` → apenas guardam a ação como tag (sem campos extra obrigatórios — só etiqueta livre opcional).
+- Etiqueta opcional + camada (igual ao diálogo atual).
+
+**Persistência (gravação):**
+
+Ao confirmar, cria múltiplos registos via `addMeasurement.mutateAsync` para alimentar dimensionamento (pisos/pinturas/revestimentos):
+
+| Tipo | Etiqueta | Unidade | Notas |
+|---|---|---|---|
+| `linha` | `Segmento — <ação>` | `m` | comprimento da parede |
+| `area` | `Parede — <ação> (h=X.XX m)` | `m²` | área líquida (após aberturas) |
+| `area` | `Volume — Demolição` (apenas demolir) | `m³` | gravado como área com observação contendo o volume; `unidade = "m³"` |
+
+Em todos os casos a `observacao` regista: ação, material (se aplicável), espessura, número de aberturas e fórmula usada — para posterior cross-check com a Base de Preços e geração de orçamento.
+
+---
+
+## Hook auxiliar para materiais
+
+**Novo helper** (dentro do dialog ou em `src/hooks/usePlanWallMaterials.ts`):
+
+```ts
+// Faz query a 'materials' filtrando por nomes/categorias relevantes para paredes.
+// Devolve [{ id, nome, unidade_base }]. Fallback estático:
+// ['Tijolo cerâmico', 'Bloco de betão', 'Pladur (gesso cartonado)', 'Madeira', 'Outro']
+```
+
+Reutiliza `useBasePrecos` se já expuser uma listagem; caso contrário, faz `supabase.from('materials').select(...).ilike('nome', ...)`.
+
+---
+
+## Detalhes técnicos
+
+- O `MeasureMode` mantém todos os literais existentes para não partir tipos guardados; apenas a UI deixa de expor os botões removidos. Adiciona-se `"measure_segment"` como alias (ou reaproveita `measure_line` com flag interna) — proposta: **reaproveitar `measure_line`** e diferenciar pelo número de pontos no `handleCanvasComplete`, evitando migração de dados.
+- O diálogo de área existente (`showSaveDialog` quando `pendingSave.tipo === "area"`) mantém-se como está, apenas com o label "Perímetro" → "Rodapé".
+- As medições antigas continuam a funcionar — apenas os novos registos passam a usar a nova nomenclatura.
+
+---
+
+## Ficheiros impactados
+
+- `src/components/plantas/PlanMeasurementToolbar.tsx` — reduzir para 2 botões.
+- `src/components/plantas/PlanWorkflowBar.tsx` — verificar se passa props que precisem ajuste (provavelmente nenhum).
+- `src/components/plantas/PlanSegmentDialog.tsx` — **NOVO**.
+- `src/pages/plantas/Detail.tsx` — renomear "Perímetro"→"Rodapé", roteamento do `handleCanvasComplete` para o novo diálogo, integração da gravação multi-registo.
+- (opcional) `src/hooks/usePlanWallMaterials.ts` — **NOVO**, lookup à Base de Preços.
+
+## Fora do âmbito
+
+- Não alterar a estrutura da BD `plan_measurements` (já suporta `observacao` livre + `etiqueta` + `unidade` — chega para tudo).
+- Não mexer no fluxo de calibração nem em "Compartimento/Parede/Vão" persistidos (continuam a existir nas tabs laterais para edição de dados antigos, só não são iniciáveis pela barra).

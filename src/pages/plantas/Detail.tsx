@@ -12,6 +12,7 @@ import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWor
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
+import { PlanSegmentDialog, type SegmentSavePayload } from "@/components/plantas/PlanSegmentDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -129,6 +130,10 @@ export default function PlanDetail() {
   const [openingLargura, setOpeningLargura] = useState("0.80");
   const [openingAltura, setOpeningAltura] = useState("2.10");
   const [openingPeitoril, setOpeningPeitoril] = useState("");
+
+  // Segment dialog (parede isolada com ações construtivas)
+  const [showSegmentDialog, setShowSegmentDialog] = useState(false);
+  const [pendingSegment, setPendingSegment] = useState<{ coordinates: Array<{ x: number; y: number }>; comprimento: number } | null>(null);
 
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
@@ -370,10 +375,24 @@ export default function PlanDetail() {
 
   // Complete handler (double-click)
   const handleCanvasComplete = useCallback(() => {
-    if (mode === "measure_line" && activePoints.length >= 2 && pixelsPerMeter > 0) {
-      const length = calculateLineLength(activePoints, pixelsPerMeter);
-      setPendingSave({ tipo: "linha", coordinates: [...activePoints], valor: length });
-      setShowSaveDialog(true);
+    if (mode === "measure_line" && pixelsPerMeter > 0) {
+      // 2 pontos → segmento de parede isolada (ações construtivas)
+      // 3+ pontos → polígono fechado (área + rodapé)
+      if (activePoints.length === 2) {
+        const length = calculateLineLength(activePoints, pixelsPerMeter);
+        setPendingSegment({ coordinates: [...activePoints], comprimento: length });
+        setShowSegmentDialog(true);
+        return;
+      }
+      if (activePoints.length >= 3) {
+        const area = calculatePolygonArea(activePoints, pixelsPerMeter);
+        const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
+        setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area, perimetro });
+        setAberturas([]);
+        setPeDireito("2.70");
+        setShowSaveDialog(true);
+        return;
+      }
     } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
       const area = calculatePolygonArea(activePoints, pixelsPerMeter);
       const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
@@ -441,7 +460,7 @@ export default function PlanDetail() {
         valorBruto: parseFloat(pendingSave.perimetro.toFixed(4)),
         unidade: "m",
         camada: saveCamada || undefined,
-        etiqueta: `${baseEtiqueta} — Perímetro`,
+        etiqueta: `${baseEtiqueta} — Rodapé`,
         cor,
       });
 
@@ -564,6 +583,65 @@ export default function PlanDetail() {
     setOpeningPeitoril("");
   };
 
+  // Save segment (parede isolada com ações construtivas)
+  const handleConfirmSegment = async (payload: SegmentSavePayload) => {
+    if (!pendingSegment) return;
+    const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
+    const baseEtiqueta = payload.etiqueta;
+
+    // 1) Comprimento (linha)
+    await addMeasurement.mutateAsync({
+      tipo: "linha",
+      coordinates: pendingSegment.coordinates,
+      valorBruto: payload.comprimento_m,
+      unidade: "m",
+      camada: payload.camada || undefined,
+      etiqueta: baseEtiqueta,
+      cor,
+      observacao: payload.observacao,
+    });
+
+    // 2) Área da parede líquida (m²) — útil para pintura/revestimento/barrar/construir
+    if (payload.area_liquida_m2 > 0) {
+      await addMeasurement.mutateAsync({
+        tipo: "area",
+        coordinates: pendingSegment.coordinates,
+        valorBruto: payload.area_liquida_m2,
+        unidade: "m²",
+        camada: payload.camada || undefined,
+        etiqueta: `${baseEtiqueta} — Parede (h=${payload.pe_direito_m.toFixed(2)} m)`,
+        cor,
+        observacao: payload.observacao,
+      });
+    }
+
+    // 3) Volume de demolição (m³) — apenas se ação = demolir
+    if (payload.acao === "demolir" && payload.volume_demolicao_m3 && payload.volume_demolicao_m3 > 0) {
+      await addMeasurement.mutateAsync({
+        tipo: "area",
+        coordinates: pendingSegment.coordinates,
+        valorBruto: payload.volume_demolicao_m3,
+        unidade: "m³",
+        camada: payload.camada || undefined,
+        etiqueta: `${baseEtiqueta} — Volume demolição (e=${payload.espessura_cm?.toFixed(1)} cm)`,
+        cor,
+        observacao: payload.observacao,
+      });
+    }
+
+    setColorIndex((i) => i + 1);
+    setActivePoints([]);
+    setPendingSegment(null);
+    setShowSegmentDialog(false);
+    toast.success("Segmento guardado");
+  };
+
+  const handleCancelSegment = () => {
+    setShowSegmentDialog(false);
+    setPendingSegment(null);
+    setActivePoints([]);
+  };
+
   // Loading states
   if (plansLoading || fileUrlQuery.isLoading) {
     return (
@@ -590,6 +668,9 @@ export default function PlanDetail() {
   const totalLinhas = measurements.filter((m) => m.tipo === "linha").reduce((s, m) => s + m.valor_bruto, 0);
   const totalAreas = measurements.filter((m) => m.tipo === "area").reduce((s, m) => s + m.valor_bruto, 0);
   const totalRoomsArea = rooms.reduce((s, r) => s + r.area_m2, 0);
+  const totalRodape = measurements
+    .filter((m) => m.tipo === "linha" && (m.etiqueta ?? "").toLowerCase().includes("rodapé"))
+    .reduce((s, m) => s + m.valor_bruto, 0);
 
   return (
     <AppLayout title={plan.nome_ficheiro} subtitle={`Rev. ${plan.revision_number}`}>
@@ -647,6 +728,11 @@ export default function PlanDetail() {
             {totalAreas > 0 && (
               <span className="flex items-center gap-1">
                 <Pentagon className="w-3 h-3" /> {totalAreas.toFixed(2)} m²
+              </span>
+            )}
+            {totalRodape > 0 && (
+              <span className="flex items-center gap-1">
+                <Minus className="w-3 h-3" /> Rodapé: {totalRodape.toFixed(2)} m
               </span>
             )}
             {rooms.length > 0 && (
@@ -902,7 +988,7 @@ export default function PlanDetail() {
                   </p>
                 </div>
                 <div className="bg-muted rounded-lg p-3 text-center">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Perímetro</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Rodapé (perímetro)</p>
                   <p className="text-xl font-bold text-foreground">
                     {(pendingSave.perimetro ?? 0).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m</span>
                   </p>
@@ -942,7 +1028,7 @@ export default function PlanDetail() {
                   <div>
                     <p className="text-sm font-semibold">Cálculo de Paredes</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Perímetro × pé direito − aberturas
+                      Rodapé × pé direito − aberturas
                     </p>
                   </div>
                   <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
@@ -1214,6 +1300,15 @@ export default function PlanDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Segment dialog (parede isolada com ações construtivas) */}
+      <PlanSegmentDialog
+        open={showSegmentDialog}
+        onClose={handleCancelSegment}
+        comprimentoMetros={pendingSegment?.comprimento ?? 0}
+        onConfirm={handleConfirmSegment}
+        isSaving={addMeasurement.isPending}
+      />
 
       {/* Element properties dialog */}
       <PlanElementProperties
