@@ -12,6 +12,7 @@ import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWor
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
+import { PlanSegmentDialog, type SegmentSavePayload } from "@/components/plantas/PlanSegmentDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -129,6 +130,10 @@ export default function PlanDetail() {
   const [openingLargura, setOpeningLargura] = useState("0.80");
   const [openingAltura, setOpeningAltura] = useState("2.10");
   const [openingPeitoril, setOpeningPeitoril] = useState("");
+
+  // Segment dialog (parede isolada com ações construtivas)
+  const [showSegmentDialog, setShowSegmentDialog] = useState(false);
+  const [pendingSegment, setPendingSegment] = useState<{ coordinates: Array<{ x: number; y: number }>; comprimento: number } | null>(null);
 
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
