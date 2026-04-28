@@ -14,7 +14,7 @@ export default function CriarObraPage() {
   const navigate = useNavigate();
   const { createObra } = useObras();
   const { canCreateObra, limits, tier, obrasAtivas } = useFeatureGate();
-  const [showUpgrade, setShowUpgrade] = useState(!canCreateObra);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleSubmit = async (data: ObraFormData) => {
     if (!canCreateObra) {
