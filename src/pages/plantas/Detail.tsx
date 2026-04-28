@@ -583,6 +583,65 @@ export default function PlanDetail() {
     setOpeningPeitoril("");
   };
 
+  // Save segment (parede isolada com ações construtivas)
+  const handleConfirmSegment = async (payload: SegmentSavePayload) => {
+    if (!pendingSegment) return;
+    const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
+    const baseEtiqueta = payload.etiqueta;
+
+    // 1) Comprimento (linha)
+    await addMeasurement.mutateAsync({
+      tipo: "linha",
+      coordinates: pendingSegment.coordinates,
+      valorBruto: payload.comprimento_m,
+      unidade: "m",
+      camada: payload.camada || undefined,
+      etiqueta: baseEtiqueta,
+      cor,
+      observacao: payload.observacao,
+    });
+
+    // 2) Área da parede líquida (m²) — útil para pintura/revestimento/barrar/construir
+    if (payload.area_liquida_m2 > 0) {
+      await addMeasurement.mutateAsync({
+        tipo: "area",
+        coordinates: pendingSegment.coordinates,
+        valorBruto: payload.area_liquida_m2,
+        unidade: "m²",
+        camada: payload.camada || undefined,
+        etiqueta: `${baseEtiqueta} — Parede (h=${payload.pe_direito_m.toFixed(2)} m)`,
+        cor,
+        observacao: payload.observacao,
+      });
+    }
+
+    // 3) Volume de demolição (m³) — apenas se ação = demolir
+    if (payload.acao === "demolir" && payload.volume_demolicao_m3 && payload.volume_demolicao_m3 > 0) {
+      await addMeasurement.mutateAsync({
+        tipo: "area",
+        coordinates: pendingSegment.coordinates,
+        valorBruto: payload.volume_demolicao_m3,
+        unidade: "m³",
+        camada: payload.camada || undefined,
+        etiqueta: `${baseEtiqueta} — Volume demolição (e=${payload.espessura_cm?.toFixed(1)} cm)`,
+        cor,
+        observacao: payload.observacao,
+      });
+    }
+
+    setColorIndex((i) => i + 1);
+    setActivePoints([]);
+    setPendingSegment(null);
+    setShowSegmentDialog(false);
+    toast.success("Segmento guardado");
+  };
+
+  const handleCancelSegment = () => {
+    setShowSegmentDialog(false);
+    setPendingSegment(null);
+    setActivePoints([]);
+  };
+
   // Loading states
   if (plansLoading || fileUrlQuery.isLoading) {
     return (
