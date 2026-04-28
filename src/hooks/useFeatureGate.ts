@@ -16,18 +16,21 @@ export function useFeatureGate() {
 
   const hasFeature = useCallback(
     (feature: PlanFeature): boolean => {
+      if (isUnlimited) return true;
       return limits.features[feature] ?? false;
     },
-    [limits]
+    [limits, isUnlimited]
   );
 
   const canCreateObra = useMemo(() => {
+    if (isUnlimited) return true;
+    if (subscriptionLoading) return true; // não bloquear enquanto carrega
     if (limits.maxObrasAtivas === 0) return true; // unlimited
     const activeObras = obras?.filter(
       (o) => o.status !== 'concluida'
     )?.length || 0;
     return activeObras < limits.maxObrasAtivas;
-  }, [limits.maxObrasAtivas, obras]);
+  }, [limits.maxObrasAtivas, obras, isUnlimited, subscriptionLoading]);
 
   const obrasAtivas = useMemo(() => {
     return obras?.filter((o) => o.status !== 'concluida')?.length || 0;
