@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle, Text, Group, Rect } from "react-konva";
 import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -162,6 +162,54 @@ export function PlanViewer({
     });
   }, [zoom, position]);
 
+  // ===== Grips: agregação de endpoints de paredes que partilham o mesmo ponto =====
+  const GRIP_SNAP_TOLERANCE_PX = 6; // tolerância em coordenadas da imagem
+  const GRIP_SIZE_PX = 8;           // tamanho visual (dividido por zoom no render)
+
+  const wallGrips = useMemo(() => {
+    const buckets = new Map<string, { x: number; y: number; wallIds: Set<string> }>();
+    const keyFor = (x: number, y: number) => {
+      const kx = Math.round(x / GRIP_SNAP_TOLERANCE_PX);
+      const ky = Math.round(y / GRIP_SNAP_TOLERANCE_PX);
+      return `${kx}:${ky}`;
+    };
+    const add = (x: number, y: number, wallId: string) => {
+      const k = keyFor(x, y);
+      const existing = buckets.get(k);
+      if (existing) {
+        existing.wallIds.add(wallId);
+        // média ponderada simples para estabilizar a posição
+        existing.x = (existing.x + x) / 2;
+        existing.y = (existing.y + y) / 2;
+      } else {
+        buckets.set(k, { x, y, wallIds: new Set([wallId]) });
+      }
+    };
+    walls.forEach((w) => {
+      add(w.start_point.x, w.start_point.y, w.id);
+      add(w.end_point.x, w.end_point.y, w.id);
+    });
+    return Array.from(buckets.values())
+      .filter((b) => b.wallIds.size >= 2)
+      .map((b) => ({ x: b.x, y: b.y, count: b.wallIds.size }));
+  }, [walls]);
+
+  const showGrips = mode === "view" || mode === "draw_wall" || mode === "draw_opening";
+
+  const snapToGrip = useCallback(
+    (x: number, y: number) => {
+      let best: { x: number; y: number; d: number } | null = null;
+      for (const g of wallGrips) {
+        const d = Math.hypot(g.x - x, g.y - y);
+        if (d <= GRIP_SNAP_TOLERANCE_PX * 2 && (!best || d < best.d)) {
+          best = { x: g.x, y: g.y, d };
+        }
+      }
+      return best ? { x: best.x, y: best.y } : { x, y };
+    },
+    [wallGrips]
+  );
+
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (mode === "view") return;
     const stage = stageRef.current;
@@ -173,10 +221,14 @@ export function PlanViewer({
 
     if (mode === "calibrate") {
       onCalibrationClick({ x: imgX, y: imgY });
+    } else if (mode === "draw_wall") {
+      // Snap ao grip mais próximo para fechar interseções perfeitamente
+      const snapped = snapToGrip(imgX, imgY);
+      onMeasurementClick?.(snapped);
     } else {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
-  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick]);
+  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, snapToGrip]);
 
   const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
     setPosition({ x: e.target.x(), y: e.target.y() });
@@ -429,6 +481,28 @@ export function PlanViewer({
                 />
               </Group>
             ))}
+
+            {/* Wall intersection grips — destacam cantos (L), junções (T) e cruzamentos (X) */}
+            {showGrips && wallGrips.map((g, i) => {
+              const fill =
+                g.count >= 4 ? "hsl(var(--primary))" :
+                g.count === 3 ? "#F59E0B" :
+                "#0F4C5C";
+              const size = GRIP_SIZE_PX / zoom;
+              return (
+                <Rect
+                  key={`grip-${i}`}
+                  x={g.x - size / 2}
+                  y={g.y - size / 2}
+                  width={size}
+                  height={size}
+                  fill={fill}
+                  stroke="white"
+                  strokeWidth={1.5 / zoom}
+                  listening={false}
+                />
+              );
+            })}
 
             {/* Openings (vãos) – drawn perpendicular to wall, centered at posicao_na_parede */}
             {openings.map((o) => {
