@@ -1,4 +1,4 @@
-import { Check, Ruler, MousePointer2, Brain, FileSpreadsheet, MousePointer2 as Cursor, Minus, Pentagon, Hash, SquareDashed, Wallpaper, DoorOpen, Undo2, ChevronRight, Lightbulb, ArrowRight } from "lucide-react";
+import { Check, Ruler, MousePointer2, Brain, FileSpreadsheet, Minus, Pentagon, Hash, SquareDashed, Wallpaper, DoorOpen, Undo2, ChevronRight, Lightbulb, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
