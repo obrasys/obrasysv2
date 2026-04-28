@@ -807,6 +807,64 @@ export function PlanViewer({
               </Group>
             )}
 
+            {/* Alignment preview & guides while drawing */}
+            {isDrawingMode && alignedHover && (
+              <Group listening={false}>
+                {activeMeasurementPoints.length > 0 && (
+                  <Line
+                    points={[
+                      activeMeasurementPoints[activeMeasurementPoints.length - 1].x,
+                      activeMeasurementPoints[activeMeasurementPoints.length - 1].y,
+                      alignedHover.x,
+                      alignedHover.y,
+                    ]}
+                    stroke={mode === "draw_room" ? "#8b5cf6" : mode === "draw_wall" ? WALL_COLOR : "hsl(var(--primary))"}
+                    strokeWidth={2 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.6}
+                  />
+                )}
+                {alignedHover.guideX !== null && (
+                  <Line
+                    points={[alignedHover.guideX, 0, alignedHover.guideX, (image?.height ?? 4000)]}
+                    stroke="#F59E0B"
+                    strokeWidth={1 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.7}
+                  />
+                )}
+                {alignedHover.guideY !== null && (
+                  <Line
+                    points={[0, alignedHover.guideY, (image?.width ?? 4000), alignedHover.guideY]}
+                    stroke="#F59E0B"
+                    strokeWidth={1 / zoom}
+                    dash={[4 / zoom, 4 / zoom]}
+                    opacity={0.7}
+                  />
+                )}
+                <Circle
+                  x={alignedHover.x}
+                  y={alignedHover.y}
+                  radius={(alignedHover.snappedToGripPoint ? 8 : 5) / zoom}
+                  stroke={alignedHover.snappedToGripPoint ? "hsl(var(--primary))" : "#F59E0B"}
+                  strokeWidth={2 / zoom}
+                  fill="white"
+                  opacity={0.9}
+                />
+                {alignedHover.snappedToGripPoint && (
+                  <Rect
+                    x={alignedHover.x - 6 / zoom}
+                    y={alignedHover.y - 6 / zoom}
+                    width={12 / zoom}
+                    height={12 / zoom}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={1.5 / zoom}
+                    dash={[2 / zoom, 2 / zoom]}
+                  />
+                )}
+              </Group>
+            )}
+
             {/* Placed elements (symbols) */}
             {placedElements.map((el) => {
               const sym = getSymbolById(el.symbolTypeId);
