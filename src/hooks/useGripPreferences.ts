@@ -51,6 +51,20 @@ export function useGripPreferences() {
     setPrefs(readFromStorage(userId));
   }, [userId]);
 
+  // Sincronizar entre abas/janelas: se o utilizador mudar as preferências
+  // noutra aba e depois abrir/importar um novo plano aqui, refletimos imediatamente.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const expectedKey = userId ? `${KEY_PREFIX}${userId}` : `${KEY_PREFIX}anon`;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === expectedKey) {
+        setPrefs(readFromStorage(userId));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [userId]);
+
   const update = useCallback(
     (patch: Partial<GripPreferences>) => {
       setPrefs((prev) => {
