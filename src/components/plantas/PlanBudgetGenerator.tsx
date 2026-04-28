@@ -308,7 +308,9 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
               <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  {unmappedCount} medição(ões) não mapeadas serão excluídas do pré-orçamento.
+                  {unmappedCount} medição(ões) ainda não estão mapeadas a artigos da base de preços.
+                  Serão incluídas no orçamento como artigos <strong>"A DEFINIR"</strong> agrupados por etiqueta,
+                  para que possa atribuir o artigo correto e o preço unitário diretamente no editor de orçamento.
                 </p>
               </div>
             )}
