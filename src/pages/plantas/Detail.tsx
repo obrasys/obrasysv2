@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
-import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
+import { usePlanMeasurements, calculateLineLength, calculatePolygonArea, calculatePolygonPerimeter } from "@/hooks/usePlanMeasurements";
 import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { usePlanWalls } from "@/hooks/usePlanWalls";
 import { usePlanOpenings } from "@/hooks/usePlanOpenings";
