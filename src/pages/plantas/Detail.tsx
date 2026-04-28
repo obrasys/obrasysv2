@@ -10,6 +10,7 @@ import { PlanWallsList } from "@/components/plantas/PlanWallsList";
 import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
 import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWorkflowBar";
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
+import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
