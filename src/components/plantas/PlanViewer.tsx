@@ -261,6 +261,37 @@ export function PlanViewer({
         <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm flex items-center gap-1.5">
           <Ruler className="w-3.5 h-3.5" />
           {getModeLabel()}
+          {(mode === "measure_line" || mode === "measure_area" || mode === "draw_room") && activeMeasurementPoints.length > 0 && (
+            <span className="ml-2 px-1.5 py-0.5 rounded bg-primary-foreground/20 text-[10px]">
+              {activeMeasurementPoints.length} ponto{activeMeasurementPoints.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Floating action bar for active drawing modes */}
+      {(mode === "measure_line" || mode === "measure_area" || mode === "draw_room") && activeMeasurementPoints.length > 0 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-background border shadow-lg rounded-full px-3 py-1.5">
+          <span className="text-[11px] text-muted-foreground hidden sm:inline">
+            {mode === "measure_line"
+              ? "Mín. 2 pontos"
+              : "Mín. 3 pontos"}
+          </span>
+          <Button
+            size="sm"
+            variant="default"
+            className="h-7 text-xs"
+            disabled={
+              (mode === "measure_line" && activeMeasurementPoints.length < 2) ||
+              ((mode === "measure_area" || mode === "draw_room") && activeMeasurementPoints.length < 3)
+            }
+            onClick={() => onMeasurementComplete?.()}
+          >
+            ✓ Concluir
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => onCancelDrawing?.()}>
+            Cancelar
+          </Button>
         </div>
       )}
 
