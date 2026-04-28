@@ -397,7 +397,81 @@ export function PlanViewer({
               </Group>
             ))}
 
-            {/* Calibration points and line */}
+            {/* Openings (vãos) – drawn perpendicular to wall, centered at posicao_na_parede */}
+            {openings.map((o) => {
+              const wall = walls.find((w) => w.id === o.wall_id);
+              if (!wall) return null;
+              // Position: stored point if available, otherwise wall midpoint
+              const cx = o.posicao_na_parede?.x ?? (wall.start_point.x + wall.end_point.x) / 2;
+              const cy = o.posicao_na_parede?.y ?? (wall.start_point.y + wall.end_point.y) / 2;
+              // Wall direction (unit vector)
+              const dx = wall.end_point.x - wall.start_point.x;
+              const dy = wall.end_point.y - wall.start_point.y;
+              const len = Math.sqrt(dx * dx + dy * dy) || 1;
+              const ux = dx / len;
+              const uy = dy / len;
+              // Pixels per meter (estimate from wall length)
+              const pxPerM = wall.comprimento_m > 0 ? len / wall.comprimento_m : 50;
+              const halfWPx = (o.largura_m * pxPerM) / 2;
+              const tickPx = Math.max(8, wall.espessura_cm / 5 + 6);
+              // Endpoints on the wall axis
+              const p1x = cx - ux * halfWPx;
+              const p1y = cy - uy * halfWPx;
+              const p2x = cx + ux * halfWPx;
+              const p2y = cy + uy * halfWPx;
+              // Perpendicular ticks
+              const px = -uy;
+              const py = ux;
+              const opColor = o.tipo === "porta" ? "#16a34a" : "#0ea5e9";
+              return (
+                <Group key={`op-${o.id}`}>
+                  {/* Cut line on the wall (white "gap") */}
+                  <Line
+                    points={[p1x, p1y, p2x, p2y]}
+                    stroke="#ffffff"
+                    strokeWidth={Math.max(6, wall.espessura_cm / 5 + 2) / zoom}
+                    lineCap="butt"
+                  />
+                  {/* Opening fill */}
+                  <Line
+                    points={[p1x, p1y, p2x, p2y]}
+                    stroke={opColor}
+                    strokeWidth={3 / zoom}
+                    lineCap="round"
+                  />
+                  {/* Perpendicular ticks at edges */}
+                  <Line
+                    points={[p1x - px * tickPx / zoom, p1y - py * tickPx / zoom, p1x + px * tickPx / zoom, p1y + py * tickPx / zoom]}
+                    stroke={opColor}
+                    strokeWidth={1.5 / zoom}
+                  />
+                  <Line
+                    points={[p2x - px * tickPx / zoom, p2y - py * tickPx / zoom, p2x + px * tickPx / zoom, p2y + py * tickPx / zoom]}
+                    stroke={opColor}
+                    strokeWidth={1.5 / zoom}
+                  />
+                  {/* Door arc (simplified) for porta */}
+                  {o.tipo === "porta" && (
+                    <Line
+                      points={[p1x, p1y, p1x + ux * halfWPx * 0.7, p1y + uy * halfWPx * 0.7, p2x - ux * halfWPx * 0.3 + px * halfWPx * 1.4, p2y - uy * halfWPx * 0.3 + py * halfWPx * 1.4]}
+                      stroke={opColor}
+                      strokeWidth={1 / zoom}
+                      tension={0.5}
+                      dash={[3 / zoom, 2 / zoom]}
+                    />
+                  )}
+                  {/* Label */}
+                  <Text
+                    x={cx + px * (tickPx + 2) / zoom - 14 / zoom}
+                    y={cy + py * (tickPx + 2) / zoom - 6 / zoom}
+                    text={`${o.tipo === "porta" ? "P" : o.tipo === "janela" ? "J" : o.tipo[0].toUpperCase()} ${o.largura_m.toFixed(2)}`}
+                    fontSize={9 / zoom}
+                    fill={opColor}
+                    fontStyle="bold"
+                  />
+                </Group>
+              );
+            })}
             {calibrationPoints.map((pt, i) => (
               <Group key={`cal-${i}`}>
                 <Circle x={pt.x} y={pt.y} radius={6 / zoom} fill="hsl(var(--destructive))" stroke="white" strokeWidth={2 / zoom} />
