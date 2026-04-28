@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
-import { usePlanMeasurements, calculateLineLength, calculatePolygonArea } from "@/hooks/usePlanMeasurements";
+import { usePlanMeasurements, calculateLineLength, calculatePolygonArea, calculatePolygonPerimeter } from "@/hooks/usePlanMeasurements";
 import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { usePlanWalls } from "@/hooks/usePlanWalls";
 import { usePlanOpenings } from "@/hooks/usePlanOpenings";
@@ -98,9 +98,16 @@ export default function PlanDetail() {
 
   // Save measurement dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ tipo: "linha" | "area" | "contagem"; coordinates: Array<{ x: number; y: number }>; valor: number; perimetro?: number } | null>(null);
   const [saveEtiqueta, setSaveEtiqueta] = useState("");
   const [saveCamada, setSaveCamada] = useState("");
+
+  // Wall/openings calculator (only for area-type save)
+  const [peDireito, setPeDireito] = useState("2.70");
+  type AberturaTipo = "janela" | "porta";
+  type AberturaCalc = { id: string; tipo: AberturaTipo; largura: string; altura: string };
+  const [aberturas, setAberturas] = useState<AberturaCalc[]>([]);
+  const [includeWallsAsMeasurement, setIncludeWallsAsMeasurement] = useState(true);
 
   // Save room dialog
   const [showRoomDialog, setShowRoomDialog] = useState(false);
@@ -369,7 +376,10 @@ export default function PlanDetail() {
       setShowSaveDialog(true);
     } else if (mode === "measure_area" && activePoints.length >= 3 && pixelsPerMeter > 0) {
       const area = calculatePolygonArea(activePoints, pixelsPerMeter);
-      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area });
+      const perimetro = calculatePolygonPerimeter(activePoints, pixelsPerMeter);
+      setPendingSave({ tipo: "area", coordinates: [...activePoints], valor: area, perimetro });
+      setAberturas([]);
+      setPeDireito("2.70");
       setShowSaveDialog(true);
     } else if (mode === "draw_room" && activePoints.length >= 3) {
       setPendingRoomCoords([...activePoints]);
@@ -377,26 +387,88 @@ export default function PlanDetail() {
     }
   }, [mode, activePoints, pixelsPerMeter]);
 
+  // Derived calc for area dialog (perimeter × pé direito − aberturas)
+  const peDireitoNum = Math.max(0, parseFloat(peDireito) || 0);
+  const aberturasAreaTotal = aberturas.reduce((s, a) => {
+    const l = parseFloat(a.largura) || 0;
+    const h = parseFloat(a.altura) || 0;
+    return s + l * h;
+  }, 0);
+  const paredesAreaBruta = (pendingSave?.perimetro ?? 0) * peDireitoNum;
+  const paredesAreaLiquida = Math.max(0, paredesAreaBruta - aberturasAreaTotal);
+
+  const addAbertura = (tipo: AberturaTipo) => {
+    setAberturas((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        tipo,
+        largura: tipo === "porta" ? "0.80" : "1.20",
+        altura: tipo === "porta" ? "2.10" : "1.20",
+      },
+    ]);
+  };
+  const updateAbertura = (id: string, patch: Partial<AberturaCalc>) => {
+    setAberturas((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  };
+  const removeAbertura = (id: string) => {
+    setAberturas((prev) => prev.filter((a) => a.id !== id));
+  };
+
   // Save measurement
   const handleConfirmSave = async () => {
     if (!pendingSave) return;
     const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
+    const baseEtiqueta = saveEtiqueta?.trim() || (pendingSave.tipo === "area" ? "Área" : pendingSave.tipo === "linha" ? "Linha" : "Contagem");
+
+    // 1) Main measurement (the polygon area / line length / count)
     await addMeasurement.mutateAsync({
       tipo: pendingSave.tipo,
       coordinates: pendingSave.coordinates,
       valorBruto: parseFloat(pendingSave.valor.toFixed(4)),
       unidade: pendingSave.tipo === "contagem" ? "un" : pendingSave.tipo === "area" ? "m²" : "m",
       camada: saveCamada || undefined,
-      etiqueta: saveEtiqueta || undefined,
+      etiqueta: baseEtiqueta,
       cor,
     });
+
+    // 2) For closed polygons (area), also persist perimeter + wall areas if user opted in
+    if (pendingSave.tipo === "area" && pendingSave.perimetro && pendingSave.perimetro > 0) {
+      // Perimeter as a 'linha' measurement so it can be reused (rodapés, contornos…)
+      await addMeasurement.mutateAsync({
+        tipo: "linha",
+        coordinates: [...pendingSave.coordinates, pendingSave.coordinates[0]],
+        valorBruto: parseFloat(pendingSave.perimetro.toFixed(4)),
+        unidade: "m",
+        camada: saveCamada || undefined,
+        etiqueta: `${baseEtiqueta} — Perímetro`,
+        cor,
+      });
+
+      if (includeWallsAsMeasurement && peDireitoNum > 0 && paredesAreaLiquida > 0) {
+        const obs = `Paredes (líquido): perímetro ${pendingSave.perimetro.toFixed(2)} m × pé direito ${peDireitoNum.toFixed(2)} m = ${paredesAreaBruta.toFixed(2)} m² − aberturas ${aberturasAreaTotal.toFixed(2)} m²`;
+        await addMeasurement.mutateAsync({
+          tipo: "area",
+          coordinates: pendingSave.coordinates,
+          valorBruto: parseFloat(paredesAreaLiquida.toFixed(4)),
+          unidade: "m²",
+          camada: saveCamada || undefined,
+          etiqueta: `${baseEtiqueta} — Paredes (h=${peDireitoNum.toFixed(2)} m)`,
+          cor,
+          observacao: obs,
+        } as any);
+      }
+    }
+
     setColorIndex((i) => i + 1);
     setActivePoints([]);
     setPendingSave(null);
     setShowSaveDialog(false);
     setSaveEtiqueta("");
     setSaveCamada("");
-    toast.success(`Medição guardada`);
+    setAberturas([]);
+    setPeDireito("2.70");
+    toast.success("Medição guardada");
   };
 
   const handleCancelSave = () => {
@@ -404,6 +476,8 @@ export default function PlanDetail() {
     setPendingSave(null);
     setSaveEtiqueta("");
     setSaveCamada("");
+    setAberturas([]);
+    setPeDireito("2.70");
     setActivePoints([]);
   };
 
@@ -811,24 +885,43 @@ export default function PlanDetail() {
 
       {/* Save measurement dialog */}
       <Dialog open={showSaveDialog} onOpenChange={(open) => !open && handleCancelSave()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base">
               {pendingSave?.tipo === "linha" ? "Guardar Medição de Linha" : pendingSave?.tipo === "area" ? "Guardar Medição de Área" : "Guardar Contagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="bg-muted rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">
-                {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  {pendingSave?.tipo === "contagem" ? "un" : pendingSave?.tipo === "area" ? "m²" : "m"}
-                </span>
-              </p>
-            </div>
+            {/* Headline metrics */}
+            {pendingSave?.tipo === "area" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Área</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {pendingSave.valor.toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m²</span>
+                  </p>
+                </div>
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Perímetro</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {(pendingSave.perimetro ?? 0).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">m</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">
+                  {pendingSave?.valor.toFixed(pendingSave.tipo === "contagem" ? 0 : 2)}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {pendingSave?.tipo === "contagem" ? "un" : "m"}
+                  </span>
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label className="text-xs">Etiqueta (opcional)</Label>
-              <Input value={saveEtiqueta} onChange={(e) => setSaveEtiqueta(e.target.value)} placeholder="Ex: Parede sala, Tomadas quarto..." />
+              <Input value={saveEtiqueta} onChange={(e) => setSaveEtiqueta(e.target.value)} placeholder="Ex: Sala, Cozinha, Quarto 1..." />
             </div>
             <div className="space-y-2">
               <Label className="text-xs">Camada</Label>
@@ -841,6 +934,131 @@ export default function PlanDetail() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Wall calculator – only for closed polygons (area) */}
+            {pendingSave?.tipo === "area" && (pendingSave.perimetro ?? 0) > 0 && (
+              <div className="border rounded-lg p-3 space-y-3 bg-card">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">Cálculo de Paredes</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Perímetro × pé direito − aberturas
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeWallsAsMeasurement}
+                      onChange={(e) => setIncludeWallsAsMeasurement(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-primary"
+                    />
+                    Guardar como medição
+                  </label>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Pé direito h (m)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={peDireito}
+                    onChange={(e) => setPeDireito(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Aberturas list */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Aberturas (a subtrair)</Label>
+                    <div className="flex gap-1">
+                      <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => addAbertura("janela")}>
+                        + Janela
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => addAbertura("porta")}>
+                        + Porta
+                      </Button>
+                    </div>
+                  </div>
+
+                  {aberturas.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground italic">Sem aberturas. Adicione janelas ou portas a subtrair.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {aberturas.map((a) => {
+                        const l = parseFloat(a.largura) || 0;
+                        const h = parseFloat(a.altura) || 0;
+                        const area = l * h;
+                        return (
+                          <div key={a.id} className="grid grid-cols-[70px_1fr_1fr_70px_28px] items-end gap-2">
+                            <div className="text-[11px] font-medium pb-2">
+                              {a.tipo === "janela" ? "Janela" : "Porta"}
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground">L (m)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={a.largura}
+                                onChange={(e) => updateAbertura(a.id, { largura: e.target.value })}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground">A (m)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={a.altura}
+                                onChange={(e) => updateAbertura(a.id, { altura: e.target.value })}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="text-[11px] text-right pb-2 font-medium tabular-nums">
+                              {area.toFixed(2)} m²
+                            </div>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-7"
+                              onClick={() => removeAbertura(a.id)}
+                              aria-label="Remover abertura"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Summary */}
+                <div className="rounded-md bg-muted/60 p-2.5 text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Paredes (bruto)</span>
+                    <span className="tabular-nums">
+                      {(pendingSave.perimetro ?? 0).toFixed(2)} × {peDireitoNum.toFixed(2)} = <strong>{paredesAreaBruta.toFixed(2)} m²</strong>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">− Aberturas</span>
+                    <span className="tabular-nums">{aberturasAreaTotal.toFixed(2)} m²</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-1 mt-1">
+                    <span className="font-semibold">Paredes (líquido)</span>
+                    <span className="font-bold text-primary tabular-nums">{paredesAreaLiquida.toFixed(2)} m²</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-1">
+                    Útil para pinturas, revestimentos e coberturas. A área da planta ({pendingSave.valor.toFixed(2)} m²) serve para pisos.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelSave}>Cancelar</Button>

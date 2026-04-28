@@ -181,3 +181,20 @@ export function calculatePolygonArea(
   }
   return Math.abs(area) / 2 / (pixelsPerMeter * pixelsPerMeter);
 }
+
+/** Calculate closed polygon perimeter in meters (sums all edges incl. closing edge) */
+export function calculatePolygonPerimeter(
+  coordinates: Array<{ x: number; y: number }>,
+  pixelsPerMeter: number
+): number {
+  if (coordinates.length < 3 || pixelsPerMeter <= 0) return 0;
+  let total = 0;
+  const n = coordinates.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const dx = coordinates[j].x - coordinates[i].x;
+    const dy = coordinates[j].y - coordinates[i].y;
+    total += Math.sqrt(dx * dx + dy * dy);
+  }
+  return total / pixelsPerMeter;
+}
