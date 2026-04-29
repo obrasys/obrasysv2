@@ -41,9 +41,10 @@ interface Props {
   elements: AxiaElement[];
   onHighlightPosition?: (x: number, y: number) => void;
   pageLabel?: string;
-  /** Optional: enables "Enviar para orçamento" sending all analyzed pages, one chapter per folha. */
+  /** Optional: enables sending all analyzed pages to the unified Quantitativos table. */
   resultsByPage?: Record<number, PlanAnalysisResult>;
   obraId?: string;
+  planImportId?: string;
   planName?: string;
 }
 
