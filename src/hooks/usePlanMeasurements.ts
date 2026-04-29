@@ -105,7 +105,7 @@ export function usePlanMeasurements(planImportId?: string) {
 
       const { data, error } = await supabase
         .from("plan_measurements")
-        .insert(payload)
+        .insert(payload as any)
         .select()
         .single();
       if (error) throw error;
