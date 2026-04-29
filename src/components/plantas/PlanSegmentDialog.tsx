@@ -79,6 +79,14 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
   const [espessura, setEspessura] = useState("11");
   const [materialId, setMaterialId] = useState<string>("__fallback:Tijolo cerâmico furado");
   const [etiqueta, setEtiqueta] = useState("");
+  // Action-specific extras
+  const [barrarSistema, setBarrarSistema] = useState<string>("Reboco + barramento");
+  const [barrarFaces, setBarrarFaces] = useState<string>("1");
+  const [pinturaTipo, setPinturaTipo] = useState<string>("Tinta plástica interior");
+  const [pinturaDemaos, setPinturaDemaos] = useState<string>("2");
+  const [pinturaFaces, setPinturaFaces] = useState<string>("1");
+  const [revestirTipo, setRevestirTipo] = useState<string>("Azulejo cerâmico");
+  const [revestirAlturaParcial, setRevestirAlturaParcial] = useState<string>("");
 
   // Hydrate from initialValues when opening in edit mode
   useEffect(() => {
