@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,14 @@ import {
   Eye,
   MapPin,
   AlertTriangle,
+  Table2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PlanAxiaResultsTable } from "./PlanAxiaResultsTable";
+import { PlanPagesPanel } from "./PlanPagesPanel";
 
-interface PlanAnalysisResult {
+export interface PlanAnalysisResult {
   scale_detected: {
     found: boolean;
     value?: string;
@@ -56,25 +59,54 @@ interface PlanAIAnalysisProps {
     unidade: string;
   } | null;
   onHighlightPosition?: (x: number, y: number) => void;
-  onConvertDimensions?: (dimensions: Array<{
-    value: number;
-    unit: string;
-    label: string;
-    position_x: number;
-    position_y: number;
-    confidence: number;
-  }>) => void;
+  onConvertDimensions?: (dimensions: PlanAnalysisResult["dimensions"]) => void;
   onAnalysisComplete?: () => void;
+  // Multi-page support — controlled from parent so analyses persist per page
+  result?: PlanAnalysisResult | null;
+  onResultChange?: (result: PlanAnalysisResult | null) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onSelectPage?: (page: number) => void;
+  analyzedPages?: number[];
+  onAnalyzeAllPending?: () => void;
+  /** When this number increments, the panel auto-triggers analysis on the current page once the image is ready. */
+  autoAnalyzeToken?: number;
 }
 
-export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition, onConvertDimensions, onAnalysisComplete }: PlanAIAnalysisProps) {
+export function PlanAIAnalysis({
+  imageDataUrl,
+  calibration,
+  onHighlightPosition,
+  onConvertDimensions,
+  onAnalysisComplete,
+  result: controlledResult,
+  onResultChange,
+  currentPage = 1,
+  totalPages = 1,
+  onSelectPage,
+  analyzedPages = [],
+  onAnalyzeAllPending,
+  autoAnalyzeToken,
+}: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<PlanAnalysisResult | null>(null);
+  const [internalResult, setInternalResult] = useState<PlanAnalysisResult | null>(null);
+  const [showTable, setShowTable] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({
     dimensions: true,
     rooms: true,
     elements: false,
   });
+
+  // Use controlled result when parent provides one, fall back to internal state
+  const isControlled = onResultChange !== undefined;
+  const result = isControlled ? controlledResult ?? null : internalResult;
+  const setResult = (next: PlanAnalysisResult | null) => {
+    if (isControlled) onResultChange?.(next);
+    else setInternalResult(next);
+  };
+
+  // Pending auto-analyze trigger after page switch (used by "Analisar todas")
+  const lastTokenRef = useRef<number | undefined>(undefined);
 
   const handleAnalyze = async () => {
     if (!imageDataUrl) {
@@ -84,40 +116,31 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
 
     setIsAnalyzing(true);
     try {
-      // Convert image to base64
       let base64: string;
       if (imageDataUrl.startsWith("data:")) {
         base64 = imageDataUrl.split(",")[1];
       } else {
-        // Fetch and convert
         const response = await fetch(imageDataUrl);
         const blob = await response.blob();
         const reader = new FileReader();
         base64 = await new Promise<string>((resolve) => {
           reader.onloadend = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]);
+            const r = reader.result as string;
+            resolve(r.split(",")[1]);
           };
           reader.readAsDataURL(blob);
         });
       }
 
       const { data, error } = await supabase.functions.invoke("axia-plan-vision", {
-        body: {
-          image_base64: base64,
-          calibration_info: calibration,
-        },
+        body: { image_base64: base64, calibration_info: calibration },
       });
 
       if (error) throw error;
       if (data?.error) {
-        if (data.error === "Rate limit exceeded") {
-          toast.error("Limite de pedidos atingido. Tente novamente em breve.");
-        } else if (data.error === "Credits exhausted") {
-          toast.error("Créditos de IA esgotados.");
-        } else {
-          throw new Error(data.error);
-        }
+        if (data.error === "Rate limit exceeded") toast.error("Limite de pedidos atingido. Tente novamente em breve.");
+        else if (data.error === "Credits exhausted") toast.error("Créditos de IA esgotados.");
+        else throw new Error(data.error);
         return;
       }
 
@@ -138,51 +161,91 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
     }
   };
 
+  // Auto-trigger analyze when parent bumps the token (sequential "analyze all" flow)
+  useEffect(() => {
+    if (autoAnalyzeToken === undefined) return;
+    if (autoAnalyzeToken === lastTokenRef.current) return;
+    if (!imageDataUrl) return;
+    lastTokenRef.current = autoAnalyzeToken;
+    handleAnalyze();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAnalyzeToken, imageDataUrl]);
+
   const confidenceBadge = (confidence: number) => {
     if (confidence >= 0.8) return <Badge variant="default" className="text-[9px] px-1">Alta</Badge>;
     if (confidence >= 0.5) return <Badge variant="secondary" className="text-[9px] px-1">Média</Badge>;
     return <Badge variant="outline" className="text-[9px] px-1">Baixa</Badge>;
   };
 
+  const handleAnalyzeCurrentPage = () => {
+    handleAnalyze();
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3 shrink-0">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Brain className="w-4 h-4" style={{ color: "#00679d" }} />
-          <span style={{ color: "#00679d" }}>Axia™</span> Análise Visual
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {!result ? (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              A Axia™ analisa a planta para identificar automaticamente cotas, dimensões, compartimentos e elementos construtivos.
-            </p>
-            <Button
-              className="w-full"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing || !imageDataUrl}
-              style={!isAnalyzing ? { backgroundColor: "#00679d" } : undefined}
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  A analisar planta...
-                </>
-              ) : (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Analisar com IA
-                </>
-              )}
-            </Button>
-          </div>
-        ) : (
-          <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
+    <>
+      {/* Multi-page panel (only when PDF has more than one sheet) */}
+      <PlanPagesPanel
+        totalPages={totalPages}
+        currentPage={currentPage}
+        analyzedPages={analyzedPages}
+        isAnalyzing={isAnalyzing}
+        onSelectPage={(p) => onSelectPage?.(p)}
+        onAnalyzeCurrentPage={handleAnalyzeCurrentPage}
+        onAnalyzeAllPending={() => onAnalyzeAllPending?.()}
+      />
+
+      <Card>
+        <CardHeader className="pb-3 shrink-0">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Brain className="w-4 h-4" style={{ color: "#00679d" }} />
+            <span style={{ color: "#00679d" }}>Axia™</span> Análise Visual
+            {totalPages > 1 && (
+              <Badge variant="outline" className="ml-auto text-[10px]">Folha {currentPage}/{totalPages}</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!result ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                A Axia™ analisa a planta para identificar automaticamente cotas, dimensões, compartimentos e elementos construtivos.
+              </p>
+              <Button
+                className="w-full"
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || !imageDataUrl}
+                style={!isAnalyzing ? { backgroundColor: "#00679d" } : undefined}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    A analisar planta...
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Analisar com IA
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
               {/* Summary */}
               <div className="bg-muted rounded-lg p-2.5">
                 <p className="text-xs text-muted-foreground">{result.summary}</p>
               </div>
+
+              {/* Open full table button */}
+              <Button
+                variant="default"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowTable(true)}
+              >
+                <Table2 className="w-3.5 h-3.5 mr-1.5" />
+                Ver tabela completa ({result.dimensions.length + result.rooms.length + result.elements.length} itens)
+              </Button>
 
               {/* Scale */}
               {result.scale_detected.found && (
@@ -211,16 +274,14 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sectionsOpen.dimensions ? "rotate-180" : ""}`} />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 mt-1">
-                    {result.dimensions.map((dim, i) => (
+                    {result.dimensions.slice(0, 5).map((dim, i) => (
                       <div
                         key={i}
                         className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5 cursor-pointer hover:bg-muted transition-colors"
                         onClick={() => onHighlightPosition?.(dim.position_x, dim.position_y)}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">
-                            {dim.value} {dim.unit}
-                          </p>
+                          <p className="text-xs font-medium truncate">{dim.value} {dim.unit}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{dim.label}</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -229,6 +290,11 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                         </div>
                       </div>
                     ))}
+                    {result.dimensions.length > 5 && (
+                      <p className="text-[10px] text-muted-foreground text-center py-1">
+                        + {result.dimensions.length - 5} cotas — abrir tabela completa para ver todas
+                      </p>
+                    )}
                     {onConvertDimensions && result.dimensions.length > 0 && (
                       <Button
                         variant="outline"
@@ -261,7 +327,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sectionsOpen.rooms ? "rotate-180" : ""}`} />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 mt-1">
-                    {result.rooms.map((room, i) => (
+                    {result.rooms.slice(0, 5).map((room, i) => (
                       <div
                         key={i}
                         className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5 cursor-pointer hover:bg-muted transition-colors"
@@ -270,9 +336,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium">{room.name}</p>
                           {room.estimated_area && (
-                            <p className="text-[10px] text-muted-foreground">
-                              ≈ {room.estimated_area.toFixed(1)} m²
-                            </p>
+                            <p className="text-[10px] text-muted-foreground">≈ {room.estimated_area.toFixed(1)} m²</p>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -281,6 +345,11 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                         </div>
                       </div>
                     ))}
+                    {result.rooms.length > 5 && (
+                      <p className="text-[10px] text-muted-foreground text-center py-1">
+                        + {result.rooms.length - 5} compartimentos — abrir tabela completa para ver todos
+                      </p>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               )}
@@ -299,7 +368,7 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sectionsOpen.elements ? "rotate-180" : ""}`} />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-1 mt-1">
-                    {result.elements.map((el, i) => (
+                    {result.elements.slice(0, 5).map((el, i) => (
                       <div
                         key={i}
                         className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5 cursor-pointer hover:bg-muted transition-colors"
@@ -312,6 +381,11 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                         <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                       </div>
                     ))}
+                    {result.elements.length > 5 && (
+                      <p className="text-[10px] text-muted-foreground text-center py-1">
+                        + {result.elements.length - 5} elementos — abrir tabela completa para ver todos
+                      </p>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               )}
@@ -339,11 +413,24 @@ export function PlanAIAnalysis({ imageDataUrl, calibration, onHighlightPosition,
                 ) : (
                   <Brain className="w-3.5 h-3.5 mr-1.5" style={{ color: "#00679d" }} />
                 )}
-                Reanalisar
+                Reanalisar esta folha
               </Button>
             </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {result && (
+        <PlanAxiaResultsTable
+          open={showTable}
+          onOpenChange={setShowTable}
+          dimensions={result.dimensions}
+          rooms={result.rooms}
+          elements={result.elements}
+          onHighlightPosition={onHighlightPosition}
+          pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
+        />
+      )}
+    </>
   );
 }

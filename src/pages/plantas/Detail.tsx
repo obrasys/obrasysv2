@@ -7,7 +7,8 @@ import type { MeasureMode } from "@/components/plantas/PlanMeasurementToolbar";
 import { PlanMeasurementsList } from "@/components/plantas/PlanMeasurementsList";
 import { PlanRoomsList } from "@/components/plantas/PlanRoomsList";
 import { PlanWallsList } from "@/components/plantas/PlanWallsList";
-import { PlanAIAnalysis } from "@/components/plantas/PlanAIAnalysis";
+import { PlanAIAnalysis, type PlanAnalysisResult } from "@/components/plantas/PlanAIAnalysis";
+import { PlanUploadForm } from "@/components/plantas/PlanUploadForm";
 import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWorkflowBar";
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
@@ -23,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug, Upload } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength, calculatePolygonArea, calculatePolygonPerimeter } from "@/hooks/usePlanMeasurements";
@@ -50,7 +51,7 @@ export default function PlanDetail() {
   const navigate = useNavigate();
 
   // Data
-  const { plans, isLoading: plansLoading } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
   const { calibration, saveCalibration } = usePlanCalibration(planId);
   const { measurements, addMeasurement, updateMeasurement, deleteMeasurement } = usePlanMeasurements(planId);
@@ -78,6 +79,44 @@ export default function PlanDetail() {
   useEffect(() => {
     localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
   }, [guidedMode]);
+
+  // Axia analysis results PER PAGE (persisted in localStorage by planId)
+  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>(() => {
+    if (typeof window === "undefined" || !planId) return {};
+    try {
+      const raw = localStorage.getItem(`plan-axia-results:${planId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    if (!planId) return;
+    try {
+      localStorage.setItem(`plan-axia-results:${planId}`, JSON.stringify(axiaResultsByPage));
+    } catch { /* quota */ }
+  }, [axiaResultsByPage, planId]);
+
+  // Upload-new-plan dialog
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  // Pending page-jump for "Analisar todas as folhas em falta"
+  const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
+  const [autoAnalyzeToken, setAutoAnalyzeToken] = useState(0);
+
+  // Advance queue when the current page becomes analyzed
+  useEffect(() => {
+    if (pendingAnalyzeQueue.length === 0) return;
+    const [head, ...rest] = pendingAnalyzeQueue;
+    if (axiaResultsByPage[head]) {
+      if (rest.length > 0) {
+        setPendingAnalyzeQueue(rest);
+        setCurrentPage(rest[0]);
+        setAutoAnalyzeToken((t) => t + 1);
+        toast.info(`A analisar folha ${rest[0]}... (${rest.length} restantes)`);
+      } else {
+        setPendingAnalyzeQueue([]);
+        toast.success("Todas as folhas analisadas.");
+      }
+    }
+  }, [axiaResultsByPage, pendingAnalyzeQueue]);
 
   // File URL
   const fileUrlQuery = useQuery({
@@ -741,6 +780,9 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
+          <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
+            <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
+          </Button>
         </div>
 
         {/* Unified workflow bar (stepper + guide + toolbar + active hint) */}
@@ -953,6 +995,37 @@ export default function PlanDetail() {
                 onAnalysisComplete={() => {
                   setHasAnalysis(true);
                   setWorkflowStep("analyze");
+                  // mark current page as analyzed (handled via onResultChange below)
+                }}
+                result={axiaResultsByPage[currentPage] ?? null}
+                onResultChange={(next) => {
+                  setAxiaResultsByPage((prev) => {
+                    const copy = { ...prev };
+                    if (next) copy[currentPage] = next;
+                    else delete copy[currentPage];
+                    return copy;
+                  });
+                }}
+                currentPage={currentPage}
+                totalPages={isPdf ? totalPages : 1}
+                onSelectPage={(p) => setCurrentPage(p)}
+                analyzedPages={Object.keys(axiaResultsByPage).map(Number)}
+                onAnalyzeAllPending={() => {
+                  const pending = Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => !axiaResultsByPage[p]);
+                  if (pending.length === 0) {
+                    toast.info("Todas as folhas já estão analisadas.");
+                    return;
+                  }
+                  toast.info(`A analisar ${pending.length} folhas em sequência...`);
+                  setPendingAnalyzeQueue(pending);
+                  setCurrentPage(pending[0]);
+                  setAutoAnalyzeToken((t) => t + 1);
+                }}
+                autoAnalyzeToken={autoAnalyzeToken}
+                onHighlightPosition={(x, y) => {
+                  // best-effort: relies on PlanViewer's panning to focus point — noop placeholder
+                  console.log("Highlight position requested:", x, y);
                 }}
               />
             )}
@@ -1418,6 +1491,26 @@ export default function PlanDetail() {
         onUpdate={handleUpdateElement}
         onDelete={handleDeleteElement}
       />
+
+      {/* Upload new plan dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
+          {obraId && (
+            <PlanUploadForm
+              obraId={obraId}
+              isUploading={uploadPlan.isPending}
+              onCancel={() => setShowUploadDialog(false)}
+              onUpload={async (data) => {
+                const created = await uploadPlan.mutateAsync(data);
+                setShowUploadDialog(false);
+                if (created?.id) {
+                  navigate(`/obras/${obraId}/plantas/${created.id}`);
+                }
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
