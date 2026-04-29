@@ -132,6 +132,19 @@ export function PlanAxiaResultsTable({
               className="pl-9"
             />
           </div>
+          {canSendBudget && (
+            <Button
+              size="sm"
+              onClick={() => setShowSendDialog(true)}
+              className="shrink-0"
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              Enviar tudo p/ orçamento
+              <Badge variant="secondary" className="ml-2 text-[10px]">
+                {analyzedPagesCount} folha(s)
+              </Badge>
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="dimensions" className="w-full">
