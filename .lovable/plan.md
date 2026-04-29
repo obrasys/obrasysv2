@@ -1,158 +1,333 @@
-# Plano: Fluxo Plantas → Medição → Intervenção → Orçamento → Axia
+# Leitura Inteligente de Plantas com Axia — Plano de Implementação
 
-## Estado atual (verificado no código)
+## Estado atual (verificado)
 
-Boa parte das regras já está implementada:
-- "Rodapé" já é o label visível no resumo, na etiqueta auto-gerada e no diálogo de área (`Detail.tsx` L463/735/991). A função `calculatePolygonPerimeter` (em `usePlanMeasurements.ts`) já soma todas as arestas do polígono fechado (≥3 pontos) — equivale a `calculateRodape`.
-- O `PlanSegmentDialog` já implementa: 2 pontos → comprimento auto, pé direito editável, aberturas (porta/janela) com subtração, 5 ações (Demolir, Construir, Barrar, Pintar, Revestir), espessura obrigatória em Demolir, material da biblioteca (`materials`) em Construir, cálculo de volume de demolição.
-- Persistência multi-registo (linha + área de parede + volume de demolição) em `handleConfirmSegment`.
+Já está em produção:
+- Upload de planta (PDF/imagem), calibração 2-pontos, escala em px/m.
+- Medição: segmento (2 cliques) e polígono fechado (3+ cliques) com Rodapé já calculado.
+- Compartimentos (`plan_rooms`), paredes (`plan_walls`), vãos (`plan_openings`), elementos pontuais (`plan_placed_elements`).
+- Ações construtivas por segmento: demolir / construir / barrar / pintar / revestir, com painel Orçamento e painel Axia (regras client-side) já implementados.
+- Workflow stepper 4 passos: Calibrar → Medir → Axia → Orçamentar.
 
-Faltam três blocos para fechar o ciclo pedido: simplificação da toolbar, **metadados estruturados da intervenção** (hoje vão só em `observacao` em texto), e as camadas de **Orçamento** e **Axia** sobre cada medição.
+**Faltam, conforme briefing:**
+
+1. **Pavimentos** (subsolo, térreo, piso 1…) — hoje a planta vive solta na obra, sem hierarquia de níveis.
+2. **Páginas de PDF** ligadas a pavimento + calibração própria por página.
+3. **Modo Guiado Axia** ON/OFF com mensagens passo-a-passo em linguagem simples.
+4. **Confiança** por item (Confirmado / Provável / Precisa validar / Informação em falta) — hoje só temos `pendente/validado/rejeitado`.
+5. **Escadas** estruturadas (degraus, espelhos, patamares, corrimão).
+6. **Símbolos de especialidades** quantificados (elétrica, hidráulica, incêndio).
+7. **Itens "Outros"** invisíveis em planta (demolições, andaimes, licenças, limpeza…).
+8. **Quadro Quantitativo unificado** por pavimento/compartimento/categoria com origem da medição e ação sugerida.
+9. **Envio para Orçamento em lote** com pré-visualização e vínculo persistente medição ↔ artigo.
 
 ---
 
-## 1. Toolbar simplificada (Segmento apenas)
+## Princípios de segurança (não-negociáveis)
 
-Em `PlanWorkflowBar.tsx` (`TOOLS`) remover `measure_count` (Contagem). Manter:
-- `view` (Navegar)
-- `measure_line` renomeado visualmente para "Segmento" (já está)
+- Nada existente é apagado ou renomeado: `plan_imports`, `plan_calibrations`, `plan_measurements`, `plan_rooms`, `plan_walls`, `plan_openings`, `plan_placed_elements` ficam como estão.
+- Tabelas novas adicionadas; FKs novas são nullable; medições antigas continuam visíveis e editáveis.
+- Fallback automático: planta sem pavimento ⇒ pavimento "Não definido" criado on-the-fly por obra; planta sem calibração de página ⇒ usa a calibração existente do `plan_import` (já no `plan_calibrations`).
+- RLS herda o padrão atual (`get_org_member_ids()`).
+- Toggle "Modo Guiado Axia" guardado em `user_settings` ou local; OFF restaura a UI atual (com calibração ainda recomendada).
 
-Atualizar `MODE_HINTS.measure_line` para texto curto: "2 cliques = parede isolada · 3+ cliques + duplo-clique = polígono fechado (Rodapé + Área)".
+---
 
-Em `Detail.tsx`, remover/ocultar o ramo `mode === "measure_count"` no `handleCanvasClick` (deixar o código mas torná-lo inacessível pela UI). Outros modos internos (`draw_room`, `draw_wall`, `draw_opening`, `insert_element`) continuam disponíveis via Symbol Picker / Axia, sem botão na barra principal.
+## Fase 1 — Pavimentos, páginas e Modo Guiado
 
-## 2. Metadados estruturados da medição
+### 1.1 Modelo de dados (migrações novas, aditivas)
 
-Hoje a ação, espessura, material, etc. só ficam em `observacao` (texto livre) — não dá para ler de volta no orçamento nem na Axia. Vamos adicionar metadados em `plan_measurements`:
-
-Migração:
 ```sql
-alter table public.plan_measurements
-  add column if not exists action_type text
-    check (action_type in ('demolir','construir','barrar','pintar','revestir')),
-  add column if not exists segment_length numeric(12,4),
-  add column if not exists ceiling_height numeric(12,4),
-  add column if not exists wall_area numeric(12,4),
-  add column if not exists baseboard_length numeric(12,4),
-  add column if not exists wall_thickness_cm numeric(12,4),
-  add column if not exists demolition_volume numeric(12,4),
-  add column if not exists material_id uuid references public.materials(id),
-  add column if not exists material_label text,
-  add column if not exists openings_area numeric(12,4),
-  add column if not exists budget_link_status text not null default 'not_linked'
-    check (budget_link_status in ('not_linked','suggested','linked','ignored')),
-  add column if not exists budget_artigo_id uuid,
-  add column if not exists axia_status text not null default 'not_analyzed'
-    check (axia_status in ('not_analyzed','valid','warning','error')),
-  add column if not exists axia_notes jsonb;
+-- Pavimentos por obra
+create table public.plan_floors (
+  id uuid primary key default gen_random_uuid(),
+  obra_id uuid not null references public.obras(id) on delete cascade,
+  user_id uuid not null,
+  name text not null,
+  type text not null default 'piso'
+    check (type in ('subsolo','terreo','piso','cobertura','mezanino','outro')),
+  order_index int not null default 0,
+  default_ceiling_height numeric(6,2) not null default 2.70,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 
-create index if not exists idx_plan_measurements_action on public.plan_measurements(action_type);
-create index if not exists idx_plan_measurements_budget on public.plan_measurements(budget_link_status);
-create index if not exists idx_plan_measurements_axia on public.plan_measurements(axia_status);
+-- Páginas de planta (1:N por plan_import)
+create table public.plan_pages (
+  id uuid primary key default gen_random_uuid(),
+  plan_import_id uuid not null references public.plan_imports(id) on delete cascade,
+  page_number int not null default 1,
+  floor_id uuid references public.plan_floors(id) on delete set null,
+  notes text,
+  created_at timestamptz not null default now(),
+  unique (plan_import_id, page_number)
+);
+
+-- Ligar calibração e medições a uma página específica (nullable p/ retro-compat)
+alter table public.plan_calibrations  add column page_id uuid references public.plan_pages(id) on delete cascade;
+alter table public.plan_measurements  add column page_id uuid references public.plan_pages(id) on delete set null,
+                                      add column floor_id uuid references public.plan_floors(id) on delete set null,
+                                      add column room_id uuid references public.plan_rooms(id) on delete set null,
+                                      add column confidence text not null default 'provavel'
+                                        check (confidence in ('confirmado','provavel','precisa_validar','informacao_em_falta')),
+                                      add column measurement_origin text not null default 'manual'
+                                        check (measurement_origin in ('axia_auto','manual','derivado','outros','simbolo','editado'));
+alter table public.plan_rooms         add column page_id uuid references public.plan_pages(id) on delete set null,
+                                      add column floor_id uuid references public.plan_floors(id) on delete set null,
+                                      add column confidence text not null default 'provavel';
 ```
 
-`measurement_type` (segment vs polygon) é derivado: `tipo='linha'` + 2 coords + `action_type` ⇒ segmento; `tipo='area'` ⇒ polígono. Não duplicamos coluna. Multi-tenant continua via `user_id` + RLS já existente (`get_org_member_ids()`).
+Trigger backfill: ao abrir um `plan_import` sem `plan_pages`, criar 1 página default ligada à página 1 do PDF (ou única para imagem). Idem para `plan_floors`: ao abrir uma obra sem floors, oferecer criar "Térreo" automaticamente — sem inserir em silêncio.
 
-Atualizar `usePlanMeasurements.addMeasurement` para aceitar e persistir os campos novos, e `PlanMeasurement` em `types/plan-measurements.ts`.
+RLS: políticas iguais às tabelas-pai (via `get_org_member_ids()`).
 
-Em `handleConfirmSegment` (Detail.tsx) e no save do polígono (`handleConfirmSave`), gravar **uma única medição "principal"** com todos os metadados, em vez de 2-3 medições "satélite":
-- Segmento → 1 registo (`tipo='linha'`, `action_type` setado, `segment_length`, `ceiling_height`, `wall_area`, `wall_thickness_cm`, `demolition_volume`, `material_id`, `openings_area`).
-- Polígono fechado → 1 registo (`tipo='area'`, `valor_bruto = área`, `baseboard_length = rodapé`).
+### 1.2 UI — Sidebar de Pavimentos no Detail da planta
 
-Isto elimina os "fantasmas" duplicados na lista, e faz com que cada parede seja um item único que pode ser ligado ao orçamento.
+- Painel esquerdo novo `PlanFloorsSidebar.tsx`: lista de pavimentos da obra com badges (n.º compartimentos / m² / quantitativos).
+- Botões: criar / editar / reordenar / eliminar pavimento (drag para reordenar).
+- Selecionar pavimento filtra: páginas visíveis, medições, compartimentos, e o quadro quantitativo.
 
-(Migração de retro-compat: registos antigos sem `action_type` continuam a funcionar, simplesmente não aparecem secções de Orçamento/Axia.)
+### 1.3 UI — Páginas e calibração por página
 
-## 3. Painel "Orçamento" no detalhe da medição
+- No `Detail.tsx`, substituir o controlo `currentPage` simples por uma `PlanPagesBar.tsx`:
+  - thumbnails das páginas (PDF) com badge "Calibrada" / "Pavimento: Térreo".
+  - botão "Atribuir pavimento" e "Reutilizar calibração de outra página" (com aviso).
+- `usePlanCalibration` passa a aceitar `pageId`. Compatibilidade: se um plan_import só tem 1 página e a calibração antiga está em `plan_calibrations` sem `page_id`, ela é tratada como página default.
 
-Novo componente `PlanMeasurementBudgetPanel.tsx` exibido no painel direito quando uma medição com `action_type` está selecionada.
+### 1.4 Modo Guiado Axia
 
-Mapeamento ação → orçamento (em `src/lib/plan-budget-mapping.ts`):
-```ts
-const MAP = {
-  demolir:   { capitulo: "Demolições",                 unit: "m³", source: "demolition_volume",  desc: "Demolição de parede" },
-  construir: { capitulo: "Alvenarias",                 unit: "m²", source: "wall_area",          desc: "Construção de parede" },
-  barrar:    { capitulo: "Preparação de superfícies",  unit: "m²", source: "wall_area",          desc: "Barramento" },
-  pintar:    { capitulo: "Pinturas",                   unit: "m²", source: "wall_area",          desc: "Pintura" },
-  revestir:  { capitulo: "Revestimentos",              unit: "m²", source: "wall_area",          desc: "Revestimento" },
-};
+- Novo componente `PlanGuideAxia.tsx` (overlay flutuante canto inferior-direito, dispensável).
+- Estado `guideEnabled` em `usePreferences()` (já existe `PreferencesContext`) — chave `plan_guide_enabled`, default `true`.
+- Sequência de mensagens contextuais (uma por vez, com botões "Já fiz" / "Saltar"):
+  1. "Carregue uma planta ou selecione uma página."
+  2. "Vamos calibrar a escala. Selecione 2 pontos com distância conhecida."
+  3. "Confirme o pavimento desta planta."
+  4. "Confirme o pé-direito padrão deste pavimento."
+  5. "Identifiquei N compartimentos. Está correto?"
+  6. "Encontrei N portas e N janelas. Quer validar?"
+  7. "Estes quantitativos estão prontos para enviar ao orçamento."
+- Toggle visível em `PlanWorkflowBar.tsx`: **"Desativar condução da Axia"** (Switch). Quando OFF, o overlay esconde-se mas calibração continua acessível e recomendada.
+
+### 1.5 Confiança por item
+
+- Helper `src/lib/plan-confidence.ts` mapeia automaticamente:
+  - validado pelo user ⇒ `confirmado`
+  - criado por IA com score ≥ 0.8 ⇒ `provavel`
+  - score < 0.8 ⇒ `precisa_validar`
+  - falta `ceiling_height` / `wall_thickness_cm` quando aplicável ⇒ `informacao_em_falta`
+- Badges visuais (verde / amarelo / laranja / vermelho) em `PlanMeasurementsList`, `PlanRoomsList` e no Quadro Quantitativo.
+- Regra de envio: itens `informacao_em_falta` bloqueados no envio para orçamento.
+
+---
+
+## Fase 2 — Quadro Quantitativo unificado
+
+### 2.1 View materializada (sem nova tabela)
+
+Em vez de duplicar dados, criar **view** `plan_quantitativos_v` que agrega o que já existe:
+
+```sql
+create or replace view public.plan_quantitativos_v as
+  -- Linha por medição com action_type: parede/pintura/etc
+  select m.id, m.plan_import_id, m.page_id, m.floor_id, m.room_id, m.user_id,
+         coalesce(m.action_type, 'medicao') as categoria,
+         m.etiqueta as elemento, m.unidade,
+         coalesce(m.valor_final, m.valor_ajustado, m.valor_bruto) as quantidade,
+         m.confidence, m.measurement_origin, m.observacao,
+         m.budget_link_status, m.budget_artigo_id, 'measurement' as fonte
+    from public.plan_measurements m
+  union all
+  -- Linha por compartimento: piso, teto, rodapé
+  select r.id || ':piso', r.plan_import_id, r.page_id, r.floor_id, r.id as room_id, r.user_id,
+         'piso' as categoria, r.nome as elemento, 'm²' as unidade,
+         r.area_m2 as quantidade, r.confidence,
+         'derivado' as measurement_origin, null as observacao,
+         'not_linked', null, 'room_floor' as fonte
+    from public.plan_rooms r
+  union all  -- igual para teto, rodapé
+  ...;
 ```
 
-UI do painel (3 estados conforme `budget_link_status`):
-- `not_linked` / `suggested` → mostra "Sugestão: gerar item em **Pinturas** · 12,50 m²" + 3 botões: **Gerar item**, **Associar existente**, **Ignorar**.
-- `linked` → mostra capítulo+artigo ligado, botão "Desassociar".
-- `ignored` → mostra "Ignorado", botão "Reverter".
+(View em vez de tabela: zero risco de divergência; refresh é automático.)
 
-Ações:
-- **Gerar item** → modal com capítulo (Select dos `capitulos_orcamento` do orçamento ativo da obra, ou criar novo), descrição editável, quantidade pré-preenchida, unidade fixa, preço unitário (consulta opcional a `base_precos_personalizada` por palavras-chave do material). Insere em `artigos_orcamento` e atualiza `plan_measurements.budget_artigo_id` + `budget_link_status='linked'`.
-- **Associar existente** → reaproveitar `PlanMappingTable` simplificado (procura artigos do orçamento da obra).
-- **Ignorar** → set `budget_link_status='ignored'`.
+### 2.2 Componente `PlanQuantityTable.tsx`
 
-Para Construir, se houver `material_id`, sugerir preço/descrição a partir de `base_precos_personalizada` que tenha esse material.
+Nova tab "Quadro Quantitativo" no `Detail.tsx` (substitui parcialmente a `PlanQuantitativosByRoom` existente, que continua disponível).
 
-Tudo client-side via `supabase` (sem edge function nesta fase) — respeita RLS já existente em `orcamentos` / `artigos_orcamento`.
+Colunas: Pavimento · Compartimento · Categoria · Elemento · Unidade · Quantidade · Confiança · Origem · Observações · Ação.
 
-## 4. Camada Axia – análise por regras
+Filtros (toolbar): pavimento, compartimento, categoria, confiança, origem, status de envio.
 
-Novo hook `useAxiaPlanAnalysis(planId)` + componente `PlanMeasurementAxiaPanel.tsx` (no painel direito, abaixo do bloco de Orçamento).
+Ações inline por linha:
+- editar quantidade / unidade / categoria
+- alterar confiança
+- confirmar item (passa a `confirmado`)
+- excluir
+- adicionar observação
+- enviar este item para orçamento
 
-Avaliação **client-side, por regras**, sem chamada a IA externa nesta fase (para já — fica preparado para um edge function `axia-plan-measurement-analyzer` futuro). Roda em cada save/update de medição e atualiza `axia_status` + `axia_notes` no próprio registo.
+Ação em massa:
+- selecionar tudo / por filtro
+- "Enviar selecionados para orçamento"
 
-Regras (ordem de severidade):
+---
 
-| Condição | Status | Mensagem |
-|---|---|---|
-| `tipo='linha'` (segmento) sem `ceiling_height` | error · `missing_ceiling_height` | "Falta altura do pé direito — não consigo calcular a área da parede." |
-| `action_type='demolir'` sem `wall_thickness_cm` | error · `missing_wall_thickness` | "Demolição sem espessura definida — volume não calculável." |
-| `action_type='construir'` sem `material_id` e sem `material_label` | warning · `missing_material` | "Parede para construir sem material definido." |
-| `wall_area > 100` e ação ∈ {pintar, barrar, revestir} | warning · `area_high` | "Área elevada — confirme a escala da planta." |
-| `budget_link_status='not_linked'` (depois de medição válida) | info · `unlinked_to_budget` | "Esta medição ainda não está num orçamento." |
-| Tudo ok | valid | "Medição completa e pronta para orçamento." |
+## Fase 3 — Escadas, Especialidades e "Outros"
 
-Estrutura `axia_notes` (jsonb, array para suportar múltiplos avisos):
-```json
-[{ "severity":"warning","type":"missing_material",
-   "message":"...","explanation":"...","suggested_action":"...","related_field":"material_id" }]
+### 3.1 Escadas
+
+```sql
+create table public.plan_stairs (
+  id uuid primary key default gen_random_uuid(),
+  plan_import_id uuid not null references public.plan_imports(id) on delete cascade,
+  page_id uuid references public.plan_pages(id) on delete set null,
+  origin_floor_id uuid references public.plan_floors(id) on delete set null,
+  destination_floor_id uuid references public.plan_floors(id) on delete set null,
+  user_id uuid not null,
+  largura_m numeric(6,2) not null default 1.00,
+  steps_count int not null default 0,
+  risers_count int not null default 0,
+  tread_depth_m numeric(6,3) not null default 0.28,
+  riser_height_m numeric(6,3) not null default 0.18,
+  landings jsonb not null default '[]'::jsonb,  -- [{ largura, comprimento }]
+  has_handrail boolean not null default true,
+  has_guardrail boolean not null default false,
+  handrail_length_m numeric(6,2),
+  guardrail_length_m numeric(6,2),
+  confidence text not null default 'provavel',
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 ```
 
-UI:
-- Bloco "Análise Axia™" com badge colorido (verde/âmbar/vermelho) + lista de mensagens.
-- Cada mensagem com botão "Corrigir" que dá foco ao campo (abre o `PlanSegmentDialog` em modo edição apontando ao `related_field`).
-- Botão global "Reanalisar planta" no painel de medições, que percorre todas e atualiza `axia_status`.
+Componente `PlanStairsForm.tsx` com cálculos automáticos (área pisos = steps × largura × tread; área espelhos = risers × largura × riser; área patamares; comprimento total de corrimão e guarda-corpo). Cada cálculo gera linha no Quadro Quantitativo via view.
 
-Resumo agregado no topo do painel: "3 válidas · 2 avisos · 1 erro".
+### 3.2 Símbolos de especialidades
 
-## 5. Edição pós-criação
+Já existe `plan_placed_elements` + `plant_symbols`. Acrescentar mapeamento:
+- novo helper `src/lib/plan-symbol-budget-mapping.ts`: símbolo → categoria de orçamento + unidade default.
+- Quadro Quantitativo agrega contagens por tipo de símbolo e pavimento.
+- `PlanWorkflowBar.tsx` ganha toggle de filtro de especialidade (Elétrica / Canalização / Incêndio / AVAC / Telecom).
 
-Hoje o `PlanSegmentDialog` só abre na criação. Adicionar:
-- Botão "Editar" em cada item da `PlanMeasurementsList` que tenha `action_type`.
-- Reabrir `PlanSegmentDialog` em modo edição pré-preenchido (props: `initial?: SegmentSavePayload`), e em vez de inserir, atualizar via `updateMeasurement`.
+### 3.3 Itens "Outros"
 
-## 6. Critérios de aceitação verificáveis
+```sql
+create table public.plan_additional_items (
+  id uuid primary key default gen_random_uuid(),
+  obra_id uuid not null references public.obras(id) on delete cascade,
+  floor_id uuid references public.plan_floors(id) on delete set null,
+  room_id uuid references public.plan_rooms(id) on delete set null,
+  user_id uuid not null,
+  description text not null,
+  category text,
+  unit text not null default 'un',
+  quantity numeric(14,4) not null default 1,
+  notes text,
+  budget_link_status text not null default 'not_linked',
+  budget_artigo_id uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
 
-1. Toolbar mostra apenas "Navegar" e "Segmento".
-2. Polígonos de ≥3 pontos guardam `baseboard_length` e mostram "Rodapé" no resumo (já feito).
-3. Segmento (2 pontos) guarda 1 registo único com `action_type`, `wall_area`, e (consoante ação) `wall_thickness_cm`/`demolition_volume`/`material_id`.
-4. Demolir bloqueia guardar sem espessura; Construir bloqueia sem material.
-5. Cada medição com `action_type` mostra painel de Orçamento com 3 ações funcionais; ao gerar item, aparece em `artigos_orcamento` da obra e o estado passa a `linked`.
-6. A Axia preenche `axia_status` e `axia_notes` automaticamente no save e no reanalisar; mensagens são contextuais (não genéricas).
-7. RLS continua a isolar por organização (sem alterações às policies existentes — os campos novos herdam-nas).
-8. Medições antigas (sem `action_type`) continuam visíveis e editáveis.
+Componente `PlanOthersTab.tsx` com presets (demolições, andaimes, transporte, licenças, limpeza, impermeabilizações, ligações técnicas, trabalhos especiais). Aparece no Quadro Quantitativo com origem `outros`.
 
-## 7. Ordem de implementação
+---
 
-1. Migração de `plan_measurements` (campos novos + índices).
-2. Atualizar `types/plan-measurements.ts` e `usePlanMeasurements` para os novos campos.
-3. Refatorar `handleConfirmSegment` para gravar registo único com metadados (e idem polígono).
-4. Remover botão "Contagem" da `PlanWorkflowBar`.
-5. Criar `lib/plan-budget-mapping.ts` + `PlanMeasurementBudgetPanel.tsx` e integrar no painel direito de `Detail.tsx`.
-6. Criar `useAxiaPlanAnalysis` + `PlanMeasurementAxiaPanel.tsx`; rodar regras no save e botão "Reanalisar".
-7. Modo edição do `PlanSegmentDialog`.
-8. Smoke test: criar segmento → ver Axia → gerar item de orçamento → confirmar artigo na página de orçamento da obra.
+## Fase 4 — Envio para Orçamento integrado
 
-## 8. O que NÃO vai mudar
+### 4.1 Diálogo de pré-visualização
 
-- Schemas de `orcamentos`, `artigos_orcamento`, `materials` ficam intactos.
-- `PlanMeasurementMapping` (tabela de mapping antiga) continua a existir para a página `Quantitativos` — o novo painel de Orçamento é caminho rápido por medição, mas não invalida o fluxo de Quantitativos.
-- `PlanRooms`, `PlanWalls`, `PlanOpenings` continuam — só não são exposed na toolbar simples (ficam acessíveis via Axia/Symbol picker).
-- Nenhuma alteração ao módulo de Plantas em produção que quebre medições antigas (campos novos são todos nullable com default).
+Novo `PlanBudgetSendDialog.tsx`:
+1. lista os itens selecionados agrupados por capítulo sugerido
+2. permite escolher orçamento de destino (Select dos `orcamentos` da obra) ou criar novo
+3. permite alterar capítulo e descrição por linha
+4. valida: unidade não vazia, quantidade > 0, sem `informacao_em_falta`
+5. botão "Confirmar envio"
+
+Inserção via Supabase client (RLS protege):
+- por linha cria `artigos_orcamento` (sem `valor_total` — trigger trata, conforme regra registada na memória)
+- atualiza `plan_measurements.budget_artigo_id` + `budget_link_status='linked'`
+- guarda `plan_budget_links` (já existe) para histórico
+
+### 4.2 Vínculo persistente
+
+Cada artigo criado guarda em `observacao` ou metadata o `plan_import_id` + `plan_floor_id` + `plan_measurement_id`, para que o orçamento mostre badge "Origem: Planta · Térreo · Sala" e permita "Voltar à planta".
+
+### 4.3 Reverter
+
+- Em cada artigo originado de planta, o utilizador pode "Desligar da planta" (não apaga o artigo, apenas remove o vínculo).
+- Em cada item da planta, "Desassociar" volta o estado a `not_linked`.
+
+---
+
+## Fase 5 — Detalhes técnicos e novos hooks
+
+Hooks novos:
+- `usePlanFloors(obraId)`
+- `usePlanPages(planImportId)`
+- `usePlanQuantitativos(planImportId, filters)`
+- `usePlanStairs(planImportId)`
+- `usePlanAdditionalItems(obraId)`
+- `useGuidedAxia()` — gerencia a sequência de passos do modo guiado
+
+Funções utilitárias em `src/lib/plan-calculations.ts` (consolidando o que já existe disperso):
+- `calculateStairTreadArea`, `calculateStairRiserArea`, `calculateLandingArea`
+- `calculateFacadeArea(perimeter, height, openings, platibanda)`
+- `calculateBaseboardLength(roomPolygon, openings, rule)` com regras configuráveis
+- `mapPlanElementToBudgetItem(element)`
+- `validateQuantitiesBeforeBudgetSend(items)`
+
+---
+
+## Fase 6 — Validações e fallbacks
+
+Antes de gerar quantitativos:
+- planta carregada? página atribuída a pavimento? calibração ativa? pé-direito definido quando necessário? polígonos têm ≥3 pontos? escadas têm dimensões mínimas? itens com baixa confiança sinalizados?
+
+Antes do envio para orçamento (na lib `validateQuantitiesBeforeBudgetSend`):
+- existe orçamento na obra?
+- todas as linhas têm unidade e quantidade > 0?
+- nenhuma linha em `informacao_em_falta`?
+- utilizador confirmou explicitamente?
+
+Fallback retro-compat:
+- plantas antigas sem pavimento: criar pavimento "Não definido" (type `outro`, ordem 999) e pedir validação no overlay Axia.
+- plantas sem calibração de página: continuam a usar a calibração antiga; não bloqueia visualização, bloqueia apenas geração de novos quantitativos automáticos (manuais continuam permitidos).
+
+---
+
+## Critérios de aceitação verificáveis
+
+1. Posso criar pavimentos (subsolo, térreo, piso 1, cobertura, mezanino, personalizado) numa obra.
+2. Cada página de uma planta PDF pode ser atribuída a um pavimento e ter calibração própria.
+3. Modo Guiado Axia aparece por defeito, conduz passo-a-passo, e pode ser desligado sem partir nada.
+4. Cada medição/compartimento tem badge de confiança visível.
+5. Quadro Quantitativo agrega tudo (medições, compartimentos, escadas, símbolos, "Outros") com filtros.
+6. Linhas com "Informação em falta" não enviam para orçamento.
+7. Envio em lote cria artigos de orçamento e mantém vínculo bidirecional planta ↔ artigo.
+8. Plantas antigas continuam abrir e editar sem erros; nenhuma medição é apagada.
+9. Linter sem erros novos; build verde; RLS isola por organização.
+
+---
+
+## O que NÃO muda
+
+- Nenhum schema existente é renomeado ou tem coluna apagada (só `add column nullable`).
+- `PlanWorkflowBar`, `PlanCalibrationTool`, `PlanSegmentDialog`, `PlanMeasurementsList`, `PlanQuantitativosByRoom`, `PlanBudgetGenerator` continuam a funcionar (ganham, no máximo, props opcionais).
+- Rotas atuais (`/obras/:id/plantas`, `/obras/:id/plantas/:planId`) intactas.
+- Módulos Orçamentos, Obras, Documentos, Axia chat, RDOs ficam isolados.
+
+---
+
+## Ordem sugerida de implementação
+
+1. **Fase 1** (pavimentos + páginas + Modo Guiado + confiança) — desbloqueia tudo o resto.
+2. **Fase 2** (Quadro Quantitativo via view) — entrega visível.
+3. **Fase 3** (Escadas + Símbolos como categorias + "Outros").
+4. **Fase 4** (envio em lote para orçamento + vínculo bidirecional).
+5. Testes manuais com uma planta antiga (sem pavimento, sem calibração nova) e uma planta nova.
+
+Cada fase é independentemente entregável e testável; podemos parar em qualquer ponto sem deixar o módulo num estado inconsistente.
