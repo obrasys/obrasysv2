@@ -71,6 +71,10 @@ interface PlanAIAnalysisProps {
   onAnalyzeAllPending?: () => void;
   /** When this number increments, the panel auto-triggers analysis on the current page once the image is ready. */
   autoAnalyzeToken?: number;
+  /** Map of page -> analysis result, for the "send all to budget" flow. */
+  resultsByPage?: Record<number, PlanAnalysisResult>;
+  obraId?: string;
+  planName?: string;
 }
 
 export function PlanAIAnalysis({
