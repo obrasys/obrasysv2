@@ -368,6 +368,16 @@ export function PlanQuantityTable({
           </Table>
         )}
       </div>
+
+      {obraId && !onSendToBudget && (
+        <PlanBudgetSendDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          rows={filtered.filter((r) => selected.has(r.id))}
+          obraId={obraId}
+          floorMap={floorMap}
+        />
+      )}
     </Card>
   );
 }
