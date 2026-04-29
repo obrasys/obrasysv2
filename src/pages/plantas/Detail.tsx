@@ -51,7 +51,7 @@ export default function PlanDetail() {
   const navigate = useNavigate();
 
   // Data
-  const { plans, isLoading: plansLoading } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
   const { calibration, saveCalibration } = usePlanCalibration(planId);
   const { measurements, addMeasurement, updateMeasurement, deleteMeasurement } = usePlanMeasurements(planId);
