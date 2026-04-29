@@ -106,7 +106,9 @@ export function PlanQuantityTable({
       all: rows.length,
       medicao: rows.filter((r) => r.source === "medicao").length,
       compartimento: rows.filter((r) => r.source === "compartimento").length,
-      elemento: rows.filter((r) => r.source === "elemento").length,
+      especialidade: rows.filter((r) => r.source === "especialidade").length,
+      escada: rows.filter((r) => r.source === "escada").length,
+      outros: rows.filter((r) => r.source === "outros").length,
     };
   }, [rows]);
 
