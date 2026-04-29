@@ -2,7 +2,61 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import type { PlanMeasurement, MeasurementType, ValidationState } from "@/types/plan-measurements";
+import type {
+  PlanMeasurement,
+  MeasurementType,
+  ValidationState,
+  SegmentActionType,
+  BudgetLinkStatus,
+  AxiaStatus,
+  AxiaNote,
+} from "@/types/plan-measurements";
+
+export interface AddMeasurementInput {
+  tipo: MeasurementType;
+  coordinates: Array<{ x: number; y: number }>;
+  valorBruto: number;
+  unidade: string;
+  camada?: string;
+  etiqueta?: string;
+  cor?: string;
+  observacao?: string;
+  // Structured intervention metadata
+  action_type?: SegmentActionType;
+  segment_length?: number;
+  ceiling_height?: number;
+  wall_area?: number;
+  baseboard_length?: number;
+  wall_thickness_cm?: number;
+  demolition_volume?: number;
+  openings_area?: number;
+  material_id?: string | null;
+  material_label?: string | null;
+}
+
+export interface UpdateMeasurementInput {
+  id: string;
+  valorAjustado?: number;
+  valorFinal?: number;
+  etiqueta?: string;
+  camada?: string;
+  observacao?: string;
+  estadoValidacao?: ValidationState;
+  action_type?: SegmentActionType | null;
+  segment_length?: number | null;
+  ceiling_height?: number | null;
+  wall_area?: number | null;
+  baseboard_length?: number | null;
+  wall_thickness_cm?: number | null;
+  demolition_volume?: number | null;
+  openings_area?: number | null;
+  material_id?: string | null;
+  material_label?: string | null;
+  budget_link_status?: BudgetLinkStatus;
+  budget_artigo_id?: string | null;
+  axia_status?: AxiaStatus;
+  axia_notes?: AxiaNote[] | null;
+}
 
 export function usePlanMeasurements(planImportId?: string) {
   const { user } = useAuth();
@@ -18,60 +72,50 @@ export function usePlanMeasurements(planImportId?: string) {
         .eq("plan_import_id", planImportId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as PlanMeasurement[];
+      return (data ?? []) as unknown as PlanMeasurement[];
     },
     enabled: !!planImportId && !!user,
   });
 
   const addMeasurement = useMutation({
-    mutationFn: async ({
-      tipo,
-      coordinates,
-      valorBruto,
-      unidade,
-      camada,
-      etiqueta,
-      cor,
-      observacao,
-    }: {
-      tipo: MeasurementType;
-      coordinates: Array<{ x: number; y: number }>;
-      valorBruto: number;
-      unidade: string;
-      camada?: string;
-      etiqueta?: string;
-      cor?: string;
-      observacao?: string;
-    }) => {
+    mutationFn: async (input: AddMeasurementInput) => {
       if (!user || !planImportId) throw new Error("Não autenticado");
+      const payload: Record<string, any> = {
+        plan_import_id: planImportId,
+        user_id: user.id,
+        tipo: input.tipo,
+        coordinates: input.coordinates as any,
+        valor_bruto: input.valorBruto,
+        valor_ajustado: input.valorBruto,
+        valor_final: input.valorBruto,
+        unidade: input.unidade,
+        camada: input.camada || null,
+        etiqueta: input.etiqueta || null,
+        cor: input.cor || "#3b82f6",
+        observacao: input.observacao || null,
+      };
+      const optional: Array<keyof AddMeasurementInput> = [
+        "action_type", "segment_length", "ceiling_height", "wall_area",
+        "baseboard_length", "wall_thickness_cm", "demolition_volume",
+        "openings_area", "material_id", "material_label",
+      ];
+      for (const k of optional) {
+        if (input[k] !== undefined) payload[k as string] = input[k];
+      }
 
       const { data, error } = await supabase
         .from("plan_measurements")
-        .insert({
-          plan_import_id: planImportId,
-          user_id: user.id,
-          tipo,
-          coordinates: coordinates as any,
-          valor_bruto: valorBruto,
-          valor_ajustado: valorBruto,
-          valor_final: valorBruto,
-          unidade,
-          camada: camada || null,
-          etiqueta: etiqueta || null,
-          cor: cor || "#3b82f6",
-          observacao: observacao || null,
-        })
+        .insert(payload as any)
         .select()
         .single();
       if (error) throw error;
 
-      // Update plan status
       await supabase
         .from("plan_imports")
         .update({ status: "medida" })
         .eq("id", planImportId);
 
-      return data as PlanMeasurement;
+      return data as unknown as PlanMeasurement;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plan-measurements", planImportId] });
@@ -83,30 +127,24 @@ export function usePlanMeasurements(planImportId?: string) {
   });
 
   const updateMeasurement = useMutation({
-    mutationFn: async ({
-      id,
-      valorAjustado,
-      valorFinal,
-      etiqueta,
-      camada,
-      observacao,
-      estadoValidacao,
-    }: {
-      id: string;
-      valorAjustado?: number;
-      valorFinal?: number;
-      etiqueta?: string;
-      camada?: string;
-      observacao?: string;
-      estadoValidacao?: ValidationState;
-    }) => {
+    mutationFn: async (input: UpdateMeasurementInput) => {
+      const { id, ...rest } = input;
       const updates: Record<string, any> = {};
-      if (valorAjustado !== undefined) updates.valor_ajustado = valorAjustado;
-      if (valorFinal !== undefined) updates.valor_final = valorFinal;
-      if (etiqueta !== undefined) updates.etiqueta = etiqueta;
-      if (camada !== undefined) updates.camada = camada;
-      if (observacao !== undefined) updates.observacao = observacao;
-      if (estadoValidacao !== undefined) updates.estado_validacao = estadoValidacao;
+      if (rest.valorAjustado !== undefined) updates.valor_ajustado = rest.valorAjustado;
+      if (rest.valorFinal !== undefined) updates.valor_final = rest.valorFinal;
+      if (rest.etiqueta !== undefined) updates.etiqueta = rest.etiqueta;
+      if (rest.camada !== undefined) updates.camada = rest.camada;
+      if (rest.observacao !== undefined) updates.observacao = rest.observacao;
+      if (rest.estadoValidacao !== undefined) updates.estado_validacao = rest.estadoValidacao;
+      const passthrough: Array<keyof UpdateMeasurementInput> = [
+        "action_type", "segment_length", "ceiling_height", "wall_area",
+        "baseboard_length", "wall_thickness_cm", "demolition_volume",
+        "openings_area", "material_id", "material_label",
+        "budget_link_status", "budget_artigo_id", "axia_status", "axia_notes",
+      ];
+      for (const k of passthrough) {
+        if (rest[k] !== undefined) updates[k as string] = rest[k] as any;
+      }
 
       const { data, error } = await supabase
         .from("plan_measurements")
@@ -115,7 +153,7 @@ export function usePlanMeasurements(planImportId?: string) {
         .select()
         .single();
       if (error) throw error;
-      return data as PlanMeasurement;
+      return data as unknown as PlanMeasurement;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plan-measurements", planImportId] });
@@ -182,7 +220,7 @@ export function calculatePolygonArea(
   return Math.abs(area) / 2 / (pixelsPerMeter * pixelsPerMeter);
 }
 
-/** Calculate closed polygon perimeter in meters (sums all edges incl. closing edge) */
+/** Calculate closed polygon perimeter (a.k.a. Rodapé) in meters — sums all edges including closing edge */
 export function calculatePolygonPerimeter(
   coordinates: Array<{ x: number; y: number }>,
   pixelsPerMeter: number
@@ -198,3 +236,6 @@ export function calculatePolygonPerimeter(
   }
   return total / pixelsPerMeter;
 }
+
+/** Alias: Rodapé is the perimeter of a closed polygon */
+export const calculateRodape = calculatePolygonPerimeter;

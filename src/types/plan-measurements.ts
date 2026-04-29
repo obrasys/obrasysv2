@@ -35,6 +35,19 @@ export interface PlanCalibration {
   updated_at: string;
 }
 
+export type SegmentActionType = 'demolir' | 'construir' | 'barrar' | 'pintar' | 'revestir';
+export type BudgetLinkStatus = 'not_linked' | 'suggested' | 'linked' | 'ignored';
+export type AxiaStatus = 'not_analyzed' | 'valid' | 'warning' | 'error';
+
+export interface AxiaNote {
+  severity: 'info' | 'warning' | 'error';
+  type: string;
+  message: string;
+  explanation?: string;
+  suggested_action?: string;
+  related_field?: string;
+}
+
 export interface PlanMeasurement {
   id: string;
   plan_import_id: string;
@@ -52,6 +65,21 @@ export interface PlanMeasurement {
   estado_validacao: ValidationState;
   created_at: string;
   updated_at: string;
+  // Structured intervention metadata (added 2026-04)
+  action_type?: SegmentActionType | null;
+  segment_length?: number | null;
+  ceiling_height?: number | null;
+  wall_area?: number | null;
+  baseboard_length?: number | null;
+  wall_thickness_cm?: number | null;
+  demolition_volume?: number | null;
+  openings_area?: number | null;
+  material_id?: string | null;
+  material_label?: string | null;
+  budget_link_status?: BudgetLinkStatus;
+  budget_artigo_id?: string | null;
+  axia_status?: AxiaStatus;
+  axia_notes?: AxiaNote[] | null;
 }
 
 export interface PlanMeasurementMapping {

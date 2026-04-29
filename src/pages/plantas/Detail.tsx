@@ -13,6 +13,8 @@ import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { PlanSegmentDialog, type SegmentSavePayload } from "@/components/plantas/PlanSegmentDialog";
+import { PlanMeasurementBudgetPanel } from "@/components/plantas/PlanMeasurementBudgetPanel";
+import { PlanMeasurementAxiaPanel, PlanAxiaSummaryStrip } from "@/components/plantas/PlanMeasurementAxiaPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -449,6 +451,9 @@ export default function PlanDetail() {
       camada: saveCamada || undefined,
       etiqueta: baseEtiqueta,
       cor,
+      ...(pendingSave.tipo === "area" && pendingSave.perimetro
+        ? { baseboard_length: parseFloat(pendingSave.perimetro.toFixed(4)) }
+        : {}),
     });
 
     // 2) For closed polygons (area), also persist perimeter + wall areas if user opted in
@@ -583,13 +588,12 @@ export default function PlanDetail() {
     setOpeningPeitoril("");
   };
 
-  // Save segment (parede isolada com ações construtivas)
+  // Save segment (parede isolada com ações construtivas) — registo único com metadados estruturados
   const handleConfirmSegment = async (payload: SegmentSavePayload) => {
     if (!pendingSegment) return;
     const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
     const baseEtiqueta = payload.etiqueta;
 
-    // 1) Comprimento (linha)
     await addMeasurement.mutateAsync({
       tipo: "linha",
       coordinates: pendingSegment.coordinates,
@@ -599,35 +603,16 @@ export default function PlanDetail() {
       etiqueta: baseEtiqueta,
       cor,
       observacao: payload.observacao,
+      action_type: payload.acao,
+      segment_length: payload.comprimento_m,
+      ceiling_height: payload.pe_direito_m,
+      wall_area: payload.area_liquida_m2,
+      openings_area: payload.aberturas_m2,
+      wall_thickness_cm: payload.espessura_cm ?? undefined,
+      demolition_volume: payload.volume_demolicao_m3 ?? undefined,
+      material_id: payload.material_id ?? null,
+      material_label: payload.material_label ?? null,
     });
-
-    // 2) Área da parede líquida (m²) — útil para pintura/revestimento/barrar/construir
-    if (payload.area_liquida_m2 > 0) {
-      await addMeasurement.mutateAsync({
-        tipo: "area",
-        coordinates: pendingSegment.coordinates,
-        valorBruto: payload.area_liquida_m2,
-        unidade: "m²",
-        camada: payload.camada || undefined,
-        etiqueta: `${baseEtiqueta} — Parede (h=${payload.pe_direito_m.toFixed(2)} m)`,
-        cor,
-        observacao: payload.observacao,
-      });
-    }
-
-    // 3) Volume de demolição (m³) — apenas se ação = demolir
-    if (payload.acao === "demolir" && payload.volume_demolicao_m3 && payload.volume_demolicao_m3 > 0) {
-      await addMeasurement.mutateAsync({
-        tipo: "area",
-        coordinates: pendingSegment.coordinates,
-        valorBruto: payload.volume_demolicao_m3,
-        unidade: "m³",
-        camada: payload.camada || undefined,
-        etiqueta: `${baseEtiqueta} — Volume demolição (e=${payload.espessura_cm?.toFixed(1)} cm)`,
-        cor,
-        observacao: payload.observacao,
-      });
-    }
 
     setColorIndex((i) => i + 1);
     setActivePoints([]);
@@ -948,6 +933,19 @@ export default function PlanDetail() {
                 } : null}
               />
             )}
+
+            {/* Painel contextual da última medição estruturada (segmento com ação) */}
+            {(() => {
+              const lastStructured = [...measurements].reverse().find((m) => !!m.action_type);
+              if (!lastStructured || !obraId) return null;
+              return (
+                <div className="space-y-3">
+                  <PlanAxiaSummaryStrip measurements={measurements} />
+                  <PlanMeasurementBudgetPanel measurement={lastStructured} obraId={obraId} />
+                  <PlanMeasurementAxiaPanel measurement={lastStructured} />
+                </div>
+              );
+            })()}
 
             {/* Budget action on budget step */}
             {effectiveStep === "budget" && (
