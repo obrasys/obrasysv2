@@ -111,7 +111,7 @@ function isStepUnlocked(step: WorkflowStep, ctx: ChecklistContext): boolean {
 const MODE_HINTS: Record<MeasureMode, string> = {
   view: "Arraste para mover · scroll para zoom",
   calibrate: "Selecione 2 pontos de uma distância conhecida",
-  measure_line: "Segmento: 2 cliques = parede isolada · 3+ cliques + duplo-clique = polígono fechado (área + rodapé)",
+  measure_line: "2 cliques = parede isolada · 3+ cliques + duplo-clique = polígono fechado (Rodapé + Área)",
   measure_area: "Clique nos vértices da área · Duplo-clique para fechar",
   measure_count: "Clique para marcar cada elemento",
   draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar",
@@ -130,8 +130,7 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   { id: "view", icon: MousePointer2, label: "Navegar", tip: "Arrastar e zoom", group: "nav" },
-  { id: "measure_line", icon: Wallpaper, label: "Segmento", tip: "Segmento de parede ou polígono fechado (área + rodapé)", group: "measure" },
-  { id: "measure_count", icon: Hash, label: "Contagem", tip: "Contar elementos", group: "measure" },
+  { id: "measure_line", icon: Wallpaper, label: "Segmento", tip: "2 cliques = parede isolada · 3+ cliques + duplo-clique = polígono fechado (Área + Rodapé)", group: "measure" },
 ];
 
 interface Props {
