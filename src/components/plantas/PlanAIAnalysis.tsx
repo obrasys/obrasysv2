@@ -106,7 +106,7 @@ export function PlanAIAnalysis({
   };
 
   // Pending auto-analyze trigger after page switch (used by "Analisar todas")
-  const pendingAutoAnalyze = useRef(false);
+  const lastTokenRef = useRef<number | undefined>(undefined);
 
   const handleAnalyze = async () => {
     if (!imageDataUrl) {
@@ -161,14 +161,15 @@ export function PlanAIAnalysis({
     }
   };
 
-  // Auto-trigger analyze when parent navigated to a new page programmatically
+  // Auto-trigger analyze when parent bumps the token (sequential "analyze all" flow)
   useEffect(() => {
-    if (!pendingAutoAnalyze.current) return;
+    if (autoAnalyzeToken === undefined) return;
+    if (autoAnalyzeToken === lastTokenRef.current) return;
     if (!imageDataUrl) return;
-    pendingAutoAnalyze.current = false;
+    lastTokenRef.current = autoAnalyzeToken;
     handleAnalyze();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageDataUrl]);
+  }, [autoAnalyzeToken, imageDataUrl]);
 
   const confidenceBadge = (confidence: number) => {
     if (confidence >= 0.8) return <Badge variant="default" className="text-[9px] px-1">Alta</Badge>;
