@@ -436,6 +436,9 @@ export function PlanAIAnalysis({
           elements={result.elements}
           onHighlightPosition={onHighlightPosition}
           pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
+          resultsByPage={resultsByPage}
+          obraId={obraId}
+          planName={planName}
         />
       )}
     </>
