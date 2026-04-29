@@ -173,12 +173,22 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     if (aberturas.length > 0) obsParts.push(`Aberturas: ${aberturas.length} (−${aberturasArea.toFixed(2)} m²) → líquido ${areaLiquida.toFixed(2)} m²`);
     if (acao === "demolir") obsParts.push(`Espessura ${espessuraNum.toFixed(1)} cm → volume ${volumeDemolicao.toFixed(3)} m³`);
     if (acao === "construir" && materialLabel) obsParts.push(`Material: ${materialLabel}${espessuraNum > 0 ? ` (e=${espessuraNum.toFixed(1)} cm)` : ""}`);
+    if (acao === "barrar") obsParts.push(`${barrarSistema} · ${facesBarrar} face(s) → ${areaBarrar.toFixed(2)} m²`);
+    if (acao === "pintar") obsParts.push(`${pinturaTipo} · ${demaos} demão(s) × ${facesPintura} face(s) → ${areaPintura.toFixed(2)} m²`);
+    if (acao === "revestir") obsParts.push(`${revestirTipo}${alturaRevPar > 0 ? ` (h=${alturaRevPar.toFixed(2)} m)` : ""} → ${areaRevestir.toFixed(2)} m²`);
+
+    // Final wall_area depends on action
+    const finalWallArea =
+      acao === "barrar" ? areaBarrar :
+      acao === "pintar" ? areaPintura :
+      acao === "revestir" ? areaRevestir :
+      areaLiquida;
 
     await onConfirm({
       comprimento_m: parseFloat(comprimentoMetros.toFixed(4)),
       pe_direito_m: peDireitoNum,
       area_bruta_m2: parseFloat(areaBruta.toFixed(4)),
-      area_liquida_m2: parseFloat(areaLiquida.toFixed(4)),
+      area_liquida_m2: parseFloat(finalWallArea.toFixed(4)),
       aberturas_m2: parseFloat(aberturasArea.toFixed(4)),
       acao,
       espessura_cm: acao === "demolir" || acao === "construir" ? espessuraNum : null,
@@ -197,6 +207,13 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     setEspessura("11");
     setMaterialId("__fallback:Tijolo cerâmico furado");
     setEtiqueta("");
+    setBarrarSistema("Reboco + barramento");
+    setBarrarFaces("1");
+    setPinturaTipo("Tinta plástica interior");
+    setPinturaDemaos("2");
+    setPinturaFaces("1");
+    setRevestirTipo("Azulejo cerâmico");
+    setRevestirAlturaParcial("");
   };
 
   return (
