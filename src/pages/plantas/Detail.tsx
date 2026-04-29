@@ -880,6 +880,36 @@ export default function PlanDetail() {
               />
             )}
 
+            {/* Axia Guided Mode */}
+            <AxiaGuidedMode
+              enabled={guidedMode}
+              onToggle={setGuidedMode}
+              status={{
+                calibrated: canMeasure,
+                hasFloors: floors.length > 0,
+                hasMeasurements: measurements.length > 0 || rooms.length > 0,
+                hasValidated:
+                  measurements.length > 0 &&
+                  measurements.every((m) => m.estado_validacao !== "pendente"),
+              }}
+              onStartCalibration={handleStartCalibration}
+              onCreateFloor={() => {
+                // Scroll to floor selector
+                document.getElementById("plan-floor-selector")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              onStartMeasure={() => handleModeChange("measure_area")}
+              onOpenValidation={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+            />
+
+            {/* Pavimentos */}
+            <div id="plan-floor-selector">
+              <PlanFloorSelector
+                obraId={obraId}
+                selectedFloorId={selectedFloorId}
+                onSelectFloor={setSelectedFloorId}
+              />
+            </div>
+
             {/* Show Axia analysis prominently on analyze step, or compact on others */}
             {(effectiveStep === "analyze" || canMeasure) && (
               <PlanAIAnalysis
