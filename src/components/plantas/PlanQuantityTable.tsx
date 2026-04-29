@@ -46,6 +46,7 @@ import {
   CONFIDENCE_OPTIONS,
   type ConfidenceLevel,
 } from "@/components/plantas/ConfidenceBadge";
+import { PlanBudgetSendDialog } from "@/components/plantas/PlanBudgetSendDialog";
 import { cn } from "@/lib/utils";
 
 const SOURCE_META: Record<
