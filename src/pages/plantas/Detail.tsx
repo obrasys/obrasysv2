@@ -592,6 +592,30 @@ export default function PlanDetail() {
 
   // Save segment (parede isolada com ações construtivas) — registo único com metadados estruturados
   const handleConfirmSegment = async (payload: SegmentSavePayload) => {
+    // Modo edição → atualizar registo existente
+    if (editingSegmentId) {
+      await updateMeasurement.mutateAsync({
+        id: editingSegmentId,
+        etiqueta: payload.etiqueta,
+        camada: payload.camada || undefined,
+        observacao: payload.observacao,
+        action_type: payload.acao,
+        ceiling_height: payload.pe_direito_m,
+        wall_area: payload.area_liquida_m2,
+        openings_area: payload.aberturas_m2,
+        wall_thickness_cm: payload.espessura_cm ?? null,
+        demolition_volume: payload.volume_demolicao_m3 ?? null,
+        material_id: payload.material_id ?? null,
+        material_label: payload.material_label ?? null,
+      });
+      setEditingSegmentId(null);
+      setEditingSegmentInitial(null);
+      setPendingSegment(null);
+      setShowSegmentDialog(false);
+      toast.success("Segmento atualizado");
+      return;
+    }
+
     if (!pendingSegment) return;
     const cor = MEASUREMENT_COLORS[colorIndex % MEASUREMENT_COLORS.length];
     const baseEtiqueta = payload.etiqueta;
@@ -626,7 +650,26 @@ export default function PlanDetail() {
   const handleCancelSegment = () => {
     setShowSegmentDialog(false);
     setPendingSegment(null);
+    setEditingSegmentId(null);
+    setEditingSegmentInitial(null);
     setActivePoints([]);
+  };
+
+  // Abrir dialog em modo edição a partir da lista de medições
+  const handleEditSegmentRequest = (m: typeof measurements[number]) => {
+    const coords = (m.coordinates as Array<{ x: number; y: number }>) ?? [];
+    setEditingSegmentId(m.id);
+    setEditingSegmentInitial({
+      pe_direito_m: m.ceiling_height ?? 2.7,
+      acao: (m.action_type ?? "construir") as any,
+      espessura_cm: m.wall_thickness_cm ?? null,
+      material_id: m.material_id ?? null,
+      material_label: m.material_label ?? null,
+      etiqueta: m.etiqueta ?? "",
+      aberturas_m2: m.openings_area ?? 0,
+    });
+    setPendingSegment({ coordinates: coords, comprimento: m.segment_length ?? m.valor_bruto });
+    setShowSegmentDialog(true);
   };
 
   // Loading states
