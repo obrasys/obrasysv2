@@ -319,6 +319,16 @@ export function PlanAxiaResultsTable({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {canSendBudget && resultsByPage && obraId && (
+        <PlanAxiaBudgetSendDialog
+          open={showSendDialog}
+          onOpenChange={setShowSendDialog}
+          resultsByPage={resultsByPage}
+          obraId={obraId}
+          planName={planName}
+        />
+      )}
     </Dialog>
   );
 }
