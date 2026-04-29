@@ -762,6 +762,9 @@ export default function PlanDetail() {
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
             </div>
           </div>
+          <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
+            <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
+          </Button>
         </div>
 
         {/* Unified workflow bar (stepper + guide + toolbar + active hint) */}
