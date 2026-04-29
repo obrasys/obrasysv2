@@ -193,17 +193,19 @@ export function PlanQuantityTable({
             <Button variant="outline" size="sm" onClick={exportCsv} type="button">
               <Download className="h-3.5 w-3.5 mr-1" /> Exportar CSV
             </Button>
-            {onSendToBudget && (
-              <Button
-                size="sm"
-                onClick={() => onSendToBudget(filtered.filter((r) => selected.has(r.id)))}
-                disabled={selected.size === 0}
-                type="button"
-              >
-                <ListChecks className="h-3.5 w-3.5 mr-1" />
-                Enviar p/ orçamento ({selected.size})
-              </Button>
-            )}
+            <Button
+              size="sm"
+              onClick={() => {
+                const sel = filtered.filter((r) => selected.has(r.id));
+                if (onSendToBudget) onSendToBudget(sel);
+                else setSendOpen(true);
+              }}
+              disabled={selected.size === 0}
+              type="button"
+            >
+              <ListChecks className="h-3.5 w-3.5 mr-1" />
+              Enviar p/ orçamento ({selected.size})
+            </Button>
           </div>
         </div>
 
