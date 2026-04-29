@@ -20,7 +20,7 @@ export function usePlanCalibration(planImportId?: string) {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as PlanCalibration | null;
+      return data as unknown as PlanCalibration | null;
     },
     enabled: !!planImportId && !!user,
   });

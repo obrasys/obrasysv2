@@ -18,7 +18,7 @@ export function usePlanRooms(planImportId?: string) {
         .eq("plan_import_id", planImportId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as PlanRoom[];
+      return data as unknown as PlanRoom[];
     },
     enabled: !!planImportId && !!user,
   });
@@ -48,7 +48,7 @@ export function usePlanRooms(planImportId?: string) {
         .select()
         .single();
       if (error) throw error;
-      return data as PlanRoom;
+      return data as unknown as PlanRoom;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plan-rooms", planImportId] });
@@ -82,7 +82,7 @@ export function usePlanRooms(planImportId?: string) {
         .select()
         .single();
       if (error) throw error;
-      return data as PlanRoom;
+      return data as unknown as PlanRoom;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plan-rooms", planImportId] });
