@@ -78,8 +78,15 @@ export function PlanAxiaResultsTable({
   elements,
   onHighlightPosition,
   pageLabel,
+  resultsByPage,
+  obraId,
+  planName,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [showSendDialog, setShowSendDialog] = useState(false);
+
+  const analyzedPagesCount = resultsByPage ? Object.keys(resultsByPage).length : 0;
+  const canSendBudget = !!obraId && analyzedPagesCount > 0;
 
   const q = search.trim().toLowerCase();
 
