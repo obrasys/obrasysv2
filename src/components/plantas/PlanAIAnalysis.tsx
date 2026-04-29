@@ -69,6 +69,8 @@ interface PlanAIAnalysisProps {
   onSelectPage?: (page: number) => void;
   analyzedPages?: number[];
   onAnalyzeAllPending?: () => void;
+  /** When this number increments, the panel auto-triggers analysis on the current page once the image is ready. */
+  autoAnalyzeToken?: number;
 }
 
 export function PlanAIAnalysis({
