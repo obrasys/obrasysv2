@@ -4,6 +4,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type { IcfResumo, IcfConfiguracao, IcfLaje } from '@/types/icf';
 import { ICF_DEFAULT_CONSTANTS, type IcfCalculationConstants } from '@/hooks/useIcfCalculationConstants';
+import {
+  buildArchitectureChapters,
+  type IcfArchitectureScope,
+} from '@/lib/icf-architecture-engine';
+import type { PlanQuantitativoRow } from '@/hooks/usePlanQuantitativos';
 
 interface IcfBudgetArticle {
   codigo?: string;
@@ -224,6 +229,7 @@ export function useGenerateIcfBudget() {
       margem_lucro = 15,
       iva_percent = 23,
       custos_indiretos_percent = 0,
+      scope,
     }: {
       resumo: IcfResumo;
       config: IcfConfiguracao;
@@ -231,6 +237,8 @@ export function useGenerateIcfBudget() {
       margem_lucro?: number;
       iva_percent?: number;
       custos_indiretos_percent?: number;
+      /** Âmbito adicional (arquitetura/especialidades). Se omitido = só estrutura. */
+      scope?: IcfArchitectureScope;
     }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
@@ -278,23 +286,25 @@ export function useGenerateIcfBudget() {
       if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
       // 3. Subtotal de custo + custos indiretos absolutos (também a custo).
-      // O custo indireto é uma despesa real e não deve ser inflada novamente
-      // — também passa pela margem na camada de leitura.
       const subtotalCusto = chapters.reduce(
         (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
         0,
       );
       const estaleiroAbs = Math.round(subtotalCusto * (custos_indiretos_percent / 100) * 100) / 100;
 
-      // 4. Geração transacional via RPC (atómica + auditada).
-      // Toda a criação (orçamento + capítulos + artigos + log) ocorre numa
-      // única transação SQL — se algum passo falhar, nada é gravado.
+      // 4. Geração transacional via RPC (atómica + auditada) — só estrutura.
+      const titulo = scope?.arquitetura
+        ? scope.especialidades.length === 4
+          ? `Obra Completa — ${config.nome}`
+          : `Estrutura + Arquitetura — ${config.nome}`
+        : `Estrutura ICF — ${config.nome}`;
+
       const { data: result, error: rpcErr } = await supabase.rpc(
         'generate_icf_budget_transactional',
         {
           p_obra_id: obraId,
           p_configuracao_id: config.id,
-          p_titulo: `Estrutura ICF — ${config.nome}`,
+          p_titulo: titulo,
           p_margem_lucro: margem_lucro,
           p_custos_indiretos: {
             estaleiro: estaleiroAbs,
@@ -318,13 +328,87 @@ export function useGenerateIcfBudget() {
       if (rpcErr) throw rpcErr;
 
       const out = result as { orcamento_id: string; codigo: string };
-      return { id: out.orcamento_id, codigo: out.codigo };
+      const orcamentoId = out.orcamento_id;
+
+      // 5. Se o âmbito incluir arquitetura/especialidades, gerar e inserir
+      //    capítulos adicionais (paramétrico + planta quando disponível).
+      let extraChaptersCount = 0;
+      let extraArtigosCount = 0;
+      if (scope?.arquitetura && scope.especialidades.length > 0) {
+        // 5a. Procurar planta calibrada da obra (opcional)
+        let planRows: PlanQuantitativoRow[] = [];
+        try {
+          const { data: planRowsData } = await supabase
+            .from('plan_quantitativos_v' as any)
+            .select('*')
+            .eq('obra_id', obraId);
+          planRows = (planRowsData ?? []) as unknown as PlanQuantitativoRow[];
+        } catch {
+          // tabela/view pode não estar acessível para o user — ignora.
+          planRows = [];
+        }
+
+        const startNumero = chapters.length + 1;
+        const { chapters: extra } = buildArchitectureChapters({
+          resumo,
+          config,
+          scope,
+          planRows,
+          precos,
+          startNumero,
+        });
+
+        for (const cap of extra) {
+          const { data: capRow, error: capErr } = await supabase
+            .from('capitulos_orcamento')
+            .insert({
+              orcamento_id: orcamentoId,
+              numero: cap.numero,
+              ordem: cap.numero,
+              titulo: cap.titulo,
+              descricao: cap.descricao ?? null,
+            } as any)
+            .select('id')
+            .single();
+          if (capErr) throw capErr;
+          extraChaptersCount += 1;
+
+          if (cap.artigos.length > 0) {
+            const rows = cap.artigos.map((a, idx) => ({
+              capitulo_id: (capRow as any).id,
+              codigo: a.codigo ?? `ARQ.${cap.numero}.${String(idx + 1).padStart(2, '0')}`,
+              descricao: a.descricao,
+              unidade: a.unidade,
+              quantidade: a.quantidade,
+              preco_unitario: a.preco_unitario,
+              preco_base: a.preco_unitario,
+              ordem: idx + 1,
+              quantity_source: 'icf_architecture',
+            }));
+            const { error: artErr } = await supabase
+              .from('artigos_orcamento')
+              .insert(rows as any);
+            if (artErr) throw artErr;
+            extraArtigosCount += rows.length;
+          }
+        }
+      }
+
+      return {
+        id: orcamentoId,
+        codigo: out.codigo,
+        extraChaptersCount,
+        extraArtigosCount,
+      };
     },
     onSuccess: (orc) => {
       qc.invalidateQueries({ queryKey: ['orcamentos'] });
+      const extra = orc.extraChaptersCount
+        ? ` + ${orc.extraChaptersCount} capítulos de arquitetura`
+        : '';
       toast({
         title: 'Orçamento ICF gerado',
-        description: `${orc.codigo} criado a partir do módulo ICF`,
+        description: `${orc.codigo} criado a partir do módulo ICF${extra}`,
       });
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
