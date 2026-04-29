@@ -977,6 +977,35 @@ export default function PlanDetail() {
                 onAnalysisComplete={() => {
                   setHasAnalysis(true);
                   setWorkflowStep("analyze");
+                  // mark current page as analyzed (handled via onResultChange below)
+                }}
+                result={axiaResultsByPage[currentPage] ?? null}
+                onResultChange={(next) => {
+                  setAxiaResultsByPage((prev) => {
+                    const copy = { ...prev };
+                    if (next) copy[currentPage] = next;
+                    else delete copy[currentPage];
+                    return copy;
+                  });
+                }}
+                currentPage={currentPage}
+                totalPages={isPdf ? totalPages : 1}
+                onSelectPage={(p) => setCurrentPage(p)}
+                analyzedPages={Object.keys(axiaResultsByPage).map(Number)}
+                onAnalyzeAllPending={() => {
+                  const pending = Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => !axiaResultsByPage[p]);
+                  if (pending.length === 0) {
+                    toast.info("Todas as folhas já estão analisadas.");
+                    return;
+                  }
+                  toast.info(`A analisar ${pending.length} folhas em sequência...`);
+                  setPendingAnalyzeQueue(pending);
+                  setCurrentPage(pending[0]);
+                }}
+                onHighlightPosition={(x, y) => {
+                  // best-effort: relies on PlanViewer's panning to focus point — noop placeholder
+                  console.log("Highlight position requested:", x, y);
                 }}
               />
             )}
