@@ -17,6 +17,7 @@ import { IcfKpiGrid } from '@/components/icf/IcfKpiGrid';
 import { IcfQuickNav } from '@/components/icf/IcfQuickNav';
 import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
 import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
+import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
