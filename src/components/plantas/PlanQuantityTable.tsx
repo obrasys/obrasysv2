@@ -32,6 +32,8 @@ import {
   Loader2,
   Download,
   ListChecks,
+  Footprints,
+  Package,
 } from "lucide-react";
 import {
   usePlanQuantitativos,
@@ -52,7 +54,9 @@ const SOURCE_META: Record<
 > = {
   medicao: { label: "Medição", icon: Ruler, tone: "text-blue-600" },
   compartimento: { label: "Compartimento", icon: SquareDashed, tone: "text-emerald-600" },
-  elemento: { label: "Elemento", icon: Plug, tone: "text-sky-600" },
+  especialidade: { label: "Especialidade", icon: Plug, tone: "text-sky-600" },
+  escada: { label: "Escada", icon: Footprints, tone: "text-red-600" },
+  outros: { label: "Outros", icon: Package, tone: "text-slate-600" },
 };
 
 interface PlanQuantityTableProps {
