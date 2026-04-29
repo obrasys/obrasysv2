@@ -86,6 +86,7 @@ export function PlanAIAnalysis({
   onSelectPage,
   analyzedPages = [],
   onAnalyzeAllPending,
+  autoAnalyzeToken,
 }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [internalResult, setInternalResult] = useState<PlanAnalysisResult | null>(null);
