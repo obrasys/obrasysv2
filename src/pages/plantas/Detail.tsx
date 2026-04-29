@@ -1020,7 +1020,9 @@ export default function PlanDetail() {
                   toast.info(`A analisar ${pending.length} folhas em sequência...`);
                   setPendingAnalyzeQueue(pending);
                   setCurrentPage(pending[0]);
+                  setAutoAnalyzeToken((t) => t + 1);
                 }}
+                autoAnalyzeToken={autoAnalyzeToken}
                 onHighlightPosition={(x, y) => {
                   // best-effort: relies on PlanViewer's panning to focus point — noop placeholder
                   console.log("Highlight position requested:", x, y);
