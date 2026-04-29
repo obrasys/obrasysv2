@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import type { PlanMeasurement, SegmentActionType } from "@/types/plan-measurements";
+import { ConfidenceBadge } from "@/components/plantas/ConfidenceBadge";
 import { useState } from "react";
 
 interface PlanMeasurementsListProps {
@@ -151,6 +152,12 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate, onEditS
                           <Badge variant={ESTADO_COLORS[m.estado_validacao]} className="text-[9px] h-4 px-1">
                             {m.estado_validacao === "pendente" ? "P" : m.estado_validacao === "validado" ? "V" : "R"}
                           </Badge>
+                          {(m as any).confidence && (
+                            <ConfidenceBadge
+                              level={(m as any).confidence}
+                              origin={(m as any).measurement_origin}
+                            />
+                          )}
                           {isSegment && onEditSegment && (
                             <Button
                               variant="ghost"
