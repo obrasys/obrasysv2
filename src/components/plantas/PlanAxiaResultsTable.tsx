@@ -41,6 +41,10 @@ interface Props {
   elements: AxiaElement[];
   onHighlightPosition?: (x: number, y: number) => void;
   pageLabel?: string;
+  /** Optional: enables "Enviar para orçamento" sending all analyzed pages, one chapter per folha. */
+  resultsByPage?: Record<number, PlanAnalysisResult>;
+  obraId?: string;
+  planName?: string;
 }
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
