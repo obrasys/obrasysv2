@@ -141,7 +141,7 @@ export function PlanAxiaResultsTable({
               className="shrink-0"
             >
               <Send className="w-3.5 h-3.5 mr-1.5" />
-              Enviar tudo p/ orçamento
+              Enviar p/ Quantitativos
               <Badge variant="secondary" className="ml-2 text-[10px]">
                 {analyzedPagesCount} folha(s)
               </Badge>
