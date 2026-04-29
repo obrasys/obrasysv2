@@ -80,6 +80,26 @@ export default function PlanDetail() {
     localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
   }, [guidedMode]);
 
+  // Axia analysis results PER PAGE (persisted in localStorage by planId)
+  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>(() => {
+    if (typeof window === "undefined" || !planId) return {};
+    try {
+      const raw = localStorage.getItem(`plan-axia-results:${planId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    if (!planId) return;
+    try {
+      localStorage.setItem(`plan-axia-results:${planId}`, JSON.stringify(axiaResultsByPage));
+    } catch { /* quota */ }
+  }, [axiaResultsByPage, planId]);
+
+  // Upload-new-plan dialog
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  // Pending page-jump for "Analisar todas as folhas em falta"
+  const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
+
   // File URL
   const fileUrlQuery = useQuery({
     queryKey: ["plan-file-url", plan?.file_path],
