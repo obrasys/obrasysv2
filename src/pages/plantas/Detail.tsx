@@ -57,6 +57,27 @@ export default function PlanDetail() {
   const { rooms, addRoom, updateRoom, deleteRoom } = usePlanRooms(planId);
   const { walls, addWall, updateWall, deleteWall } = usePlanWalls(planId);
   const { openings, addOpening, deleteOpening } = usePlanOpenings(planId);
+  const { floors } = usePlanFloors(obraId);
+
+  // Floor selection (used to scope new measurements/rooms; persisted per plan in localStorage)
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(() => {
+    if (typeof window === "undefined" || !planId) return null;
+    return localStorage.getItem(`plan-floor:${planId}`);
+  });
+  useEffect(() => {
+    if (!planId) return;
+    if (selectedFloorId) localStorage.setItem(`plan-floor:${planId}`, selectedFloorId);
+    else localStorage.removeItem(`plan-floor:${planId}`);
+  }, [selectedFloorId, planId]);
+
+  // Axia Guided Mode (persisted per user)
+  const [guidedMode, setGuidedMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("plan-axia-guided") === "1";
+  });
+  useEffect(() => {
+    localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
+  }, [guidedMode]);
 
   // File URL
   const fileUrlQuery = useQuery({
