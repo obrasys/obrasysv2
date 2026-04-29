@@ -207,7 +207,6 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         unidade: string;
         quantidade: number;
         preco_unitario: number;
-        valor_total: number;
         ordem: number;
         quantity_source: string;
         linked_element_id: string | null;
@@ -225,7 +224,6 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
             unidade: item.article.unidade,
             quantidade: parseFloat(item.quantidade.toFixed(2)),
             preco_unitario: item.article.preco_unitario,
-            valor_total: parseFloat(item.valorTotal.toFixed(2)),
             ordem: idx + 1,
             quantity_source: "plan_measurement",
             linked_element_id: null,
