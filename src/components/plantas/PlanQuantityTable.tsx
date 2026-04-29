@@ -46,6 +46,7 @@ import {
   CONFIDENCE_OPTIONS,
   type ConfidenceLevel,
 } from "@/components/plantas/ConfidenceBadge";
+import { PlanBudgetSendDialog } from "@/components/plantas/PlanBudgetSendDialog";
 import { cn } from "@/lib/utils";
 
 const SOURCE_META: Record<
@@ -79,6 +80,7 @@ export function PlanQuantityTable({
   const [sourceFilter, setSourceFilter] = useState<QuantitativoSource | "all">("all");
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceLevel | "all">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sendOpen, setSendOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -191,17 +193,19 @@ export function PlanQuantityTable({
             <Button variant="outline" size="sm" onClick={exportCsv} type="button">
               <Download className="h-3.5 w-3.5 mr-1" /> Exportar CSV
             </Button>
-            {onSendToBudget && (
-              <Button
-                size="sm"
-                onClick={() => onSendToBudget(filtered.filter((r) => selected.has(r.id)))}
-                disabled={selected.size === 0}
-                type="button"
-              >
-                <ListChecks className="h-3.5 w-3.5 mr-1" />
-                Enviar p/ orçamento ({selected.size})
-              </Button>
-            )}
+            <Button
+              size="sm"
+              onClick={() => {
+                const sel = filtered.filter((r) => selected.has(r.id));
+                if (onSendToBudget) onSendToBudget(sel);
+                else setSendOpen(true);
+              }}
+              disabled={selected.size === 0}
+              type="button"
+            >
+              <ListChecks className="h-3.5 w-3.5 mr-1" />
+              Enviar p/ orçamento ({selected.size})
+            </Button>
           </div>
         </div>
 
@@ -364,6 +368,16 @@ export function PlanQuantityTable({
           </Table>
         )}
       </div>
+
+      {obraId && !onSendToBudget && (
+        <PlanBudgetSendDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          rows={filtered.filter((r) => selected.has(r.id))}
+          obraId={obraId}
+          floorMap={floorMap}
+        />
+      )}
     </Card>
   );
 }
