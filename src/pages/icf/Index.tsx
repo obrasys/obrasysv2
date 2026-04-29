@@ -258,6 +258,12 @@ const IcfIndex = () => {
         )}
       </div>
 
+      <IcfScopeDialog
+        open={scopeDialogOpen}
+        onOpenChange={setScopeDialogOpen}
+        onConfirm={handleScopeConfirmed}
+      />
+
       <IcfBudgetConfigDialog
         open={budgetDialogOpen}
         onOpenChange={setBudgetDialogOpen}
