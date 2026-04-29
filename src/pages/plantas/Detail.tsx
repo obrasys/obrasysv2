@@ -1471,6 +1471,26 @@ export default function PlanDetail() {
         onUpdate={handleUpdateElement}
         onDelete={handleDeleteElement}
       />
+
+      {/* Upload new plan dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
+          {obraId && (
+            <PlanUploadForm
+              obraId={obraId}
+              isUploading={uploadPlan.isPending}
+              onCancel={() => setShowUploadDialog(false)}
+              onUpload={async (data) => {
+                const created = await uploadPlan.mutateAsync(data);
+                setShowUploadDialog(false);
+                if (created?.id) {
+                  navigate(`/obras/${obraId}/plantas/${created.id}`);
+                }
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
