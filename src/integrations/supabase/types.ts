@@ -5892,6 +5892,79 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_additional_items: {
+        Row: {
+          budget_artigo_id: string | null
+          budget_link_status: string
+          category: string | null
+          created_at: string
+          description: string
+          floor_id: string | null
+          id: string
+          notes: string | null
+          obra_id: string
+          quantity: number
+          room_id: string | null
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_artigo_id?: string | null
+          budget_link_status?: string
+          category?: string | null
+          created_at?: string
+          description: string
+          floor_id?: string | null
+          id?: string
+          notes?: string | null
+          obra_id: string
+          quantity?: number
+          room_id?: string | null
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_artigo_id?: string | null
+          budget_link_status?: string
+          category?: string | null
+          created_at?: string
+          description?: string
+          floor_id?: string | null
+          id?: string
+          notes?: string | null
+          obra_id?: string
+          quantity?: number
+          room_id?: string | null
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_additional_items_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_additional_items_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_additional_items_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "plan_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_budget_links: {
         Row: {
           artigo_orcamento_id: string
@@ -5945,6 +6018,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          page_id: string | null
           pixels_per_meter: number
           plan_import_id: string
           point1: Json
@@ -5958,6 +6032,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          page_id?: string | null
           pixels_per_meter?: number
           plan_import_id: string
           point1?: Json
@@ -5971,6 +6046,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          page_id?: string | null
           pixels_per_meter?: number
           plan_import_id?: string
           point1?: Json
@@ -5983,10 +6059,64 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "plan_calibrations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "plan_pages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "plan_calibrations_plan_import_id_fkey"
             columns: ["plan_import_id"]
             isOneToOne: false
             referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_floors: {
+        Row: {
+          created_at: string
+          default_ceiling_height: number
+          id: string
+          name: string
+          notes: string | null
+          obra_id: string
+          order_index: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_ceiling_height?: number
+          id?: string
+          name: string
+          notes?: string | null
+          obra_id: string
+          order_index?: number
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_ceiling_height?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          obra_id?: string
+          order_index?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_floors_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
         ]
@@ -6282,18 +6412,23 @@ export type Database = {
           budget_link_status: string
           camada: string | null
           ceiling_height: number | null
+          confidence: string
           coordinates: Json
           cor: string | null
           created_at: string
           demolition_volume: number | null
           estado_validacao: string
           etiqueta: string | null
+          floor_id: string | null
           id: string
           material_id: string | null
           material_label: string | null
+          measurement_origin: string
           observacao: string | null
           openings_area: number | null
+          page_id: string | null
           plan_import_id: string
+          room_id: string | null
           segment_length: number | null
           tipo: string
           unidade: string
@@ -6314,18 +6449,23 @@ export type Database = {
           budget_link_status?: string
           camada?: string | null
           ceiling_height?: number | null
+          confidence?: string
           coordinates?: Json
           cor?: string | null
           created_at?: string
           demolition_volume?: number | null
           estado_validacao?: string
           etiqueta?: string | null
+          floor_id?: string | null
           id?: string
           material_id?: string | null
           material_label?: string | null
+          measurement_origin?: string
           observacao?: string | null
           openings_area?: number | null
+          page_id?: string | null
           plan_import_id: string
+          room_id?: string | null
           segment_length?: number | null
           tipo?: string
           unidade?: string
@@ -6346,18 +6486,23 @@ export type Database = {
           budget_link_status?: string
           camada?: string | null
           ceiling_height?: number | null
+          confidence?: string
           coordinates?: Json
           cor?: string | null
           created_at?: string
           demolition_volume?: number | null
           estado_validacao?: string
           etiqueta?: string | null
+          floor_id?: string | null
           id?: string
           material_id?: string | null
           material_label?: string | null
+          measurement_origin?: string
           observacao?: string | null
           openings_area?: number | null
+          page_id?: string | null
           plan_import_id?: string
+          room_id?: string | null
           segment_length?: number | null
           tipo?: string
           unidade?: string
@@ -6371,10 +6516,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "plan_measurements_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_measurements_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "plan_pages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "plan_measurements_plan_import_id_fkey"
             columns: ["plan_import_id"]
             isOneToOne: false
             referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_measurements_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "plan_rooms"
             referencedColumns: ["id"]
           },
         ]
@@ -6428,6 +6594,54 @@ export type Database = {
             columns: ["wall_id"]
             isOneToOne: false
             referencedRelation: "plan_walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_pages: {
+        Row: {
+          created_at: string
+          floor_id: string | null
+          id: string
+          notes: string | null
+          page_number: number
+          plan_import_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          floor_id?: string | null
+          id?: string
+          notes?: string | null
+          page_number?: number
+          plan_import_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          floor_id?: string | null
+          id?: string
+          notes?: string | null
+          page_number?: number
+          plan_import_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_pages_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_pages_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
             referencedColumns: ["id"]
           },
         ]
@@ -6567,12 +6781,15 @@ export type Database = {
         Row: {
           area_m2: number
           boundary_coords: Json
+          confidence: string
           created_at: string
           estado_validacao: string
+          floor_id: string | null
           id: string
           nome: string
           observacao: string | null
           origem: string
+          page_id: string | null
           pe_direito_m: number
           perimetro_m: number
           plan_import_id: string
@@ -6583,12 +6800,15 @@ export type Database = {
         Insert: {
           area_m2?: number
           boundary_coords?: Json
+          confidence?: string
           created_at?: string
           estado_validacao?: string
+          floor_id?: string | null
           id?: string
           nome: string
           observacao?: string | null
           origem?: string
+          page_id?: string | null
           pe_direito_m?: number
           perimetro_m?: number
           plan_import_id: string
@@ -6599,12 +6819,15 @@ export type Database = {
         Update: {
           area_m2?: number
           boundary_coords?: Json
+          confidence?: string
           created_at?: string
           estado_validacao?: string
+          floor_id?: string | null
           id?: string
           nome?: string
           observacao?: string | null
           origem?: string
+          page_id?: string | null
           pe_direito_m?: number
           perimetro_m?: number
           plan_import_id?: string
@@ -6613,6 +6836,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "plan_rooms_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_rooms_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "plan_pages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plan_rooms_plan_import_id_fkey"
             columns: ["plan_import_id"]
@@ -6674,6 +6911,104 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: true
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_stairs: {
+        Row: {
+          confidence: string
+          created_at: string
+          destination_floor_id: string | null
+          guardrail_length_m: number | null
+          handrail_length_m: number | null
+          has_guardrail: boolean
+          has_handrail: boolean
+          id: string
+          landings: Json
+          largura_m: number
+          notes: string | null
+          origin_floor_id: string | null
+          page_id: string | null
+          plan_import_id: string
+          riser_height_m: number
+          risers_count: number
+          steps_count: number
+          tread_depth_m: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          destination_floor_id?: string | null
+          guardrail_length_m?: number | null
+          handrail_length_m?: number | null
+          has_guardrail?: boolean
+          has_handrail?: boolean
+          id?: string
+          landings?: Json
+          largura_m?: number
+          notes?: string | null
+          origin_floor_id?: string | null
+          page_id?: string | null
+          plan_import_id: string
+          riser_height_m?: number
+          risers_count?: number
+          steps_count?: number
+          tread_depth_m?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          destination_floor_id?: string | null
+          guardrail_length_m?: number | null
+          handrail_length_m?: number | null
+          has_guardrail?: boolean
+          has_handrail?: boolean
+          id?: string
+          landings?: Json
+          largura_m?: number
+          notes?: string | null
+          origin_floor_id?: string | null
+          page_id?: string | null
+          plan_import_id?: string
+          riser_height_m?: number
+          risers_count?: number
+          steps_count?: number
+          tread_depth_m?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_stairs_destination_floor_id_fkey"
+            columns: ["destination_floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_stairs_origin_floor_id_fkey"
+            columns: ["origin_floor_id"]
+            isOneToOne: false
+            referencedRelation: "plan_floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_stairs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "plan_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_stairs_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
             referencedColumns: ["id"]
           },
         ]
