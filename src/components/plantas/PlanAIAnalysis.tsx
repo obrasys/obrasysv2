@@ -440,6 +440,7 @@ export function PlanAIAnalysis({
           pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
           resultsByPage={resultsByPage}
           obraId={obraId}
+          planImportId={planImportId}
           planName={planName}
         />
       )}
