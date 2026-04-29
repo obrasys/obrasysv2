@@ -10530,6 +10530,33 @@ export type Database = {
           },
         ]
       }
+      plan_quantitativos_v: {
+        Row: {
+          action_type: string | null
+          camada: string | null
+          categoria: string | null
+          confidence: string | null
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          estado_validacao: string | null
+          floor_id: string | null
+          id: string | null
+          obra_id: string | null
+          origem: string | null
+          page_id: string | null
+          plan_import_id: string | null
+          room_id: string | null
+          source: string | null
+          source_subtype: string | null
+          symbol_type_id: string | null
+          unidade: string | null
+          updated_at: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       user_subscription: {
         Row: {
           created_at: string | null

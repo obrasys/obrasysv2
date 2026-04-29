@@ -10,9 +10,10 @@ import { PlanInfraTab } from "@/components/plantas/PlanInfraTab";
 import { AxiaPlanSuggestionsPanel } from "@/components/plantas/AxiaPlanSuggestionsPanel";
 import { PlanCrossValidationPanel } from "@/components/plantas/PlanCrossValidationPanel";
 import { PlanRoomTemplatesPanel } from "@/components/plantas/PlanRoomTemplatesPanel";
+import { PlanQuantityTable } from "@/components/plantas/PlanQuantityTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat } from "lucide-react";
+import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
@@ -188,8 +189,12 @@ export default function PlanQuantitativos() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           {/* Main content */}
-          <Tabs defaultValue="byRoom">
+          <Tabs defaultValue="unified">
             <TabsList className="flex-wrap">
+              <TabsTrigger value="unified" className="gap-1.5">
+                <Layers className="w-4 h-4" />
+                Tabela Unificada
+              </TabsTrigger>
               <TabsTrigger value="byRoom" className="gap-1.5">
                 <Home className="w-4 h-4" />
                 Por Compartimento
@@ -215,6 +220,10 @@ export default function PlanQuantitativos() {
                 Infraestrutura
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="unified" className="mt-4">
+              <PlanQuantityTable planImportId={planId} obraId={obraId} />
+            </TabsContent>
 
             <TabsContent value="byRoom" className="mt-4">
               <PlanQuantitativosByRoom
