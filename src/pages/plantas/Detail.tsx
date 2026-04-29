@@ -1025,6 +1025,7 @@ export default function PlanDetail() {
                 autoAnalyzeToken={autoAnalyzeToken}
                 resultsByPage={axiaResultsByPage}
                 obraId={obraId}
+                planImportId={planId}
                 planName={plan?.nome_ficheiro ?? undefined}
                 onHighlightPosition={(x, y) => {
                   // best-effort: relies on PlanViewer's panning to focus point — noop placeholder

@@ -41,9 +41,10 @@ interface Props {
   elements: AxiaElement[];
   onHighlightPosition?: (x: number, y: number) => void;
   pageLabel?: string;
-  /** Optional: enables "Enviar para orçamento" sending all analyzed pages, one chapter per folha. */
+  /** Optional: enables sending all analyzed pages to the unified Quantitativos table. */
   resultsByPage?: Record<number, PlanAnalysisResult>;
   obraId?: string;
+  planImportId?: string;
   planName?: string;
 }
 
@@ -80,13 +81,14 @@ export function PlanAxiaResultsTable({
   pageLabel,
   resultsByPage,
   obraId,
+  planImportId,
   planName,
 }: Props) {
   const [search, setSearch] = useState("");
   const [showSendDialog, setShowSendDialog] = useState(false);
 
   const analyzedPagesCount = resultsByPage ? Object.keys(resultsByPage).length : 0;
-  const canSendBudget = !!obraId && analyzedPagesCount > 0;
+  const canSendBudget = !!obraId && !!planImportId && analyzedPagesCount > 0;
 
   const q = search.trim().toLowerCase();
 
@@ -139,7 +141,7 @@ export function PlanAxiaResultsTable({
               className="shrink-0"
             >
               <Send className="w-3.5 h-3.5 mr-1.5" />
-              Enviar tudo p/ orçamento
+              Enviar p/ Quantitativos
               <Badge variant="secondary" className="ml-2 text-[10px]">
                 {analyzedPagesCount} folha(s)
               </Badge>
@@ -320,12 +322,13 @@ export function PlanAxiaResultsTable({
         </Tabs>
       </DialogContent>
 
-      {canSendBudget && resultsByPage && obraId && (
+      {canSendBudget && resultsByPage && obraId && planImportId && (
         <PlanAxiaBudgetSendDialog
           open={showSendDialog}
           onOpenChange={setShowSendDialog}
           resultsByPage={resultsByPage}
           obraId={obraId}
+          planImportId={planImportId}
           planName={planName}
         />
       )}
