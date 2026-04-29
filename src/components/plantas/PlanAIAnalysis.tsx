@@ -94,6 +94,7 @@ export function PlanAIAnalysis({
   autoAnalyzeToken,
   resultsByPage,
   obraId,
+  planImportId,
   planName,
 }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
