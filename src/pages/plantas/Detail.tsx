@@ -12,7 +12,7 @@ import { PlanWorkflowBar, type WorkflowStep } from "@/components/plantas/PlanWor
 import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
-import { PlanSegmentDialog, type SegmentSavePayload } from "@/components/plantas/PlanSegmentDialog";
+import { PlanSegmentDialog, type SegmentSavePayload, type SegmentInitialValues } from "@/components/plantas/PlanSegmentDialog";
 import { PlanMeasurementBudgetPanel } from "@/components/plantas/PlanMeasurementBudgetPanel";
 import { PlanMeasurementAxiaPanel, PlanAxiaSummaryStrip } from "@/components/plantas/PlanMeasurementAxiaPanel";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,8 @@ export default function PlanDetail() {
   // Segment dialog (parede isolada com ações construtivas)
   const [showSegmentDialog, setShowSegmentDialog] = useState(false);
   const [pendingSegment, setPendingSegment] = useState<{ coordinates: Array<{ x: number; y: number }>; comprimento: number } | null>(null);
+  const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
+  const [editingSegmentInitial, setEditingSegmentInitial] = useState<SegmentInitialValues | null>(null);
 
   const canMeasure = !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
