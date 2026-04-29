@@ -71,6 +71,10 @@ interface PlanAIAnalysisProps {
   onAnalyzeAllPending?: () => void;
   /** When this number increments, the panel auto-triggers analysis on the current page once the image is ready. */
   autoAnalyzeToken?: number;
+  /** Map of page -> analysis result, for the "send all to budget" flow. */
+  resultsByPage?: Record<number, PlanAnalysisResult>;
+  obraId?: string;
+  planName?: string;
 }
 
 export function PlanAIAnalysis({
@@ -87,6 +91,9 @@ export function PlanAIAnalysis({
   analyzedPages = [],
   onAnalyzeAllPending,
   autoAnalyzeToken,
+  resultsByPage,
+  obraId,
+  planName,
 }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [internalResult, setInternalResult] = useState<PlanAnalysisResult | null>(null);
@@ -429,6 +436,9 @@ export function PlanAIAnalysis({
           elements={result.elements}
           onHighlightPosition={onHighlightPosition}
           pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
+          resultsByPage={resultsByPage}
+          obraId={obraId}
+          planName={planName}
         />
       )}
     </>

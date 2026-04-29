@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Ruler, DoorOpen, Columns3, Search, Download, MapPin, Table2 } from "lucide-react";
+import { Ruler, DoorOpen, Columns3, Search, Download, MapPin, Table2, Send } from "lucide-react";
+import { PlanAxiaBudgetSendDialog } from "./PlanAxiaBudgetSendDialog";
+import type { PlanAnalysisResult } from "./PlanAIAnalysis";
 
 export interface AxiaDimension {
   value: number;
@@ -39,6 +41,10 @@ interface Props {
   elements: AxiaElement[];
   onHighlightPosition?: (x: number, y: number) => void;
   pageLabel?: string;
+  /** Optional: enables "Enviar para orçamento" sending all analyzed pages, one chapter per folha. */
+  resultsByPage?: Record<number, PlanAnalysisResult>;
+  obraId?: string;
+  planName?: string;
 }
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
@@ -72,8 +78,15 @@ export function PlanAxiaResultsTable({
   elements,
   onHighlightPosition,
   pageLabel,
+  resultsByPage,
+  obraId,
+  planName,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [showSendDialog, setShowSendDialog] = useState(false);
+
+  const analyzedPagesCount = resultsByPage ? Object.keys(resultsByPage).length : 0;
+  const canSendBudget = !!obraId && analyzedPagesCount > 0;
 
   const q = search.trim().toLowerCase();
 
@@ -119,6 +132,19 @@ export function PlanAxiaResultsTable({
               className="pl-9"
             />
           </div>
+          {canSendBudget && (
+            <Button
+              size="sm"
+              onClick={() => setShowSendDialog(true)}
+              className="shrink-0"
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              Enviar tudo p/ orçamento
+              <Badge variant="secondary" className="ml-2 text-[10px]">
+                {analyzedPagesCount} folha(s)
+              </Badge>
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="dimensions" className="w-full">
@@ -293,6 +319,16 @@ export function PlanAxiaResultsTable({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {canSendBudget && resultsByPage && obraId && (
+        <PlanAxiaBudgetSendDialog
+          open={showSendDialog}
+          onOpenChange={setShowSendDialog}
+          resultsByPage={resultsByPage}
+          obraId={obraId}
+          planName={planName}
+        />
+      )}
     </Dialog>
   );
 }
