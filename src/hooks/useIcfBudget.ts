@@ -4,6 +4,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type { IcfResumo, IcfConfiguracao, IcfLaje } from '@/types/icf';
 import { ICF_DEFAULT_CONSTANTS, type IcfCalculationConstants } from '@/hooks/useIcfCalculationConstants';
+import {
+  buildArchitectureChapters,
+  type IcfArchitectureScope,
+} from '@/lib/icf-architecture-engine';
+import type { PlanQuantitativoRow } from '@/hooks/usePlanQuantitativos';
 
 interface IcfBudgetArticle {
   codigo?: string;
