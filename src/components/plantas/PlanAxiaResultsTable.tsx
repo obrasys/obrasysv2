@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Ruler, DoorOpen, Columns3, Search, Download, MapPin, Table2 } from "lucide-react";
+import { Ruler, DoorOpen, Columns3, Search, Download, MapPin, Table2, Send } from "lucide-react";
+import { PlanAxiaBudgetSendDialog } from "./PlanAxiaBudgetSendDialog";
+import type { PlanAnalysisResult } from "./PlanAIAnalysis";
 
 export interface AxiaDimension {
   value: number;
