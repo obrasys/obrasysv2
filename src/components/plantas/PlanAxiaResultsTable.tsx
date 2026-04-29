@@ -322,12 +322,13 @@ export function PlanAxiaResultsTable({
         </Tabs>
       </DialogContent>
 
-      {canSendBudget && resultsByPage && obraId && (
+      {canSendBudget && resultsByPage && obraId && planImportId && (
         <PlanAxiaBudgetSendDialog
           open={showSendDialog}
           onOpenChange={setShowSendDialog}
           resultsByPage={resultsByPage}
           obraId={obraId}
+          planImportId={planImportId}
           planName={planName}
         />
       )}
