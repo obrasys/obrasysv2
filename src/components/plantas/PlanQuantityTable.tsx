@@ -207,7 +207,7 @@ export function PlanQuantityTable({
 
         {/* Source tabs */}
         <Tabs value={sourceFilter} onValueChange={(v) => setSourceFilter(v as any)}>
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
+          <TabsList className="flex w-full overflow-x-auto justify-start">
             <TabsTrigger value="all" className="text-xs">
               Todos <Badge variant="secondary" className="ml-1 text-[9px]">{counts.all}</Badge>
             </TabsTrigger>
@@ -217,8 +217,14 @@ export function PlanQuantityTable({
             <TabsTrigger value="compartimento" className="text-xs">
               Comp. <Badge variant="secondary" className="ml-1 text-[9px]">{counts.compartimento}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="elemento" className="text-xs">
-              Elem. <Badge variant="secondary" className="ml-1 text-[9px]">{counts.elemento}</Badge>
+            <TabsTrigger value="especialidade" className="text-xs">
+              Especialidades <Badge variant="secondary" className="ml-1 text-[9px]">{counts.especialidade}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="escada" className="text-xs">
+              Escadas <Badge variant="secondary" className="ml-1 text-[9px]">{counts.escada}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="outros" className="text-xs">
+              Outros <Badge variant="secondary" className="ml-1 text-[9px]">{counts.outros}</Badge>
             </TabsTrigger>
           </TabsList>
         </Tabs>
