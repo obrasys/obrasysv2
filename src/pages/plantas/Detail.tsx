@@ -13,6 +13,8 @@ import { PlanSymbolPicker } from "@/components/plantas/PlanSymbolPicker";
 import { PlanGripPreferences } from "@/components/plantas/PlanGripPreferences";
 import { PlanElementProperties } from "@/components/plantas/PlanElementProperties";
 import { PlanSegmentDialog, type SegmentSavePayload } from "@/components/plantas/PlanSegmentDialog";
+import { PlanMeasurementBudgetPanel } from "@/components/plantas/PlanMeasurementBudgetPanel";
+import { PlanMeasurementAxiaPanel, PlanAxiaSummaryStrip } from "@/components/plantas/PlanMeasurementAxiaPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -931,6 +933,19 @@ export default function PlanDetail() {
                 } : null}
               />
             )}
+
+            {/* Painel contextual da última medição estruturada (segmento com ação) */}
+            {(() => {
+              const lastStructured = [...measurements].reverse().find((m) => !!m.action_type);
+              if (!lastStructured || !obraId) return null;
+              return (
+                <div className="space-y-3">
+                  <PlanAxiaSummaryStrip measurements={measurements} />
+                  <PlanMeasurementBudgetPanel measurement={lastStructured} obraId={obraId} />
+                  <PlanMeasurementAxiaPanel measurement={lastStructured} />
+                </div>
+              );
+            })()}
 
             {/* Budget action on budget step */}
             {effectiveStep === "budget" && (
