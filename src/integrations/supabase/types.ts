@@ -6274,15 +6274,27 @@ export type Database = {
       }
       plan_measurements: {
         Row: {
+          action_type: string | null
+          axia_notes: Json | null
+          axia_status: string
+          baseboard_length: number | null
+          budget_artigo_id: string | null
+          budget_link_status: string
           camada: string | null
+          ceiling_height: number | null
           coordinates: Json
           cor: string | null
           created_at: string
+          demolition_volume: number | null
           estado_validacao: string
           etiqueta: string | null
           id: string
+          material_id: string | null
+          material_label: string | null
           observacao: string | null
+          openings_area: number | null
           plan_import_id: string
+          segment_length: number | null
           tipo: string
           unidade: string
           updated_at: string
@@ -6290,17 +6302,31 @@ export type Database = {
           valor_ajustado: number | null
           valor_bruto: number
           valor_final: number | null
+          wall_area: number | null
+          wall_thickness_cm: number | null
         }
         Insert: {
+          action_type?: string | null
+          axia_notes?: Json | null
+          axia_status?: string
+          baseboard_length?: number | null
+          budget_artigo_id?: string | null
+          budget_link_status?: string
           camada?: string | null
+          ceiling_height?: number | null
           coordinates?: Json
           cor?: string | null
           created_at?: string
+          demolition_volume?: number | null
           estado_validacao?: string
           etiqueta?: string | null
           id?: string
+          material_id?: string | null
+          material_label?: string | null
           observacao?: string | null
+          openings_area?: number | null
           plan_import_id: string
+          segment_length?: number | null
           tipo?: string
           unidade?: string
           updated_at?: string
@@ -6308,17 +6334,31 @@ export type Database = {
           valor_ajustado?: number | null
           valor_bruto?: number
           valor_final?: number | null
+          wall_area?: number | null
+          wall_thickness_cm?: number | null
         }
         Update: {
+          action_type?: string | null
+          axia_notes?: Json | null
+          axia_status?: string
+          baseboard_length?: number | null
+          budget_artigo_id?: string | null
+          budget_link_status?: string
           camada?: string | null
+          ceiling_height?: number | null
           coordinates?: Json
           cor?: string | null
           created_at?: string
+          demolition_volume?: number | null
           estado_validacao?: string
           etiqueta?: string | null
           id?: string
+          material_id?: string | null
+          material_label?: string | null
           observacao?: string | null
+          openings_area?: number | null
           plan_import_id?: string
+          segment_length?: number | null
           tipo?: string
           unidade?: string
           updated_at?: string
@@ -6326,6 +6366,8 @@ export type Database = {
           valor_ajustado?: number | null
           valor_bruto?: number
           valor_final?: number | null
+          wall_area?: number | null
+          wall_thickness_cm?: number | null
         }
         Relationships: [
           {
