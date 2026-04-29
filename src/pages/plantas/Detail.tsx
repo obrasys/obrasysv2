@@ -449,6 +449,9 @@ export default function PlanDetail() {
       camada: saveCamada || undefined,
       etiqueta: baseEtiqueta,
       cor,
+      ...(pendingSave.tipo === "area" && pendingSave.perimetro
+        ? { baseboard_length: parseFloat(pendingSave.perimetro.toFixed(4)) }
+        : {}),
     });
 
     // 2) For closed polygons (area), also persist perimeter + wall areas if user opted in
