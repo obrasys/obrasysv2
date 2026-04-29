@@ -2,14 +2,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Minus, Hash, Pentagon, Trash2, Check, X, Pencil } from "lucide-react";
-import type { PlanMeasurement } from "@/types/plan-measurements";
+import {
+  Minus,
+  Hash,
+  Pentagon,
+  Trash2,
+  Check,
+  X,
+  Hammer,
+  Wrench,
+  Paintbrush,
+  Layers,
+  Brush,
+  SlidersHorizontal,
+} from "lucide-react";
+import type { PlanMeasurement, SegmentActionType } from "@/types/plan-measurements";
 import { useState } from "react";
 
 interface PlanMeasurementsListProps {
   measurements: PlanMeasurement[];
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: { etiqueta?: string; valor_ajustado?: number; estado_validacao?: string; camada?: string }) => void;
+  onEditSegment?: (measurement: PlanMeasurement) => void;
 }
 
 const TIPO_ICON: Record<string, typeof Minus> = {
@@ -30,7 +44,15 @@ const ESTADO_COLORS: Record<string, "secondary" | "default" | "destructive"> = {
   rejeitado: "destructive",
 };
 
-export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanMeasurementsListProps) {
+const ACTION_META: Record<SegmentActionType, { label: string; icon: typeof Hammer; tone: string; bg: string }> = {
+  demolir: { label: "Demolir", icon: Hammer, tone: "text-destructive", bg: "bg-destructive/10" },
+  construir: { label: "Construir", icon: Wrench, tone: "text-primary", bg: "bg-primary/10" },
+  barrar: { label: "Barrar", icon: Layers, tone: "text-amber-700", bg: "bg-amber-100" },
+  pintar: { label: "Pintar", icon: Paintbrush, tone: "text-blue-700", bg: "bg-blue-100" },
+  revestir: { label: "Revestir", icon: Brush, tone: "text-purple-700", bg: "bg-purple-100" },
+};
+
+export function PlanMeasurementsList({ measurements, onDelete, onUpdate, onEditSegment }: PlanMeasurementsListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
 
@@ -90,6 +112,9 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
               <div className="divide-y">
                 {measurements.map((m, idx) => {
                   const Icon = TIPO_ICON[m.tipo] ?? Minus;
+                  const action = m.action_type ? ACTION_META[m.action_type] : null;
+                  const ActionIcon = action?.icon;
+                  const isSegment = !!m.action_type;
                   return (
                     <div key={m.id} className="px-4 py-2.5 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between gap-2">
@@ -126,6 +151,17 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
                           <Badge variant={ESTADO_COLORS[m.estado_validacao]} className="text-[9px] h-4 px-1">
                             {m.estado_validacao === "pendente" ? "P" : m.estado_validacao === "validado" ? "V" : "R"}
                           </Badge>
+                          {isSegment && onEditSegment && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-primary"
+                              onClick={() => onEditSegment(m)}
+                              title="Editar segmento"
+                            >
+                              <SlidersHorizontal className="w-3 h-3" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -136,7 +172,38 @@ export function PlanMeasurementsList({ measurements, onDelete, onUpdate }: PlanM
                           </Button>
                         </div>
                       </div>
-                      {m.camada && (
+
+                      {/* Structured segment metadata */}
+                      {isSegment && action && ActionIcon && (
+                        <div className="mt-1.5 ml-[26px] flex flex-wrap items-center gap-1.5">
+                          <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${action.bg} ${action.tone}`}>
+                            <ActionIcon className="w-2.5 h-2.5" />
+                            {action.label}
+                          </span>
+                          {m.wall_area != null && m.wall_area > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              área {m.wall_area.toFixed(2)} m²
+                            </span>
+                          )}
+                          {m.wall_thickness_cm != null && m.wall_thickness_cm > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              e={m.wall_thickness_cm} cm
+                            </span>
+                          )}
+                          {m.demolition_volume != null && m.demolition_volume > 0 && (
+                            <span className="text-[10px] text-destructive">
+                              vol {m.demolition_volume.toFixed(3)} m³
+                            </span>
+                          )}
+                          {m.material_label && (
+                            <span className="text-[10px] text-muted-foreground italic">
+                              · {m.material_label}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {m.camada && !isSegment && (
                         <p className="text-[10px] text-muted-foreground mt-0.5 ml-[26px]">
                           Camada: {m.camada}
                         </p>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,21 +52,50 @@ const FALLBACK_MATERIALS = [
   "Outro",
 ];
 
+export interface SegmentInitialValues {
+  pe_direito_m?: number;
+  acao?: SegmentAction;
+  espessura_cm?: number | null;
+  material_id?: string | null;
+  material_label?: string | null;
+  etiqueta?: string;
+  aberturas_m2?: number;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   comprimentoMetros: number;
   onConfirm: (payload: SegmentSavePayload) => Promise<void> | void;
   isSaving?: boolean;
+  mode?: "create" | "edit";
+  initialValues?: SegmentInitialValues | null;
 }
 
-export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm, isSaving }: Props) {
+export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm, isSaving, mode = "create", initialValues }: Props) {
   const [peDireito, setPeDireito] = useState("2.70");
   const [aberturas, setAberturas] = useState<AberturaCalc[]>([]);
   const [acao, setAcao] = useState<SegmentAction>("construir");
   const [espessura, setEspessura] = useState("11");
   const [materialId, setMaterialId] = useState<string>("__fallback:Tijolo cerâmico furado");
   const [etiqueta, setEtiqueta] = useState("");
+
+  // Hydrate from initialValues when opening in edit mode
+  useEffect(() => {
+    if (!open) return;
+    if (mode === "edit" && initialValues) {
+      if (initialValues.pe_direito_m != null) setPeDireito(String(initialValues.pe_direito_m));
+      if (initialValues.acao) setAcao(initialValues.acao);
+      if (initialValues.espessura_cm != null) setEspessura(String(initialValues.espessura_cm));
+      if (initialValues.material_id) {
+        setMaterialId(initialValues.material_id);
+      } else if (initialValues.material_label) {
+        setMaterialId(`__fallback:${initialValues.material_label}`);
+      }
+      if (initialValues.etiqueta) setEtiqueta(initialValues.etiqueta);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode]);
 
   // Fetch a small subset of materials likely relevant for walls
   const materialsQuery = useQuery({
@@ -156,7 +185,9 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">Segmento de parede</DialogTitle>
+          <DialogTitle className="text-base">
+            {mode === "edit" ? "Editar segmento de parede" : "Segmento de parede"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
@@ -289,7 +320,7 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleConfirm} disabled={isSaving}>
-            {isSaving ? "A guardar..." : "Guardar"}
+            {isSaving ? "A guardar..." : mode === "edit" ? "Atualizar" : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
