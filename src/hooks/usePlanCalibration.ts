@@ -74,7 +74,7 @@ export function usePlanCalibration(planImportId?: string) {
         .update({ status: "calibrada" })
         .eq("id", planImportId);
 
-      return data as PlanCalibration;
+      return data as unknown as PlanCalibration;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plan-calibration", planImportId] });
