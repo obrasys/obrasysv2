@@ -117,6 +117,32 @@ export function PlanAIAnalysis({
   // Pending auto-analyze trigger after page switch (used by "Analisar todas")
   const lastTokenRef = useRef<number | undefined>(undefined);
 
+  // Downscale the rendered image before sending to the Vision LLM.
+  // High-res canvas (>5x DPR) can produce 10-20 MB payloads, which exceed
+  // the edge function body limit and crash req.json() with "Unexpected end
+  // of JSON input". Cap at 2000px on the longest side and use JPEG q=0.85.
+  const downscaleForAI = (src: string, maxSide = 2000, quality = 0.85): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const longest = Math.max(img.width, img.height);
+        const ratio = longest > maxSide ? maxSide / longest : 1;
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas 2D not available"));
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl.split(",")[1] ?? "");
+      };
+      img.onerror = () => reject(new Error("Falha ao carregar imagem para análise"));
+      img.src = src;
+    });
+
   const handleAnalyze = async () => {
     if (!imageDataUrl) {
       toast.error("Nenhuma planta carregada");
@@ -125,21 +151,7 @@ export function PlanAIAnalysis({
 
     setIsAnalyzing(true);
     try {
-      let base64: string;
-      if (imageDataUrl.startsWith("data:")) {
-        base64 = imageDataUrl.split(",")[1];
-      } else {
-        const response = await fetch(imageDataUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        base64 = await new Promise<string>((resolve) => {
-          reader.onloadend = () => {
-            const r = reader.result as string;
-            resolve(r.split(",")[1]);
-          };
-          reader.readAsDataURL(blob);
-        });
-      }
+      const base64 = await downscaleForAI(imageDataUrl);
 
       const { data, error } = await supabase.functions.invoke("axia-plan-vision", {
         body: { image_base64: base64, calibration_info: calibration },

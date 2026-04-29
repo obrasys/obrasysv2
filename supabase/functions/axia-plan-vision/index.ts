@@ -86,7 +86,7 @@ Regras:
       {
         type: "image_url",
         image_url: {
-          url: `data:image/png;base64,${image_base64}`,
+          url: `data:image/jpeg;base64,${image_base64}`,
         },
       },
     ];
