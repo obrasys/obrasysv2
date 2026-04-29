@@ -99,6 +99,7 @@ export default function PlanDetail() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   // Pending page-jump for "Analisar todas as folhas em falta"
   const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
+  const [autoAnalyzeToken, setAutoAnalyzeToken] = useState(0);
 
   // Advance queue when the current page becomes analyzed
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function PlanDetail() {
       if (rest.length > 0) {
         setPendingAnalyzeQueue(rest);
         setCurrentPage(rest[0]);
+        setAutoAnalyzeToken((t) => t + 1);
         toast.info(`A analisar folha ${rest[0]}... (${rest.length} restantes)`);
       } else {
         setPendingAnalyzeQueue([]);
