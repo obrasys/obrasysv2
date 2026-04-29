@@ -942,6 +942,7 @@ export default function PlanDetail() {
                         estadoValidacao: updates.estado_validacao as any,
                       })
                     }
+                    onEditSegment={handleEditSegmentRequest}
                   />
                 </TabsContent>
                 <TabsContent value="rooms" className="mt-2">
@@ -1350,7 +1351,9 @@ export default function PlanDetail() {
         onClose={handleCancelSegment}
         comprimentoMetros={pendingSegment?.comprimento ?? 0}
         onConfirm={handleConfirmSegment}
-        isSaving={addMeasurement.isPending}
+        isSaving={addMeasurement.isPending || updateMeasurement.isPending}
+        mode={editingSegmentId ? "edit" : "create"}
+        initialValues={editingSegmentInitial}
       />
 
       {/* Element properties dialog */}
