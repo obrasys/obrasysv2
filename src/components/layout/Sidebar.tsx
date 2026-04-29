@@ -7,6 +7,7 @@ import { useClientAccess } from '@/hooks/useClientAccess';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { prefetchRoute } from '@/lib/route-prefetch';
 
 export function Sidebar() {
   const location = useLocation();
@@ -110,6 +111,9 @@ export function Sidebar() {
               <button
                 key={group.label}
                 onClick={() => navigate(item.href)}
+                onMouseEnter={() => prefetchRoute(item.href)}
+                onFocus={() => prefetchRoute(item.href)}
+                onTouchStart={() => prefetchRoute(item.href)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-[14px] ${
                   active
                     ? 'bg-[hsl(192,40%,18%)] text-white font-semibold shadow-lg shadow-black/10'
@@ -152,6 +156,9 @@ export function Sidebar() {
                       <button
                         key={item.href}
                         onClick={() => navigate(item.href)}
+                        onMouseEnter={() => prefetchRoute(item.href)}
+                        onFocus={() => prefetchRoute(item.href)}
+                        onTouchStart={() => prefetchRoute(item.href)}
                         className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl transition-all duration-200 text-[12px] ${
                           active
                             ? 'bg-[hsl(192,40%,18%)] text-white font-semibold shadow-md shadow-black/10'
@@ -182,6 +189,9 @@ export function Sidebar() {
                   <button
                     key={item.href}
                     onClick={() => navigate(item.href)}
+                    onMouseEnter={() => prefetchRoute(item.href)}
+                    onFocus={() => prefetchRoute(item.href)}
+                    onTouchStart={() => prefetchRoute(item.href)}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-[13px] ${
                       active
                         ? 'bg-white/12 text-white font-semibold border-l-2 border-white/60'
