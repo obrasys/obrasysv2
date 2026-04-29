@@ -79,6 +79,14 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
   const [espessura, setEspessura] = useState("11");
   const [materialId, setMaterialId] = useState<string>("__fallback:Tijolo cerâmico furado");
   const [etiqueta, setEtiqueta] = useState("");
+  // Action-specific extras
+  const [barrarSistema, setBarrarSistema] = useState<string>("Reboco + barramento");
+  const [barrarFaces, setBarrarFaces] = useState<string>("1");
+  const [pinturaTipo, setPinturaTipo] = useState<string>("Tinta plástica interior");
+  const [pinturaDemaos, setPinturaDemaos] = useState<string>("2");
+  const [pinturaFaces, setPinturaFaces] = useState<string>("1");
+  const [revestirTipo, setRevestirTipo] = useState<string>("Azulejo cerâmico");
+  const [revestirAlturaParcial, setRevestirAlturaParcial] = useState<string>("");
 
   // Hydrate from initialValues when opening in edit mode
   useEffect(() => {
@@ -120,6 +128,16 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
   const aberturasArea = aberturas.reduce((s, a) => s + (parseFloat(a.largura) || 0) * (parseFloat(a.altura) || 0), 0);
   const areaLiquida = Math.max(0, areaBruta - aberturasArea);
   const volumeDemolicao = acao === "demolir" ? areaLiquida * (espessuraNum / 100) : 0;
+  // Painting / barring / cladding derived areas
+  const facesBarrar = Math.max(1, parseInt(barrarFaces) || 1);
+  const facesPintura = Math.max(1, parseInt(pinturaFaces) || 1);
+  const demaos = Math.max(1, parseInt(pinturaDemaos) || 1);
+  const areaBarrar = acao === "barrar" ? areaLiquida * facesBarrar : 0;
+  const areaPintura = acao === "pintar" ? areaLiquida * facesPintura : 0;
+  const alturaRevPar = parseFloat(revestirAlturaParcial) || 0;
+  const areaRevestir = acao === "revestir"
+    ? (alturaRevPar > 0 ? Math.max(0, comprimentoMetros * Math.min(alturaRevPar, peDireitoNum) - aberturasArea) : areaLiquida)
+    : 0;
 
   const materialOptions = useMemo(() => {
     const fromDb = materialsQuery.data ?? [];
@@ -155,12 +173,22 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     if (aberturas.length > 0) obsParts.push(`Aberturas: ${aberturas.length} (−${aberturasArea.toFixed(2)} m²) → líquido ${areaLiquida.toFixed(2)} m²`);
     if (acao === "demolir") obsParts.push(`Espessura ${espessuraNum.toFixed(1)} cm → volume ${volumeDemolicao.toFixed(3)} m³`);
     if (acao === "construir" && materialLabel) obsParts.push(`Material: ${materialLabel}${espessuraNum > 0 ? ` (e=${espessuraNum.toFixed(1)} cm)` : ""}`);
+    if (acao === "barrar") obsParts.push(`${barrarSistema} · ${facesBarrar} face(s) → ${areaBarrar.toFixed(2)} m²`);
+    if (acao === "pintar") obsParts.push(`${pinturaTipo} · ${demaos} demão(s) × ${facesPintura} face(s) → ${areaPintura.toFixed(2)} m²`);
+    if (acao === "revestir") obsParts.push(`${revestirTipo}${alturaRevPar > 0 ? ` (h=${alturaRevPar.toFixed(2)} m)` : ""} → ${areaRevestir.toFixed(2)} m²`);
+
+    // Final wall_area depends on action
+    const finalWallArea =
+      acao === "barrar" ? areaBarrar :
+      acao === "pintar" ? areaPintura :
+      acao === "revestir" ? areaRevestir :
+      areaLiquida;
 
     await onConfirm({
       comprimento_m: parseFloat(comprimentoMetros.toFixed(4)),
       pe_direito_m: peDireitoNum,
       area_bruta_m2: parseFloat(areaBruta.toFixed(4)),
-      area_liquida_m2: parseFloat(areaLiquida.toFixed(4)),
+      area_liquida_m2: parseFloat(finalWallArea.toFixed(4)),
       aberturas_m2: parseFloat(aberturasArea.toFixed(4)),
       acao,
       espessura_cm: acao === "demolir" || acao === "construir" ? espessuraNum : null,
@@ -179,6 +207,13 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     setEspessura("11");
     setMaterialId("__fallback:Tijolo cerâmico furado");
     setEtiqueta("");
+    setBarrarSistema("Reboco + barramento");
+    setBarrarFaces("1");
+    setPinturaTipo("Tinta plástica interior");
+    setPinturaDemaos("2");
+    setPinturaFaces("1");
+    setRevestirTipo("Azulejo cerâmico");
+    setRevestirAlturaParcial("");
   };
 
   return (
@@ -310,7 +345,109 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
             </div>
           )}
 
-          {/* Etiqueta */}
+          {acao === "barrar" && (
+            <div className="border rounded-lg p-3 space-y-2.5 bg-card">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Sistema</Label>
+                <Select value={barrarSistema} onValueChange={setBarrarSistema}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Reboco + barramento">Reboco + barramento</SelectItem>
+                    <SelectItem value="Estuque projetado">Estuque projetado</SelectItem>
+                    <SelectItem value="Massa de acabamento">Massa de acabamento</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Faces a barrar</Label>
+                <Select value={barrarFaces} onValueChange={setBarrarFaces}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 face</SelectItem>
+                    <SelectItem value="2">2 faces</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-md bg-amber-500/10 p-2.5 text-xs flex items-center justify-between">
+                <span className="text-muted-foreground">Área a barrar</span>
+                <span className="font-bold text-amber-700 tabular-nums">{areaBarrar.toFixed(2)} m²</span>
+              </div>
+            </div>
+          )}
+
+          {acao === "pintar" && (
+            <div className="border rounded-lg p-3 space-y-2.5 bg-card">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo de tinta</Label>
+                <Select value={pinturaTipo} onValueChange={setPinturaTipo}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tinta plástica interior">Tinta plástica interior</SelectItem>
+                    <SelectItem value="Tinta plástica exterior">Tinta plástica exterior</SelectItem>
+                    <SelectItem value="Tinta acrílica">Tinta acrílica</SelectItem>
+                    <SelectItem value="Esmalte">Esmalte</SelectItem>
+                    <SelectItem value="Verniz">Verniz</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Demãos</Label>
+                  <Select value={pinturaDemaos} onValueChange={setPinturaDemaos}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 demão</SelectItem>
+                      <SelectItem value="2">2 demãos</SelectItem>
+                      <SelectItem value="3">3 demãos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Faces</Label>
+                  <Select value={pinturaFaces} onValueChange={setPinturaFaces}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 face</SelectItem>
+                      <SelectItem value="2">2 faces</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="rounded-md bg-blue-500/10 p-2.5 text-xs flex items-center justify-between">
+                <span className="text-muted-foreground">Área a pintar (rendimento bruto)</span>
+                <span className="font-bold text-blue-700 tabular-nums">{areaPintura.toFixed(2)} m²</span>
+              </div>
+            </div>
+          )}
+
+          {acao === "revestir" && (
+            <div className="border rounded-lg p-3 space-y-2.5 bg-card">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo de revestimento</Label>
+                <Select value={revestirTipo} onValueChange={setRevestirTipo}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Azulejo cerâmico">Azulejo cerâmico</SelectItem>
+                    <SelectItem value="Pedra natural">Pedra natural</SelectItem>
+                    <SelectItem value="Painel decorativo">Painel decorativo</SelectItem>
+                    <SelectItem value="Madeira">Madeira</SelectItem>
+                    <SelectItem value="ETICS / Capoto">ETICS / Capoto</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Altura a revestir (m) — opcional, deixa vazio para toda a parede</Label>
+                <Input type="number" step="0.01" min="0" value={revestirAlturaParcial} onChange={(e) => setRevestirAlturaParcial(e.target.value)} placeholder={`${peDireitoNum.toFixed(2)} (toda a parede)`} className="h-9" />
+              </div>
+              <div className="rounded-md bg-purple-500/10 p-2.5 text-xs flex items-center justify-between">
+                <span className="text-muted-foreground">Área a revestir</span>
+                <span className="font-bold text-purple-700 tabular-nums">{areaRevestir.toFixed(2)} m²</span>
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs">Etiqueta (opcional)</Label>
             <Input value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder={`Segmento — ${acao}`} />
