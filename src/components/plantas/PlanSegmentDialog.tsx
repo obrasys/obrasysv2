@@ -128,6 +128,16 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
   const aberturasArea = aberturas.reduce((s, a) => s + (parseFloat(a.largura) || 0) * (parseFloat(a.altura) || 0), 0);
   const areaLiquida = Math.max(0, areaBruta - aberturasArea);
   const volumeDemolicao = acao === "demolir" ? areaLiquida * (espessuraNum / 100) : 0;
+  // Painting / barring / cladding derived areas
+  const facesBarrar = Math.max(1, parseInt(barrarFaces) || 1);
+  const facesPintura = Math.max(1, parseInt(pinturaFaces) || 1);
+  const demaos = Math.max(1, parseInt(pinturaDemaos) || 1);
+  const areaBarrar = acao === "barrar" ? areaLiquida * facesBarrar : 0;
+  const areaPintura = acao === "pintar" ? areaLiquida * facesPintura : 0;
+  const alturaRevPar = parseFloat(revestirAlturaParcial) || 0;
+  const areaRevestir = acao === "revestir"
+    ? (alturaRevPar > 0 ? Math.max(0, comprimentoMetros * Math.min(alturaRevPar, peDireitoNum) - aberturasArea) : areaLiquida)
+    : 0;
 
   const materialOptions = useMemo(() => {
     const fromDb = materialsQuery.data ?? [];
