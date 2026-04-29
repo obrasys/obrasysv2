@@ -148,7 +148,7 @@ export function PlanQuantityTable({
       lines.push(
         [
           SOURCE_META[r.source]?.label ?? r.source,
-          (r.descricao || "").replaceAll(";", ","),
+          (r.descricao || "").replace(/;/g, ","),
           r.categoria,
           r.camada,
           Number(r.valor).toFixed(2).replace(".", ","),
