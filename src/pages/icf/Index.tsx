@@ -46,20 +46,37 @@ const IcfIndex = () => {
   const generateBudget = useGenerateIcfBudget();
 
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
-
+  const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
+  const [pendingScope, setPendingScope] = useState<IcfScopeSelection | null>(null);
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo || !selectedObraId) return;
+    // Primeiro pergunta o âmbito (estrutura, +arquitetura, completo)
+    setPendingScope(null);
+    setScopeDialogOpen(true);
+  };
+
+  const handleScopeConfirmed = (selection: IcfScopeSelection) => {
+    setPendingScope(selection);
+    setScopeDialogOpen(false);
+    // Em seguida abre o diálogo financeiro habitual
     setBudgetDialogOpen(true);
   };
 
   const handleConfirmGenerateBudget = (values: IcfBudgetFinancials) => {
     if (!activeConfig || !resumo || !selectedObraId) return;
     generateBudget.mutate(
-      { resumo, config: activeConfig, obraId: selectedObraId, ...values },
+      {
+        resumo,
+        config: activeConfig,
+        obraId: selectedObraId,
+        ...values,
+        scope: pendingScope?.scope,
+      },
       {
         onSuccess: (orc) => {
           setBudgetDialogOpen(false);
+          setPendingScope(null);
           navigate(`/orcamentos/${orc.id}`);
         },
       },
