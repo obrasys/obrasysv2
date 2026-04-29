@@ -80,6 +80,7 @@ export function PlanQuantityTable({
   const [sourceFilter, setSourceFilter] = useState<QuantitativoSource | "all">("all");
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceLevel | "all">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sendOpen, setSendOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
