@@ -39,6 +39,9 @@ import { getSymbolById, type PlacedPlantElement, type PlantSymbolType, type Acti
 import { usePlanPlacedElements } from "@/hooks/usePlanPlacedElements";
 import { PlanElementsExportBudget } from "@/components/plantas/PlanElementsExportBudget";
 import { PlanElectricalAnalysis } from "@/components/plantas/PlanElectricalAnalysis";
+import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
+import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
+import { usePlanFloors } from "@/hooks/usePlanFloors";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -54,6 +57,27 @@ export default function PlanDetail() {
   const { rooms, addRoom, updateRoom, deleteRoom } = usePlanRooms(planId);
   const { walls, addWall, updateWall, deleteWall } = usePlanWalls(planId);
   const { openings, addOpening, deleteOpening } = usePlanOpenings(planId);
+  const { floors } = usePlanFloors(obraId);
+
+  // Floor selection (used to scope new measurements/rooms; persisted per plan in localStorage)
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(() => {
+    if (typeof window === "undefined" || !planId) return null;
+    return localStorage.getItem(`plan-floor:${planId}`);
+  });
+  useEffect(() => {
+    if (!planId) return;
+    if (selectedFloorId) localStorage.setItem(`plan-floor:${planId}`, selectedFloorId);
+    else localStorage.removeItem(`plan-floor:${planId}`);
+  }, [selectedFloorId, planId]);
+
+  // Axia Guided Mode (persisted per user)
+  const [guidedMode, setGuidedMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("plan-axia-guided") === "1";
+  });
+  useEffect(() => {
+    localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
+  }, [guidedMode]);
 
   // File URL
   const fileUrlQuery = useQuery({
@@ -855,6 +879,36 @@ export default function PlanDetail() {
                 isSaving={saveCalibration.isPending}
               />
             )}
+
+            {/* Axia Guided Mode */}
+            <AxiaGuidedMode
+              enabled={guidedMode}
+              onToggle={setGuidedMode}
+              status={{
+                calibrated: canMeasure,
+                hasFloors: floors.length > 0,
+                hasMeasurements: measurements.length > 0 || rooms.length > 0,
+                hasValidated:
+                  measurements.length > 0 &&
+                  measurements.every((m) => m.estado_validacao !== "pendente"),
+              }}
+              onStartCalibration={handleStartCalibration}
+              onCreateFloor={() => {
+                // Scroll to floor selector
+                document.getElementById("plan-floor-selector")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              onStartMeasure={() => handleModeChange("measure_area")}
+              onOpenValidation={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+            />
+
+            {/* Pavimentos */}
+            <div id="plan-floor-selector">
+              <PlanFloorSelector
+                obraId={obraId}
+                selectedFloorId={selectedFloorId}
+                onSelectFloor={setSelectedFloorId}
+              />
+            </div>
 
             {/* Show Axia analysis prominently on analyze step, or compact on others */}
             {(effectiveStep === "analyze" || canMeasure) && (
