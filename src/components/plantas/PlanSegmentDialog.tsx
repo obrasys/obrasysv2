@@ -185,7 +185,9 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">Segmento de parede</DialogTitle>
+          <DialogTitle className="text-base">
+            {mode === "edit" ? "Editar segmento de parede" : "Segmento de parede"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
@@ -318,7 +320,7 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleConfirm} disabled={isSaving}>
-            {isSaving ? "A guardar..." : "Guardar"}
+            {isSaving ? "A guardar..." : mode === "edit" ? "Atualizar" : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
