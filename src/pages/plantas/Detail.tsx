@@ -100,6 +100,22 @@ export default function PlanDetail() {
   // Pending page-jump for "Analisar todas as folhas em falta"
   const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
 
+  // Advance queue when the current page becomes analyzed
+  useEffect(() => {
+    if (pendingAnalyzeQueue.length === 0) return;
+    const [head, ...rest] = pendingAnalyzeQueue;
+    if (axiaResultsByPage[head]) {
+      if (rest.length > 0) {
+        setPendingAnalyzeQueue(rest);
+        setCurrentPage(rest[0]);
+        toast.info(`A analisar folha ${rest[0]}... (${rest.length} restantes)`);
+      } else {
+        setPendingAnalyzeQueue([]);
+        toast.success("Todas as folhas analisadas.");
+      }
+    }
+  }, [axiaResultsByPage, pendingAnalyzeQueue]);
+
   // File URL
   const fileUrlQuery = useQuery({
     queryKey: ["plan-file-url", plan?.file_path],
