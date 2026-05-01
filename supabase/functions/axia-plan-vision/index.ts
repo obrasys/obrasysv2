@@ -58,30 +58,45 @@ serve(async (req) => {
       ? `A planta já está calibrada: ${calibration_info.real_distance} ${calibration_info.unidade} = ${calibration_info.pixels_per_meter.toFixed(1)} px/m.`
       : "A planta NÃO está calibrada. Tenta identificar a escala gráfica ou cotas de referência para sugerir calibração.";
 
-    const systemPrompt = `Eres Axia™, motor de visão computacional para plantas de construção civil portuguesa.
+    const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys, especializada em leitura técnica de documentos de obra.
 
-Analisa a imagem da planta e extrai TODAS as informações que consigas identificar:
+A tua função é analisar plantas arquitetónicas, cortes, alçados, implantações e documentos técnicos, extraindo informação útil para gestão de obra, orçamento, medições, cronograma e validação técnica. Trabalhas em português de Portugal e segues normas e práticas correntes em Portugal.
 
-1. COTAS E DIMENSÕES: Identifica todos os valores numéricos com unidade (ex: "3.50", "2.10m", "450") que representem distâncias ou dimensões cotadas na planta. Indica a posição aproximada (percentagem x,y da imagem) e o que medem.
+Devolves SEMPRE um JSON estruturado válido conforme o schema da function tool. Nunca inventas: se não tens a certeza, marcas confidence baixa e review_required=true.
 
-2. ELEMENTOS CONSTRUTIVOS: Identifica paredes, portas, janelas, pilares, escadas, e divisões/compartimentos. Para cada divisão identificada, estima o nome provável (sala, quarto, WC, cozinha, corredor, etc.).
+ETAPAS DE ANÁLISE:
 
-3. ESCALA: Se vires uma escala gráfica (barra de escala) ou indicação de escala (ex: "1:100", "1:50"), reporta-a.
+1) CLASSIFICAÇÃO DA FOLHA — preenche sheet_classification: tipo (planta_piso, implantacao, corte, alcado, detalhe, legenda, outro), piso, título da folha, escala (1:50, 1:100…), e flags norte_presente, legenda_presente, carimbo_presente.
 
-4. ÁREAS: Se conseguires estimar áreas de compartimentos com base nas cotas visíveis, fá-lo.
+2) CALIBRAÇÃO E ESCALA — ${calibrationContext}. Preenche scale_detected.found=true se vires barra de escala ou indicação textual de escala.
 
-${calibrationContext}
+3) COTAS — para cada cota visível, regista: raw_text (texto exatamente como aparece, ex: "3.50", "3,50 m", "350"), value (numérico interpretado), unit (m/cm/mm), label (o que mede), position_x/position_y (centro normalizado 0-1), bbox normalizada {x_min,y_min,x_max,y_max} se possível, confidence 0-1. Se a cota é ilegível, marca valor_nao_legivel=true e review_required=true (não inventes valor — usa 0).
 
-Regras:
-- Reporta apenas o que REALMENTE vês na imagem
-- Usa coordenadas normalizadas (0-1) relativas à imagem
-- Responde sempre em português de Portugal
-- Sê preciso nos valores numéricos`;
+4) COMPARTIMENTOS — identifica divisões. Cada um: name (texto literal da planta se existir), tipo_normalizado (sala, cozinha, sala_cozinha, quarto, suite, instalacao_sanitaria, circulacao, escada, arrumos, zona_tecnica, garagem, estacionamento, terraco, varanda, jardim, churrasqueira, exterior, indefinido), estimated_area, center_x/center_y, bbox, confidence, evidencias (sinais que usaste — ex: "rotulo SALA", "WC simbolo sanitario"), area_legivel.
+
+5) PAREDES — popula walls com tipo (parede_exterior, parede_interior, muro_lote, muro_contencao, parede_indefinida), orientacao (horizontal/vertical/diagonal/irregular), bbox, compartimento_associado, confidence_score, review_required, evidencias. NUNCA afirmes que uma parede é estrutural com base só em planta arquitetónica — usa parede_indefinida em caso de dúvida.
+
+6) ELEMENTOS CONSTRUTIVOS — portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada (mantém porta/janela genéricos como fallback). Inclui parede_associada, compartimentos_conectados, largura_legivel, confidence_score, review_required.
+
+7) ELEMENTOS EXTERIORES — para implantações ou folhas com exterior, popula exterior_elements: lote, rua, acesso, estacionamento, jardim, vegetacao, muro, patio, terraco, cota_altimetrica, confrontacao. Inclui bbox e confidence_score.
+
+8) QUALIDADE DE LEITURA — preenche reading_quality com overall_confidence, image_quality (alta/media/baixa), text_legibility, dimensions_legibility, risk_level (baixo/medio/alto) e human_intervention_required (true se a folha tem texto/cotas largamente ilegíveis ou é ambígua).
+
+9) LIMITAÇÕES E PERGUNTAS — em limitations lista o que não conseguiste extrair (ex: "cotas verticais sobrepostas no canto inferior direito"); em validation_questions sugere até 5 perguntas concretas para um humano confirmar (ex: "Confirma que o compartimento central é Sala+Cozinha?").
+
+REGRAS CRÍTICAS:
+- Nunca afirmes que um elemento é estrutural apenas pela planta arquitetónica.
+- Usa sempre confidence/confidence_score entre 0 e 1.
+- Marca review_required=true sempre que houver dúvida.
+- Toda entidade deve ter posição (position_x/y ou center_x/y ou bbox). Coordenadas e bbox são SEMPRE normalizadas 0-1.
+- Se não conseguires localizar a região, omite bbox e explica em notes.
+- Responde em português de Portugal.
+- Sê preciso nos valores numéricos. Não inventes cotas que não vês.`;
 
     const userContent = [
       {
         type: "text",
-        text: "Analisa esta planta de construção e identifica todas as cotas, dimensões, elementos construtivos e compartimentos visíveis.",
+        text: "Analisa esta planta de construção seguindo as 9 etapas. Devolve JSON estruturado completo via plan_analysis.",
       },
       {
         type: "image_url",
@@ -90,6 +105,18 @@ Regras:
         },
       },
     ];
+
+    const bboxSchema = {
+      type: "object",
+      properties: {
+        x_min: { type: "number" },
+        y_min: { type: "number" },
+        x_max: { type: "number" },
+        y_max: { type: "number" },
+      },
+      required: ["x_min", "y_min", "x_max", "y_max"],
+      additionalProperties: false,
+    };
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -108,32 +135,52 @@ Regras:
             type: "function",
             function: {
               name: "plan_analysis",
-              description: "Return structured analysis of a construction plan image",
+              description: "Return structured analysis of a construction plan image (Axia spec).",
               parameters: {
                 type: "object",
                 properties: {
+                  sheet_classification: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        enum: ["planta_piso", "implantacao", "corte", "alcado", "detalhe", "legenda", "outro"],
+                      },
+                      piso: { type: "string" },
+                      titulo: { type: "string" },
+                      escala: { type: "string" },
+                      norte_presente: { type: "boolean" },
+                      legenda_presente: { type: "boolean" },
+                      carimbo_presente: { type: "boolean" },
+                    },
+                    additionalProperties: false,
+                  },
                   scale_detected: {
                     type: "object",
                     properties: {
                       found: { type: "boolean" },
-                      value: { type: "string", description: "Ex: 1:100, 1:50" },
-                      reference_dimension: { type: "string", description: "Ex: barra de escala de 1m" },
+                      value: { type: "string" },
+                      reference_dimension: { type: "string" },
                     },
                     required: ["found"],
                     additionalProperties: false,
                   },
                   dimensions: {
                     type: "array",
-                    description: "Cotas e dimensões identificadas na planta",
                     items: {
                       type: "object",
                       properties: {
-                        value: { type: "number", description: "Valor numérico da cota" },
-                        unit: { type: "string", description: "Unidade: m, cm, mm" },
-                        label: { type: "string", description: "O que mede: largura parede sala, comprimento corredor, etc." },
-                        position_x: { type: "number", description: "Posição X normalizada (0-1)" },
-                        position_y: { type: "number", description: "Posição Y normalizada (0-1)" },
-                        confidence: { type: "number", description: "Confiança 0-1" },
+                        value: { type: "number" },
+                        unit: { type: "string" },
+                        label: { type: "string" },
+                        raw_text: { type: "string" },
+                        valor_nao_legivel: { type: "boolean" },
+                        position_x: { type: "number" },
+                        position_y: { type: "number" },
+                        bbox: bboxSchema,
+                        confidence: { type: "number" },
+                        review_required: { type: "boolean" },
+                        associated_to: { type: "string" },
                       },
                       required: ["value", "unit", "label", "position_x", "position_y", "confidence"],
                       additionalProperties: false,
@@ -141,15 +188,27 @@ Regras:
                   },
                   rooms: {
                     type: "array",
-                    description: "Compartimentos/divisões identificados",
                     items: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Nome do compartimento: Sala, Quarto, WC, Cozinha, etc." },
-                        estimated_area: { type: "number", description: "Área estimada em m² (se possível calcular)" },
-                        center_x: { type: "number", description: "Centro X normalizado (0-1)" },
-                        center_y: { type: "number", description: "Centro Y normalizado (0-1)" },
-                        confidence: { type: "number", description: "Confiança 0-1" },
+                        name: { type: "string" },
+                        tipo_normalizado: {
+                          type: "string",
+                          enum: [
+                            "sala", "cozinha", "sala_cozinha", "quarto", "suite",
+                            "instalacao_sanitaria", "circulacao", "escada", "arrumos",
+                            "zona_tecnica", "garagem", "estacionamento", "terraco",
+                            "varanda", "jardim", "churrasqueira", "exterior", "indefinido",
+                          ],
+                        },
+                        estimated_area: { type: "number" },
+                        area_legivel: { type: "boolean" },
+                        center_x: { type: "number" },
+                        center_y: { type: "number" },
+                        bbox: bboxSchema,
+                        confidence: { type: "number" },
+                        review_required: { type: "boolean" },
+                        evidencias: { type: "array", items: { type: "string" } },
                       },
                       required: ["name", "center_x", "center_y", "confidence"],
                       additionalProperties: false,
@@ -157,24 +216,91 @@ Regras:
                   },
                   elements: {
                     type: "array",
-                    description: "Elementos construtivos identificados (portas, janelas, pilares, escadas)",
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["porta", "janela", "pilar", "escada", "parede", "outro"] },
+                        type: {
+                          type: "string",
+                          enum: [
+                            "porta", "janela", "pilar", "escada", "parede", "outro",
+                            "porta_interior", "porta_exterior", "porta_correr",
+                            "portao_garagem", "portao_lote", "vao_indefinido",
+                          ],
+                        },
                         label: { type: "string" },
                         position_x: { type: "number" },
                         position_y: { type: "number" },
-                        count: { type: "number", description: "Quantidade deste elemento" },
+                        bbox: bboxSchema,
+                        count: { type: "number" },
+                        parede_associada: { type: "string" },
+                        compartimentos_conectados: { type: "array", items: { type: "string" } },
+                        largura_legivel: { type: "boolean" },
+                        confidence_score: { type: "number" },
+                        review_required: { type: "boolean" },
                       },
                       required: ["type", "label", "position_x", "position_y"],
                       additionalProperties: false,
                     },
                   },
-                  summary: {
-                    type: "string",
-                    description: "Resumo textual da análise da planta",
+                  walls: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        tipo: {
+                          type: "string",
+                          enum: ["parede_exterior", "parede_interior", "muro_lote", "muro_contencao", "parede_indefinida"],
+                        },
+                        orientacao: {
+                          type: "string",
+                          enum: ["horizontal", "vertical", "diagonal", "irregular"],
+                        },
+                        bbox: bboxSchema,
+                        compartimento_associado: { type: "string" },
+                        confidence_score: { type: "number" },
+                        review_required: { type: "boolean" },
+                        evidencias: { type: "array", items: { type: "string" } },
+                        notes: { type: "string" },
+                      },
+                      required: ["tipo", "orientacao", "confidence_score"],
+                      additionalProperties: false,
+                    },
                   },
+                  exterior_elements: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        tipo: {
+                          type: "string",
+                          enum: [
+                            "lote", "rua", "acesso", "estacionamento", "jardim",
+                            "vegetacao", "muro", "patio", "terraco", "cota_altimetrica", "confrontacao",
+                          ],
+                        },
+                        bbox: bboxSchema,
+                        confidence_score: { type: "number" },
+                        notes: { type: "string" },
+                      },
+                      required: ["tipo", "confidence_score"],
+                      additionalProperties: false,
+                    },
+                  },
+                  reading_quality: {
+                    type: "object",
+                    properties: {
+                      overall_confidence: { type: "number" },
+                      image_quality: { type: "string", enum: ["alta", "media", "baixa"] },
+                      text_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
+                      dimensions_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
+                      risk_level: { type: "string", enum: ["baixo", "medio", "alto"] },
+                      human_intervention_required: { type: "boolean" },
+                    },
+                    additionalProperties: false,
+                  },
+                  limitations: { type: "array", items: { type: "string" } },
+                  validation_questions: { type: "array", items: { type: "string" } },
+                  summary: { type: "string" },
                 },
                 required: ["scale_detected", "dimensions", "rooms", "elements", "summary"],
                 additionalProperties: false,
@@ -219,7 +345,6 @@ Regras:
       }
     }
 
-    // Log the analysis
     await supabase.from("axia_suggestions_log").insert({
       user_id: userId,
       suggestion_type: "plan_vision_analysis",
