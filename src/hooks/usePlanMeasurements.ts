@@ -180,12 +180,40 @@ export function usePlanMeasurements(planImportId?: string) {
     },
   });
 
+  // Bulk validation update — single PATCH for many ids at once.
+  const bulkUpdateValidation = useMutation({
+    mutationFn: async ({
+      ids,
+      estado,
+    }: {
+      ids: string[];
+      estado: ValidationState;
+    }) => {
+      if (!ids.length) return { count: 0 };
+      const { data, error } = await supabase
+        .from("plan_measurements")
+        .update({ estado_validacao: estado })
+        .in("id", ids)
+        .select("id");
+      if (error) throw error;
+      return { count: data?.length ?? 0 };
+    },
+    onSuccess: ({ count }, { estado }) => {
+      queryClient.invalidateQueries({ queryKey: ["plan-measurements", planImportId] });
+      toast.success(`${count} medição(ões) atualizada(s) para "${estado}"`);
+    },
+    onError: (err: Error) => {
+      toast.error("Erro ao atualizar em massa: " + err.message);
+    },
+  });
+
   return {
     measurements: measurementsQuery.data ?? [],
     isLoading: measurementsQuery.isLoading,
     addMeasurement,
     updateMeasurement,
     deleteMeasurement,
+    bulkUpdateValidation,
   };
 }
 
