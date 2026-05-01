@@ -59,6 +59,8 @@ export interface PlanAnalysisResult {
     name: string;
     tipo_normalizado?: string;
     estimated_area?: number;
+    perimetro_estimado_m?: number;
+    vaos_porta_associados?: string[];
     area_legivel?: boolean;
     center_x: number;
     center_y: number;
@@ -74,6 +76,9 @@ export interface PlanAnalysisResult {
     position_y: number;
     bbox?: AxiaBBox;
     count?: number;
+    largura_cm?: number;
+    altura_cm?: number;
+    dimensao_legivel?: boolean;
     parede_associada?: string;
     compartimentos_conectados?: string[];
     largura_legivel?: boolean;

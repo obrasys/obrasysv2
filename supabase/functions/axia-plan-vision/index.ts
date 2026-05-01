@@ -72,11 +72,11 @@ ETAPAS DE ANÁLISE:
 
 3) COTAS — para cada cota visível, regista: raw_text (texto exatamente como aparece, ex: "3.50", "3,50 m", "350"), value (numérico interpretado), unit (m/cm/mm), label (o que mede), position_x/position_y (centro normalizado 0-1), bbox normalizada {x_min,y_min,x_max,y_max} se possível, confidence 0-1. Se a cota é ilegível, marca valor_nao_legivel=true e review_required=true (não inventes valor — usa 0).
 
-4) COMPARTIMENTOS — identifica divisões. Cada um: name (texto literal da planta se existir), tipo_normalizado (sala, cozinha, sala_cozinha, quarto, suite, instalacao_sanitaria, circulacao, escada, arrumos, zona_tecnica, garagem, estacionamento, terraco, varanda, jardim, churrasqueira, exterior, indefinido), estimated_area (m² — OBRIGATÓRIO, nunca 0; se a área está rotulada na planta usa-a e marca area_legivel=true; caso contrário ESTIMA com base nas cotas visíveis, escala detetada, ou proporção do bbox face à folha — neste caso area_legivel=false e review_required=true; usa intervalos típicos: WC 3-6 m², quarto 9-15 m², sala 15-30 m², cozinha 8-15 m², circulação 4-10 m², garagem 12-25 m²), center_x/center_y, bbox, confidence, evidencias (sinais que usaste — ex: "rotulo SALA", "WC simbolo sanitario", "estimado por bbox"), area_legivel.
+4) COMPARTIMENTOS — identifica divisões. Cada um: name (texto literal da planta se existir), tipo_normalizado (sala, cozinha, sala_cozinha, quarto, suite, instalacao_sanitaria, circulacao, escada, arrumos, zona_tecnica, garagem, estacionamento, terraco, varanda, jardim, churrasqueira, exterior, indefinido), estimated_area (m² — OBRIGATÓRIO, nunca 0; se a área está rotulada na planta usa-a e marca area_legivel=true; caso contrário ESTIMA com base nas cotas visíveis, escala detetada, ou proporção do bbox face à folha — neste caso area_legivel=false e review_required=true; usa intervalos típicos: WC 3-6 m², quarto 9-15 m², sala 15-30 m², cozinha 8-15 m², circulação 4-10 m², garagem 12-25 m²), perimetro_estimado_m (perímetro real do contorno em metros — se cotas visíveis usa-as; caso contrário aproxima pelo retângulo do bbox usando a escala detetada; NUNCA devolvas 0 quando há área), vaos_porta_associados (array com os labels/identificadores das portas em elements que abrem para este compartimento — usa o mesmo nome que pões em compartimentos_conectados dos vãos), center_x/center_y, bbox, confidence, evidencias (sinais que usaste — ex: "rotulo SALA", "WC simbolo sanitario", "estimado por bbox"), area_legivel.
 
 5) PAREDES — popula walls com tipo (parede_exterior, parede_interior, muro_lote, muro_contencao, parede_indefinida), orientacao (horizontal/vertical/diagonal/irregular), bbox, compartimento_associado, confidence_score, review_required, evidencias. NUNCA afirmes que uma parede é estrutural com base só em planta arquitetónica — usa parede_indefinida em caso de dúvida.
 
-6) ELEMENTOS CONSTRUTIVOS — portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada (mantém porta/janela genéricos como fallback). Inclui parede_associada, compartimentos_conectados, largura_legivel, confidence_score, review_required.
+6) ELEMENTOS CONSTRUTIVOS — portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada (mantém porta/janela genéricos como fallback). Para CADA porta/janela é OBRIGATÓRIO devolver largura_cm e altura_cm. Se a planta tem cota legível do vão usa-a e marca dimensao_legivel=true; caso contrário INFERE com padrões PT (Porta WC 70, Porta interior 80, Porta entrada 90, Porta correr 120, Portão garagem 240; Janela pequena 60-80×100, média 100-140×120, grande ≥160×140; altura padrão de portas 210, de janelas 120) e marca dimensao_legivel=false + review_required=true. Inclui parede_associada, compartimentos_conectados (lista os compartimentos que o vão liga — para portas interiores DEVE incluir o compartimento "interior" para que o rodapé seja descontado nesse compartimento), confidence_score.
 
 7) ELEMENTOS EXTERIORES — para implantações ou folhas com exterior, popula exterior_elements: lote, rua, acesso, estacionamento, jardim, vegetacao, muro, patio, terraco, cota_altimetrica, confrontacao. Inclui bbox e confidence_score.
 
@@ -203,6 +203,8 @@ REGRAS CRÍTICAS:
                         },
                         estimated_area: { type: "number" },
                         area_legivel: { type: "boolean" },
+                        perimetro_estimado_m: { type: "number" },
+                        vaos_porta_associados: { type: "array", items: { type: "string" } },
                         center_x: { type: "number" },
                         center_y: { type: "number" },
                         bbox: bboxSchema,
@@ -232,6 +234,9 @@ REGRAS CRÍTICAS:
                         position_y: { type: "number" },
                         bbox: bboxSchema,
                         count: { type: "number" },
+                        largura_cm: { type: "number" },
+                        altura_cm: { type: "number" },
+                        dimensao_legivel: { type: "boolean" },
                         parede_associada: { type: "string" },
                         compartimentos_conectados: { type: "array", items: { type: "string" } },
                         largura_legivel: { type: "boolean" },

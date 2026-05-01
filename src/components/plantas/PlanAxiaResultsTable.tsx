@@ -344,9 +344,13 @@ export function PlanAxiaResultsTable({
                 disabled={filteredElements.length === 0}
                 onClick={() =>
                   downloadCsv("axia-elementos.csv", [
-                    ["Tipo", "Etiqueta", "Quantidade", "Confiança", "Validar?", "Posição X", "Posição Y"],
-                    ...filteredElements.map((e) => [
-                      e.type, e.label, e.count ?? 1,
+                    ["Tipo", "Etiqueta", "Largura (cm)", "Altura (cm)", "Dim. Lida?", "Quantidade", "Confiança", "Validar?", "Posição X", "Posição Y"],
+                    ...filteredElements.map((e: any) => [
+                      e.type, e.label,
+                      e.largura_cm ?? "",
+                      e.altura_cm ?? "",
+                      e.dimensao_legivel ? "sim" : (e.largura_cm ? "inferida" : ""),
+                      e.count ?? 1,
                       (e.confidence_score ?? 0).toFixed(2),
                       e.review_required ? "sim" : "",
                       e.position_x, e.position_y,
@@ -363,6 +367,7 @@ export function PlanAxiaResultsTable({
                   <TableRow>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Etiqueta</TableHead>
+                    <TableHead>Dimensão</TableHead>
                     <TableHead>Qtd</TableHead>
                     <TableHead>Confiança</TableHead>
                     <TableHead>Validar?</TableHead>
@@ -371,21 +376,33 @@ export function PlanAxiaResultsTable({
                 </TableHeader>
                 <TableBody>
                   {filteredElements.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem elementos.</TableCell></TableRow>
-                  ) : filteredElements.map((e, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="capitalize text-xs">{e.type.replace(/_/g, " ")}</TableCell>
-                      <TableCell className="font-medium">{e.label}</TableCell>
-                      <TableCell>{e.count ?? 1}</TableCell>
-                      <TableCell><ConfidenceBadge level={scoreToLevel(e.confidence_score)} /></TableCell>
-                      <TableCell><ReviewBadge required={e.review_required} /></TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => handleGoTo(e.position_x, e.position_y)}>
-                          <MapPin className="w-3.5 h-3.5 mr-1" /> Ir para
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sem elementos.</TableCell></TableRow>
+                  ) : filteredElements.map((e: any, i) => {
+                    const dim = e.largura_cm
+                      ? `${e.largura_cm}×${e.altura_cm ?? "—"}`
+                      : "—";
+                    const dimSrc = e.dimensao_legivel ? "lida" : (e.largura_cm ? "inferida" : "");
+                    return (
+                      <TableRow key={i}>
+                        <TableCell className="capitalize text-xs">{e.type.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="font-medium">{e.label}</TableCell>
+                        <TableCell className="text-xs tabular-nums">
+                          {dim}
+                          {dimSrc && (
+                            <span className="ml-1 text-[10px] text-muted-foreground">({dimSrc})</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{e.count ?? 1}</TableCell>
+                        <TableCell><ConfidenceBadge level={scoreToLevel(e.confidence_score)} /></TableCell>
+                        <TableCell><ReviewBadge required={e.review_required} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleGoTo(e.position_x, e.position_y)}>
+                            <MapPin className="w-3.5 h-3.5 mr-1" /> Ir para
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>

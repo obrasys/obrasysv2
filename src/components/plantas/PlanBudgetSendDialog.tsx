@@ -222,9 +222,10 @@ export function PlanBudgetSendDialog({
             {rows.filter((r) => !Number(r.valor)).length > 0 && (
               <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2.5 text-xs text-amber-800 dark:text-amber-200">
                 ⚠️ {rows.filter((r) => !Number(r.valor)).length} item(s) sem quantidade
-                (valor 0). Vão ser enviados com Qtd. 0,00 — preencha as medições
-                na Tabela Unificada antes de enviar para evitar artigos vazios
-                no orçamento.
+                (valor 0). Para vãos, rodapé e paredes, volte a executar a
+                leitura da planta com a Axia — ela passou a calcular as
+                quantidades automaticamente. Em alternativa, edite os valores
+                na Tabela Unificada antes de enviar.
               </div>
             )}
             <div className="border rounded-md max-h-48 overflow-auto divide-y">
