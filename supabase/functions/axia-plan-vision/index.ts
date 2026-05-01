@@ -203,6 +203,8 @@ REGRAS CRÍTICAS:
                         },
                         estimated_area: { type: "number" },
                         area_legivel: { type: "boolean" },
+                        perimetro_estimado_m: { type: "number" },
+                        vaos_porta_associados: { type: "array", items: { type: "string" } },
                         center_x: { type: "number" },
                         center_y: { type: "number" },
                         bbox: bboxSchema,
