@@ -212,7 +212,7 @@ REGRAS CRÍTICAS:
                         review_required: { type: "boolean" },
                         evidencias: { type: "array", items: { type: "string" } },
                       },
-                      required: ["name", "center_x", "center_y", "confidence"],
+                      required: ["name", "center_x", "center_y", "confidence", "estimated_area", "perimetro_estimado_m"],
                       additionalProperties: false,
                     },
                   },
