@@ -20,36 +20,104 @@ import { toast } from "sonner";
 import { PlanAxiaResultsTable } from "./PlanAxiaResultsTable";
 import { PlanPagesPanel } from "./PlanPagesPanel";
 
+export interface AxiaBBox {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+}
+
 export interface PlanAnalysisResult {
   scale_detected: {
     found: boolean;
     value?: string;
     reference_dimension?: string;
   };
+  sheet_classification?: {
+    type?: string;
+    piso?: string;
+    titulo?: string;
+    escala?: string;
+    norte_presente?: boolean;
+    legenda_presente?: boolean;
+    carimbo_presente?: boolean;
+  };
   dimensions: Array<{
     value: number;
     unit: string;
     label: string;
+    raw_text?: string;
+    valor_nao_legivel?: boolean;
     position_x: number;
     position_y: number;
+    bbox?: AxiaBBox;
     confidence: number;
+    review_required?: boolean;
+    associated_to?: string;
   }>;
   rooms: Array<{
     name: string;
+    tipo_normalizado?: string;
     estimated_area?: number;
+    area_legivel?: boolean;
     center_x: number;
     center_y: number;
+    bbox?: AxiaBBox;
     confidence: number;
+    review_required?: boolean;
+    evidencias?: string[];
   }>;
   elements: Array<{
     type: string;
     label: string;
     position_x: number;
     position_y: number;
+    bbox?: AxiaBBox;
     count?: number;
+    parede_associada?: string;
+    compartimentos_conectados?: string[];
+    largura_legivel?: boolean;
+    confidence_score?: number;
+    review_required?: boolean;
   }>;
+  walls?: Array<{
+    tipo: string;
+    orientacao: string;
+    bbox?: AxiaBBox;
+    compartimento_associado?: string;
+    confidence_score: number;
+    review_required?: boolean;
+    evidencias?: string[];
+    notes?: string;
+  }>;
+  exterior_elements?: Array<{
+    tipo: string;
+    bbox?: AxiaBBox;
+    confidence_score: number;
+    notes?: string;
+  }>;
+  reading_quality?: {
+    overall_confidence?: number;
+    image_quality?: "alta" | "media" | "baixa";
+    text_legibility?: "alta" | "media" | "baixa";
+    dimensions_legibility?: "alta" | "media" | "baixa";
+    risk_level?: "baixo" | "medio" | "alto";
+    human_intervention_required?: boolean;
+  };
+  limitations?: string[];
+  validation_questions?: string[];
   summary: string;
 }
+
+const SHEET_TYPE_LABEL: Record<string, string> = {
+  planta_piso: "Planta de Piso",
+  implantacao: "Implantação",
+  corte: "Corte",
+  alcado: "Alçado",
+  detalhe: "Detalhe",
+  legenda: "Legenda",
+  outro: "Outro",
+};
 
 interface PlanAIAnalysisProps {
   imageDataUrl: string | null;
