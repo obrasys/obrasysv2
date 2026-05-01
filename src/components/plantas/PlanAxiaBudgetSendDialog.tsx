@@ -390,6 +390,15 @@ export function PlanAxiaBudgetSendDialog({
                 Excluir compartimentos/vãos marcados para validação humana
               </span>
             </label>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:bg-amber-100 mt-2 w-fit">
+              <Checkbox
+                checked={replacePrevious}
+                onCheckedChange={(v) => setReplacePrevious(!!v)}
+              />
+              <span className="text-xs font-medium">
+                Substituir análise anterior (limpa quantitativos da Axia já existentes nesta planta)
+              </span>
+            </label>
           </div>
 
           {/* Pages */}
