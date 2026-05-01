@@ -314,6 +314,13 @@ export function PlanAxiaBudgetSendDialog({
                 </label>
               ))}
             </div>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer hover:bg-muted/40 mt-2 w-fit">
+              <Checkbox
+                checked={excludeReviewRequired}
+                onCheckedChange={(v) => setExcludeReviewRequired(!!v)}
+              />
+              <span className="text-xs">Excluir itens marcados para validação humana</span>
+            </label>
           </div>
 
           {/* Pages */}
