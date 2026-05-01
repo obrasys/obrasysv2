@@ -69,6 +69,7 @@ export function PlanAxiaBudgetSendDialog({
     rooms: true,
     elements: true,
   });
+  const [excludeReviewRequired, setExcludeReviewRequired] = useState(true);
   const [sending, setSending] = useState(false);
 
   // Recompute when pages change (e.g. dialog re-opened)
