@@ -219,6 +219,14 @@ export function PlanBudgetSendDialog({
               <Layers className="h-3.5 w-3.5" />
               Pré-visualização: {groups.length} capítulo(s), {rows.length} artigo(s)
             </div>
+            {rows.filter((r) => !Number(r.valor)).length > 0 && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2.5 text-xs text-amber-800 dark:text-amber-200">
+                ⚠️ {rows.filter((r) => !Number(r.valor)).length} item(s) sem quantidade
+                (valor 0). Vão ser enviados com Qtd. 0,00 — preencha as medições
+                na Tabela Unificada antes de enviar para evitar artigos vazios
+                no orçamento.
+              </div>
+            )}
             <div className="border rounded-md max-h-48 overflow-auto divide-y">
               {groups.map(([title, items]) => (
                 <div key={title} className="p-2.5">
