@@ -76,6 +76,24 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const [titulo, setTitulo] = useState(`Pré-Orçamento — ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openings, setOpenings] = useState<PlacedOpening[]>([]);
+
+  // Buscar vãos (portas/janelas) inseridos pela Axia em plan_placed_elements
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("plan_placed_elements")
+        .select("symbol_type_id, subcategory, quantity")
+        .eq("plan_import_id", planId)
+        .eq("category", "vaos");
+      if (error || cancel) return;
+      setOpenings((data ?? []) as PlacedOpening[]);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [planId]);
 
   const articleById = useMemo(() => {
     const map = new Map<string, Article>();
