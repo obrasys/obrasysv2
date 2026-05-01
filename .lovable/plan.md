@@ -1,117 +1,136 @@
+
 ## Objetivo
 
-Adequar o motor `axia-plan-vision` e a UI da Análise Visual ao novo prompt técnico (classificação de folha, paredes/vãos tipados, cotas com `raw_text`, regiões normalizadas em bbox, `confidence` + `review_required`, limitações e perguntas de validação), **mantendo compatibilidade** com o fluxo atual de envio para Quantitativos.
+A leitura da planta deixa de gerar "1 porta = Qtd 1, 0 €" sem dimensão. Passa a produzir **quantitativos orçamentáveis** prontos a calcular preço:
+
+- **Vãos (portas/janelas)** agrupados por **dimensão** (ex.: `Porta interior 80×210` = 6 un, `Janela 120×120` = 4 un).
+- **Rodapé** em **metros lineares**, calculado pelo **perímetro do compartimento menos a largura dos vãos de porta** que abrem para esse compartimento.
+- **Paredes** em **m² (revestimento/pintura/barramento)** e **m linear (cantos, perfis)**, usando perímetro total × pé direito, descontando vãos.
+- **Pavimento e teto** em **m²** já existentes, mas agora coerentes com os mesmos compartimentos.
+
+Tudo isto chega à Tabela Unificada com **Qtd. já preenchida** e segue para o orçamento sem ficar a 0 €.
 
 ---
 
-## 1. Edge function: `supabase/functions/axia-plan-vision/index.ts`
+## Alterações principais
 
-### 1.1 Substituir o `systemPrompt`
-Trocar o prompt atual pela versão limpa do novo prompt técnico (Etapas 1 a 9, regras críticas anti-alucinação). O `${calibrationContext}` continua a ser injetado no fim.
+### 1. Edge function `axia-plan-vision` — extrair largura dos vãos
 
-### 1.2 Estender o schema do tool call `plan_analysis` (todos os novos campos opcionais)
+Adicionar ao schema do tool `plan_analysis`, em cada `element`:
 
-**Novos blocos de topo** (não obrigatórios, para manter retrocompat):
-- `sheet_classification`: `{ type: enum["planta_piso","implantacao","corte","alcado","detalhe","legenda","outro"], piso?, titulo?, escala?, norte_presente?, legenda_presente?, carimbo_presente? }`
-- `walls`: array de `{ tipo: enum["parede_exterior","parede_interior","muro_lote","muro_contencao","parede_indefinida"], orientacao: enum["horizontal","vertical","diagonal","irregular"], bbox?, compartimento_associado?, confidence_score, review_required, evidencias?: string[], notes? }`
-- `exterior_elements`: array de `{ tipo: enum["lote","rua","acesso","estacionamento","jardim","vegetacao","muro","patio","terraco","cota_altimetrica","confrontacao"], bbox?, confidence_score, notes? }`
-- `reading_quality`: `{ overall_confidence: 0-1, image_quality: enum["alta","media","baixa"], text_legibility, dimensions_legibility, risk_level: enum["baixo","medio","alto"], human_intervention_required: bool }`
-- `limitations`: `string[]`
-- `validation_questions`: `string[]`
+- `largura_cm` (number) — largura nominal do vão em cm. Quando há cota legível na planta, usar; caso contrário inferir pelos padrões PT:
+  - Porta WC: 70
+  - Porta interior quarto/sala/cozinha: 80
+  - Porta entrada: 90
+  - Porta correr: 120
+  - Janela pequena: 60–80, média: 100–140, grande: ≥160
+- `altura_cm` (number) — altura do vão (210 portas, 120 janelas típicas).
+- `dimensao_legivel` (boolean) — true se foi lida da cota, false se foi inferida (`review_required=true`).
+- `compartimentos_conectados` continua, mas reforçar: para porta interior, identificar o compartimento "interior" (o que recebe rodapé descontado).
 
-**Enriquecer blocos existentes** (campos novos opcionais):
-- `dimensions[i]`: `raw_text?`, `valor_nao_legivel?: bool`, `bbox?`, `review_required?`, `associated_to?: string`. Manter `value/unit/label/position_x/position_y/confidence` obrigatórios.
-- `rooms[i]`: `tipo_normalizado?: enum["sala","cozinha","sala_cozinha","quarto","suite","instalacao_sanitaria","circulacao","escada","arrumos","zona_tecnica","garagem","estacionamento","terraco","varanda","jardim","churrasqueira","exterior","indefinido"]`, `bbox?`, `evidencias?: string[]`, `review_required?`, `area_legivel?: bool`. Manter `name/center_x/center_y/confidence`.
-- `elements[i]`: enum `type` ampliado com `["porta_interior","porta_exterior","porta_correr","janela","portao_garagem","portao_lote","vao_indefinido"]` mais os antigos `["porta","janela","pilar","escada","parede","outro"]` (compatibilidade). Adicionar `parede_associada?`, `compartimentos_conectados?: string[]`, `largura_legivel?: bool`, `confidence_score?`, `review_required?`.
+E em cada `room`, adicionar:
 
-`bbox` em todos os sítios = `{ x_min, y_min, x_max, y_max }` (números 0–1) ou ausente.
+- `perimetro_estimado_m` — perímetro real estimado pelo bbox/cotas (não 4·√área), aproximando ao retângulo do bbox quando não há contorno melhor.
+- `vaos_porta_associados` (array de índices/labels de elementos) — para o motor de rodapé.
 
-### 1.3 Sem mudanças noutras partes
-Modelo continua `google/gemini-2.5-flash`. Headers, auth, logging mantêm-se.
+Manter o resto do prompt como está.
 
----
+### 2. Novo módulo `src/lib/plan-quantitativos-engine.ts`
 
-## 2. Tipos no frontend: `src/components/plantas/PlanAIAnalysis.tsx`
+Função pura `buildBudgetableQuantities(analysis)` que, a partir do JSON da Axia, devolve linhas prontas para a Tabela Unificada:
 
-Estender a interface exportada `PlanAnalysisResult` (todos os novos campos opcionais para não partir consumidores actuais):
-
-```ts
-sheet_classification?: { type, piso?, titulo?, escala?, norte_presente?, legenda_presente?, carimbo_presente? }
-walls?: Array<{ tipo, orientacao, bbox?, compartimento_associado?, confidence_score, review_required, evidencias?, notes? }>
-exterior_elements?: Array<{ tipo, bbox?, confidence_score, notes? }>
-reading_quality?: { overall_confidence, image_quality, text_legibility, dimensions_legibility, risk_level, human_intervention_required }
-limitations?: string[]
-validation_questions?: string[]
-// E nos itens existentes:
-dimensions[i].raw_text?, valor_nao_legivel?, bbox?, review_required?
-rooms[i].tipo_normalizado?, bbox?, review_required?, evidencias?
-elements[i].confidence_score?, review_required?, parede_associada?
+```text
+INPUT  : analysis.rooms[], analysis.elements[], analysis.walls[]
+OUTPUT : {
+  rooms,          // pavimento + teto (m²)
+  baseboards,     // rodapé por compartimento (ml)  ← perímetro − Σ larguras de portas que abrem para o compartimento
+  wallSurfaces,   // paredes (m²) por compartimento = perímetro × pé_direito − Σ área de vãos
+  openingsByDim,  // {tipo: porta_interior, largura: 80, altura: 210, qtd: 6}
+}
 ```
 
-### Mudanças no card colapsado (lado direito do canvas)
+Regras:
 
-- **Header da folha**: se vier `sheet_classification`, mostrar uma linha com badges: `Tipo`, `Piso`, `Escala`, `Norte`. Dá ao utilizador feedback imediato do que a Axia leu.
-- **Banner de qualidade**: se `reading_quality.human_intervention_required === true` ou `risk_level === "alto"`, mostrar banner âmbar com `AlertTriangle` no topo do card.
-- **Nova secção colapsável "Paredes"** abaixo de "Elementos", com contagem por tipo (Exterior X · Interior Y · Muro Z).
-- **Limitações & Perguntas**: secção colapsável "Validações da Axia" listando `limitations` e `validation_questions`.
-- Para cada item com `review_required`, mostrar um pequeno `AlertTriangle` âmbar à direita do nome.
+- Perímetro do compartimento: usa `perimetro_estimado_m` da Axia; fallback `2·(w+h)` do bbox normalizado convertido por escala; último recurso `4·√área`.
+- Pé direito por defeito 2.70 m (já em `plan_rooms`).
+- Largura do vão para descontar = `largura_cm/100`. Altura idem para área.
+- Agregação de vãos: chave `${tipo}|${largura_cm}x${altura_cm}` → soma `count`. Output legível: "Porta interior 80×210" un.
 
----
+### 3. `PlanAxiaBudgetSendDialog.tsx` — usar o motor
 
-## 3. Tabela completa: `src/components/plantas/PlanAxiaResultsTable.tsx`
+Substituir o cálculo atual (`perimetro = 4·√área`, elementos lançados 1 a 1 sem dimensão) por:
 
-- Substituir o `ConfidenceBadge` local pelo `ConfidenceBadge` partilhado de `src/components/plantas/ConfidenceBadge.tsx` (já existe e segue o standard visual da app — mapeia score → `confirmado`/`provavel`/`precisa_validar`).
-- Adicionar **2 novos tabs**: "Paredes" e "Exterior".
-- Em "Cotas": adicionar coluna **"Texto original"** que mostra `raw_text` quando existir e badge "Ilegível" quando `valor_nao_legivel === true`.
-- Em "Compartimentos": adicionar coluna **"Tipo"** (do `tipo_normalizado`).
-- Em todos os tabs: adicionar coluna **"Validar?"** com badge âmbar quando `review_required === true`.
-- Atualizar exports CSV para incluir novas colunas.
-- Header do dialog: se houver `sheet_classification`, mostrar badge com o `type` da folha ao lado de `pageLabel`.
+- Para cada folha selecionada, correr `buildBudgetableQuantities`.
+- Inserir em `plan_rooms` o `perimetro_m` real do motor (não a aproximação quadrada).
+- Inserir em `plan_measurements` registos do tipo `linha` para **rodapé** (um por compartimento) com `valor_bruto = perímetro útil`, `unidade = m`, `etiqueta = "Rodapé — <nome compartimento>"`, `camada = "rodape"`.
+- Inserir em `plan_measurements` registos do tipo `area` para **paredes** com `valor_bruto = m² líquido`, `camada = "paredes"`.
+- Inserir em `plan_placed_elements` os vãos agrupados por dimensão: um registo por (tipo, largura, altura) com `quantity = total`, `note = "Folha N · 80×210"`, e `subcategory = "porta_interior_80x210"` para que a categoria no orçamento já distinga vãos.
 
-Para isto receber os dados, o componente precisa do objecto `PlanAnalysisResult` completo (não só dos 3 arrays). Adicionar props opcionais `sheetClassification`, `readingQuality`, `walls`, `exteriorElements`, `limitations`, `validationQuestions`, e passá-las a partir de `PlanAIAnalysis.tsx`.
+Adicionar nova secção no diálogo "Quantitativos derivados":
+- ☑ Rodapé (perímetro − vãos)
+- ☑ Paredes (m² para revestir/pintar)
+- ☑ Vãos agrupados por dimensão
 
----
+Estes toggles substituem a granularidade atual "Elementos" para o caso de portas/janelas (mantém-se para outros símbolos: pilar, escada, etc.).
 
-## 4. Envio para Quantitativos: `src/components/plantas/PlanAxiaBudgetSendDialog.tsx`
+### 4. View `plan_quantitativos_v` — leve ajuste
 
-- Adicionar checkbox **"Excluir itens marcados para validar humana"** (default: ligado). Quando ligado, filtra qualquer item com `review_required === true`.
-- Para `rooms` com `tipo_normalizado`, mapear para `plan_rooms.tipo_compartimento` quando o valor existir na taxonomia atual; caso contrário usar `"habitacao"` como fallback.
-- Para `dimensions` com `valor_nao_legivel === true`: nunca enviar, mesmo sem o filtro acima (não é honesto criar cota com valor inventado).
-- Mostrar contador "Filtrados por validação humana: N" no resumo.
+Já mostra rodapé/teto a partir de `plan_rooms`. Vamos:
 
-Fora do âmbito desta iteração: criar registos em `plan_walls` a partir do output da Axia (a estrutura de dados é diferente — `walls` da Axia não tem `start_point`/`end_point`, só `bbox`). Apenas mostramos no UI; a inserção em `plan_walls` fica para iteração futura quando a Axia conseguir devolver pontos.
+- Acrescentar UNION para `plan_measurements` filtrado por `camada IN ('rodape','paredes')` com descrição já bonita (ex.: "Rodapé — Sala") — na verdade já cai no ramo `medicao`, basta garantir que `etiqueta` chega populada (responsabilidade do dialog).
+- Para `plan_placed_elements`, melhorar `descricao` no UNION existente para usar `subcategory` (ex.: "Porta interior 80×210") e `quantity` real em vez de 1.
 
----
+(Migration SQL pequena, só recria a view.)
 
-## 5. Pequenas correcções
+### 5. `PlanBudgetSendDialog.tsx` — sem alterações funcionais grandes
 
-- **Erro runtime atual** "Failed to fetch dynamically imported module: Detail.tsx" — ao tocar em `Detail.tsx` para passar as novas props, o módulo é re-emitido e o erro de cache resolve-se. Não requer mudança adicional.
-- Confiança: o componente atual usa `confidence` (0–1). Vamos preferir `confidence_score` quando vier (sinónimos), com fallback. Helper único `pickConfidence(item)` em `PlanAIAnalysis.tsx`.
+O agrupamento por `camada` já existe, portanto ao agrupar verás capítulos: "Rodapé", "Paredes", "Pavimento", "Teto", "Vãos". Apenas:
 
----
-
-## 6. QA manual após implementação
-
-Na rota actual `/obras/:id/plantas/:planId`:
-1. Carregar o PDF anexo (`Autodesk_Viewer_Free_Online_File_Viewer.pdf`).
-2. Correr "Analisar com IA". Verificar:
-   - Badges de classificação da folha aparecem.
-   - Cotas têm `raw_text` (quando legível) e marca "Ilegível" quando aplicável.
-   - Paredes aparecem separadas por tipo (exterior/interior/muro).
-   - Vãos com tipos detalhados (porta_interior, janela, portão_garagem...).
-   - Banner de qualidade só aparece quando `human_intervention_required`.
-3. Abrir tabela completa → confirmar 5 tabs (Cotas, Compartimentos, Elementos, Paredes, Exterior) + nova coluna "Validar?".
-4. Enviar para Quantitativos com filtro ligado → confirmar que itens com `review_required` ficam de fora.
-5. Logs da edge function: confirmar que o JSON do tool call parseia (sem `Unexpected end of JSON`).
+- Substituir o aviso atual "X itens com Qtd 0" para também sugerir re-correr a leitura Axia se >50% estiver a 0 (já não deve acontecer depois desta alteração).
 
 ---
 
-## Ficheiros que vão ser tocados
+## Impacto na UI (resumo visual)
 
-- `supabase/functions/axia-plan-vision/index.ts` — novo prompt + schema estendido
-- `src/components/plantas/PlanAIAnalysis.tsx` — tipos + UI do card (header de folha, banner de qualidade, secção Paredes, secção Validações)
-- `src/components/plantas/PlanAxiaResultsTable.tsx` — 2 novos tabs, coluna Validar, coluna Texto original, ConfidenceBadge partilhado
-- `src/components/plantas/PlanAxiaBudgetSendDialog.tsx` — filtro `review_required`, mapeamento `tipo_normalizado`, exclusão de cotas ilegíveis
-- `src/pages/plantas/Detail.tsx` — passar novas props (`sheetClassification`, etc.) ao tabela completa via `PlanAIAnalysis`
+Antes:
+```text
+9. porta_interior   10 itens  0,00 €
+   - Porta casa de banho  un  1.00  0,00 €
+   - Porta wc social      un  1.00  0,00 €
+   ...
+```
 
-Aprovas para implementar?
+Depois:
+```text
+9. Vãos
+   - Porta interior 70×210   un  2.00   0,00 €
+   - Porta interior 80×210   un  6.00   0,00 €
+   - Porta exterior 90×210   un  1.00   0,00 €
+   - Janela 120×120          un  4.00   0,00 €
+10. Rodapé
+   - Rodapé — Sala           m   18.40
+   - Rodapé — Quarto 1       m   12.80
+   ...
+11. Paredes
+   - Paredes — Sala (revestir)  m²  49.68
+   ...
+```
+
+O preço unitário continua por preencher (responsabilidade do utilizador / Base de Preços), mas a **quantidade chega correta**.
+
+---
+
+## Detalhes técnicos
+
+**Ficheiros a editar**
+- `supabase/functions/axia-plan-vision/index.ts` — schema + prompt (largura_cm, altura_cm, perimetro_estimado_m, vaos_porta_associados).
+- `src/lib/plan-quantitativos-engine.ts` — **novo** (motor puro + testes leves).
+- `src/components/plantas/PlanAxiaBudgetSendDialog.tsx` — usa o motor, novos toggles, novos inserts.
+- `src/components/plantas/PlanAIAnalysis.tsx` — mostrar dimensões dos vãos no preview (campo `largura_cm`).
+- `src/components/plantas/PlanAxiaResultsTable.tsx` — coluna "Dimensão" no separador Elementos.
+- `src/components/plantas/PlanBudgetSendDialog.tsx` — ajustar mensagem de aviso de Qtd 0.
+- **Nova migration**: recriar `plan_quantitativos_v` para usar `subcategory + quantity` em `plan_placed_elements`.
+
+**Não toca em**: tabelas existentes, `client.ts`, `types.ts`, fluxos fora de plantas/quantitativos.
+
+**Compatível com dados existentes**: rooms já criados sem `perimetro_m` correto continuam a funcionar (motor recalcula no envio); plantas antigas precisam de re-correr a Axia para obter `largura_cm`/`altura_cm` dos vãos.
