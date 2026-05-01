@@ -325,8 +325,9 @@ export function PlanAxiaBudgetSendDialog({
         inserted += elementsRows.length;
       }
 
+      const removedMsg = replacePrevious && removed > 0 ? ` (${removed} anteriores removidos)` : "";
       toast.success(
-        `${inserted} quantitativo(s) adicionados à Tabela Unificada`,
+        `${inserted} quantitativo(s) adicionados à Tabela Unificada${removedMsg}`,
         {
           action: {
             label: "Ver Quantitativos",
