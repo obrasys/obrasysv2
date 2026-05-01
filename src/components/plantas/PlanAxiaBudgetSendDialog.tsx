@@ -95,6 +95,7 @@ export function PlanAxiaBudgetSendDialog({
     rooms: true,
   });
   const [excludeReviewRequired, setExcludeReviewRequired] = useState(false);
+  const [replacePrevious, setReplacePrevious] = useState(true);
   const [sending, setSending] = useState(false);
 
   // Recompute when pages change (e.g. dialog re-opened)
@@ -273,6 +274,41 @@ export function PlanAxiaBudgetSendDialog({
       }
 
       let inserted = 0;
+      let removed = 0;
+
+      // Limpar análise anterior da Axia para esta planta antes de inserir
+      if (replacePrevious) {
+        // 1. plan_measurements derivadas
+        const { data: oldMeas, error: oldMeasErr } = await supabase
+          .from("plan_measurements")
+          .delete()
+          .eq("plan_import_id", planImportId)
+          .eq("measurement_origin", "derivado")
+          .select("id");
+        if (oldMeasErr) throw oldMeasErr;
+        removed += oldMeas?.length ?? 0;
+
+        // 2. plan_rooms gerados pela Axia
+        const { data: oldRooms, error: oldRoomsErr } = await supabase
+          .from("plan_rooms")
+          .delete()
+          .eq("plan_import_id", planImportId)
+          .eq("origem", "axia")
+          .select("id");
+        if (oldRoomsErr) throw oldRoomsErr;
+        removed += oldRooms?.length ?? 0;
+
+        // 3. plan_placed_elements desta planta criados pela Axia (note começa por "Folha ")
+        const { data: oldEl, error: oldElErr } = await supabase
+          .from("plan_placed_elements")
+          .delete()
+          .eq("plan_import_id", planImportId)
+          .ilike("note", "Folha %")
+          .select("id");
+        if (oldElErr) throw oldElErr;
+        removed += oldEl?.length ?? 0;
+      }
+
       if (measurementsRows.length) {
         const { error } = await supabase.from("plan_measurements").insert(measurementsRows);
         if (error) throw error;
@@ -289,8 +325,9 @@ export function PlanAxiaBudgetSendDialog({
         inserted += elementsRows.length;
       }
 
+      const removedMsg = replacePrevious && removed > 0 ? ` (${removed} anteriores removidos)` : "";
       toast.success(
-        `${inserted} quantitativo(s) adicionados à Tabela Unificada`,
+        `${inserted} quantitativo(s) adicionados à Tabela Unificada${removedMsg}`,
         {
           action: {
             label: "Ver Quantitativos",
@@ -351,6 +388,15 @@ export function PlanAxiaBudgetSendDialog({
               />
               <span className="text-xs">
                 Excluir compartimentos/vãos marcados para validação humana
+              </span>
+            </label>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:bg-amber-100 mt-2 w-fit">
+              <Checkbox
+                checked={replacePrevious}
+                onCheckedChange={(v) => setReplacePrevious(!!v)}
+              />
+              <span className="text-xs font-medium">
+                Substituir análise anterior (limpa quantitativos da Axia já existentes nesta planta)
               </span>
             </label>
           </div>
