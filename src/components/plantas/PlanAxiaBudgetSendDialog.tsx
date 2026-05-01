@@ -366,6 +366,12 @@ export function PlanAxiaBudgetSendDialog({
               <span className="text-muted-foreground">Folhas selecionadas</span>
               <span className="font-semibold">{preview.perPage.length}</span>
             </div>
+            {preview.filteredAll > 0 && (
+              <div className="flex items-center justify-between text-amber-700 dark:text-amber-300">
+                <span>Filtrados por validação humana</span>
+                <span className="font-semibold">{preview.filteredAll}</span>
+              </div>
+            )}
           </div>
         </div>
 
