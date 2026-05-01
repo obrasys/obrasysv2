@@ -510,7 +510,60 @@ export function PlanAIAnalysis({
                 </Collapsible>
               )}
 
-              {/* No scale warning */}
+              {/* Walls summary */}
+              {result.walls && result.walls.length > 0 && (
+                <div className="rounded-lg border p-2 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium">
+                    <Columns3 className="w-3.5 h-3.5" />
+                    Paredes ({result.walls.length})
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(
+                      result.walls.reduce<Record<string, number>>((acc, w) => {
+                        acc[w.tipo] = (acc[w.tipo] ?? 0) + 1;
+                        return acc;
+                      }, {})
+                    ).map(([tipo, n]) => (
+                      <Badge key={tipo} variant="outline" className="text-[10px]">
+                        {tipo.replace("parede_", "").replace("_", " ")}: {n}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Limitations & validation questions */}
+              {((result.limitations?.length ?? 0) > 0 || (result.validation_questions?.length ?? 0) > 0) && (
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-medium py-1">
+                    <span className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      Validações da Axia ({(result.limitations?.length ?? 0) + (result.validation_questions?.length ?? 0)})
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-1">
+                    {result.limitations && result.limitations.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Limitações</p>
+                        <ul className="text-[11px] space-y-0.5 pl-3 list-disc text-muted-foreground">
+                          {result.limitations.map((l, i) => <li key={i}>{l}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {result.validation_questions && result.validation_questions.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Perguntas a confirmar</p>
+                        <ul className="text-[11px] space-y-0.5 pl-3 list-disc text-muted-foreground">
+                          {result.validation_questions.map((q, i) => <li key={i}>{q}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+
+
               {!result.scale_detected.found && !calibration && (
                 <div className="flex items-start gap-2 bg-destructive/10 rounded-lg p-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
