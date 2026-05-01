@@ -14,6 +14,38 @@
 
 const DEFAULT_CEILING_HEIGHT_M = 2.7;
 
+/**
+ * Áreas mínimas plausíveis (m²) por tipo, usadas como último recurso quando
+ * a IA não devolveu `estimated_area`. Mantemos valores conservadores: o
+ * objetivo é garantir que o orçamento nunca arranca em 0; o utilizador
+ * ajusta na Tabela Unificada.
+ */
+const FALLBACK_AREA_BY_TYPE: Record<string, number> = {
+  sala: 18,
+  cozinha: 10,
+  sala_cozinha: 24,
+  quarto: 12,
+  suite: 14,
+  instalacao_sanitaria: 4,
+  circulacao: 6,
+  escada: 5,
+  arrumos: 4,
+  zona_tecnica: 4,
+  garagem: 16,
+  estacionamento: 14,
+  terraco: 12,
+  varanda: 6,
+  jardim: 20,
+  churrasqueira: 12,
+  exterior: 15,
+  indefinido: 10,
+};
+
+function fallbackAreaFor(room: AxiaRoomLike): number {
+  const t = (room.tipo_normalizado || "indefinido").toLowerCase();
+  return FALLBACK_AREA_BY_TYPE[t] ?? 10;
+}
+
 const DEFAULT_DOOR_WIDTH_CM_BY_TYPE: Record<string, number> = {
   porta: 80,
   porta_interior: 80,
@@ -227,8 +259,19 @@ export function buildBudgetableQuantities(
 
   // 1. Rooms (pavimento/teto) com perímetro já calculado
   for (const r of rooms) {
-    const area = Number(r.estimated_area) || 0;
-    const perimetro = estimateRoomPerimeter(r);
+    let area = Number(r.estimated_area) || 0;
+    let reviewRequired = r.review_required ?? false;
+    if (area <= 0) {
+      // Fallback: usa valor plausível por tipo + flag para revisão.
+      area = fallbackAreaFor(r);
+      reviewRequired = true;
+    }
+    // Garante perímetro: se IA não enviou, deriva do bbox/área (4·√A).
+    let perimetro = estimateRoomPerimeter(r);
+    if (perimetro <= 0 && area > 0) {
+      perimetro = Number((4 * Math.sqrt(area)).toFixed(2));
+      reviewRequired = true;
+    }
     out.rooms.push({
       name: r.name || "Compartimento",
       tipo_normalizado: r.tipo_normalizado,
@@ -236,7 +279,7 @@ export function buildBudgetableQuantities(
       perimetro_m: perimetro,
       pe_direito_m: ceiling,
       confidence: r.confidence,
-      review_required: r.review_required,
+      review_required: reviewRequired,
       source: r,
     });
 
