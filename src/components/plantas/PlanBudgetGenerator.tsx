@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,34 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Categorização inteligente (capítulos do orçamento)
+// Usa camada/etiqueta dos measurements derivados pela Axia para agrupar por
+// especialidade em vez de cair tudo em "A definir (revisão manual)".
+// ─────────────────────────────────────────────────────────────────────────────
+type DerivedBucket =
+  | "Vãos — Portas e Janelas"
+  | "Acabamentos — Rodapé"
+  | "Acabamentos — Paredes"
+  | "Acabamentos — Pavimentos e Tetos"
+  | "A definir (revisão manual)";
+
+function categorizeMeasurement(m: PlanMeasurement): DerivedBucket {
+  const camada = (m.camada ?? "").toLowerCase();
+  const etiqueta = (m.etiqueta ?? "").toLowerCase();
+  if (camada === "rodape" || etiqueta.startsWith("rodapé")) return "Acabamentos — Rodapé";
+  if (camada === "paredes" || etiqueta.startsWith("paredes")) return "Acabamentos — Paredes";
+  if (camada === "pavimento" || camada === "teto" || etiqueta.startsWith("pavimento") || etiqueta.startsWith("teto"))
+    return "Acabamentos — Pavimentos e Tetos";
+  return "A definir (revisão manual)";
+}
+
+interface PlacedOpening {
+  symbol_type_id: string;
+  subcategory: string | null;
+  quantity: number;
+}
 
 interface Article {
   id: string;
