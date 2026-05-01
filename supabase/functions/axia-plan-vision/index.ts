@@ -340,15 +340,61 @@ REGRAS CRÍTICAS:
     }
 
     const aiData = await resp.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    const choice = aiData.choices?.[0];
+    const finishReason = choice?.finish_reason;
+    const toolCall = choice?.message?.tool_calls?.[0];
     let analysis = null;
 
     if (toolCall) {
+      const rawArgs: string = toolCall.function?.arguments ?? "";
       try {
-        analysis = JSON.parse(toolCall.function.arguments);
+        analysis = JSON.parse(rawArgs);
       } catch (e) {
-        console.error("Failed to parse AI response:", e);
+        console.error(
+          "Failed to parse AI tool args. finish_reason=",
+          finishReason,
+          "len=",
+          rawArgs.length,
+          "tail=",
+          rawArgs.slice(-200),
+        );
+        // Attempt repair: balance unclosed braces/brackets caused by truncation
+        try {
+          let s = rawArgs.trim().replace(/,\s*$/, "");
+          const stack: string[] = [];
+          let inStr = false;
+          let esc = false;
+          for (const c of s) {
+            if (esc) { esc = false; continue; }
+            if (c === "\\") { esc = true; continue; }
+            if (c === '"') { inStr = !inStr; continue; }
+            if (inStr) continue;
+            if (c === "{") stack.push("}");
+            else if (c === "[") stack.push("]");
+            else if (c === "}" || c === "]") stack.pop();
+          }
+          if (inStr) s += '"';
+          while (stack.length) s += stack.pop();
+          analysis = JSON.parse(s);
+          console.warn("Recovered partial JSON via repair (truncated output).");
+        } catch (e2) {
+          return new Response(
+            JSON.stringify({
+              error:
+                finishReason === "length"
+                  ? "Análise truncada (planta muito densa). Tente processar uma página de cada vez."
+                  : "Resposta inválida do motor de IA. Tente novamente.",
+            }),
+            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       }
+    } else {
+      console.error("No tool_call in AI response. finish_reason=", finishReason);
+      return new Response(
+        JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     await supabase.from("axia_suggestions_log").insert({
