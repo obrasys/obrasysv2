@@ -30,7 +30,7 @@ export default function PlanQuantitativos() {
 
   const { plans, isLoading: plansLoading } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
-  const { measurements, updateMeasurement } = usePlanMeasurements(planId);
+  const { measurements, updateMeasurement, bulkUpdateValidation } = usePlanMeasurements(planId);
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
   const { rooms, roomMeasurements } = usePlanRooms(planId);
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
@@ -69,20 +69,11 @@ export default function PlanQuantitativos() {
   };
 
   const handleBulkValidate = (ids: string[], estado: "validado" | "rejeitado" | "pendente") => {
-    let completed = 0;
-    ids.forEach((id) => {
-      updateMeasurement.mutate(
-        { id, estadoValidacao: estado as any },
-        {
-          onSuccess: () => {
-            completed++;
-            if (completed === ids.length) {
-              toast.success(`${ids.length} medição(ões) atualizadas para "${estado}"`);
-            }
-          },
-        }
-      );
-    });
+    if (!ids.length) {
+      toast.error("Nenhuma medição selecionada");
+      return;
+    }
+    bulkUpdateValidation.mutate({ ids, estado: estado as any });
   };
 
   if (plansLoading) {
