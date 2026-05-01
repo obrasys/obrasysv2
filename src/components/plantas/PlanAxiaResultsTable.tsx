@@ -276,6 +276,18 @@ export function PlanAxiaResultsTable({
 
           {/* Compartimentos */}
           <TabsContent value="rooms" className="mt-3">
+            {(() => {
+              const pendingCount = filteredRooms.filter((r) => r.review_required).length;
+              return pendingCount > 0 ? (
+                <div className="mb-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2.5 text-xs text-amber-900 dark:text-amber-200">
+                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <div>
+                    <strong>{pendingCount}</strong> compartimento(s) com valores estimados pela Axia (área/perímetro inferidos por tipo).
+                    Reveja e ajuste antes de enviar para orçamento — as linhas a amarelo precisam de validação.
+                  </div>
+                </div>
+              ) : null;
+            })()}
             <div className="flex justify-end mb-2">
               <Button
                 variant="outline"
@@ -312,13 +324,25 @@ export function PlanAxiaResultsTable({
                   {filteredRooms.length === 0 ? (
                     <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem compartimentos.</TableCell></TableRow>
                   ) : filteredRooms.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{r.name}</TableCell>
+                    <TableRow
+                      key={i}
+                      className={r.review_required ? "bg-amber-50/60 dark:bg-amber-900/10 border-l-2 border-l-amber-400" : ""}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-1.5">
+                          {r.review_required && (
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" aria-label="Requer validação" />
+                          )}
+                          {r.name}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs capitalize">{r.tipo_normalizado?.replace(/_/g, " ") ?? "—"}</TableCell>
                       <TableCell>
                         {r.estimated_area ? `${r.estimated_area.toFixed(2)} m²` : "—"}
                         {r.area_legivel === false && (
-                          <Badge variant="outline" className="ml-1 text-[9px]">estimada</Badge>
+                          <Badge variant="outline" className="ml-1 text-[9px] border-amber-400 text-amber-700 dark:text-amber-300">
+                            estimada
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell><ConfidenceBadge level={scoreToLevel(r.confidence)} /></TableCell>
