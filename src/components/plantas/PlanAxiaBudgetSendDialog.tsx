@@ -217,7 +217,7 @@ export function PlanAxiaBudgetSendDialog({
               cor: "#f59e0b",
               estado_validacao: "pendente",
               confidence: "provavel",
-              measurement_origin: "axia",
+              measurement_origin: "derivado",
               observacao: `${folhaTag} · Perímetro ${b.raw_perimeter}m − ${b.discounted_openings_m}m vãos`,
             });
           });
@@ -239,7 +239,7 @@ export function PlanAxiaBudgetSendDialog({
               cor: "#8b5cf6",
               estado_validacao: "pendente",
               confidence: "provavel",
-              measurement_origin: "axia",
+              measurement_origin: "derivado",
               observacao: `${folhaTag} · Bruto ${w.raw_area}m² − ${w.openings_area_m2}m² vãos`,
             });
           });
