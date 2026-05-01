@@ -205,6 +205,12 @@ export function PlanAxiaBudgetSendDialog({
           r.rooms.forEach((rm: any) => {
             if (isReview(rm)) return;
             const tipo = ROOM_TYPE_MAP[rm.tipo_normalizado ?? ""] ?? "habitacao";
+            const area = Number(rm.estimated_area) || 0;
+            // Perímetro estimado: se a Axia não devolveu, aproxima a sala como
+            // quadrada (4·√área). É uma estimativa de partida para que o
+            // rodapé/teto tenham quantidade enviável ao orçamento — o user
+            // valida depois na Tabela Unificada.
+            const perimetroEstimado = area > 0 ? Number((4 * Math.sqrt(area)).toFixed(2)) : 0;
             roomsRows.push({
               plan_import_id: planImportId,
               user_id: user.id,
@@ -213,10 +219,10 @@ export function PlanAxiaBudgetSendDialog({
               boundary_coords: [
                 { x: Number(rm.center_x) || 0, y: Number(rm.center_y) || 0 },
               ],
-              area_m2: Number(rm.estimated_area) || 0,
-              perimetro_m: 0,
+              area_m2: area,
+              perimetro_m: perimetroEstimado,
               observacao: folhaTag,
-              estado_validacao: "pendente",
+              estado_validacao: rm.area_legivel === false ? "pendente" : "pendente",
               origem: "axia",
               confidence: confidenceFromScore(rm.confidence),
             });
