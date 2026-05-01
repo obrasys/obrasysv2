@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { PlanAnalysisResult } from "./PlanAIAnalysis";
+import { buildBudgetableQuantities } from "@/lib/plan-quantitativos-engine";
 
 interface Props {
   open: boolean;
@@ -29,12 +30,13 @@ interface Props {
   planName?: string;
 }
 
-type SectionKey = "dimensions" | "rooms" | "elements";
+type DerivedKey = "openings" | "baseboards" | "wallSurfaces" | "rooms";
 
-const SECTION_LABEL: Record<SectionKey, string> = {
-  dimensions: "Cotas",
-  rooms: "Compartimentos",
-  elements: "Elementos",
+const DERIVED_LABEL: Record<DerivedKey, string> = {
+  openings: "Vãos por dimensão (un)",
+  baseboards: "Rodapé — perímetro útil (m)",
+  wallSurfaces: "Paredes — m² para revestir/pintar",
+  rooms: "Pavimento e Teto (m²)",
 };
 
 const confidenceFromScore = (score?: number): "confirmado" | "provavel" | "incerto" => {
@@ -42,6 +44,28 @@ const confidenceFromScore = (score?: number): "confirmado" | "provavel" | "incer
   if (score >= 0.85) return "confirmado";
   if (score >= 0.55) return "provavel";
   return "incerto";
+};
+
+// Map Axia normalized room types → plan_rooms.tipo_compartimento taxonomy.
+const ROOM_TYPE_MAP: Record<string, string> = {
+  sala: "habitacao",
+  cozinha: "habitacao",
+  sala_cozinha: "habitacao",
+  quarto: "habitacao",
+  suite: "habitacao",
+  instalacao_sanitaria: "wc",
+  circulacao: "circulacao",
+  escada: "circulacao",
+  arrumos: "arrumos",
+  zona_tecnica: "tecnico",
+  garagem: "garagem",
+  estacionamento: "garagem",
+  terraco: "exterior",
+  varanda: "exterior",
+  jardim: "exterior",
+  churrasqueira: "exterior",
+  exterior: "exterior",
+  indefinido: "habitacao",
 };
 
 export function PlanAxiaBudgetSendDialog({
@@ -64,12 +88,13 @@ export function PlanAxiaBudgetSendDialog({
   );
 
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set(pages));
-  const [includeSections, setIncludeSections] = useState<Record<SectionKey, boolean>>({
-    dimensions: true,
+  const [includeDerived, setIncludeDerived] = useState<Record<DerivedKey, boolean>>({
+    openings: true,
+    baseboards: true,
+    wallSurfaces: true,
     rooms: true,
-    elements: true,
   });
-  const [excludeReviewRequired, setExcludeReviewRequired] = useState(true);
+  const [excludeReviewRequired, setExcludeReviewRequired] = useState(false);
   const [sending, setSending] = useState(false);
 
   // Recompute when pages change (e.g. dialog re-opened)
@@ -91,75 +116,47 @@ export function PlanAxiaBudgetSendDialog({
     });
   };
 
-  const toggleSection = (k: SectionKey) => {
-    setIncludeSections((prev) => ({ ...prev, [k]: !prev[k] }));
+  const toggleDerived = (k: DerivedKey) => {
+    setIncludeDerived((prev) => ({ ...prev, [k]: !prev[k] }));
   };
 
-  // Map Axia normalized room types → plan_rooms.tipo_compartimento taxonomy.
-  // Anything not mapped falls back to "habitacao".
-  const ROOM_TYPE_MAP: Record<string, string> = {
-    sala: "habitacao",
-    cozinha: "habitacao",
-    sala_cozinha: "habitacao",
-    quarto: "habitacao",
-    suite: "habitacao",
-    instalacao_sanitaria: "wc",
-    circulacao: "circulacao",
-    escada: "circulacao",
-    arrumos: "arrumos",
-    zona_tecnica: "tecnico",
-    garagem: "garagem",
-    estacionamento: "garagem",
-    terraco: "exterior",
-    varanda: "exterior",
-    jardim: "exterior",
-    churrasqueira: "exterior",
-    exterior: "exterior",
-    indefinido: "habitacao",
-  };
-
-  const isReview = (item: any) => excludeReviewRequired && item?.review_required === true;
+  // Pre-compute derived quantities per selected page
+  const perPage = useMemo(() => {
+    return pages
+      .filter((p) => selectedPages.has(p))
+      .map((page) => {
+        const r = resultsByPage[page];
+        const q = buildBudgetableQuantities(r as any, { groupOpeningsByDim: true });
+        return { page, quantities: q, raw: r };
+      });
+  }, [pages, selectedPages, resultsByPage]);
 
   const preview = useMemo(() => {
-    const perPage: Array<{ page: number; counts: Record<SectionKey, number>; total: number; filtered: number }> = [];
-    let totalAll = 0;
-    let filteredAll = 0;
-    for (const page of pages) {
-      if (!selectedPages.has(page)) continue;
-      const r = resultsByPage[page];
-
-      // Cotas ilegíveis nunca contam (não são honestas).
-      const dims = (r.dimensions ?? []).filter((d: any) => !d.valor_nao_legivel);
-      const dimsKept = includeSections.dimensions ? dims.filter((d) => !isReview(d)) : [];
-      const dimsFiltered = (includeSections.dimensions ? dims.length : 0) - dimsKept.length;
-
-      const rmsKept = includeSections.rooms ? (r.rooms ?? []).filter((rm) => !isReview(rm)) : [];
-      const rmsFiltered = (includeSections.rooms ? (r.rooms?.length ?? 0) : 0) - rmsKept.length;
-
-      const elsKept = includeSections.elements ? (r.elements ?? []).filter((e) => !isReview(e)) : [];
-      const elsFiltered = (includeSections.elements ? (r.elements?.length ?? 0) : 0) - elsKept.length;
-
-      const counts: Record<SectionKey, number> = {
-        dimensions: dimsKept.length,
-        rooms: rmsKept.length,
-        elements: elsKept.length,
-      };
-      const total = counts.dimensions + counts.rooms + counts.elements;
-      const filtered = dimsFiltered + rmsFiltered + elsFiltered;
-      filteredAll += filtered;
-      if (total === 0 && filtered === 0) continue;
-      perPage.push({ page, counts, total, filtered });
-      totalAll += total;
+    let rooms = 0,
+      baseboards = 0,
+      walls = 0,
+      openings = 0;
+    for (const { quantities } of perPage) {
+      if (includeDerived.rooms) rooms += quantities.rooms.length * 2; // pavimento + teto
+      if (includeDerived.baseboards) baseboards += quantities.baseboards.filter((b) => b.valor > 0).length;
+      if (includeDerived.wallSurfaces) walls += quantities.wallSurfaces.filter((w) => w.valor > 0).length;
+      if (includeDerived.openings) openings += quantities.openingsByDim.length;
     }
-    return { perPage, totalAll, filteredAll };
-  }, [pages, selectedPages, resultsByPage, includeSections, excludeReviewRequired]);
+    return {
+      rooms,
+      baseboards,
+      walls,
+      openings,
+      total: rooms + baseboards + walls + openings,
+    };
+  }, [perPage, includeDerived]);
 
   const handleSend = async () => {
     if (!user?.id) {
       toast.error("Sessão inválida");
       return;
     }
-    if (preview.totalAll === 0) {
+    if (preview.total === 0) {
       toast.error("Sem itens para enviar com os filtros atuais");
       return;
     }
@@ -170,80 +167,106 @@ export function PlanAxiaBudgetSendDialog({
       const roomsRows: any[] = [];
       const elementsRows: any[] = [];
 
-      for (const page of pages) {
-        if (!selectedPages.has(page)) continue;
-        const r = resultsByPage[page];
+      for (const { page, quantities, raw } of perPage) {
         const folhaTag = `Folha ${page}`;
 
-        // Cotas → plan_measurements (skip ilegíveis e review se filtro ligado)
-        if (includeSections.dimensions && r.dimensions?.length) {
-          r.dimensions.forEach((d: any) => {
-            if (d.valor_nao_legivel) return;
-            if (isReview(d)) return;
-            const valor = Number(d.value) || 0;
-            measurementsRows.push({
-              plan_import_id: planImportId,
-              user_id: user.id,
-              tipo: "cota",
-              coordinates: [
-                { x: Number(d.position_x) || 0, y: Number(d.position_y) || 0 },
-              ],
-              valor_bruto: valor,
-              unidade: (d.unit || "m").toLowerCase(),
-              etiqueta: d.label || `Cota ${valor} ${d.unit ?? ""}`.trim(),
-              camada: folhaTag,
-              cor: "#3b82f6",
-              estado_validacao: "pendente",
-              confidence: confidenceFromScore(d.confidence),
-              measurement_origin: "axia",
-            });
-          });
-        }
-
-        // Compartimentos → plan_rooms (mapeia tipo_normalizado)
-        if (includeSections.rooms && r.rooms?.length) {
-          r.rooms.forEach((rm: any) => {
-            if (isReview(rm)) return;
+        // 1. Compartimentos (pavimento + teto). Inserimos sempre o room
+        //    quando há rooms ou wallSurfaces ou baseboards a enviar — o
+        //    perímetro real vai para perimetro_m e a área para area_m2.
+        if (
+          includeDerived.rooms ||
+          includeDerived.baseboards ||
+          includeDerived.wallSurfaces
+        ) {
+          quantities.rooms.forEach((rm, idx) => {
+            const src = rm.source as any;
+            if (excludeReviewRequired && src?.review_required) return;
             const tipo = ROOM_TYPE_MAP[rm.tipo_normalizado ?? ""] ?? "habitacao";
-            const area = Number(rm.estimated_area) || 0;
-            // Perímetro estimado: se a Axia não devolveu, aproxima a sala como
-            // quadrada (4·√área). É uma estimativa de partida para que o
-            // rodapé/teto tenham quantidade enviável ao orçamento — o user
-            // valida depois na Tabela Unificada.
-            const perimetroEstimado = area > 0 ? Number((4 * Math.sqrt(area)).toFixed(2)) : 0;
             roomsRows.push({
               plan_import_id: planImportId,
               user_id: user.id,
-              nome: rm.name || "Compartimento",
+              nome: rm.name,
               tipo_compartimento: tipo,
               boundary_coords: [
-                { x: Number(rm.center_x) || 0, y: Number(rm.center_y) || 0 },
+                { x: Number(src?.center_x) || 0, y: Number(src?.center_y) || 0 },
               ],
-              area_m2: area,
-              perimetro_m: perimetroEstimado,
+              area_m2: rm.area_m2,
+              perimetro_m: rm.perimetro_m,
+              pe_direito_m: rm.pe_direito_m,
               observacao: folhaTag,
-              estado_validacao: rm.area_legivel === false ? "pendente" : "pendente",
+              estado_validacao: "pendente",
               origem: "axia",
               confidence: confidenceFromScore(rm.confidence),
             });
           });
         }
 
-        // Elementos → plan_placed_elements
-        if (includeSections.elements && r.elements?.length) {
-          r.elements.forEach((e: any) => {
-            if (isReview(e)) return;
-            const qty = Number(e.count) || 1;
+        // 2. Rodapé — registos lineares por compartimento
+        if (includeDerived.baseboards) {
+          quantities.baseboards.forEach((b) => {
+            if (b.valor <= 0) return;
+            measurementsRows.push({
+              plan_import_id: planImportId,
+              user_id: user.id,
+              tipo: "linha",
+              coordinates: [{ x: 0, y: 0 }],
+              valor_bruto: b.valor,
+              unidade: "m",
+              etiqueta: `Rodapé — ${b.room_name}`,
+              camada: "rodape",
+              cor: "#f59e0b",
+              estado_validacao: "pendente",
+              confidence: "provavel",
+              measurement_origin: "axia",
+              observacao: `${folhaTag} · Perímetro ${b.raw_perimeter}m − ${b.discounted_openings_m}m vãos`,
+            });
+          });
+        }
+
+        // 3. Paredes — m² líquidos para revestir/pintar/barrar
+        if (includeDerived.wallSurfaces) {
+          quantities.wallSurfaces.forEach((w) => {
+            if (w.valor <= 0) return;
+            measurementsRows.push({
+              plan_import_id: planImportId,
+              user_id: user.id,
+              tipo: "area",
+              coordinates: [{ x: 0, y: 0 }],
+              valor_bruto: w.valor,
+              unidade: "m2",
+              etiqueta: `Paredes — ${w.room_name}`,
+              camada: "paredes",
+              cor: "#8b5cf6",
+              estado_validacao: "pendente",
+              confidence: "provavel",
+              measurement_origin: "axia",
+              observacao: `${folhaTag} · Bruto ${w.raw_area}m² − ${w.openings_area_m2}m² vãos`,
+            });
+          });
+        }
+
+        // 4. Vãos agrupados por dimensão → plan_placed_elements
+        if (includeDerived.openings) {
+          quantities.openingsByDim.forEach((o) => {
+            if (excludeReviewRequired && o.review_required) return;
+            // Posição = média das posições dos elementos do bucket
+            const posList = o.elements.filter((e) => e.position_x != null);
+            const x = posList.length
+              ? posList.reduce((s, e) => s + (Number(e.position_x) || 0), 0) / posList.length
+              : 0.5;
+            const y = posList.length
+              ? posList.reduce((s, e) => s + (Number(e.position_y) || 0), 0) / posList.length
+              : 0.5;
             elementsRows.push({
               plan_import_id: planImportId,
               user_id: user.id,
-              symbol_type_id: e.label || e.type || "elemento",
-              category: "instalacoes",
-              subcategory: e.type || "geral",
-              x: Number(e.position_x) || 0,
-              y: Number(e.position_y) || 0,
-              quantity: qty,
-              note: folhaTag,
+              symbol_type_id: `${o.type}_${o.largura_cm}x${o.altura_cm}`,
+              category: "vaos",
+              subcategory: o.label, // ex: "Porta interior 80×210" — vira a descrição na view
+              x,
+              y,
+              quantity: o.qtd,
+              note: `${folhaTag} · ${o.largura_cm}×${o.altura_cm}cm${o.review_required ? " (validar)" : ""}`,
             });
           });
         }
@@ -290,33 +313,34 @@ export function PlanAxiaBudgetSendDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Table2 className="h-4 w-4 text-primary" />
-            Enviar análise Axia™ para Tabela Unificada de Quantitativos
+            Enviar quantitativos para a Tabela Unificada
           </DialogTitle>
           <DialogDescription>
-            A Axia regista cotas, compartimentos e elementos identificados como
-            quantitativos pendentes em <strong>Orçamentar → Ver Quantitativos</strong>.
-            Cada item fica associado à respetiva folha do PDF.
+            A Axia transforma os elementos identificados em <strong>quantitativos
+            orçamentáveis</strong>: vãos agrupados por dimensão, rodapé pelo
+            perímetro do compartimento descontando portas, e área de paredes
+            para revestimentos / pintura.
             {planName ? <> Planta: <strong>{planName}</strong>.</> : null}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Sections */}
+          {/* Categorias derivadas */}
           <div className="space-y-1.5">
             <div className="text-xs font-medium text-muted-foreground">
-              Categorias a incluir
+              Quantitativos a gerar
             </div>
-            <div className="flex gap-2 flex-wrap">
-              {(Object.keys(SECTION_LABEL) as SectionKey[]).map((k) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {(Object.keys(DERIVED_LABEL) as DerivedKey[]).map((k) => (
                 <label
                   key={k}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer hover:bg-muted/40"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer hover:bg-muted/40"
                 >
                   <Checkbox
-                    checked={includeSections[k]}
-                    onCheckedChange={() => toggleSection(k)}
+                    checked={includeDerived[k]}
+                    onCheckedChange={() => toggleDerived(k)}
                   />
-                  <span className="text-sm">{SECTION_LABEL[k]}</span>
+                  <span className="text-sm">{DERIVED_LABEL[k]}</span>
                 </label>
               ))}
             </div>
@@ -325,7 +349,9 @@ export function PlanAxiaBudgetSendDialog({
                 checked={excludeReviewRequired}
                 onCheckedChange={(v) => setExcludeReviewRequired(!!v)}
               />
-              <span className="text-xs">Excluir itens marcados para validação humana</span>
+              <span className="text-xs">
+                Excluir compartimentos/vãos marcados para validação humana
+              </span>
             </label>
           </div>
 
@@ -335,47 +361,55 @@ export function PlanAxiaBudgetSendDialog({
               <span>Folhas analisadas</span>
               <Badge variant="secondary">{pages.length}</Badge>
             </div>
-            <ScrollArea className="h-[200px] rounded-md border p-2">
+            <ScrollArea className="h-[160px] rounded-md border p-2">
               <div className="space-y-1">
-                {pages.map((p) => {
-                  const row = preview.perPage.find((x) => x.page === p);
-                  return (
-                    <label
-                      key={p}
-                      className="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-muted/40 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={selectedPages.has(p)}
-                          onCheckedChange={() => togglePage(p)}
-                        />
-                        <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">Folha {p}</span>
-                      </div>
-                      <Badge variant="outline" className="text-[10px]">
-                        {row?.total ?? 0} item(s)
-                      </Badge>
-                    </label>
-                  );
-                })}
+                {pages.map((p) => (
+                  <label
+                    key={p}
+                    className="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-muted/40 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedPages.has(p)}
+                        onCheckedChange={() => togglePage(p)}
+                      />
+                      <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">Folha {p}</span>
+                    </div>
+                  </label>
+                ))}
               </div>
             </ScrollArea>
           </div>
 
           {/* Summary */}
-          <div className="rounded-md bg-muted/40 p-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Total a enviar</span>
-              <span className="font-semibold">{preview.totalAll} item(s)</span>
+          <div className="rounded-md bg-muted/40 p-3 text-sm space-y-1">
+            <div className="flex items-center justify-between font-medium">
+              <span>Total a enviar</span>
+              <span>{preview.total} item(s)</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Folhas selecionadas</span>
-              <span className="font-semibold">{preview.perPage.length}</span>
-            </div>
-            {preview.filteredAll > 0 && (
-              <div className="flex items-center justify-between text-amber-700 dark:text-amber-300">
-                <span>Filtrados por validação humana</span>
-                <span className="font-semibold">{preview.filteredAll}</span>
+            {includeDerived.rooms && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Pavimento + Teto</span>
+                <span>{preview.rooms}</span>
+              </div>
+            )}
+            {includeDerived.baseboards && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Rodapé</span>
+                <span>{preview.baseboards}</span>
+              </div>
+            )}
+            {includeDerived.wallSurfaces && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Paredes (m²)</span>
+                <span>{preview.walls}</span>
+              </div>
+            )}
+            {includeDerived.openings && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Vãos por dimensão</span>
+                <span>{preview.openings}</span>
               </div>
             )}
           </div>
@@ -385,7 +419,7 @@ export function PlanAxiaBudgetSendDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
             Cancelar
           </Button>
-          <Button onClick={handleSend} disabled={sending || preview.totalAll === 0}>
+          <Button onClick={handleSend} disabled={sending || preview.total === 0}>
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" /> A enviar…
