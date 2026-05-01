@@ -600,6 +600,12 @@ export function PlanAIAnalysis({
           dimensions={result.dimensions}
           rooms={result.rooms}
           elements={result.elements}
+          walls={result.walls}
+          exteriorElements={result.exterior_elements}
+          sheetClassification={result.sheet_classification}
+          readingQuality={result.reading_quality}
+          limitations={result.limitations}
+          validationQuestions={result.validation_questions}
           onHighlightPosition={onHighlightPosition}
           pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
           resultsByPage={resultsByPage}
