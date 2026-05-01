@@ -20,36 +20,104 @@ import { toast } from "sonner";
 import { PlanAxiaResultsTable } from "./PlanAxiaResultsTable";
 import { PlanPagesPanel } from "./PlanPagesPanel";
 
+export interface AxiaBBox {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+}
+
 export interface PlanAnalysisResult {
   scale_detected: {
     found: boolean;
     value?: string;
     reference_dimension?: string;
   };
+  sheet_classification?: {
+    type?: string;
+    piso?: string;
+    titulo?: string;
+    escala?: string;
+    norte_presente?: boolean;
+    legenda_presente?: boolean;
+    carimbo_presente?: boolean;
+  };
   dimensions: Array<{
     value: number;
     unit: string;
     label: string;
+    raw_text?: string;
+    valor_nao_legivel?: boolean;
     position_x: number;
     position_y: number;
+    bbox?: AxiaBBox;
     confidence: number;
+    review_required?: boolean;
+    associated_to?: string;
   }>;
   rooms: Array<{
     name: string;
+    tipo_normalizado?: string;
     estimated_area?: number;
+    area_legivel?: boolean;
     center_x: number;
     center_y: number;
+    bbox?: AxiaBBox;
     confidence: number;
+    review_required?: boolean;
+    evidencias?: string[];
   }>;
   elements: Array<{
     type: string;
     label: string;
     position_x: number;
     position_y: number;
+    bbox?: AxiaBBox;
     count?: number;
+    parede_associada?: string;
+    compartimentos_conectados?: string[];
+    largura_legivel?: boolean;
+    confidence_score?: number;
+    review_required?: boolean;
   }>;
+  walls?: Array<{
+    tipo: string;
+    orientacao: string;
+    bbox?: AxiaBBox;
+    compartimento_associado?: string;
+    confidence_score: number;
+    review_required?: boolean;
+    evidencias?: string[];
+    notes?: string;
+  }>;
+  exterior_elements?: Array<{
+    tipo: string;
+    bbox?: AxiaBBox;
+    confidence_score: number;
+    notes?: string;
+  }>;
+  reading_quality?: {
+    overall_confidence?: number;
+    image_quality?: "alta" | "media" | "baixa";
+    text_legibility?: "alta" | "media" | "baixa";
+    dimensions_legibility?: "alta" | "media" | "baixa";
+    risk_level?: "baixo" | "medio" | "alto";
+    human_intervention_required?: boolean;
+  };
+  limitations?: string[];
+  validation_questions?: string[];
   summary: string;
 }
+
+const SHEET_TYPE_LABEL: Record<string, string> = {
+  planta_piso: "Planta de Piso",
+  implantacao: "Implantação",
+  corte: "Corte",
+  alcado: "Alçado",
+  detalhe: "Detalhe",
+  legenda: "Legenda",
+  outro: "Outro",
+};
 
 interface PlanAIAnalysisProps {
   imageDataUrl: string | null;
@@ -252,6 +320,37 @@ export function PlanAIAnalysis({
             </div>
           ) : (
             <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
+              {/* Sheet classification header */}
+              {result.sheet_classification && (
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {result.sheet_classification.type && (
+                    <Badge variant="default" className="text-[10px]">
+                      {SHEET_TYPE_LABEL[result.sheet_classification.type] ?? result.sheet_classification.type}
+                    </Badge>
+                  )}
+                  {result.sheet_classification.piso && (
+                    <Badge variant="outline" className="text-[10px]">Piso: {result.sheet_classification.piso}</Badge>
+                  )}
+                  {result.sheet_classification.escala && (
+                    <Badge variant="outline" className="text-[10px]">Esc. {result.sheet_classification.escala}</Badge>
+                  )}
+                  {result.sheet_classification.norte_presente && (
+                    <Badge variant="secondary" className="text-[10px]">Norte ✓</Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Reading-quality banner */}
+              {result.reading_quality && (result.reading_quality.human_intervention_required || result.reading_quality.risk_level === "alto") && (
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-200 dark:border-amber-800 rounded-lg p-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-amber-800 dark:text-amber-200 leading-snug">
+                    <strong>Validação humana recomendada.</strong>{" "}
+                    Qualidade de imagem: {result.reading_quality.image_quality ?? "?"} · cotas: {result.reading_quality.dimensions_legibility ?? "?"} · risco: {result.reading_quality.risk_level ?? "?"}.
+                  </div>
+                </div>
+              )}
+
               {/* Summary */}
               <div className="bg-muted rounded-lg p-2.5">
                 <p className="text-xs text-muted-foreground">{result.summary}</p>
@@ -411,7 +510,60 @@ export function PlanAIAnalysis({
                 </Collapsible>
               )}
 
-              {/* No scale warning */}
+              {/* Walls summary */}
+              {result.walls && result.walls.length > 0 && (
+                <div className="rounded-lg border p-2 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium">
+                    <Columns3 className="w-3.5 h-3.5" />
+                    Paredes ({result.walls.length})
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(
+                      result.walls.reduce<Record<string, number>>((acc, w) => {
+                        acc[w.tipo] = (acc[w.tipo] ?? 0) + 1;
+                        return acc;
+                      }, {})
+                    ).map(([tipo, n]) => (
+                      <Badge key={tipo} variant="outline" className="text-[10px]">
+                        {tipo.replace("parede_", "").replace("_", " ")}: {n}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Limitations & validation questions */}
+              {((result.limitations?.length ?? 0) > 0 || (result.validation_questions?.length ?? 0) > 0) && (
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-medium py-1">
+                    <span className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      Validações da Axia ({(result.limitations?.length ?? 0) + (result.validation_questions?.length ?? 0)})
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-1">
+                    {result.limitations && result.limitations.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Limitações</p>
+                        <ul className="text-[11px] space-y-0.5 pl-3 list-disc text-muted-foreground">
+                          {result.limitations.map((l, i) => <li key={i}>{l}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {result.validation_questions && result.validation_questions.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Perguntas a confirmar</p>
+                        <ul className="text-[11px] space-y-0.5 pl-3 list-disc text-muted-foreground">
+                          {result.validation_questions.map((q, i) => <li key={i}>{q}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+
+
               {!result.scale_detected.found && !calibration && (
                 <div className="flex items-start gap-2 bg-destructive/10 rounded-lg p-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
@@ -448,6 +600,12 @@ export function PlanAIAnalysis({
           dimensions={result.dimensions}
           rooms={result.rooms}
           elements={result.elements}
+          walls={result.walls}
+          exteriorElements={result.exterior_elements}
+          sheetClassification={result.sheet_classification}
+          readingQuality={result.reading_quality}
+          limitations={result.limitations}
+          validationQuestions={result.validation_questions}
           onHighlightPosition={onHighlightPosition}
           pageLabel={totalPages > 1 ? `Folha ${currentPage}/${totalPages}` : undefined}
           resultsByPage={resultsByPage}

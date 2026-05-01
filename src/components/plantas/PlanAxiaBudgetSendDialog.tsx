@@ -69,6 +69,7 @@ export function PlanAxiaBudgetSendDialog({
     rooms: true,
     elements: true,
   });
+  const [excludeReviewRequired, setExcludeReviewRequired] = useState(true);
   const [sending, setSending] = useState(false);
 
   // Recompute when pages change (e.g. dialog re-opened)
@@ -94,24 +95,64 @@ export function PlanAxiaBudgetSendDialog({
     setIncludeSections((prev) => ({ ...prev, [k]: !prev[k] }));
   };
 
+  // Map Axia normalized room types → plan_rooms.tipo_compartimento taxonomy.
+  // Anything not mapped falls back to "habitacao".
+  const ROOM_TYPE_MAP: Record<string, string> = {
+    sala: "habitacao",
+    cozinha: "habitacao",
+    sala_cozinha: "habitacao",
+    quarto: "habitacao",
+    suite: "habitacao",
+    instalacao_sanitaria: "wc",
+    circulacao: "circulacao",
+    escada: "circulacao",
+    arrumos: "arrumos",
+    zona_tecnica: "tecnico",
+    garagem: "garagem",
+    estacionamento: "garagem",
+    terraco: "exterior",
+    varanda: "exterior",
+    jardim: "exterior",
+    churrasqueira: "exterior",
+    exterior: "exterior",
+    indefinido: "habitacao",
+  };
+
+  const isReview = (item: any) => excludeReviewRequired && item?.review_required === true;
+
   const preview = useMemo(() => {
-    const perPage: Array<{ page: number; counts: Record<SectionKey, number>; total: number }> = [];
+    const perPage: Array<{ page: number; counts: Record<SectionKey, number>; total: number; filtered: number }> = [];
     let totalAll = 0;
+    let filteredAll = 0;
     for (const page of pages) {
       if (!selectedPages.has(page)) continue;
       const r = resultsByPage[page];
+
+      // Cotas ilegíveis nunca contam (não são honestas).
+      const dims = (r.dimensions ?? []).filter((d: any) => !d.valor_nao_legivel);
+      const dimsKept = includeSections.dimensions ? dims.filter((d) => !isReview(d)) : [];
+      const dimsFiltered = (includeSections.dimensions ? dims.length : 0) - dimsKept.length;
+
+      const rmsKept = includeSections.rooms ? (r.rooms ?? []).filter((rm) => !isReview(rm)) : [];
+      const rmsFiltered = (includeSections.rooms ? (r.rooms?.length ?? 0) : 0) - rmsKept.length;
+
+      const elsKept = includeSections.elements ? (r.elements ?? []).filter((e) => !isReview(e)) : [];
+      const elsFiltered = (includeSections.elements ? (r.elements?.length ?? 0) : 0) - elsKept.length;
+
       const counts: Record<SectionKey, number> = {
-        dimensions: includeSections.dimensions ? r.dimensions?.length ?? 0 : 0,
-        rooms: includeSections.rooms ? r.rooms?.length ?? 0 : 0,
-        elements: includeSections.elements ? r.elements?.length ?? 0 : 0,
+        dimensions: dimsKept.length,
+        rooms: rmsKept.length,
+        elements: elsKept.length,
       };
       const total = counts.dimensions + counts.rooms + counts.elements;
-      if (total === 0) continue;
-      perPage.push({ page, counts, total });
+      const filtered = dimsFiltered + rmsFiltered + elsFiltered;
+      filteredAll += filtered;
+      if (total === 0 && filtered === 0) continue;
+      perPage.push({ page, counts, total, filtered });
       totalAll += total;
     }
-    return { perPage, totalAll };
-  }, [pages, selectedPages, resultsByPage, includeSections]);
+    return { perPage, totalAll, filteredAll };
+  }, [pages, selectedPages, resultsByPage, includeSections, excludeReviewRequired]);
 
   const handleSend = async () => {
     if (!user?.id) {
@@ -134,9 +175,11 @@ export function PlanAxiaBudgetSendDialog({
         const r = resultsByPage[page];
         const folhaTag = `Folha ${page}`;
 
-        // Cotas → plan_measurements
+        // Cotas → plan_measurements (skip ilegíveis e review se filtro ligado)
         if (includeSections.dimensions && r.dimensions?.length) {
           r.dimensions.forEach((d: any) => {
+            if (d.valor_nao_legivel) return;
+            if (isReview(d)) return;
             const valor = Number(d.value) || 0;
             measurementsRows.push({
               plan_import_id: planImportId,
@@ -157,14 +200,16 @@ export function PlanAxiaBudgetSendDialog({
           });
         }
 
-        // Compartimentos → plan_rooms
+        // Compartimentos → plan_rooms (mapeia tipo_normalizado)
         if (includeSections.rooms && r.rooms?.length) {
           r.rooms.forEach((rm: any) => {
+            if (isReview(rm)) return;
+            const tipo = ROOM_TYPE_MAP[rm.tipo_normalizado ?? ""] ?? "habitacao";
             roomsRows.push({
               plan_import_id: planImportId,
               user_id: user.id,
               nome: rm.name || "Compartimento",
-              tipo_compartimento: "habitacao",
+              tipo_compartimento: tipo,
               boundary_coords: [
                 { x: Number(rm.center_x) || 0, y: Number(rm.center_y) || 0 },
               ],
@@ -181,6 +226,7 @@ export function PlanAxiaBudgetSendDialog({
         // Elementos → plan_placed_elements
         if (includeSections.elements && r.elements?.length) {
           r.elements.forEach((e: any) => {
+            if (isReview(e)) return;
             const qty = Number(e.count) || 1;
             elementsRows.push({
               plan_import_id: planImportId,
@@ -268,6 +314,13 @@ export function PlanAxiaBudgetSendDialog({
                 </label>
               ))}
             </div>
+            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer hover:bg-muted/40 mt-2 w-fit">
+              <Checkbox
+                checked={excludeReviewRequired}
+                onCheckedChange={(v) => setExcludeReviewRequired(!!v)}
+              />
+              <span className="text-xs">Excluir itens marcados para validação humana</span>
+            </label>
           </div>
 
           {/* Pages */}
@@ -313,6 +366,12 @@ export function PlanAxiaBudgetSendDialog({
               <span className="text-muted-foreground">Folhas selecionadas</span>
               <span className="font-semibold">{preview.perPage.length}</span>
             </div>
+            {preview.filteredAll > 0 && (
+              <div className="flex items-center justify-between text-amber-700 dark:text-amber-300">
+                <span>Filtrados por validação humana</span>
+                <span className="font-semibold">{preview.filteredAll}</span>
+              </div>
+            )}
           </div>
         </div>
 
