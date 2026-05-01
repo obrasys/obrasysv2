@@ -320,6 +320,37 @@ export function PlanAIAnalysis({
             </div>
           ) : (
             <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
+              {/* Sheet classification header */}
+              {result.sheet_classification && (
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {result.sheet_classification.type && (
+                    <Badge variant="default" className="text-[10px]">
+                      {SHEET_TYPE_LABEL[result.sheet_classification.type] ?? result.sheet_classification.type}
+                    </Badge>
+                  )}
+                  {result.sheet_classification.piso && (
+                    <Badge variant="outline" className="text-[10px]">Piso: {result.sheet_classification.piso}</Badge>
+                  )}
+                  {result.sheet_classification.escala && (
+                    <Badge variant="outline" className="text-[10px]">Esc. {result.sheet_classification.escala}</Badge>
+                  )}
+                  {result.sheet_classification.norte_presente && (
+                    <Badge variant="secondary" className="text-[10px]">Norte ✓</Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Reading-quality banner */}
+              {result.reading_quality && (result.reading_quality.human_intervention_required || result.reading_quality.risk_level === "alto") && (
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-200 dark:border-amber-800 rounded-lg p-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-amber-800 dark:text-amber-200 leading-snug">
+                    <strong>Validação humana recomendada.</strong>{" "}
+                    Qualidade de imagem: {result.reading_quality.image_quality ?? "?"} · cotas: {result.reading_quality.dimensions_legibility ?? "?"} · risco: {result.reading_quality.risk_level ?? "?"}.
+                  </div>
+                </div>
+              )}
+
               {/* Summary */}
               <div className="bg-muted rounded-lg p-2.5">
                 <p className="text-xs text-muted-foreground">{result.summary}</p>
