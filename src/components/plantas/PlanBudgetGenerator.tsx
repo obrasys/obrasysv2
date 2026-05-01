@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,34 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Categorização inteligente (capítulos do orçamento)
+// Usa camada/etiqueta dos measurements derivados pela Axia para agrupar por
+// especialidade em vez de cair tudo em "A definir (revisão manual)".
+// ─────────────────────────────────────────────────────────────────────────────
+type DerivedBucket =
+  | "Vãos — Portas e Janelas"
+  | "Acabamentos — Rodapé"
+  | "Acabamentos — Paredes"
+  | "Acabamentos — Pavimentos e Tetos"
+  | "A definir (revisão manual)";
+
+function categorizeMeasurement(m: PlanMeasurement): DerivedBucket {
+  const camada = (m.camada ?? "").toLowerCase();
+  const etiqueta = (m.etiqueta ?? "").toLowerCase();
+  if (camada === "rodape" || etiqueta.startsWith("rodapé")) return "Acabamentos — Rodapé";
+  if (camada === "paredes" || etiqueta.startsWith("paredes")) return "Acabamentos — Paredes";
+  if (camada === "pavimento" || camada === "teto" || etiqueta.startsWith("pavimento") || etiqueta.startsWith("teto"))
+    return "Acabamentos — Pavimentos e Tetos";
+  return "A definir (revisão manual)";
+}
+
+interface PlacedOpening {
+  symbol_type_id: string;
+  subcategory: string | null;
+  quantity: number;
+}
 
 interface Article {
   id: string;
@@ -48,6 +76,24 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const [titulo, setTitulo] = useState(`Pré-Orçamento — ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openings, setOpenings] = useState<PlacedOpening[]>([]);
+
+  // Buscar vãos (portas/janelas) inseridos pela Axia em plan_placed_elements
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("plan_placed_elements")
+        .select("symbol_type_id, subcategory, quantity")
+        .eq("plan_import_id", planId)
+        .eq("category", "vaos");
+      if (error || cancel) return;
+      setOpenings((data ?? []) as PlacedOpening[]);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [planId]);
 
   const articleById = useMemo(() => {
     const map = new Map<string, Article>();
@@ -96,15 +142,38 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         row.valorTotal += qtd * article.preco_unitario;
         row.measurementIds.push(measurement.id);
       } else {
-        // Placeholder article grouped by etiqueta (or tipo)
-        const etiqueta =
-          measurement.etiqueta?.trim() ||
-          (measurement.tipo === "area"
-            ? "Áreas a definir"
-            : measurement.tipo === "linha"
-            ? "Lineares a definir"
-            : "Contagens a definir");
-        const placeholderId = `placeholder::${measurement.tipo}::${etiqueta}`;
+        // Categorização inteligente para derivados da Axia (rodapé, paredes,
+        // pavimento/teto). Cada categoria vira um capítulo dedicado e os
+        // items derivados são consolidados num único artigo "A DEFINIR" com a
+        // soma da quantidade — o utilizador atribui o preço unitário no editor.
+        const bucket = categorizeMeasurement(measurement);
+        const unidade =
+          measurement.unidade || (measurement.tipo === "area" ? "m²" : measurement.tipo === "linha" ? "ml" : "un");
+
+        let descricao: string;
+        let placeholderId: string;
+        if (bucket === "Acabamentos — Rodapé") {
+          descricao = "Rodapé — fornecimento e aplicação";
+          placeholderId = `derived::rodape::${unidade}`;
+        } else if (bucket === "Acabamentos — Paredes") {
+          descricao = "Paredes — revestimento/pintura";
+          placeholderId = `derived::paredes::${unidade}`;
+        } else if (bucket === "Acabamentos — Pavimentos e Tetos") {
+          const isTeto = (measurement.camada ?? "").toLowerCase() === "teto" ||
+            (measurement.etiqueta ?? "").toLowerCase().startsWith("teto");
+          descricao = isTeto ? "Teto — pintura/acabamento" : "Pavimento — fornecimento e aplicação";
+          placeholderId = `derived::${isTeto ? "teto" : "pavimento"}::${unidade}`;
+        } else {
+          descricao =
+            measurement.etiqueta?.trim() ||
+            (measurement.tipo === "area"
+              ? "Áreas a definir"
+              : measurement.tipo === "linha"
+              ? "Lineares a definir"
+              : "Contagens a definir");
+          placeholderId = `placeholder::${measurement.tipo}::${descricao}`;
+        }
+
         const qtd = measurement.valor_ajustado ?? measurement.valor_bruto ?? 0;
 
         if (!byArticle.has(placeholderId)) {
@@ -113,12 +182,12 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
             article: {
               id: placeholderId,
               codigo: "A DEFINIR",
-              descricao: etiqueta,
-              unidade: measurement.unidade || (measurement.tipo === "area" ? "m²" : measurement.tipo === "linha" ? "ml" : "un"),
+              descricao,
+              unidade,
               preco_unitario: 0,
-              categoria: "A definir (revisão manual)",
+              categoria: bucket,
             },
-            categoria: "A definir (revisão manual)",
+            categoria: bucket,
             quantidade: 0,
             valorTotal: 0,
             measurementIds: [],
@@ -130,8 +199,36 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
       }
     });
 
+    // Adicionar vãos (portas/janelas) agrupados por dimensão como capítulo dedicado
+    const openingsBucket = new Map<string, { descricao: string; qtd: number }>();
+    openings.forEach((o) => {
+      // symbol_type_id formato: "porta_interior_80x210" — usamos como chave
+      const key = o.symbol_type_id;
+      const descricao = o.subcategory?.trim() || o.symbol_type_id;
+      const existing = openingsBucket.get(key);
+      if (existing) existing.qtd += o.quantity ?? 1;
+      else openingsBucket.set(key, { descricao, qtd: o.quantity ?? 1 });
+    });
+    openingsBucket.forEach((v, key) => {
+      byArticle.set(`opening::${key}`, {
+        artigoId: `opening::${key}`,
+        article: {
+          id: `opening::${key}`,
+          codigo: "VÃO",
+          descricao: v.descricao,
+          unidade: "un",
+          preco_unitario: 0,
+          categoria: "Vãos — Portas e Janelas",
+        },
+        categoria: "Vãos — Portas e Janelas",
+        quantidade: v.qtd,
+        valorTotal: 0,
+        measurementIds: [],
+      });
+    });
+
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
-  }, [mappings, measurements, measurementById, articleById]);
+  }, [mappings, measurements, measurementById, articleById, openings]);
 
   // Group by category for chapters
   const chapters = useMemo(() => {
@@ -278,7 +375,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     }
   };
 
-  const canGenerate = consolidated.length > 0 || measurements.length > 0;
+  const canGenerate = consolidated.length > 0 || measurements.length > 0 || openings.length > 0;
 
   return (
     <>
