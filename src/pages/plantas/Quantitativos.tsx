@@ -69,20 +69,11 @@ export default function PlanQuantitativos() {
   };
 
   const handleBulkValidate = (ids: string[], estado: "validado" | "rejeitado" | "pendente") => {
-    let completed = 0;
-    ids.forEach((id) => {
-      updateMeasurement.mutate(
-        { id, estadoValidacao: estado as any },
-        {
-          onSuccess: () => {
-            completed++;
-            if (completed === ids.length) {
-              toast.success(`${ids.length} medição(ões) atualizadas para "${estado}"`);
-            }
-          },
-        }
-      );
-    });
+    if (!ids.length) {
+      toast.error("Nenhuma medição selecionada");
+      return;
+    }
+    bulkUpdateValidation.mutate({ ids, estado: estado as any });
   };
 
   if (plansLoading) {
