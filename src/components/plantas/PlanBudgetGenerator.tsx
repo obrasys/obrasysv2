@@ -68,9 +68,10 @@ interface Props {
   measurements: PlanMeasurement[];
   mappings: PlanMeasurementMapping[];
   articles: Article[];
+  tipoBase?: TipoBase;
 }
 
-export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles }: Props) {
+export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral" }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -79,6 +80,8 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
+  const [autoMatches, setAutoMatches] = useState<Map<string, BaseArticleMatch>>(new Map());
+  const [isMatching, setIsMatching] = useState(false);
 
   // Buscar vãos (portas/janelas) inseridos pela Axia em plan_placed_elements
   useEffect(() => {
