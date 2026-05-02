@@ -232,7 +232,11 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
 
         {/* Catalog items */}
         <ScrollArea className="flex-1 min-h-0">
-          {filtered.length > 0 ? (
+          {loadingBase ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+          ) : filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1">
               {filtered.map((item) => {
                 const isSelected = selected.has(item.id);
@@ -248,7 +252,12 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
                   >
                     <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground leading-tight">{item.name}</p>
+                      <div className="flex items-center gap-2">
+                        {item.codigo && (
+                          <span className="text-[10px] font-mono text-muted-foreground">{item.codigo}</span>
+                        )}
+                        <p className="text-sm font-medium text-foreground leading-tight">{item.name}</p>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Un: {item.unit} &nbsp; M.O: {formatEUR(item.laborPrice)} &nbsp; Mat.: {formatEUR(item.materialPrice)}
                       </p>
@@ -257,7 +266,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
                 );
               })}
             </div>
-          ) : catalogItems.length === 0 ? (
+          ) : allItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <p className="text-sm">Sem itens predefinidos para esta área.</p>
               <p className="text-xs mt-1">Usa o formulário acima para adicionar itens personalizados.</p>
