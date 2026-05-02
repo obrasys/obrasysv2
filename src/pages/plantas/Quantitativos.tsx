@@ -126,7 +126,8 @@ export default function PlanQuantitativos() {
   const articles = articlesQuery.data ?? [];
 
   // Ensure the selected article exists in base_precos_personalizada (FK target).
-  // If user picked a default_articles row, clone it into the user's custom price base.
+  // If the user picked a row from default_articles or base_artigos_user (Base de Preços),
+  // clone it into the user's custom price base so the FK is satisfied.
   const resolveArticleId = async (artigoBaseId?: string): Promise<string | undefined> => {
     if (!artigoBaseId) return undefined;
     const art = articles.find((a) => a.id === artigoBaseId);
