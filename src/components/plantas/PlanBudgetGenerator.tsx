@@ -12,6 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
+import type { TipoBase } from "@/hooks/useBaseArtigos";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
