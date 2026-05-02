@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type TipoBase = "geral" | "remodelacao";
+
 export interface BaseArtigoGlobal {
   id: string;
   codigo: string;
@@ -20,6 +22,8 @@ export interface BaseArtigoGlobal {
   estado: string | null;
   observacoes: string | null;
   ativo: boolean;
+  tipo_base: TipoBase;
+  tipo_linha: string | null;
 }
 
 export interface BaseArtigoUser extends BaseArtigoGlobal {
@@ -29,14 +33,15 @@ export interface BaseArtigoUser extends BaseArtigoGlobal {
   origem: "global" | "csv" | "manual";
 }
 
-export function useBaseArtigosGlobal(search?: string) {
+export function useBaseArtigosGlobal(search?: string, tipoBase: TipoBase = "geral") {
   return useQuery({
-    queryKey: ["base_artigos_global", search],
+    queryKey: ["base_artigos_global", tipoBase, search],
     queryFn: async () => {
       let q = supabase
         .from("base_artigos_global" as any)
         .select("*")
         .eq("ativo", true)
+        .eq("tipo_base", tipoBase)
         .order("capitulo")
         .order("codigo");
       if (search?.trim()) {
@@ -51,13 +56,14 @@ export function useBaseArtigosGlobal(search?: string) {
   });
 }
 
-export function useBaseArtigosUser(search?: string) {
+export function useBaseArtigosUser(search?: string, tipoBase: TipoBase = "geral") {
   return useQuery({
-    queryKey: ["base_artigos_user", search],
+    queryKey: ["base_artigos_user", tipoBase, search],
     queryFn: async () => {
       let q = supabase
         .from("base_artigos_user" as any)
         .select("*")
+        .eq("tipo_base", tipoBase)
         .order("capitulo")
         .order("codigo");
       if (search?.trim()) {
@@ -75,7 +81,7 @@ export function useBaseArtigosUser(search?: string) {
 export function useImportBaseGlobalToUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (tipoBase: TipoBase = "geral") => {
       const { data: sess } = await supabase.auth.getSession();
       const user = sess?.session?.user;
       if (!user) throw new Error("Sessão expirada.");
@@ -86,7 +92,8 @@ export function useImportBaseGlobalToUser() {
       const { data: globais, error: gErr } = await supabase
         .from("base_artigos_global" as any)
         .select("*")
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .eq("tipo_base", tipoBase);
       if (gErr) throw gErr;
 
       if (!globais || globais.length === 0) return { inserted: 0 };
@@ -96,6 +103,8 @@ export function useImportBaseGlobalToUser() {
         user_id: user.id,
         global_artigo_id: g.id,
         origem: "global",
+        tipo_base: g.tipo_base ?? tipoBase,
+        tipo_linha: g.tipo_linha ?? null,
         codigo: g.codigo,
         capitulo: g.capitulo,
         subcapitulo: g.subcapitulo,
@@ -114,7 +123,7 @@ export function useImportBaseGlobalToUser() {
 
       const { error: insErr, count } = await supabase
         .from("base_artigos_user" as any)
-        .upsert(rows, { onConflict: "organization_id,codigo", ignoreDuplicates: true, count: "exact" });
+        .upsert(rows, { onConflict: "organization_id,tipo_base,codigo", ignoreDuplicates: true, count: "exact" });
       if (insErr) throw insErr;
       return { inserted: count ?? rows.length };
     },
@@ -129,8 +138,9 @@ export function useImportBaseGlobalToUser() {
 export function useImportCsvToUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File) => {
-      const text = await file.text();
+    mutationFn: async (input: { file: File; tipoBase?: TipoBase }) => {
+      const tipoBase: TipoBase = input.tipoBase ?? "geral";
+      const text = await input.file.text();
       const rows = parseCsv(text);
       if (rows.length === 0) throw new Error("CSV vazio ou formato inválido.");
 
@@ -141,28 +151,47 @@ export function useImportCsvToUser() {
       const { data: orgId, error: orgErr } = await supabase.rpc("get_user_org_id" as any);
       if (orgErr || !orgId) throw new Error("Organização não encontrada.");
 
-      const payload = rows.map((r) => ({
-        organization_id: orgId,
-        user_id: user.id,
-        origem: "csv",
-        codigo: r.codigo,
-        capitulo: r.capitulo,
-        subcapitulo: r.subcapitulo || null,
-        artigo: r.artigo,
-        unidade: r.unidade || "un",
-        mao_obra_estimada_eur: num(r.mao_obra_estimada_eur),
-        material_estimado_eur: num(r.material_estimado_eur),
-        custo_direto_eur: num(r.custo_direto_eur),
-        margem_configuravel_pct: num(r.margem_configuravel_pct, 25),
-        preco_indicativo_eur: num(r.preco_indicativo_eur),
-        fonte_base: r.fonte_base || "Importação CSV",
-        estado: r.estado || "Provisório",
-        observacoes: r.observacoes || null,
-      }));
+      const payload = rows.map((r) => {
+        const mo = num(r.mao_obra_estimada_eur);
+        const mat = num(r.material_estimado_eur);
+        let custo = num(r.custo_direto_eur);
+        if (custo === 0) custo = mo + mat;
+        const margem = num(r.margem_configuravel_pct, 25);
+        let preco = num(r.preco_indicativo_eur);
+        if (preco === 0) {
+          // Aceita também coluna "preco_unitario" (formato Remodelação)
+          preco = num(r.preco_unitario);
+        }
+        if (preco === 0 && custo > 0) {
+          preco = margem >= 100 ? custo : custo / (1 - margem / 100);
+        }
+        const tipoLinha = (r.tipo_linha || r.tipolinha || "").toUpperCase() || null;
+
+        return {
+          organization_id: orgId,
+          user_id: user.id,
+          origem: "csv",
+          tipo_base: tipoBase,
+          tipo_linha: tipoLinha,
+          codigo: r.codigo,
+          capitulo: r.capitulo,
+          subcapitulo: r.subcapitulo || null,
+          artigo: r.artigo,
+          unidade: r.unidade || "un",
+          mao_obra_estimada_eur: mo,
+          material_estimado_eur: mat,
+          custo_direto_eur: Number(custo.toFixed(2)),
+          margem_configuravel_pct: margem,
+          preco_indicativo_eur: Number(preco.toFixed(2)),
+          fonte_base: r.fonte_base || (tipoBase === "remodelacao" ? "Importação Remodelação" : "Importação CSV"),
+          estado: r.estado || "Provisório",
+          observacoes: r.observacoes || null,
+        };
+      });
 
       const { error, count } = await supabase
         .from("base_artigos_user" as any)
-        .upsert(payload, { onConflict: "organization_id,codigo", count: "exact" });
+        .upsert(payload, { onConflict: "organization_id,tipo_base,codigo", count: "exact" });
       if (error) throw error;
       return { inserted: count ?? payload.length };
     },

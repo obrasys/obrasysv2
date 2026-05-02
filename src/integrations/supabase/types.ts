@@ -1156,6 +1156,8 @@ export type Database = {
           observacoes: string | null
           preco_indicativo_eur: number
           subcapitulo: string | null
+          tipo_base: string
+          tipo_linha: string | null
           unidade: string
           updated_at: string
         }
@@ -1177,6 +1179,8 @@ export type Database = {
           observacoes?: string | null
           preco_indicativo_eur?: number
           subcapitulo?: string | null
+          tipo_base?: string
+          tipo_linha?: string | null
           unidade?: string
           updated_at?: string
         }
@@ -1198,6 +1202,8 @@ export type Database = {
           observacoes?: string | null
           preco_indicativo_eur?: number
           subcapitulo?: string | null
+          tipo_base?: string
+          tipo_linha?: string | null
           unidade?: string
           updated_at?: string
         }
@@ -1224,6 +1230,8 @@ export type Database = {
           origem: string
           preco_indicativo_eur: number
           subcapitulo: string | null
+          tipo_base: string
+          tipo_linha: string | null
           unidade: string
           updated_at: string
           user_id: string
@@ -1248,6 +1256,8 @@ export type Database = {
           origem?: string
           preco_indicativo_eur?: number
           subcapitulo?: string | null
+          tipo_base?: string
+          tipo_linha?: string | null
           unidade?: string
           updated_at?: string
           user_id: string
@@ -1272,6 +1282,8 @@ export type Database = {
           origem?: string
           preco_indicativo_eur?: number
           subcapitulo?: string | null
+          tipo_base?: string
+          tipo_linha?: string | null
           unidade?: string
           updated_at?: string
           user_id?: string
