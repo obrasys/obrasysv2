@@ -31,10 +31,12 @@ import {
   Package,
   BarChart3,
   ShieldCheck,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PriceConfidenceBadge } from "@/components/base-precos";
 import { AIPriceSearchPanel } from "@/components/base-precos/AIPriceSearchPanel";
+import { ArtigosPanel } from "@/components/base-precos/ArtigosPanel";
 import {
   useMaterialPriceReferences,
   useMaterialCategories,
@@ -51,7 +53,7 @@ export default function BasePrecosIndex() {
   });
   const [sortBy, setSortBy] = useState<"preco" | "confidence">("preco");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [activeTab, setActiveTab] = useState("pesquisa-ai");
+  const [activeTab, setActiveTab] = useState("artigos");
 
   const { data: priceRefs, isLoading } = useMaterialPriceReferences(filters);
   const { data: categories } = useMaterialCategories();
@@ -109,16 +111,28 @@ export default function BasePrecosIndex() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-2 max-w-md">
+          <TabsList className="w-full grid grid-cols-3 max-w-2xl">
+            <TabsTrigger value="artigos" className="flex items-center gap-2">
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Artigos PT</span>
+              <span className="sm:hidden">Artigos</span>
+            </TabsTrigger>
             <TabsTrigger value="pesquisa-ai" className="flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" />
-              Pesquisa Axia™
+              <span className="hidden sm:inline">Pesquisa Axia™</span>
+              <span className="sm:hidden">Axia™</span>
             </TabsTrigger>
             <TabsTrigger value="base-dados" className="flex items-center gap-2">
               <Database className="h-3.5 w-3.5" />
-              Base de Dados
+              <span className="hidden sm:inline">Materiais</span>
+              <span className="sm:hidden">Mat.</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Artigos PT (Catálogo Obra Sys + CSV) */}
+          <TabsContent value="artigos" className="mt-4">
+            <ArtigosPanel />
+          </TabsContent>
 
           {/* AI Search Tab */}
           <TabsContent value="pesquisa-ai" className="mt-4">
