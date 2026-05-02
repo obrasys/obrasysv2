@@ -40,19 +40,39 @@ export default function PlanQuantitativos() {
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
   const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
-  // Load articles from base_precos_personalizada + default_articles
+  // Tipo de base ativo (Geral / Remodelação) — partilhado com Essencial e Avançado
+  const [tipoBase, setTipoBase] = useState<TipoBase>("geral");
+
+  // Load articles: priorizar base_artigos_user (nova Base de Preços) com fallback para
+  // base_precos_personalizada + default_articles (legados) — tudo unificado num único array
+  // para preservar a interface dos componentes filhos.
   const articlesQuery = useQuery({
-    queryKey: ["plan-articles-for-mapping"],
+    queryKey: ["plan-articles-for-mapping", tipoBase],
     queryFn: async () => {
-      const [customRes, defaultRes] = await Promise.all([
+      const [baseRes, customRes, defaultRes] = await Promise.all([
+        supabase
+          .from("base_artigos_user" as any)
+          .select("id, codigo, artigo, unidade, preco_indicativo_eur, capitulo, tipo_base")
+          .eq("tipo_base", tipoBase)
+          .order("capitulo"),
         supabase.from("base_precos_personalizada").select("id, codigo, descricao, unidade, preco_unitario, categoria").order("categoria"),
         supabase.from("default_articles").select("id, codigo, descricao, unidade, preco_unitario, categoria").order("categoria"),
       ]);
 
+      const base = ((baseRes.data ?? []) as any[]).map((a) => ({
+        id: a.id,
+        codigo: a.codigo,
+        descricao: a.artigo,
+        unidade: a.unidade,
+        preco_unitario: a.preco_indicativo_eur ?? 0,
+        categoria: a.capitulo,
+        _source: "base_precos" as const,
+      }));
       const custom = (customRes.data ?? []).map((a) => ({ ...a, preco_unitario: a.preco_unitario ?? 0, _source: "custom" as const }));
       const defaults = (defaultRes.data ?? []).map((a) => ({ ...a, preco_unitario: a.preco_unitario ?? 0, _source: "default" as const }));
 
-      return [...custom, ...defaults];
+      // Ordem de prioridade: Base de Preços > Personalizado > Default
+      return [...base, ...custom, ...defaults];
     },
   });
 
