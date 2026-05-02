@@ -106,8 +106,8 @@ export async function autoMatchPlaceholdersAgainstBase(
     .eq("tipo_base", tipoBase);
 
   type Row = { codigo: string; artigo: string; unidade: string; preco_indicativo_eur: number | null; capitulo: string | null };
-  const userRows = (userBase ?? []) as Row[];
-  const globalRows = (globalBase ?? []) as Row[];
+  const userRows = (userBase ?? []) as unknown as Row[];
+  const globalRows = (globalBase ?? []) as unknown as Row[];
 
   for (const ph of placeholders) {
     const descricaoNorm = normalize(ph.descricao);
