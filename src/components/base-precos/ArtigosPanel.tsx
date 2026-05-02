@@ -47,12 +47,15 @@ import {
   useUpdateArtigoUser,
   useDeleteArtigoUser,
   type BaseArtigoUser,
+  type TipoBase,
 } from "@/hooks/useBaseArtigos";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function ArtigosPanel() {
   const [search, setSearch] = useState("");
+  const [tipoBase, setTipoBase] = useState<TipoBase>("geral");
   const fileRef = useRef<HTMLInputElement>(null);
-  const { data: artigos, isLoading } = useBaseArtigosUser(search);
+  const { data: artigos, isLoading } = useBaseArtigosUser(search, tipoBase);
   const importGlobal = useImportBaseGlobalToUser();
   const importCsv = useImportCsvToUser();
   const update = useUpdateArtigoUser();
