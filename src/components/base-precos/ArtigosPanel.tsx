@@ -115,6 +115,18 @@ export function ArtigosPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Sub-tabs Geral / Remodelação */}
+      <Tabs value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+        <TabsList className="bg-muted/40">
+          <TabsTrigger value="geral" className="data-[state=active]:bg-background">
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="remodelacao" className="data-[state=active]:bg-background">
+            Remodelação
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Action bar */}
       <Card className="border-primary/20 bg-primary/[0.02]">
         <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
@@ -123,9 +135,11 @@ export function ArtigosPanel() {
               <FileSpreadsheet className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-semibold leading-tight">Artigos de Obra (PT)</p>
+              <p className="font-semibold leading-tight">
+                {tipoBase === "remodelacao" ? "Artigos de Remodelação (PT)" : "Artigos de Obra (PT)"}
+              </p>
               <p className="text-xs text-muted-foreground">
-                {total} artigo(s) na sua base. Pode editar livremente preços, mão-de-obra e margens.
+                {total} artigo(s) na biblioteca <strong>{tipoBase === "remodelacao" ? "Remodelação" : "Geral"}</strong>. Pode editar livremente preços, mão-de-obra e margens.
               </p>
             </div>
           </div>
@@ -134,7 +148,7 @@ export function ArtigosPanel() {
             <Button
               size="sm"
               variant="default"
-              onClick={() => importGlobal.mutate()}
+              onClick={() => importGlobal.mutate(tipoBase)}
               disabled={importGlobal.isPending}
             >
               {importGlobal.isPending ? (
