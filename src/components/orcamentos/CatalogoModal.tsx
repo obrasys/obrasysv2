@@ -35,13 +35,44 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('sistema');
+  const [activeTab, setActiveTab] = useState('base');
+  const [tipoBase, setTipoBase] = useState<TipoBase>('geral');
+
+  const { data: baseArtigos, isLoading: loadingBase } = useBaseArtigosUser(
+    searchQuery || undefined,
+    tipoBase,
+  );
 
   const allArticles = useMemo(() => {
-    const sistema = (defaultArticles || []).map((a) => ({ ...a, source: 'sistema' }));
-    const empresa = (artigosTrabalho || []).map((a) => ({ ...a, source: 'empresa' }));
-    return [...sistema, ...empresa];
-  }, [defaultArticles, artigosTrabalho]);
+    const sistema = (defaultArticles || []).map((a) => ({
+      id: `sis_${a.id}`,
+      source: 'sistema' as const,
+      codigo: a.codigo,
+      descricao: a.descricao,
+      unidade: a.unidade,
+      preco_unitario: a.preco_unitario,
+      categoria: a.categoria,
+    }));
+    const empresa = (artigosTrabalho || []).map((a) => ({
+      id: `emp_${a.id}`,
+      source: 'empresa' as const,
+      codigo: a.codigo,
+      descricao: a.descricao,
+      unidade: a.unidade,
+      preco_unitario: a.preco_unitario,
+      categoria: a.categoria,
+    }));
+    const base = (baseArtigos || []).map((a) => ({
+      id: `base_${a.id}`,
+      source: 'base' as const,
+      codigo: a.codigo,
+      descricao: a.artigo,
+      unidade: a.unidade,
+      preco_unitario: Number(a.preco_indicativo_eur || 0),
+      categoria: a.capitulo,
+    }));
+    return [...sistema, ...empresa, ...base];
+  }, [defaultArticles, artigosTrabalho, baseArtigos]);
 
   const filteredArticles = useMemo(() => {
     let result = allArticles;
@@ -51,10 +82,12 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
       result = result.filter((a) => a.source === 'sistema');
     } else if (activeTab === 'empresa') {
       result = result.filter((a) => a.source === 'empresa');
+    } else if (activeTab === 'base') {
+      result = result.filter((a) => a.source === 'base');
     }
 
-    // Filter by category
-    if (selectedCategoria && selectedCategoria !== 'all') {
+    // Filter by category (only relevant for sistema/empresa; base usa capítulos diferentes)
+    if (activeTab !== 'base' && selectedCategoria && selectedCategoria !== 'all') {
       result = result.filter((a) => a.categoria === selectedCategoria);
     }
 
