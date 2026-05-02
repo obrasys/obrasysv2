@@ -78,7 +78,7 @@ export function ArtigosPanel() {
 
   const onCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) importCsv.mutate(f);
+    if (f) importCsv.mutate({ file: f, tipoBase });
     if (fileRef.current) fileRef.current.value = "";
   };
 
