@@ -20,8 +20,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCatalogo } from '@/hooks/useOrcamentos';
+import { useBaseArtigosUser, type TipoBase } from '@/hooks/useBaseArtigos';
 import { CATEGORIAS, type ArtigoFormData } from '@/types/orcamentos';
-import { Search, Plus, Loader2 } from 'lucide-react';
+import { Search, Plus, Loader2, Database } from 'lucide-react';
 
 interface CatalogoModalProps {
   open: boolean;
