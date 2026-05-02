@@ -400,7 +400,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         orcamento_id: string;
         artigo_orcamento_id: string;
       }> = [];
-      consolidated.forEach((item) => {
+      consolidatedEnriched.forEach((item) => {
         item.measurementIds.forEach((mId) => {
           linkInserts.push({
             measurement_id: mId,
