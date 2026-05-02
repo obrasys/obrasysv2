@@ -149,12 +149,26 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Catálogo Default</p>
-              <DialogTitle className="text-xl">{areaLabel}</DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                  {baseItems.length > 0 ? (
+                    <><Database className="h-3 w-3 mr-1" /> Base de Preços</>
+                  ) : (
+                    <><Library className="h-3 w-3 mr-1" /> Catálogo Default</>
+                  )}
+                </Badge>
+                {loadingBase && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+              </div>
+              <DialogTitle className="text-xl mt-1">{areaLabel}</DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {baseItems.length > 0
+                  ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
+                  : `Sem artigos na Base para esta área — a usar catálogo embutido.`}
+              </p>
             </div>
-            <div className="relative w-56">
+            <div className="relative w-56 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Procurar item nesta área"
