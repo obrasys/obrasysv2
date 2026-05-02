@@ -13,7 +13,11 @@ import { PlanRoomTemplatesPanel } from "@/components/plantas/PlanRoomTemplatesPa
 import { PlanQuantityTable } from "@/components/plantas/PlanQuantityTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers, Database } from "lucide-react";
+import { useState } from "react";
+import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
