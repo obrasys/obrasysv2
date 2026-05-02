@@ -193,15 +193,32 @@ export default function PlanQuantitativos() {
             </Button>
             <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
           </div>
-          <PlanBudgetGenerator
-            obraId={obraId!}
-            planId={planId!}
-            planName={plan.nome_ficheiro}
-            measurements={measurements}
-            mappings={mappings}
-            articles={articles}
-          />
-        </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-muted/30">
+              <Database className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground hidden sm:inline">Base de Preços:</span>
+              <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+                <SelectTrigger className="h-7 w-[140px] border-0 bg-transparent text-sm font-medium focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="geral">Geral</SelectItem>
+                  <SelectItem value="remodelacao">Remodelação</SelectItem>
+                </SelectContent>
+              </Select>
+              <Badge variant="secondary" className="text-[10px]">
+                {articles.filter((a: any) => a._source === "base_precos").length} artigos
+              </Badge>
+            </div>
+            <PlanBudgetGenerator
+              obraId={obraId!}
+              planId={planId!}
+              planName={plan.nome_ficheiro}
+              measurements={measurements}
+              mappings={mappings}
+              articles={articles}
+            />
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           {/* Main content */}
