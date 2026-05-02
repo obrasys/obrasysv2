@@ -219,6 +219,7 @@ export default function PlanQuantitativos() {
               articles={articles}
             />
           </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           {/* Main content */}
