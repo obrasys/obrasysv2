@@ -457,14 +457,40 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Warnings */}
-            {unmappedCount > 0 && (
+            {/* Auto-match status */}
+            {isMatching && (
+              <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-lg p-3">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  A procurar preços na sua Base ({tipoBase === "remodelacao" ? "Remodelação" : "Geral"}) e na Base Global…
+                </p>
+              </div>
+            )}
+            {!isMatching && itemsAutoMatched > 0 && (
+              <div className="flex items-start gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  <strong>{itemsAutoMatched}</strong> artigo(s) com preço auto-preenchido a partir da Base
+                  {itemsAutoMatchedFromGlobal > 0 && (
+                    <> (incluindo <strong>{itemsAutoMatchedFromGlobal}</strong> da Base Global)</>
+                  )}.
+                </p>
+              </div>
+            )}
+            {!isMatching && itemsWithoutPrice > 0 && (
               <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  {unmappedCount} medição(ões) ainda não estão mapeadas a artigos da base de preços.
-                  Serão incluídas no orçamento como artigos <strong>"A DEFINIR"</strong> agrupados por etiqueta,
-                  para que possa atribuir o artigo correto e o preço unitário diretamente no editor de orçamento.
+                  <strong>{itemsWithoutPrice}</strong> artigo(s) ainda sem preço unitário. Vai poder atribuir o preço diretamente no editor do orçamento.
+                </p>
+              </div>
+            )}
+            {/* Warnings */}
+            {unmappedCount > 0 && (
+              <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {unmappedCount} medição(ões) não foram mapeadas manualmente a artigos. A Axia tentou auto-preencher pelo capítulo e descrição.
                 </p>
               </div>
             )}
