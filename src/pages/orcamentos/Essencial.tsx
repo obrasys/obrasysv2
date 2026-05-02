@@ -573,12 +573,13 @@ export default function EssencialPage() {
       </div>
 
       {/* Item Selector Modal */}
-      {modalArea && (
+      {modalArea && budgetType && (
         <ItemSelectorModal
           open={!!modalArea}
           onClose={() => setModalArea(null)}
           areaKey={modalArea.key}
           areaLabel={modalArea.label}
+          budgetType={budgetType}
           onAddItems={handleAddItems}
         />
       )}
