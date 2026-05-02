@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,56 +11,110 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, X } from 'lucide-react';
-import { type CatalogItem, type BudgetItem, DEFAULT_CATALOG, formatEUR } from '@/types/orcamento-essencial';
+import { Badge } from '@/components/ui/badge';
+import { Search, Plus, Loader2, Database, Library } from 'lucide-react';
+import {
+  type CatalogItem,
+  type BudgetItem,
+  type BudgetType,
+  DEFAULT_CATALOG,
+  formatEUR,
+} from '@/types/orcamento-essencial';
+import { useBaseArtigosForArea } from '@/hooks/useBaseArtigos';
+import { keywordsForArea, tipoBaseForBudget } from '@/lib/essencial-base-mapping';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   areaKey: string;
   areaLabel: string;
+  budgetType: BudgetType;
   onAddItems: (items: BudgetItem[]) => void;
 }
 
-export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItems }: Props) {
+type Source = 'base' | 'default';
+
+interface UnifiedItem {
+  id: string;          // unique within the modal
+  source: Source;
+  name: string;
+  unit: string;
+  laborPrice: number;
+  materialPrice: number;
+  codigo?: string;     // only when source = 'base'
+}
+
+export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
 
-  const catalogItems = DEFAULT_CATALOG[areaKey] || [];
-  const filtered = catalogItems.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const tipoBase = tipoBaseForBudget(budgetType);
+  const capituloKeywords = keywordsForArea(areaKey);
 
-  const toggleItem = (item: CatalogItem) => {
+  const { data: baseRows, isLoading: loadingBase } = useBaseArtigosForArea({
+    tipoBase,
+    capituloKeywords,
+    enabled: open,
+  });
+
+  const baseItems: UnifiedItem[] = useMemo(() => {
+    return (baseRows || []).map((r) => ({
+      id: `base_${r.id}`,
+      source: 'base' as Source,
+      name: r.artigo,
+      unit: r.unidade || 'un',
+      // Para o Essencial usamos custos diretos: M.O. + Material.
+      // Se não houver split, deriva do preço indicativo.
+      laborPrice: Number(r.mao_obra_estimada_eur || 0),
+      materialPrice: Number(r.material_estimado_eur || 0),
+      codigo: r.codigo,
+    }));
+  }, [baseRows]);
+
+  const defaultItems: UnifiedItem[] = useMemo(() => {
+    return (DEFAULT_CATALOG[areaKey] || []).map((c) => ({
+      id: `def_${c.id}`,
+      source: 'default' as Source,
+      name: c.name,
+      unit: c.unit,
+      laborPrice: c.laborPrice,
+      materialPrice: c.materialPrice,
+    }));
+  }, [areaKey]);
+
+  // Prefer Base items; fallback for default catalog when Base vazia.
+  const allItems: UnifiedItem[] = baseItems.length > 0 ? baseItems : defaultItems;
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return allItems.filter((i) => !q || i.name.toLowerCase().includes(q));
+  }, [allItems, search]);
+
+  const toggleItem = (item: UnifiedItem) => {
     const next = new Map(selected);
-    if (next.has(item.id)) {
-      next.delete(item.id);
-    } else {
-      next.set(item.id, { qty: 1 });
-    }
+    if (next.has(item.id)) next.delete(item.id);
+    else next.set(item.id, { qty: 1 });
     setSelected(next);
   };
 
   const handleConfirm = () => {
     const items: BudgetItem[] = [];
-
     selected.forEach((val, id) => {
-      const cat = catalogItems.find((c) => c.id === id);
-      if (cat) {
+      const it = allItems.find((c) => c.id === id);
+      if (it) {
         items.push({
           id: crypto.randomUUID(),
           areaKey,
-          name: cat.name,
-          unit: cat.unit,
+          name: it.name,
+          unit: it.unit,
           quantity: val.qty,
-          laborUnitPrice: cat.laborPrice,
-          materialTotalPrice: cat.materialPrice,
+          laborUnitPrice: it.laborPrice,
+          materialTotalPrice: it.materialPrice,
         });
       }
     });
-
     onAddItems(items);
     setSelected(new Map());
     setSearch('');
