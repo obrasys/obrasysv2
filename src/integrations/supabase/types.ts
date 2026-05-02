@@ -1137,6 +1137,155 @@ export type Database = {
         }
         Relationships: []
       }
+      base_artigos_global: {
+        Row: {
+          artigo: string
+          ativo: boolean
+          capitulo: string
+          codigo: string
+          created_at: string
+          custo_direto_eur: number
+          data_atualizacao: string | null
+          edicao_livre: boolean
+          estado: string | null
+          fonte_base: string | null
+          id: string
+          mao_obra_estimada_eur: number
+          margem_configuravel_pct: number
+          material_estimado_eur: number
+          observacoes: string | null
+          preco_indicativo_eur: number
+          subcapitulo: string | null
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          artigo: string
+          ativo?: boolean
+          capitulo: string
+          codigo: string
+          created_at?: string
+          custo_direto_eur?: number
+          data_atualizacao?: string | null
+          edicao_livre?: boolean
+          estado?: string | null
+          fonte_base?: string | null
+          id?: string
+          mao_obra_estimada_eur?: number
+          margem_configuravel_pct?: number
+          material_estimado_eur?: number
+          observacoes?: string | null
+          preco_indicativo_eur?: number
+          subcapitulo?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          artigo?: string
+          ativo?: boolean
+          capitulo?: string
+          codigo?: string
+          created_at?: string
+          custo_direto_eur?: number
+          data_atualizacao?: string | null
+          edicao_livre?: boolean
+          estado?: string | null
+          fonte_base?: string | null
+          id?: string
+          mao_obra_estimada_eur?: number
+          margem_configuravel_pct?: number
+          material_estimado_eur?: number
+          observacoes?: string | null
+          preco_indicativo_eur?: number
+          subcapitulo?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      base_artigos_user: {
+        Row: {
+          artigo: string
+          ativo: boolean
+          capitulo: string
+          codigo: string
+          created_at: string
+          custo_direto_eur: number
+          data_atualizacao: string | null
+          estado: string | null
+          fonte_base: string | null
+          global_artigo_id: string | null
+          id: string
+          mao_obra_estimada_eur: number
+          margem_configuravel_pct: number
+          material_estimado_eur: number
+          observacoes: string | null
+          organization_id: string
+          origem: string
+          preco_indicativo_eur: number
+          subcapitulo: string | null
+          unidade: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artigo: string
+          ativo?: boolean
+          capitulo: string
+          codigo: string
+          created_at?: string
+          custo_direto_eur?: number
+          data_atualizacao?: string | null
+          estado?: string | null
+          fonte_base?: string | null
+          global_artigo_id?: string | null
+          id?: string
+          mao_obra_estimada_eur?: number
+          margem_configuravel_pct?: number
+          material_estimado_eur?: number
+          observacoes?: string | null
+          organization_id: string
+          origem?: string
+          preco_indicativo_eur?: number
+          subcapitulo?: string | null
+          unidade?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artigo?: string
+          ativo?: boolean
+          capitulo?: string
+          codigo?: string
+          created_at?: string
+          custo_direto_eur?: number
+          data_atualizacao?: string | null
+          estado?: string | null
+          fonte_base?: string | null
+          global_artigo_id?: string | null
+          id?: string
+          mao_obra_estimada_eur?: number
+          margem_configuravel_pct?: number
+          material_estimado_eur?: number
+          observacoes?: string | null
+          organization_id?: string
+          origem?: string
+          preco_indicativo_eur?: number
+          subcapitulo?: string | null
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "base_artigos_user_global_artigo_id_fkey"
+            columns: ["global_artigo_id"]
+            isOneToOne: false
+            referencedRelation: "base_artigos_global"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       base_precos_personalizada: {
         Row: {
           categoria: string
