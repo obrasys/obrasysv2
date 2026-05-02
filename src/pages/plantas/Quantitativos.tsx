@@ -13,7 +13,11 @@ import { PlanRoomTemplatesPanel } from "@/components/plantas/PlanRoomTemplatesPa
 import { PlanQuantityTable } from "@/components/plantas/PlanQuantityTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers, Database } from "lucide-react";
+import { useState } from "react";
+import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
 import { usePlanMappings } from "@/hooks/usePlanMappings";
@@ -36,19 +40,39 @@ export default function PlanQuantitativos() {
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
   const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
-  // Load articles from base_precos_personalizada + default_articles
+  // Tipo de base ativo (Geral / Remodelação) — partilhado com Essencial e Avançado
+  const [tipoBase, setTipoBase] = useState<TipoBase>("geral");
+
+  // Load articles: priorizar base_artigos_user (nova Base de Preços) com fallback para
+  // base_precos_personalizada + default_articles (legados) — tudo unificado num único array
+  // para preservar a interface dos componentes filhos.
   const articlesQuery = useQuery({
-    queryKey: ["plan-articles-for-mapping"],
+    queryKey: ["plan-articles-for-mapping", tipoBase],
     queryFn: async () => {
-      const [customRes, defaultRes] = await Promise.all([
+      const [baseRes, customRes, defaultRes] = await Promise.all([
+        supabase
+          .from("base_artigos_user" as any)
+          .select("id, codigo, artigo, unidade, preco_indicativo_eur, capitulo, tipo_base")
+          .eq("tipo_base", tipoBase)
+          .order("capitulo"),
         supabase.from("base_precos_personalizada").select("id, codigo, descricao, unidade, preco_unitario, categoria").order("categoria"),
         supabase.from("default_articles").select("id, codigo, descricao, unidade, preco_unitario, categoria").order("categoria"),
       ]);
 
+      const base = ((baseRes.data ?? []) as any[]).map((a) => ({
+        id: a.id,
+        codigo: a.codigo,
+        descricao: a.artigo,
+        unidade: a.unidade,
+        preco_unitario: a.preco_indicativo_eur ?? 0,
+        categoria: a.capitulo,
+        _source: "base_precos" as const,
+      }));
       const custom = (customRes.data ?? []).map((a) => ({ ...a, preco_unitario: a.preco_unitario ?? 0, _source: "custom" as const }));
       const defaults = (defaultRes.data ?? []).map((a) => ({ ...a, preco_unitario: a.preco_unitario ?? 0, _source: "default" as const }));
 
-      return [...custom, ...defaults];
+      // Ordem de prioridade: Base de Preços > Personalizado > Default
+      return [...base, ...custom, ...defaults];
     },
   });
 
@@ -102,7 +126,8 @@ export default function PlanQuantitativos() {
   const articles = articlesQuery.data ?? [];
 
   // Ensure the selected article exists in base_precos_personalizada (FK target).
-  // If user picked a default_articles row, clone it into the user's custom price base.
+  // If the user picked a row from default_articles or base_artigos_user (Base de Preços),
+  // clone it into the user's custom price base so the FK is satisfied.
   const resolveArticleId = async (artigoBaseId?: string): Promise<string | undefined> => {
     if (!artigoBaseId) return undefined;
     const art = articles.find((a) => a.id === artigoBaseId);
@@ -168,14 +193,32 @@ export default function PlanQuantitativos() {
             </Button>
             <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
           </div>
-          <PlanBudgetGenerator
-            obraId={obraId!}
-            planId={planId!}
-            planName={plan.nome_ficheiro}
-            measurements={measurements}
-            mappings={mappings}
-            articles={articles}
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-muted/30">
+              <Database className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground hidden sm:inline">Base de Preços:</span>
+              <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+                <SelectTrigger className="h-7 w-[140px] border-0 bg-transparent text-sm font-medium focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="geral">Geral</SelectItem>
+                  <SelectItem value="remodelacao">Remodelação</SelectItem>
+                </SelectContent>
+              </Select>
+              <Badge variant="secondary" className="text-[10px]">
+                {articles.filter((a: any) => a._source === "base_precos").length} artigos
+              </Badge>
+            </div>
+            <PlanBudgetGenerator
+              obraId={obraId!}
+              planId={planId!}
+              planName={plan.nome_ficheiro}
+              measurements={measurements}
+              mappings={mappings}
+              articles={articles}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
