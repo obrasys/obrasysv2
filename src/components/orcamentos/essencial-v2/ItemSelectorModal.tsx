@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,56 +11,110 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, X } from 'lucide-react';
-import { type CatalogItem, type BudgetItem, DEFAULT_CATALOG, formatEUR } from '@/types/orcamento-essencial';
+import { Badge } from '@/components/ui/badge';
+import { Search, Plus, Loader2, Database, Library } from 'lucide-react';
+import {
+  type CatalogItem,
+  type BudgetItem,
+  type BudgetType,
+  DEFAULT_CATALOG,
+  formatEUR,
+} from '@/types/orcamento-essencial';
+import { useBaseArtigosForArea } from '@/hooks/useBaseArtigos';
+import { keywordsForArea, tipoBaseForBudget } from '@/lib/essencial-base-mapping';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   areaKey: string;
   areaLabel: string;
+  budgetType: BudgetType;
   onAddItems: (items: BudgetItem[]) => void;
 }
 
-export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItems }: Props) {
+type Source = 'base' | 'default';
+
+interface UnifiedItem {
+  id: string;          // unique within the modal
+  source: Source;
+  name: string;
+  unit: string;
+  laborPrice: number;
+  materialPrice: number;
+  codigo?: string;     // only when source = 'base'
+}
+
+export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
 
-  const catalogItems = DEFAULT_CATALOG[areaKey] || [];
-  const filtered = catalogItems.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const tipoBase = tipoBaseForBudget(budgetType);
+  const capituloKeywords = keywordsForArea(areaKey);
 
-  const toggleItem = (item: CatalogItem) => {
+  const { data: baseRows, isLoading: loadingBase } = useBaseArtigosForArea({
+    tipoBase,
+    capituloKeywords,
+    enabled: open,
+  });
+
+  const baseItems: UnifiedItem[] = useMemo(() => {
+    return (baseRows || []).map((r) => ({
+      id: `base_${r.id}`,
+      source: 'base' as Source,
+      name: r.artigo,
+      unit: r.unidade || 'un',
+      // Para o Essencial usamos custos diretos: M.O. + Material.
+      // Se não houver split, deriva do preço indicativo.
+      laborPrice: Number(r.mao_obra_estimada_eur || 0),
+      materialPrice: Number(r.material_estimado_eur || 0),
+      codigo: r.codigo,
+    }));
+  }, [baseRows]);
+
+  const defaultItems: UnifiedItem[] = useMemo(() => {
+    return (DEFAULT_CATALOG[areaKey] || []).map((c) => ({
+      id: `def_${c.id}`,
+      source: 'default' as Source,
+      name: c.name,
+      unit: c.unit,
+      laborPrice: c.laborPrice,
+      materialPrice: c.materialPrice,
+    }));
+  }, [areaKey]);
+
+  // Prefer Base items; fallback for default catalog when Base vazia.
+  const allItems: UnifiedItem[] = baseItems.length > 0 ? baseItems : defaultItems;
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return allItems.filter((i) => !q || i.name.toLowerCase().includes(q));
+  }, [allItems, search]);
+
+  const toggleItem = (item: UnifiedItem) => {
     const next = new Map(selected);
-    if (next.has(item.id)) {
-      next.delete(item.id);
-    } else {
-      next.set(item.id, { qty: 1 });
-    }
+    if (next.has(item.id)) next.delete(item.id);
+    else next.set(item.id, { qty: 1 });
     setSelected(next);
   };
 
   const handleConfirm = () => {
     const items: BudgetItem[] = [];
-
     selected.forEach((val, id) => {
-      const cat = catalogItems.find((c) => c.id === id);
-      if (cat) {
+      const it = allItems.find((c) => c.id === id);
+      if (it) {
         items.push({
           id: crypto.randomUUID(),
           areaKey,
-          name: cat.name,
-          unit: cat.unit,
+          name: it.name,
+          unit: it.unit,
           quantity: val.qty,
-          laborUnitPrice: cat.laborPrice,
-          materialTotalPrice: cat.materialPrice,
+          laborUnitPrice: it.laborPrice,
+          materialTotalPrice: it.materialPrice,
         });
       }
     });
-
     onAddItems(items);
     setSelected(new Map());
     setSearch('');
@@ -95,12 +149,26 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Catálogo Default</p>
-              <DialogTitle className="text-xl">{areaLabel}</DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                  {baseItems.length > 0 ? (
+                    <><Database className="h-3 w-3 mr-1" /> Base de Preços</>
+                  ) : (
+                    <><Library className="h-3 w-3 mr-1" /> Catálogo Default</>
+                  )}
+                </Badge>
+                {loadingBase && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+              </div>
+              <DialogTitle className="text-xl mt-1">{areaLabel}</DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {baseItems.length > 0
+                  ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
+                  : `Sem artigos na Base para esta área — a usar catálogo embutido.`}
+              </p>
             </div>
-            <div className="relative w-56">
+            <div className="relative w-56 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Procurar item nesta área"
@@ -164,7 +232,11 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
 
         {/* Catalog items */}
         <ScrollArea className="flex-1 min-h-0">
-          {filtered.length > 0 ? (
+          {loadingBase ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+          ) : filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1">
               {filtered.map((item) => {
                 const isSelected = selected.has(item.id);
@@ -180,7 +252,12 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
                   >
                     <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground leading-tight">{item.name}</p>
+                      <div className="flex items-center gap-2">
+                        {item.codigo && (
+                          <span className="text-[10px] font-mono text-muted-foreground">{item.codigo}</span>
+                        )}
+                        <p className="text-sm font-medium text-foreground leading-tight">{item.name}</p>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Un: {item.unit} &nbsp; M.O: {formatEUR(item.laborPrice)} &nbsp; Mat.: {formatEUR(item.materialPrice)}
                       </p>
@@ -189,7 +266,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, onAddItem
                 );
               })}
             </div>
-          ) : catalogItems.length === 0 ? (
+          ) : allItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <p className="text-sm">Sem itens predefinidos para esta área.</p>
               <p className="text-xs mt-1">Usa o formulário acima para adicionar itens personalizados.</p>

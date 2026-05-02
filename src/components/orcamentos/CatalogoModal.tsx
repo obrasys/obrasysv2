@@ -20,8 +20,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCatalogo } from '@/hooks/useOrcamentos';
+import { useBaseArtigosUser, type TipoBase } from '@/hooks/useBaseArtigos';
 import { CATEGORIAS, type ArtigoFormData } from '@/types/orcamentos';
-import { Search, Plus, Loader2 } from 'lucide-react';
+import { Search, Plus, Loader2, Database } from 'lucide-react';
 
 interface CatalogoModalProps {
   open: boolean;
@@ -34,13 +35,44 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('sistema');
+  const [activeTab, setActiveTab] = useState('base');
+  const [tipoBase, setTipoBase] = useState<TipoBase>('geral');
+
+  const { data: baseArtigos, isLoading: loadingBase } = useBaseArtigosUser(
+    searchQuery || undefined,
+    tipoBase,
+  );
 
   const allArticles = useMemo(() => {
-    const sistema = (defaultArticles || []).map((a) => ({ ...a, source: 'sistema' }));
-    const empresa = (artigosTrabalho || []).map((a) => ({ ...a, source: 'empresa' }));
-    return [...sistema, ...empresa];
-  }, [defaultArticles, artigosTrabalho]);
+    const sistema = (defaultArticles || []).map((a) => ({
+      id: `sis_${a.id}`,
+      source: 'sistema' as const,
+      codigo: a.codigo,
+      descricao: a.descricao,
+      unidade: a.unidade,
+      preco_unitario: a.preco_unitario,
+      categoria: a.categoria,
+    }));
+    const empresa = (artigosTrabalho || []).map((a) => ({
+      id: `emp_${a.id}`,
+      source: 'empresa' as const,
+      codigo: a.codigo,
+      descricao: a.descricao,
+      unidade: a.unidade,
+      preco_unitario: a.preco_unitario,
+      categoria: a.categoria,
+    }));
+    const base = (baseArtigos || []).map((a) => ({
+      id: `base_${a.id}`,
+      source: 'base' as const,
+      codigo: a.codigo,
+      descricao: a.artigo,
+      unidade: a.unidade,
+      preco_unitario: Number(a.preco_indicativo_eur || 0),
+      categoria: a.capitulo,
+    }));
+    return [...sistema, ...empresa, ...base];
+  }, [defaultArticles, artigosTrabalho, baseArtigos]);
 
   const filteredArticles = useMemo(() => {
     let result = allArticles;
@@ -50,10 +82,12 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
       result = result.filter((a) => a.source === 'sistema');
     } else if (activeTab === 'empresa') {
       result = result.filter((a) => a.source === 'empresa');
+    } else if (activeTab === 'base') {
+      result = result.filter((a) => a.source === 'base');
     }
 
-    // Filter by category
-    if (selectedCategoria && selectedCategoria !== 'all') {
+    // Filter by category (only relevant for sistema/empresa; base usa capítulos diferentes)
+    if (activeTab !== 'base' && selectedCategoria && selectedCategoria !== 'all') {
       result = result.filter((a) => a.categoria === selectedCategoria);
     }
 
@@ -121,7 +155,11 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="base">
+              <Database className="h-3.5 w-3.5 mr-1.5" />
+              Base de Preços
+            </TabsTrigger>
             <TabsTrigger value="sistema">Catálogo do Sistema</TabsTrigger>
             <TabsTrigger value="empresa">Meu Catálogo</TabsTrigger>
           </TabsList>
@@ -136,23 +174,35 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
                 className="pl-9"
               />
             </div>
-            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {CATEGORIAS.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {activeTab === 'base' ? (
+              <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="geral">Base Geral</SelectItem>
+                  <SelectItem value="remodelacao">Base Remodelação</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {CATEGORIAS.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <ScrollArea className="h-[400px] border rounded-md">
-            {isLoading ? (
+            {(isLoading || (activeTab === 'base' && loadingBase)) ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
