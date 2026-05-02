@@ -155,7 +155,11 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="base">
+              <Database className="h-3.5 w-3.5 mr-1.5" />
+              Base de Preços
+            </TabsTrigger>
             <TabsTrigger value="sistema">Catálogo do Sistema</TabsTrigger>
             <TabsTrigger value="empresa">Meu Catálogo</TabsTrigger>
           </TabsList>
@@ -170,23 +174,35 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
                 className="pl-9"
               />
             </div>
-            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {CATEGORIAS.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {activeTab === 'base' ? (
+              <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="geral">Base Geral</SelectItem>
+                  <SelectItem value="remodelacao">Base Remodelação</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {CATEGORIAS.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <ScrollArea className="h-[400px] border rounded-md">
-            {isLoading ? (
+            {(isLoading || (activeTab === 'base' && loadingBase)) ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
