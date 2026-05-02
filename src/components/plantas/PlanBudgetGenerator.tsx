@@ -235,26 +235,80 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
   }, [mappings, measurements, measurementById, articleById, openings]);
 
+  // Apply auto-matches: substitui código/descrição/preço dos placeholders/vãos
+  // que tiveram match contra a Base (user ou global). Recalcula valorTotal.
+  const consolidatedEnriched = useMemo(() => {
+    if (autoMatches.size === 0) return consolidated;
+    return consolidated.map((item) => {
+      const match = autoMatches.get(item.artigoId);
+      if (!match) return item;
+      const newArticle: Article = {
+        ...item.article,
+        codigo: match.codigo || item.article.codigo,
+        descricao: match.descricao || item.article.descricao,
+        unidade: match.unidade || item.article.unidade,
+        preco_unitario: match.preco_unitario,
+      };
+      return {
+        ...item,
+        article: newArticle,
+        valorTotal: item.quantidade * match.preco_unitario,
+      };
+    });
+  }, [consolidated, autoMatches]);
+
   // Group by category for chapters
   const chapters = useMemo(() => {
     const map = new Map<string, ConsolidatedItem[]>();
-    consolidated.forEach((item) => {
+    consolidatedEnriched.forEach((item) => {
       if (!map.has(item.categoria)) map.set(item.categoria, []);
       map.get(item.categoria)!.push(item);
     });
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [consolidated]);
+  }, [consolidatedEnriched]);
 
   const totalGeral = useMemo(
-    () => consolidated.reduce((acc, r) => acc + r.valorTotal, 0),
-    [consolidated]
+    () => consolidatedEnriched.reduce((acc, r) => acc + r.valorTotal, 0),
+    [consolidatedEnriched]
   );
 
   const unmappedCount = measurements.filter((m) => {
     const mapping = mappings.find((mp) => mp.measurement_id === m.id);
     return !mapping || mapping.estado !== "mapeado" || !mapping.artigo_base_id;
   }).length;
-  const placeholderItemsCount = consolidated.filter((c) => c.artigoId.startsWith("placeholder::")).length;
+  const itemsWithoutPrice = consolidatedEnriched.filter((c) => c.article.preco_unitario === 0).length;
+  const itemsAutoMatched = autoMatches.size;
+  const itemsAutoMatchedFromGlobal = Array.from(autoMatches.values()).filter((m) => m.origem === "global").length;
+
+  // Disparar auto-match contra a Base quando o diálogo abre (placeholders + vãos)
+  useEffect(() => {
+    if (!showDialog || !user) return;
+    const targets: PlaceholderToMatch[] = consolidated
+      .filter((c) => c.artigoId.startsWith("derived::") || c.artigoId.startsWith("opening::") || c.artigoId.startsWith("placeholder::"))
+      .map((c) => ({
+        key: c.artigoId,
+        descricao: c.article.descricao,
+        unidade: c.article.unidade,
+        capituloHint: c.categoria,
+        keywords: c.article.descricao.split(/[\s—\-]+/).filter((w) => w.length > 3).slice(0, 4),
+      }));
+    if (targets.length === 0) {
+      setAutoMatches(new Map());
+      return;
+    }
+    let cancel = false;
+    setIsMatching(true);
+    autoMatchPlaceholdersAgainstBase(targets, tipoBase, user.id)
+      .then((m) => {
+        if (!cancel) setAutoMatches(m);
+      })
+      .catch((e) => console.warn("Auto-match falhou:", e))
+      .finally(() => !cancel && setIsMatching(false));
+    return () => {
+      cancel = true;
+    };
+  }, [showDialog, consolidated, tipoBase, user]);
+
 
   const handleGenerate = async () => {
     if (!user) return;
