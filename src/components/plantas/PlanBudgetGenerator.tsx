@@ -12,6 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
+import type { TipoBase } from "@/hooks/useBaseArtigos";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
@@ -66,9 +68,10 @@ interface Props {
   measurements: PlanMeasurement[];
   mappings: PlanMeasurementMapping[];
   articles: Article[];
+  tipoBase?: TipoBase;
 }
 
-export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles }: Props) {
+export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral" }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -77,6 +80,8 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
+  const [autoMatches, setAutoMatches] = useState<Map<string, BaseArticleMatch>>(new Map());
+  const [isMatching, setIsMatching] = useState(false);
 
   // Buscar vãos (portas/janelas) inseridos pela Axia em plan_placed_elements
   useEffect(() => {
@@ -230,26 +235,80 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
   }, [mappings, measurements, measurementById, articleById, openings]);
 
+  // Apply auto-matches: substitui código/descrição/preço dos placeholders/vãos
+  // que tiveram match contra a Base (user ou global). Recalcula valorTotal.
+  const consolidatedEnriched = useMemo(() => {
+    if (autoMatches.size === 0) return consolidated;
+    return consolidated.map((item) => {
+      const match = autoMatches.get(item.artigoId);
+      if (!match) return item;
+      const newArticle: Article = {
+        ...item.article,
+        codigo: match.codigo || item.article.codigo,
+        descricao: match.descricao || item.article.descricao,
+        unidade: match.unidade || item.article.unidade,
+        preco_unitario: match.preco_unitario,
+      };
+      return {
+        ...item,
+        article: newArticle,
+        valorTotal: item.quantidade * match.preco_unitario,
+      };
+    });
+  }, [consolidated, autoMatches]);
+
   // Group by category for chapters
   const chapters = useMemo(() => {
     const map = new Map<string, ConsolidatedItem[]>();
-    consolidated.forEach((item) => {
+    consolidatedEnriched.forEach((item) => {
       if (!map.has(item.categoria)) map.set(item.categoria, []);
       map.get(item.categoria)!.push(item);
     });
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [consolidated]);
+  }, [consolidatedEnriched]);
 
   const totalGeral = useMemo(
-    () => consolidated.reduce((acc, r) => acc + r.valorTotal, 0),
-    [consolidated]
+    () => consolidatedEnriched.reduce((acc, r) => acc + r.valorTotal, 0),
+    [consolidatedEnriched]
   );
 
   const unmappedCount = measurements.filter((m) => {
     const mapping = mappings.find((mp) => mp.measurement_id === m.id);
     return !mapping || mapping.estado !== "mapeado" || !mapping.artigo_base_id;
   }).length;
-  const placeholderItemsCount = consolidated.filter((c) => c.artigoId.startsWith("placeholder::")).length;
+  const itemsWithoutPrice = consolidatedEnriched.filter((c) => c.article.preco_unitario === 0).length;
+  const itemsAutoMatched = autoMatches.size;
+  const itemsAutoMatchedFromGlobal = Array.from(autoMatches.values()).filter((m) => m.origem === "global").length;
+
+  // Disparar auto-match contra a Base quando o diálogo abre (placeholders + vãos)
+  useEffect(() => {
+    if (!showDialog || !user) return;
+    const targets: PlaceholderToMatch[] = consolidated
+      .filter((c) => c.artigoId.startsWith("derived::") || c.artigoId.startsWith("opening::") || c.artigoId.startsWith("placeholder::"))
+      .map((c) => ({
+        key: c.artigoId,
+        descricao: c.article.descricao,
+        unidade: c.article.unidade,
+        capituloHint: c.categoria,
+        keywords: c.article.descricao.split(/[\s—\-]+/).filter((w) => w.length > 3).slice(0, 4),
+      }));
+    if (targets.length === 0) {
+      setAutoMatches(new Map());
+      return;
+    }
+    let cancel = false;
+    setIsMatching(true);
+    autoMatchPlaceholdersAgainstBase(targets, tipoBase, user.id)
+      .then((m) => {
+        if (!cancel) setAutoMatches(m);
+      })
+      .catch((e) => console.warn("Auto-match falhou:", e))
+      .finally(() => !cancel && setIsMatching(false));
+    return () => {
+      cancel = true;
+    };
+  }, [showDialog, consolidated, tipoBase, user]);
+
 
   const handleGenerate = async () => {
     if (!user) return;
@@ -341,7 +400,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         orcamento_id: string;
         artigo_orcamento_id: string;
       }> = [];
-      consolidated.forEach((item) => {
+      consolidatedEnriched.forEach((item) => {
         item.measurementIds.forEach((mId) => {
           linkInserts.push({
             measurement_id: mId,
@@ -375,7 +434,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     }
   };
 
-  const canGenerate = consolidated.length > 0 || measurements.length > 0 || openings.length > 0;
+  const canGenerate = consolidatedEnriched.length > 0 || measurements.length > 0 || openings.length > 0;
 
   return (
     <>
@@ -398,14 +457,40 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Warnings */}
-            {unmappedCount > 0 && (
+            {/* Auto-match status */}
+            {isMatching && (
+              <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-lg p-3">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  A procurar preços na sua Base ({tipoBase === "remodelacao" ? "Remodelação" : "Geral"}) e na Base Global…
+                </p>
+              </div>
+            )}
+            {!isMatching && itemsAutoMatched > 0 && (
+              <div className="flex items-start gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  <strong>{itemsAutoMatched}</strong> artigo(s) com preço auto-preenchido a partir da Base
+                  {itemsAutoMatchedFromGlobal > 0 && (
+                    <> (incluindo <strong>{itemsAutoMatchedFromGlobal}</strong> da Base Global)</>
+                  )}.
+                </p>
+              </div>
+            )}
+            {!isMatching && itemsWithoutPrice > 0 && (
               <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  {unmappedCount} medição(ões) ainda não estão mapeadas a artigos da base de preços.
-                  Serão incluídas no orçamento como artigos <strong>"A DEFINIR"</strong> agrupados por etiqueta,
-                  para que possa atribuir o artigo correto e o preço unitário diretamente no editor de orçamento.
+                  <strong>{itemsWithoutPrice}</strong> artigo(s) ainda sem preço unitário. Vai poder atribuir o preço diretamente no editor do orçamento.
+                </p>
+              </div>
+            )}
+            {/* Warnings */}
+            {unmappedCount > 0 && (
+              <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {unmappedCount} medição(ões) não foram mapeadas manualmente a artigos. A Axia tentou auto-preencher pelo capítulo e descrição.
                 </p>
               </div>
             )}

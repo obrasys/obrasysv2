@@ -217,6 +217,7 @@ export default function PlanQuantitativos() {
               measurements={measurements}
               mappings={mappings}
               articles={articles}
+              tipoBase={tipoBase}
             />
           </div>
         </div>
