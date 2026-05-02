@@ -56,6 +56,43 @@ export function useBaseArtigosGlobal(search?: string, tipoBase: TipoBase = "gera
   });
 }
 
+/**
+ * Hook for the Essencial wizard / Avançado catalog: fetches base_artigos_user
+ * filtered by tipo_base, optional capítulo keywords (OR ilike) and search.
+ */
+export function useBaseArtigosForArea(opts: {
+  tipoBase: TipoBase;
+  capituloKeywords?: string[];
+  search?: string;
+  enabled?: boolean;
+}) {
+  const { tipoBase, capituloKeywords = [], search, enabled = true } = opts;
+  return useQuery({
+    queryKey: ["base_artigos_user_area", tipoBase, capituloKeywords.join("|"), search],
+    queryFn: async () => {
+      let q = supabase
+        .from("base_artigos_user" as any)
+        .select("*")
+        .eq("tipo_base", tipoBase)
+        .order("capitulo")
+        .order("codigo");
+      if (capituloKeywords.length > 0) {
+        const ors = capituloKeywords.map((k) => `capitulo.ilike.%${k}%`).join(",");
+        q = q.or(ors);
+      }
+      if (search?.trim()) {
+        q = q.or(
+          `codigo.ilike.%${search}%,artigo.ilike.%${search}%,capitulo.ilike.%${search}%`
+        );
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data || []) as unknown as BaseArtigoUser[];
+    },
+    enabled,
+  });
+}
+
 export function useBaseArtigosUser(search?: string, tipoBase: TipoBase = "geral") {
   return useQuery({
     queryKey: ["base_artigos_user", tipoBase, search],
