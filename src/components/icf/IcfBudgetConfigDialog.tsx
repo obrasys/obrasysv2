@@ -5,14 +5,19 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, FileText, Calculator, Save, Trash2, Bookmark } from 'lucide-react';
+import { Loader2, FileText, Calculator, Save, Trash2, Bookmark, LayoutTemplate } from 'lucide-react';
 import { useIcfBudgetPresets, useSaveIcfBudgetPreset, useDeleteIcfBudgetPreset } from '@/hooks/useIcfBudgetPresets';
+import { useIcfChapterTemplates, type IcfTemplateChapter } from '@/hooks/useIcfChapterTemplates';
 
 export interface IcfBudgetFinancials {
   margem_lucro: number;
   iva_percent: number;
   /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
   estaleiro_valor: number;
+  /** Capítulos provenientes de um template "chave-na-mão" (substitui geração paramétrica) */
+  template_chapters?: IcfTemplateChapter[];
+  /** Nome do template aplicado (auditoria) */
+  template_nome?: string;
 }
 
 interface Props {
@@ -25,6 +30,7 @@ interface Props {
 
 export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending, defaults }: Props) {
   const { data: presets } = useIcfBudgetPresets();
+  const { data: templates } = useIcfChapterTemplates();
   const savePreset = useSaveIcfBudgetPreset();
   const deletePreset = useDeleteIcfBudgetPreset();
 
@@ -32,12 +38,12 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
   const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none');
 
   const [showSave, setShowSave] = useState(false);
   const [presetNome, setPresetNome] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
 
-  // Aplicar preset default automaticamente na primeira abertura
   useEffect(() => {
     if (!open || !presets?.length || selectedPresetId) return;
     const def = presets.find((p) => p.is_default);
@@ -57,6 +63,18 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     setIva(Number(p.iva_percent));
     setEstaleiro(Number(p.custos_indiretos_percent));
   };
+
+  const handleApplyTemplate = (id: string) => {
+    setSelectedTemplateId(id);
+    if (id === 'none') return;
+    const t = templates?.find((x) => x.id === id);
+    if (!t) return;
+    // Auto-preencher estaleiro com o capítulo "Estaleiros" do template (se existir)
+    const est = t.capitulos.find((c) => /estaleir/i.test(c.titulo));
+    if (est) setEstaleiro(Number(est.valor) || 0);
+  };
+
+  const selectedTemplate = templates?.find((t) => t.id === selectedTemplateId);
 
   const handleSavePreset = () => {
     if (!presetNome.trim()) return;
@@ -83,6 +101,8 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
       estaleiro_valor: Number(estaleiro) || 0,
+      template_chapters: selectedTemplate?.capitulos,
+      template_nome: selectedTemplate?.nome,
     });
   };
 
@@ -100,6 +120,34 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Templates "chave-na-mão" */}
+          {templates && templates.length > 0 && (
+            <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wide text-primary">
+                <LayoutTemplate className="h-3 w-3" /> Template de Capítulos (chave-na-mão)
+              </Label>
+              <Select value={selectedTemplateId} onValueChange={handleApplyTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem template (usar cálculo paramétrico)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem template — usar cálculo paramétrico</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.is_global ? '🌐 ' : ''}{t.nome}
+                      {t.total_referencia ? ` — ref. ${t.total_referencia.toLocaleString('pt-PT')} €` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplate && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedTemplate.capitulos.length} capítulos com valores fixos editáveis serão usados em vez do cálculo paramétrico.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Presets */}
           {presets && presets.length > 0 && (
             <div className="space-y-2 p-3 rounded-lg bg-muted/40 border">

@@ -4236,6 +4236,45 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_budget_chapter_templates: {
+        Row: {
+          capitulos: Json
+          created_at: string
+          descricao: string | null
+          id: string
+          is_default: boolean
+          is_global: boolean
+          nome: string
+          total_referencia: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          capitulos?: Json
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_default?: boolean
+          is_global?: boolean
+          nome: string
+          total_referencia?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          capitulos?: Json
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_default?: boolean
+          is_global?: boolean
+          nome?: string
+          total_referencia?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       icf_budget_presets: {
         Row: {
           created_at: string
