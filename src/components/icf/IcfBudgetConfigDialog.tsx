@@ -11,7 +11,8 @@ import { useIcfBudgetPresets, useSaveIcfBudgetPreset, useDeleteIcfBudgetPreset }
 export interface IcfBudgetFinancials {
   margem_lucro: number;
   iva_percent: number;
-  custos_indiretos_percent: number;
+  /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
+  estaleiro_valor: number;
 }
 
 interface Props {
