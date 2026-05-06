@@ -5,14 +5,19 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, FileText, Calculator, Save, Trash2, Bookmark } from 'lucide-react';
+import { Loader2, FileText, Calculator, Save, Trash2, Bookmark, LayoutTemplate } from 'lucide-react';
 import { useIcfBudgetPresets, useSaveIcfBudgetPreset, useDeleteIcfBudgetPreset } from '@/hooks/useIcfBudgetPresets';
+import { useIcfChapterTemplates, type IcfTemplateChapter } from '@/hooks/useIcfChapterTemplates';
 
 export interface IcfBudgetFinancials {
   margem_lucro: number;
   iva_percent: number;
   /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
   estaleiro_valor: number;
+  /** Capítulos provenientes de um template "chave-na-mão" (substitui geração paramétrica) */
+  template_chapters?: IcfTemplateChapter[];
+  /** Nome do template aplicado (auditoria) */
+  template_nome?: string;
 }
 
 interface Props {
