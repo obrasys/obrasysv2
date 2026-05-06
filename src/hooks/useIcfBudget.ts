@@ -230,6 +230,8 @@ export function useGenerateIcfBudget() {
       iva_percent = 23,
       estaleiro_valor = 0,
       scope,
+      template_chapters,
+      template_nome,
     }: {
       resumo: IcfResumo;
       config: IcfConfiguracao;
@@ -237,8 +239,9 @@ export function useGenerateIcfBudget() {
       margem_lucro?: number;
       iva_percent?: number;
       estaleiro_valor?: number;
-      /** Âmbito adicional (arquitetura/especialidades). Se omitido = só estrutura. */
       scope?: IcfArchitectureScope;
+      template_chapters?: Array<{ titulo: string; descricao?: string; valor: number; prazo?: string }>;
+      template_nome?: string;
     }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
@@ -277,31 +280,46 @@ export function useGenerateIcfBudget() {
           }
         : ICF_DEFAULT_CONSTANTS;
 
-      // 2. Construir capítulos com preços de CUSTO.
-      // IMPORTANTE: persistimos sempre o custo em preco_unitario.
-      // A margem é aplicada apenas pela camada de leitura (Ver.tsx / orcamento-pdf.ts)
-      // através da fórmula PV = Custo / (1 - margem%). Persistir o custo evita
-      // dupla aplicação de margem e mantém o orçamento auditável.
-      const chaptersBase = buildChapters(resumo, config, precos, lajes, K);
-      if (chaptersBase.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+      let chapters: IcfBudgetChapter[];
 
-      // Capítulo "Estaleiros e Escavações" sempre como nº 1, editável.
-      const estaleiroVal = Math.round((estaleiro_valor || 0) * 100) / 100;
-      const estaleiroChapter: IcfBudgetChapter = {
-        numero: 1,
-        titulo: 'Estaleiros e Escavações',
-        descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF — caso o cliente não tenha projeto em ICF.',
-        artigos: [
-          {
-            descricao: 'Estaleiros e escavações — preparação de estaleiro, marcação de obra e escavação às cotas',
-            unidade: 'vg',
-            quantidade: 1,
-            preco_unitario: estaleiroVal,
-          },
-        ],
-      };
+      if (template_chapters && template_chapters.length > 0) {
+        // ── MODO TEMPLATE ─────────────────────────────────────────
+        // Cada capítulo do template = 1 capítulo com 1 artigo "vg" a valor fixo.
+        chapters = template_chapters.map((c, idx) => ({
+          numero: idx + 1,
+          titulo: c.titulo,
+          descricao: c.prazo ? `${c.descricao ?? ''}${c.descricao ? ' · ' : ''}Prazo: ${c.prazo}` : (c.descricao ?? undefined),
+          artigos: [
+            {
+              descricao: c.descricao || c.titulo,
+              unidade: 'vg',
+              quantidade: 1,
+              preco_unitario: Math.round((Number(c.valor) || 0) * 100) / 100,
+            },
+          ],
+        }));
+      } else {
+        // ── MODO PARAMÉTRICO (default) ────────────────────────────
+        const chaptersBase = buildChapters(resumo, config, precos, lajes, K);
+        if (chaptersBase.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
-      const chapters = [estaleiroChapter, ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 }))];
+        const estaleiroVal = Math.round((estaleiro_valor || 0) * 100) / 100;
+        const estaleiroChapter: IcfBudgetChapter = {
+          numero: 1,
+          titulo: 'Estaleiros e Escavações',
+          descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF — caso o cliente não tenha projeto em ICF.',
+          artigos: [
+            {
+              descricao: 'Estaleiros e escavações — preparação de estaleiro, marcação de obra e escavação às cotas',
+              unidade: 'vg',
+              quantidade: 1,
+              preco_unitario: estaleiroVal,
+            },
+          ],
+        };
+
+        chapters = [estaleiroChapter, ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 }))];
+      }
 
       // 4. Geração transacional via RPC (atómica + auditada) — só estrutura.
       const titulo = scope?.arquitetura
