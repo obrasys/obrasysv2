@@ -30,6 +30,7 @@ interface Props {
 
 export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending, defaults }: Props) {
   const { data: presets } = useIcfBudgetPresets();
+  const { data: templates } = useIcfChapterTemplates();
   const savePreset = useSaveIcfBudgetPreset();
   const deletePreset = useDeleteIcfBudgetPreset();
 
@@ -37,12 +38,12 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
   const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none');
 
   const [showSave, setShowSave] = useState(false);
   const [presetNome, setPresetNome] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
 
-  // Aplicar preset default automaticamente na primeira abertura
   useEffect(() => {
     if (!open || !presets?.length || selectedPresetId) return;
     const def = presets.find((p) => p.is_default);
@@ -62,6 +63,18 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     setIva(Number(p.iva_percent));
     setEstaleiro(Number(p.custos_indiretos_percent));
   };
+
+  const handleApplyTemplate = (id: string) => {
+    setSelectedTemplateId(id);
+    if (id === 'none') return;
+    const t = templates?.find((x) => x.id === id);
+    if (!t) return;
+    // Auto-preencher estaleiro com o capítulo "Estaleiros" do template (se existir)
+    const est = t.capitulos.find((c) => /estaleir/i.test(c.titulo));
+    if (est) setEstaleiro(Number(est.valor) || 0);
+  };
+
+  const selectedTemplate = templates?.find((t) => t.id === selectedTemplateId);
 
   const handleSavePreset = () => {
     if (!presetNome.trim()) return;
@@ -88,6 +101,8 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
       estaleiro_valor: Number(estaleiro) || 0,
+      template_chapters: selectedTemplate?.capitulos,
+      template_nome: selectedTemplate?.nome,
     });
   };
 
