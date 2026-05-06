@@ -30,7 +30,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
 
   const [margem, setMargem] = useState<number>(defaults?.margem_lucro ?? 15);
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
-  const [indiretos, setIndiretos] = useState<number>(defaults?.custos_indiretos_percent ?? 8);
+  const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   const [showSave, setShowSave] = useState(false);
@@ -45,7 +45,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       setSelectedPresetId(def.id);
       setMargem(Number(def.margem_lucro));
       setIva(Number(def.iva_percent));
-      setIndiretos(Number(def.custos_indiretos_percent));
+      setEstaleiro(Number(def.custos_indiretos_percent));
     }
   }, [open, presets, selectedPresetId]);
 
@@ -55,7 +55,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     if (!p) return;
     setMargem(Number(p.margem_lucro));
     setIva(Number(p.iva_percent));
-    setIndiretos(Number(p.custos_indiretos_percent));
+    setEstaleiro(Number(p.custos_indiretos_percent));
   };
 
   const handleSavePreset = () => {
@@ -65,7 +65,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
         nome: presetNome.trim(),
         margem_lucro: Number(margem) || 0,
         iva_percent: Number(iva) || 0,
-        custos_indiretos_percent: Number(indiretos) || 0,
+        custos_indiretos_percent: Number(estaleiro) || 0,
         is_default: setAsDefault,
       },
       {
@@ -82,7 +82,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     onConfirm({
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
-      custos_indiretos_percent: Number(indiretos) || 0,
+      estaleiro_valor: Number(estaleiro) || 0,
     });
   };
 
