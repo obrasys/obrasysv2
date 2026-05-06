@@ -11,7 +11,8 @@ import { useIcfBudgetPresets, useSaveIcfBudgetPreset, useDeleteIcfBudgetPreset }
 export interface IcfBudgetFinancials {
   margem_lucro: number;
   iva_percent: number;
-  custos_indiretos_percent: number;
+  /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
+  estaleiro_valor: number;
 }
 
 interface Props {
@@ -29,7 +30,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
 
   const [margem, setMargem] = useState<number>(defaults?.margem_lucro ?? 15);
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
-  const [indiretos, setIndiretos] = useState<number>(defaults?.custos_indiretos_percent ?? 8);
+  const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   const [showSave, setShowSave] = useState(false);
@@ -44,7 +45,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       setSelectedPresetId(def.id);
       setMargem(Number(def.margem_lucro));
       setIva(Number(def.iva_percent));
-      setIndiretos(Number(def.custos_indiretos_percent));
+      setEstaleiro(Number(def.custos_indiretos_percent));
     }
   }, [open, presets, selectedPresetId]);
 
@@ -54,7 +55,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     if (!p) return;
     setMargem(Number(p.margem_lucro));
     setIva(Number(p.iva_percent));
-    setIndiretos(Number(p.custos_indiretos_percent));
+    setEstaleiro(Number(p.custos_indiretos_percent));
   };
 
   const handleSavePreset = () => {
@@ -64,7 +65,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
         nome: presetNome.trim(),
         margem_lucro: Number(margem) || 0,
         iva_percent: Number(iva) || 0,
-        custos_indiretos_percent: Number(indiretos) || 0,
+        custos_indiretos_percent: Number(estaleiro) || 0,
         is_default: setAsDefault,
       },
       {
@@ -81,7 +82,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
     onConfirm({
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
-      custos_indiretos_percent: Number(indiretos) || 0,
+      estaleiro_valor: Number(estaleiro) || 0,
     });
   };
 
@@ -133,9 +134,9 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="indiretos">Custos Indiretos (%)</Label>
-            <Input id="indiretos" type="number" min={0} max={100} step="0.1" value={indiretos} onChange={(e) => setIndiretos(parseFloat(e.target.value))} />
-            <p className="text-xs text-muted-foreground">Aplicado sobre o subtotal (estaleiro, transporte, equipamentos, etc.)</p>
+            <Label htmlFor="estaleiro">Estaleiros e Escavações (€)</Label>
+            <Input id="estaleiro" type="number" min={0} step="0.01" value={estaleiro} onChange={(e) => setEstaleiro(parseFloat(e.target.value))} />
+            <p className="text-xs text-muted-foreground">Valor fixo (€) — capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
           </div>
 
           <div className="space-y-2">
