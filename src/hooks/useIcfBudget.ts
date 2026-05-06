@@ -322,11 +322,13 @@ export function useGenerateIcfBudget() {
       }
 
       // 4. Geração transacional via RPC (atómica + auditada) — só estrutura.
-      const titulo = scope?.arquitetura
-        ? scope.especialidades.length === 4
-          ? `Obra Completa — ${config.nome}`
-          : `Estrutura + Arquitetura — ${config.nome}`
-        : `Estrutura ICF — ${config.nome}`;
+      const titulo = template_chapters && template_chapters.length > 0
+        ? `${template_nome ?? 'Chave-na-mão'} — ${config.nome}`
+        : scope?.arquitetura
+          ? scope.especialidades.length === 4
+            ? `Obra Completa — ${config.nome}`
+            : `Estrutura + Arquitetura — ${config.nome}`
+          : `Estrutura ICF — ${config.nome}`;
 
       const { data: result, error: rpcErr } = await supabase.rpc(
         'generate_icf_budget_transactional',
