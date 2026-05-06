@@ -134,9 +134,9 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="indiretos">Custos Indiretos (%)</Label>
-            <Input id="indiretos" type="number" min={0} max={100} step="0.1" value={indiretos} onChange={(e) => setIndiretos(parseFloat(e.target.value))} />
-            <p className="text-xs text-muted-foreground">Aplicado sobre o subtotal (estaleiro, transporte, equipamentos, etc.)</p>
+            <Label htmlFor="estaleiro">Estaleiros e Escavações (€)</Label>
+            <Input id="estaleiro" type="number" min={0} step="0.01" value={estaleiro} onChange={(e) => setEstaleiro(parseFloat(e.target.value))} />
+            <p className="text-xs text-muted-foreground">Valor fixo (€) — capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
           </div>
 
           <div className="space-y-2">
