@@ -228,7 +228,7 @@ export function useGenerateIcfBudget() {
       obraId,
       margem_lucro = 15,
       iva_percent = 23,
-      custos_indiretos_percent = 0,
+      estaleiro_valor = 0,
       scope,
     }: {
       resumo: IcfResumo;
@@ -236,7 +236,7 @@ export function useGenerateIcfBudget() {
       obraId: string;
       margem_lucro?: number;
       iva_percent?: number;
-      custos_indiretos_percent?: number;
+      estaleiro_valor?: number;
       /** Âmbito adicional (arquitetura/especialidades). Se omitido = só estrutura. */
       scope?: IcfArchitectureScope;
     }) => {
