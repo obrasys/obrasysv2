@@ -120,6 +120,34 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Templates "chave-na-mão" */}
+          {templates && templates.length > 0 && (
+            <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wide text-primary">
+                <LayoutTemplate className="h-3 w-3" /> Template de Capítulos (chave-na-mão)
+              </Label>
+              <Select value={selectedTemplateId} onValueChange={handleApplyTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem template (usar cálculo paramétrico)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem template — usar cálculo paramétrico</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.is_global ? '🌐 ' : ''}{t.nome}
+                      {t.total_referencia ? ` — ref. ${t.total_referencia.toLocaleString('pt-PT')} €` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplate && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedTemplate.capitulos.length} capítulos com valores fixos editáveis serão usados em vez do cálculo paramétrico.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Presets */}
           {presets && presets.length > 0 && (
             <div className="space-y-2 p-3 rounded-lg bg-muted/40 border">
