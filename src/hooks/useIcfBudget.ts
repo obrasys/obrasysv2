@@ -282,15 +282,26 @@ export function useGenerateIcfBudget() {
       // A margem é aplicada apenas pela camada de leitura (Ver.tsx / orcamento-pdf.ts)
       // através da fórmula PV = Custo / (1 - margem%). Persistir o custo evita
       // dupla aplicação de margem e mantém o orçamento auditável.
-      const chapters = buildChapters(resumo, config, precos, lajes, K);
-      if (chapters.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
+      const chaptersBase = buildChapters(resumo, config, precos, lajes, K);
+      if (chaptersBase.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
-      // 3. Subtotal de custo + custos indiretos absolutos (também a custo).
-      const subtotalCusto = chapters.reduce(
-        (acc, cap) => acc + cap.artigos.reduce((s, a) => s + a.quantidade * a.preco_unitario, 0),
-        0,
-      );
-      const estaleiroAbs = Math.round(subtotalCusto * (custos_indiretos_percent / 100) * 100) / 100;
+      // Capítulo "Estaleiros e Escavações" sempre como nº 1, editável.
+      const estaleiroVal = Math.round((estaleiro_valor || 0) * 100) / 100;
+      const estaleiroChapter: IcfBudgetChapter = {
+        numero: 1,
+        titulo: 'Estaleiros e Escavações',
+        descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF — caso o cliente não tenha projeto em ICF.',
+        artigos: [
+          {
+            descricao: 'Estaleiros e escavações — preparação de estaleiro, marcação de obra e escavação às cotas',
+            unidade: 'vg',
+            quantidade: 1,
+            preco_unitario: estaleiroVal,
+          },
+        ],
+      };
+
+      const chapters = [estaleiroChapter, ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 }))];
 
       // 4. Geração transacional via RPC (atómica + auditada) — só estrutura.
       const titulo = scope?.arquitetura
@@ -307,11 +318,11 @@ export function useGenerateIcfBudget() {
           p_titulo: titulo,
           p_margem_lucro: margem_lucro,
           p_custos_indiretos: {
-            estaleiro: estaleiroAbs,
+            estaleiro: 0,
             seguros: 0,
             licenciamento: 0,
             iva_percent,
-            indiretos_percent: custos_indiretos_percent,
+            indiretos_percent: 0,
           },
           p_chapters: chapters as any,
           p_config_snapshot: {
