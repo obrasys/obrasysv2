@@ -7,12 +7,88 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function normalizeNumber(value: unknown, decimals = 2): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Number(n.toFixed(decimals));
+}
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function totalComprimentoParedes(paredes: any[]): number {
+  return normalizeNumber(
+    (paredes ?? []).reduce((sum, p) => sum + normalizeNumber(p.comprimento), 0),
+    2,
+  );
+}
+
+function dedupeParedes(paredes: any[]) {
+  const seen = new Map<string, any>();
+  const duplicados: any[] = [];
+
+  for (const parede of paredes ?? []) {
+    const comprimento = normalizeNumber(parede.comprimento, 2);
+    const altura = normalizeNumber(parede.altura_util, 2);
+    const espessura = normalizeNumber(parede.espessura_nucleo, 3);
+    const pisoInicial = normalizeText(parede.piso_inicial || "sem_piso");
+    const pisoFinal = normalizeText(parede.piso_final || pisoInicial);
+
+    if (comprimento <= 0 || altura <= 0) {
+      duplicados.push({
+        removida: parede.referencia || null,
+        motivo: "Parede com comprimento ou altura inválidos",
+      });
+      continue;
+    }
+
+    const key = [pisoInicial, pisoFinal, comprimento, altura, espessura].join("|");
+
+    if (seen.has(key)) {
+      duplicados.push({
+        mantida: seen.get(key).referencia || null,
+        removida: parede.referencia || null,
+        motivo: "Possível duplicação: mesmo piso, comprimento, altura e espessura",
+      });
+      continue;
+    }
+
+    seen.set(key, {
+      ...parede,
+      comprimento,
+      altura_util: altura,
+      espessura_nucleo: espessura,
+    });
+  }
+
+  return { paredes: Array.from(seen.values()), duplicados };
+}
+
+function detectPossibleDoubleCounting(originalTotal: number, correctedTotal: number): boolean {
+  if (originalTotal <= 0 || correctedTotal <= 0) return false;
+  const ratio = originalTotal / correctedTotal;
+  return ratio >= 1.85 && ratio <= 2.15;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return jsonResponse({ error: "Método não permitido" }, 405);
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!LOVABLE_API_KEY) return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
 
     const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -22,18 +98,48 @@ serve(async (req) => {
     // Validate user
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
     const token = authHeader?.replace("Bearer ", "");
-    if (!token) throw new Error("Não autenticado");
+    if (!token) return jsonResponse({ error: "Não autenticado" }, 401);
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
-    if (authErr || !user) throw new Error("Não autenticado");
+    if (authErr || !user) return jsonResponse({ error: "Não autenticado" }, 401);
 
     const body = await req.json();
     const { file_path, obra_id, configuracao_id, espessura_nucleo, classe_betao, classe_aco } = body;
 
     if (!file_path || !obra_id || !configuracao_id) {
-      return new Response(JSON.stringify({ error: "Campos obrigatórios em falta" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Campos obrigatórios em falta" }, 400);
+    }
+
+    // Authorization: user must belong to an organization that owns the obra
+    const { data: userMembership, error: memberErr } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .eq("member_status", "active")
+      .maybeSingle();
+
+    if (memberErr || !userMembership?.organization_id) {
+      return jsonResponse({ error: "Sem acesso à obra" }, 403);
+    }
+
+    const { data: obra, error: obraError } = await supabase
+      .from("obras")
+      .select("id, user_id, gestor_id")
+      .eq("id", obra_id)
+      .maybeSingle();
+
+    if (obraError || !obra) {
+      return jsonResponse({ error: "Sem acesso à obra" }, 403);
+    }
+
+    // Verify obra belongs to same organization (via owner user_id)
+    const { data: ownerMembership } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", obra.user_id)
+      .maybeSingle();
+
+    if (!ownerMembership || ownerMembership.organization_id !== userMembership.organization_id) {
+      return jsonResponse({ error: "Sem acesso à obra" }, 403);
     }
 
     // Download the file from storage
@@ -42,11 +148,20 @@ serve(async (req) => {
       .download(file_path);
 
     if (dlErr || !fileData) {
-      throw new Error(`Erro ao descarregar ficheiro: ${dlErr?.message || "ficheiro não encontrado"}`);
+      return jsonResponse({ error: "Erro ao descarregar ficheiro" }, 404);
     }
 
     // Convert to base64 (chunk-safe for large files)
     const arrayBuf = await fileData.arrayBuffer();
+
+    const MAX_FILE_SIZE = 12 * 1024 * 1024;
+    if (arrayBuf.byteLength > MAX_FILE_SIZE) {
+      return jsonResponse(
+        { error: "Ficheiro demasiado grande para análise automática. Envie uma planta por piso." },
+        413,
+      );
+    }
+
     const bytes = new Uint8Array(arrayBuf);
     let binary = "";
     const chunkSize = 8192;
@@ -60,58 +175,47 @@ serve(async (req) => {
       : "image/jpeg";
 
     const systemPrompt = `Você é um engenheiro estrutural especialista em sistema construtivo ICF (Insulated Concrete Forms).
-Analise a planta de estrutura/arquitetura fornecida e extraia TODOS os elementos construtivos visíveis.
 
-Regras de extração:
-- Paredes ICF: identifique cada pano de parede com referência (ex: P1, P2...), comprimento (m), altura útil (m), e espessura do núcleo de betão (${espessura_nucleo || 0.15}m).
-- Vãos: para cada parede, identifique portas (largura x altura), janelas (largura x altura) e respectivas quantidades.
-- Fundações: identifique sapatas contínuas e/ou isoladas com comprimento, largura e altura estimados.
-- Lajes: identifique lajes com área (m²), espessura total estimada e tipologia (maciça, aligeirada, etc.).
-- Use dimensões em METROS.
-- Se não conseguir determinar um valor exacto, faça uma estimativa razoável baseada na escala da planta.
+Objetivo:
+Extrair elementos construtivos de uma planta para gerar pré-medição ICF. A medição deve ser conservadora, rastreável e sem duplicações.
 
-Classe de betão de referência: ${classe_betao || "C25/30"}
-Classe de aço de referência: ${classe_aco || "A500NR"}
+REGRAS CRÍTICAS DE MEDIÇÃO:
+- Para paredes ICF, medir cada pano de parede UMA ÚNICA VEZ.
+- Medir o comprimento pelo EIXO MÉDIO da parede, não pelas duas faces.
+- Se uma parede estiver representada por duas linhas paralelas, isso representa uma única parede, não duas.
+- Nunca somar face interior + face exterior da mesma parede.
+- Nunca contar o mesmo elemento mais de uma vez se aparecer em planta geral, detalhe ampliado, corte, legenda ou tabela.
+- Analisar apenas plantas em vista horizontal do piso.
+- Ignorar cortes, alçados, pormenores construtivos, legendas, carimbos, quadros de áreas e esquemas repetidos.
+- Se houver várias páginas, identificar o piso/página e evitar contar a mesma planta repetida.
+- Se não houver escala ou cotas suficientes, marcar a medição como estimada e reduzir confiança.
+- Usar dimensões em METROS.
+- Não inventar paredes que não estejam visíveis.
+- Não usar valores do exemplo como dados reais.
 
-Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`;
+Critério de parede ICF:
+- Cada pano deve representar um segmento físico único de parede.
+- Paredes em L, T ou U devem ser divididas em segmentos apenas quando houver mudança clara de direção.
+- Segmentos colineares contínuos devem ser agrupados numa única parede, salvo se houver interrupção real.
+- Vãos não reduzem o comprimento linear da parede; reduzem apenas área/volume quando aplicável.
 
-    const userPrompt = `Analise esta planta e extraia todos os elementos construtivos ICF num JSON com esta estrutura exacta:
-{
-  "paredes": [
-    {
-      "referencia": "P1",
-      "comprimento": 5.0,
-      "altura_util": 2.80,
-      "espessura_nucleo": ${espessura_nucleo || 0.15},
-      "piso_inicial": "R/C",
-      "piso_final": "R/C",
-      "vaos": [
-        { "tipo_vao": "porta", "largura": 0.90, "altura": 2.10, "quantidade": 1 },
-        { "tipo_vao": "janela", "largura": 1.20, "altura": 1.00, "quantidade": 2 }
-      ]
-    }
-  ],
-  "fundacoes": [
-    {
-      "tipo_fundacao": "sapata_continua",
-      "referencia": "SC1",
-      "comprimento": 10.0,
-      "largura": 0.70,
-      "altura": 0.45,
-      "quantidade": 1
-    }
-  ],
-  "lajes": [
-    {
-      "referencia": "L1",
-      "piso": "R/C",
-      "tipologia_laje": "aligeirada",
-      "area": 80.0,
-      "espessura_total": 0.25
-    }
-  ],
-  "notas": "Observações gerais sobre a planta analisada"
-}`;
+Parâmetros de referência:
+- Espessura do núcleo de betão: ${espessura_nucleo || 0.15} m
+- Classe de betão: ${classe_betao || "C25/30"}
+- Classe de aço: ${classe_aco || "A500NR"}
+
+Responda exclusivamente por tool call no schema definido.`;
+
+    const userPrompt = `Analise a planta e extraia os elementos ICF.
+
+Antes de devolver o JSON:
+1. Verifique se alguma parede foi contada duas vezes por ter duas faces paralelas.
+2. Verifique se o mesmo elemento aparece em detalhe/corte e na planta geral.
+3. Verifique se a soma dos comprimentos parece plausível.
+4. Se houver dúvida, mantenha apenas uma ocorrência e registre a incerteza nas notas.
+5. Não copie valores de exemplos. Use apenas valores extraídos da planta.
+
+Devolva a análise usando exclusivamente a tool call configurada.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -127,10 +231,7 @@ Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`
             role: "user",
             content: [
               { type: "text", text: userPrompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:${mimeType};base64,${base64}` },
-              },
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
             ],
           },
         ],
@@ -147,11 +248,27 @@ Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`
                     type: "array",
                     items: {
                       type: "object",
+                      additionalProperties: false,
                       properties: {
                         referencia: { type: "string" },
-                        comprimento: { type: "number" },
-                        altura_util: { type: "number" },
-                        espessura_nucleo: { type: "number" },
+                        comprimento: {
+                          type: "number",
+                          minimum: 0.01,
+                          maximum: 200,
+                          description: "Comprimento linear da parede em metros, medido uma única vez pelo eixo médio.",
+                        },
+                        altura_util: {
+                          type: "number",
+                          minimum: 1.5,
+                          maximum: 6,
+                          description: "Altura útil da parede em metros.",
+                        },
+                        espessura_nucleo: {
+                          type: "number",
+                          minimum: 0.1,
+                          maximum: 0.4,
+                          description: "Espessura do núcleo de betão em metros.",
+                        },
                         piso_inicial: { type: "string" },
                         piso_final: { type: "string" },
                         vaos: {
@@ -167,8 +284,33 @@ Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`
                             required: ["tipo_vao", "largura", "altura", "quantidade"],
                           },
                         },
+                        metodo_medicao: {
+                          type: "string",
+                          enum: ["cota", "escala", "estimativa_visual"],
+                          description: "Método usado para obter a medição.",
+                        },
+                        confianca: {
+                          type: "number",
+                          minimum: 0,
+                          maximum: 1,
+                          description: "Confiança da medição entre 0 e 1.",
+                        },
+                        notas_validacao: {
+                          type: "string",
+                          description: "Notas sobre incerteza, escala, duplicação ou limitação da leitura.",
+                        },
                       },
-                      required: ["referencia", "comprimento", "altura_util", "espessura_nucleo"],
+                      required: [
+                        "referencia",
+                        "comprimento",
+                        "altura_util",
+                        "espessura_nucleo",
+                        "piso_inicial",
+                        "piso_final",
+                        "vaos",
+                        "metodo_medicao",
+                        "confianca",
+                      ],
                     },
                   },
                   fundacoes: {
@@ -214,20 +356,14 @@ Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`
     if (!aiResponse.ok) {
       const status = aiResponse.status;
       if (status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de pedidos excedido, tente novamente em breve." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Limite de pedidos excedido, tente novamente em breve." }, 429);
       }
       if (status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos AI esgotados. Adicione créditos em Definições." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Créditos AI esgotados. Adicione créditos em Definições." }, 402);
       }
       const errText = await aiResponse.text();
       console.error("AI error:", status, errText);
-      throw new Error(`Erro na análise AI: ${status}`);
+      return jsonResponse({ error: `Erro na análise AI: ${status}` }, 500);
     }
 
     const aiData = await aiResponse.json();
@@ -240,26 +376,50 @@ Responda EXCLUSIVAMENTE com o JSON estruturado, sem markdown, sem comentários.`
         ? JSON.parse(toolCall.function.arguments)
         : toolCall.function.arguments;
     } else {
-      // Fallback: try parsing from content
       const content = aiData.choices?.[0]?.message?.content || "";
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         extracted = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error("Não foi possível extrair dados da planta");
+        return jsonResponse({ error: "Não foi possível extrair dados da planta" }, 500);
       }
     }
 
-    return new Response(JSON.stringify({ success: true, data: extracted }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Pós-processamento anti-duplicação
+    const originalParedes = Array.isArray(extracted.paredes) ? extracted.paredes : [];
+    const originalTotal = totalComprimentoParedes(originalParedes);
+    const originalCount = originalParedes.length;
+
+    const dedupeResult = dedupeParedes(originalParedes);
+    extracted.paredes = dedupeResult.paredes;
+
+    const correctedTotal = totalComprimentoParedes(extracted.paredes);
+    const possibleDoubleCounting = detectPossibleDoubleCounting(originalTotal, correctedTotal);
+    const lowConfidenceDetected = extracted.paredes.some((p: any) => {
+      const c = Number(p.confianca);
+      return Number.isFinite(c) && c < 0.65;
     });
+
+    extracted.totais = {
+      ...(extracted.totais ?? {}),
+      comprimento_paredes_original_m: originalTotal,
+      comprimento_paredes_corrigido_m: correctedTotal,
+    };
+
+    extracted.validacao = {
+      ...(extracted.validacao ?? {}),
+      paredes_recebidas_ai: originalCount,
+      paredes_apos_deduplicacao: extracted.paredes.length,
+      paredes_duplicadas_removidas: dedupeResult.duplicados,
+      possivel_contagem_dupla: possibleDoubleCounting,
+      baixa_confianca_detectada: lowConfidenceDetected,
+      requer_revisao_humana:
+        possibleDoubleCounting || lowConfidenceDetected || dedupeResult.duplicados.length > 0,
+    };
+
+    return jsonResponse({ success: true, data: extracted, audit: extracted.validacao });
   } catch (e) {
     console.error("icf-plant-analysis error:", e);
-    const msg = e instanceof Error ? e.message : "Erro desconhecido";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Erro interno ao processar a planta" }, 500);
   }
 });
