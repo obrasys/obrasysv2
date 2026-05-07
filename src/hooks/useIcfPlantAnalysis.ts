@@ -75,14 +75,23 @@ export function useIcfPlantAnalysis() {
 
       if (error) throw new Error(error.message || 'Erro na análise');
       if (data?.error) throw new Error(data.error);
-      return data.data as IcfPlantAnalysisResult;
+      return { ...(data.data as IcfPlantAnalysisResult), __audit: data.audit } as IcfPlantAnalysisResult & { __audit?: any };
     },
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       setAnalysisResult(result);
-      toast({
-        title: 'Análise concluída',
-        description: `Encontrados: ${result.paredes.length} paredes, ${result.fundacoes.length} fundações, ${result.lajes.length} lajes`,
-      });
+      const audit = result?.__audit;
+      if (audit?.requer_revisao_humana) {
+        toast({
+          title: 'Revisão humana recomendada',
+          description: 'A Axia detetou possível duplicação ou baixa confiança na leitura da planta. Revise as paredes extraídas antes de gerar orçamento.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Análise concluída',
+          description: `Encontrados: ${result.paredes.length} paredes, ${result.fundacoes.length} fundações, ${result.lajes.length} lajes`,
+        });
+      }
     },
     onError: (e: any) => {
       toast({ title: 'Erro na análise', description: e.message, variant: 'destructive' });
