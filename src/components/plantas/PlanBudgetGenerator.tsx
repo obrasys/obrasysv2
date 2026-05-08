@@ -152,8 +152,14 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         // items derivados são consolidados num único artigo "A DEFINIR" com a
         // soma da quantidade — o utilizador atribui o preço unitário no editor.
         const bucket = categorizeMeasurement(measurement);
+        // Normalizar unidade: m² para áreas, ml para lineares
+        const rawUnit = (measurement.unidade || "").toLowerCase();
         const unidade =
-          measurement.unidade || (measurement.tipo === "area" ? "m²" : measurement.tipo === "linha" ? "ml" : "un");
+          measurement.tipo === "area"
+            ? "m²"
+            : measurement.tipo === "linha"
+            ? "ml"
+            : rawUnit || "un";
 
         let descricao: string;
         let placeholderId: string;
