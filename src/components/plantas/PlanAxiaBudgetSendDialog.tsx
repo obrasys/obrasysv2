@@ -234,7 +234,7 @@ export function PlanAxiaBudgetSendDialog({
               tipo: "area",
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: w.valor,
-              unidade: "m2",
+              unidade: "m²",
               etiqueta: `Paredes — ${w.room_name}`,
               camada: "paredes",
               cor: "#8b5cf6",
