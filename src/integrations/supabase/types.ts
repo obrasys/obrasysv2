@@ -6853,6 +6853,7 @@ export type Database = {
           environment: string | null
           id: string
           note: string | null
+          origin: string
           plan_import_id: string
           quantity: number | null
           rotation: number | null
@@ -6870,6 +6871,7 @@ export type Database = {
           environment?: string | null
           id?: string
           note?: string | null
+          origin?: string
           plan_import_id: string
           quantity?: number | null
           rotation?: number | null
@@ -6887,6 +6889,7 @@ export type Database = {
           environment?: string | null
           id?: string
           note?: string | null
+          origin?: string
           plan_import_id?: string
           quantity?: number | null
           rotation?: number | null
