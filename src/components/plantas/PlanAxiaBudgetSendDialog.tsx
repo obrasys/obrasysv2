@@ -299,12 +299,14 @@ export function PlanAxiaBudgetSendDialog({
         if (oldRoomsErr) throw oldRoomsErr;
         removed += oldRooms?.length ?? 0;
 
-        // 3. plan_placed_elements desta planta criados pela Axia (note começa por "Folha ")
+        // 3. plan_placed_elements desta planta criados pela Axia
+        //    (apaga apenas elementos com origin='axia' — nunca toca em
+        //    elementos colocados manualmente pelo utilizador)
         const { data: oldEl, error: oldElErr } = await supabase
           .from("plan_placed_elements")
           .delete()
           .eq("plan_import_id", planImportId)
-          .ilike("note", "Folha %")
+          .eq("origin", "axia")
           .select("id");
         if (oldElErr) throw oldElErr;
         removed += oldEl?.length ?? 0;
