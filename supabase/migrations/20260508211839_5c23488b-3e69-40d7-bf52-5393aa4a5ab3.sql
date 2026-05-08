@@ -1,0 +1,1 @@
+CREATE POLICY "Super admins can view all subscribers" ON public.subscribers FOR SELECT TO authenticated USING (public.is_super_admin());
