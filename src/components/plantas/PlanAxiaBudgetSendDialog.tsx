@@ -98,8 +98,8 @@ export function PlanAxiaBudgetSendDialog({
   const [replacePrevious, setReplacePrevious] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Recompute when pages change (e.g. dialog re-opened)
-  useMemo(() => {
+  // Recompute when pages change (e.g. dialog re-opened) — useEffect, não useMemo
+  useEffect(() => {
     setSelectedPages((prev) => {
       if (prev.size === 0) return new Set(pages);
       const next = new Set<number>();
