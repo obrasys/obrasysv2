@@ -119,6 +119,12 @@ serve(async (req) => {
                 subscription_end: subscriptionEnd,
               }, { onConflict: "user_id" });
 
+            // Mark trial as expired on the profile so trial banners stop showing
+            await supabaseClient
+              .from("profiles")
+              .update({ trial_expired: true })
+              .eq("user_id", user.id);
+
             logStep("Subscriber record created/updated", { userId: user.id, tier });
           } else {
             logStep("User not found for email", { email: customer.email });
