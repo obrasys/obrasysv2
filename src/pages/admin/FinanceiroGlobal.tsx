@@ -3,43 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/relatorios/KpiCard";
-import { TrendingUp, Users, Wallet, BarChart3, Star, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Users, Wallet, BarChart3, Star, Loader2 } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 
-const mockUsers = [
-  { email: "bruno.ferreira@ferreiralcantara.com", plano: "Founder", valor: 490, desde: "Fev 2026", tipo: "Vitalício" },
-  { email: "adm.mtpichelariaeletricidade@hotmail.com", plano: "Founder", valor: 490, desde: "Mar 2026", tipo: "Vitalício" },
-  { email: "inrioimobiliaria@gmail.com", plano: "Professional", valor: 99, desde: "Fev 2026", tipo: "Mensal" },
-  { email: "modenoepeculiar@gmail.com", plano: "Starter", valor: 49, desde: "Fev 2026", tipo: "Mensal" },
-  { email: "jmsplacido@gmail.com", plano: "Professional", valor: 99, desde: "Mar 2026", tipo: "Mensal" },
-];
+const PLAN_PRICES: Record<string, number> = {
+  founder: 490,
+  professional: 99,
+  starter: 49,
+  trial: 0,
+};
 
-const totalMRR = mockUsers.reduce((sum, u) => sum + u.valor, 0);
-const founderCount = mockUsers.filter(u => u.plano === "Founder").length;
-const proCount = mockUsers.filter(u => u.plano === "Professional").length;
-const starterCount = mockUsers.filter(u => u.plano === "Starter").length;
-const founderRevenue = mockUsers.filter(u => u.plano === "Founder").reduce((s, u) => s + u.valor, 0);
-const proRevenue = mockUsers.filter(u => u.plano === "Professional").reduce((s, u) => s + u.valor, 0);
-const starterRevenue = mockUsers.filter(u => u.plano === "Starter").reduce((s, u) => s + u.valor, 0);
-
-const revenueChartData = [
-  { month: "Out 25", receita: 0, acumulado: 0 },
-  { month: "Nov 25", receita: 0, acumulado: 0 },
-  { month: "Dez 25", receita: 0, acumulado: 0 },
-  { month: "Jan 26", receita: 0, acumulado: 0 },
-  { month: "Fev 26", receita: 737, acumulado: 737 },
-  { month: "Mar 26", receita: 1227, acumulado: 1964 },
-];
-
-const planDistribution = [
-  { name: "Founder", value: founderRevenue, count: founderCount },
-  { name: "Professional", value: proRevenue, count: proCount },
-  { name: "Starter", value: starterRevenue, count: starterCount },
-];
+const PLAN_LABELS: Record<string, string> = {
+  founder: "Founder",
+  professional: "Professional",
+  starter: "Starter",
+  trial: "Trial",
+};
 
 const PLAN_COLORS = ["hsl(36, 77%, 49%)", "hsl(199, 100%, 31%)", "hsl(199, 30%, 60%)"];
 
@@ -49,7 +36,7 @@ const chartConfig = {
 };
 
 function getPlanBadge(plano: string) {
-  if (plano === "Founder") {
+  if (plano === "founder") {
     return (
       <Badge className="bg-amber-600/15 text-amber-700 border border-amber-300 hover:bg-amber-600/20 gap-1">
         <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
@@ -57,47 +44,124 @@ function getPlanBadge(plano: string) {
       </Badge>
     );
   }
-  if (plano === "Professional") return <Badge variant="default">{plano}</Badge>;
-  return <Badge variant="secondary">{plano}</Badge>;
+  if (plano === "professional") return <Badge variant="default">Professional</Badge>;
+  return <Badge variant="secondary">{PLAN_LABELS[plano] || plano}</Badge>;
 }
 
 export default function AdminFinanceiroGlobal() {
-  const growthPercent = revenueChartData[5].receita > 0 && revenueChartData[4].receita > 0
-    ? Math.round(((revenueChartData[5].receita - revenueChartData[4].receita) / revenueChartData[4].receita) * 100)
-    : 0;
+  const { data: subs, isLoading } = useQuery({
+    queryKey: ["admin-financeiro-subscribers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subscribers")
+        .select("user_id, email, subscription_tier, subscription_status, subscription_end, subscribed, updated_at, created_at")
+        .eq("subscribed", true)
+        .in("subscription_tier", ["founder", "professional", "starter"])
+        .in("subscription_status", ["active", "trialing"])
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 60_000,
+  });
+
+  const payingUsers = (subs || []).map((s) => ({
+    email: s.email,
+    plano: s.subscription_tier || "trial",
+    valor: PLAN_PRICES[s.subscription_tier || "trial"] || 0,
+    desde: s.created_at ? format(new Date(s.created_at), "MMM yyyy", { locale: pt }) : "—",
+    tipo: s.subscription_tier === "founder" ? "Vitalício" : "Mensal",
+  }));
+
+  const totalMRR = payingUsers
+    .filter((u) => u.plano !== "founder")
+    .reduce((sum, u) => sum + u.valor, 0);
+  const founderCount = payingUsers.filter((u) => u.plano === "founder").length;
+  const proCount = payingUsers.filter((u) => u.plano === "professional").length;
+  const starterCount = payingUsers.filter((u) => u.plano === "starter").length;
+  const founderRevenue = payingUsers.filter((u) => u.plano === "founder").reduce((s, u) => s + u.valor, 0);
+  const proRevenue = proCount * PLAN_PRICES.professional;
+  const starterRevenue = starterCount * PLAN_PRICES.starter;
+  const totalAccumulated = founderRevenue + proRevenue + starterRevenue;
+
+  const planDistribution = [
+    { name: "Founder", value: founderRevenue, count: founderCount },
+    { name: "Professional", value: proRevenue, count: proCount },
+    { name: "Starter", value: starterRevenue, count: starterCount },
+  ];
+
+  // Build a 6-month trailing revenue chart from created_at
+  const now = new Date();
+  const months: { key: string; month: string; receita: number; acumulado: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${d.getMonth()}`,
+      month: format(d, "MMM yy", { locale: pt }),
+      receita: 0,
+      acumulado: 0,
+    });
+  }
+  (subs || []).forEach((s) => {
+    if (!s.created_at) return;
+    const d = new Date(s.created_at);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const slot = months.find((m) => m.key === key);
+    if (slot && s.subscription_tier && s.subscription_tier !== "founder") {
+      slot.receita += PLAN_PRICES[s.subscription_tier] || 0;
+    }
+  });
+  let acc = 0;
+  months.forEach((m) => {
+    acc += m.receita;
+    m.acumulado = acc;
+  });
+
+  const growthPercent =
+    months[5].receita > 0 && months[4].receita > 0
+      ? Math.round(((months[5].receita - months[4].receita) / months[4].receita) * 100)
+      : 0;
+
+  if (isLoading) {
+    return (
+      <AdminLayout title="Financeiro Global" subtitle="Receitas de subscrições e planos">
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Financeiro Global" subtitle="Receitas de subscrições e planos">
       <div className="p-4 md:p-6 space-y-6">
-        {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
             title="MRR Atual"
             value={`€${totalMRR.toLocaleString("pt-PT")}`}
             icon={TrendingUp}
-            description={`+${growthPercent}% vs mês anterior`}
+            description={growthPercent !== 0 ? `${growthPercent > 0 ? "+" : ""}${growthPercent}% vs mês anterior` : "Receita recorrente"}
           />
           <KpiCard
             title="Receita Acumulada"
-            value={`€${revenueChartData[revenueChartData.length - 1].acumulado.toLocaleString("pt-PT")}`}
+            value={`€${totalAccumulated.toLocaleString("pt-PT")}`}
             icon={BarChart3}
-            description="Desde o lançamento"
+            description="Inclui Founder vitalício"
           />
           <KpiCard
             title="Utilizadores Pagantes"
-            value={String(mockUsers.length)}
+            value={String(payingUsers.length)}
             icon={Users}
             description={`${founderCount} Founder · ${proCount} Pro · ${starterCount} Starter`}
           />
           <KpiCard
             title="Ticket Médio"
-            value={`€${(totalMRR / mockUsers.length).toFixed(0)}`}
+            value={`€${payingUsers.length > 0 ? (totalMRR / Math.max(proCount + starterCount, 1)).toFixed(0) : 0}`}
             icon={Wallet}
-            description="Por utilizador"
+            description="Por utilizador mensal"
           />
         </div>
 
-        {/* Charts */}
         <div className="grid lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
@@ -107,7 +171,7 @@ export default function AdminFinanceiroGlobal() {
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueChartData} barCategoryGap="20%">
+                  <BarChart data={months} barCategoryGap="20%">
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => `€${v}`} tick={{ fontSize: 11 }} />
@@ -162,10 +226,9 @@ export default function AdminFinanceiroGlobal() {
           </Card>
         </div>
 
-        {/* Table */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Subscrições Ativas</CardTitle>
+            <CardTitle className="text-sm font-semibold">Subscrições Ativas ({payingUsers.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -180,14 +243,21 @@ export default function AdminFinanceiroGlobal() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockUsers.map((user) => (
+                {payingUsers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                      Sem subscrições ativas
+                    </TableCell>
+                  </TableRow>
+                )}
+                {payingUsers.map((user) => (
                   <TableRow key={user.email}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary uppercase">
                           {user.email.charAt(0)}
                         </div>
-                        <span className="text-sm truncate max-w-[200px]">{user.email}</span>
+                        <span className="text-sm truncate max-w-[260px]">{user.email}</span>
                       </div>
                     </TableCell>
                     <TableCell>{getPlanBadge(user.plano)}</TableCell>
