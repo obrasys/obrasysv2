@@ -212,7 +212,7 @@ export function PlanAxiaBudgetSendDialog({
               tipo: "linha",
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: b.valor,
-              unidade: "m",
+              unidade: "ml",
               etiqueta: `Rodapé — ${b.room_name}`,
               camada: "rodape",
               cor: "#f59e0b",
