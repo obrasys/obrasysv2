@@ -401,6 +401,35 @@ REGRAS CRÍTICAS:
       );
     }
 
+    // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
+    // (evita contar duas faces paralelas como duas paredes distintas)
+    if (analysis && Array.isArray(analysis.walls)) {
+      const seen = new Map<string, any>();
+      const PROX = 0.02; // 2% da folha = ~espessura de parede em coords normalizadas
+      let removed = 0;
+      for (const w of analysis.walls) {
+        const b = w.bbox;
+        const cx = b ? (b.x_min + b.x_max) / 2 : -1;
+        const cy = b ? (b.y_min + b.y_max) / 2 : -1;
+        const ori = w.orientacao ?? "indef";
+        const comp = (w.compartimento_associado ?? "").toLowerCase().trim();
+        // chave grosseira (compartimento + orientação + centroide arredondado)
+        const key = `${comp}|${ori}|${Math.round(cx / PROX)}|${Math.round(cy / PROX)}`;
+        if (seen.has(key)) {
+          removed++;
+          continue;
+        }
+        seen.set(key, w);
+      }
+      if (removed > 0) {
+        analysis.walls = Array.from(seen.values());
+        analysis.limitations = [
+          ...(Array.isArray(analysis.limitations) ? analysis.limitations : []),
+          `Dedup automático: ${removed} parede(s) duplicada(s) (faces paralelas ou repetidas) removidas.`,
+        ];
+      }
+    }
+
     await supabase.from("axia_suggestions_log").insert({
       user_id: userId,
       suggestion_type: "plan_vision_analysis",
