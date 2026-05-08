@@ -182,6 +182,13 @@ serve(async (req) => {
             })
             .eq("user_id", user.id);
 
+          if (subscription.status === "active") {
+            await supabaseClient
+              .from("profiles")
+              .update({ trial_expired: true })
+              .eq("user_id", user.id);
+          }
+
           logStep("Subscriber updated", { userId: user.id, status: subscription.status });
         }
         break;
