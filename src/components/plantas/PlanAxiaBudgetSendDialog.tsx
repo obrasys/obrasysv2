@@ -268,6 +268,7 @@ export function PlanAxiaBudgetSendDialog({
               y,
               quantity: o.qtd,
               note: `${folhaTag} · ${o.largura_cm}×${o.altura_cm}cm${o.review_required ? " (validar)" : ""}`,
+              origin: "axia",
             });
           });
         }
