@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -98,8 +98,8 @@ export function PlanAxiaBudgetSendDialog({
   const [replacePrevious, setReplacePrevious] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Recompute when pages change (e.g. dialog re-opened)
-  useMemo(() => {
+  // Recompute when pages change (e.g. dialog re-opened) — useEffect, não useMemo
+  useEffect(() => {
     setSelectedPages((prev) => {
       if (prev.size === 0) return new Set(pages);
       const next = new Set<number>();
@@ -212,7 +212,7 @@ export function PlanAxiaBudgetSendDialog({
               tipo: "linha",
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: b.valor,
-              unidade: "m",
+              unidade: "ml",
               etiqueta: `Rodapé — ${b.room_name}`,
               camada: "rodape",
               cor: "#f59e0b",
@@ -234,7 +234,7 @@ export function PlanAxiaBudgetSendDialog({
               tipo: "area",
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: w.valor,
-              unidade: "m2",
+              unidade: "m²",
               etiqueta: `Paredes — ${w.room_name}`,
               camada: "paredes",
               cor: "#8b5cf6",
@@ -268,6 +268,7 @@ export function PlanAxiaBudgetSendDialog({
               y,
               quantity: o.qtd,
               note: `${folhaTag} · ${o.largura_cm}×${o.altura_cm}cm${o.review_required ? " (validar)" : ""}`,
+              origin: "axia",
             });
           });
         }
@@ -298,12 +299,14 @@ export function PlanAxiaBudgetSendDialog({
         if (oldRoomsErr) throw oldRoomsErr;
         removed += oldRooms?.length ?? 0;
 
-        // 3. plan_placed_elements desta planta criados pela Axia (note começa por "Folha ")
+        // 3. plan_placed_elements desta planta criados pela Axia
+        //    (apaga apenas elementos com origin='axia' — nunca toca em
+        //    elementos colocados manualmente pelo utilizador)
         const { data: oldEl, error: oldElErr } = await supabase
           .from("plan_placed_elements")
           .delete()
           .eq("plan_import_id", planImportId)
-          .ilike("note", "Folha %")
+          .eq("origin", "axia")
           .select("id");
         if (oldElErr) throw oldElErr;
         removed += oldEl?.length ?? 0;

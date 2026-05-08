@@ -76,6 +76,10 @@ ETAPAS DE ANÁLISE:
 
 5) PAREDES — popula walls com tipo (parede_exterior, parede_interior, muro_lote, muro_contencao, parede_indefinida), orientacao (horizontal/vertical/diagonal/irregular), bbox, compartimento_associado, confidence_score, review_required, evidencias. NUNCA afirmes que uma parede é estrutural com base só em planta arquitetónica — usa parede_indefinida em caso de dúvida.
 
+REGRA ANTI-DUPLICAÇÃO DE PAREDES (CRÍTICO): cada parede física é UMA entrada. Mede pelo eixo médio (centerline) — NUNCA contes as duas faces paralelas da mesma parede como duas paredes diferentes. Se vires duas linhas paralelas próximas (espessura típica de parede 0.10–0.40 m), é UMA parede. Não dupliques paredes vistas em cortes/detalhes/legendas/carimbos.
+
+IGNORAR ELEMENTOS NÃO-PLANTA: se a folha for classificada como corte, alcado, detalhe, legenda ou outro (ou se uma região for claramente um corte/legenda/carimbo dentro da folha), NÃO incluas as suas paredes/vãos/compartimentos em walls/elements/rooms — esses elementos não devem ir para quantitativos. Regista apenas em limitations.
+
 6) ELEMENTOS CONSTRUTIVOS — portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada (mantém porta/janela genéricos como fallback). Para CADA porta/janela é OBRIGATÓRIO devolver largura_cm e altura_cm. Se a planta tem cota legível do vão usa-a e marca dimensao_legivel=true; caso contrário INFERE com padrões PT (Porta WC 70, Porta interior 80, Porta entrada 90, Porta correr 120, Portão garagem 240; Janela pequena 60-80×100, média 100-140×120, grande ≥160×140; altura padrão de portas 210, de janelas 120) e marca dimensao_legivel=false + review_required=true. Inclui parede_associada, compartimentos_conectados (lista os compartimentos que o vão liga — para portas interiores DEVE incluir o compartimento "interior" para que o rodapé seja descontado nesse compartimento), confidence_score.
 
 7) ELEMENTOS EXTERIORES — para implantações ou folhas com exterior, popula exterior_elements: lote, rua, acesso, estacionamento, jardim, vegetacao, muro, patio, terraco, cota_altimetrica, confrontacao. Inclui bbox e confidence_score.
@@ -395,6 +399,35 @@ REGRAS CRÍTICAS:
         JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
+    // (evita contar duas faces paralelas como duas paredes distintas)
+    if (analysis && Array.isArray(analysis.walls)) {
+      const seen = new Map<string, any>();
+      const PROX = 0.02; // 2% da folha = ~espessura de parede em coords normalizadas
+      let removed = 0;
+      for (const w of analysis.walls) {
+        const b = w.bbox;
+        const cx = b ? (b.x_min + b.x_max) / 2 : -1;
+        const cy = b ? (b.y_min + b.y_max) / 2 : -1;
+        const ori = w.orientacao ?? "indef";
+        const comp = (w.compartimento_associado ?? "").toLowerCase().trim();
+        // chave grosseira (compartimento + orientação + centroide arredondado)
+        const key = `${comp}|${ori}|${Math.round(cx / PROX)}|${Math.round(cy / PROX)}`;
+        if (seen.has(key)) {
+          removed++;
+          continue;
+        }
+        seen.set(key, w);
+      }
+      if (removed > 0) {
+        analysis.walls = Array.from(seen.values());
+        analysis.limitations = [
+          ...(Array.isArray(analysis.limitations) ? analysis.limitations : []),
+          `Dedup automático: ${removed} parede(s) duplicada(s) (faces paralelas ou repetidas) removidas.`,
+        ];
+      }
     }
 
     await supabase.from("axia_suggestions_log").insert({

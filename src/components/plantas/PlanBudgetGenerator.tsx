@@ -152,8 +152,14 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         // items derivados são consolidados num único artigo "A DEFINIR" com a
         // soma da quantidade — o utilizador atribui o preço unitário no editor.
         const bucket = categorizeMeasurement(measurement);
+        // Normalizar unidade: m² para áreas, ml para lineares
+        const rawUnit = (measurement.unidade || "").toLowerCase();
         const unidade =
-          measurement.unidade || (measurement.tipo === "area" ? "m²" : measurement.tipo === "linha" ? "ml" : "un");
+          measurement.tipo === "area"
+            ? "m²"
+            : measurement.tipo === "linha"
+            ? "ml"
+            : rawUnit || "un";
 
         let descricao: string;
         let placeholderId: string;
@@ -355,8 +361,9 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         chapterIdByCategory.set(cat, ch.id);
       });
 
-      // 4. Create artigos_orcamento
-      const artigoInserts: Array<{
+      // 4. Create artigos_orcamento — manter referência ao item consolidado
+      //    para podermos criar plan_budget_links com o artigo_orcamento_id real.
+      type ArtigoInsert = {
         capitulo_id: string;
         codigo: string;
         descricao: string;
@@ -367,7 +374,10 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         quantity_source: string;
         linked_element_id: string | null;
         margem_lucro_artigo: number;
-      }> = [];
+      };
+      const artigoInserts: ArtigoInsert[] = [];
+      const insertedItemRef: ConsolidatedItem[] = []; // paralelo a artigoInserts
+
       chapters.forEach(([cat, items]) => {
         const capituloId = chapterIdByCategory.get(cat);
         if (!capituloId) return;
@@ -385,28 +395,36 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
             linked_element_id: null,
             margem_lucro_artigo: 0,
           });
+          insertedItemRef.push(item);
         });
       });
 
+      let createdArtigos: Array<{ id: string }> = [];
       if (artigoInserts.length > 0) {
-        const { error: artErr } = await supabase.from("artigos_orcamento").insert(artigoInserts);
+        const { data: arts, error: artErr } = await supabase
+          .from("artigos_orcamento")
+          .insert(artigoInserts)
+          .select("id");
         if (artErr) throw artErr;
+        createdArtigos = arts ?? [];
       }
 
-      // 5. Create plan_budget_links
+      // 5. Create plan_budget_links — agora com artigo_orcamento_id REAL
       const linkInserts: Array<{
         measurement_id: string;
         user_id: string;
         orcamento_id: string;
         artigo_orcamento_id: string;
       }> = [];
-      consolidatedEnriched.forEach((item) => {
+      createdArtigos.forEach((art, i) => {
+        const item = insertedItemRef[i];
+        if (!item) return;
         item.measurementIds.forEach((mId) => {
           linkInserts.push({
             measurement_id: mId,
             user_id: user.id,
             orcamento_id: orcamento.id,
-            artigo_orcamento_id: orcamento.id, // placeholder - will be linked properly
+            artigo_orcamento_id: art.id,
           });
         });
       });

@@ -239,10 +239,20 @@ export function PlanAIAnalysis({
       }
 
       if (data?.analysis) {
-        setResult(data.analysis);
-        const dimCount = data.analysis.dimensions?.length ?? 0;
-        const roomCount = data.analysis.rooms?.length ?? 0;
-        toast.success(`Análise concluída: ${dimCount} cotas, ${roomCount} compartimentos identificados`);
+        // Normalizar: garantir que todos os arrays existem para evitar crashes
+        const a = data.analysis as PlanAnalysisResult;
+        const safe: PlanAnalysisResult = {
+          ...a,
+          dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
+          rooms: Array.isArray(a.rooms) ? a.rooms : [],
+          elements: Array.isArray(a.elements) ? a.elements : [],
+          walls: Array.isArray(a.walls) ? a.walls : [],
+          exterior_elements: Array.isArray(a.exterior_elements) ? a.exterior_elements : [],
+          summary: a.summary ?? "",
+          scale_detected: a.scale_detected ?? { found: false },
+        };
+        setResult(safe);
+        toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
         onAnalysisComplete?.();
       } else {
         toast.warning("A IA não conseguiu analisar esta planta.");
