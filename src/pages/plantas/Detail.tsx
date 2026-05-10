@@ -44,6 +44,10 @@ import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
 import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
 import { usePlanFloors } from "@/hooks/usePlanFloors";
 import { usePlanAxiaPersistence } from "@/hooks/usePlanAxiaPersistence";
+import { computePlanRoomAnalysis } from "@/lib/plan-room-analysis";
+import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisParametersCard";
+import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
+import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -62,6 +66,20 @@ export default function PlanDetail() {
   const { walls, addWall, updateWall, deleteWall } = usePlanWalls(planId);
   const { openings, addOpening, deleteOpening } = usePlanOpenings(planId);
   const { floors } = usePlanFloors(obraId);
+
+  // Axia analysis parameters (ceiling height + door height) — persisted per plan in localStorage
+  const [analysisParams, setAnalysisParams] = useState<{ ceilingHeightM: number; doorHeightM: number }>(() => {
+    if (typeof window === "undefined" || !planId) return { ceilingHeightM: 2.6, doorHeightM: 2.0 };
+    try {
+      const raw = window.localStorage.getItem(`plan-analysis-params:${planId}`);
+      if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return { ceilingHeightM: 2.6, doorHeightM: 2.0 };
+  });
+  useEffect(() => {
+    if (typeof window === "undefined" || !planId) return;
+    try { window.localStorage.setItem(`plan-analysis-params:${planId}`, JSON.stringify(analysisParams)); } catch { /* ignore */ }
+  }, [planId, analysisParams]);
 
   // Floor selection (used to scope new measurements/rooms; persisted per plan in localStorage)
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(() => {
@@ -207,6 +225,18 @@ export default function PlanDetail() {
 
   // Element insertion state - persisted via hook
   const { elements: placedElements, addElement, updateElement: updateElementDb, deleteElement: deleteElementDb, deleteLastElement } = usePlanPlacedElements(planId);
+
+  // Compute Axia per-room analysis (overlay + tables)
+  const planRoomAnalysis = useMemo(() => computePlanRoomAnalysis({
+    rooms,
+    walls,
+    openings,
+    placedElements,
+    pixelsPerMeter,
+    ceilingHeightM: analysisParams.ceilingHeightM,
+    defaultDoorHeightM: analysisParams.doorHeightM,
+  }), [rooms, walls, openings, placedElements, pixelsPerMeter, analysisParams.ceilingHeightM, analysisParams.doorHeightM]);
+
   const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
   const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
   const [showElementProps, setShowElementProps] = useState(false);
@@ -905,6 +935,15 @@ export default function PlanDetail() {
             onInsertCancel={handleInsertCancel}
             onElementClick={handleElementClick}
             onCancelDrawing={handleCancelDrawing}
+            roomAnalysis={planRoomAnalysis.perRoom.map((r) => ({
+              room_id: r.room_id,
+              area_m2: r.area_m2,
+              walls_m2: r.walls_m2,
+              baseboard_m: r.baseboard_m,
+              ceiling_height_m: r.ceiling_height_m,
+              elements: r.elements.map((e) => ({ tipo: e.tipo, largura_cm: e.largura_cm, altura_cm: e.altura_cm, qtd: e.qtd })),
+              edges: r.edges,
+            }))}
           />
 
           {/* Side panel - contextual based on step */}
@@ -1154,6 +1193,22 @@ export default function PlanDetail() {
             )}
           </div>
         </div>
+
+        {/* Axia analysis tables — per-room breakdown + global totals */}
+        {rooms.length > 0 && (
+          <div className="space-y-4 mt-4">
+            <PlanAnalysisParametersCard
+              ceilingHeightM={analysisParams.ceilingHeightM}
+              doorHeightM={analysisParams.doorHeightM}
+              onChange={setAnalysisParams}
+            />
+            <PlanRoomBreakdownTable
+              rows={planRoomAnalysis.perRoom}
+              onRename={async (id, newName) => { await updateRoom.mutateAsync({ id, nome: newName }); }}
+            />
+            <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
+          </div>
+        )}
       </div>
 
       {/* Save measurement dialog */}

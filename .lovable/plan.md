@@ -1,62 +1,152 @@
-# Correções Críticas — Módulo Planta / Leitura de Planta
+## Objetivo
 
-Este é um trabalho extenso (8 fases, várias migrations, ~15-20 ficheiros). Vou executar **fase a fase**, com aprovação implícita no fim de cada migration. Sem refactor de `PlanDetail.tsx`, sem mexer em rotas nem identidade visual.
+Quando a Axia analisar uma planta, o utilizador passa a ter três peças de informação claras e acionáveis:
 
-## Fase 1 — Persistência Axia em DB
-- **Migration**: adicionar a `plan_pages` as colunas `axia_analysis jsonb`, `axia_analyzed_at timestamptz`, `axia_model text`, `axia_risk_level text`, `axia_review_required boolean default false`.
-- **Hook novo**: `usePlanAxiaAnalysis(pageId)` — load/save em `plan_pages`, com fallback de leitura ao `localStorage` antigo (`plan-axia-results:${planId}`) e limpeza após migrar.
-- **Integrar** nos pontos atuais que usam `localStorage.plan-axia-results`.
+1. **Overlay visual sobre a planta** (estilo da imagem de referência) com cada compartimento colorido e identificado.
+2. **Quadro discriminativo por compartimento** (uma linha por compartimento).
+3. **Quadro geral de quantitativos** consolidado da planta inteira.
 
-## Fase 2 — Calibração por página/pavimento
-- **Migration**: adicionar `page_id` (já existe segundo auditoria) + índice único `(plan_import_id, COALESCE(page_id,'00000000-…'), COALESCE(floor_id,'00000000-…'))`. Validar primeiro com `read_query`.
-- **Refactor `usePlanCalibration`**: aceitar `pageId` e `floorId`, fazer `upsert` por chave (sem `delete + insert` global), filtrar query por página.
-- **Atualizar consumidores** para passar `pageId`/`floorId` ativos: `PlanDetail`, `PlanViewer`, `PlanCalibrationTool`, ferramentas de medição, painel Axia, dialogs de envio.
-- Aviso quando muda página e não há calibração; alerta de sanidade se `pixels_per_meter` for absurdo (`< 5` ou `> 5000`).
+Tudo controlado por dois parâmetros editáveis pelo utilizador (pé direito e altura das portas), com defaults **2.60 m** e **2.00 m**.
 
-## Fase 3 — Guardas de envio para orçamento
-- **Hook novo**: `useCanSendPlanToBudget(planId, pageId?, floorId?)` retornando `{ ok, reasons[], warnings[], requiresExplicitConfirmation }`.
-- Integrar em: `PlanBudgetGenerator`, `PlanAxiaBudgetSendDialog`, `PlanMeasurementBudgetPanel` e botões diretos.
-- Bloqueios duros (sem calibração, risco alto não revisto); soft com confirmação (pendentes, baixa confiança, fallback estimado, possível duplicação).
+---
 
-## Fase 4 — Deduplicação no orçamento
-- **Migration**: adicionar a `plan_budget_links` as colunas `dedupe_key text`, `source_type text`, `source_id text`, `quantity_origin text`, `validation_status text`. Índice **parcial** único `(orcamento_id, dedupe_key) WHERE dedupe_key IS NOT NULL`.
-- **Util novo**: `src/lib/plan-dedupe.ts` com `normalize(name)` (lowercase, trim, sem acentos, sem pontuação) e `buildDedupeKey({...})`.
-- Aplicar `dedupe_key` em todos os caminhos de envio (manual, paredes, Axia, compartimentos, instalações, aberturas, rodapés, áreas).
-- Pre-check antes do insert; aviso de duplicação no preview.
+## 1. Overlay visual na planta (`PlanViewer.tsx`)
 
-## Fase 5 — Validação de upload
-- Reforçar `PlanUploadForm` + `usePlanImports.uploadPlan` com validações duras: MIME (`pdf|png|jpg|jpeg`), tamanho ≤ 25 MB, ficheiro vazio, extensão. Mensagens conforme briefing.
+Cada compartimento já é desenhado como polígono. Vamos enriquecer:
 
-## Fase 6 — Normalização no engine de quantitativos
-- Em `src/lib/plan-quantitativos-engine.ts`: helper `normalizeName()` aplicado a `rooms`, `compartimentos_conectados`, `vaos_porta_associados`, paredes, aberturas, buckets. Em divergência → `review_required` + observação, sem quebrar cálculo.
+- Aumentar `fill opacity` (0.10 → 0.18) para o look da imagem.
+- Substituir os dois `<Text>` atuais por um bloco multi-linha único centrado no centróide:
+  - Linha 1 (negrito): `{nome do compartimento}`
+  - Linha 2: `{área} m² (Área)`
+  - Linha 3: `— Paredes (h={pé direito} m) · {área paredes} m²`
+  - Linha 4 (resumo elementos, opcional): `2 portas · 1 janela · rodapé`
+- `<Rect>` semi-transparente branco (opacity 0.7, `cornerRadius={4/zoom}`) por baixo do bloco para legibilidade.
+- Etiquetas de aresta (comprimento `14.01 m` + tag `(Rodapé)` / `(Soleira)` se houver porta no segmento) — só com `zoom ≥ 0.6` para evitar poluição.
+- Toggle "Mostrar análise Axia" no canto superior direito do viewer para esconder/mostrar o overlay.
 
-## Fase 7 — Logs estruturados Axia
-- **Migration**: tabela `axia_call_logs` com colunas listadas + RLS (org via `get_org_member_ids()` ou `is_super_admin`). Índices em `org_id`, `created_at`, `plan_import_id`.
-- Atualizar `supabase/functions/axia-plan-vision/index.ts` para registar início/fim/erro/latência/modelo/tamanho de input. Sem guardar imagem/base64.
+---
 
-## Fase 8 — Smoke tests
-- Executar checklist (1-15) e reportar resultados (uploads, calibração multi-página, persistência Axia, bloqueios, dedupe).
+## 2. Quadro discriminativo por compartimento
 
-## Detalhes técnicos
-- Todas as migrations em chamadas separadas (regra do tooling) com descrição PT-PT.
-- RLS de `axia_call_logs`: SELECT por org members + super admin; INSERT pelo próprio user.
-- `dedupe_key` é determinístico (hash-like string concatenada) — nunca depende de UUIDs voláteis.
-- Compatibilidade: leitura do `localStorage` mantida como fallback até primeira gravação na DB.
-- Sem alteração de tipos em `src/integrations/supabase/types.ts` (auto-gerado após migrations).
+Novo componente `PlanRoomBreakdownTable.tsx` (em `src/components/plantas/`).
 
-## Riscos conhecidos
-- Constraint único em `plan_calibrations` pode falhar se já existirem duplicados — a migration faz `DELETE` dos antigos mantendo o mais recente antes de criar o índice.
-- Constraint único em `plan_budget_links` é parcial (só com `dedupe_key NOT NULL`) para não partir dados existentes.
-- `axia_review_required` default `false` — análises antigas no localStorage não terão risco até reanálise.
+**Colunas**
 
-## Ordem de execução
-1. Migrations Fase 1 → código Fase 1
-2. Migration Fase 2 → código Fase 2
-3. Código Fase 3
-4. Migration Fase 4 → código Fase 4 + util
-5. Código Fase 5
-6. Código Fase 6
-7. Migration Fase 7 → código edge function Fase 7
-8. Smoke tests + relatório final
+| Compartimento | Área (m²) | Rodapé (m) | Paredes (m²) | Elementos |
+|---|---|---|---|---|
+| Sala (✏️ renomear) | 32.83 | 18.40 | 41.20 | 2× Porta 80×200, 1× Janela 120×120 |
 
-Confirma para começar pela Fase 1?
+**Detalhes de UI**
+- Nome editável inline: clique abre input; Enter ou blur salva via mutação `updatePlanRoom` (já existe em `usePlanRooms`); Esc cancela.
+- Área = `room.area_m2` (apenas valor numérico, sem texto).
+- Rodapé = `perímetro − Σ larguras de portas que abrem para o compartimento`.
+- Paredes = `perímetro × pé direito − Σ áreas de vãos (portas + janelas)`.
+- Elementos = portas + janelas associadas, agrupadas por `(tipo, largura×altura)`, ordenadas por largura desc; formato `{n}× Porta {largura}×{altura}`.
+- Linha de totais no rodapé da tabela (soma de Área, Rodapé, Paredes).
+- Cor da bolinha à esquerda de cada linha = mesma cor do compartimento no overlay (consistência visual).
+
+---
+
+## 3. Quadro geral de quantitativos da planta
+
+Segundo componente `PlanGlobalQuantityTable.tsx` colocado **abaixo** do anterior.
+
+**Secções (cards/tabelas pequenas lado a lado)**
+
+1. **Portas — total por tamanho**
+   `2× Porta 80×200`, `1× Porta 90×200`, `1× Portão 240×200` …
+2. **Janelas — total por tamanho**
+   `4× Janela 120×120`, `2× Janela 60×60` …
+3. **Rodapé — total m lineares** (soma da coluna Rodapé do quadro discriminativo).
+4. **Paredes interiores — total m²** (soma das paredes dos compartimentos `tipo ≠ exterior`).
+5. **Paredes exteriores — estimativa m²** (perímetro do *contorno externo* da planta × pé direito − área de vãos exteriores). O contorno externo é derivado por união (convex hull simplificado) dos polígonos dos compartimentos quando não há um polígono explícito.
+
+Cada bloco fica num card compacto (estilo `kpi-card` já existente) com ícone, valor grande e label.
+
+---
+
+## 4. Parâmetros editáveis (pé direito + altura porta)
+
+Novo card pequeno **acima** dos quadros: "Parâmetros de cálculo".
+
+- Dois `<Input type="number">` com sufixo `m`:
+  - **Pé direito** (default `2.60`)
+  - **Altura padrão das portas** (default `2.00`)
+- Botão `Recalcular` (também recalcula automaticamente `onBlur` com debounce 400ms).
+- Persistência: guardados em `plan_site_conditions` (já existe a tabela e o hook `usePlanSiteConditions`); se não houver linha, criar com upsert.
+- Banner discreto na primeira análise: *"A Axia usou pé direito **2.60 m** e altura de portas **2.00 m**. Confirma ou ajusta acima."* — fecha em "Confirmar".
+- A alteração propaga para: overlay (linha "h=…"), quadro discriminativo, quadro global. Recálculo é feito em memória via `useMemo`, sem nova chamada à Axia.
+
+---
+
+## 5. Camada de cálculo (lib pura, testável)
+
+Novo `src/lib/plan-room-analysis.ts` que recebe:
+
+```ts
+{
+  rooms,            // PlanRoom[] (com boundary_coords e area_m2)
+  walls,            // opcional
+  openings,         // PlanOpening[] (largura/altura/parede)
+  placedElements,   // PlacedPlantElement[] (point-in-polygon)
+  pixelsPerMeter,
+  ceilingHeightM,   // default 2.60
+  defaultDoorHeightM, // default 2.00
+}
+```
+
+Devolve:
+
+```ts
+{
+  perRoom: Array<{
+    room_id; name; color;
+    area_m2; perimeter_m; baseboard_m; walls_m2;
+    elements: Array<{ tipo: "porta"|"janela"; largura_cm; altura_cm; qtd }>;
+    edges: Array<{ length_m; tag?: "Rodapé"|"Soleira" }>;
+  }>;
+  totals: {
+    doorsByDim: Array<{ largura_cm; altura_cm; qtd }>;
+    windowsByDim: Array<{ largura_cm; altura_cm; qtd }>;
+    baseboard_m_total: number;
+    interior_walls_m2_total: number;
+    exterior_walls_m2_estimate: number;
+  };
+}
+```
+
+Implementação:
+- **Perímetro**: soma das distâncias entre vértices consecutivos do `boundary_coords`, convertida para metros via `pixelsPerMeter`.
+- **Atribuição de elementos**: ray-casting point-in-polygon entre `placedElement.position` e cada `boundary_coords`.
+- **Largura/altura faltante**: usa defaults do utilizador (porta 80×{altura_porta}, janela 120×120) — reutiliza `defaultsForElement` de `plan-quantitativos-engine.ts`.
+- **Contorno exterior**: união aproximada por convex hull (Andrew's monotone chain, ~30 linhas) dos vértices de todos os compartimentos.
+
+Função pura → testes unitários simples (`plan-room-analysis.test.ts`).
+
+---
+
+## 6. Integração no `Detail.tsx` da planta
+
+- `useMemo` chama `computePlanRoomAnalysis(...)` quando dados mudam.
+- Render abaixo do viewer:
+  1. Card "Parâmetros de cálculo".
+  2. `PlanRoomBreakdownTable`.
+  3. `PlanGlobalQuantityTable`.
+- Passa `roomAnalysis.perRoom` para `PlanViewer` como nova prop `roomAnalysis` para alimentar o overlay.
+- Reutiliza o `usePlanSiteConditions` para ler/gravar pé direito + altura porta.
+
+---
+
+## Fora do âmbito
+
+- Não toca em edge functions nem no motor da Axia (a estrutura JSON existente já chega).
+- Não altera o envio para orçamento, PDFs ou exportações (próxima iteração pode reutilizar estes quadros para o PDF).
+- Não modifica as RLS/migrações — `plan_site_conditions` já tem as colunas necessárias (caso falte `default_door_height_m`, será adicionada via migração simples antes do passo 4).
+
+## Notas técnicas
+
+- Konva: `<Text>` multi-linha com `\n` e `lineHeight={1.15}`.
+- Edge labels: ocultar quando `zoom < 0.6`.
+- Cores reutilizam `ROOM_COLORS` já definido em `PlanViewer`.
+- Tabelas usam `Table` do design system + `rounded-xl` standard.
+- Ordenação dos elementos: por largura desc, depois altura desc (consistente entre per-room e global).

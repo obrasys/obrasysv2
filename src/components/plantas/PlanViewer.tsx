@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle, Text, Group, Rect } from "react-konva";
-import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type Konva from "konva";
 import type { MeasureMode } from "./PlanMeasurementToolbar";
@@ -70,6 +70,16 @@ interface PlanViewerProps {
   onInsertCancel?: () => void;
   onElementClick?: (element: PlacedPlantElement) => void;
   onCancelDrawing?: () => void;
+  // Axia analysis overlay (per-room enrichment)
+  roomAnalysis?: Array<{
+    room_id: string;
+    area_m2: number;
+    walls_m2: number;
+    baseboard_m: number;
+    ceiling_height_m: number;
+    elements: Array<{ tipo: "porta" | "janela"; largura_cm: number; altura_cm: number; qtd: number }>;
+    edges: Array<{ index: number; length_m: number; tag?: "Rodapé" | "Soleira" }>;
+  }>;
 }
 
 export function PlanViewer({
@@ -100,10 +110,12 @@ export function PlanViewer({
   onInsertCancel,
   onElementClick,
   onCancelDrawing,
+  roomAnalysis,
 }: PlanViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [showAxiaOverlay, setShowAxiaOverlay] = useState(true);
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
@@ -456,6 +468,20 @@ export function PlanViewer({
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetView}>
           <RotateCcw className="w-4 h-4" />
         </Button>
+        {roomAnalysis && roomAnalysis.length > 0 && (
+          <>
+            <div className="w-px bg-border" />
+            <Button
+              variant={showAxiaOverlay ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setShowAxiaOverlay((v) => !v)}
+              title={showAxiaOverlay ? "Esconder análise Axia" : "Mostrar análise Axia"}
+            >
+              {showAxiaOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </Button>
+          </>
+        )}
         <div className="flex items-center px-2 text-xs text-muted-foreground border-l">
           {Math.round(zoom * 100)}%
         </div>
@@ -573,12 +599,37 @@ export function PlanViewer({
               const flatPoints = r.boundary_coords.flatMap((c) => [c.x, c.y]);
               const cx = r.boundary_coords.reduce((s, c) => s + c.x, 0) / r.boundary_coords.length;
               const cy = r.boundary_coords.reduce((s, c) => s + c.y, 0) / r.boundary_coords.length;
+              const analysis = showAxiaOverlay ? roomAnalysis?.find((a) => a.room_id === r.id) : undefined;
+
+              // Build label lines (when enriched analysis is available)
+              const lines: string[] = [r.nome];
+              if (analysis) {
+                lines.push(`${analysis.area_m2.toFixed(2)} m² (Área)`);
+                lines.push(`Paredes (h=${analysis.ceiling_height_m.toFixed(2)} m) · ${analysis.walls_m2.toFixed(2)} m²`);
+                const doors = analysis.elements.filter((e) => e.tipo === "porta").reduce((s, e) => s + e.qtd, 0);
+                const windows = analysis.elements.filter((e) => e.tipo === "janela").reduce((s, e) => s + e.qtd, 0);
+                const summary: string[] = [];
+                if (doors > 0) summary.push(`${doors} porta${doors > 1 ? "s" : ""}`);
+                if (windows > 0) summary.push(`${windows} janela${windows > 1 ? "s" : ""}`);
+                if (summary.length) lines.push(summary.join(" · "));
+              } else {
+                lines.push(`${r.area_m2.toFixed(2)} m²`);
+              }
+
+              const labelText = lines.join("\n");
+              const fontSize = 12 / zoom;
+              const lineHeight = 1.25;
+              const labelW = 220 / zoom;
+              const labelH = lines.length * fontSize * lineHeight + 8 / zoom;
+
+              const fillOpacity = analysis ? (isSelected ? 0.28 : 0.18) : (isSelected ? 0.25 : 0.1);
+
               return (
                 <Group key={`room-${r.id}`}>
                   <Line
                     points={flatPoints}
                     fill={color}
-                    opacity={isSelected ? 0.25 : 0.1}
+                    opacity={fillOpacity}
                     closed
                   />
                   <Line
@@ -586,26 +637,56 @@ export function PlanViewer({
                     stroke={color}
                     strokeWidth={(isSelected ? 3 : 2) / zoom}
                     closed
-                    dash={[8 / zoom, 4 / zoom]}
+                    dash={analysis ? undefined : [8 / zoom, 4 / zoom]}
+                  />
+
+                  {/* Edge length labels (only with Axia analysis + sufficient zoom) */}
+                  {analysis && zoom >= 0.6 && analysis.edges.map((edge) => {
+                    const a = r.boundary_coords[edge.index];
+                    const b = r.boundary_coords[(edge.index + 1) % r.boundary_coords.length];
+                    if (!a || !b) return null;
+                    const mx = (a.x + b.x) / 2;
+                    const my = (a.y + b.y) / 2;
+                    const tag = edge.tag === "Soleira" ? " (Soleira)" : " (Rodapé)";
+                    return (
+                      <Text
+                        key={`edge-${r.id}-${edge.index}`}
+                        x={mx - 60 / zoom}
+                        y={my - 8 / zoom}
+                        text={`${edge.length_m.toFixed(2)} m${tag}`}
+                        fontSize={10 / zoom}
+                        fill={color}
+                        align="center"
+                        width={120 / zoom}
+                        listening={false}
+                      />
+                    );
+                  })}
+
+                  {/* Label background for legibility */}
+                  <Rect
+                    x={cx - labelW / 2}
+                    y={cy - labelH / 2}
+                    width={labelW}
+                    height={labelH}
+                    fill="#ffffff"
+                    opacity={0.78}
+                    cornerRadius={4 / zoom}
+                    stroke={color}
+                    strokeWidth={1 / zoom}
+                    listening={false}
                   />
                   <Text
-                    x={cx - 40 / zoom}
-                    y={cy - 14 / zoom}
-                    text={r.nome}
-                    fontSize={13 / zoom}
+                    x={cx - labelW / 2}
+                    y={cy - labelH / 2 + 4 / zoom}
+                    width={labelW}
+                    text={labelText}
+                    fontSize={fontSize}
+                    lineHeight={lineHeight}
                     fill={color}
                     fontStyle="bold"
                     align="center"
-                    width={80 / zoom}
-                  />
-                  <Text
-                    x={cx - 30 / zoom}
-                    y={cy + 2 / zoom}
-                    text={`${r.area_m2.toFixed(2)} m²`}
-                    fontSize={11 / zoom}
-                    fill={color}
-                    align="center"
-                    width={60 / zoom}
+                    listening={false}
                   />
                 </Group>
               );
