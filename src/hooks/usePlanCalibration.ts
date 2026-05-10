@@ -4,18 +4,40 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { PlanCalibration } from "@/types/plan-measurements";
 
-export function usePlanCalibration(planImportId?: string) {
+const NULL_UUID = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Calibração por planta + página + pavimento.
+ * Quando pageId/floorId não são fornecidos, opera no escopo "global" (compatibilidade).
+ *
+ * Após Fase 2 (multi-página): usar sempre pageId quando disponível.
+ */
+export function usePlanCalibration(
+  planImportId?: string,
+  pageId?: string | null,
+  floorId?: string | null,
+) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const scopeKey = ["plan-calibration", planImportId, pageId ?? null, floorId ?? null];
+
   const calibrationQuery = useQuery({
-    queryKey: ["plan-calibration", planImportId],
+    queryKey: scopeKey,
     queryFn: async () => {
       if (!planImportId) return null;
-      const { data, error } = await supabase
+      let q = supabase
         .from("plan_calibrations")
         .select("*")
-        .eq("plan_import_id", planImportId)
+        .eq("plan_import_id", planImportId);
+
+      if (pageId) q = q.eq("page_id", pageId);
+      else q = q.is("page_id", null);
+
+      if (floorId) q = (q as any).eq("floor_id", floorId);
+      else q = (q as any).is("floor_id", null);
+
+      const { data, error } = await q
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -42,20 +64,34 @@ export function usePlanCalibration(planImportId?: string) {
       const dx = point2.x - point1.x;
       const dy = point2.y - point1.y;
       const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-      
+
       const distanceInMeters = unidade === "cm" ? realDistance / 100 : realDistance;
       const pixelsPerMeter = pixelDistance / distanceInMeters;
 
-      // Upsert: delete existing and insert new
-      await supabase
+      // Sanity check (non-blocking, surfaced via toast)
+      if (pixelsPerMeter < 5 || pixelsPerMeter > 5000) {
+        toast.warning(
+          `Escala invulgar (${pixelsPerMeter.toFixed(0)} px/m). Verifique se selecionou os pontos corretos.`,
+        );
+      }
+
+      // Apaga calibração existente APENAS deste escopo (página/pavimento) — não toca outras páginas
+      let del = supabase
         .from("plan_calibrations")
         .delete()
         .eq("plan_import_id", planImportId);
+      if (pageId) del = del.eq("page_id", pageId);
+      else del = del.is("page_id", null);
+      if (floorId) del = (del as any).eq("floor_id", floorId);
+      else del = (del as any).is("floor_id", null);
+      await del;
 
       const { data, error } = await supabase
         .from("plan_calibrations")
         .insert({
           plan_import_id: planImportId,
+          page_id: pageId ?? null,
+          floor_id: floorId ?? null,
           user_id: user.id,
           point1,
           point2,
@@ -63,12 +99,12 @@ export function usePlanCalibration(planImportId?: string) {
           pixels_per_meter: pixelsPerMeter,
           unidade,
           status: "valida",
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
 
-      // Update plan status to calibrada
+      // Marca a planta como calibrada (se ainda não estiver)
       await supabase
         .from("plan_imports")
         .update({ status: "calibrada" })
