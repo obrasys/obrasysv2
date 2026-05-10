@@ -1208,7 +1208,7 @@ export default function PlanDetail() {
         </div>
 
         {/* Axia analysis tables — per-room breakdown + global totals */}
-        {rooms.length > 0 && (
+        {planRoomAnalysis.perRoom.length > 0 && (
           <div className="space-y-4 mt-4">
             <PlanAnalysisParametersCard
               ceilingHeightM={analysisParams.ceilingHeightM}
@@ -1217,7 +1217,14 @@ export default function PlanDetail() {
             />
             <PlanRoomBreakdownTable
               rows={planRoomAnalysis.perRoom}
-              onRename={async (id, newName) => { await updateRoom.mutateAsync({ id, nome: newName }); }}
+              onRename={async (id, newName) => {
+                // Apenas compartimentos persistidos podem ser renomeados na DB.
+                if (id.startsWith("axia-")) {
+                  toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
+                  return;
+                }
+                await updateRoom.mutateAsync({ id, nome: newName });
+              }}
             />
             <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
           </div>
