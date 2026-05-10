@@ -90,7 +90,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
             <p className="text-sm font-medium text-foreground">
               {isDragActive ? "Solte o ficheiro aqui" : "Arraste ou clique para selecionar"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 20MB</p>
+            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 25 MB</p>
           </div>
         ) : (
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
