@@ -67,6 +67,20 @@ export default function PlanDetail() {
   const { openings, addOpening, deleteOpening } = usePlanOpenings(planId);
   const { floors } = usePlanFloors(obraId);
 
+  // Axia analysis parameters (ceiling height + door height) — persisted per plan in localStorage
+  const [analysisParams, setAnalysisParams] = useState<{ ceilingHeightM: number; doorHeightM: number }>(() => {
+    if (typeof window === "undefined" || !planId) return { ceilingHeightM: 2.6, doorHeightM: 2.0 };
+    try {
+      const raw = window.localStorage.getItem(`plan-analysis-params:${planId}`);
+      if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return { ceilingHeightM: 2.6, doorHeightM: 2.0 };
+  });
+  useEffect(() => {
+    if (typeof window === "undefined" || !planId) return;
+    try { window.localStorage.setItem(`plan-analysis-params:${planId}`, JSON.stringify(analysisParams)); } catch { /* ignore */ }
+  }, [planId, analysisParams]);
+
   // Floor selection (used to scope new measurements/rooms; persisted per plan in localStorage)
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(() => {
     if (typeof window === "undefined" || !planId) return null;
