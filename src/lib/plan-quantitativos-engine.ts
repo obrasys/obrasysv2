@@ -204,12 +204,12 @@ function estimateRoomPerimeter(room: AxiaRoomLike, sheetWidthM = 20): number {
  * compartimento (case-insensitive, trim).
  */
 function sumDoorOpeningsForRoom(roomName: string, elements: AxiaElementLike[]): number {
-  const target = (roomName || "").toLowerCase().trim();
+  const target = normalizeName(roomName);
   if (!target) return 0;
   let total = 0;
   for (const el of elements) {
     if (!isDoor(el.type)) continue;
-    const conn = (el.compartimentos_conectados ?? []).map((c) => (c || "").toLowerCase().trim());
+    const conn = (el.compartimentos_conectados ?? []).map((c) => normalizeName(c));
     if (!conn.includes(target)) continue;
     const { largura_cm } = defaultsForElement(el);
     total += (largura_cm / 100) * (Number(el.count) || 1);
