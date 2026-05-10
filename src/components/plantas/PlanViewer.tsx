@@ -468,6 +468,20 @@ export function PlanViewer({
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetView}>
           <RotateCcw className="w-4 h-4" />
         </Button>
+        {roomAnalysis && roomAnalysis.length > 0 && (
+          <>
+            <div className="w-px bg-border" />
+            <Button
+              variant={showAxiaOverlay ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setShowAxiaOverlay((v) => !v)}
+              title={showAxiaOverlay ? "Esconder análise Axia" : "Mostrar análise Axia"}
+            >
+              {showAxiaOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </Button>
+          </>
+        )}
         <div className="flex items-center px-2 text-xs text-muted-foreground border-l">
           {Math.round(zoom * 100)}%
         </div>
