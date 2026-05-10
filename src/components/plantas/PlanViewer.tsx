@@ -110,10 +110,12 @@ export function PlanViewer({
   onInsertCancel,
   onElementClick,
   onCancelDrawing,
+  roomAnalysis,
 }: PlanViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [showAxiaOverlay, setShowAxiaOverlay] = useState(true);
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
