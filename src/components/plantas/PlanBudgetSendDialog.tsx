@@ -299,7 +299,14 @@ export function PlanBudgetSendDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>
             Cancelar
           </Button>
-          <Button onClick={handleSend} disabled={sending || !orcamentoId}>
+          <Button
+            onClick={handleSend}
+            disabled={
+              sending ||
+              !orcamentoId ||
+              (!!planImportId && (!guard.ok || (guard.requiresExplicitConfirmation && !confirmedWarnings)))
+            }
+          >
             {sending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
