@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Send, Layers } from "lucide-react";
+import { Loader2, Send, Layers, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
+import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type GroupBy = "source" | "camada" | "floor" | "single";
 
@@ -34,6 +36,10 @@ interface Props {
   obraId: string;
   planName?: string;
   floorMap?: Map<string, string>;
+  /** Para validações de calibração / risco Axia (Fase 3). */
+  planImportId?: string;
+  pageId?: string | null;
+  floorId?: string | null;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
