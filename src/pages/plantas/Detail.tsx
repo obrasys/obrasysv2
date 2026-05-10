@@ -935,6 +935,15 @@ export default function PlanDetail() {
             onInsertCancel={handleInsertCancel}
             onElementClick={handleElementClick}
             onCancelDrawing={handleCancelDrawing}
+            roomAnalysis={planRoomAnalysis.perRoom.map((r) => ({
+              room_id: r.room_id,
+              area_m2: r.area_m2,
+              walls_m2: r.walls_m2,
+              baseboard_m: r.baseboard_m,
+              ceiling_height_m: r.ceiling_height_m,
+              elements: r.elements.map((e) => ({ tipo: e.tipo, largura_cm: e.largura_cm, altura_cm: e.altura_cm, qtd: e.qtd })),
+              edges: r.edges,
+            }))}
           />
 
           {/* Side panel - contextual based on step */}
