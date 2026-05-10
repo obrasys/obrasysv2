@@ -109,6 +109,9 @@ export function PlanViewer({
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const [middlePanning, setMiddlePanning] = useState(false);
+  const suppressNextClickRef = useRef(false);
 
   useEffect(() => {
     if (!imageDataUrl) return;
