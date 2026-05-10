@@ -109,6 +109,9 @@ export function PlanViewer({
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const [middlePanning, setMiddlePanning] = useState(false);
+  const suppressNextClickRef = useRef(false);
 
   useEffect(() => {
     if (!imageDataUrl) return;
@@ -288,10 +291,25 @@ export function PlanViewer({
     [snapToGrip, alignToAxes, snapAngular, activeMeasurementPoints, shiftHeld, GRIP_SNAP_TOLERANCE_PX]
   );
 
-  // Tracking de Shift para desativar snap angular temporariamente
+  // Tracking de Shift (desativa snap angular) e Space (pan temporário tipo "mão")
   useEffect(() => {
-    const down = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(true); };
-    const up = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(false); };
+    const isTypingTarget = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(true);
+      if ((e.code === "Space" || e.key === " ") && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        setSpaceHeld(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(false);
+      if (e.code === "Space" || e.key === " ") setSpaceHeld(false);
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
@@ -327,6 +345,11 @@ export function PlanViewer({
 
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (mode === "view") return;
+    if (spaceHeld || middlePanning) return;
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
     const stage = stageRef.current;
     if (!stage) return;
     const pointer = stage.getPointerPosition();
@@ -342,7 +365,7 @@ export function PlanViewer({
     } else {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
-  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, computeAlignedPoint, isDrawingMode]);
+  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, computeAlignedPoint, isDrawingMode, spaceHeld, middlePanning]);
 
   const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
     setPosition({ x: e.target.x(), y: e.target.y() });
@@ -362,6 +385,7 @@ export function PlanViewer({
   };
 
   const getCursorStyle = () => {
+    if (spaceHeld || middlePanning) return middlePanning ? "grabbing" : "grab";
     if (mode !== "view") return "crosshair";
     return "grab";
   };
@@ -467,6 +491,17 @@ export function PlanViewer({
       <div
         className="border rounded-lg overflow-hidden bg-muted"
         style={{ cursor: getCursorStyle(), height: containerSize.height }}
+        onMouseDown={(e) => {
+          // Botão do meio = pan temporário, mantendo o modo activo
+          if (e.button === 1) {
+            e.preventDefault();
+            setMiddlePanning(true);
+          }
+        }}
+        onMouseUp={(e) => {
+          if (e.button === 1) setMiddlePanning(false);
+        }}
+        onMouseLeave={() => setMiddlePanning(false)}
       >
         <Stage
           ref={stageRef}
@@ -481,11 +516,12 @@ export function PlanViewer({
               onMeasurementComplete?.();
             }
           }}
-          draggable={mode === "view"}
+          draggable={mode === "view" || spaceHeld || middlePanning}
           x={position.x}
           y={position.y}
           scaleX={zoom}
           scaleY={zoom}
+          onDragStart={() => { suppressNextClickRef.current = true; }}
           onDragEnd={handleDragEnd}
         >
           <Layer>

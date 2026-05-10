@@ -25,14 +25,14 @@ interface PlanMeasurementToolbarProps {
 
 const MODE_HINTS: Record<MeasureMode, string> = {
   view: "Arraste para mover, scroll para zoom",
-  calibrate: "",
-  measure_line: "Clique nos pontos da linha · Duplo-clique para finalizar",
-  measure_area: "Clique nos vértices da área · Duplo-clique para fechar",
-  measure_count: "Clique para marcar cada elemento",
-  draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar",
-  draw_wall: "Clique no início e fim da parede (2 pontos)",
-  draw_opening: "Selecione sobre uma parede existente",
-  insert_element: "Clique na planta para inserir elementos · ESC para terminar",
+  calibrate: "Mantenha ESPAÇO ou use o botão do meio do rato para mover a planta sem perder a calibração",
+  measure_line: "Clique nos pontos da linha · Duplo-clique para finalizar · ESPAÇO = mão (mover planta)",
+  measure_area: "Clique nos vértices da área · Duplo-clique para fechar · ESPAÇO = mão (mover planta)",
+  measure_count: "Clique para marcar cada elemento · ESPAÇO = mão (mover planta)",
+  draw_room: "Clique nos cantos do compartimento · Duplo-clique para fechar · ESPAÇO = mão",
+  draw_wall: "Clique no início e fim da parede · ESPAÇO = mão (mover planta)",
+  draw_opening: "Selecione sobre uma parede existente · ESPAÇO = mão",
+  insert_element: "Clique na planta para inserir · ESC termina · ESPAÇO = mão",
 };
 
 export function PlanMeasurementToolbar({
