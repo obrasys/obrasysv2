@@ -65,8 +65,8 @@ export function usePlanImports(obraId?: string) {
       const nextRevision = (existing?.[0]?.revision_number ?? 0) + 1;
 
       // Upload file
-      const ext = file.name.split(".").pop() || "pdf";
-      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${ext}`;
+      const fileExt = ext || "pdf";
+      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("plan-files")
