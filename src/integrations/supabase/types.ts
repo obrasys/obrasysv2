@@ -6217,6 +6217,7 @@ export type Database = {
       plan_calibrations: {
         Row: {
           created_at: string
+          floor_id: string | null
           id: string
           page_id: string | null
           pixels_per_meter: number
@@ -6231,6 +6232,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          floor_id?: string | null
           id?: string
           page_id?: string | null
           pixels_per_meter?: number
@@ -6245,6 +6247,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          floor_id?: string | null
           id?: string
           page_id?: string | null
           pixels_per_meter?: number
