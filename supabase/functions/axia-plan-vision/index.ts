@@ -452,6 +452,19 @@ REGRAS CRÍTICAS:
       suggestion_payload: { analysis },
     });
 
+    // Log estruturado de chamada (Fase 7)
+    await supabase.from("axia_call_logs").insert({
+      user_id: userId,
+      call_type: callType,
+      model: callModel,
+      plan_import_id: plan_import_id ?? null,
+      page_number: page_number ?? null,
+      input_size_bytes: inputSizeBytes,
+      latency_ms: Date.now() - startedAt,
+      status: logStatus,
+      error_message: logErrorMessage,
+    } as any).then(() => {}, (e) => console.warn("axia_call_logs insert failed:", e?.message));
+
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
