@@ -175,6 +175,38 @@ export function PlanBudgetSendDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Validações Axia (Fase 3) */}
+          {planImportId && guard.reasons.length > 0 && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive flex gap-2">
+              <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="font-medium">Não é possível enviar:</div>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {guard.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
+          {planImportId && guard.warnings.length > 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-2">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <div className="font-medium">Avisos antes de enviar:</div>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {guard.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={confirmedWarnings}
+                  onCheckedChange={(v) => setConfirmedWarnings(v === true)}
+                />
+                <span>Confirmo que revi os avisos e quero enviar mesmo assim.</span>
+              </label>
+            </div>
+          )}
           {/* Orçamento */}
           <div className="space-y-1.5">
             <Label className="text-xs">Orçamento de destino</Label>
