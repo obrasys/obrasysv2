@@ -302,13 +302,26 @@ export function PlanViewer({
     const down = (e: KeyboardEvent) => {
       if (e.key === "Shift") setShiftHeld(true);
       if ((e.code === "Space" || e.key === " ") && !isTypingTarget(e.target)) {
+        // Evita scroll da página E impede que um botão com foco (ex: toolbar
+        // de modo) seja activado pelo Space — o que estava a impedir o pan.
         e.preventDefault();
+        e.stopPropagation();
+        const active = document.activeElement as HTMLElement | null;
+        if (active && (active.tagName === "BUTTON" || active.getAttribute("role") === "button")) {
+          active.blur();
+        }
         setSpaceHeld(true);
       }
     };
     const up = (e: KeyboardEvent) => {
       if (e.key === "Shift") setShiftHeld(false);
-      if (e.code === "Space" || e.key === " ") setSpaceHeld(false);
+      if (e.code === "Space" || e.key === " ") {
+        if (!isTypingTarget(e.target)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        setSpaceHeld(false);
+      }
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
