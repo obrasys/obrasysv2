@@ -72,6 +72,10 @@ export interface GlobalTotals {
   interior_walls_m2_total: number;
   exterior_walls_m2_estimate: number;
   exterior_perimeter_m: number;
+  floor_area_m2_total: number;
+  doors_qtd_total: number;
+  windows_qtd_total: number;
+  ceiling_height_m: number;
 }
 
 export interface PlanRoomAnalysis {
