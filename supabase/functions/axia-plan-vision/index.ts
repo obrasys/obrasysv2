@@ -37,7 +37,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    const { image_base64, calibration_info } = await req.json();
+    const { image_base64, calibration_info, plan_import_id, page_number } = await req.json();
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
@@ -45,6 +45,22 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Validação de tamanho — base64 inflate ~33% sobre bytes reais.
+    const approxBytes = Math.floor((image_base64.length * 3) / 4);
+    const MAX_BYTES = 12 * 1024 * 1024; // 12 MB de imagem
+    if (approxBytes > MAX_BYTES) {
+      return new Response(JSON.stringify({
+        error: `Imagem demasiado grande (${(approxBytes / 1024 / 1024).toFixed(1)} MB). Limite 12 MB. Reduza a resolução ou divida a planta.`,
+      }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const startedAt = Date.now();
+    const callModel = "google/gemini-2.5-flash";
+    const callType = "axia_plan_vision";
+    const inputSizeBytes = approxBytes;
+    let logStatus: "ok" | "error" | "timeout" = "ok";
+    let logErrorMessage: string | null = null;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
