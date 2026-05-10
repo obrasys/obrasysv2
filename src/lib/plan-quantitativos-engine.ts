@@ -12,6 +12,8 @@
  * Funções puras, sem dependências de Supabase. Testável.
  */
 
+import { normalizeName } from "./plan-dedupe";
+
 const DEFAULT_CEILING_HEIGHT_M = 2.7;
 
 /**
