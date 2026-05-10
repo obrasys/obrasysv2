@@ -227,7 +227,7 @@ export function PlanAIAnalysis({
       const base64 = await downscaleForAI(imageDataUrl);
 
       const { data, error } = await supabase.functions.invoke("axia-plan-vision", {
-        body: { image_base64: base64, calibration_info: calibration },
+        body: { image_base64: base64, calibration_info: calibration, plan_import_id: planImportId, page_number: currentPage },
       });
 
       if (error) throw error;
