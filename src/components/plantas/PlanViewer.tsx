@@ -491,6 +491,17 @@ export function PlanViewer({
       <div
         className="border rounded-lg overflow-hidden bg-muted"
         style={{ cursor: getCursorStyle(), height: containerSize.height }}
+        onMouseDown={(e) => {
+          // Botão do meio = pan temporário, mantendo o modo activo
+          if (e.button === 1) {
+            e.preventDefault();
+            setMiddlePanning(true);
+          }
+        }}
+        onMouseUp={(e) => {
+          if (e.button === 1) setMiddlePanning(false);
+        }}
+        onMouseLeave={() => setMiddlePanning(false)}
       >
         <Stage
           ref={stageRef}
@@ -505,11 +516,12 @@ export function PlanViewer({
               onMeasurementComplete?.();
             }
           }}
-          draggable={mode === "view"}
+          draggable={mode === "view" || spaceHeld || middlePanning}
           x={position.x}
           y={position.y}
           scaleX={zoom}
           scaleY={zoom}
+          onDragStart={() => { suppressNextClickRef.current = true; }}
           onDragEnd={handleDragEnd}
         >
           <Layer>
