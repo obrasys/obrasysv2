@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Circle, Text, Group, Rect } from "react-konva";
-import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ZoomIn, ZoomOut, RotateCcw, Ruler, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type Konva from "konva";
 import type { MeasureMode } from "./PlanMeasurementToolbar";
