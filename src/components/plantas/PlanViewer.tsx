@@ -345,6 +345,11 @@ export function PlanViewer({
 
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (mode === "view") return;
+    if (spaceHeld || middlePanning) return;
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
     const stage = stageRef.current;
     if (!stage) return;
     const pointer = stage.getPointerPosition();
@@ -360,7 +365,7 @@ export function PlanViewer({
     } else {
       onMeasurementClick?.({ x: imgX, y: imgY });
     }
-  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, computeAlignedPoint, isDrawingMode]);
+  }, [mode, zoom, position, onCalibrationClick, onMeasurementClick, computeAlignedPoint, isDrawingMode, spaceHeld, middlePanning]);
 
   const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
     setPosition({ x: e.target.x(), y: e.target.y() });
