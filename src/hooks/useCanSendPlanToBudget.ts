@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface CanSendResult {
   ok: boolean;
+  loading: boolean;       // qualquer query subjacente ainda em execução
   reasons: string[];      // bloqueios duros
   warnings: string[];     // requerem confirmação
   requiresExplicitConfirmation: boolean;
@@ -83,6 +84,14 @@ export function useCanSendPlanToBudget(
     const reasons: string[] = [];
     const warnings: string[] = [];
 
+    const loading =
+      calibrationQuery.isLoading ||
+      calibrationQuery.isFetching ||
+      measurementsQuery.isLoading ||
+      measurementsQuery.isFetching ||
+      pageQuery.isLoading ||
+      pageQuery.isFetching;
+
     const hasCalibration = !!calibrationQuery.data;
     const measurements = measurementsQuery.data ?? [];
     const pages = pageQuery.data ?? [];
@@ -103,10 +112,13 @@ export function useCanSendPlanToBudget(
     const hasAxia = pages.some((p: any) => !!p?.axia_analysis);
     const hasAnyData = hasAxia || measurements.length > 0;
 
-    if (!hasCalibration) {
+    if (loading) {
+      reasons.push("A validar pré-condições da página atual…");
+    }
+    if (!loading && !hasCalibration) {
       reasons.push("A página atual ainda não tem calibração de escala válida.");
     }
-    if (!hasAnyData) {
+    if (!loading && !hasAnyData) {
       reasons.push("Não existem medições nem análise Axia para enviar.");
     }
     if (axiaHighRiskUnreviewed) {
@@ -124,7 +136,8 @@ export function useCanSendPlanToBudget(
     }
 
     return {
-      ok: reasons.length === 0,
+      ok: !loading && reasons.length === 0,
+      loading,
       reasons,
       warnings,
       requiresExplicitConfirmation: warnings.length > 0,
@@ -137,5 +150,15 @@ export function useCanSendPlanToBudget(
         hasAnyData,
       },
     };
-  }, [calibrationQuery.data, measurementsQuery.data, pageQuery.data]);
+  }, [
+    calibrationQuery.data,
+    calibrationQuery.isLoading,
+    calibrationQuery.isFetching,
+    measurementsQuery.data,
+    measurementsQuery.isLoading,
+    measurementsQuery.isFetching,
+    pageQuery.data,
+    pageQuery.isLoading,
+    pageQuery.isFetching,
+  ]);
 }

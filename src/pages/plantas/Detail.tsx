@@ -135,7 +135,7 @@ export default function PlanDetail() {
 
   // Calibração escopo: planta + página atual + pavimento selecionado
   const currentPageId = axiaPersist.getPageMetadata(currentPage)?.page_id ?? null;
-  const { calibration, saveCalibration } = usePlanCalibration(planId, currentPageId, selectedFloorId);
+  const { calibration, isLoading: calibrationLoading, saveCalibration } = usePlanCalibration(planId, currentPageId, selectedFloorId);
 
   // Image loader for non-PDF
   const imageQuery = useQuery({
@@ -202,7 +202,7 @@ export default function PlanDetail() {
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [editingSegmentInitial, setEditingSegmentInitial] = useState<SegmentInitialValues | null>(null);
 
-  const canMeasure = !!calibration && calibration.status === "valida";
+  const canMeasure = !calibrationLoading && !!calibration && calibration.status === "valida";
   const pixelsPerMeter = calibration?.pixels_per_meter ?? 0;
 
   // Element insertion state - persisted via hook
