@@ -1193,6 +1193,22 @@ export default function PlanDetail() {
             )}
           </div>
         </div>
+
+        {/* Axia analysis tables — per-room breakdown + global totals */}
+        {rooms.length > 0 && (
+          <div className="space-y-4 mt-4">
+            <PlanAnalysisParametersCard
+              ceilingHeightM={analysisParams.ceilingHeightM}
+              doorHeightM={analysisParams.doorHeightM}
+              onChange={setAnalysisParams}
+            />
+            <PlanRoomBreakdownTable
+              rows={planRoomAnalysis.perRoom}
+              onRename={async (id, newName) => { await updateRoom.mutateAsync({ id, nome: newName }); }}
+            />
+            <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
+          </div>
+        )}
       </div>
 
       {/* Save measurement dialog */}
