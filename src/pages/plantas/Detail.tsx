@@ -44,7 +44,7 @@ import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
 import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
 import { usePlanFloors } from "@/hooks/usePlanFloors";
 import { usePlanAxiaPersistence } from "@/hooks/usePlanAxiaPersistence";
-import { computePlanRoomAnalysis } from "@/lib/plan-room-analysis";
+import { computePlanRoomAnalysis, analysisFromAxiaResult } from "@/lib/plan-room-analysis";
 import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisParametersCard";
 import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
 import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
