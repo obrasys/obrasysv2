@@ -6800,6 +6800,11 @@ export type Database = {
       }
       plan_pages: {
         Row: {
+          axia_analysis: Json | null
+          axia_analyzed_at: string | null
+          axia_model: string | null
+          axia_review_required: boolean
+          axia_risk_level: string | null
           created_at: string
           floor_id: string | null
           id: string
@@ -6810,6 +6815,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          axia_analysis?: Json | null
+          axia_analyzed_at?: string | null
+          axia_model?: string | null
+          axia_review_required?: boolean
+          axia_risk_level?: string | null
           created_at?: string
           floor_id?: string | null
           id?: string
@@ -6820,6 +6830,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          axia_analysis?: Json | null
+          axia_analyzed_at?: string | null
+          axia_model?: string | null
+          axia_review_required?: boolean
+          axia_risk_level?: string | null
           created_at?: string
           floor_id?: string | null
           id?: string
