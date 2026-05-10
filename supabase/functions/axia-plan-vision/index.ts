@@ -138,15 +138,16 @@ REGRAS CRÍTICAS:
       additionalProperties: false,
     };
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        max_tokens: 16000,
+    const callAI = async (modelName: string) => {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+        model: modelName,
+        max_tokens: 8000,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -337,6 +338,10 @@ REGRAS CRÍTICAS:
         tool_choice: { type: "function", function: { name: "plan_analysis" } },
       }),
     });
+    };
+
+    let resp = await callAI("google/gemini-2.5-flash");
+    let usedFallback = false;
 
     if (!resp.ok) {
       if (resp.status === 429) {
@@ -359,10 +364,24 @@ REGRAS CRÍTICAS:
       });
     }
 
-    const aiData = await resp.json();
-    const choice = aiData.choices?.[0];
-    const finishReason = choice?.finish_reason;
-    const toolCall = choice?.message?.tool_calls?.[0];
+    let aiData = await resp.json();
+    let choice = aiData.choices?.[0];
+    let finishReason = choice?.finish_reason;
+    let toolCall = choice?.message?.tool_calls?.[0];
+
+    // Retry com modelo mais robusto se a Flash falhou (finish_reason=error ou sem tool_call)
+    if ((!toolCall || finishReason === "error") && !usedFallback) {
+      console.warn("Flash failed (finish_reason=", finishReason, "). Retrying with gemini-2.5-pro.");
+      usedFallback = true;
+      resp = await callAI("google/gemini-2.5-pro");
+      if (resp.ok) {
+        aiData = await resp.json();
+        choice = aiData.choices?.[0];
+        finishReason = choice?.finish_reason;
+        toolCall = choice?.message?.tool_calls?.[0];
+      }
+    }
+
     let analysis = null;
 
     if (toolCall) {
