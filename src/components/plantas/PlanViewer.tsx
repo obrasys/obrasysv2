@@ -70,6 +70,16 @@ interface PlanViewerProps {
   onInsertCancel?: () => void;
   onElementClick?: (element: PlacedPlantElement) => void;
   onCancelDrawing?: () => void;
+  // Axia analysis overlay (per-room enrichment)
+  roomAnalysis?: Array<{
+    room_id: string;
+    area_m2: number;
+    walls_m2: number;
+    baseboard_m: number;
+    ceiling_height_m: number;
+    elements: Array<{ tipo: "porta" | "janela"; largura_cm: number; altura_cm: number; qtd: number }>;
+    edges: Array<{ index: number; length_m: number; tag?: "Rodapé" | "Soleira" }>;
+  }>;
 }
 
 export function PlanViewer({
