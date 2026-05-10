@@ -1,71 +1,62 @@
-## Objetivo
-Adicionar a base "Remodelação" (~215 artigos do CSV) à Base de Preços, **separada** da base "Geral" atual, usando um campo `tipo_base` para segregar bibliotecas.
+# Correções Críticas — Módulo Planta / Leitura de Planta
 
-## 1. Migração de Schema
+Este é um trabalho extenso (8 fases, várias migrations, ~15-20 ficheiros). Vou executar **fase a fase**, com aprovação implícita no fim de cada migration. Sem refactor de `PlanDetail.tsx`, sem mexer em rotas nem identidade visual.
 
-```sql
--- Coluna tipo_base nas duas tabelas (default 'geral' preserva dados atuais)
-ALTER TABLE base_artigos_global 
-  ADD COLUMN tipo_base TEXT NOT NULL DEFAULT 'geral',
-  ADD COLUMN tipo_linha TEXT; -- 'SERVICO' | 'MATERIAL'
+## Fase 1 — Persistência Axia em DB
+- **Migration**: adicionar a `plan_pages` as colunas `axia_analysis jsonb`, `axia_analyzed_at timestamptz`, `axia_model text`, `axia_risk_level text`, `axia_review_required boolean default false`.
+- **Hook novo**: `usePlanAxiaAnalysis(pageId)` — load/save em `plan_pages`, com fallback de leitura ao `localStorage` antigo (`plan-axia-results:${planId}`) e limpeza após migrar.
+- **Integrar** nos pontos atuais que usam `localStorage.plan-axia-results`.
 
-ALTER TABLE base_artigos_user 
-  ADD COLUMN tipo_base TEXT NOT NULL DEFAULT 'geral',
-  ADD COLUMN tipo_linha TEXT;
+## Fase 2 — Calibração por página/pavimento
+- **Migration**: adicionar `page_id` (já existe segundo auditoria) + índice único `(plan_import_id, COALESCE(page_id,'00000000-…'), COALESCE(floor_id,'00000000-…'))`. Validar primeiro com `read_query`.
+- **Refactor `usePlanCalibration`**: aceitar `pageId` e `floorId`, fazer `upsert` por chave (sem `delete + insert` global), filtrar query por página.
+- **Atualizar consumidores** para passar `pageId`/`floorId` ativos: `PlanDetail`, `PlanViewer`, `PlanCalibrationTool`, ferramentas de medição, painel Axia, dialogs de envio.
+- Aviso quando muda página e não há calibração; alerta de sanidade se `pixels_per_meter` for absurdo (`< 5` ou `> 5000`).
 
--- Permitir mesmo código em bases diferentes
-ALTER TABLE base_artigos_global DROP CONSTRAINT IF EXISTS base_artigos_global_codigo_key;
-ALTER TABLE base_artigos_global 
-  ADD CONSTRAINT uniq_global_tipo_codigo UNIQUE (tipo_base, codigo);
+## Fase 3 — Guardas de envio para orçamento
+- **Hook novo**: `useCanSendPlanToBudget(planId, pageId?, floorId?)` retornando `{ ok, reasons[], warnings[], requiresExplicitConfirmation }`.
+- Integrar em: `PlanBudgetGenerator`, `PlanAxiaBudgetSendDialog`, `PlanMeasurementBudgetPanel` e botões diretos.
+- Bloqueios duros (sem calibração, risco alto não revisto); soft com confirmação (pendentes, baixa confiança, fallback estimado, possível duplicação).
 
--- Constraint check para valores válidos
-ALTER TABLE base_artigos_global 
-  ADD CONSTRAINT chk_tipo_base CHECK (tipo_base IN ('geral','remodelacao'));
-ALTER TABLE base_artigos_user 
-  ADD CONSTRAINT chk_tipo_base_user CHECK (tipo_base IN ('geral','remodelacao'));
+## Fase 4 — Deduplicação no orçamento
+- **Migration**: adicionar a `plan_budget_links` as colunas `dedupe_key text`, `source_type text`, `source_id text`, `quantity_origin text`, `validation_status text`. Índice **parcial** único `(orcamento_id, dedupe_key) WHERE dedupe_key IS NOT NULL`.
+- **Util novo**: `src/lib/plan-dedupe.ts` com `normalize(name)` (lowercase, trim, sem acentos, sem pontuação) e `buildDedupeKey({...})`.
+- Aplicar `dedupe_key` em todos os caminhos de envio (manual, paredes, Axia, compartimentos, instalações, aberturas, rodapés, áreas).
+- Pre-check antes do insert; aviso de duplicação no preview.
 
-CREATE INDEX idx_base_global_tipo ON base_artigos_global(tipo_base);
-CREATE INDEX idx_base_user_tipo ON base_artigos_user(user_id, tipo_base);
-```
+## Fase 5 — Validação de upload
+- Reforçar `PlanUploadForm` + `usePlanImports.uploadPlan` com validações duras: MIME (`pdf|png|jpg|jpeg`), tamanho ≤ 25 MB, ficheiro vazio, extensão. Mensagens conforme briefing.
 
-## 2. Seed dos Artigos de Remodelação
-Inserir os ~215 artigos do CSV em `base_artigos_global` com `tipo_base = 'remodelacao'`, preservando:
-- Código (`REM-*`, `MAT-*`)
-- Capítulo (Demolições, Materiais, Pavimentos, etc.)
-- Tipo de linha (SERVICO/MATERIAL)
-- Unidade e preço unitário
+## Fase 6 — Normalização no engine de quantitativos
+- Em `src/lib/plan-quantitativos-engine.ts`: helper `normalizeName()` aplicado a `rooms`, `compartimentos_conectados`, `vaos_porta_associados`, paredes, aberturas, buckets. Em divergência → `review_required` + observação, sem quebrar cálculo.
 
-## 3. Hook `useBaseArtigos.ts`
-- Adicionar parâmetro `tipoBase: 'geral' | 'remodelacao'` nos fetches.
-- Filtrar queries por `tipo_base`.
-- Função `importarBasePadrao(tipoBase)` copia apenas os artigos globais correspondentes para `base_artigos_user`.
+## Fase 7 — Logs estruturados Axia
+- **Migration**: tabela `axia_call_logs` com colunas listadas + RLS (org via `get_org_member_ids()` ou `is_super_admin`). Índices em `org_id`, `created_at`, `plan_import_id`.
+- Atualizar `supabase/functions/axia-plan-vision/index.ts` para registar início/fim/erro/latência/modelo/tamanho de input. Sem guardar imagem/base64.
 
-## 4. UI — `ArtigosPanel.tsx`
-Adicionar sub-tabs no topo do painel "Artigos":
+## Fase 8 — Smoke tests
+- Executar checklist (1-15) e reportar resultados (uploads, calibração multi-página, persistência Axia, bloqueios, dedupe).
 
-```text
-┌─ Artigos ─────────────────────────────┐
-│  [ Geral ]  [ Remodelação ]           │
-│  ─────────────────────────────────    │
-│  🔍 Pesquisar...    [+ Novo] [Import] │
-│  ▼ Capítulo 1 (n)                     │
-│     ...                                │
-└────────────────────────────────────────┘
-```
+## Detalhes técnicos
+- Todas as migrations em chamadas separadas (regra do tooling) com descrição PT-PT.
+- RLS de `axia_call_logs`: SELECT por org members + super admin; INSERT pelo próprio user.
+- `dedupe_key` é determinístico (hash-like string concatenada) — nunca depende de UUIDs voláteis.
+- Compatibilidade: leitura do `localStorage` mantida como fallback até primeira gravação na DB.
+- Sem alteração de tipos em `src/integrations/supabase/types.ts` (auto-gerado após migrations).
 
-- Tab ativa controla `tipoBase` passado ao hook.
-- Botão "Importar Base Padrão" importa apenas artigos da tab ativa.
-- Coluna extra opcional "Tipo" (SERVICO/MATERIAL) visível na tab Remodelação.
+## Riscos conhecidos
+- Constraint único em `plan_calibrations` pode falhar se já existirem duplicados — a migration faz `DELETE` dos antigos mantendo o mais recente antes de criar o índice.
+- Constraint único em `plan_budget_links` é parcial (só com `dedupe_key NOT NULL`) para não partir dados existentes.
+- `axia_review_required` default `false` — análises antigas no localStorage não terão risco até reanálise.
 
-## 5. Link futuro com Orçamento
-Quando o utilizador adicionar artigo a um orçamento via Base de Preços, o seletor mostrará as duas bibliotecas (Geral / Remodelação) como filtro — sem alterar a estrutura do orçamento.
+## Ordem de execução
+1. Migrations Fase 1 → código Fase 1
+2. Migration Fase 2 → código Fase 2
+3. Código Fase 3
+4. Migration Fase 4 → código Fase 4 + util
+5. Código Fase 5
+6. Código Fase 6
+7. Migration Fase 7 → código edge function Fase 7
+8. Smoke tests + relatório final
 
-## Ficheiros afetados
-- `supabase/migrations/<timestamp>_add_tipo_base_remodelacao.sql` (schema + seed)
-- `src/hooks/useBaseArtigos.ts`
-- `src/components/base-precos/ArtigosPanel.tsx`
-- `src/integrations/supabase/types.ts` (auto-regenerado)
-
-## Compatibilidade
-- Todos os artigos existentes ficam automaticamente em `tipo_base = 'geral'` — zero breaking changes.
-- RLS atual mantém-se válida (filtra por `user_id`); apenas adicionamos filtro extra por `tipo_base` ao nível do hook.
+Confirma para começar pela Fase 1?
