@@ -323,11 +323,11 @@ export function PlanViewer({
         setSpaceHeld(false);
       }
     };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
+    window.addEventListener("keydown", down, { capture: true });
+    window.addEventListener("keyup", up, { capture: true });
     return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
+      window.removeEventListener("keydown", down, { capture: true } as EventListenerOptions);
+      window.removeEventListener("keyup", up, { capture: true } as EventListenerOptions);
     };
   }, []);
 
