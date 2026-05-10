@@ -6169,26 +6169,41 @@ export type Database = {
         Row: {
           artigo_orcamento_id: string
           created_at: string
+          dedupe_key: string | null
           id: string
           measurement_id: string
           orcamento_id: string
+          quantity_origin: string | null
+          source_id: string | null
+          source_type: string | null
           user_id: string
+          validation_status: string | null
         }
         Insert: {
           artigo_orcamento_id: string
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           measurement_id: string
           orcamento_id: string
+          quantity_origin?: string | null
+          source_id?: string | null
+          source_type?: string | null
           user_id: string
+          validation_status?: string | null
         }
         Update: {
           artigo_orcamento_id?: string
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           measurement_id?: string
           orcamento_id?: string
+          quantity_origin?: string | null
+          source_id?: string | null
+          source_type?: string | null
           user_id?: string
+          validation_status?: string | null
         }
         Relationships: [
           {
