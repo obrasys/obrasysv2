@@ -226,16 +226,29 @@ export default function PlanDetail() {
   // Element insertion state - persisted via hook
   const { elements: placedElements, addElement, updateElement: updateElementDb, deleteElement: deleteElementDb, deleteLastElement } = usePlanPlacedElements(planId);
 
-  // Compute Axia per-room analysis (overlay + tables)
-  const planRoomAnalysis = useMemo(() => computePlanRoomAnalysis({
-    rooms,
-    walls,
-    openings,
-    placedElements,
-    pixelsPerMeter,
-    ceilingHeightM: analysisParams.ceilingHeightM,
-    defaultDoorHeightM: analysisParams.doorHeightM,
-  }), [rooms, walls, openings, placedElements, pixelsPerMeter, analysisParams.ceilingHeightM, analysisParams.doorHeightM]);
+  // Compute Axia per-room analysis (overlay + tables).
+  // Preferência: rooms desenhados/persistidos. Fallback: resultado vivo da Axia
+  // para a página atual (quando o utilizador ainda não converteu em plan_rooms).
+  const planRoomAnalysis = useMemo(() => {
+    const fromDb = computePlanRoomAnalysis({
+      rooms,
+      walls,
+      openings,
+      placedElements,
+      pixelsPerMeter,
+      ceilingHeightM: analysisParams.ceilingHeightM,
+      defaultDoorHeightM: analysisParams.doorHeightM,
+    });
+    if (fromDb.perRoom.length > 0) return fromDb;
+    const axiaResult = axiaResultsByPage[currentPage];
+    if (axiaResult && (axiaResult.rooms?.length ?? 0) > 0) {
+      return analysisFromAxiaResult(axiaResult as any, {
+        ceilingHeightM: analysisParams.ceilingHeightM,
+        defaultDoorHeightM: analysisParams.doorHeightM,
+      });
+    }
+    return fromDb;
+  }, [rooms, walls, openings, placedElements, pixelsPerMeter, analysisParams.ceilingHeightM, analysisParams.doorHeightM, axiaResultsByPage, currentPage]);
 
   const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
   const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
