@@ -72,6 +72,10 @@ export interface GlobalTotals {
   interior_walls_m2_total: number;
   exterior_walls_m2_estimate: number;
   exterior_perimeter_m: number;
+  floor_area_m2_total: number;
+  doors_qtd_total: number;
+  windows_qtd_total: number;
+  ceiling_height_m: number;
 }
 
 export interface PlanRoomAnalysis {
@@ -346,6 +350,10 @@ export function computePlanRoomAnalysis(input: AnalysisInput): PlanRoomAnalysis 
       interior_walls_m2_total: Number(interior_walls_m2_total.toFixed(2)),
       exterior_walls_m2_estimate: Number(exterior_walls_m2_estimate.toFixed(2)),
       exterior_perimeter_m: Number(exterior_perimeter_m.toFixed(2)),
+      floor_area_m2_total: Number(perRoom.reduce((s, r) => s + r.area_m2, 0).toFixed(2)),
+      doors_qtd_total: doorsByDim.reduce((s, d) => s + d.qtd, 0),
+      windows_qtd_total: windowsByDim.reduce((s, d) => s + d.qtd, 0),
+      ceiling_height_m: ceiling,
     },
   };
 }
