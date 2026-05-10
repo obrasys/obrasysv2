@@ -56,6 +56,7 @@ export default function PlanDetail() {
   const plan = plans.find((p) => p.id === planId);
   // Axia persistence (DB-backed, com fallback localStorage)
   const axiaPersist = usePlanAxiaPersistence(planId);
+  // calibration declared below (depends on currentPage / pageId)
   const { measurements, addMeasurement, updateMeasurement, deleteMeasurement } = usePlanMeasurements(planId);
   const { rooms, addRoom, updateRoom, deleteRoom } = usePlanRooms(planId);
   const { walls, addWall, updateWall, deleteWall } = usePlanWalls(planId);
