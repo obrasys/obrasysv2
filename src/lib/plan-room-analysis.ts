@@ -357,3 +357,185 @@ export function computePlanRoomAnalysis(input: AnalysisInput): PlanRoomAnalysis 
     },
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Adapter: derive a PlanRoomAnalysis directly from a Gemini/Axia
+// vision result (PlanAnalysisResult). Used as a fallback when no
+// rooms have been persisted yet to plan_rooms (i.e. the user só
+// correu a análise da Axia sem desenhar nada manualmente).
+// ─────────────────────────────────────────────────────────────────────
+
+export interface AxiaResultLike {
+  rooms?: Array<{
+    name: string;
+    tipo_normalizado?: string;
+    estimated_area?: number;
+    perimetro_estimado_m?: number;
+    vaos_porta_associados?: string[];
+    center_x?: number;
+    center_y?: number;
+    bbox?: { x_min: number; y_min: number; x_max: number; y_max: number };
+  }>;
+  elements?: Array<{
+    type: string;
+    label?: string;
+    largura_cm?: number;
+    altura_cm?: number;
+    count?: number;
+    position_x?: number;
+    position_y?: number;
+    compartimentos_conectados?: string[];
+  }>;
+  exterior_elements?: Array<{ tipo: string }>;
+}
+
+function elementKindFromType(t: string): ElementKind | null {
+  const s = (t || "").toLowerCase();
+  if (s.includes("janela") || s.includes("window") || s.includes("claraboia")) return "janela";
+  if (s.includes("porta") || s.includes("door") || s.includes("portao") || s.includes("portão")) return "porta";
+  return null;
+}
+
+export function analysisFromAxiaResult(
+  result: AxiaResultLike,
+  opts: { ceilingHeightM?: number; defaultDoorHeightM?: number; defaultDoorWidthM?: number } = {},
+): PlanRoomAnalysis {
+  const ceiling = opts.ceilingHeightM ?? DEFAULT_CEILING_HEIGHT_M;
+  const doorH = opts.defaultDoorHeightM ?? DEFAULT_DOOR_HEIGHT_M;
+  const doorW = opts.defaultDoorWidthM ?? DEFAULT_DOOR_WIDTH_M;
+
+  const rooms = result.rooms ?? [];
+  const elements = result.elements ?? [];
+
+  // Index elements -> rooms via `compartimentos_conectados` (matches by name).
+  const elementsByRoom = new Map<string, typeof elements>();
+  const unassigned: typeof elements = [];
+  for (const el of elements) {
+    const links = el.compartimentos_conectados ?? [];
+    if (links.length === 0) { unassigned.push(el); continue; }
+    for (const name of links) {
+      const arr = elementsByRoom.get(name) ?? [];
+      arr.push(el);
+      elementsByRoom.set(name, arr);
+    }
+  }
+
+  const perRoom: PerRoomAnalysis[] = rooms.map((r, idx) => {
+    const color = ROOM_PALETTE[idx % ROOM_PALETTE.length];
+    const area_m2 = Number((r.estimated_area ?? 0).toFixed(2));
+    const perimeter_m = Number((r.perimetro_estimado_m ?? 0).toFixed(2));
+
+    const buckets = new Map<string, { tipo: ElementKind; largura_cm: number; altura_cm: number; qtd: number }>();
+    const addBucket = (tipo: ElementKind, w_cm: number, h_cm: number, q = 1) => {
+      const lw = Math.max(1, Math.round(w_cm));
+      const lh = Math.max(1, Math.round(h_cm));
+      const key = `${tipo}|${lw}x${lh}`;
+      const ex = buckets.get(key);
+      if (ex) ex.qtd += q;
+      else buckets.set(key, { tipo, largura_cm: lw, altura_cm: lh, qtd: q });
+    };
+
+    const linked = elementsByRoom.get(r.name) ?? [];
+    for (const el of linked) {
+      const kind = elementKindFromType(el.type);
+      if (!kind) continue;
+      const w_cm = el.largura_cm ?? (kind === "porta" ? doorW * 100 : DEFAULT_WINDOW_W_M * 100);
+      const h_cm = el.altura_cm ?? (kind === "porta" ? doorH * 100 : DEFAULT_WINDOW_H_M * 100);
+      addBucket(kind, w_cm, h_cm, el.count ?? 1);
+    }
+
+    // If Axia named door labels in `vaos_porta_associados`, count those too (doorW default)
+    const doorLabels = r.vaos_porta_associados ?? [];
+    const linkedDoorCount = linked.filter((e) => elementKindFromType(e.type) === "porta").length;
+    const missingDoors = Math.max(doorLabels.length - linkedDoorCount, 0);
+    for (let i = 0; i < missingDoors; i++) addBucket("porta", doorW * 100, doorH * 100, 1);
+
+    const elementsArr: RoomElementGroup[] = Array.from(buckets.values())
+      .sort((a, b) => b.largura_cm - a.largura_cm || b.altura_cm - a.altura_cm)
+      .map((b) => ({
+        ...b,
+        label: `${b.tipo === "porta" ? "Porta" : "Janela"} ${b.largura_cm}×${b.altura_cm}`,
+      }));
+
+    const totalDoorWidthM = elementsArr
+      .filter((e) => e.tipo === "porta")
+      .reduce((s, e) => s + (e.largura_cm / 100) * e.qtd, 0);
+    const totalOpeningsAreaM2 = elementsArr
+      .reduce((s, e) => s + (e.largura_cm / 100) * (e.altura_cm / 100) * e.qtd, 0);
+
+    const baseboard_m = Math.max(perimeter_m - totalDoorWidthM, 0);
+    const walls_m2 = Math.max(perimeter_m * ceiling - totalOpeningsAreaM2, 0);
+
+    const tipo = r.tipo_normalizado ?? "habitacao";
+    const cx = r.bbox ? (r.bbox.x_min + r.bbox.x_max) / 2 : (r.center_x ?? 0.5);
+    const cy = r.bbox ? (r.bbox.y_min + r.bbox.y_max) / 2 : (r.center_y ?? 0.5);
+
+    return {
+      room_id: `axia-${idx}-${r.name}`,
+      name: r.name,
+      color,
+      area_m2,
+      perimeter_m,
+      baseboard_m: Number(baseboard_m.toFixed(2)),
+      walls_m2: Number(walls_m2.toFixed(2)),
+      is_exterior: tipo === "exterior",
+      elements: elementsArr,
+      edges: [],
+      centroid: { x: cx, y: cy },
+      ceiling_height_m: ceiling,
+    };
+  });
+
+  // Aggregate
+  const allDoor = new Map<string, { largura_cm: number; altura_cm: number; qtd: number; label: string }>();
+  const allWin = new Map<string, { largura_cm: number; altura_cm: number; qtd: number; label: string }>();
+  for (const room of perRoom) {
+    for (const el of room.elements) {
+      const target = el.tipo === "porta" ? allDoor : allWin;
+      const key = `${el.largura_cm}x${el.altura_cm}`;
+      const ex = target.get(key);
+      if (ex) ex.qtd += el.qtd;
+      else target.set(key, { largura_cm: el.largura_cm, altura_cm: el.altura_cm, qtd: el.qtd, label: el.label });
+    }
+  }
+  // Add unassigned elements (top-level vãos sem compartimento) directly to globais
+  for (const el of unassigned) {
+    const kind = elementKindFromType(el.type);
+    if (!kind) continue;
+    const w_cm = Math.round(el.largura_cm ?? (kind === "porta" ? doorW * 100 : DEFAULT_WINDOW_W_M * 100));
+    const h_cm = Math.round(el.altura_cm ?? (kind === "porta" ? doorH * 100 : DEFAULT_WINDOW_H_M * 100));
+    const target = kind === "porta" ? allDoor : allWin;
+    const key = `${w_cm}x${h_cm}`;
+    const ex = target.get(key);
+    const q = el.count ?? 1;
+    if (ex) ex.qtd += q;
+    else target.set(key, { largura_cm: w_cm, altura_cm: h_cm, qtd: q, label: `${kind === "porta" ? "Porta" : "Janela"} ${w_cm}×${h_cm}` });
+  }
+
+  const doorsByDim = Array.from(allDoor.values()).sort((a, b) => b.largura_cm - a.largura_cm);
+  const windowsByDim = Array.from(allWin.values()).sort((a, b) => b.largura_cm - a.largura_cm);
+
+  const baseboard_m_total = perRoom.reduce((s, r) => s + r.baseboard_m, 0);
+  const interior_walls_m2_total = perRoom.filter((r) => !r.is_exterior).reduce((s, r) => s + r.walls_m2, 0);
+  // Exterior estimate: sum of room perimeters * 0.4 as rough envelope (we don't have polygons here).
+  // Better: when Axia entrega área total, usar 4*sqrt(area) como proxy.
+  const totalArea = perRoom.reduce((s, r) => s + r.area_m2, 0);
+  const exterior_perimeter_m = totalArea > 0 ? Number((4 * Math.sqrt(totalArea)).toFixed(2)) : 0;
+  const exterior_walls_m2_estimate = Math.max(exterior_perimeter_m * ceiling, 0);
+
+  return {
+    perRoom,
+    totals: {
+      doorsByDim,
+      windowsByDim,
+      baseboard_m_total: Number(baseboard_m_total.toFixed(2)),
+      interior_walls_m2_total: Number(interior_walls_m2_total.toFixed(2)),
+      exterior_walls_m2_estimate: Number(exterior_walls_m2_estimate.toFixed(2)),
+      exterior_perimeter_m,
+      floor_area_m2_total: Number(totalArea.toFixed(2)),
+      doors_qtd_total: doorsByDim.reduce((s, d) => s + d.qtd, 0),
+      windows_qtd_total: windowsByDim.reduce((s, d) => s + d.qtd, 0),
+      ceiling_height_m: ceiling,
+    },
+  };
+}

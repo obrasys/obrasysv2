@@ -44,7 +44,7 @@ import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
 import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
 import { usePlanFloors } from "@/hooks/usePlanFloors";
 import { usePlanAxiaPersistence } from "@/hooks/usePlanAxiaPersistence";
-import { computePlanRoomAnalysis } from "@/lib/plan-room-analysis";
+import { computePlanRoomAnalysis, analysisFromAxiaResult } from "@/lib/plan-room-analysis";
 import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisParametersCard";
 import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
 import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
@@ -226,16 +226,29 @@ export default function PlanDetail() {
   // Element insertion state - persisted via hook
   const { elements: placedElements, addElement, updateElement: updateElementDb, deleteElement: deleteElementDb, deleteLastElement } = usePlanPlacedElements(planId);
 
-  // Compute Axia per-room analysis (overlay + tables)
-  const planRoomAnalysis = useMemo(() => computePlanRoomAnalysis({
-    rooms,
-    walls,
-    openings,
-    placedElements,
-    pixelsPerMeter,
-    ceilingHeightM: analysisParams.ceilingHeightM,
-    defaultDoorHeightM: analysisParams.doorHeightM,
-  }), [rooms, walls, openings, placedElements, pixelsPerMeter, analysisParams.ceilingHeightM, analysisParams.doorHeightM]);
+  // Compute Axia per-room analysis (overlay + tables).
+  // Preferência: rooms desenhados/persistidos. Fallback: resultado vivo da Axia
+  // para a página atual (quando o utilizador ainda não converteu em plan_rooms).
+  const planRoomAnalysis = useMemo(() => {
+    const fromDb = computePlanRoomAnalysis({
+      rooms,
+      walls,
+      openings,
+      placedElements,
+      pixelsPerMeter,
+      ceilingHeightM: analysisParams.ceilingHeightM,
+      defaultDoorHeightM: analysisParams.doorHeightM,
+    });
+    if (fromDb.perRoom.length > 0) return fromDb;
+    const axiaResult = axiaResultsByPage[currentPage];
+    if (axiaResult && (axiaResult.rooms?.length ?? 0) > 0) {
+      return analysisFromAxiaResult(axiaResult as any, {
+        ceilingHeightM: analysisParams.ceilingHeightM,
+        defaultDoorHeightM: analysisParams.doorHeightM,
+      });
+    }
+    return fromDb;
+  }, [rooms, walls, openings, placedElements, pixelsPerMeter, analysisParams.ceilingHeightM, analysisParams.doorHeightM, axiaResultsByPage, currentPage]);
 
   const [insertTool, setInsertTool] = useState<ActiveInsertTool>({ symbolTypeId: null, mode: "idle", continuous: false, insertedCount: 0 });
   const [selectedElement, setSelectedElement] = useState<PlacedPlantElement | null>(null);
@@ -1195,7 +1208,7 @@ export default function PlanDetail() {
         </div>
 
         {/* Axia analysis tables — per-room breakdown + global totals */}
-        {rooms.length > 0 && (
+        {planRoomAnalysis.perRoom.length > 0 && (
           <div className="space-y-4 mt-4">
             <PlanAnalysisParametersCard
               ceilingHeightM={analysisParams.ceilingHeightM}
@@ -1204,7 +1217,14 @@ export default function PlanDetail() {
             />
             <PlanRoomBreakdownTable
               rows={planRoomAnalysis.perRoom}
-              onRename={async (id, newName) => { await updateRoom.mutateAsync({ id, nome: newName }); }}
+              onRename={async (id, newName) => {
+                // Apenas compartimentos persistidos podem ser renomeados na DB.
+                if (id.startsWith("axia-")) {
+                  toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
+                  return;
+                }
+                await updateRoom.mutateAsync({ id, nome: newName });
+              }}
             />
             <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
           </div>
