@@ -291,10 +291,25 @@ export function PlanViewer({
     [snapToGrip, alignToAxes, snapAngular, activeMeasurementPoints, shiftHeld, GRIP_SNAP_TOLERANCE_PX]
   );
 
-  // Tracking de Shift para desativar snap angular temporariamente
+  // Tracking de Shift (desativa snap angular) e Space (pan temporário tipo "mão")
   useEffect(() => {
-    const down = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(true); };
-    const up = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftHeld(false); };
+    const isTypingTarget = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(true);
+      if ((e.code === "Space" || e.key === " ") && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        setSpaceHeld(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(false);
+      if (e.code === "Space" || e.key === " ") setSpaceHeld(false);
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
