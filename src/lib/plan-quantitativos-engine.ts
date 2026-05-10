@@ -222,12 +222,12 @@ function sumDoorOpeningsForRoom(roomName: string, elements: AxiaElementLike[]): 
  * compartimento (m²) — para descontar das paredes.
  */
 function sumOpeningsAreaForRoom(roomName: string, elements: AxiaElementLike[]): number {
-  const target = (roomName || "").toLowerCase().trim();
+  const target = normalizeName(roomName);
   if (!target) return 0;
   let total = 0;
   for (const el of elements) {
     if (!isDoor(el.type) && !isWindow(el.type)) continue;
-    const conn = (el.compartimentos_conectados ?? []).map((c) => (c || "").toLowerCase().trim());
+    const conn = (el.compartimentos_conectados ?? []).map((c) => normalizeName(c));
     if (!conn.includes(target)) continue;
     const { largura_cm, altura_cm } = defaultsForElement(el);
     const areaPorVao = (largura_cm / 100) * (altura_cm / 100);
