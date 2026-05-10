@@ -140,6 +140,10 @@ export default function PlanDetail() {
     page: currentPage,
   });
 
+  // Calibração escopo: planta + página atual + pavimento selecionado
+  const currentPageId = axiaPersist.getPageMetadata(currentPage)?.page_id ?? null;
+  const { calibration, saveCalibration } = usePlanCalibration(planId, currentPageId, selectedFloorId);
+
   // Image loader for non-PDF
   const imageQuery = useQuery({
     queryKey: ["plan-image-dim", fileUrlQuery.data, isPdf],
