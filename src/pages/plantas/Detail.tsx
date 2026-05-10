@@ -44,6 +44,10 @@ import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
 import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
 import { usePlanFloors } from "@/hooks/usePlanFloors";
 import { usePlanAxiaPersistence } from "@/hooks/usePlanAxiaPersistence";
+import { computePlanRoomAnalysis } from "@/lib/plan-room-analysis";
+import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisParametersCard";
+import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
+import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
