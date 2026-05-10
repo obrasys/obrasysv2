@@ -29,7 +29,23 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
   const [observacoes, setObservacoes] = useState("");
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) setFile(acceptedFiles[0]);
+    if (acceptedFiles.length === 0) return;
+    const f = acceptedFiles[0];
+    const ALLOWED = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+    if (!ALLOWED.includes(f.type)) {
+      // sonner via dynamic import (componente já usa toast indireto via mutations)
+      import("sonner").then(({ toast }) => toast.error("Este ficheiro não é suportado. Use PDF, PNG ou JPG."));
+      return;
+    }
+    if (f.size === 0) {
+      import("sonner").then(({ toast }) => toast.error("Não foi possível carregar o ficheiro. Verifique se o documento não está corrompido."));
+      return;
+    }
+    if (f.size > 25 * 1024 * 1024) {
+      import("sonner").then(({ toast }) => toast.error("O ficheiro excede o limite de 25 MB."));
+      return;
+    }
+    setFile(f);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -40,7 +56,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
       "image/jpeg": [".jpg", ".jpeg"],
     },
     maxFiles: 1,
-    maxSize: 20 * 1024 * 1024,
+    maxSize: 25 * 1024 * 1024,
   });
 
   const handleSubmit = async () => {
@@ -74,7 +90,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
             <p className="text-sm font-medium text-foreground">
               {isDragActive ? "Solte o ficheiro aqui" : "Arraste ou clique para selecionar"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 20MB</p>
+            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 25 MB</p>
           </div>
         ) : (
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">

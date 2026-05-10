@@ -39,6 +39,21 @@ export function usePlanImports(obraId?: string) {
     }) => {
       if (!user) throw new Error("Não autenticado");
 
+      // ── Validação de upload (Fase 5) ───────────────────────────────────────
+      const MAX_BYTES = 25 * 1024 * 1024;
+      const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+      const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg"];
+      const ext = (file.name.split(".").pop() || "").toLowerCase();
+      if (!file || file.size === 0) {
+        throw new Error("Não foi possível carregar o ficheiro. Verifique se o documento não está corrompido.");
+      }
+      if (file.size > MAX_BYTES) {
+        throw new Error("O ficheiro excede o limite de 25 MB.");
+      }
+      if (!ALLOWED_MIME.includes(file.type) || !ALLOWED_EXT.includes(ext)) {
+        throw new Error("Este ficheiro não é suportado. Use PDF, PNG ou JPG.");
+      }
+
       // Get next revision number
       const { data: existing } = await supabase
         .from("plan_imports")
@@ -50,8 +65,8 @@ export function usePlanImports(obraId?: string) {
       const nextRevision = (existing?.[0]?.revision_number ?? 0) + 1;
 
       // Upload file
-      const ext = file.name.split(".").pop() || "pdf";
-      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${ext}`;
+      const fileExt = ext || "pdf";
+      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("plan-files")

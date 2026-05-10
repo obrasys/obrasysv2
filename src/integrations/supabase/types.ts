@@ -880,6 +880,54 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_call_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          function_name: string
+          id: string
+          input_size_bytes: number | null
+          latency_ms: number | null
+          model: string | null
+          obra_id: string | null
+          org_id: string | null
+          page_id: string | null
+          plan_import_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          function_name: string
+          id?: string
+          input_size_bytes?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          obra_id?: string | null
+          org_id?: string | null
+          page_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          input_size_bytes?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          obra_id?: string | null
+          org_id?: string | null
+          page_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       axia_events: {
         Row: {
           created_at: string
@@ -6169,26 +6217,41 @@ export type Database = {
         Row: {
           artigo_orcamento_id: string
           created_at: string
+          dedupe_key: string | null
           id: string
           measurement_id: string
           orcamento_id: string
+          quantity_origin: string | null
+          source_id: string | null
+          source_type: string | null
           user_id: string
+          validation_status: string | null
         }
         Insert: {
           artigo_orcamento_id: string
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           measurement_id: string
           orcamento_id: string
+          quantity_origin?: string | null
+          source_id?: string | null
+          source_type?: string | null
           user_id: string
+          validation_status?: string | null
         }
         Update: {
           artigo_orcamento_id?: string
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           measurement_id?: string
           orcamento_id?: string
+          quantity_origin?: string | null
+          source_id?: string | null
+          source_type?: string | null
           user_id?: string
+          validation_status?: string | null
         }
         Relationships: [
           {
@@ -6217,6 +6280,7 @@ export type Database = {
       plan_calibrations: {
         Row: {
           created_at: string
+          floor_id: string | null
           id: string
           page_id: string | null
           pixels_per_meter: number
@@ -6231,6 +6295,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          floor_id?: string | null
           id?: string
           page_id?: string | null
           pixels_per_meter?: number
@@ -6245,6 +6310,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          floor_id?: string | null
           id?: string
           page_id?: string | null
           pixels_per_meter?: number
@@ -6800,6 +6866,11 @@ export type Database = {
       }
       plan_pages: {
         Row: {
+          axia_analysis: Json | null
+          axia_analyzed_at: string | null
+          axia_model: string | null
+          axia_review_required: boolean
+          axia_risk_level: string | null
           created_at: string
           floor_id: string | null
           id: string
@@ -6810,6 +6881,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          axia_analysis?: Json | null
+          axia_analyzed_at?: string | null
+          axia_model?: string | null
+          axia_review_required?: boolean
+          axia_risk_level?: string | null
           created_at?: string
           floor_id?: string | null
           id?: string
@@ -6820,6 +6896,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          axia_analysis?: Json | null
+          axia_analyzed_at?: string | null
+          axia_model?: string | null
+          axia_review_required?: boolean
+          axia_risk_level?: string | null
           created_at?: string
           floor_id?: string | null
           id?: string
