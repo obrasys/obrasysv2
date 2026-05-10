@@ -57,6 +57,9 @@ export function PlanBudgetSendDialog({
   obraId,
   planName,
   floorMap,
+  planImportId,
+  pageId,
+  floorId,
 }: Props) {
   const { orcamentos } = useOrcamentos();
   const obraOrcamentos = (orcamentos ?? []).filter((o) => o.obra_id === obraId);
@@ -67,6 +70,9 @@ export function PlanBudgetSendDialog({
     planName ? `Quantitativos — ${planName}` : "Quantitativos da Planta",
   );
   const [sending, setSending] = useState(false);
+  const [confirmedWarnings, setConfirmedWarnings] = useState(false);
+
+  const guard = useCanSendPlanToBudget(planImportId ?? null, pageId ?? null, floorId ?? null);
 
   const groups = useMemo(() => {
     const map = new Map<string, PlanQuantitativoRow[]>();
@@ -90,6 +96,14 @@ export function PlanBudgetSendDialog({
     }
     if (rows.length === 0) {
       toast.error("Sem linhas para enviar");
+      return;
+    }
+    if (planImportId && !guard.ok) {
+      toast.error("Não é possível enviar: " + guard.reasons.join(" "));
+      return;
+    }
+    if (planImportId && guard.requiresExplicitConfirmation && !confirmedWarnings) {
+      toast.warning("Confirme os avisos antes de enviar.");
       return;
     }
     setSending(true);
