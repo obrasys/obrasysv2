@@ -376,6 +376,7 @@ export function PlanQuantityTable({
           rows={filtered.filter((r) => selected.has(r.id))}
           obraId={obraId}
           floorMap={floorMap}
+          planImportId={planImportId}
         />
       )}
     </Card>

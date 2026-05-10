@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Send, Layers } from "lucide-react";
+import { Loader2, Send, Layers, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
+import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type GroupBy = "source" | "camada" | "floor" | "single";
 
@@ -34,6 +36,10 @@ interface Props {
   obraId: string;
   planName?: string;
   floorMap?: Map<string, string>;
+  /** Para validações de calibração / risco Axia (Fase 3). */
+  planImportId?: string;
+  pageId?: string | null;
+  floorId?: string | null;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -51,6 +57,9 @@ export function PlanBudgetSendDialog({
   obraId,
   planName,
   floorMap,
+  planImportId,
+  pageId,
+  floorId,
 }: Props) {
   const { orcamentos } = useOrcamentos();
   const obraOrcamentos = (orcamentos ?? []).filter((o) => o.obra_id === obraId);
@@ -61,6 +70,9 @@ export function PlanBudgetSendDialog({
     planName ? `Quantitativos — ${planName}` : "Quantitativos da Planta",
   );
   const [sending, setSending] = useState(false);
+  const [confirmedWarnings, setConfirmedWarnings] = useState(false);
+
+  const guard = useCanSendPlanToBudget(planImportId ?? null, pageId ?? null, floorId ?? null);
 
   const groups = useMemo(() => {
     const map = new Map<string, PlanQuantitativoRow[]>();
@@ -84,6 +96,14 @@ export function PlanBudgetSendDialog({
     }
     if (rows.length === 0) {
       toast.error("Sem linhas para enviar");
+      return;
+    }
+    if (planImportId && !guard.ok) {
+      toast.error("Não é possível enviar: " + guard.reasons.join(" "));
+      return;
+    }
+    if (planImportId && guard.requiresExplicitConfirmation && !confirmedWarnings) {
+      toast.warning("Confirme os avisos antes de enviar.");
       return;
     }
     setSending(true);
@@ -155,6 +175,38 @@ export function PlanBudgetSendDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Validações Axia (Fase 3) */}
+          {planImportId && guard.reasons.length > 0 && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive flex gap-2">
+              <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="font-medium">Não é possível enviar:</div>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {guard.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
+          {planImportId && guard.warnings.length > 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-2">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <div className="font-medium">Avisos antes de enviar:</div>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {guard.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={confirmedWarnings}
+                  onCheckedChange={(v) => setConfirmedWarnings(v === true)}
+                />
+                <span>Confirmo que revi os avisos e quero enviar mesmo assim.</span>
+              </label>
+            </div>
+          )}
           {/* Orçamento */}
           <div className="space-y-1.5">
             <Label className="text-xs">Orçamento de destino</Label>
@@ -247,7 +299,14 @@ export function PlanBudgetSendDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>
             Cancelar
           </Button>
-          <Button onClick={handleSend} disabled={sending || !orcamentoId}>
+          <Button
+            onClick={handleSend}
+            disabled={
+              sending ||
+              !orcamentoId ||
+              (!!planImportId && (!guard.ok || (guard.requiresExplicitConfirmation && !confirmedWarnings)))
+            }
+          >
             {sending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (

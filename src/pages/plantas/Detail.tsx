@@ -43,6 +43,7 @@ import { PlanElectricalAnalysis } from "@/components/plantas/PlanElectricalAnaly
 import { AxiaGuidedMode } from "@/components/plantas/AxiaGuidedMode";
 import { PlanFloorSelector } from "@/components/plantas/PlanFloorSelector";
 import { usePlanFloors } from "@/hooks/usePlanFloors";
+import { usePlanAxiaPersistence } from "@/hooks/usePlanAxiaPersistence";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -53,7 +54,9 @@ export default function PlanDetail() {
   // Data
   const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
-  const { calibration, saveCalibration } = usePlanCalibration(planId);
+  // Axia persistence (DB-backed, com fallback localStorage)
+  const axiaPersist = usePlanAxiaPersistence(planId);
+  // calibration declared below (depends on currentPage / pageId)
   const { measurements, addMeasurement, updateMeasurement, deleteMeasurement } = usePlanMeasurements(planId);
   const { rooms, addRoom, updateRoom, deleteRoom } = usePlanRooms(planId);
   const { walls, addWall, updateWall, deleteWall } = usePlanWalls(planId);
@@ -80,20 +83,13 @@ export default function PlanDetail() {
     localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
   }, [guidedMode]);
 
-  // Axia analysis results PER PAGE (persisted in localStorage by planId)
-  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>(() => {
-    if (typeof window === "undefined" || !planId) return {};
-    try {
-      const raw = localStorage.getItem(`plan-axia-results:${planId}`);
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  });
+  // Axia analysis results PER PAGE — fonte de verdade: DB (plan_pages.axia_analysis)
+  // Mantemos um espelho local para reagir instantaneamente; persistência é via axiaPersist.saveAnalysis.
+  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>({});
   useEffect(() => {
-    if (!planId) return;
-    try {
-      localStorage.setItem(`plan-axia-results:${planId}`, JSON.stringify(axiaResultsByPage));
-    } catch { /* quota */ }
-  }, [axiaResultsByPage, planId]);
+    // Re-hidrata sempre que a DB devolve novos resultados (ou ao primeiro fetch com fallback localStorage)
+    setAxiaResultsByPage(axiaPersist.resultsByPage as Record<number, PlanAnalysisResult>);
+  }, [axiaPersist.resultsByPage]);
 
   // Upload-new-plan dialog
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -136,6 +132,10 @@ export default function PlanDetail() {
     url: isPdf ? fileUrlQuery.data ?? null : null,
     page: currentPage,
   });
+
+  // Calibração escopo: planta + página atual + pavimento selecionado
+  const currentPageId = axiaPersist.getPageMetadata(currentPage)?.page_id ?? null;
+  const { calibration, saveCalibration } = usePlanCalibration(planId, currentPageId, selectedFloorId);
 
   // Image loader for non-PDF
   const imageQuery = useQuery({
@@ -1005,6 +1005,18 @@ export default function PlanDetail() {
                     else delete copy[currentPage];
                     return copy;
                   });
+                  // Persistência DB (assíncrona, não bloqueia UI)
+                  if (next) {
+                    const rq = (next as any)?.reading_quality ?? {};
+                    void axiaPersist.saveAnalysis(currentPage, next, {
+                      model: "google/gemini-2.5-flash",
+                      riskLevel: rq.risk_level ?? null,
+                      reviewRequired: !!rq.human_intervention_required,
+                      floorId: selectedFloorId,
+                    });
+                  } else {
+                    void axiaPersist.clearAnalysis(currentPage);
+                  }
                 }}
                 currentPage={currentPage}
                 totalPages={isPdf ? totalPages : 1}

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
 import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
+import { buildDedupePayload } from "@/lib/plan-dedupe";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
@@ -409,28 +410,50 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         createdArtigos = arts ?? [];
       }
 
-      // 5. Create plan_budget_links — agora com artigo_orcamento_id REAL
+      // 5. Create plan_budget_links — agora com artigo_orcamento_id REAL e dedupe_key
       const linkInserts: Array<{
         measurement_id: string;
         user_id: string;
         orcamento_id: string;
         artigo_orcamento_id: string;
+        dedupe_key: string;
+        source_type: string;
+        source_id: string | null;
+        quantity_origin: string | null;
+        validation_status: string | null;
       }> = [];
       createdArtigos.forEach((art, i) => {
         const item = insertedItemRef[i];
         if (!item) return;
         item.measurementIds.forEach((mId) => {
+          const m = measurements.find((mm) => mm.id === mId);
+          const dedupe = buildDedupePayload({
+            planImportId: planId,
+            roomName: m?.etiqueta ?? null,
+            actionType: m?.action_type ?? null,
+            unidade: m?.unidade ?? item.article.unidade,
+            primaryDimension: typeof item.quantidade === "number" ? item.quantidade : null,
+            sourceType: "manual_measurement",
+            sourceId: mId,
+            artigoOrcamentoId: art.id,
+          }, {
+            quantityOrigin: "plan_measurement",
+            validationStatus: m?.estado_validacao ?? null,
+          });
           linkInserts.push({
             measurement_id: mId,
             user_id: user.id,
             orcamento_id: orcamento.id,
             artigo_orcamento_id: art.id,
+            ...dedupe,
           });
         });
       });
 
       if (linkInserts.length > 0) {
-        const { error: linkErr } = await supabase.from("plan_budget_links").insert(linkInserts);
+        const { error: linkErr } = await supabase
+          .from("plan_budget_links")
+          .upsert(linkInserts as any, { onConflict: "orcamento_id,dedupe_key", ignoreDuplicates: true } as any);
         if (linkErr) {
           console.warn("Budget links creation warning:", linkErr.message);
         }
