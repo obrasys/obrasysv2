@@ -138,15 +138,16 @@ REGRAS CRÍTICAS:
       additionalProperties: false,
     };
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        max_tokens: 16000,
+    const callAI = async (modelName: string) => {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+        model: modelName,
+        max_tokens: 8000,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
