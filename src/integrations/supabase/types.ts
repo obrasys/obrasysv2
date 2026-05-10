@@ -880,6 +880,54 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_call_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          function_name: string
+          id: string
+          input_size_bytes: number | null
+          latency_ms: number | null
+          model: string | null
+          obra_id: string | null
+          org_id: string | null
+          page_id: string | null
+          plan_import_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          function_name: string
+          id?: string
+          input_size_bytes?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          obra_id?: string | null
+          org_id?: string | null
+          page_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          input_size_bytes?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          obra_id?: string | null
+          org_id?: string | null
+          page_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       axia_events: {
         Row: {
           created_at: string
