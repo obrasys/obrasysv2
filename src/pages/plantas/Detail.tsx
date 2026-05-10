@@ -1005,6 +1005,18 @@ export default function PlanDetail() {
                     else delete copy[currentPage];
                     return copy;
                   });
+                  // Persistência DB (assíncrona, não bloqueia UI)
+                  if (next) {
+                    const rq = (next as any)?.reading_quality ?? {};
+                    void axiaPersist.saveAnalysis(currentPage, next, {
+                      model: "google/gemini-2.5-flash",
+                      riskLevel: rq.risk_level ?? null,
+                      reviewRequired: !!rq.human_intervention_required,
+                      floorId: selectedFloorId,
+                    });
+                  } else {
+                    void axiaPersist.clearAnalysis(currentPage);
+                  }
                 }}
                 currentPage={currentPage}
                 totalPages={isPdf ? totalPages : 1}
