@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface CanSendResult {
   ok: boolean;
+  loading: boolean;       // qualquer query subjacente ainda em execução
   reasons: string[];      // bloqueios duros
   warnings: string[];     // requerem confirmação
   requiresExplicitConfirmation: boolean;
