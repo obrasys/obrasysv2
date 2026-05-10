@@ -83,20 +83,13 @@ export default function PlanDetail() {
     localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
   }, [guidedMode]);
 
-  // Axia analysis results PER PAGE (persisted in localStorage by planId)
-  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>(() => {
-    if (typeof window === "undefined" || !planId) return {};
-    try {
-      const raw = localStorage.getItem(`plan-axia-results:${planId}`);
-      return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-  });
+  // Axia analysis results PER PAGE — fonte de verdade: DB (plan_pages.axia_analysis)
+  // Mantemos um espelho local para reagir instantaneamente; persistência é via axiaPersist.saveAnalysis.
+  const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>({});
   useEffect(() => {
-    if (!planId) return;
-    try {
-      localStorage.setItem(`plan-axia-results:${planId}`, JSON.stringify(axiaResultsByPage));
-    } catch { /* quota */ }
-  }, [axiaResultsByPage, planId]);
+    // Re-hidrata sempre que a DB devolve novos resultados (ou ao primeiro fetch com fallback localStorage)
+    setAxiaResultsByPage(axiaPersist.resultsByPage as Record<number, PlanAnalysisResult>);
+  }, [axiaPersist.resultsByPage]);
 
   // Upload-new-plan dialog
   const [showUploadDialog, setShowUploadDialog] = useState(false);
