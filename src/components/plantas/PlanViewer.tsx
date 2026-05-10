@@ -385,6 +385,7 @@ export function PlanViewer({
   };
 
   const getCursorStyle = () => {
+    if (spaceHeld || middlePanning) return middlePanning ? "grabbing" : "grab";
     if (mode !== "view") return "crosshair";
     return "grab";
   };
