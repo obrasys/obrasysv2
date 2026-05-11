@@ -59,6 +59,8 @@ export default function PlanDetail() {
   // Data
   const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
+  const scope = disciplineScope((plan as any)?.disciplina);
+  const disciplineMeta = (plan as any)?.disciplina ? DISCIPLINE_META[(plan as any).disciplina as keyof typeof DISCIPLINE_META] : null;
   // Axia persistence (DB-backed, com fallback localStorage)
   const axiaPersist = usePlanAxiaPersistence(planId);
   // calibration declared below (depends on currentPage / pageId)
