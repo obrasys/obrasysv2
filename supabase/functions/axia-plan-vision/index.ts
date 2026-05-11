@@ -517,7 +517,7 @@ REGRAS CRÍTICAS:
         }
       }
 
-      if (!analysis) {
+      if (!analysis && remainingMs() > 30_000) {
         const jsonResp = await callAI("google/gemini-2.5-pro", "json");
         if (jsonResp.ok) {
           const jsonData = await jsonResp.json();
