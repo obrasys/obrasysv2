@@ -381,6 +381,8 @@ export function PlanQuantityTable({
           obraId={obraId}
           floorMap={floorMap}
           planImportId={planImportId}
+          disciplina={disciplina ?? undefined}
+          planName={planName}
         />
       )}
     </Card>
