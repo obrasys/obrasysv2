@@ -210,10 +210,19 @@ REGRAS CRÍTICAS:
       summary: typeof analysis?.summary === "string" ? analysis.summary : "",
     });
 
-    const callAI = async (modelName: string, mode: "tool" | "json" = "tool") => {
+    const HARD_DEADLINE_MS = 135_000; // deixa folga para 150s da edge runtime
+    const deadline = startedAt + HARD_DEADLINE_MS;
+    const remainingMs = () => deadline - Date.now();
+
+    const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
-      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const ctrl = new AbortController();
+      const budget = Math.min(timeoutMs, Math.max(5_000, remainingMs() - 2_000));
+      const timer = setTimeout(() => ctrl.abort(), budget);
+      try {
+        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
+        signal: ctrl.signal,
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
@@ -417,6 +426,9 @@ REGRAS CRÍTICAS:
               }),
         }),
       });
+      } finally {
+        clearTimeout(timer);
+      }
     };
 
     let resp = await callAI("google/gemini-2.5-flash");
@@ -449,8 +461,8 @@ REGRAS CRÍTICAS:
     let toolCall = choice?.message?.tool_calls?.[0];
     let messageText = extractTextContent(choice?.message?.content);
 
-    // Retry com modelo mais robusto se a Flash falhou (finish_reason=error ou sem tool_call)
-    if ((!toolCall || finishReason === "error") && !usedFallback) {
+    // Retry com modelo mais robusto se a Flash falhou (apenas se houver tempo)
+    if ((!toolCall || finishReason === "error") && !usedFallback && remainingMs() > 45_000) {
       console.warn("Flash failed (finish_reason=", finishReason, "). Retrying with gemini-2.5-pro.");
       usedFallback = true;
       resp = await callAI("google/gemini-2.5-pro");
@@ -505,7 +517,7 @@ REGRAS CRÍTICAS:
         }
       }
 
-      if (!analysis) {
+      if (!analysis && remainingMs() > 30_000) {
         const jsonResp = await callAI("google/gemini-2.5-pro", "json");
         if (jsonResp.ok) {
           const jsonData = await jsonResp.json();
