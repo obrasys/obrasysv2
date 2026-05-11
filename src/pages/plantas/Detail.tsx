@@ -892,6 +892,28 @@ export default function PlanDetail() {
           </div>
         )}
 
+        {/* Axia analysis tables — per-room breakdown + global totals (prominent, above main content) */}
+        {planRoomAnalysis.perRoom.length > 0 && (
+          <div className="space-y-4">
+            <PlanAnalysisParametersCard
+              ceilingHeightM={analysisParams.ceilingHeightM}
+              doorHeightM={analysisParams.doorHeightM}
+              onChange={setAnalysisParams}
+            />
+            <PlanRoomBreakdownTable
+              rows={planRoomAnalysis.perRoom}
+              onRename={async (id, newName) => {
+                if (id.startsWith("axia-")) {
+                  toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
+                  return;
+                }
+                await updateRoom.mutateAsync({ id, nome: newName });
+              }}
+            />
+            <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
+          </div>
+        )}
+
         {/* Main content */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
           <PlanViewer
@@ -1207,28 +1229,6 @@ export default function PlanDetail() {
           </div>
         </div>
 
-        {/* Axia analysis tables — per-room breakdown + global totals */}
-        {planRoomAnalysis.perRoom.length > 0 && (
-          <div className="space-y-4 mt-4">
-            <PlanAnalysisParametersCard
-              ceilingHeightM={analysisParams.ceilingHeightM}
-              doorHeightM={analysisParams.doorHeightM}
-              onChange={setAnalysisParams}
-            />
-            <PlanRoomBreakdownTable
-              rows={planRoomAnalysis.perRoom}
-              onRename={async (id, newName) => {
-                // Apenas compartimentos persistidos podem ser renomeados na DB.
-                if (id.startsWith("axia-")) {
-                  toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
-                  return;
-                }
-                await updateRoom.mutateAsync({ id, nome: newName });
-              }}
-            />
-            <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
-          </div>
-        )}
       </div>
 
       {/* Save measurement dialog */}
