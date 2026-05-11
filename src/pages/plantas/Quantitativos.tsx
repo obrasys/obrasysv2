@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanMappingTable } from "@/components/plantas/PlanMappingTable";
 import { PlanQuantitativosReview } from "@/components/plantas/PlanQuantitativosReview";
