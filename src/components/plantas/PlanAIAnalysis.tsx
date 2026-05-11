@@ -14,6 +14,8 @@ import {
   MapPin,
   AlertTriangle,
   Table2,
+  CheckCircle2,
+  ShieldAlert,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
