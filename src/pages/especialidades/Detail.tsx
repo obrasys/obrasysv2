@@ -8,6 +8,7 @@ import { useSpecialtyElements } from "@/hooks/useSpecialtyElements";
 import { SpecialtyPlanCanvas } from "@/components/especialidades/SpecialtyPlanCanvas";
 import { SpecialtySymbolPicker } from "@/components/especialidades/SpecialtySymbolPicker";
 import { SpecialtyDetectedElementsPanel } from "@/components/especialidades/SpecialtyDetectedElementsPanel";
+import { SpecialtyAxiaAnalysis } from "@/components/especialidades/SpecialtyAxiaAnalysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SPECIALTY_LABELS, type SpecialtySymbol } from "@/types/especialidades";
@@ -60,7 +61,8 @@ export default function EspecialidadeDetail() {
                   onSelect={(s) => setPicked(s)}
                 />
               </CardContent>
-            </Card>
+          </Card>
+            <SpecialtyAxiaAnalysis plan={plan} />
           </div>
 
           {/* Centro: visualizador */}
