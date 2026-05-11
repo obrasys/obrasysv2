@@ -1238,6 +1238,7 @@ export default function PlanDetail() {
                   real_distance: calibration.real_distance,
                   unidade: calibration.unidade,
                 } : null}
+                planImportId={plan?.id}
               />
             )}
 
