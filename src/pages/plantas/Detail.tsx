@@ -1268,7 +1268,7 @@ export default function PlanDetail() {
 
             {/* Export placed elements to budget */}
             {placedElements.length > 0 && obraId && (
-              <PlanElementsExportBudget elements={placedElements} obraId={obraId} />
+              <PlanElementsExportBudget elements={placedElements} obraId={obraId} disciplina={(plan as any)?.disciplina} />
             )}
           </div>
         </div>
