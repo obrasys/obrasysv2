@@ -25,9 +25,10 @@ interface PlanUploadFormProps {
 
 export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [disciplina, setDisciplina] = useState<PlanDisciplina>("arquitetura");
+  const [disciplina, setDisciplina] = useState<PlanDisciplina | null>(null);
   const [dataPlanta, setDataPlanta] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const activeMeta = disciplina ? DISCIPLINE_META[disciplina] : null;
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
