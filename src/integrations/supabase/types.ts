@@ -9163,6 +9163,383 @@ export type Database = {
         }
         Relationships: []
       }
+      specialty_detected_elements: {
+        Row: {
+          analysis_id: string | null
+          bounding_box: Json | null
+          confidence_score: number | null
+          created_at: string
+          floor_level: string | null
+          id: string
+          label: string | null
+          page_number: number
+          quantity: number
+          review_required: boolean
+          source: string
+          specialty_plan_id: string
+          specialty_type: string
+          symbol_type: string
+          unit: string
+          updated_at: string
+          user_confirmed: boolean
+          user_id: string
+          x_position: number | null
+          y_position: number | null
+        }
+        Insert: {
+          analysis_id?: string | null
+          bounding_box?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          floor_level?: string | null
+          id?: string
+          label?: string | null
+          page_number?: number
+          quantity?: number
+          review_required?: boolean
+          source?: string
+          specialty_plan_id: string
+          specialty_type: string
+          symbol_type: string
+          unit?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Update: {
+          analysis_id?: string | null
+          bounding_box?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          floor_level?: string | null
+          id?: string
+          label?: string | null
+          page_number?: number
+          quantity?: number
+          review_required?: boolean
+          source?: string
+          specialty_plan_id?: string
+          specialty_type?: string
+          symbol_type?: string
+          unit?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id?: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialty_detected_elements_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plan_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "specialty_detected_elements_specialty_plan_id_fkey"
+            columns: ["specialty_plan_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      specialty_measurements: {
+        Row: {
+          calculation_basis: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          label: string | null
+          measurement_type: string
+          points_json: Json
+          quantity: number
+          review_required: boolean
+          source: string
+          specialty_plan_id: string
+          specialty_type: string
+          symbol_type: string | null
+          unit: string
+          updated_at: string
+          user_confirmed: boolean
+          user_id: string
+        }
+        Insert: {
+          calculation_basis?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          measurement_type?: string
+          points_json?: Json
+          quantity?: number
+          review_required?: boolean
+          source?: string
+          specialty_plan_id: string
+          specialty_type: string
+          symbol_type?: string | null
+          unit?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id: string
+        }
+        Update: {
+          calculation_basis?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          measurement_type?: string
+          points_json?: Json
+          quantity?: number
+          review_required?: boolean
+          source?: string
+          specialty_plan_id?: string
+          specialty_type?: string
+          symbol_type?: string | null
+          unit?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialty_measurements_specialty_plan_id_fkey"
+            columns: ["specialty_plan_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      specialty_plan_analysis: {
+        Row: {
+          ai_model: string | null
+          analysis_status: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          missing_information: string[] | null
+          raw_response_json: Json | null
+          review_required: boolean
+          specialty_plan_id: string
+          summary: string | null
+          user_id: string
+          warnings: string[] | null
+        }
+        Insert: {
+          ai_model?: string | null
+          analysis_status?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          missing_information?: string[] | null
+          raw_response_json?: Json | null
+          review_required?: boolean
+          specialty_plan_id: string
+          summary?: string | null
+          user_id: string
+          warnings?: string[] | null
+        }
+        Update: {
+          ai_model?: string | null
+          analysis_status?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          missing_information?: string[] | null
+          raw_response_json?: Json | null
+          review_required?: boolean
+          specialty_plan_id?: string
+          summary?: string | null
+          user_id?: string
+          warnings?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialty_plan_analysis_specialty_plan_id_fkey"
+            columns: ["specialty_plan_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      specialty_plans: {
+        Row: {
+          calibration_data: Json | null
+          created_at: string
+          declared_scale: string | null
+          estimated_scale: string | null
+          file_path: string
+          file_type: string
+          floor_level: string | null
+          id: string
+          nome_ficheiro: string
+          obra_id: string
+          observacoes: string | null
+          specialty_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calibration_data?: Json | null
+          created_at?: string
+          declared_scale?: string | null
+          estimated_scale?: string | null
+          file_path: string
+          file_type?: string
+          floor_level?: string | null
+          id?: string
+          nome_ficheiro: string
+          obra_id: string
+          observacoes?: string | null
+          specialty_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calibration_data?: Json | null
+          created_at?: string
+          declared_scale?: string | null
+          estimated_scale?: string | null
+          file_path?: string
+          file_type?: string
+          floor_level?: string | null
+          id?: string
+          nome_ficheiro?: string
+          obra_id?: string
+          observacoes?: string | null
+          specialty_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialty_plans_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      specialty_quantity_items: {
+        Row: {
+          budget_item_id: string | null
+          confidence_score: number | null
+          created_at: string
+          description: string | null
+          id: string
+          item_name: string
+          quantity: number
+          review_required: boolean
+          sent_to_budget: boolean
+          source_id: string | null
+          source_type: string
+          specialty_plan_id: string
+          specialty_type: string
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_item_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name: string
+          quantity?: number
+          review_required?: boolean
+          sent_to_budget?: boolean
+          source_id?: string | null
+          source_type?: string
+          specialty_plan_id: string
+          specialty_type: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_item_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name?: string
+          quantity?: number
+          review_required?: boolean
+          sent_to_budget?: boolean
+          source_id?: string | null
+          source_type?: string
+          specialty_plan_id?: string
+          specialty_type?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "specialty_quantity_items_specialty_plan_id_fkey"
+            columns: ["specialty_plan_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      specialty_symbol_library: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_budget_category: string | null
+          default_budget_item_name: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          specialty_type: string
+          symbol_key: string
+          symbol_name: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_budget_category?: string | null
+          default_budget_item_name?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          specialty_type: string
+          symbol_key: string
+          symbol_name: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_budget_category?: string | null
+          default_budget_item_name?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          specialty_type?: string
+          symbol_key?: string
+          symbol_name?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subempreiteiros: {
         Row: {
           ativo: boolean
