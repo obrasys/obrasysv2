@@ -558,14 +558,12 @@ REGRAS CRÍTICAS:
           analysis = parseJsonWithRepair(rawArgs);
           console.warn("Recovered partial JSON via repair (truncated output).");
         } catch (e2) {
-          return new Response(
-            JSON.stringify({
-              error:
-                finishReason === "length"
-                  ? "Análise truncada (planta muito densa). Tente processar uma página de cada vez."
-                  : "Resposta inválida do motor de IA. Tente novamente.",
-            }),
-            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          return controlledFailure(
+            "AI_STRUCTURED_OUTPUT_TRUNCATED",
+            finishReason === "length"
+              ? "Análise truncada (planta muito densa)."
+              : "Resposta inválida do motor de IA.",
+            `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`,
           );
         }
       }
