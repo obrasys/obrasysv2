@@ -429,6 +429,10 @@ REGRAS CRÍTICAS:
               }),
         }),
       });
+      } catch (e) {
+        const isAbort = (e as any)?.name === "AbortError" || /aborted/i.test(String((e as any)?.message ?? e));
+        console.warn(`callAI(${modelName},${mode}) ${isAbort ? "aborted (timeout)" : "failed"}:`, (e as any)?.message ?? e);
+        return new Response(JSON.stringify({ error: isAbort ? "timeout" : "fetch_failed" }), { status: 599 });
       } finally {
         clearTimeout(timer);
       }
