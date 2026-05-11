@@ -82,7 +82,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(autoOpen);
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
-    ? (require("@/lib/plan-discipline") as typeof import("@/lib/plan-discipline")).DISCIPLINE_META[disciplina]?.label
+    ? DISCIPLINE_META[disciplina]?.label
     : null;
   const chapterPrefix = disciplineLabel ? `${disciplineLabel} — ` : "";
   const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} — ${planName}` : `Pré-Orçamento — ${planName}`);
