@@ -824,6 +824,12 @@ export default function PlanDetail() {
               {isPdf ? <FileText className="w-4 h-4 text-destructive" /> : <Image className="w-4 h-4 text-primary" />}
               <span className="text-sm font-medium">{plan.nome_ficheiro}</span>
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
+              {disciplineMeta && (
+                <Badge variant="outline" className={`text-[10px] gap-1 ${disciplineMeta.badgeClass}`}>
+                  <disciplineMeta.icon className="w-3 h-3" />
+                  {disciplineMeta.label}
+                </Badge>
+              )}
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
