@@ -64,14 +64,22 @@ export function PlanBudgetSendDialog({
   planImportId,
   pageId,
   floorId,
+  disciplina,
 }: Props) {
   const { orcamentos } = useOrcamentos();
   const obraOrcamentos = (orcamentos ?? []).filter((o) => o.obra_id === obraId);
 
+  const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
+    ? DISCIPLINE_META[disciplina]?.label
+    : null;
+  const prefix = disciplineLabel ? `${disciplineLabel} — ` : "";
+
   const [orcamentoId, setOrcamentoId] = useState("");
-  const [groupBy, setGroupBy] = useState<GroupBy>("source");
+  const [groupBy, setGroupBy] = useState<GroupBy>(disciplineLabel ? "single" : "source");
   const [chapterTitle, setChapterTitle] = useState(
-    planName ? `Quantitativos — ${planName}` : "Quantitativos da Planta",
+    disciplineLabel
+      ? `${disciplineLabel}${planName ? ` — ${planName}` : ""}`
+      : planName ? `Quantitativos — ${planName}` : "Quantitativos da Planta",
   );
   const [sending, setSending] = useState(false);
   const [confirmedWarnings, setConfirmedWarnings] = useState(false);
@@ -83,15 +91,15 @@ export function PlanBudgetSendDialog({
     for (const r of rows) {
       let key: string;
       if (groupBy === "single") key = chapterTitle || "Quantitativos";
-      else if (groupBy === "source") key = SOURCE_LABEL[r.source] ?? r.source;
-      else if (groupBy === "camada") key = r.camada || "Geral";
-      else key = r.floor_id ? floorMap?.get(r.floor_id) ?? "Pavimento" : "Sem pavimento";
+      else if (groupBy === "source") key = `${prefix}${SOURCE_LABEL[r.source] ?? r.source}`;
+      else if (groupBy === "camada") key = `${prefix}${r.camada || "Geral"}`;
+      else key = `${prefix}${r.floor_id ? floorMap?.get(r.floor_id) ?? "Pavimento" : "Sem pavimento"}`;
       const arr = map.get(key) ?? [];
       arr.push(r);
       map.set(key, arr);
     }
     return Array.from(map.entries());
-  }, [rows, groupBy, chapterTitle, floorMap]);
+  }, [rows, groupBy, chapterTitle, floorMap, prefix]);
 
   const handleSend = async () => {
     if (!orcamentoId) {
