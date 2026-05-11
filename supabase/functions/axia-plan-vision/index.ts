@@ -461,8 +461,8 @@ REGRAS CRÍTICAS:
     let toolCall = choice?.message?.tool_calls?.[0];
     let messageText = extractTextContent(choice?.message?.content);
 
-    // Retry com modelo mais robusto se a Flash falhou (finish_reason=error ou sem tool_call)
-    if ((!toolCall || finishReason === "error") && !usedFallback) {
+    // Retry com modelo mais robusto se a Flash falhou (apenas se houver tempo)
+    if ((!toolCall || finishReason === "error") && !usedFallback && remainingMs() > 45_000) {
       console.warn("Flash failed (finish_reason=", finishReason, "). Retrying with gemini-2.5-pro.");
       usedFallback = true;
       resp = await callAI("google/gemini-2.5-pro");
