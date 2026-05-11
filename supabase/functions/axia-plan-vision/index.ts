@@ -138,29 +138,107 @@ REGRAS CRÍTICAS:
       additionalProperties: false,
     };
 
-    const callAI = async (modelName: string) => {
+    const extractTextContent = (content: unknown): string => {
+      if (typeof content === "string") return content;
+      if (Array.isArray(content)) {
+        return content
+          .map((part) => {
+            if (typeof part === "string") return part;
+            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+              return part.text;
+            }
+            return "";
+          })
+          .filter(Boolean)
+          .join("\n");
+      }
+      return "";
+    };
+
+    const parseJsonWithRepair = (raw: string) => {
+      const cleaned = raw
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        const start = cleaned.indexOf("{");
+        const end = cleaned.lastIndexOf("}");
+        const sliced = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+        let s = sliced.trim().replace(/,\s*$/, "");
+        const stack: string[] = [];
+        let inStr = false;
+        let esc = false;
+        for (const c of s) {
+          if (esc) {
+            esc = false;
+            continue;
+          }
+          if (c === "\\") {
+            esc = true;
+            continue;
+          }
+          if (c === '"') {
+            inStr = !inStr;
+            continue;
+          }
+          if (inStr) continue;
+          if (c === "{") stack.push("}");
+          else if (c === "[") stack.push("]");
+          else if ((c === "}" || c === "]") && stack.length) stack.pop();
+        }
+        if (inStr) s += '"';
+        while (stack.length) s += stack.pop();
+        return JSON.parse(s);
+      }
+    };
+
+    const normalizeAnalysis = (analysis: any) => ({
+      ...analysis,
+      scale_detected: analysis?.scale_detected ?? { found: false },
+      dimensions: Array.isArray(analysis?.dimensions) ? analysis.dimensions : [],
+      rooms: Array.isArray(analysis?.rooms) ? analysis.rooms : [],
+      elements: Array.isArray(analysis?.elements) ? analysis.elements : [],
+      walls: Array.isArray(analysis?.walls) ? analysis.walls : [],
+      exterior_elements: Array.isArray(analysis?.exterior_elements) ? analysis.exterior_elements : [],
+      limitations: Array.isArray(analysis?.limitations) ? analysis.limitations : [],
+      validation_questions: Array.isArray(analysis?.validation_questions) ? analysis.validation_questions : [],
+      summary: typeof analysis?.summary === "string" ? analysis.summary : "",
+    });
+
+    const callAI = async (modelName: string, mode: "tool" | "json" = "tool") => {
+      const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Lovable-API-Key": LOVABLE_API_KEY,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-        model: modelName,
-        max_tokens: 8000,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "plan_analysis",
-              description: "Return structured analysis of a construction plan image (Axia spec).",
-              parameters: {
-                type: "object",
-                properties: {
+          model: modelName,
+          max_tokens: mode === "json" ? 12000 : 8000,
+          messages: [
+            { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          ...(mode === "json"
+            ? {
+                response_format: { type: "json_object" },
+              }
+            : {
+                tools: [
+                  {
+                    type: "function",
+                    function: {
+                      name: "plan_analysis",
+                      description: "Return structured analysis of a construction plan image (Axia spec).",
+                      parameters: {
+                        type: "object",
+                        properties: {
                   sheet_classification: {
                     type: "object",
                     properties: {
@@ -329,15 +407,16 @@ REGRAS CRÍTICAS:
                   validation_questions: { type: "array", items: { type: "string" } },
                   summary: { type: "string" },
                 },
-                required: ["scale_detected", "dimensions", "rooms", "elements", "summary"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "plan_analysis" } },
-      }),
-    });
+                        required: ["scale_detected", "dimensions", "rooms", "elements", "summary"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                ],
+                tool_choice: { type: "function", function: { name: "plan_analysis" } },
+              }),
+        }),
+      });
     };
 
     let resp = await callAI("google/gemini-2.5-flash");
