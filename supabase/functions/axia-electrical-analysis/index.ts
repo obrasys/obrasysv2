@@ -388,7 +388,13 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
       }
 
       // 2) Linhas de tabela quantitativa declarada → plan_placed_elements (data_source=extracted_quantity_table)
-      if (plan_import_id && Array.isArray(analysis.declared_quantities) && analysis.declared_quantities.length > 0) {
+      // Em folhas de legenda nunca persistir como obra: a legenda só explica símbolos.
+      if (
+        plan_import_id &&
+        subtype !== "legenda_simbolos" &&
+        Array.isArray(analysis.declared_quantities) &&
+        analysis.declared_quantities.length > 0
+      ) {
         const rows: any[] = [];
         for (const d of analysis.declared_quantities) {
           const qty = Math.max(0, Math.round(Number(d.quantity) || 0));
