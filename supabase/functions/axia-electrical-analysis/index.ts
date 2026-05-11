@@ -312,3 +312,21 @@ Para cada elemento identificado, sugere materiais necessários (cabo, tubo, caix
     });
   }
 });
+
+function emptyElectricalAnalysis(reason: string) {
+  return {
+    scale_detected: { found: false },
+    legend_found: false,
+    symbols: [],
+    circuits: [],
+    wire_runs: [],
+    materials_list: [],
+    total_wire_length_m: 0,
+    total_conduit_length_m: 0,
+    summary: "",
+    recommendations: [
+      { type: "warning", message: `Análise indisponível: ${reason}. Reveja manualmente a planta elétrica.` },
+    ],
+    review_required: true,
+  };
+}
