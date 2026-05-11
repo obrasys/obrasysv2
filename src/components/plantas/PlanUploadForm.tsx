@@ -62,7 +62,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
   });
 
   const handleSubmit = async () => {
-    if (!file) return;
+    if (!file || !disciplina) return;
     await onUpload({ file, obraId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
   };
 
