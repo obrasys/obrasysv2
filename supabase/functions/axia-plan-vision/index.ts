@@ -210,6 +210,58 @@ REGRAS CRÍTICAS:
       summary: typeof analysis?.summary === "string" ? analysis.summary : "",
     });
 
+    const emptyFallbackAnalysis = (reason: string) => normalizeAnalysis({
+      scale_detected: { found: false },
+      dimensions: [],
+      rooms: [],
+      elements: [],
+      walls: [],
+      exterior_elements: [],
+      reading_quality: {
+        overall_confidence: 0,
+        image_quality: "baixa",
+        text_legibility: "baixa",
+        dimensions_legibility: "baixa",
+        risk_level: "alto",
+        human_intervention_required: true,
+      },
+      limitations: [reason],
+      validation_questions: [],
+      summary: "",
+      review_required: true,
+    });
+
+    const controlledFailure = (
+      code: string,
+      message: string,
+      details: string,
+      retryable = true,
+    ) => {
+      console.warn(`[axia-plan-vision] controlled failure ${code}: ${details}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          analysis: emptyFallbackAnalysis(message),
+          error: { code, message, details, retryable },
+          fallback: {
+            review_required: true,
+            risk_level: "alto",
+            suggested_action: "Tente novamente, confirme a calibração ou use uma imagem/PDF com melhor qualidade.",
+          },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    };
+
+    const hasMinimumFields = (a: any) => {
+      if (!a || typeof a !== "object") return false;
+      const hasArrays =
+        Array.isArray(a.rooms) || Array.isArray(a.elements) ||
+        Array.isArray(a.walls) || Array.isArray(a.dimensions);
+      const hasMeta = !!a.reading_quality || !!a.scale_detected || typeof a.summary === "string";
+      return hasArrays || hasMeta;
+    };
+
     const HARD_DEADLINE_MS = 135_000; // deixa folga para 150s da edge runtime
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
@@ -456,12 +508,13 @@ REGRAS CRÍTICAS:
       }
       // 599 = timeout/abort/fetch_failed interno → tentar fallback Pro abaixo
       if (resp.status !== 599) {
-        const errText = await resp.text();
+        const errText = await resp.text().catch(() => "");
         console.error("AI gateway error:", resp.status, errText);
-        return new Response(JSON.stringify({ error: "AI error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return controlledFailure(
+          "AI_GATEWAY_ERROR",
+          "A Axia não conseguiu contactar o motor de IA.",
+          `Gateway respondeu ${resp.status}.`,
+        );
       }
     }
 
@@ -505,14 +558,12 @@ REGRAS CRÍTICAS:
           analysis = parseJsonWithRepair(rawArgs);
           console.warn("Recovered partial JSON via repair (truncated output).");
         } catch (e2) {
-          return new Response(
-            JSON.stringify({
-              error:
-                finishReason === "length"
-                  ? "Análise truncada (planta muito densa). Tente processar uma página de cada vez."
-                  : "Resposta inválida do motor de IA. Tente novamente.",
-            }),
-            { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          return controlledFailure(
+            "AI_STRUCTURED_OUTPUT_TRUNCATED",
+            finishReason === "length"
+              ? "Análise truncada (planta muito densa)."
+              : "Resposta inválida do motor de IA.",
+            `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`,
           );
         }
       }
@@ -545,20 +596,28 @@ REGRAS CRÍTICAS:
       }
 
       if (!analysis) {
-        return new Response(
-          JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        return controlledFailure(
+          "AI_STRUCTURED_OUTPUT_MISSING",
+          "A Axia não conseguiu devolver uma análise estruturada desta planta.",
+          "O modelo respondeu, mas não no formato esperado.",
         );
       }
+    }
+
+    if (!hasMinimumFields(analysis)) {
+      return controlledFailure(
+        "AI_STRUCTURED_OUTPUT_INVALID",
+        "A Axia não conseguiu devolver uma análise estruturada desta planta.",
+        "Resposta sem campos mínimos (rooms/elements/walls/dimensions/reading_quality).",
+      );
     }
 
     analysis = normalizeAnalysis(analysis);
 
     // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
-    // (evita contar duas faces paralelas como duas paredes distintas)
     if (analysis && Array.isArray(analysis.walls)) {
       const seen = new Map<string, any>();
-      const PROX = 0.02; // 2% da folha = ~espessura de parede em coords normalizadas
+      const PROX = 0.02;
       let removed = 0;
       for (const w of analysis.walls) {
         const b = w.bbox;
@@ -566,7 +625,6 @@ REGRAS CRÍTICAS:
         const cy = b ? (b.y_min + b.y_max) / 2 : -1;
         const ori = w.orientacao ?? "indef";
         const comp = (w.compartimento_associado ?? "").toLowerCase().trim();
-        // chave grosseira (compartimento + orientação + centroide arredondado)
         const key = `${comp}|${ori}|${Math.round(cx / PROX)}|${Math.round(cy / PROX)}`;
         if (seen.has(key)) {
           removed++;
@@ -589,7 +647,6 @@ REGRAS CRÍTICAS:
       suggestion_payload: { analysis },
     });
 
-    // Log estruturado de chamada (Fase 7)
     await supabase.from("axia_call_logs").insert({
       user_id: userId,
       call_type: callType,
@@ -602,15 +659,29 @@ REGRAS CRÍTICAS:
       error_message: logErrorMessage,
     } as any).then(() => {}, (e) => console.warn("axia_call_logs insert failed:", e?.message));
 
-    return new Response(JSON.stringify({ analysis }), {
+    return new Response(JSON.stringify({ success: true, analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-plan-vision error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        analysis: null,
+        error: {
+          code: "AI_UNEXPECTED_ERROR",
+          message: "Ocorreu um erro inesperado ao analisar a planta.",
+          details: msg,
+          retryable: true,
+        },
+        fallback: {
+          review_required: true,
+          risk_level: "alto",
+          suggested_action: "Tente novamente em instantes.",
+        },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
   }
 });
