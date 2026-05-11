@@ -508,12 +508,13 @@ REGRAS CRÍTICAS:
       }
       // 599 = timeout/abort/fetch_failed interno → tentar fallback Pro abaixo
       if (resp.status !== 599) {
-        const errText = await resp.text();
+        const errText = await resp.text().catch(() => "");
         console.error("AI gateway error:", resp.status, errText);
-        return new Response(JSON.stringify({ error: "AI error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return controlledFailure(
+          "AI_GATEWAY_ERROR",
+          "A Axia não conseguiu contactar o motor de IA.",
+          `Gateway respondeu ${resp.status}.`,
+        );
       }
     }
 
