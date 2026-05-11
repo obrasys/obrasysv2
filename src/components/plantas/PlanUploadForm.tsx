@@ -107,25 +107,46 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
           </div>
         )}
 
-        {/* Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Disciplina</Label>
-            <Select value={disciplina} onValueChange={(v) => setDisciplina(v as PlanDisciplina)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DISCIPLINA_OPTIONS.map((d) => (
-                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Disciplina — escolha destacada */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Tipo de planta</Label>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Escolha a disciplina para a Axia analisar apenas o que importa.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {DISCIPLINE_LIST.map((d) => {
+              const Icon = d.icon;
+              const active = disciplina === d.value;
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setDisciplina(d.value)}
+                  className={cn(
+                    "flex flex-col items-start gap-1 p-3 border rounded-xl text-left transition-all",
+                    active
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40 hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4", active ? "text-primary" : "text-muted-foreground")} />
+                  <span className={cn("text-xs font-medium", active ? "text-primary" : "text-foreground")}>
+                    {d.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <div className="space-y-2">
-            <Label>Data da Planta</Label>
-            <Input type="date" value={dataPlanta} onChange={(e) => setDataPlanta(e.target.value)} />
-          </div>
+          {activeMeta && (
+            <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-md px-2 py-1.5 mt-1">
+              <strong className="text-foreground">{activeMeta.label}:</strong> {activeMeta.description}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Data da Planta (opcional)</Label>
+          <Input type="date" value={dataPlanta} onChange={(e) => setDataPlanta(e.target.value)} />
         </div>
 
         <div className="space-y-2">
