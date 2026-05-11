@@ -896,7 +896,7 @@ export default function PlanDetail() {
         )}
 
         {/* Axia analysis tables — per-room breakdown + global totals (prominent, above main content) */}
-        {(() => {
+        {scope.showArchitectureTables && (() => {
           const t = planRoomAnalysis.totals;
           const hasGlobalData =
             (t?.floor_area_m2_total ?? 0) > 0 ||
