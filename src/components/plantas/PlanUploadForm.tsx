@@ -162,7 +162,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={!file || isUploading}>
+          <Button onClick={handleSubmit} disabled={!file || !disciplina || isUploading}>
             {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
             Importar
           </Button>
