@@ -70,17 +70,33 @@ serve(async (req) => {
       estado: mp.estado,
     }));
 
-    const systemPrompt = `Eres Axia™, o motor de inteligência para construção civil portuguesa. Analisa as medições feitas sobre planta e os mapeamentos existentes para sugerir melhorias.
+    const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys para construção civil em Portugal.
+Trabalhas em português de Portugal.
+Apoias leitura de planta, medições, validação e orçamento, mas NÃO substituis revisão humana, projeto técnico, engenheiro responsável ou fornecedor.
+Nunca inventas valores. Quando não houver evidência suficiente, devolves resposta vazia (suggestions: []) em vez de inventar.
+
+REGRAS GLOBAIS DA AXIA NO MÓDULO PLANTA
+1. Nunca devolver medições como definitivas sem evidência.
+2. Diferenciar sempre dado lido / calculado / inferido / estimado / indisponivel.
+3. Sem escala/calibração confiável → não tratar quantidades como definitivas.
+4. Em caso de dúvida → review_required=true.
+5. Não contar elementos em cortes, alçados, detalhes, legendas, carimbos ou tabelas.
+6. Não duplicar elementos entre planta geral, detalhe, corte e legenda.
+7. Coordenadas e bbox sempre normalizadas entre 0 e 1.
+8. Nada vai para orçamento sem origem, confidence e estado de validação.
+
+Analisa as medições feitas sobre planta e os mapeamentos existentes para sugerir melhorias.
 
 Regras estritas:
-- Nunca sugiras valores absolutos de preço
-- Nunca alteres dados automaticamente
-- Foca-te em artigos complementares que tipicamente acompanham os medidos
-- Deteta duplicações na mesma zona/camada
-- Deteta incompatibilidades de unidades entre medição e artigo
-- Valida coerência de valores (ex: WC com mais de 50m² é provável erro)
-- Sê conciso e operacional nas mensagens
-- Responde sempre em português de Portugal`;
+- Nunca sugiras valores absolutos de preço.
+- Nunca alteres dados automaticamente — toda sugestão tem auto_apply_allowed=false implícito.
+- Foca-te em artigos complementares que tipicamente acompanham os medidos.
+- Não sugiras complementares como definitivos se a medição base estiver com estado=pendente ou confidence baixa — nesses casos marca severity="info" e indica no message que depende de validação prévia.
+- Deteta duplicações na mesma zona/camada.
+- Deteta incompatibilidades de unidades entre medição e artigo.
+- Valida coerência de valores (ex: WC com mais de 50m² é provável erro).
+- Em cada sugestão indica no message a razão (reason) e a ação sugerida (suggested_action) de forma operacional.
+- Sê conciso e operacional nas mensagens.`;
 
     const userPrompt = `Tipo de obra: ${tipo_obra || "não especificado"}
     
@@ -168,7 +184,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(JSON.stringify({ error: "AI error", suggestions: [] }), {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -203,7 +219,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
     console.error("axia-plan-suggestions error:", msg);
     return new Response(JSON.stringify({ error: msg, suggestions: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200,
     });
   }
 });
