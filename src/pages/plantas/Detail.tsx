@@ -893,26 +893,42 @@ export default function PlanDetail() {
         )}
 
         {/* Axia analysis tables — per-room breakdown + global totals (prominent, above main content) */}
-        {planRoomAnalysis.perRoom.length > 0 && (
-          <div className="space-y-4">
-            <PlanAnalysisParametersCard
-              ceilingHeightM={analysisParams.ceilingHeightM}
-              doorHeightM={analysisParams.doorHeightM}
-              onChange={setAnalysisParams}
-            />
-            <PlanRoomBreakdownTable
-              rows={planRoomAnalysis.perRoom}
-              onRename={async (id, newName) => {
-                if (id.startsWith("axia-")) {
-                  toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
-                  return;
-                }
-                await updateRoom.mutateAsync({ id, nome: newName });
-              }}
-            />
-            <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
-          </div>
-        )}
+        {(() => {
+          const t = planRoomAnalysis.totals;
+          const hasGlobalData =
+            (t?.floor_area_m2_total ?? 0) > 0 ||
+            (t?.baseboard_m_total ?? 0) > 0 ||
+            (t?.interior_walls_m2_total ?? 0) > 0 ||
+            (t?.exterior_walls_m2_estimate ?? 0) > 0 ||
+            (t?.doors_qtd_total ?? 0) > 0 ||
+            (t?.windows_qtd_total ?? 0) > 0 ||
+            (t?.doorsByDim?.length ?? 0) > 0 ||
+            (t?.windowsByDim?.length ?? 0) > 0;
+          const hasPerRoom = planRoomAnalysis.perRoom.length > 0;
+          if (!hasGlobalData && !hasPerRoom) return null;
+          return (
+            <div className="space-y-4">
+              <PlanAnalysisParametersCard
+                ceilingHeightM={analysisParams.ceilingHeightM}
+                doorHeightM={analysisParams.doorHeightM}
+                onChange={setAnalysisParams}
+              />
+              {hasPerRoom && (
+                <PlanRoomBreakdownTable
+                  rows={planRoomAnalysis.perRoom}
+                  onRename={async (id, newName) => {
+                    if (id.startsWith("axia-")) {
+                      toast.info("Para renomear, primeiro converta a análise da Axia em compartimentos.");
+                      return;
+                    }
+                    await updateRoom.mutateAsync({ id, nome: newName });
+                  }}
+                />
+              )}
+              <PlanGlobalQuantityTable totals={planRoomAnalysis.totals} />
+            </div>
+          );
+        })()}
 
         {/* Main content */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
