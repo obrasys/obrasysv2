@@ -220,6 +220,8 @@ export default function PlanQuantitativos() {
               mappings={mappings}
               articles={articles}
               tipoBase={tipoBase}
+              disciplina={(plan as any).disciplina}
+              autoOpen={autoOpenBudget}
             />
           </div>
         </div>
