@@ -832,9 +832,28 @@ export default function PlanDetail() {
               )}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
-            <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
-          </Button>
+          <div className="flex items-center gap-2">
+            {!scope.showArchitectureTables && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                >
+                  <Table2 className="w-4 h-4 mr-1.5" /> Quantitativos
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos?openBudget=1`)}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Orçamentar
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
+              <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
+            </Button>
+          </div>
         </div>
 
         {/* Unified workflow bar (stepper + guide + toolbar + active hint) */}
