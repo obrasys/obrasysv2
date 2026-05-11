@@ -424,8 +424,10 @@ REGRAS CRÍTICAS:
                 ],
                 tool_choice: { type: "function", function: { name: "plan_analysis" } },
               }),
-        }),
-      });
+        });
+      } finally {
+        clearTimeout(timer);
+      }
     };
 
     let resp = await callAI("google/gemini-2.5-flash");
