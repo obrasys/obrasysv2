@@ -210,6 +210,58 @@ REGRAS CRÍTICAS:
       summary: typeof analysis?.summary === "string" ? analysis.summary : "",
     });
 
+    const emptyFallbackAnalysis = (reason: string) => normalizeAnalysis({
+      scale_detected: { found: false },
+      dimensions: [],
+      rooms: [],
+      elements: [],
+      walls: [],
+      exterior_elements: [],
+      reading_quality: {
+        overall_confidence: 0,
+        image_quality: "baixa",
+        text_legibility: "baixa",
+        dimensions_legibility: "baixa",
+        risk_level: "alto",
+        human_intervention_required: true,
+      },
+      limitations: [reason],
+      validation_questions: [],
+      summary: "",
+      review_required: true,
+    });
+
+    const controlledFailure = (
+      code: string,
+      message: string,
+      details: string,
+      retryable = true,
+    ) => {
+      console.warn(`[axia-plan-vision] controlled failure ${code}: ${details}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          analysis: emptyFallbackAnalysis(message),
+          error: { code, message, details, retryable },
+          fallback: {
+            review_required: true,
+            risk_level: "alto",
+            suggested_action: "Tente novamente, confirme a calibração ou use uma imagem/PDF com melhor qualidade.",
+          },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    };
+
+    const hasMinimumFields = (a: any) => {
+      if (!a || typeof a !== "object") return false;
+      const hasArrays =
+        Array.isArray(a.rooms) || Array.isArray(a.elements) ||
+        Array.isArray(a.walls) || Array.isArray(a.dimensions);
+      const hasMeta = !!a.reading_quality || !!a.scale_detected || typeof a.summary === "string";
+      return hasArrays || hasMeta;
+    };
+
     const HARD_DEADLINE_MS = 135_000; // deixa folga para 150s da edge runtime
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
