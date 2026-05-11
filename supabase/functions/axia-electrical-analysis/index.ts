@@ -272,15 +272,18 @@ Para cada elemento identificado, sugere materiais necessários (cabo, tubo, caix
       }
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
-      return new Response(JSON.stringify({ error: "AI error" }), {
-        status: 500,
+      return new Response(JSON.stringify({
+        analysis: emptyElectricalAnalysis("Falha do motor de IA — resposta indisponível."),
+        error: { code: "ai_error", message: "AI error", details: errText.slice(0, 500) },
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const aiData = await resp.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    let analysis = null;
+    let analysis: any = null;
 
     if (toolCall) {
       try {
@@ -290,15 +293,22 @@ Para cada elemento identificado, sugere materiais necessários (cabo, tubo, caix
       }
     }
 
+    if (!analysis) {
+      analysis = emptyElectricalAnalysis("A IA não devolveu análise estruturada.");
+    }
+
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-electrical-analysis error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({
+      analysis: emptyElectricalAnalysis(msg),
+      error: { code: "runtime_error", message: msg },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200,
     });
   }
 });
