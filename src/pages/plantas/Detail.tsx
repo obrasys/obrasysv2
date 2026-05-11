@@ -1201,8 +1201,8 @@ export default function PlanDetail() {
               </Tabs>
             )}
 
-            {/* Electrical Analysis */}
-            {effectiveStep === "analyze" && (
+            {/* Electrical Analysis — sempre disponível, independentemente do passo */}
+            {effectiveImageUrl && (
               <PlanElectricalAnalysis
                 imageDataUrl={effectiveImageUrl}
                 calibration={calibration ? {
