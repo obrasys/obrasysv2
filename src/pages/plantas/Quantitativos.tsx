@@ -31,6 +31,8 @@ import { toast } from "sonner";
 export default function PlanQuantitativos() {
   const { id: obraId, planId } = useParams<{ id: string; planId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const autoOpenBudget = searchParams.get("openBudget") === "1";
 
   const { plans, isLoading: plansLoading } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
