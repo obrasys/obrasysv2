@@ -596,9 +596,10 @@ REGRAS CRÍTICAS:
       }
 
       if (!analysis) {
-        return new Response(
-          JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        return controlledFailure(
+          "AI_STRUCTURED_OUTPUT_MISSING",
+          "A Axia não conseguiu devolver uma análise estruturada desta planta.",
+          "O modelo respondeu, mas não no formato esperado.",
         );
       }
     }
