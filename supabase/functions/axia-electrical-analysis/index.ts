@@ -1,4 +1,9 @@
+// Axia – análise elétrica avançada com sub-classificação de folha,
+// regra anti-legenda, leitura de tabelas quantitativas e cross-validation.
+// Persiste símbolos em plan_placed_elements e circuitos em plan_electrical_circuits.
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,321 +11,460 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SHEET_SUBTYPES = [
+  "planta_instalacoes_eletricas",
+  "planta_iluminacao",
+  "planta_tomadas_alimentacoes",
+  "pontos_eletricos_cotados",
+  "diagrama_unifilar",
+  "tabela_cargas",
+  "quadro_distribuicao",
+  "detalhe_vista_eletrica",
+  "legenda_simbolos",
+  "outro",
+] as const;
+
+const SYMBOL_KEYS = [
+  "luz_teto", "luz_parede", "luz_pendente", "fluorescente", "led_neon",
+  "tomada_baixa", "tomada_media", "tomada_alta", "tomada_dupla", "tomada_trifasica",
+  "interruptor_simples", "interruptor_duplo", "interruptor_paralelo",
+  "quadro_distribuicao", "disjuntor",
+  "calha_tecnica", "eletroduto", "eletrocalha",
+  "motor_extracao", "ar_condicionado", "campainha", "sensor", "refletor",
+  "outro",
+] as const;
+
+const SHEETS_THAT_ALLOW_VISUAL_COUNT = new Set([
+  "planta_instalacoes_eletricas",
+  "planta_iluminacao",
+  "planta_tomadas_alimentacoes",
+  "pontos_eletricos_cotados",
+]);
+
+const SHEETS_THAT_BLOCK_VISUAL_COUNT = new Set([
+  "diagrama_unifilar",
+  "tabela_cargas",
+  "quadro_distribuicao",
+  "legenda_simbolos",
+  "detalhe_vista_eletrica",
+]);
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { image_base64, calibration_info, scale_text } = await req.json();
+    const authHeader = req.headers.get("Authorization");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseAnon, {
+      global: { headers: authHeader ? { Authorization: authHeader } : {} },
+    });
+
+    let userId: string | null = null;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims } = await supabase.auth.getClaims(token);
+      userId = (claims?.claims?.sub as string | undefined) ?? null;
+    }
+
+    const body = await req.json();
+    const {
+      image_base64,
+      calibration_info,
+      scale_text,
+      plan_import_id,
+      specialty_plan_id,
+      page_number,
+      persist = true,
+    } = body ?? {};
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const calibrationContext = calibration_info
-      ? `A planta está calibrada: ${calibration_info.real_distance} ${calibration_info.unidade} = ${calibration_info.pixels_per_meter.toFixed(1)} px/m.`
+      ? `Planta calibrada: ${calibration_info.real_distance} ${calibration_info.unidade ?? "m"} = ${calibration_info.pixels_per_meter?.toFixed?.(1) ?? "?"} px/m.`
       : scale_text
-        ? `Escala indicada: ${scale_text}. Usa esta escala para estimar distâncias.`
-        : "Planta NÃO calibrada. Tenta identificar a escala gráfica para estimar distâncias.";
+        ? `Escala indicada: ${scale_text}.`
+        : "Planta NÃO calibrada — deixa total_wire_length_m=0 e total_conduit_length_m=0.";
 
-    const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys para construção civil em Portugal.
-Trabalhas em português de Portugal.
-Apoias leitura de plantas de instalações elétricas, mas NÃO substituis projeto técnico, engenheiro responsável nem instalador certificado.
-Nunca inventas valores nem símbolos. Quando não houver evidência suficiente, devolves arrays vazios e marca review_required=true em recommendations.
+    const systemPrompt = `Tu és a Axia, motor de inteligência operacional do Obra Sys, em PT-PT.
+Analisas plantas e desenhos elétricos. NUNCA inventas dados. Sem evidência → confidence baixa e review_required=true.
 
-REGRAS GLOBAIS DA AXIA NO MÓDULO PLANTA
-1. Nunca devolver medições/contagens como definitivas sem evidência.
-2. Diferencia sempre dado lido vs estimado vs indisponível (regista no campo notes/label de cada item).
-3. Sem escala/calibração confiável → NÃO estimar comprimentos de cablagem ou conduta. Devolve total_wire_length_m=0, total_conduit_length_m=0 e marca recommendation type="warning" com mensagem "Sem escala — comprimentos não estimados".
-4. Em caso de dúvida → adiciona recommendation type="warning".
-5. Não contar símbolos em cortes, alçados, detalhes ou apenas presentes em legendas/carimbos.
-6. Não duplicar elementos entre planta geral, detalhe e legenda.
-7. Se houver legenda elétrica na folha, usa a legenda como prioridade absoluta para identificar símbolos — confidence>=0.85 só quando consta da legenda.
+ETAPA 1 — sheet_classification (OBRIGATÓRIA)
+Classifica o tipo de folha em "sheet_subtype" usando UMA destas chaves:
+- planta_instalacoes_eletricas: planta de implantação geral de instalações elétricas
+- planta_iluminacao: planta dedicada apenas a iluminação
+- planta_tomadas_alimentacoes: planta dedicada a tomadas e alimentações
+- pontos_eletricos_cotados: planta de pontos cotados em altura/posição
+- diagrama_unifilar: esquema unifilar de circuitos (NÃO é planta)
+- tabela_cargas: quadro/tabela de cargas elétricas
+- quadro_distribuicao: detalhe de quadro de distribuição
+- detalhe_vista_eletrica: detalhe técnico ou vista
+- legenda_simbolos: folha apenas com legenda/mapa de símbolos
+- outro
 
-A tua tarefa é analisar a imagem de uma planta elétrica e extrair um levantamento detalhado e CONSERVADOR dos elementos elétricos visíveis. Sê detalhado, mas NÃO inventes símbolos. Se um símbolo é ambíguo, não o contes ou marca-o com confidence baixa (<=0.5).
+ETAPA 2 — REGRAS DE EXTRAÇÃO POR TIPO DE FOLHA (CRÍTICO)
+- Em planta_instalacoes_eletricas, planta_iluminacao, planta_tomadas_alimentacoes, pontos_eletricos_cotados:
+  podes contar símbolos POSICIONADOS na planta como elementos reais da obra (placed_symbols).
+- Em diagrama_unifilar, tabela_cargas, quadro_distribuicao:
+  NÃO devolvas placed_symbols (deixa o array vazio). Preenche apenas circuits[] com circuito, quadro, tensão, potência, secção e disjuntor.
+- Em legenda_simbolos:
+  NÃO devolvas placed_symbols (vazio). Devolve apenas legend_map[] com {symbol_visual, symbol_key, meaning}.
+- Em detalhe_vista_eletrica:
+  NÃO contes símbolos. Devolve placed_symbols vazio.
 
-Separação obrigatória nas tuas respostas:
-- "symbols" deve conter apenas elementos confirmados ou de elevada certeza (confidence >= 0.7).
-- Elementos incertos vão em "symbols" com confidence <= 0.5 e label prefixado por "[incerto]".
-- Marcas que pareçam carimbo, legenda, anotação textual ou cota NÃO entram em "symbols".
+REGRA DURA: Não contar símbolos presentes em legendas, tabelas de cargas, diagramas unifilares ou vistas técnicas como pontos executáveis da planta, salvo confirmação explícita do utilizador.
 
-## Como identificar símbolos elétricos em plantas técnicas:
+ETAPA 3 — quantity_table_extraction
+Se a folha contiver uma TABELA QUANTITATIVA declarada (ex: "Tomadas Simples — 12 un", "Luminárias — 8 un", "Eletroduto aparente — 45 m"), extrai cada linha para declared_quantities[] com:
+{ symbol_key, label, quantity, unit, source_table_name?, data_source: "extracted_quantity_table" }
 
-### Símbolos comuns de instalações elétricas (normas portuguesas):
-- **Ponto de luz no teto**: Círculo com um "X" ou cruz dentro, ou círculo com ponto central
-- **Ponto de luz na parede (arandela)**: Meio-círculo ou semicírculo encostado a uma parede
-- **Ponto de luz pendente**: Círculo com linha a sair para baixo
-- **Iluminação fluorescente**: Retângulo estreito longo
-- **Iluminação LED (néon)**: Linha contínua com marcação especial
-- **Tomada simples (baixa h=0.35m)**: Semicírculo com dois traços, ou triângulo apontando para a parede
-- **Tomada a meia parede (h=1.10m)**: Mesmo símbolo da tomada com anotação de altura
-- **Tomada alta (h>1.40m)**: Mesmo símbolo com anotação de altura diferente
-- **Tomada dupla**: Símbolo de tomada duplicado ou com dois pontos
-- **Tomada trifásica**: Triângulo com 3 traços ou símbolo especial
-- **Interruptor simples**: Ponto com um traço curvo
-- **Interruptor duplo**: Ponto com dois traços curvos
-- **Interruptor paralelo (3 vias)**: Ponto com traço e símbolo de paralelo
-- **Quadro de distribuição (QD)**: Retângulo com divisões internas, geralmente rotulado "QD"
-- **Disjuntor**: Retângulo com "X" ou símbolo específico no quadro
-- **Calha técnica**: Linha dupla tracejada ao longo do teto
-- **Condutas/tubos**: Linhas contínuas ou tracejadas conectando elementos
-- **Motor de extração**: Símbolo de motor (M com círculo) ou ventilador
-- **Ar condicionado**: Retângulo com marcação AC ou símbolo específico
+ETAPA 4 — Cross-validation (visual_counts vs declared_quantities)
+- Para cada símbolo presente em ambos, calcula divergência relativa.
+- Se divergência > 10%, adiciona um item em "discrepancies": { symbol_key, visual_count, declared_count, message: "Há diferença entre a contagem visual e a tabela quantitativa da prancha. Confirme qual valor deseja usar." }
+- Marca review_required=true nesses casos.
 
-### Regras de contagem:
-- Conta CADA símbolo individualmente, mesmo que sejam iguais.
-- Diferencia entre tipos de tomadas pela altura indicada.
-- Identifica os circuitos pela numeração ou cores quando visíveis.
-- Só estima comprimento de cablagem/conduta se houver escala/calibração confiável; caso contrário deixa estimated_length_m=0 e indica em notes "[indisponivel — sem escala]".
+ETAPA 5 — Atributos elétricos por símbolo (quando aplicável)
+Para cada symbol em placed_symbols, devolve, quando legível:
+- installation_height: ex "h=0.35m", "h=1.10m", "h=1.40m"
+- circuit_number, distribution_board (ex "QD-01"), voltage, power_w, cable_section_mm2, breaker_rating_a
+- room_name (ex "Cozinha", "Salão", "Lavabo")
+- is_existing (true se marcado como existente)
+- technical_note
+- data_source: "visual_symbol_detection" | "extracted_quantity_table" | "electrical_diagram" | "load_schedule"
 
-${calibrationContext}
+ETAPA 6 — Materiais e cabos
+- Só estima total_wire_length_m / total_conduit_length_m se houver escala/calibração; caso contrário 0.
+- ${calibrationContext}
 
-### Materiais associados:
-Para cada elemento identificado, sugere materiais necessários (cabo, tubo, caixa de derivação, mecanismo, disjuntor, quadro). Se não houver evidência de quantidade/comprimento, devolve quantity=0 e marca a unidade com nota explicativa.`;
+DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
 
     const userContent = [
-      {
-        type: "text",
-        text: "Analisa esta planta de instalações elétricas. Identifica TODOS os símbolos elétricos, conta-os, mede os traçados de fios e gera o mapa completo de quantidades e materiais necessários. Se houver legenda ou tabela de cargas na planta, usa essa informação.",
-      },
-      {
-        type: "image_url",
-        image_url: {
-          url: `data:image/png;base64,${image_base64}`,
-        },
-      },
+      { type: "text", text: "Analisa esta folha elétrica seguindo as etapas e devolve a estrutura completa." },
+      { type: "image_url", image_url: { url: `data:image/png;base64,${image_base64}` } },
     ];
+
+    const toolSchema = {
+      type: "object",
+      properties: {
+        sheet_subtype: { type: "string", enum: [...SHEET_SUBTYPES] },
+        sheet_subtype_confidence: { type: "number" },
+        scale_detected: {
+          type: "object",
+          properties: { found: { type: "boolean" }, value: { type: "string" } },
+          required: ["found"], additionalProperties: false,
+        },
+        legend_found: { type: "boolean" },
+        placed_symbols: {
+          type: "array",
+          description: "Símbolos POSICIONADOS na planta (apenas em folhas tipo planta_*).",
+          items: {
+            type: "object",
+            properties: {
+              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              label: { type: "string" },
+              count: { type: "number", description: "Quantidade agrupada (ex: 5 tomadas iguais juntas) ou 1." },
+              x: { type: "number" }, y: { type: "number" },
+              installation_height: { type: "string" },
+              circuit_number: { type: "string" },
+              distribution_board: { type: "string" },
+              voltage: { type: "number" },
+              power_w: { type: "number" },
+              cable_section_mm2: { type: "number" },
+              breaker_rating_a: { type: "number" },
+              room_name: { type: "string" },
+              is_existing: { type: "boolean" },
+              technical_note: { type: "string" },
+              data_source: { type: "string", enum: ["visual_symbol_detection", "extracted_quantity_table", "electrical_diagram", "load_schedule"] },
+              confidence: { type: "number" },
+              review_required: { type: "boolean" },
+            },
+            required: ["symbol_key", "count", "confidence"],
+            additionalProperties: false,
+          },
+        },
+        declared_quantities: {
+          type: "array",
+          description: "Linhas de tabelas quantitativas declaradas na folha.",
+          items: {
+            type: "object",
+            properties: {
+              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              label: { type: "string" },
+              quantity: { type: "number" },
+              unit: { type: "string" },
+              source_table_name: { type: "string" },
+              data_source: { type: "string", enum: ["extracted_quantity_table"] },
+            },
+            required: ["symbol_key", "quantity", "unit"],
+            additionalProperties: false,
+          },
+        },
+        legend_map: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              symbol_visual: { type: "string" },
+              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              meaning: { type: "string" },
+            },
+            required: ["symbol_key", "meaning"],
+            additionalProperties: false,
+          },
+        },
+        circuits: {
+          type: "array",
+          description: "Apenas para diagrama_unifilar / tabela_cargas / quadro_distribuicao.",
+          items: {
+            type: "object",
+            properties: {
+              circuit_number: { type: "string" },
+              description: { type: "string" },
+              distribution_board: { type: "string" },
+              voltage: { type: "number" },
+              power_w: { type: "number" },
+              cable_section_mm2: { type: "number" },
+              breaker_rating_a: { type: "number" },
+              technical_note: { type: "string" },
+              data_source: { type: "string", enum: ["electrical_diagram", "load_schedule"] },
+            },
+            required: ["description"],
+            additionalProperties: false,
+          },
+        },
+        discrepancies: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              symbol_key: { type: "string" },
+              visual_count: { type: "number" },
+              declared_count: { type: "number" },
+              message: { type: "string" },
+            },
+            required: ["symbol_key", "visual_count", "declared_count", "message"],
+            additionalProperties: false,
+          },
+        },
+        total_wire_length_m: { type: "number" },
+        total_conduit_length_m: { type: "number" },
+        summary: { type: "string" },
+        recommendations: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["info", "warning", "alert"] },
+              message: { type: "string" },
+            },
+            required: ["type", "message"],
+            additionalProperties: false,
+          },
+        },
+        review_required: { type: "boolean" },
+      },
+      required: ["sheet_subtype", "scale_detected", "legend_found", "placed_symbols", "declared_quantities", "legend_map", "circuits", "discrepancies", "total_wire_length_m", "total_conduit_length_m", "summary", "recommendations", "review_required"],
+      additionalProperties: false,
+    };
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "electrical_plan_analysis",
-              description: "Return structured analysis of an electrical installation plan",
-              parameters: {
-                type: "object",
-                properties: {
-                  scale_detected: {
-                    type: "object",
-                    properties: {
-                      found: { type: "boolean" },
-                      value: { type: "string", description: "Ex: 1:50, 1:100" },
-                    },
-                    required: ["found"],
-                    additionalProperties: false,
-                  },
-                  legend_found: {
-                    type: "boolean",
-                    description: "Se foi encontrada uma legenda de símbolos na planta",
-                  },
-                  symbols: {
-                    type: "array",
-                    description: "Todos os tipos de símbolos elétricos identificados com contagem",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: {
-                          type: "string",
-                          enum: [
-                            "luz_teto", "luz_parede", "luz_pendente",
-                            "fluorescente", "led_neon",
-                            "tomada_baixa", "tomada_media", "tomada_alta",
-                            "tomada_dupla", "tomada_trifasica",
-                            "interruptor_simples", "interruptor_duplo", "interruptor_paralelo",
-                            "quadro_distribuicao", "disjuntor",
-                            "calha_tecnica", "motor_extracao",
-                            "ar_condicionado", "campainha", "sensor",
-                            "outro"
-                          ],
-                        },
-                        label: { type: "string", description: "Descrição legível do elemento" },
-                        count: { type: "number", description: "Quantidade total deste tipo na planta" },
-                        height_note: { type: "string", description: "Nota de altura se aplicável (ex: h=0.35m)" },
-                        circuit: { type: "string", description: "Circuito associado se identificável" },
-                        confidence: { type: "number", description: "Confiança 0-1" },
-                      },
-                      required: ["type", "label", "count", "confidence"],
-                      additionalProperties: false,
-                    },
-                  },
-                  circuits: {
-                    type: "array",
-                    description: "Circuitos elétricos identificados (da tabela de cargas ou do traçado)",
-                    items: {
-                      type: "object",
-                      properties: {
-                        number: { type: "string", description: "Número do circuito" },
-                        description: { type: "string", description: "Descrição (ex: Ilum. Sala, TUG)" },
-                        voltage: { type: "number", description: "Tensão em V" },
-                        power_w: { type: "number", description: "Potência em W" },
-                        wire_section_mm2: { type: "number", description: "Secção do fio em mm²" },
-                        breaker_a: { type: "number", description: "Disjuntor em A" },
-                        estimated_length_m: { type: "number", description: "Comprimento estimado do circuito em metros" },
-                      },
-                      required: ["number", "description"],
-                      additionalProperties: false,
-                    },
-                  },
-                  wire_runs: {
-                    type: "array",
-                    description: "Traçados de fios/condutas principais identificados com comprimento estimado",
-                    items: {
-                      type: "object",
-                      properties: {
-                        from: { type: "string", description: "Ponto de origem (ex: QD-01)" },
-                        to: { type: "string", description: "Ponto de destino (ex: Tomada cozinha)" },
-                        estimated_length_m: { type: "number", description: "Comprimento estimado em metros" },
-                        wire_type: { type: "string", description: "Tipo de cabo sugerido (ex: H07V-U 3x2.5mm²)" },
-                        conduit_diameter_mm: { type: "number", description: "Diâmetro da conduta em mm" },
-                      },
-                      required: ["from", "to", "estimated_length_m"],
-                      additionalProperties: false,
-                    },
-                  },
-                  materials_list: {
-                    type: "array",
-                    description: "Lista completa de materiais necessários para a instalação",
-                    items: {
-                      type: "object",
-                      properties: {
-                        category: {
-                          type: "string",
-                          enum: ["cablagem", "conduta", "mecanismo", "protecao", "iluminacao", "quadro", "acessorio", "outro"],
-                        },
-                        name: { type: "string", description: "Nome do material" },
-                        specification: { type: "string", description: "Especificação técnica (secção, diâmetro, etc.)" },
-                        quantity: { type: "number", description: "Quantidade necessária" },
-                        unit: { type: "string", description: "Unidade (un, m, ml, cx)" },
-                        notes: { type: "string", description: "Observações adicionais" },
-                      },
-                      required: ["category", "name", "quantity", "unit"],
-                      additionalProperties: false,
-                    },
-                  },
-                  total_wire_length_m: {
-                    type: "number",
-                    description: "Comprimento total estimado de cablagem em metros",
-                  },
-                  total_conduit_length_m: {
-                    type: "number",
-                    description: "Comprimento total estimado de condutas em metros",
-                  },
-                  summary: {
-                    type: "string",
-                    description: "Resumo executivo da análise da planta elétrica",
-                  },
-                  recommendations: {
-                    type: "array",
-                    description: "Recomendações técnicas ou alertas",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: { type: "string", enum: ["info", "warning", "alert"] },
-                        message: { type: "string" },
-                      },
-                      required: ["type", "message"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["scale_detected", "legend_found", "symbols", "circuits", "wire_runs", "materials_list", "total_wire_length_m", "total_conduit_length_m", "summary", "recommendations"],
-                additionalProperties: false,
-              },
-            },
+        tools: [{
+          type: "function",
+          function: {
+            name: "electrical_plan_analysis_v2",
+            description: "Análise estruturada de folha elétrica com sub-classificação e cross-validation.",
+            parameters: toolSchema,
           },
-        ],
-        tool_choice: { type: "function", function: { name: "electrical_plan_analysis" } },
+        }],
+        tool_choice: { type: "function", function: { name: "electrical_plan_analysis_v2" } },
       }),
     });
 
     if (!resp.ok) {
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (resp.status === 402) {
         return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(JSON.stringify({
-        analysis: emptyElectricalAnalysis("Falha do motor de IA — resposta indisponível."),
+        analysis: emptyAnalysis("Falha do motor de IA — resposta indisponível."),
         error: { code: "ai_error", message: "AI error", details: errText.slice(0, 500) },
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const aiData = await resp.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     let analysis: any = null;
-
     if (toolCall) {
-      try {
-        analysis = JSON.parse(toolCall.function.arguments);
-      } catch (e) {
-        console.error("Failed to parse AI response:", e);
+      try { analysis = JSON.parse(toolCall.function.arguments); }
+      catch (e) { console.error("Failed to parse AI response:", e); }
+    }
+    if (!analysis) analysis = emptyAnalysis("A IA não devolveu análise estruturada.");
+
+    // Aplicar regras de bloqueio em folhas que não permitem contagem visual
+    const subtype = analysis.sheet_subtype || "outro";
+    if (SHEETS_THAT_BLOCK_VISUAL_COUNT.has(subtype)) {
+      if (Array.isArray(analysis.placed_symbols) && analysis.placed_symbols.length > 0) {
+        analysis.recommendations ||= [];
+        analysis.recommendations.push({
+          type: "warning",
+          message: `Esta folha foi classificada como "${subtype}" — símbolos visuais foram descartados. Não devem ser contados como elementos da obra.`,
+        });
+        analysis.placed_symbols = [];
       }
     }
 
-    if (!analysis) {
-      analysis = emptyElectricalAnalysis("A IA não devolveu análise estruturada.");
+    // Persistência
+    let persisted = { placed_elements: 0, circuits: 0 };
+    if (persist && userId && (plan_import_id || specialty_plan_id)) {
+      // 1) Símbolos colocados → plan_placed_elements (apenas se plan_import_id)
+      if (plan_import_id && Array.isArray(analysis.placed_symbols) && analysis.placed_symbols.length > 0) {
+        const rows: any[] = [];
+        for (const s of analysis.placed_symbols) {
+          const count = Math.max(1, Math.round(Number(s.count) || 1));
+          // Cada "count" expandido para uma linha separada simplifica os quantitativos.
+          for (let i = 0; i < count; i++) {
+            rows.push({
+              plan_import_id,
+              user_id: userId,
+              symbol_type_id: s.symbol_key ?? "outro",
+              category: "eletrica",
+              subcategory: s.symbol_key ?? null,
+              x: typeof s.x === "number" ? s.x : 0,
+              y: typeof s.y === "number" ? s.y : 0,
+              quantity: 1,
+              note: s.label ?? null,
+              environment: s.room_name ?? null,
+              origin: "axia",
+              installation_height: s.installation_height ?? null,
+              circuit_number: s.circuit_number ?? null,
+              distribution_board: s.distribution_board ?? null,
+              voltage: s.voltage ?? null,
+              power_w: s.power_w ?? null,
+              cable_section_mm2: s.cable_section_mm2 ?? null,
+              breaker_rating_a: s.breaker_rating_a ?? null,
+              is_existing: !!s.is_existing,
+              room_name: s.room_name ?? null,
+              technical_note: s.technical_note ?? null,
+              data_source: s.data_source ?? "visual_symbol_detection",
+              sheet_subtype: subtype,
+              review_required: !!s.review_required || (typeof s.confidence === "number" && s.confidence < 0.6),
+            });
+          }
+        }
+        if (rows.length > 0) {
+          const { error, count } = await supabase
+            .from("plan_placed_elements")
+            .insert(rows, { count: "exact" });
+          if (error) console.error("insert placed_elements failed", error);
+          else persisted.placed_elements = count ?? rows.length;
+        }
+      }
+
+      // 2) Linhas de tabela quantitativa declarada → plan_placed_elements (data_source=extracted_quantity_table)
+      if (plan_import_id && Array.isArray(analysis.declared_quantities) && analysis.declared_quantities.length > 0) {
+        const rows: any[] = [];
+        for (const d of analysis.declared_quantities) {
+          const qty = Math.max(0, Math.round(Number(d.quantity) || 0));
+          if (qty === 0) continue;
+          rows.push({
+            plan_import_id,
+            user_id: userId,
+            symbol_type_id: d.symbol_key ?? "outro",
+            category: "eletrica",
+            subcategory: d.symbol_key ?? null,
+            x: 0, y: 0,
+            quantity: qty,
+            note: d.label ?? d.source_table_name ?? "Tabela quantitativa",
+            origin: "axia",
+            data_source: "extracted_quantity_table",
+            sheet_subtype: subtype,
+            review_required: false,
+          });
+        }
+        if (rows.length > 0) {
+          const { error, count } = await supabase
+            .from("plan_placed_elements")
+            .insert(rows, { count: "exact" });
+          if (error) console.error("insert declared_quantities failed", error);
+          else persisted.placed_elements += count ?? rows.length;
+        }
+      }
+
+      // 3) Circuitos elétricos
+      if (Array.isArray(analysis.circuits) && analysis.circuits.length > 0) {
+        const rows = analysis.circuits.map((c: any) => ({
+          plan_import_id: plan_import_id ?? null,
+          specialty_plan_id: specialty_plan_id ?? null,
+          user_id: userId,
+          circuit_number: c.circuit_number ?? null,
+          description: c.description ?? null,
+          distribution_board: c.distribution_board ?? null,
+          voltage: c.voltage ?? null,
+          power_w: c.power_w ?? null,
+          cable_section_mm2: c.cable_section_mm2 ?? null,
+          breaker_rating_a: c.breaker_rating_a ?? null,
+          source_sheet_subtype: subtype,
+          data_source: c.data_source ?? "electrical_diagram",
+          technical_note: c.technical_note ?? null,
+        }));
+        const { error, count } = await supabase
+          .from("plan_electrical_circuits")
+          .insert(rows, { count: "exact" });
+        if (error) console.error("insert circuits failed", error);
+        else persisted.circuits = count ?? rows.length;
+      }
     }
 
-    return new Response(JSON.stringify({ analysis }), {
+    return new Response(JSON.stringify({ analysis, persisted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-electrical-analysis error:", msg);
     return new Response(JSON.stringify({
-      analysis: emptyElectricalAnalysis(msg),
+      analysis: emptyAnalysis(msg),
       error: { code: "runtime_error", message: msg },
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
   }
 });
 
-function emptyElectricalAnalysis(reason: string) {
+function emptyAnalysis(reason: string) {
   return {
+    sheet_subtype: "outro",
     scale_detected: { found: false },
     legend_found: false,
-    symbols: [],
+    placed_symbols: [],
+    declared_quantities: [],
+    legend_map: [],
     circuits: [],
-    wire_runs: [],
-    materials_list: [],
+    discrepancies: [],
     total_wire_length_m: 0,
     total_conduit_length_m: 0,
     summary: "",
