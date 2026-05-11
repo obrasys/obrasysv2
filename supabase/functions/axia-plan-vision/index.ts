@@ -447,6 +447,7 @@ REGRAS CRÍTICAS:
     let choice = aiData.choices?.[0];
     let finishReason = choice?.finish_reason;
     let toolCall = choice?.message?.tool_calls?.[0];
+    let messageText = extractTextContent(choice?.message?.content);
 
     // Retry com modelo mais robusto se a Flash falhou (finish_reason=error ou sem tool_call)
     if ((!toolCall || finishReason === "error") && !usedFallback) {
@@ -458,6 +459,7 @@ REGRAS CRÍTICAS:
         choice = aiData.choices?.[0];
         finishReason = choice?.finish_reason;
         toolCall = choice?.message?.tool_calls?.[0];
+        messageText = extractTextContent(choice?.message?.content);
       }
     }
 
@@ -466,7 +468,7 @@ REGRAS CRÍTICAS:
     if (toolCall) {
       const rawArgs: string = toolCall.function?.arguments ?? "";
       try {
-        analysis = JSON.parse(rawArgs);
+        analysis = parseJsonWithRepair(rawArgs);
       } catch (e) {
         console.error(
           "Failed to parse AI tool args. finish_reason=",
@@ -478,22 +480,7 @@ REGRAS CRÍTICAS:
         );
         // Attempt repair: balance unclosed braces/brackets caused by truncation
         try {
-          let s = rawArgs.trim().replace(/,\s*$/, "");
-          const stack: string[] = [];
-          let inStr = false;
-          let esc = false;
-          for (const c of s) {
-            if (esc) { esc = false; continue; }
-            if (c === "\\") { esc = true; continue; }
-            if (c === '"') { inStr = !inStr; continue; }
-            if (inStr) continue;
-            if (c === "{") stack.push("}");
-            else if (c === "[") stack.push("]");
-            else if (c === "}" || c === "]") stack.pop();
-          }
-          if (inStr) s += '"';
-          while (stack.length) s += stack.pop();
-          analysis = JSON.parse(s);
+          analysis = parseJsonWithRepair(rawArgs);
           console.warn("Recovered partial JSON via repair (truncated output).");
         } catch (e2) {
           return new Response(
@@ -508,12 +495,42 @@ REGRAS CRÍTICAS:
         }
       }
     } else {
-      console.error("No tool_call in AI response. finish_reason=", finishReason);
-      return new Response(
-        JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      console.error("No tool_call in AI response. finish_reason=", finishReason, "messageTextLen=", messageText.length);
+      if (messageText) {
+        try {
+          analysis = parseJsonWithRepair(messageText);
+          console.warn("Recovered analysis from plain JSON message content.");
+        } catch {
+          console.warn("Plain JSON recovery failed. Retrying with json_object response format.");
+        }
+      }
+
+      if (!analysis) {
+        const jsonResp = await callAI("google/gemini-2.5-pro", "json");
+        if (jsonResp.ok) {
+          const jsonData = await jsonResp.json();
+          const jsonChoice = jsonData.choices?.[0];
+          const jsonText = extractTextContent(jsonChoice?.message?.content);
+          try {
+            analysis = parseJsonWithRepair(jsonText);
+            finishReason = jsonChoice?.finish_reason ?? finishReason;
+          } catch (jsonErr) {
+            console.error("JSON fallback parse failed:", jsonErr instanceof Error ? jsonErr.message : String(jsonErr));
+          }
+        } else {
+          console.error("JSON fallback request failed with status", jsonResp.status);
+        }
+      }
+
+      if (!analysis) {
+        return new Response(
+          JSON.stringify({ error: "Motor de IA não devolveu análise estruturada." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
+
+    analysis = normalizeAnalysis(analysis);
 
     // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
     // (evita contar duas faces paralelas como duas paredes distintas)
