@@ -210,10 +210,19 @@ REGRAS CRÍTICAS:
       summary: typeof analysis?.summary === "string" ? analysis.summary : "",
     });
 
-    const callAI = async (modelName: string, mode: "tool" | "json" = "tool") => {
+    const HARD_DEADLINE_MS = 135_000; // deixa folga para 150s da edge runtime
+    const deadline = startedAt + HARD_DEADLINE_MS;
+    const remainingMs = () => deadline - Date.now();
+
+    const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
-      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const ctrl = new AbortController();
+      const budget = Math.min(timeoutMs, Math.max(5_000, remainingMs() - 2_000));
+      const timer = setTimeout(() => ctrl.abort(), budget);
+      try {
+        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
+        signal: ctrl.signal,
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
