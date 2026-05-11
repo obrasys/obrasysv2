@@ -15,6 +15,7 @@ import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measu
 import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { buildDedupePayload } from "@/lib/plan-dedupe";
+import { DISCIPLINE_META } from "@/lib/plan-discipline";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
