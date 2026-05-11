@@ -235,12 +235,20 @@ export function PlanAIAnalysis({
         body: { image_base64: base64, calibration_info: calibration, plan_import_id: planImportId, page_number: currentPage },
       });
 
-      if (error) throw error;
-      if (data?.error && typeof data.error === "string") {
-        if (data.error === "Rate limit exceeded") toast.error("Limite de pedidos atingido. Tente novamente em breve.");
-        else if (data.error === "Credits exhausted") toast.error("Créditos de IA esgotados.");
-        else throw new Error(data.error);
-        return;
+      if (error) {
+        // Quando a edge devolve non-2xx, supabase-js entrega o body em `data` na mesma.
+        // Se houver um analysis fallback, não queremos rebentar — seguimos para o fluxo controlado.
+        if (!data?.analysis && !data?.error) {
+          const msg = (error as any)?.message || (typeof error === "string" ? error : "Falha na comunicação com a Axia");
+          throw new Error(msg);
+        }
+      }
+      if (data?.error) {
+        const errStr = typeof data.error === "string" ? data.error : (data.error?.message || data.error?.code || "");
+        if (errStr === "Rate limit exceeded") { toast.error("Limite de pedidos atingido. Tente novamente em breve."); return; }
+        if (errStr === "Credits exhausted") { toast.error("Créditos de IA esgotados."); return; }
+        // Se não há analysis de fallback, é erro terminal; caso contrário, segue para o ramo success:false.
+        if (!data?.analysis && typeof data.error === "string") { throw new Error(errStr); }
       }
 
       const normalize = (a: PlanAnalysisResult): PlanAnalysisResult => ({
@@ -274,7 +282,10 @@ export function PlanAIAnalysis({
       }
     } catch (err: any) {
       console.error("AI analysis error:", err);
-      toast.error("Erro na análise: " + (err.message || "erro desconhecido"));
+      const msg = err?.message && err.message !== "[object Object]"
+        ? err.message
+        : (typeof err === "string" ? err : (err?.error?.message || err?.code || "erro desconhecido"));
+      toast.error("Erro na análise: " + msg);
     } finally {
       setIsAnalyzing(false);
     }
