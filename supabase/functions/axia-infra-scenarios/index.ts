@@ -169,8 +169,8 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-infra-scenarios error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
+    return new Response(JSON.stringify({ scenarios: [], error: msg, review_required: true }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
