@@ -220,6 +220,9 @@ REGRAS CRÍTICAS:
       const budget = Math.min(timeoutMs, Math.max(5_000, remainingMs() - 2_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
+        if (remainingMs() < 5_000) {
+          return new Response(JSON.stringify({ error: "deadline" }), { status: 599 });
+        }
         return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         signal: ctrl.signal,
