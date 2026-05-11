@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Image, X, Loader2 } from "lucide-react";
-import { DISCIPLINA_OPTIONS, type PlanDisciplina } from "@/types/plan-measurements";
+import { type PlanDisciplina } from "@/types/plan-measurements";
+import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
+import { cn } from "@/lib/utils";
 
 interface PlanUploadFormProps {
   obraId: string;
@@ -24,9 +25,10 @@ interface PlanUploadFormProps {
 
 export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [disciplina, setDisciplina] = useState<PlanDisciplina>("arquitetura");
+  const [disciplina, setDisciplina] = useState<PlanDisciplina | null>(null);
   const [dataPlanta, setDataPlanta] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const activeMeta = disciplina ? DISCIPLINE_META[disciplina] : null;
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -60,7 +62,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
   });
 
   const handleSubmit = async () => {
-    if (!file) return;
+    if (!file || !disciplina) return;
     await onUpload({ file, obraId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
   };
 
@@ -105,25 +107,46 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
           </div>
         )}
 
-        {/* Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Disciplina</Label>
-            <Select value={disciplina} onValueChange={(v) => setDisciplina(v as PlanDisciplina)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DISCIPLINA_OPTIONS.map((d) => (
-                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Disciplina — escolha destacada */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Tipo de planta</Label>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Escolha a disciplina para a Axia analisar apenas o que importa.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {DISCIPLINE_LIST.map((d) => {
+              const Icon = d.icon;
+              const active = disciplina === d.value;
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setDisciplina(d.value)}
+                  className={cn(
+                    "flex flex-col items-start gap-1 p-3 border rounded-xl text-left transition-all",
+                    active
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40 hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4", active ? "text-primary" : "text-muted-foreground")} />
+                  <span className={cn("text-xs font-medium", active ? "text-primary" : "text-foreground")}>
+                    {d.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <div className="space-y-2">
-            <Label>Data da Planta</Label>
-            <Input type="date" value={dataPlanta} onChange={(e) => setDataPlanta(e.target.value)} />
-          </div>
+          {activeMeta && (
+            <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-md px-2 py-1.5 mt-1">
+              <strong className="text-foreground">{activeMeta.label}:</strong> {activeMeta.description}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Data da Planta (opcional)</Label>
+          <Input type="date" value={dataPlanta} onChange={(e) => setDataPlanta(e.target.value)} />
         </div>
 
         <div className="space-y-2">
@@ -139,7 +162,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onCancel}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={!file || isUploading}>
+          <Button onClick={handleSubmit} disabled={!file || !disciplina || isUploading}>
             {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
             Importar
           </Button>

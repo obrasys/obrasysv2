@@ -48,6 +48,7 @@ import { computePlanRoomAnalysis, analysisFromAxiaResult } from "@/lib/plan-room
 import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisParametersCard";
 import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
 import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
+import { disciplineScope, DISCIPLINE_META } from "@/lib/plan-discipline";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -58,6 +59,8 @@ export default function PlanDetail() {
   // Data
   const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
+  const scope = disciplineScope((plan as any)?.disciplina);
+  const disciplineMeta = (plan as any)?.disciplina ? DISCIPLINE_META[(plan as any).disciplina as keyof typeof DISCIPLINE_META] : null;
   // Axia persistence (DB-backed, com fallback localStorage)
   const axiaPersist = usePlanAxiaPersistence(planId);
   // calibration declared below (depends on currentPage / pageId)
@@ -821,6 +824,12 @@ export default function PlanDetail() {
               {isPdf ? <FileText className="w-4 h-4 text-destructive" /> : <Image className="w-4 h-4 text-primary" />}
               <span className="text-sm font-medium">{plan.nome_ficheiro}</span>
               <Badge variant="secondary" className="text-[10px]">Rev. {plan.revision_number}</Badge>
+              {disciplineMeta && (
+                <Badge variant="outline" className={`text-[10px] gap-1 ${disciplineMeta.badgeClass}`}>
+                  <disciplineMeta.icon className="w-3 h-3" />
+                  {disciplineMeta.label}
+                </Badge>
+              )}
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
@@ -893,7 +902,7 @@ export default function PlanDetail() {
         )}
 
         {/* Axia analysis tables — per-room breakdown + global totals (prominent, above main content) */}
-        {(() => {
+        {scope.showArchitectureTables && (() => {
           const t = planRoomAnalysis.totals;
           const hasGlobalData =
             (t?.floor_area_m2_total ?? 0) > 0 ||
@@ -1201,8 +1210,8 @@ export default function PlanDetail() {
               </Tabs>
             )}
 
-            {/* Electrical Analysis — sempre disponível, independentemente do passo */}
-            {effectiveImageUrl && (
+            {/* Electrical Analysis — apenas para disciplina elétrica (ou modo livre) */}
+            {scope.showElectricalAnalysis && effectiveImageUrl && (
               <PlanElectricalAnalysis
                 imageDataUrl={effectiveImageUrl}
                 calibration={calibration ? {
