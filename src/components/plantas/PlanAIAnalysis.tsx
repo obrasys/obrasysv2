@@ -231,26 +231,36 @@ export function PlanAIAnalysis({
       });
 
       if (error) throw error;
-      if (data?.error) {
+      if (data?.error && typeof data.error === "string") {
         if (data.error === "Rate limit exceeded") toast.error("Limite de pedidos atingido. Tente novamente em breve.");
         else if (data.error === "Credits exhausted") toast.error("Créditos de IA esgotados.");
         else throw new Error(data.error);
         return;
       }
 
+      const normalize = (a: PlanAnalysisResult): PlanAnalysisResult => ({
+        ...a,
+        dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
+        rooms: Array.isArray(a.rooms) ? a.rooms : [],
+        elements: Array.isArray(a.elements) ? a.elements : [],
+        walls: Array.isArray(a.walls) ? a.walls : [],
+        exterior_elements: Array.isArray(a.exterior_elements) ? a.exterior_elements : [],
+        summary: a.summary ?? "",
+        scale_detected: a.scale_detected ?? { found: false },
+      });
+
+      // Controlled failure from edge function (success:false but fallback analysis present)
+      if (data?.success === false) {
+        toast.warning(
+          data?.error?.message ||
+            "A Axia não conseguiu interpretar esta planta automaticamente. Tente novamente, confirme a calibração ou continue com medições manuais.",
+        );
+        if (data?.analysis) setResult(normalize(data.analysis as PlanAnalysisResult));
+        return;
+      }
+
       if (data?.analysis) {
-        // Normalizar: garantir que todos os arrays existem para evitar crashes
-        const a = data.analysis as PlanAnalysisResult;
-        const safe: PlanAnalysisResult = {
-          ...a,
-          dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
-          rooms: Array.isArray(a.rooms) ? a.rooms : [],
-          elements: Array.isArray(a.elements) ? a.elements : [],
-          walls: Array.isArray(a.walls) ? a.walls : [],
-          exterior_elements: Array.isArray(a.exterior_elements) ? a.exterior_elements : [],
-          summary: a.summary ?? "",
-          scale_detected: a.scale_detected ?? { found: false },
-        };
+        const safe = normalize(data.analysis as PlanAnalysisResult);
         setResult(safe);
         toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
         onAnalysisComplete?.();
