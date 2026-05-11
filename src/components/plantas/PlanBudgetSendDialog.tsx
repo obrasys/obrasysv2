@@ -26,6 +26,8 @@ import { toast } from "sonner";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
 import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { PlanDisciplina } from "@/types/plan-measurements";
+import { DISCIPLINE_META } from "@/lib/plan-discipline";
 
 type GroupBy = "source" | "camada" | "floor" | "single";
 
@@ -40,6 +42,8 @@ interface Props {
   planImportId?: string;
   pageId?: string | null;
   floorId?: string | null;
+  /** Disciplina da planta — usada como prefixo no título dos capítulos. */
+  disciplina?: PlanDisciplina | null;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
