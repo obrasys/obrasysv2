@@ -141,8 +141,12 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(
-        JSON.stringify({ error: resp.status === 429 ? "Rate limit exceeded" : resp.status === 402 ? "Credits exhausted" : "AI error" }),
-        { status: resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          scenarios: [],
+          error: resp.status === 429 ? "Rate limit exceeded" : resp.status === 402 ? "Credits exhausted" : "AI error",
+          review_required: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
