@@ -604,13 +604,20 @@ REGRAS CRÍTICAS:
       }
     }
 
+    if (!hasMinimumFields(analysis)) {
+      return controlledFailure(
+        "AI_STRUCTURED_OUTPUT_INVALID",
+        "A Axia não conseguiu devolver uma análise estruturada desta planta.",
+        "Resposta sem campos mínimos (rooms/elements/walls/dimensions/reading_quality).",
+      );
+    }
+
     analysis = normalizeAnalysis(analysis);
 
     // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
-    // (evita contar duas faces paralelas como duas paredes distintas)
     if (analysis && Array.isArray(analysis.walls)) {
       const seen = new Map<string, any>();
-      const PROX = 0.02; // 2% da folha = ~espessura de parede em coords normalizadas
+      const PROX = 0.02;
       let removed = 0;
       for (const w of analysis.walls) {
         const b = w.bbox;
@@ -618,7 +625,6 @@ REGRAS CRÍTICAS:
         const cy = b ? (b.y_min + b.y_max) / 2 : -1;
         const ori = w.orientacao ?? "indef";
         const comp = (w.compartimento_associado ?? "").toLowerCase().trim();
-        // chave grosseira (compartimento + orientação + centroide arredondado)
         const key = `${comp}|${ori}|${Math.round(cx / PROX)}|${Math.round(cy / PROX)}`;
         if (seen.has(key)) {
           removed++;
@@ -641,7 +647,6 @@ REGRAS CRÍTICAS:
       suggestion_payload: { analysis },
     });
 
-    // Log estruturado de chamada (Fase 7)
     await supabase.from("axia_call_logs").insert({
       user_id: userId,
       call_type: callType,
@@ -654,15 +659,29 @@ REGRAS CRÍTICAS:
       error_message: logErrorMessage,
     } as any).then(() => {}, (e) => console.warn("axia_call_logs insert failed:", e?.message));
 
-    return new Response(JSON.stringify({ analysis }), {
+    return new Response(JSON.stringify({ success: true, analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-plan-vision error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        analysis: null,
+        error: {
+          code: "AI_UNEXPECTED_ERROR",
+          message: "Ocorreu um erro inesperado ao analisar a planta.",
+          details: msg,
+          retryable: true,
+        },
+        fallback: {
+          review_required: true,
+          risk_level: "alto",
+          suggested_action: "Tente novamente em instantes.",
+        },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
   }
 });
