@@ -261,7 +261,7 @@ export default function PlanQuantitativos() {
             </TabsList>
 
             <TabsContent value="unified" className="mt-4">
-              <PlanQuantityTable planImportId={planId} obraId={obraId} />
+              <PlanQuantityTable planImportId={planId} obraId={obraId} disciplina={(plan as any).disciplina} planName={plan.nome_ficheiro} />
             </TabsContent>
 
             <TabsContent value="byRoom" className="mt-4">
