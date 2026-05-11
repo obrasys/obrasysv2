@@ -70,14 +70,21 @@ interface Props {
   mappings: PlanMeasurementMapping[];
   articles: Article[];
   tipoBase?: TipoBase;
+  disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
+  /** When true, opens the dialog immediately on mount (used by deep links). */
+  autoOpen?: boolean;
 }
 
-export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral" }: Props) {
+export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showDialog, setShowDialog] = useState(false);
-  const [titulo, setTitulo] = useState(`Pré-Orçamento — ${planName}`);
+  const [showDialog, setShowDialog] = useState(autoOpen);
+  const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
+    ? (require("@/lib/plan-discipline") as typeof import("@/lib/plan-discipline")).DISCIPLINE_META[disciplina]?.label
+    : null;
+  const chapterPrefix = disciplineLabel ? `${disciplineLabel} — ` : "";
+  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} — ${planName}` : `Pré-Orçamento — ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
