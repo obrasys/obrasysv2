@@ -454,15 +454,18 @@ REGRAS CRÍTICAS:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await resp.text();
-      console.error("AI gateway error:", resp.status, errText);
-      return new Response(JSON.stringify({ error: "AI error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // 599 = timeout/abort/fetch_failed interno → tentar fallback Pro abaixo
+      if (resp.status !== 599) {
+        const errText = await resp.text();
+        console.error("AI gateway error:", resp.status, errText);
+        return new Response(JSON.stringify({ error: "AI error" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    let aiData = await resp.json();
+    let aiData: any = resp.ok ? await resp.json() : {};
     let choice = aiData.choices?.[0];
     let finishReason = choice?.finish_reason;
     let toolCall = choice?.message?.tool_calls?.[0];
