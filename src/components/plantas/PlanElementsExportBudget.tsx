@@ -66,12 +66,15 @@ export function PlanElementsExportBudget({ elements, obraId, disciplina }: Props
       const nextNum = (chapters && chapters.length > 0 ? chapters[0].numero : 0) + 1;
 
       // Create chapter for plan elements
+      const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
+        ? DISCIPLINE_META[disciplina]?.label
+        : null;
       const { data: chapter, error: chError } = await supabase
         .from("capitulos_orcamento")
         .insert({
           orcamento_id: selectedOrcamento,
           numero: nextNum,
-          titulo: "Elementos de Planta - Instalações",
+          titulo: disciplineLabel ? `${disciplineLabel} — Elementos de Planta` : "Elementos de Planta - Instalações",
           ordem: nextNum,
         })
         .select()
