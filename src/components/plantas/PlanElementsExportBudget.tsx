@@ -8,9 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSymbolById, type PlacedPlantElement } from "@/types/plan-symbols";
 
+import { DISCIPLINE_META } from "@/lib/plan-discipline";
+
 interface Props {
   elements: PlacedPlantElement[];
   obraId: string;
+  disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
 }
 
 interface GroupedElement {
@@ -20,7 +23,7 @@ interface GroupedElement {
   count: number;
 }
 
-export function PlanElementsExportBudget({ elements, obraId }: Props) {
+export function PlanElementsExportBudget({ elements, obraId, disciplina }: Props) {
   const { orcamentos } = useOrcamentos();
   const [selectedOrcamento, setSelectedOrcamento] = useState("");
   const [inserting, setInserting] = useState(false);
@@ -63,12 +66,15 @@ export function PlanElementsExportBudget({ elements, obraId }: Props) {
       const nextNum = (chapters && chapters.length > 0 ? chapters[0].numero : 0) + 1;
 
       // Create chapter for plan elements
+      const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
+        ? DISCIPLINE_META[disciplina]?.label
+        : null;
       const { data: chapter, error: chError } = await supabase
         .from("capitulos_orcamento")
         .insert({
           orcamento_id: selectedOrcamento,
           numero: nextNum,
-          titulo: "Elementos de Planta - Instalações",
+          titulo: disciplineLabel ? `${disciplineLabel} — Elementos de Planta` : "Elementos de Planta - Instalações",
           ordem: nextNum,
         })
         .select()

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { PlanMappingTable } from "@/components/plantas/PlanMappingTable";
 import { PlanQuantitativosReview } from "@/components/plantas/PlanQuantitativosReview";
@@ -31,6 +31,8 @@ import { toast } from "sonner";
 export default function PlanQuantitativos() {
   const { id: obraId, planId } = useParams<{ id: string; planId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const autoOpenBudget = searchParams.get("openBudget") === "1";
 
   const { plans, isLoading: plansLoading } = usePlanImports(obraId);
   const plan = plans.find((p) => p.id === planId);
@@ -218,6 +220,8 @@ export default function PlanQuantitativos() {
               mappings={mappings}
               articles={articles}
               tipoBase={tipoBase}
+              disciplina={(plan as any).disciplina}
+              autoOpen={autoOpenBudget}
             />
           </div>
         </div>
@@ -257,7 +261,7 @@ export default function PlanQuantitativos() {
             </TabsList>
 
             <TabsContent value="unified" className="mt-4">
-              <PlanQuantityTable planImportId={planId} obraId={obraId} />
+              <PlanQuantityTable planImportId={planId} obraId={obraId} disciplina={(plan as any).disciplina} planName={plan.nome_ficheiro} />
             </TabsContent>
 
             <TabsContent value="byRoom" className="mt-4">

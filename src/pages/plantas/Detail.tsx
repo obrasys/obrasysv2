@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug, Upload } from "lucide-react";
+import { ArrowLeft, FileText, Image, Loader2, Table2, Minus, Pentagon, Hash, SquareDashed, Wallpaper, Plug, Upload, FileSpreadsheet } from "lucide-react";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanCalibration } from "@/hooks/usePlanCalibration";
 import { usePlanMeasurements, calculateLineLength, calculatePolygonArea, calculatePolygonPerimeter } from "@/hooks/usePlanMeasurements";
@@ -832,9 +832,28 @@ export default function PlanDetail() {
               )}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
-            <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
-          </Button>
+          <div className="flex items-center gap-2">
+            {!scope.showArchitectureTables && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                >
+                  <Table2 className="w-4 h-4 mr-1.5" /> Quantitativos
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos?openBudget=1`)}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Orçamentar
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
+              <Upload className="w-4 h-4 mr-1.5" /> Carregar nova planta
+            </Button>
+          </div>
         </div>
 
         {/* Unified workflow bar (stepper + guide + toolbar + active hint) */}
@@ -1249,7 +1268,7 @@ export default function PlanDetail() {
 
             {/* Export placed elements to budget */}
             {placedElements.length > 0 && obraId && (
-              <PlanElementsExportBudget elements={placedElements} obraId={obraId} />
+              <PlanElementsExportBudget elements={placedElements} obraId={obraId} disciplina={(plan as any)?.disciplina} />
             )}
           </div>
         </div>

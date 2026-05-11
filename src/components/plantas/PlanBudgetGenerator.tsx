@@ -15,6 +15,7 @@ import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measu
 import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { buildDedupePayload } from "@/lib/plan-dedupe";
+import { DISCIPLINE_META } from "@/lib/plan-discipline";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
@@ -70,14 +71,21 @@ interface Props {
   mappings: PlanMeasurementMapping[];
   articles: Article[];
   tipoBase?: TipoBase;
+  disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
+  /** When true, opens the dialog immediately on mount (used by deep links). */
+  autoOpen?: boolean;
 }
 
-export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral" }: Props) {
+export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showDialog, setShowDialog] = useState(false);
-  const [titulo, setTitulo] = useState(`Pré-Orçamento — ${planName}`);
+  const [showDialog, setShowDialog] = useState(autoOpen);
+  const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
+    ? DISCIPLINE_META[disciplina]?.label
+    : null;
+  const chapterPrefix = disciplineLabel ? `${disciplineLabel} — ` : "";
+  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} — ${planName}` : `Pré-Orçamento — ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
@@ -345,7 +353,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
       const chapterInserts = chapters.map(([cat], idx) => ({
         orcamento_id: orcamento.id,
         numero: idx + 1,
-        titulo: cat.charAt(0).toUpperCase() + cat.slice(1),
+        titulo: `${chapterPrefix}${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
         ordem: idx + 1,
       }));
 

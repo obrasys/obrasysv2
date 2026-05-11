@@ -65,12 +65,16 @@ interface PlanQuantityTableProps {
   obraId?: string;
   /** Optional callback when the user wants to send selection to budget */
   onSendToBudget?: (rows: PlanQuantitativoRow[]) => void;
+  disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
+  planName?: string;
 }
 
 export function PlanQuantityTable({
   planImportId,
   obraId,
   onSendToBudget,
+  disciplina,
+  planName,
 }: PlanQuantityTableProps) {
   const { rows, isLoading } = usePlanQuantitativos({ planImportId, obraId });
   const { floors } = usePlanFloors(obraId);
@@ -377,6 +381,8 @@ export function PlanQuantityTable({
           obraId={obraId}
           floorMap={floorMap}
           planImportId={planImportId}
+          disciplina={disciplina ?? undefined}
+          planName={planName}
         />
       )}
     </Card>
