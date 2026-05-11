@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Image, X, Loader2 } from "lucide-react";
-import { DISCIPLINA_OPTIONS, type PlanDisciplina } from "@/types/plan-measurements";
+import { type PlanDisciplina } from "@/types/plan-measurements";
+import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
+import { cn } from "@/lib/utils";
 
 interface PlanUploadFormProps {
   obraId: string;
