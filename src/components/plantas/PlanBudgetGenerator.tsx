@@ -353,7 +353,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
       const chapterInserts = chapters.map(([cat], idx) => ({
         orcamento_id: orcamento.id,
         numero: idx + 1,
-        titulo: cat.charAt(0).toUpperCase() + cat.slice(1),
+        titulo: `${chapterPrefix}${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
         ordem: idx + 1,
       }));
 
