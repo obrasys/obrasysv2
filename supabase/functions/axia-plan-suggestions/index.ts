@@ -184,7 +184,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(JSON.stringify({ error: "AI error", suggestions: [] }), {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
