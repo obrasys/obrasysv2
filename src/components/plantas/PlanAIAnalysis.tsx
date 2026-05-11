@@ -282,7 +282,10 @@ export function PlanAIAnalysis({
       }
     } catch (err: any) {
       console.error("AI analysis error:", err);
-      toast.error("Erro na análise: " + (err.message || "erro desconhecido"));
+      const msg = err?.message && err.message !== "[object Object]"
+        ? err.message
+        : (typeof err === "string" ? err : (err?.error?.message || err?.code || "erro desconhecido"));
+      toast.error("Erro na análise: " + msg);
     } finally {
       setIsAnalyzing(false);
     }
