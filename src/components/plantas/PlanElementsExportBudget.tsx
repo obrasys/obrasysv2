@@ -8,9 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSymbolById, type PlacedPlantElement } from "@/types/plan-symbols";
 
+import { DISCIPLINE_META } from "@/lib/plan-discipline";
+
 interface Props {
   elements: PlacedPlantElement[];
   obraId: string;
+  disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
 }
 
 interface GroupedElement {
@@ -20,7 +23,7 @@ interface GroupedElement {
   count: number;
 }
 
-export function PlanElementsExportBudget({ elements, obraId }: Props) {
+export function PlanElementsExportBudget({ elements, obraId, disciplina }: Props) {
   const { orcamentos } = useOrcamentos();
   const [selectedOrcamento, setSelectedOrcamento] = useState("");
   const [inserting, setInserting] = useState(false);
