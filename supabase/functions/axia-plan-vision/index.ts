@@ -220,6 +220,9 @@ REGRAS CRÍTICAS:
       const budget = Math.min(timeoutMs, Math.max(5_000, remainingMs() - 2_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
+        if (remainingMs() < 5_000) {
+          return new Response(JSON.stringify({ error: "deadline" }), { status: 599 });
+        }
         return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         signal: ctrl.signal,
@@ -426,6 +429,10 @@ REGRAS CRÍTICAS:
               }),
         }),
       });
+      } catch (e) {
+        const isAbort = (e as any)?.name === "AbortError" || /aborted/i.test(String((e as any)?.message ?? e));
+        console.warn(`callAI(${modelName},${mode}) ${isAbort ? "aborted (timeout)" : "failed"}:`, (e as any)?.message ?? e);
+        return new Response(JSON.stringify({ error: isAbort ? "timeout" : "fetch_failed" }), { status: 599 });
       } finally {
         clearTimeout(timer);
       }
@@ -447,15 +454,18 @@ REGRAS CRÍTICAS:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await resp.text();
-      console.error("AI gateway error:", resp.status, errText);
-      return new Response(JSON.stringify({ error: "AI error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // 599 = timeout/abort/fetch_failed interno → tentar fallback Pro abaixo
+      if (resp.status !== 599) {
+        const errText = await resp.text();
+        console.error("AI gateway error:", resp.status, errText);
+        return new Response(JSON.stringify({ error: "AI error" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    let aiData = await resp.json();
+    let aiData: any = resp.ok ? await resp.json() : {};
     let choice = aiData.choices?.[0];
     let finishReason = choice?.finish_reason;
     let toolCall = choice?.message?.tool_calls?.[0];
