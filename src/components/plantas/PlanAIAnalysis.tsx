@@ -215,6 +215,9 @@ export function PlanAIAnalysis({
         resolve(dataUrl.split(",")[1] ?? "");
       };
       img.onerror = () => reject(new Error("Falha ao carregar imagem para análise"));
+      // Required for cross-origin signed URLs, otherwise canvas becomes tainted
+      // and toDataURL throws SecurityError ("Tainted canvases may not be exported").
+      if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
       img.src = src;
     });
 
