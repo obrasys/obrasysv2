@@ -219,7 +219,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
     console.error("axia-plan-suggestions error:", msg);
     return new Response(JSON.stringify({ error: msg, suggestions: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200,
     });
   }
 });
