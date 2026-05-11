@@ -424,7 +424,8 @@ REGRAS CRÍTICAS:
                 ],
                 tool_choice: { type: "function", function: { name: "plan_analysis" } },
               }),
-        });
+        }),
+      });
       } finally {
         clearTimeout(timer);
       }
