@@ -61,7 +61,8 @@ export default function EspecialidadeDetail() {
                   onSelect={(s) => setPicked(s)}
                 />
               </CardContent>
-            </Card>
+          </Card>
+            <SpecialtyAxiaAnalysis plan={plan} />
           </div>
 
           {/* Centro: visualizador */}
