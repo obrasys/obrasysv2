@@ -6340,6 +6340,78 @@ export type Database = {
           },
         ]
       }
+      plan_electrical_circuits: {
+        Row: {
+          breaker_rating_a: number | null
+          cable_section_mm2: number | null
+          circuit_number: string | null
+          created_at: string
+          data_source: string
+          description: string | null
+          distribution_board: string | null
+          id: string
+          plan_import_id: string | null
+          power_w: number | null
+          source_sheet_subtype: string | null
+          specialty_plan_id: string | null
+          technical_note: string | null
+          updated_at: string
+          user_id: string
+          voltage: number | null
+        }
+        Insert: {
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
+          circuit_number?: string | null
+          created_at?: string
+          data_source?: string
+          description?: string | null
+          distribution_board?: string | null
+          id?: string
+          plan_import_id?: string | null
+          power_w?: number | null
+          source_sheet_subtype?: string | null
+          specialty_plan_id?: string | null
+          technical_note?: string | null
+          updated_at?: string
+          user_id: string
+          voltage?: number | null
+        }
+        Update: {
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
+          circuit_number?: string | null
+          created_at?: string
+          data_source?: string
+          description?: string | null
+          distribution_board?: string | null
+          id?: string
+          plan_import_id?: string | null
+          power_w?: number | null
+          source_sheet_subtype?: string | null
+          specialty_plan_id?: string | null
+          technical_note?: string | null
+          updated_at?: string
+          user_id?: string
+          voltage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_electrical_circuits_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_electrical_circuits_specialty_plan_id_fkey"
+            columns: ["specialty_plan_id"]
+            isOneToOne: false
+            referencedRelation: "specialty_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_floors: {
         Row: {
           created_at: string
@@ -6929,56 +7001,95 @@ export type Database = {
       }
       plan_placed_elements: {
         Row: {
+          breaker_rating_a: number | null
+          cable_section_mm2: number | null
           category: string
+          circuit_number: string | null
           created_at: string
+          data_source: string | null
+          distribution_board: string | null
           environment: string | null
           id: string
+          installation_height: string | null
+          is_existing: boolean | null
           note: string | null
           origin: string
           plan_import_id: string
+          power_w: number | null
           quantity: number | null
+          review_required: boolean | null
+          room_name: string | null
           rotation: number | null
           scale: number | null
+          sheet_subtype: string | null
           subcategory: string | null
           symbol_type_id: string
+          technical_note: string | null
           updated_at: string
           user_id: string
+          voltage: number | null
           x: number
           y: number
         }
         Insert: {
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
           category: string
+          circuit_number?: string | null
           created_at?: string
+          data_source?: string | null
+          distribution_board?: string | null
           environment?: string | null
           id?: string
+          installation_height?: string | null
+          is_existing?: boolean | null
           note?: string | null
           origin?: string
           plan_import_id: string
+          power_w?: number | null
           quantity?: number | null
+          review_required?: boolean | null
+          room_name?: string | null
           rotation?: number | null
           scale?: number | null
+          sheet_subtype?: string | null
           subcategory?: string | null
           symbol_type_id: string
+          technical_note?: string | null
           updated_at?: string
           user_id: string
+          voltage?: number | null
           x?: number
           y?: number
         }
         Update: {
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
           category?: string
+          circuit_number?: string | null
           created_at?: string
+          data_source?: string | null
+          distribution_board?: string | null
           environment?: string | null
           id?: string
+          installation_height?: string | null
+          is_existing?: boolean | null
           note?: string | null
           origin?: string
           plan_import_id?: string
+          power_w?: number | null
           quantity?: number | null
+          review_required?: boolean | null
+          room_name?: string | null
           rotation?: number | null
           scale?: number | null
+          sheet_subtype?: string | null
           subcategory?: string | null
           symbol_type_id?: string
+          technical_note?: string | null
           updated_at?: string
           user_id?: string
+          voltage?: number | null
           x?: number
           y?: number
         }
@@ -9167,66 +9278,102 @@ export type Database = {
         Row: {
           analysis_id: string | null
           bounding_box: Json | null
+          breaker_rating_a: number | null
+          cable_section_mm2: number | null
+          circuit_number: string | null
           confidence_score: number | null
           created_at: string
+          data_source: string | null
+          distribution_board: string | null
           floor_level: string | null
           id: string
+          installation_height: string | null
+          is_existing: boolean | null
           label: string | null
           page_number: number
+          power_w: number | null
           quantity: number
           review_required: boolean
+          room_name: string | null
+          sheet_subtype: string | null
           source: string
           specialty_plan_id: string
           specialty_type: string
           symbol_type: string
+          technical_note: string | null
           unit: string
           updated_at: string
           user_confirmed: boolean
           user_id: string
+          voltage: number | null
           x_position: number | null
           y_position: number | null
         }
         Insert: {
           analysis_id?: string | null
           bounding_box?: Json | null
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
+          circuit_number?: string | null
           confidence_score?: number | null
           created_at?: string
+          data_source?: string | null
+          distribution_board?: string | null
           floor_level?: string | null
           id?: string
+          installation_height?: string | null
+          is_existing?: boolean | null
           label?: string | null
           page_number?: number
+          power_w?: number | null
           quantity?: number
           review_required?: boolean
+          room_name?: string | null
+          sheet_subtype?: string | null
           source?: string
           specialty_plan_id: string
           specialty_type: string
           symbol_type: string
+          technical_note?: string | null
           unit?: string
           updated_at?: string
           user_confirmed?: boolean
           user_id: string
+          voltage?: number | null
           x_position?: number | null
           y_position?: number | null
         }
         Update: {
           analysis_id?: string | null
           bounding_box?: Json | null
+          breaker_rating_a?: number | null
+          cable_section_mm2?: number | null
+          circuit_number?: string | null
           confidence_score?: number | null
           created_at?: string
+          data_source?: string | null
+          distribution_board?: string | null
           floor_level?: string | null
           id?: string
+          installation_height?: string | null
+          is_existing?: boolean | null
           label?: string | null
           page_number?: number
+          power_w?: number | null
           quantity?: number
           review_required?: boolean
+          room_name?: string | null
+          sheet_subtype?: string | null
           source?: string
           specialty_plan_id?: string
           specialty_type?: string
           symbol_type?: string
+          technical_note?: string | null
           unit?: string
           updated_at?: string
           user_confirmed?: boolean
           user_id?: string
+          voltage?: number | null
           x_position?: number | null
           y_position?: number | null
         }
