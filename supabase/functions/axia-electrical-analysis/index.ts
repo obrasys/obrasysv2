@@ -180,6 +180,80 @@ ETAPA 6 — Materiais e cabos
 - Só estima total_wire_length_m / total_conduit_length_m se houver escala/calibração; caso contrário 0.
 - ${calibrationContext}
 
+SIMBOLOGIA DE REFERÊNCIA (PT-PT, norma usada em projetos de eletricidade em Portugal)
+Quando reconheceres um destes símbolos, usa EXATAMENTE a "symbol_key" indicada. Se não corresponder a nenhum, usa "outro" e descreve em technical_note.
+
+[Proteção & Quadros]
+- Interruptor tetrapolar (...A) → interruptor_tetrapolar
+- Interruptor unipolar (...A) → interruptor_unipolar
+- Interruptor unipolar com chave → interruptor_unipolar_chave
+- Interruptor diferencial tetrapolar (...A ...mA) → interruptor_diferencial_tetrapolar
+- Interruptor diferencial bipolar (...A ...mA) → interruptor_diferencial_bipolar
+- Disjuntor diferencial tetrapolar (...A ...mA) → disjuntor_diferencial_tetrapolar
+- Disjuntor diferencial bipolar (...A ...mA) → disjuntor_diferencial_bipolar
+- Disjuntor tetrapolar / tripolar / bipolar / unipolar → disjuntor_tetrapolar | disjuntor_tripolar | disjuntor_bipolar | disjuntor_unipolar
+- Porta circuitos fusível unipolar / bipolar / tripolar → porta_fusivel_unipolar | porta_fusivel_bipolar | porta_fusivel_tripolar
+- Tribloco de fusíveis → tribloco_fusiveis
+- Quadro elétrico → quadro_eletrico
+- Portinhola (P) → portinhola
+- Contador de energia (kWh) → contador_energia
+- Contador de energia tripla tarifa (kWh, leitura com TI's) → contador_energia_tripla_tarifa
+- Caixa de coluna (D=2 saídas, Q=4 saídas) → caixa_coluna
+- Caixa de derivação (•) → caixa_derivacao
+- Caixa de visita → caixa_visita
+- Caixa de alimentação (CXA, com tomadas mono/trifásicas) → caixa_alimentacao
+- Ligação à terra → ligacao_terra
+- Ligador amovível (caixa de medição de terras) → ligador_amovivel
+- Sinalizadores de tensão modulares (⦿⦿) → sinalizador_tensao_modular
+
+[Comando]
+- Interruptor simples → interruptor_simples
+- Comutador de escada → comutador_escada
+- Comutador de escada duplo → comutador_escada_duplo
+- Comutador de lustre → comutador_lustre
+- Comutador de chave → comutador_chave
+- Inversor → inversor
+- Botão de pressão → botao_pressao
+- Botão com chave → botao_chave
+- Botão de pressão com sinalização → botao_pressao_sinalizacao
+- Detector de movimento (DM, 180º/360º) → detector_movimento
+
+[Iluminação]
+- Ponto de luz (✕) → ponto_luz
+- Ponto de luz embebido em parede (☒) → ponto_luz_embebido_parede
+- Ponto de luz na parede → ponto_luz_parede
+- Ponto de luz no teto tipo "downlight" → ponto_luz_downlight
+- Ponto de luz no pavimento tipo "uplight" → ponto_luz_uplight
+- Projetor 1x250W → projetor_250w
+- Bloco autónomo de emergência permanente → bloco_emergencia_permanente
+- Bloco autónomo de emergência não permanente → bloco_emergencia_nao_permanente
+- Bloco autónomo de emergência com proteção mecânica (0,5m do pavimento) → bloco_emergencia_protecao_mecanica
+- Sinalizador de parede (△) → sinalizador_parede
+- Armadura fluorescente 1x18W / 1x36W / 1x58W → armadura_fluorescente_1x18 | _1x36 | _1x58
+- Armadura fluorescente 2x18W / 2x36W / 2x58W → armadura_fluorescente_2x18 | _2x36 | _2x58
+- Armadura fluorescente 4x18W → armadura_fluorescente_4x18
+- Armadura fluorescente 2x36W anti-deflagrante → armadura_fluorescente_2x36_antideflagrante
+- Armadura incandescente 1x60W anti-deflagrante → armadura_incandescente_60w_antideflagrante
+- Armadura fluorescente 2x36W com KIT de emergência → armadura_fluorescente_2x36_kit_emergencia
+- Armadura fluorescente 1x36W para quadro de parede → armadura_fluorescente_quadro_parede
+- Luminária industrial suspensa 1x250W → luminaria_industrial_suspensa_250w
+
+[Tomadas]
+- Tomada monofásica tipo Schuko com obturadores → tomada_schuko_obturadores
+- Tomada monofásica estabilizada (UPS, terra circuito estabilizado) → tomada_estabilizada_ups
+- Tomada trifásica com ligação à terra → tomada_trifasica_terra
+
+[Outros]
+- Sirene → sirene
+- Canalização geral (linha) → canalizacao_geral
+- Canalização geral enterrada → canalizacao_geral_enterrada
+
+REGRAS DE USO DA SIMBOLOGIA
+- Mantém SEMPRE o snake_case acima; nunca inventes chaves novas.
+- Quando o desenho mostrar variações de potência (ex. armadura 2x58W), escolhe a chave correspondente em vez de "fluorescente" genérico.
+- Se identificares um disjuntor mas não distinguires polos, usa "disjuntor" (legado).
+- Aliases antigos (luz_teto, tomada_baixa, etc.) só devem ser usados se o desenho não permitir distinção PT-PT.
+
 DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
 
     const userContent = [
