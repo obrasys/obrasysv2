@@ -118,6 +118,39 @@ const SYMBOL_ICONS: Record<string, typeof Zap> = {
   quadro_distribuicao: CircuitBoard, disjuntor: ShieldCheck,
 };
 
+async function normalizeImageToJpegBase64(imageSource: string): Promise<string> {
+  const dataUrl = imageSource.startsWith("data:")
+    ? imageSource
+    : await fetch(imageSource)
+        .then((response) => response.blob())
+        .then(
+          (blob) =>
+            new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Falha ao preparar imagem para análise."));
+    img.src = dataUrl;
+  });
+
+  const maxDim = 2400;
+  const scale = Math.min(1, maxDim / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas indisponível para análise elétrica.");
+
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+}
+
 export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId }: Props) {
   const qc = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -130,23 +163,14 @@ export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId
   const handleAnalyze = async () => {
     if (!imageDataUrl) { toast.error("Nenhuma planta carregada"); return; }
     setIsAnalyzing(true);
+    setResult(null);
     try {
-      let base64: string;
-      if (imageDataUrl.startsWith("data:")) {
-        base64 = imageDataUrl.split(",")[1];
-      } else {
-        const response = await fetch(imageDataUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        base64 = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-          reader.readAsDataURL(blob);
-        });
-      }
+      const base64 = await normalizeImageToJpegBase64(imageDataUrl);
 
       const { data, error } = await supabase.functions.invoke("axia-electrical-analysis", {
         body: {
           image_base64: base64,
+          image_mime_type: "image/jpeg",
           calibration_info: calibration,
           plan_import_id: planImportId,
           persist: !!planImportId,

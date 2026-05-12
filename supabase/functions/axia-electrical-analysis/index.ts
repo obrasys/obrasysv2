@@ -103,6 +103,7 @@ serve(async (req) => {
     const body = await req.json();
     const {
       image_base64,
+      image_mime_type,
       calibration_info,
       scale_text,
       plan_import_id,
@@ -256,9 +257,13 @@ REGRAS DE USO DA SIMBOLOGIA
 
 DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
 
+    const imageMimeType = typeof image_mime_type === "string" && image_mime_type.startsWith("image/")
+      ? image_mime_type
+      : "image/jpeg";
+
     const userContent = [
       { type: "text", text: "Analisa esta folha elétrica seguindo as etapas e devolve a estrutura completa." },
-      { type: "image_url", image_url: { url: `data:image/png;base64,${image_base64}` } },
+      { type: "image_url", image_url: { url: `data:${imageMimeType};base64,${image_base64}` } },
     ];
 
     const toolSchema = {
@@ -385,28 +390,88 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
       additionalProperties: false,
     };
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "electrical_plan_analysis_v2",
-            description: "Análise estruturada de folha elétrica com sub-classificação e cross-validation.",
-            parameters: toolSchema,
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "electrical_plan_analysis_v2" } },
-      }),
+    const extractTextContent = (content: unknown): string => {
+      if (typeof content === "string") return content;
+      if (Array.isArray(content)) {
+        return content
+          .map((part) => {
+            if (typeof part === "string") return part;
+            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+              return part.text;
+            }
+            return "";
+          })
+          .filter(Boolean)
+          .join("\n");
+      }
+      return "";
+    };
+
+    const parseJsonWithRepair = (raw: string) => {
+      const cleaned = raw
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        const start = cleaned.indexOf("{");
+        const end = cleaned.lastIndexOf("}");
+        const sliced = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+        return JSON.parse(sliced);
+      }
+    };
+
+    const normalizeAnalysis = (analysis: any) => ({
+      sheet_subtype: typeof analysis?.sheet_subtype === "string" ? analysis.sheet_subtype : "outro",
+      scale_detected: analysis?.scale_detected ?? { found: false },
+      legend_found: !!analysis?.legend_found,
+      placed_symbols: Array.isArray(analysis?.placed_symbols) ? analysis.placed_symbols : [],
+      declared_quantities: Array.isArray(analysis?.declared_quantities) ? analysis.declared_quantities : [],
+      legend_map: Array.isArray(analysis?.legend_map) ? analysis.legend_map : [],
+      circuits: Array.isArray(analysis?.circuits) ? analysis.circuits : [],
+      discrepancies: Array.isArray(analysis?.discrepancies) ? analysis.discrepancies : [],
+      total_wire_length_m: Number(analysis?.total_wire_length_m) || 0,
+      total_conduit_length_m: Number(analysis?.total_conduit_length_m) || 0,
+      summary: typeof analysis?.summary === "string" ? analysis.summary : "",
+      recommendations: Array.isArray(analysis?.recommendations) ? analysis.recommendations : [],
+      review_required: !!analysis?.review_required,
     });
 
-    if (!resp.ok) {
+    const callAI = async (modelName: string, mode: "tool" | "json" = "tool") => {
+      const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: modelName,
+          max_tokens: mode === "json" ? 10000 : 8000,
+          messages: [
+            { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          ...(mode === "json"
+            ? { response_format: { type: "json_object" } }
+            : {
+                tools: [{
+                  type: "function",
+                  function: {
+                    name: "electrical_plan_analysis_v2",
+                    description: "Análise estruturada de folha elétrica com sub-classificação e cross-validation.",
+                    parameters: toolSchema,
+                  },
+                }],
+                tool_choice: { type: "function", function: { name: "electrical_plan_analysis_v2" } },
+              }),
+        }),
+      });
+    };
+
+    let resp = await callAI("google/gemini-2.5-flash", "tool");
+    if (!resp.ok && resp.status !== 400) {
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -417,22 +482,40 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await resp.text();
-      console.error("AI gateway error:", resp.status, errText);
-      return new Response(JSON.stringify({
-        analysis: emptyAnalysis("Falha do motor de IA — resposta indisponível."),
-        error: { code: "ai_error", message: "AI error", details: errText.slice(0, 500) },
-      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const aiData = await resp.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    let aiData: any = resp.ok ? await resp.json() : {};
+    let choice = aiData.choices?.[0];
+    let toolCall = choice?.message?.tool_calls?.[0];
+    let messageText = extractTextContent(choice?.message?.content);
     let analysis: any = null;
+
     if (toolCall) {
-      try { analysis = JSON.parse(toolCall.function.arguments); }
-      catch (e) { console.error("Failed to parse AI response:", e); }
+      try { analysis = parseJsonWithRepair(toolCall.function?.arguments ?? ""); }
+      catch (e) { console.error("Failed to parse AI tool response:", e); }
     }
+
+    if (!analysis) {
+      const toolErrText = resp.ok ? "" : await resp.text();
+      if (toolErrText) console.error("AI gateway tool error:", resp.status, toolErrText);
+
+      const fallbackResp = await callAI("google/gemini-2.5-flash", "json");
+      if (fallbackResp.ok) {
+        aiData = await fallbackResp.json();
+        choice = aiData.choices?.[0];
+        messageText = extractTextContent(choice?.message?.content);
+        if (messageText) {
+          try { analysis = parseJsonWithRepair(messageText); }
+          catch (e) { console.error("Failed to parse AI JSON fallback:", e); }
+        }
+      } else {
+        const fallbackErrText = await fallbackResp.text();
+        console.error("AI gateway JSON fallback error:", fallbackResp.status, fallbackErrText);
+      }
+    }
+
     if (!analysis) analysis = emptyAnalysis("A IA não devolveu análise estruturada.");
+    analysis = normalizeAnalysis(analysis);
 
     // Aplicar regras de bloqueio em folhas que não permitem contagem visual
     const subtype = analysis.sheet_subtype || "outro";
