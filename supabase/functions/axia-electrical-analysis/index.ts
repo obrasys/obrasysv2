@@ -278,7 +278,7 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
           items: {
             type: "object",
             properties: {
-              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              symbol_key: { type: "string", description: "snake_case da simbologia PT-PT listada no prompt; usa \"outro\" se não corresponder." },
               label: { type: "string" },
               count: { type: "number", description: "Quantidade agrupada (ex: 5 tomadas iguais juntas) ou 1." },
               x: { type: "number" }, y: { type: "number" },
@@ -306,7 +306,7 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
           items: {
             type: "object",
             properties: {
-              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              symbol_key: { type: "string", description: "snake_case da simbologia PT-PT listada no prompt; usa \"outro\" se não corresponder." },
               label: { type: "string" },
               quantity: { type: "number" },
               unit: { type: "string" },
@@ -323,7 +323,7 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
             type: "object",
             properties: {
               symbol_visual: { type: "string" },
-              symbol_key: { type: "string", enum: [...SYMBOL_KEYS] },
+              symbol_key: { type: "string", description: "snake_case da simbologia PT-PT listada no prompt; usa \"outro\" se não corresponder." },
               meaning: { type: "string" },
             },
             required: ["symbol_key", "meaning"],
