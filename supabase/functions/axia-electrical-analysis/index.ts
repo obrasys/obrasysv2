@@ -25,12 +25,45 @@ const SHEET_SUBTYPES = [
 ] as const;
 
 const SYMBOL_KEYS = [
+  // ─── Proteção & quadros ───
+  "interruptor_tetrapolar", "interruptor_unipolar", "interruptor_unipolar_chave",
+  "interruptor_diferencial_tetrapolar", "interruptor_diferencial_bipolar",
+  "disjuntor_diferencial_tetrapolar", "disjuntor_diferencial_bipolar",
+  "disjuntor_tetrapolar", "disjuntor_tripolar", "disjuntor_bipolar", "disjuntor_unipolar",
+  "porta_fusivel_unipolar", "porta_fusivel_bipolar", "porta_fusivel_tripolar",
+  "tribloco_fusiveis", "quadro_eletrico", "portinhola",
+  "contador_energia", "contador_energia_tripla_tarifa",
+  "caixa_coluna", "caixa_derivacao", "caixa_visita", "caixa_alimentacao",
+  "ligacao_terra", "ligador_amovivel", "sinalizador_tensao_modular",
+  // ─── Comando ───
+  "interruptor_simples", "interruptor_duplo", "interruptor_paralelo",
+  "comutador_escada", "comutador_escada_duplo", "comutador_lustre", "comutador_chave",
+  "inversor",
+  "botao_pressao", "botao_chave", "botao_pressao_sinalizacao",
+  "detector_movimento",
+  // ─── Iluminação ───
+  "ponto_luz", "ponto_luz_embebido_parede", "ponto_luz_parede",
+  "ponto_luz_downlight", "ponto_luz_uplight", "projetor_250w",
+  "bloco_emergencia_permanente", "bloco_emergencia_nao_permanente",
+  "bloco_emergencia_protecao_mecanica",
+  "armadura_fluorescente_1x18", "armadura_fluorescente_1x36", "armadura_fluorescente_1x58",
+  "armadura_fluorescente_2x18", "armadura_fluorescente_2x36", "armadura_fluorescente_2x58",
+  "armadura_fluorescente_4x18",
+  "armadura_fluorescente_2x36_antideflagrante",
+  "armadura_incandescente_60w_antideflagrante",
+  "armadura_fluorescente_2x36_kit_emergencia",
+  "armadura_fluorescente_quadro_parede",
+  "luminaria_industrial_suspensa_250w", "sinalizador_parede",
+  // ─── Tomadas ───
+  "tomada_schuko_obturadores", "tomada_estabilizada_ups", "tomada_trifasica_terra",
+  // ─── Outros ───
+  "sirene", "canalizacao_geral", "canalizacao_geral_enterrada",
+  "ar_condicionado", "motor_extracao", "campainha", "sensor", "refletor",
+  // ─── Aliases legados (compatibilidade com análises anteriores) ───
   "luz_teto", "luz_parede", "luz_pendente", "fluorescente", "led_neon",
   "tomada_baixa", "tomada_media", "tomada_alta", "tomada_dupla", "tomada_trifasica",
-  "interruptor_simples", "interruptor_duplo", "interruptor_paralelo",
   "quadro_distribuicao", "disjuntor",
   "calha_tecnica", "eletroduto", "eletrocalha",
-  "motor_extracao", "ar_condicionado", "campainha", "sensor", "refletor",
   "outro",
 ] as const;
 
