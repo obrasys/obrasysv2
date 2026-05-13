@@ -11,6 +11,7 @@ import logoWhite from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { signUpSchema, SignUpFormData } from "@/lib/validations/auth";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { SEO } from "@/components/SEO";
 
 const CriarConta = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -73,6 +74,11 @@ const CriarConta = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEO
+        title="Criar conta grátis — ObraSys"
+        description="Comece grátis no ObraSys. Crie a sua conta e gira orçamentos, obras e equipas com 30 dias de teste."
+        path="/criar-conta"
+      />
       {/* Left side - Marketing copy */}
       <div className="hidden lg:flex lg:w-1/2 bg-hero-gradient relative overflow-hidden">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
