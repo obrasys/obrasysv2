@@ -1,11 +1,34 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { isSuperAdmin } from "@/config/superAdmins";
+import { checkIsSuperAdmin } from "@/config/superAdmins";
 
 export const useSuperAdmin = () => {
   const { user, loading } = useAuth();
-  
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setIsSuperAdmin(false);
+      setChecking(false);
+      return;
+    }
+    setChecking(true);
+    checkIsSuperAdmin(user.id)
+      .then((result) => {
+        if (!cancelled) setIsSuperAdmin(result);
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   return {
-    isSuperAdmin: isSuperAdmin(user?.email),
-    loading
+    isSuperAdmin,
+    loading: loading || checking,
   };
 };
