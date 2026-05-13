@@ -12,6 +12,7 @@ import { Eye, EyeOff, Loader2, Store, CheckCircle2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useToast } from '@/hooks/use-toast';
 import { RegisterForm } from './components/RegisterForm';
+import { SEO } from '@/components/SEO';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -79,6 +80,13 @@ export default function FornecedorAuth() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEO
+        title={mode === 'register' ? 'Registar como fornecedor — ObraSys' : 'Portal Fornecedor — Entrar — ObraSys'}
+        description={mode === 'register'
+          ? 'Junte-se à rede de fornecedores ObraSys e receba pedidos de cotação de empresas de construção.'
+          : 'Aceda ao Portal de Fornecedores ObraSys para responder a pedidos de cotação e gerir tabelas de preços.'}
+        path="/fornecedor/auth"
+      />
       {/* Left branding */}
       <div className={`hidden lg:flex ${mode === 'register' ? 'lg:w-1/3' : 'lg:w-1/2'} bg-hero-gradient relative overflow-hidden transition-all duration-500`}>
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />

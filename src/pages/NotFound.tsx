@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import logo from "@/assets/logo.png";
+import { SEO } from "@/components/SEO";
 
 const NotFound = () => {
   const location = useLocation();
@@ -11,6 +12,12 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
+      <SEO
+        title="Página não encontrada (404) — ObraSys"
+        description="A página que procura não existe ou foi movida. Volte ao início para continuar a navegar no ObraSys."
+        path={location.pathname}
+        noindex
+      />
       <div className="text-center">
         <a href="/" className="flex items-center justify-center mb-8">
           <img

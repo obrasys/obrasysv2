@@ -18,6 +18,22 @@ import {
   ResetPasswordFormData,
 } from "@/lib/validations/auth";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { SEO } from "@/components/SEO";
+
+const SEO_BY_MODE = {
+  login: {
+    title: "Entrar — ObraSys",
+    description: "Aceda à sua conta ObraSys para gerir orçamentos, obras, equipas e financeiro.",
+  },
+  signup: {
+    title: "Criar conta — ObraSys",
+    description: "Crie a sua conta ObraSys e comece a gerir obras, orçamentos e equipas em minutos.",
+  },
+  "forgot-password": {
+    title: "Recuperar palavra-passe — ObraSys",
+    description: "Recupere o acesso à sua conta ObraSys com um link enviado por email.",
+  },
+} as const;
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
@@ -150,6 +166,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEO title={SEO_BY_MODE[mode].title} description={SEO_BY_MODE[mode].description} path="/auth" />
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-hero-gradient relative overflow-hidden">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />

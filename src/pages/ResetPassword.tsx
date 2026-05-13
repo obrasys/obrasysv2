@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { newPasswordSchema, NewPasswordFormData } from "@/lib/validations/auth";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
+import { SEO } from "@/components/SEO";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -130,6 +131,12 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-8">
+      <SEO
+        title="Redefinir palavra-passe — ObraSys"
+        description="Defina uma nova palavra-passe segura para a sua conta ObraSys."
+        path="/auth/reset-password"
+        noindex
+      />
       <div className="w-full max-w-md">
         <a href="/" className="flex items-center justify-center mb-8">
           <img
