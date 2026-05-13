@@ -87,17 +87,26 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseAnon, {
-      global: { headers: authHeader ? { Authorization: authHeader } : {} },
+      global: { headers: { Authorization: authHeader } },
     });
 
-    let userId: string | null = null;
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claims } = await supabase.auth.getClaims(token);
-      userId = (claims?.claims?.sub as string | undefined) ?? null;
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claims } = await supabase.auth.getClaims(token);
+    const userId = (claims?.claims?.sub as string | undefined) ?? null;
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const body = await req.json();
