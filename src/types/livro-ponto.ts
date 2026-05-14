@@ -13,6 +13,8 @@ export interface Worker {
   compensation_type: CompensationType;
   monthly_salary: number;
   hourly_rate: number;
+  unit_rate_m2: number;
+  unit_rate_ml: number;
   nif: string | null;
   phone: string | null;
   email: string | null;
