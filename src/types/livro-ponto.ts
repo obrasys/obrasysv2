@@ -92,7 +92,7 @@ export interface ProjectLaborCostEntry {
 }
 
 export type TimesheetStatus = "draft" | "submitted" | "approved" | "locked";
-export type CostType = "regular" | "overtime" | "night" | "weekend";
+export type CostType = "regular" | "overtime" | "night" | "weekend" | "unit";
 
 export interface AllocationFormData {
   obra_id: string;
@@ -104,6 +104,14 @@ export interface AllocationFormData {
   rdo_id?: string;
 }
 
+export interface UnitWorkFormData {
+  obra_id: string;
+  unit_type: UnitWorkType;
+  quantity: number;
+  unit_rate: number;
+  description?: string;
+}
+
 export interface TimesheetFormData {
   worker_id: string;
   work_date: string;
@@ -112,4 +120,5 @@ export interface TimesheetFormData {
   break_minutes: number;
   notes?: string;
   allocations: AllocationFormData[];
+  unit_works?: UnitWorkFormData[];
 }
