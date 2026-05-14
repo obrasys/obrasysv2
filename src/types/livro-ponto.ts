@@ -64,11 +64,16 @@ export interface TimesheetAllocation {
   cost_amount: number;
   cost_type: string;
   description: string | null;
+  unit_type: UnitWorkType | null;
+  quantity: number | null;
+  unit_rate_snapshot: number | null;
   created_at: string;
   updated_at: string;
   worker?: Worker;
   obras?: { id: string; nome: string };
 }
+
+export type UnitWorkType = "m2" | "ml";
 
 export interface ProjectLaborCostEntry {
   id: string;
