@@ -208,6 +208,8 @@ export default function LancarPage() {
           onAllocationsChange={setAllocations}
           overtimeHours={overtimeHours}
           onOvertimeHoursChange={setOvertimeHours}
+          unitWorks={unitWorks}
+          onUnitWorksChange={setUnitWorks}
         />
 
         {/* Summary bar */}
