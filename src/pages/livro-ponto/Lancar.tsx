@@ -51,6 +51,7 @@ export default function LancarPage() {
   const [allocations, setAllocations] = useState<AllocationFormData[]>([
     { ...emptyAllocation, obra_id: initialObra },
   ]);
+  const [unitWorks, setUnitWorks] = useState<UnitWorkFormData[]>([]);
 
   // Worker modal
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
