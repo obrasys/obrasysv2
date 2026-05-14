@@ -238,6 +238,151 @@ export function TimesheetEntryForm({
         )}
       </div>
 
+      {/* Unit work — subcontractors only (m²/ml) */}
+      {isSubcontractor && (
+        <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <Ruler className="h-3.5 w-3.5 text-primary" />
+              Trabalho à empreitada (m² / ml)
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={() => {
+                const obraId = allocations[0]?.obra_id || "";
+                onUnitWorksChange([
+                  ...unitWorks,
+                  {
+                    obra_id: obraId,
+                    unit_type: "m2",
+                    quantity: 0,
+                    unit_rate: selectedWorker?.unit_rate_m2 || 0,
+                    description: "",
+                  },
+                ]);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar
+            </Button>
+          </div>
+
+          {unitWorks.length === 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              Opcional. Pode coexistir com horas — útil quando o subempreiteiro também é pago por unidade executada.
+            </p>
+          )}
+
+          {unitWorks.map((uw, i) => {
+            const total = (uw.quantity || 0) * (uw.unit_rate || 0);
+            return (
+              <div key={i} className="space-y-2 rounded-md border border-border bg-card p-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="col-span-2 md:col-span-1 space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">Obra</Label>
+                    <Select
+                      value={uw.obra_id}
+                      onValueChange={(v) => {
+                        const next = [...unitWorks];
+                        next[i] = { ...uw, obra_id: v };
+                        onUnitWorksChange(next);
+                      }}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Obra" /></SelectTrigger>
+                      <SelectContent>
+                        {obras.map((o) => (
+                          <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">Unidade</Label>
+                    <Select
+                      value={uw.unit_type}
+                      onValueChange={(v) => {
+                        const next = [...unitWorks];
+                        const newRate =
+                          v === "m2"
+                            ? selectedWorker?.unit_rate_m2 || 0
+                            : selectedWorker?.unit_rate_ml || 0;
+                        next[i] = { ...uw, unit_type: v as UnitWorkType, unit_rate: newRate };
+                        onUnitWorksChange(next);
+                      }}
+                    >
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="m2">m²</SelectItem>
+                        <SelectItem value="ml">ml</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">Quantidade</Label>
+                    <Input
+                      className="h-9"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      value={uw.quantity || ""}
+                      onChange={(e) => {
+                        const next = [...unitWorks];
+                        next[i] = { ...uw, quantity: parseFloat(e.target.value) || 0 };
+                        onUnitWorksChange(next);
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">€ / {uw.unit_type}</Label>
+                    <Input
+                      className="h-9"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      value={uw.unit_rate || ""}
+                      onChange={(e) => {
+                        const next = [...unitWorks];
+                        next[i] = { ...uw, unit_rate: parseFloat(e.target.value) || 0 };
+                        onUnitWorksChange(next);
+                      }}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Input
+                    className="h-8 text-xs"
+                    placeholder="Descrição (opcional)"
+                    value={uw.description || ""}
+                    onChange={(e) => {
+                      const next = [...unitWorks];
+                      next[i] = { ...uw, description: e.target.value };
+                      onUnitWorksChange(next);
+                    }}
+                  />
+                  <span className="text-sm font-semibold text-primary whitespace-nowrap">
+                    € {total.toFixed(2)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground"
+                    onClick={() => onUnitWorksChange(unitWorks.filter((_, idx) => idx !== i))}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Allocations - simplified for single obra */}
       {allocations.map((a, i) => (
         <div key={i} className="space-y-3">
