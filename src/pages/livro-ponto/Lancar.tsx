@@ -255,6 +255,11 @@ export default function LancarPage() {
                         + {formatMinutes(overtimeMinutes)} extra
                       </span>
                     )}
+                    {unitWorksTotal > 0 && (
+                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        Empreitada {formatCurrency(unitWorksTotal)}
+                      </span>
+                    )}
                     {totalCost > 0 && (
                       <span className="text-lg font-bold text-primary">
                         {formatCurrency(totalCost)}
