@@ -328,6 +328,38 @@ export function WorkerCreateModal({
                 </>
               )}
             </div>
+            {form.subempreiteiro_id && (
+              <div className="space-y-3 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px]">Empreitada</Badge>
+                  <p className="text-xs text-muted-foreground">
+                    Defina preços base por unidade. Podem ser editados em cada registo.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Preço por m² (€)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.unit_rate_m2 || ""}
+                      onChange={(e) => set({ unit_rate_m2: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Preço por ml (€)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.unit_rate_ml || ""}
+                      onChange={(e) => set({ unit_rate_ml: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* SECTION 4 — Additional */}
