@@ -128,12 +128,15 @@ export default function LancarPage() {
   };
 
   const handleSave = async (addAnother = false) => {
-    // Build allocations: regular + overtime (if any)
-    const finalAllocations = allocations.map((a) => ({
-      ...a,
-      worked_minutes: a.worked_minutes || totalMinutes,
-      cost_type: "regular" as CostType,
-    }));
+    // Build allocations: regular + overtime (if any). Skip when there are no hours.
+    const finalAllocations: AllocationFormData[] =
+      totalMinutes > 0
+        ? allocations.map((a) => ({
+            ...a,
+            worked_minutes: a.worked_minutes || totalMinutes,
+            cost_type: "regular" as CostType,
+          }))
+        : [];
 
     if (overtimeMinutes > 0 && allocations.length > 0) {
       finalAllocations.push({
@@ -152,6 +155,7 @@ export default function LancarPage() {
       break_minutes: breakMin,
       notes: notes || undefined,
       allocations: finalAllocations,
+      unit_works: validUnitWorks,
     });
 
     if (addAnother) {
@@ -164,6 +168,7 @@ export default function LancarPage() {
       setOvertimeHours("");
       setNotes("");
       setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
+      setUnitWorks([]);
     } else {
       navigate("/livro-ponto");
     }
