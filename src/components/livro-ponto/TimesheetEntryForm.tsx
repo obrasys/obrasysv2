@@ -34,6 +34,8 @@ interface TimesheetEntryFormProps {
   onAllocationsChange: (allocs: AllocationFormData[]) => void;
   overtimeHours: string;
   onOvertimeHoursChange: (v: string) => void;
+  unitWorks: UnitWorkFormData[];
+  onUnitWorksChange: (uw: UnitWorkFormData[]) => void;
 }
 
 function calcMinutesFromTimes(start: string, end: string, breakMin: number): number {
