@@ -83,21 +83,38 @@ export default function LancarPage() {
   const overtimeParsed = parseFloat(overtimeHours);
   const overtimeMinutes = isNaN(overtimeParsed) || overtimeParsed <= 0 ? 0 : Math.round(overtimeParsed * 60);
 
+  const unitWorksTotal = useMemo(
+    () =>
+      unitWorks.reduce(
+        (sum, uw) => sum + (uw.quantity || 0) * (uw.unit_rate || 0),
+        0
+      ),
+    [unitWorks]
+  );
+
   const totalCost = useMemo(() => {
-    if (!selectedWorker || totalMinutes <= 0) return 0;
-    const isSalary = selectedWorker.compensation_type === "salary";
-    if (isSalary) return 0;
-    const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
-    const regularCost = (totalMinutes / 60) * rate;
-    const otRate = selectedWorker.overtime_hourly_cost || rate;
-    const otCost = (overtimeMinutes / 60) * otRate;
-    return regularCost + otCost;
-  }, [selectedWorker, totalMinutes, overtimeMinutes]);
+    let hourlyCost = 0;
+    if (selectedWorker && totalMinutes > 0) {
+      const isSalary = selectedWorker.compensation_type === "salary";
+      if (!isSalary) {
+        const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
+        const regularCost = (totalMinutes / 60) * rate;
+        const otRate = selectedWorker.overtime_hourly_cost || rate;
+        const otCost = (overtimeMinutes / 60) * otRate;
+        hourlyCost = regularCost + otCost;
+      }
+    }
+    return hourlyCost + unitWorksTotal;
+  }, [selectedWorker, totalMinutes, overtimeMinutes, unitWorksTotal]);
+
+  const validUnitWorks = unitWorks.filter(
+    (uw) => uw.obra_id && uw.quantity > 0 && uw.unit_rate >= 0
+  );
 
   const canSave =
     workerId &&
     workDate &&
-    totalMinutes > 0 &&
+    (totalMinutes > 0 || validUnitWorks.length > 0) &&
     allocations.every((a) => a.obra_id) &&
     !createMutation.isPending;
 
