@@ -7,7 +7,7 @@ import { useWorkers, useCreateWorker, useCreateTimesheet } from "@/hooks/useLivr
 import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import { useObras } from "@/hooks/useObras";
 import { format } from "date-fns";
-import type { AllocationFormData, CostType } from "@/types/livro-ponto";
+import type { AllocationFormData, CostType, UnitWorkFormData } from "@/types/livro-ponto";
 import { TimesheetFilters } from "@/components/livro-ponto/TimesheetFilters";
 import { TimesheetEntryForm } from "@/components/livro-ponto/TimesheetEntryForm";
 import { WorkerCreateModal } from "@/components/livro-ponto/WorkerCreateModal";
