@@ -90,10 +90,13 @@ export function WorkerCreateModal({
 
   const set = (updates: Partial<WorkerFormData>) => setForm((prev) => ({ ...prev, ...updates }));
 
+  const hasUnitRates =
+    !!form.subempreiteiro_id && (form.unit_rate_m2 > 0 || form.unit_rate_ml > 0);
   const isValid =
     form.full_name.trim() &&
     ((form.compensation_type === "hourly" && form.hourly_rate > 0) ||
-      (form.compensation_type === "salary" && form.monthly_salary > 0));
+      (form.compensation_type === "salary" && form.monthly_salary > 0) ||
+      hasUnitRates);
 
   const handleSave = async () => {
     // Sync hourly_rate to default_hourly_cost for compatibility
