@@ -44,6 +44,8 @@ export interface WorkerFormData {
   compensation_type: CompensationType;
   monthly_salary: number;
   hourly_rate: number;
+  unit_rate_m2: number;
+  unit_rate_ml: number;
   default_hourly_cost: number;
   default_daily_cost: number;
   overtime_hourly_cost: number;
