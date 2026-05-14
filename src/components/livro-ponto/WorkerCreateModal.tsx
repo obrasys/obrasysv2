@@ -115,8 +115,9 @@ export function WorkerCreateModal({
       full_name: "", employee_code: null, nif: null, phone: null, email: null,
       role: null, subempreiteiro_id: null, equipa_membro_id: null,
       employment_type: "full_time", active: true, compensation_type: "hourly",
-      monthly_salary: 0, hourly_rate: 0, default_hourly_cost: 0,
-      default_daily_cost: 0, overtime_hourly_cost: 0, start_date: null, end_date: null, observacoes: "",
+      monthly_salary: 0, hourly_rate: 0, unit_rate_m2: 0, unit_rate_ml: 0,
+      default_hourly_cost: 0, default_daily_cost: 0, overtime_hourly_cost: 0,
+      start_date: null, end_date: null, observacoes: "",
     });
     return result;
   };
