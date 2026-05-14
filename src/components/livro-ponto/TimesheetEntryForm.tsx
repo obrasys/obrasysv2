@@ -10,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, UserPlus, AlertTriangle } from "lucide-react";
-import type { Worker, AllocationFormData, CostType } from "@/types/livro-ponto";
+import { Clock, UserPlus, AlertTriangle, Ruler, Plus, X } from "lucide-react";
+import type { Worker, AllocationFormData, CostType, UnitWorkFormData, UnitWorkType } from "@/types/livro-ponto";
 import { WorkerSummaryCard } from "./WorkerSummaryCard";
 
 interface TimesheetEntryFormProps {
