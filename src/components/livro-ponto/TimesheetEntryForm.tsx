@@ -70,8 +70,11 @@ export function TimesheetEntryForm({
   onAllocationsChange,
   overtimeHours,
   onOvertimeHoursChange,
+  unitWorks,
+  onUnitWorksChange,
 }: TimesheetEntryFormProps) {
   const selectedWorker = workers.find((w) => w.id === workerId);
+  const isSubcontractor = !!selectedWorker?.subempreiteiro_id;
 
   const timeBasedMinutes = useMemo(
     () => calcMinutesFromTimes(checkIn, checkOut, breakMin),
