@@ -11,12 +11,61 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth: require valid user JWT (called from app) OR cron secret (for scheduled runs)
+    const authHeader = req.headers.get('Authorization');
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const providedSecret = req.headers.get('x-cron-secret');
+    const isCron = !!cronSecret && providedSecret === cronSecret;
+
+    let callerUserId: string | null = null;
+    if (!isCron) {
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
+      if (claimsErr || !claims?.claims?.sub) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      callerUserId = claims.claims.sub as string;
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
     const { obra_id } = await req.json();
+
+    // If user-invoked, ensure they have access to this obra
+    if (callerUserId && obra_id) {
+      const { data: obra } = await supabase
+        .from('obras')
+        .select('id, user_id')
+        .eq('id', obra_id)
+        .maybeSingle();
+      if (!obra) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: orgIds } = await supabase.rpc('get_org_member_ids');
+      const allowed = Array.isArray(orgIds) ? (orgIds as string[]).includes(obra.user_id) : obra.user_id === callerUserId;
+      if (!allowed && obra.user_id !== callerUserId) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
     if (!obra_id) {
       return new Response(JSON.stringify({ error: 'obra_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
