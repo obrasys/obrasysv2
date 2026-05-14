@@ -235,7 +235,7 @@ export default function LancarPage() {
         />
 
         {/* Summary bar */}
-        {totalMinutes > 0 && (
+        {(totalMinutes > 0 || unitWorksTotal > 0) && (
           <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -244,10 +244,12 @@ export default function LancarPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Resumo do registo</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-lg font-bold text-foreground">
-                      {formatMinutes(totalMinutes)}
-                    </span>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {totalMinutes > 0 && (
+                      <span className="text-lg font-bold text-foreground">
+                        {formatMinutes(totalMinutes)}
+                      </span>
+                    )}
                     {overtimeMinutes > 0 && (
                       <span className="text-sm font-semibold text-amber-600">
                         + {formatMinutes(overtimeMinutes)} extra
