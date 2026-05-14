@@ -78,6 +78,8 @@ export function WorkerCreateModal({
     compensation_type: "hourly",
     monthly_salary: 0,
     hourly_rate: 0,
+    unit_rate_m2: 0,
+    unit_rate_ml: 0,
     default_hourly_cost: 0,
     default_daily_cost: 0,
     overtime_hourly_cost: 0,
