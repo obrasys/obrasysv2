@@ -7,7 +7,7 @@ import { useWorkers, useCreateWorker, useCreateTimesheet } from "@/hooks/useLivr
 import { useSubempreiteiros, useEquipaMembros } from "@/hooks/useRecursos";
 import { useObras } from "@/hooks/useObras";
 import { format } from "date-fns";
-import type { AllocationFormData, CostType } from "@/types/livro-ponto";
+import type { AllocationFormData, CostType, UnitWorkFormData } from "@/types/livro-ponto";
 import { TimesheetFilters } from "@/components/livro-ponto/TimesheetFilters";
 import { TimesheetEntryForm } from "@/components/livro-ponto/TimesheetEntryForm";
 import { WorkerCreateModal } from "@/components/livro-ponto/WorkerCreateModal";
@@ -51,6 +51,7 @@ export default function LancarPage() {
   const [allocations, setAllocations] = useState<AllocationFormData[]>([
     { ...emptyAllocation, obra_id: initialObra },
   ]);
+  const [unitWorks, setUnitWorks] = useState<UnitWorkFormData[]>([]);
 
   // Worker modal
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
@@ -82,21 +83,38 @@ export default function LancarPage() {
   const overtimeParsed = parseFloat(overtimeHours);
   const overtimeMinutes = isNaN(overtimeParsed) || overtimeParsed <= 0 ? 0 : Math.round(overtimeParsed * 60);
 
+  const unitWorksTotal = useMemo(
+    () =>
+      unitWorks.reduce(
+        (sum, uw) => sum + (uw.quantity || 0) * (uw.unit_rate || 0),
+        0
+      ),
+    [unitWorks]
+  );
+
   const totalCost = useMemo(() => {
-    if (!selectedWorker || totalMinutes <= 0) return 0;
-    const isSalary = selectedWorker.compensation_type === "salary";
-    if (isSalary) return 0;
-    const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
-    const regularCost = (totalMinutes / 60) * rate;
-    const otRate = selectedWorker.overtime_hourly_cost || rate;
-    const otCost = (overtimeMinutes / 60) * otRate;
-    return regularCost + otCost;
-  }, [selectedWorker, totalMinutes, overtimeMinutes]);
+    let hourlyCost = 0;
+    if (selectedWorker && totalMinutes > 0) {
+      const isSalary = selectedWorker.compensation_type === "salary";
+      if (!isSalary) {
+        const rate = selectedWorker.hourly_rate || selectedWorker.default_hourly_cost;
+        const regularCost = (totalMinutes / 60) * rate;
+        const otRate = selectedWorker.overtime_hourly_cost || rate;
+        const otCost = (overtimeMinutes / 60) * otRate;
+        hourlyCost = regularCost + otCost;
+      }
+    }
+    return hourlyCost + unitWorksTotal;
+  }, [selectedWorker, totalMinutes, overtimeMinutes, unitWorksTotal]);
+
+  const validUnitWorks = unitWorks.filter(
+    (uw) => uw.obra_id && uw.quantity > 0 && uw.unit_rate >= 0
+  );
 
   const canSave =
     workerId &&
     workDate &&
-    totalMinutes > 0 &&
+    (totalMinutes > 0 || validUnitWorks.length > 0) &&
     allocations.every((a) => a.obra_id) &&
     !createMutation.isPending;
 
@@ -110,12 +128,15 @@ export default function LancarPage() {
   };
 
   const handleSave = async (addAnother = false) => {
-    // Build allocations: regular + overtime (if any)
-    const finalAllocations = allocations.map((a) => ({
-      ...a,
-      worked_minutes: a.worked_minutes || totalMinutes,
-      cost_type: "regular" as CostType,
-    }));
+    // Build allocations: regular + overtime (if any). Skip when there are no hours.
+    const finalAllocations: AllocationFormData[] =
+      totalMinutes > 0
+        ? allocations.map((a) => ({
+            ...a,
+            worked_minutes: a.worked_minutes || totalMinutes,
+            cost_type: "regular" as CostType,
+          }))
+        : [];
 
     if (overtimeMinutes > 0 && allocations.length > 0) {
       finalAllocations.push({
@@ -134,6 +155,7 @@ export default function LancarPage() {
       break_minutes: breakMin,
       notes: notes || undefined,
       allocations: finalAllocations,
+      unit_works: validUnitWorks,
     });
 
     if (addAnother) {
@@ -146,6 +168,7 @@ export default function LancarPage() {
       setOvertimeHours("");
       setNotes("");
       setAllocations([{ ...emptyAllocation, obra_id: initialObra }]);
+      setUnitWorks([]);
     } else {
       navigate("/livro-ponto");
     }
@@ -207,10 +230,12 @@ export default function LancarPage() {
           onAllocationsChange={setAllocations}
           overtimeHours={overtimeHours}
           onOvertimeHoursChange={setOvertimeHours}
+          unitWorks={unitWorks}
+          onUnitWorksChange={setUnitWorks}
         />
 
         {/* Summary bar */}
-        {totalMinutes > 0 && (
+        {(totalMinutes > 0 || unitWorksTotal > 0) && (
           <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -219,13 +244,20 @@ export default function LancarPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Resumo do registo</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-lg font-bold text-foreground">
-                      {formatMinutes(totalMinutes)}
-                    </span>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {totalMinutes > 0 && (
+                      <span className="text-lg font-bold text-foreground">
+                        {formatMinutes(totalMinutes)}
+                      </span>
+                    )}
                     {overtimeMinutes > 0 && (
                       <span className="text-sm font-semibold text-amber-600">
                         + {formatMinutes(overtimeMinutes)} extra
+                      </span>
+                    )}
+                    {unitWorksTotal > 0 && (
+                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        Empreitada {formatCurrency(unitWorksTotal)}
                       </span>
                     )}
                     {totalCost > 0 && (

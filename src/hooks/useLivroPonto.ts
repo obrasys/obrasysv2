@@ -158,7 +158,7 @@ export function useCreateTimesheet() {
       // Get worker for cost snapshot
       const { data: worker, error: wErr } = await sb
         .from("workers")
-        .select("default_hourly_cost, overtime_hourly_cost")
+        .select("default_hourly_cost, overtime_hourly_cost, unit_rate_m2, unit_rate_ml")
         .eq("id", form.worker_id)
         .single();
       if (wErr) throw wErr;
@@ -187,7 +187,7 @@ export function useCreateTimesheet() {
         .single();
       if (tsErr) throw tsErr;
 
-      // Create allocations + cost entries
+      // Create allocations + cost entries (hourly)
       for (const alloc of form.allocations) {
         const hourlyCost =
           alloc.cost_type === "overtime"
@@ -230,6 +230,58 @@ export function useCreateTimesheet() {
             amount: Math.round(costAmount * 100) / 100,
             status: "pending",
             origin_type: "timesheet",
+          });
+        if (lcErr) throw lcErr;
+      }
+
+      // Create unit-work allocations + cost entries (m²/ml — subcontractors)
+      for (const uw of form.unit_works || []) {
+        if (!uw.obra_id || !uw.quantity || uw.quantity <= 0) continue;
+        const unitRate = uw.unit_rate || 0;
+        const costAmount = uw.quantity * unitRate;
+
+        const { data: ta, error: taErr } = await sb
+          .from("timesheet_allocations")
+          .insert({
+            user_id: user.id,
+            timesheet_id: ts.id,
+            worker_id: form.worker_id,
+            obra_id: uw.obra_id,
+            rdo_id: null,
+            work_date: form.work_date,
+            start_time: null,
+            end_time: null,
+            worked_minutes: 0,
+            hourly_cost_snapshot: 0,
+            cost_amount: Math.round(costAmount * 100) / 100,
+            cost_type: "unit",
+            description:
+              uw.description ||
+              `Empreitada ${uw.quantity} ${uw.unit_type} × €${unitRate.toFixed(2)}`,
+            unit_type: uw.unit_type,
+            quantity: uw.quantity,
+            unit_rate_snapshot: unitRate,
+          })
+          .select()
+          .single();
+        if (taErr) throw taErr;
+
+        const { error: lcErr } = await sb
+          .from("project_labor_cost_entries")
+          .insert({
+            user_id: user.id,
+            obra_id: uw.obra_id,
+            worker_id: form.worker_id,
+            timesheet_allocation_id: ta.id,
+            entry_date: form.work_date,
+            hours_worked: 0,
+            hourly_cost: 0,
+            amount: Math.round(costAmount * 100) / 100,
+            status: "pending",
+            origin_type: "timesheet_unit",
+            unit_type: uw.unit_type,
+            quantity: uw.quantity,
+            unit_rate: unitRate,
           });
         if (lcErr) throw lcErr;
       }

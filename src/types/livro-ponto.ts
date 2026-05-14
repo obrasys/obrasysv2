@@ -13,6 +13,8 @@ export interface Worker {
   compensation_type: CompensationType;
   monthly_salary: number;
   hourly_rate: number;
+  unit_rate_m2: number;
+  unit_rate_ml: number;
   nif: string | null;
   phone: string | null;
   email: string | null;
@@ -62,11 +64,16 @@ export interface TimesheetAllocation {
   cost_amount: number;
   cost_type: string;
   description: string | null;
+  unit_type: UnitWorkType | null;
+  quantity: number | null;
+  unit_rate_snapshot: number | null;
   created_at: string;
   updated_at: string;
   worker?: Worker;
   obras?: { id: string; nome: string };
 }
+
+export type UnitWorkType = "m2" | "ml";
 
 export interface ProjectLaborCostEntry {
   id: string;
@@ -85,7 +92,7 @@ export interface ProjectLaborCostEntry {
 }
 
 export type TimesheetStatus = "draft" | "submitted" | "approved" | "locked";
-export type CostType = "regular" | "overtime" | "night" | "weekend";
+export type CostType = "regular" | "overtime" | "night" | "weekend" | "unit";
 
 export interface AllocationFormData {
   obra_id: string;
@@ -97,6 +104,14 @@ export interface AllocationFormData {
   rdo_id?: string;
 }
 
+export interface UnitWorkFormData {
+  obra_id: string;
+  unit_type: UnitWorkType;
+  quantity: number;
+  unit_rate: number;
+  description?: string;
+}
+
 export interface TimesheetFormData {
   worker_id: string;
   work_date: string;
@@ -105,4 +120,5 @@ export interface TimesheetFormData {
   break_minutes: number;
   notes?: string;
   allocations: AllocationFormData[];
+  unit_works?: UnitWorkFormData[];
 }

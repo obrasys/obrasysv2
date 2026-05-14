@@ -7946,8 +7946,11 @@ export type Database = {
           id: string
           obra_id: string
           origin_type: string | null
+          quantity: number | null
           status: string | null
           timesheet_allocation_id: string | null
+          unit_rate: number | null
+          unit_type: string | null
           updated_at: string | null
           user_id: string
           worker_id: string
@@ -7961,8 +7964,11 @@ export type Database = {
           id?: string
           obra_id: string
           origin_type?: string | null
+          quantity?: number | null
           status?: string | null
           timesheet_allocation_id?: string | null
+          unit_rate?: number | null
+          unit_type?: string | null
           updated_at?: string | null
           user_id: string
           worker_id: string
@@ -7976,8 +7982,11 @@ export type Database = {
           id?: string
           obra_id?: string
           origin_type?: string | null
+          quantity?: number | null
           status?: string | null
           timesheet_allocation_id?: string | null
+          unit_rate?: number | null
+          unit_type?: string | null
           updated_at?: string | null
           user_id?: string
           worker_id?: string
@@ -10857,9 +10866,12 @@ export type Database = {
           hourly_cost_snapshot: number | null
           id: string
           obra_id: string
+          quantity: number | null
           rdo_id: string | null
           start_time: string | null
           timesheet_id: string
+          unit_rate_snapshot: number | null
+          unit_type: string | null
           updated_at: string | null
           user_id: string
           work_date: string
@@ -10875,9 +10887,12 @@ export type Database = {
           hourly_cost_snapshot?: number | null
           id?: string
           obra_id: string
+          quantity?: number | null
           rdo_id?: string | null
           start_time?: string | null
           timesheet_id: string
+          unit_rate_snapshot?: number | null
+          unit_type?: string | null
           updated_at?: string | null
           user_id: string
           work_date: string
@@ -10893,9 +10908,12 @@ export type Database = {
           hourly_cost_snapshot?: number | null
           id?: string
           obra_id?: string
+          quantity?: number | null
           rdo_id?: string | null
           start_time?: string | null
           timesheet_id?: string
+          unit_rate_snapshot?: number | null
+          unit_type?: string | null
           updated_at?: string | null
           user_id?: string
           work_date?: string
@@ -11237,6 +11255,8 @@ export type Database = {
           role: string | null
           start_date: string | null
           subempreiteiro_id: string | null
+          unit_rate_m2: number
+          unit_rate_ml: number
           updated_at: string | null
           user_id: string
         }
@@ -11261,6 +11281,8 @@ export type Database = {
           role?: string | null
           start_date?: string | null
           subempreiteiro_id?: string | null
+          unit_rate_m2?: number
+          unit_rate_ml?: number
           updated_at?: string | null
           user_id: string
         }
@@ -11285,6 +11307,8 @@ export type Database = {
           role?: string | null
           start_date?: string | null
           subempreiteiro_id?: string | null
+          unit_rate_m2?: number
+          unit_rate_ml?: number
           updated_at?: string | null
           user_id?: string
         }

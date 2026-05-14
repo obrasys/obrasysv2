@@ -44,6 +44,8 @@ export interface WorkerFormData {
   compensation_type: CompensationType;
   monthly_salary: number;
   hourly_rate: number;
+  unit_rate_m2: number;
+  unit_rate_ml: number;
   default_hourly_cost: number;
   default_daily_cost: number;
   overtime_hourly_cost: number;
@@ -76,6 +78,8 @@ export function WorkerCreateModal({
     compensation_type: "hourly",
     monthly_salary: 0,
     hourly_rate: 0,
+    unit_rate_m2: 0,
+    unit_rate_ml: 0,
     default_hourly_cost: 0,
     default_daily_cost: 0,
     overtime_hourly_cost: 0,
@@ -86,10 +90,13 @@ export function WorkerCreateModal({
 
   const set = (updates: Partial<WorkerFormData>) => setForm((prev) => ({ ...prev, ...updates }));
 
+  const hasUnitRates =
+    !!form.subempreiteiro_id && (form.unit_rate_m2 > 0 || form.unit_rate_ml > 0);
   const isValid =
     form.full_name.trim() &&
     ((form.compensation_type === "hourly" && form.hourly_rate > 0) ||
-      (form.compensation_type === "salary" && form.monthly_salary > 0));
+      (form.compensation_type === "salary" && form.monthly_salary > 0) ||
+      hasUnitRates);
 
   const handleSave = async () => {
     // Sync hourly_rate to default_hourly_cost for compatibility
@@ -111,8 +118,9 @@ export function WorkerCreateModal({
       full_name: "", employee_code: null, nif: null, phone: null, email: null,
       role: null, subempreiteiro_id: null, equipa_membro_id: null,
       employment_type: "full_time", active: true, compensation_type: "hourly",
-      monthly_salary: 0, hourly_rate: 0, default_hourly_cost: 0,
-      default_daily_cost: 0, overtime_hourly_cost: 0, start_date: null, end_date: null, observacoes: "",
+      monthly_salary: 0, hourly_rate: 0, unit_rate_m2: 0, unit_rate_ml: 0,
+      default_hourly_cost: 0, default_daily_cost: 0, overtime_hourly_cost: 0,
+      start_date: null, end_date: null, observacoes: "",
     });
     return result;
   };
@@ -323,6 +331,38 @@ export function WorkerCreateModal({
                 </>
               )}
             </div>
+            {form.subempreiteiro_id && (
+              <div className="space-y-3 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px]">Empreitada</Badge>
+                  <p className="text-xs text-muted-foreground">
+                    Defina preços base por unidade. Podem ser editados em cada registo.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Preço por m² (€)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.unit_rate_m2 || ""}
+                      onChange={(e) => set({ unit_rate_m2: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Preço por ml (€)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.unit_rate_ml || ""}
+                      onChange={(e) => set({ unit_rate_ml: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* SECTION 4 — Additional */}
