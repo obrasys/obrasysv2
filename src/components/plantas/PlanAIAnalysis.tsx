@@ -193,10 +193,10 @@ export function PlanAIAnalysis({
   const lastTokenRef = useRef<number | undefined>(undefined);
 
   // Downscale the rendered image before sending to the Vision LLM.
-  // High-res canvas (>5x DPR) can produce 10-20 MB payloads, which exceed
-  // the edge function body limit and crash req.json() with "Unexpected end
-  // of JSON input". Cap at 2000px on the longest side and use JPEG q=0.85.
-  const downscaleForAI = (src: string, maxSide = 1600, quality = 0.82): Promise<string> =>
+  // Legibilidade de cotas e nomes de compartimentos exige alta resolução:
+  // 2400 px no lado maior + JPEG q=0.92 mantém o payload <6 MB (limite 12 MB
+  // na edge function) e dá ao modelo detalhe suficiente para ler texto fino.
+  const downscaleForAI = (src: string, maxSide = 2400, quality = 0.92): Promise<string> =>
     new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -221,6 +221,24 @@ export function PlanAIAnalysis({
       img.src = src;
     });
 
+  const isAnalysisEmpty = (a: PlanAnalysisResult) =>
+    (!a.dimensions || a.dimensions.length === 0) &&
+    (!a.rooms || a.rooms.length === 0) &&
+    (!a.elements || a.elements.length === 0) &&
+    (!a.walls || a.walls.length === 0);
+
+  const callAxia = async (base64: string, hint?: "high_res_retry") => {
+    return await supabase.functions.invoke("axia-plan-vision", {
+      body: {
+        image_base64: base64,
+        calibration_info: calibration,
+        plan_import_id: planImportId,
+        page_number: currentPage,
+        retry_hint: hint,
+      },
+    });
+  };
+
   const handleAnalyze = async () => {
     if (!imageDataUrl) {
       toast.error("Nenhuma planta carregada");
@@ -230,10 +248,7 @@ export function PlanAIAnalysis({
     setIsAnalyzing(true);
     try {
       const base64 = await downscaleForAI(imageDataUrl);
-
-      const { data, error } = await supabase.functions.invoke("axia-plan-vision", {
-        body: { image_base64: base64, calibration_info: calibration, plan_import_id: planImportId, page_number: currentPage },
-      });
+      let { data, error } = await callAxia(base64);
 
       if (error) {
         // Quando a edge devolve non-2xx, supabase-js entrega o body em `data` na mesma.
