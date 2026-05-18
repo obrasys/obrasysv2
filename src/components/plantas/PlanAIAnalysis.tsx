@@ -196,7 +196,7 @@ export function PlanAIAnalysis({
   // High-res canvas (>5x DPR) can produce 10-20 MB payloads, which exceed
   // the edge function body limit and crash req.json() with "Unexpected end
   // of JSON input". Cap at 2000px on the longest side and use JPEG q=0.85.
-  const downscaleForAI = (src: string, maxSide = 2000, quality = 0.85): Promise<string> =>
+  const downscaleForAI = (src: string, maxSide = 1600, quality = 0.82): Promise<string> =>
     new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
