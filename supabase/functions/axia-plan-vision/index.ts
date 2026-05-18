@@ -503,118 +503,111 @@ REGRAS CRÍTICAS:
       }
     };
 
-    let resp = await callAI("google/gemini-2.5-flash");
-    let usedFallback = false;
+    // Cadeia de fallback resiliente: Flash(tool) → Flash(json) → Pro(json).
+    // Evitamos Pro(tool) porque tem latência alta e frequentemente faz timeout antes
+    // de devolver tool_calls, esgotando o orçamento total.
+    type Attempt = { model: string; mode: "tool" | "json"; timeoutMs: number };
+    const attempts: Attempt[] = [
+      { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 55_000 },
+      { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 45_000 },
+      { model: "google/gemini-2.5-pro", mode: "json", timeoutMs: 45_000 },
+    ];
 
-    if (!resp.ok) {
-      if (resp.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    let analysis: any = null;
+    let finishReason: string | undefined;
+    let lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+    let lastErrDetail = "O modelo respondeu, mas não no formato esperado.";
+
+    for (const att of attempts) {
+      if (analysis) break;
+      // precisa de pelo menos 8s livres para tentar (resposta + parse)
+      if (remainingMs() < 8_000) {
+        console.warn(`Skipping ${att.model}/${att.mode}: insufficient time (${remainingMs()}ms left).`);
+        break;
       }
-      if (resp.status === 402) {
-        return new Response(JSON.stringify({ error: "Credits exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      // 599 = timeout/abort/fetch_failed interno → tentar fallback Pro abaixo
-      if (resp.status !== 599) {
+
+      const resp = await callAI(att.model, att.mode, att.timeoutMs);
+
+      if (!resp.ok) {
+        if (resp.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (resp.status === 402) {
+          return new Response(JSON.stringify({ error: "Credits exhausted" }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (resp.status === 599) {
+          // timeout/abort interno — tentar próximo
+          lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+          lastErrDetail = `${att.model}/${att.mode} timeout/abort`;
+          console.warn(`${att.model}/${att.mode} timeout — trying next fallback.`);
+          continue;
+        }
         const errText = await resp.text().catch(() => "");
-        console.error("AI gateway error:", resp.status, errText);
-        return controlledFailure(
-          "AI_GATEWAY_ERROR",
-          "A Axia não conseguiu contactar o motor de IA.",
-          `Gateway respondeu ${resp.status}.`,
-        );
+        console.error(`AI gateway error on ${att.model}/${att.mode}:`, resp.status, errText);
+        lastErrCode = "AI_GATEWAY_ERROR";
+        lastErrDetail = `Gateway respondeu ${resp.status}.`;
+        continue;
       }
-    }
 
-    let aiData: any = resp.ok ? await resp.json() : {};
-    let choice = aiData.choices?.[0];
-    let finishReason = choice?.finish_reason;
-    let toolCall = choice?.message?.tool_calls?.[0];
-    let messageText = extractTextContent(choice?.message?.content);
+      const aiData: any = await resp.json().catch(() => ({}));
+      const choice = aiData.choices?.[0];
+      finishReason = choice?.finish_reason;
+      const toolCall = choice?.message?.tool_calls?.[0];
+      const messageText = extractTextContent(choice?.message?.content);
 
-    // Retry com modelo mais robusto se a Flash falhou (apenas se houver tempo)
-    if ((!toolCall || finishReason === "error") && !usedFallback && remainingMs() > 45_000) {
-      console.warn("Flash failed (finish_reason=", finishReason, "). Retrying with gemini-2.5-pro.");
-      usedFallback = true;
-      resp = await callAI("google/gemini-2.5-pro");
-      if (resp.ok) {
-        aiData = await resp.json();
-        choice = aiData.choices?.[0];
-        finishReason = choice?.finish_reason;
-        toolCall = choice?.message?.tool_calls?.[0];
-        messageText = extractTextContent(choice?.message?.content);
-      }
-    }
-
-    let analysis = null;
-
-    if (toolCall) {
-      const rawArgs: string = toolCall.function?.arguments ?? "";
-      try {
-        analysis = parseJsonWithRepair(rawArgs);
-      } catch (e) {
-        console.error(
-          "Failed to parse AI tool args. finish_reason=",
-          finishReason,
-          "len=",
-          rawArgs.length,
-          "tail=",
-          rawArgs.slice(-200),
-        );
-        // Attempt repair: balance unclosed braces/brackets caused by truncation
+      if (att.mode === "tool" && toolCall) {
+        const rawArgs: string = toolCall.function?.arguments ?? "";
         try {
           analysis = parseJsonWithRepair(rawArgs);
-          console.warn("Recovered partial JSON via repair (truncated output).");
-        } catch (e2) {
-          return controlledFailure(
-            "AI_STRUCTURED_OUTPUT_TRUNCATED",
-            finishReason === "length"
-              ? "Análise truncada (planta muito densa)."
-              : "Resposta inválida do motor de IA.",
-            `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`,
+        } catch (e) {
+          console.error(
+            `Failed to parse tool args (${att.model}). finish_reason=`,
+            finishReason,
+            "len=",
+            rawArgs.length,
+            "tail=",
+            rawArgs.slice(-200),
           );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
+          lastErrDetail = `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`;
         }
-      }
-    } else {
-      console.error("No tool_call in AI response. finish_reason=", finishReason, "messageTextLen=", messageText.length);
-      if (messageText) {
+      } else if (messageText) {
         try {
           analysis = parseJsonWithRepair(messageText);
-          console.warn("Recovered analysis from plain JSON message content.");
-        } catch {
-          console.warn("Plain JSON recovery failed. Retrying with json_object response format.");
+        } catch (jsonErr) {
+          console.error(
+            `JSON parse failed (${att.model}/${att.mode}):`,
+            jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
+          );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+          lastErrDetail = `json_parse_failed finish_reason=${finishReason}`;
         }
-      }
-
-      if (!analysis && remainingMs() > 30_000) {
-        const jsonResp = await callAI("google/gemini-2.5-pro", "json");
-        if (jsonResp.ok) {
-          const jsonData = await jsonResp.json();
-          const jsonChoice = jsonData.choices?.[0];
-          const jsonText = extractTextContent(jsonChoice?.message?.content);
-          try {
-            analysis = parseJsonWithRepair(jsonText);
-            finishReason = jsonChoice?.finish_reason ?? finishReason;
-          } catch (jsonErr) {
-            console.error("JSON fallback parse failed:", jsonErr instanceof Error ? jsonErr.message : String(jsonErr));
-          }
-        } else {
-          console.error("JSON fallback request failed with status", jsonResp.status);
-        }
-      }
-
-      if (!analysis) {
-        return controlledFailure(
-          "AI_STRUCTURED_OUTPUT_MISSING",
-          "A Axia não conseguiu devolver uma análise estruturada desta planta.",
-          "O modelo respondeu, mas não no formato esperado.",
+      } else {
+        console.warn(
+          `${att.model}/${att.mode} returned no usable content. finish_reason=`,
+          finishReason,
+          "toolCall=",
+          !!toolCall,
         );
+        lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+        lastErrDetail = `no_content finish_reason=${finishReason}`;
       }
+    }
+
+    if (!analysis) {
+      return controlledFailure(
+        lastErrCode,
+        lastErrCode === "AI_STRUCTURED_OUTPUT_TRUNCATED"
+          ? "Análise truncada (planta muito densa)."
+          : "A Axia não conseguiu devolver uma análise estruturada desta planta.",
+        lastErrDetail,
+      );
     }
 
     if (!hasMinimumFields(analysis)) {
