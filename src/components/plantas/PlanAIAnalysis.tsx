@@ -153,7 +153,9 @@ interface PlanAIAnalysisProps {
   planName?: string;
 }
 
-function normalizePlanAnalysisResult(input: any): PlanAnalysisResult {
+function normalizePlanAnalysisResult(input: any): PlanAnalysisResult | null {
+  if (!input || typeof input !== "object") return null;
+
   const rawRooms = Array.isArray(input?.rooms)
     ? input.rooms
     : Array.isArray(input?.compartments)
@@ -255,10 +257,13 @@ export function PlanAIAnalysis({
 
   // Use controlled result when parent provides one, fall back to internal state
   const isControlled = onResultChange !== undefined;
-  const result = isControlled ? controlledResult ?? null : internalResult;
+  const result = isControlled
+    ? normalizePlanAnalysisResult(controlledResult)
+    : normalizePlanAnalysisResult(internalResult);
   const setResult = (next: PlanAnalysisResult | null) => {
-    if (isControlled) onResultChange?.(next);
-    else setInternalResult(next);
+    const normalized = next ? normalizePlanAnalysisResult(next) : null;
+    if (isControlled) onResultChange?.(normalized);
+    else setInternalResult(normalized);
   };
 
   // Pending auto-analyze trigger after page switch (used by "Analisar todas")
