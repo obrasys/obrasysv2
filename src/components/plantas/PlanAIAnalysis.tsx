@@ -288,7 +288,28 @@ export function PlanAIAnalysis({
       }
 
       if (data?.analysis) {
-        const safe = normalize(data.analysis as PlanAnalysisResult);
+        let safe = normalize(data.analysis as PlanAnalysisResult);
+
+        // Escalada automática: se o modelo devolveu tudo vazio mas avisou que
+        // a qualidade/legibilidade era baixa, re-tenta com o modelo Pro.
+        const limitationsText = (safe.limitations ?? []).join(" ").toLowerCase();
+        const lowLegibility =
+          limitationsText.includes("resolu") ||
+          limitationsText.includes("legib") ||
+          limitationsText.includes("ileg") ||
+          safe.reading_quality?.dimensions_legibility === "baixa" ||
+          safe.reading_quality?.text_legibility === "baixa";
+
+        if (isAnalysisEmpty(safe) && lowLegibility) {
+          toast.info("A Axia vai re-analisar com o modelo de alta precisão…");
+          const retry = await callAxia(base64, "high_res_retry");
+          const retryData = retry.data as any;
+          if (retryData?.analysis) {
+            const retrySafe = normalize(retryData.analysis as PlanAnalysisResult);
+            if (!isAnalysisEmpty(retrySafe)) safe = retrySafe;
+          }
+        }
+
         setResult(safe);
         toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
         onAnalysisComplete?.();
