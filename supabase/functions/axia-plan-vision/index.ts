@@ -503,14 +503,15 @@ REGRAS CRÍTICAS:
       }
     };
 
-    // Cadeia de fallback resiliente: Flash(tool) → Flash(json) → Pro(json).
-    // Evitamos Pro(tool) porque tem latência alta e frequentemente faz timeout antes
-    // de devolver tool_calls, esgotando o orçamento total.
+    // Cadeia de fallback resiliente — priorizamos JSON mode (mais rápido que tool
+    // calls com schemas enormes) e modelos Flash/Flash-Lite (latência baixa).
+    // Pro foi removido: em plantas densas excedia consistentemente o orçamento
+    // de 135s antes de devolver qualquer conteúdo.
     type Attempt = { model: string; mode: "tool" | "json"; timeoutMs: number };
     const attempts: Attempt[] = [
-      { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 55_000 },
-      { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 45_000 },
-      { model: "google/gemini-2.5-pro", mode: "json", timeoutMs: 45_000 },
+      { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 50_000 },
+      { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 40_000 },
+      { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 35_000 },
     ];
 
     let analysis: any = null;
