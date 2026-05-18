@@ -212,18 +212,77 @@ REGRAS CRÍTICAS:
       }
     };
 
-    const normalizeAnalysis = (analysis: any) => ({
-      ...analysis,
-      scale_detected: analysis?.scale_detected ?? { found: false },
-      dimensions: Array.isArray(analysis?.dimensions) ? analysis.dimensions : [],
-      rooms: Array.isArray(analysis?.rooms) ? analysis.rooms : [],
-      elements: Array.isArray(analysis?.elements) ? analysis.elements : [],
-      walls: Array.isArray(analysis?.walls) ? analysis.walls : [],
-      exterior_elements: Array.isArray(analysis?.exterior_elements) ? analysis.exterior_elements : [],
-      limitations: Array.isArray(analysis?.limitations) ? analysis.limitations : [],
-      validation_questions: Array.isArray(analysis?.validation_questions) ? analysis.validation_questions : [],
-      summary: typeof analysis?.summary === "string" ? analysis.summary : "",
-    });
+    const normalizeAnalysis = (analysis: any) => {
+      const rawRooms = Array.isArray(analysis?.rooms)
+        ? analysis.rooms
+        : Array.isArray(analysis?.compartments)
+          ? analysis.compartments
+          : [];
+
+      const normalizedRooms = rawRooms
+        .filter((room: any) => room && typeof room === "object")
+        .map((room: any) => {
+          const bbox = Array.isArray(room?.bbox)
+            ? {
+                x_min: Number(room.bbox[0] ?? 0),
+                y_min: Number(room.bbox[1] ?? 0),
+                x_max: Number(room.bbox[2] ?? 0),
+                y_max: Number(room.bbox[3] ?? 0),
+              }
+            : room?.bbox;
+
+          return {
+            ...room,
+            name: room?.name ?? room?.nome ?? "Compartimento",
+            tipo_normalizado: room?.tipo_normalizado ?? room?.normalized_type ?? room?.tipo ?? "indefinido",
+            estimated_area: room?.estimated_area ?? room?.area_estimada ?? 0,
+            perimetro_estimado_m: room?.perimetro_estimado_m ?? room?.estimated_perimeter_m ?? 0,
+            vaos_porta_associados: Array.isArray(room?.vaos_porta_associados)
+              ? room.vaos_porta_associados
+              : Array.isArray(room?.connected_door_openings)
+                ? room.connected_door_openings
+                : [],
+            area_legivel: room?.area_legivel ?? room?.area_legible ?? false,
+            center_x: room?.center_x ?? room?.position_x ?? (bbox ? (bbox.x_min + bbox.x_max) / 2 : 0.5),
+            center_y: room?.center_y ?? room?.position_y ?? (bbox ? (bbox.y_min + bbox.y_max) / 2 : 0.5),
+            bbox,
+            confidence: room?.confidence ?? room?.confidence_score ?? 0,
+            review_required: room?.review_required ?? room?.needs_review ?? false,
+            evidencias: Array.isArray(room?.evidencias)
+              ? room.evidencias
+              : Array.isArray(room?.evidences)
+                ? room.evidences
+                : [],
+          };
+        });
+
+      return {
+        ...analysis,
+        sheet_classification: analysis?.sheet_classification
+          ? {
+              ...analysis.sheet_classification,
+              piso: analysis.sheet_classification?.piso ?? analysis.sheet_classification?.floor,
+              titulo: analysis.sheet_classification?.titulo ?? analysis.sheet_classification?.title,
+              norte_presente: analysis.sheet_classification?.norte_presente ?? analysis.sheet_classification?.north_present,
+              legenda_presente: analysis.sheet_classification?.legenda_presente ?? analysis.sheet_classification?.legend_present,
+              carimbo_presente: analysis.sheet_classification?.carimbo_presente ?? analysis.sheet_classification?.stamp_present,
+            }
+          : analysis?.sheetClassification,
+        scale_detected:
+          analysis?.scale_detected ??
+          analysis?.calibration?.scale_detected ?? {
+            found: false,
+          },
+        dimensions: Array.isArray(analysis?.dimensions) ? analysis.dimensions : [],
+        rooms: normalizedRooms,
+        elements: Array.isArray(analysis?.elements) ? analysis.elements : [],
+        walls: Array.isArray(analysis?.walls) ? analysis.walls : [],
+        exterior_elements: Array.isArray(analysis?.exterior_elements) ? analysis.exterior_elements : [],
+        limitations: Array.isArray(analysis?.limitations) ? analysis.limitations : [],
+        validation_questions: Array.isArray(analysis?.validation_questions) ? analysis.validation_questions : [],
+        summary: typeof analysis?.summary === "string" ? analysis.summary : "",
+      };
+    };
 
     const emptyFallbackAnalysis = (reason: string) => normalizeAnalysis({
       scale_detected: { found: false },
