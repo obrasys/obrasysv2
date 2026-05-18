@@ -408,7 +408,7 @@ export function PlanAxiaResultsTable({
                     const dimSrc = e.dimensao_legivel ? "lida" : (e.largura_cm ? "inferida" : "");
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{e.type.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(e.type ?? "—").replace(/_/g, " ")}</TableCell>
                         <TableCell className="font-medium">{e.label}</TableCell>
                         <TableCell className="text-xs tabular-nums">
                           {dim}
