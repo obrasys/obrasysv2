@@ -37,7 +37,9 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    const { image_base64, calibration_info, plan_import_id, page_number } = await req.json();
+    const { image_base64, calibration_info, plan_import_id, page_number, retry_hint } = await req.json();
+    const isHighResRetry = retry_hint === "high_res_retry";
+
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
