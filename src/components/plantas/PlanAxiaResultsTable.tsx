@@ -408,7 +408,7 @@ export function PlanAxiaResultsTable({
                     const dimSrc = e.dimensao_legivel ? "lida" : (e.largura_cm ? "inferida" : "");
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{e.type.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(e.type ?? "—").replace(/_/g, " ")}</TableCell>
                         <TableCell className="font-medium">{e.label}</TableCell>
                         <TableCell className="text-xs tabular-nums">
                           {dim}
@@ -473,7 +473,7 @@ export function PlanAxiaResultsTable({
                     const c = bboxCenter(w.bbox);
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{w.tipo.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(w.tipo ?? "—").replace(/_/g, " ")}</TableCell>
                         <TableCell className="capitalize text-xs">{w.orientacao}</TableCell>
                         <TableCell className="text-xs">{w.compartimento_associado ?? "—"}</TableCell>
                         <TableCell><ConfidenceBadge level={scoreToLevel(w.confidence_score)} /></TableCell>
@@ -527,7 +527,7 @@ export function PlanAxiaResultsTable({
                     const c = bboxCenter(e.bbox);
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{e.tipo.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(e.tipo ?? "—").replace(/_/g, " ")}</TableCell>
                         <TableCell className="text-xs">{e.notes ?? "—"}</TableCell>
                         <TableCell><ConfidenceBadge level={scoreToLevel(e.confidence_score)} /></TableCell>
                         <TableCell className="text-right">
