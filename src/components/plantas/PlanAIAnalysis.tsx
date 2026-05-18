@@ -153,6 +153,80 @@ interface PlanAIAnalysisProps {
   planName?: string;
 }
 
+function normalizePlanAnalysisResult(input: any): PlanAnalysisResult | null {
+  if (!input || typeof input !== "object") return null;
+
+  const rawRooms = Array.isArray(input?.rooms)
+    ? input.rooms
+    : Array.isArray(input?.compartments)
+      ? input.compartments
+      : [];
+
+  const rooms = rawRooms
+    .filter((room: any) => room && typeof room === "object")
+    .map((room: any) => {
+      const bbox = Array.isArray(room?.bbox)
+        ? {
+            x_min: Number(room.bbox[0] ?? 0),
+            y_min: Number(room.bbox[1] ?? 0),
+            x_max: Number(room.bbox[2] ?? 0),
+            y_max: Number(room.bbox[3] ?? 0),
+          }
+        : room?.bbox;
+
+      return {
+        ...room,
+        name: room?.name ?? room?.nome ?? "Compartimento",
+        tipo_normalizado: room?.tipo_normalizado ?? room?.normalized_type ?? room?.tipo ?? "indefinido",
+        estimated_area: room?.estimated_area ?? room?.area_estimada ?? 0,
+        perimetro_estimado_m: room?.perimetro_estimado_m ?? room?.estimated_perimeter_m ?? 0,
+        vaos_porta_associados: Array.isArray(room?.vaos_porta_associados)
+          ? room.vaos_porta_associados
+          : Array.isArray(room?.connected_door_openings)
+            ? room.connected_door_openings
+            : [],
+        area_legivel: room?.area_legivel ?? room?.area_legible ?? false,
+        center_x: room?.center_x ?? room?.position_x ?? (bbox ? (bbox.x_min + bbox.x_max) / 2 : 0.5),
+        center_y: room?.center_y ?? room?.position_y ?? (bbox ? (bbox.y_min + bbox.y_max) / 2 : 0.5),
+        bbox,
+        confidence: room?.confidence ?? room?.confidence_score ?? 0,
+        review_required: room?.review_required ?? room?.needs_review ?? false,
+        evidencias: Array.isArray(room?.evidencias)
+          ? room.evidencias
+          : Array.isArray(room?.evidences)
+            ? room.evidences
+            : [],
+      };
+    });
+
+  return {
+    ...input,
+    sheet_classification: input?.sheet_classification
+      ? {
+          ...input.sheet_classification,
+          piso: input.sheet_classification?.piso ?? input.sheet_classification?.floor,
+          titulo: input.sheet_classification?.titulo ?? input.sheet_classification?.title,
+          norte_presente: input.sheet_classification?.norte_presente ?? input.sheet_classification?.north_present,
+          legenda_presente: input.sheet_classification?.legenda_presente ?? input.sheet_classification?.legend_present,
+          carimbo_presente: input.sheet_classification?.carimbo_presente ?? input.sheet_classification?.stamp_present,
+        }
+      : undefined,
+    scale_detected:
+      input?.scale_detected ??
+      input?.calibration?.scale_detected ?? {
+        found: false,
+      },
+    dimensions: Array.isArray(input?.dimensions) ? input.dimensions : [],
+    rooms,
+    elements: Array.isArray(input?.elements) ? input.elements : [],
+    walls: Array.isArray(input?.walls) ? input.walls : [],
+    exterior_elements: Array.isArray(input?.exterior_elements) ? input.exterior_elements : [],
+    limitations: Array.isArray(input?.limitations) ? input.limitations : [],
+    validation_questions: Array.isArray(input?.validation_questions) ? input.validation_questions : [],
+    summary: typeof input?.summary === "string" ? input.summary : "",
+  };
+}
+
 export function PlanAIAnalysis({
   imageDataUrl,
   calibration,
@@ -183,10 +257,13 @@ export function PlanAIAnalysis({
 
   // Use controlled result when parent provides one, fall back to internal state
   const isControlled = onResultChange !== undefined;
-  const result = isControlled ? controlledResult ?? null : internalResult;
+  const result = isControlled
+    ? normalizePlanAnalysisResult(controlledResult)
+    : normalizePlanAnalysisResult(internalResult);
   const setResult = (next: PlanAnalysisResult | null) => {
-    if (isControlled) onResultChange?.(next);
-    else setInternalResult(next);
+    const normalized = next ? normalizePlanAnalysisResult(next) : null;
+    if (isControlled) onResultChange?.(normalized);
+    else setInternalResult(normalized);
   };
 
   // Pending auto-analyze trigger after page switch (used by "Analisar todas")
@@ -266,16 +343,7 @@ export function PlanAIAnalysis({
         if (!data?.analysis && typeof data.error === "string") { throw new Error(errStr); }
       }
 
-      const normalize = (a: PlanAnalysisResult): PlanAnalysisResult => ({
-        ...a,
-        dimensions: Array.isArray(a.dimensions) ? a.dimensions : [],
-        rooms: Array.isArray(a.rooms) ? a.rooms : [],
-        elements: Array.isArray(a.elements) ? a.elements : [],
-        walls: Array.isArray(a.walls) ? a.walls : [],
-        exterior_elements: Array.isArray(a.exterior_elements) ? a.exterior_elements : [],
-        summary: a.summary ?? "",
-        scale_detected: a.scale_detected ?? { found: false },
-      });
+      const normalize = (a: PlanAnalysisResult): PlanAnalysisResult => normalizePlanAnalysisResult(a);
 
       // Controlled failure from edge function (success:false but fallback analysis present)
       if (data?.success === false) {
