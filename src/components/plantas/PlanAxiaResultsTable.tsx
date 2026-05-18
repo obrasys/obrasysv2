@@ -473,7 +473,7 @@ export function PlanAxiaResultsTable({
                     const c = bboxCenter(w.bbox);
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{w.tipo.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(w.tipo ?? "—").replace(/_/g, " ")}</TableCell>
                         <TableCell className="capitalize text-xs">{w.orientacao}</TableCell>
                         <TableCell className="text-xs">{w.compartimento_associado ?? "—"}</TableCell>
                         <TableCell><ConfidenceBadge level={scoreToLevel(w.confidence_score)} /></TableCell>
