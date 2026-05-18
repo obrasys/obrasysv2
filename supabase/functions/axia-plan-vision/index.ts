@@ -37,7 +37,9 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    const { image_base64, calibration_info, plan_import_id, page_number } = await req.json();
+    const { image_base64, calibration_info, plan_import_id, page_number, retry_hint } = await req.json();
+    const isHighResRetry = retry_hint === "high_res_retry";
+
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
@@ -505,14 +507,20 @@ REGRAS CRÍTICAS:
 
     // Cadeia de fallback resiliente — priorizamos JSON mode (mais rápido que tool
     // calls com schemas enormes) e modelos Flash/Flash-Lite (latência baixa).
-    // Pro foi removido: em plantas densas excedia consistentemente o orçamento
-    // de 135s antes de devolver qualquer conteúdo.
+    // Quando o cliente sinaliza `high_res_retry` (1ª passagem devolveu vazio
+    // por baixa legibilidade), arrancamos com o modelo Pro: mais lento mas
+    // muito superior em texto fino e leitura de cotas.
     type Attempt = { model: string; mode: "tool" | "json"; timeoutMs: number };
-    const attempts: Attempt[] = [
-      { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 50_000 },
-      { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 40_000 },
-      { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 35_000 },
-    ];
+    const attempts: Attempt[] = isHighResRetry
+      ? [
+          { model: "google/gemini-2.5-pro", mode: "json", timeoutMs: 110_000 },
+          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 45_000 },
+        ]
+      : [
+          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 50_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 40_000 },
+          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 35_000 },
+        ];
 
     let analysis: any = null;
     let finishReason: string | undefined;
