@@ -3,8 +3,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Home, CheckCircle2, XCircle, Clock, Layers } from "lucide-react";
+import { ChevronDown, ChevronRight, Home, CheckCircle2, XCircle, Clock, Layers, Sparkles } from "lucide-react";
 import type { PlanMeasurement, PlanMeasurementMapping, PlanRoom } from "@/types/plan-measurements";
+import {
+  associateMeasurementsToCompartments,
+  buildDerivedQuantitiesForRoom,
+  type DerivedQuantity,
+  type ResolvedRoom,
+  type RoomMeasurementLink,
+} from "@/lib/plan-compartment-association";
 
 interface Article {
   id: string;
@@ -13,12 +20,6 @@ interface Article {
   unidade: string;
   preco_unitario: number;
   categoria: string;
-}
-
-interface RoomMeasurementLink {
-  id: string;
-  room_id: string;
-  measurement_id: string;
 }
 
 interface Props {
@@ -30,16 +31,29 @@ interface Props {
   onValidateMeasurement: (id: string, estado: "validado" | "rejeitado") => void;
 }
 
+interface MeasurementItem {
+  kind: "measurement";
+  measurement: PlanMeasurement;
+  mapping?: PlanMeasurementMapping;
+  article?: Article;
+  qtdFinal: number;
+  unit: string;
+  valorTotal: number;
+}
+
+interface DerivedItem {
+  kind: "derived";
+  derived: DerivedQuantity;
+  qtdFinal: number;
+  unit: string;
+  valorTotal: number;
+}
+
+type GroupItem = MeasurementItem | DerivedItem;
+
 interface RoomGroup {
-  room: PlanRoom | null; // null = sem compartimento
-  items: Array<{
-    measurement: PlanMeasurement;
-    mapping?: PlanMeasurementMapping;
-    article?: Article;
-    qtdFinal: number;
-    valorTotal: number;
-  }>;
-  totalArea: number;
+  room: ResolvedRoom | null;
+  items: GroupItem[];
   totalValor: number;
 }
 
@@ -83,36 +97,27 @@ export function PlanQuantitativosByRoom({
     return map;
   }, [mappings]);
 
-  // Build measurement → room IDs map
-  const measurementRoomMap = useMemo(() => {
-    const map = new Map<string, string[]>();
-    roomMeasurements.forEach((rm) => {
-      if (!map.has(rm.measurement_id)) map.set(rm.measurement_id, []);
-      map.get(rm.measurement_id)!.push(rm.room_id);
-    });
-    return map;
-  }, [roomMeasurements]);
+  // 🆕 Fase 2: associação heurística + deduplicação de nomes
+  const { measurementToRooms, resolvedRooms, stats } = useMemo(
+    () => associateMeasurementsToCompartments(measurements, rooms, roomMeasurements),
+    [measurements, rooms, roomMeasurements],
+  );
 
-  const roomGroups = useMemo(() => {
+  // Log diagnóstico — útil para perceber por que algo cai em "sem compartimento".
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.debug("[plan/by-room] association stats", stats);
+  }
+
+  const roomGroups = useMemo<RoomGroup[]>(() => {
     const groups = new Map<string, RoomGroup>();
 
-    // Init room groups
-    rooms.forEach((room) => {
-      groups.set(room.id, {
-        room,
-        items: [],
-        totalArea: room.area_m2,
-        totalValor: 0,
-      });
+    resolvedRooms.forEach((room) => {
+      groups.set(room.id, { room, items: [], totalValor: 0 });
     });
+    groups.set("__unassigned__", { room: null, items: [], totalValor: 0 });
 
-    // Unassigned group
-    groups.set("__unassigned__", {
-      room: null,
-      items: [],
-      totalArea: 0,
-      totalValor: 0,
-    });
+    const presentKindsPerRoom = new Map<string, Set<DerivedQuantity["kind"]>>();
 
     measurements.forEach((m) => {
       const mapping = mappingByMeasurement.get(m.id);
@@ -121,15 +126,30 @@ export function PlanQuantitativosByRoom({
       const qtdFinal = mapping ? base * mapping.coeficiente * mapping.fator_desperdicio : base;
       const valorTotal = article ? qtdFinal * article.preco_unitario : 0;
 
-      const item = { measurement: m, mapping, article, qtdFinal, valorTotal };
+      const item: MeasurementItem = {
+        kind: "measurement",
+        measurement: m,
+        mapping,
+        article,
+        qtdFinal,
+        unit: article?.unidade ?? m.unidade,
+        valorTotal,
+      };
 
-      const roomIds = measurementRoomMap.get(m.id);
+      const roomIds = measurementToRooms.get(m.id);
       if (roomIds && roomIds.length > 0) {
         roomIds.forEach((rid) => {
           const group = groups.get(rid);
           if (group) {
             group.items.push(item);
             group.totalValor += valorTotal;
+            const presentKinds = presentKindsPerRoom.get(rid) ?? new Set();
+            const tag = `${m.camada ?? ""} ${m.etiqueta ?? ""}`.toLowerCase();
+            if (/pavimento|piso|chao|chão/.test(tag)) presentKinds.add("pavimento");
+            if (/teto|tecto/.test(tag)) presentKinds.add("teto");
+            if (/rodap/.test(tag)) presentKinds.add("rodape");
+            if (/parede/.test(tag)) presentKinds.add("paredes");
+            presentKindsPerRoom.set(rid, presentKinds);
           }
         });
       } else {
@@ -139,27 +159,42 @@ export function PlanQuantitativosByRoom({
       }
     });
 
-    // Sort: rooms with items first, unassigned last
-    const result = Array.from(groups.values())
+    // 🆕 Quantitativos derivados (pavimento/teto/rodapé/paredes) para compartimentos
+    // que tenham área/perímetro mas não tenham medições desse tipo.
+    resolvedRooms.forEach((room) => {
+      const present = presentKindsPerRoom.get(room.id) ?? new Set<DerivedQuantity["kind"]>();
+      const derived = buildDerivedQuantitiesForRoom(room, present);
+      const group = groups.get(room.id);
+      if (!group) return;
+      derived.forEach((d) => {
+        group.items.push({
+          kind: "derived",
+          derived: d,
+          qtdFinal: d.value,
+          unit: d.unit,
+          valorTotal: 0,
+        });
+      });
+    });
+
+    return Array.from(groups.values())
       .filter((g) => g.items.length > 0 || g.room)
       .sort((a, b) => {
         if (!a.room) return 1;
         if (!b.room) return -1;
-        return a.room.nome.localeCompare(b.room.nome);
+        return a.room.display_name.localeCompare(b.room.display_name);
       });
-
-    return result;
-  }, [measurements, rooms, mappingByMeasurement, articleById, measurementRoomMap]);
+  }, [measurements, resolvedRooms, mappingByMeasurement, articleById, measurementToRooms]);
 
   const totals = useMemo(() => {
     let valor = 0;
     let medicoes = 0;
     roomGroups.forEach((g) => {
       valor += g.totalValor;
-      medicoes += g.items.length;
+      medicoes += g.items.filter((i) => i.kind === "measurement").length;
     });
-    return { valor, medicoes, rooms: rooms.length };
-  }, [roomGroups, rooms]);
+    return { valor, medicoes, rooms: resolvedRooms.length };
+  }, [roomGroups, resolvedRooms]);
 
   const toggleRoom = (id: string) => {
     setOpenRooms((prev) => {
@@ -172,7 +207,6 @@ export function PlanQuantitativosByRoom({
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-muted rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-foreground">{totals.rooms}</p>
@@ -190,7 +224,6 @@ export function PlanQuantitativosByRoom({
         </div>
       </div>
 
-      {/* Room groups */}
       <div className="space-y-2">
         {roomGroups.map((group) => {
           const groupId = group.room?.id ?? "__unassigned__";
@@ -214,7 +247,7 @@ export function PlanQuantitativosByRoom({
                       )}
                       <div>
                         <span className="font-medium text-sm">
-                          {group.room ? group.room.nome : "Sem compartimento"}
+                          {group.room ? group.room.display_name : "Sem compartimento"}
                         </span>
                         {group.room && (
                           <span className="text-xs text-muted-foreground ml-2">
@@ -229,7 +262,7 @@ export function PlanQuantitativosByRoom({
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className="text-[10px]">
-                        {group.items.length} med.
+                        {group.items.length} {group.items.length === 1 ? "item" : "itens"}
                       </Badge>
                       <span className="font-mono text-sm font-medium">
                         {group.totalValor.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}
@@ -243,9 +276,9 @@ export function PlanQuantitativosByRoom({
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-8"></TableHead>
-                        <TableHead>Medição</TableHead>
+                        <TableHead>Item</TableHead>
                         <TableHead>Artigo</TableHead>
-                        <TableHead className="text-right">Qtd Final</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
                         <TableHead>Un.</TableHead>
                         <TableHead className="text-right">P.Unit.</TableHead>
                         <TableHead className="text-right">Total</TableHead>
@@ -253,71 +286,104 @@ export function PlanQuantitativosByRoom({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {group.items.map((item) => (
-                        <TableRow key={`${groupId}-${item.measurement.id}`}>
-                          <TableCell>
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: item.measurement.cor || "#3b82f6" }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">{item.measurement.etiqueta || item.measurement.tipo}</span>
-                            {item.measurement.camada && (
-                              <span className="text-[10px] text-muted-foreground ml-1">({item.measurement.camada})</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {item.article ? (
-                              <span className="text-xs">
-                                <span className="font-mono">{item.article.codigo}</span>
-                                <span className="text-muted-foreground ml-1 line-clamp-1">{item.article.descricao}</span>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">Sem artigo</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-sm font-medium">
-                            {item.qtdFinal.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {item.article?.unidade ?? item.measurement.unidade}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-xs">
-                            {item.article ? `${item.article.preco_unitario.toFixed(2)} €` : "—"}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-sm font-medium">
-                            {item.valorTotal > 0 ? `${item.valorTotal.toFixed(2)} €` : "—"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {estadoIcon(item.measurement.estado_validacao)}
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                title="Validar"
-                                onClick={() => onValidateMeasurement(item.measurement.id, "validado")}
-                              >
-                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                title="Rejeitar"
-                                onClick={() => onValidateMeasurement(item.measurement.id, "rejeitado")}
-                              >
-                                <XCircle className="h-3 w-3 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {/* Subtotal */}
+                      {group.items.map((item) => {
+                        if (item.kind === "derived") {
+                          const d = item.derived;
+                          return (
+                            <TableRow key={d.id} className="bg-primary/[0.03]">
+                              <TableCell>
+                                <Sparkles className="w-3.5 h-3.5 text-primary/70" />
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm">{d.label}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1">
+                                  ({d.basis})
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-xs text-muted-foreground italic">
+                                  A definir
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right font-mono text-sm font-medium">
+                                {d.value.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-xs">{d.unit}</TableCell>
+                              <TableCell className="text-right font-mono text-xs">—</TableCell>
+                              <TableCell className="text-right font-mono text-xs">—</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-[10px]">
+                                  {d.estimated ? "Estimado" : "Calculado"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+
+                        const m = item.measurement;
+                        return (
+                          <TableRow key={`${groupId}-${m.id}`}>
+                            <TableCell>
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: m.cor || "#3b82f6" }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{m.etiqueta || m.tipo}</span>
+                              {m.camada && (
+                                <span className="text-[10px] text-muted-foreground ml-1">({m.camada})</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {item.article ? (
+                                <span className="text-xs">
+                                  <span className="font-mono">{item.article.codigo}</span>
+                                  <span className="text-muted-foreground ml-1 line-clamp-1">{item.article.descricao}</span>
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">Sem artigo</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm font-medium">
+                              {item.qtdFinal.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-xs">{item.unit}</TableCell>
+                            <TableCell className="text-right font-mono text-xs">
+                              {item.article ? `${item.article.preco_unitario.toFixed(2)} €` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm font-medium">
+                              {item.valorTotal > 0 ? `${item.valorTotal.toFixed(2)} €` : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {estadoIcon(m.estado_validacao)}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  title="Validar"
+                                  onClick={() => onValidateMeasurement(m.id, "validado")}
+                                >
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  title="Rejeitar"
+                                  onClick={() => onValidateMeasurement(m.id, "rejeitado")}
+                                >
+                                  <XCircle className="h-3 w-3 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                       <TableRow className="bg-muted/30">
                         <TableCell colSpan={6} className="text-right text-xs font-medium">
-                          Subtotal {group.room?.nome ?? "Sem compartimento"}
+                          Subtotal {group.room?.display_name ?? "Sem compartimento"}
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm font-bold">
                           {group.totalValor.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}

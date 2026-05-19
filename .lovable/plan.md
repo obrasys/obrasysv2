@@ -1,65 +1,128 @@
-# Integrar simbologia oficial PT no prompt da Axia "Análise Elétrica"
 
-## Objetivo
-Carregar no system prompt da edge function `axia-electrical-analysis` toda a simbologia elétrica extraída do PDF `simbologia.pdf` (norma PT-PT da T2DP), para que a Axia reconheça e classifique corretamente cada símbolo encontrado em plantas, legendas e diagramas.
+# Plano — Estabilização do Módulo Planta / Leitura de Planta
 
-## O que muda
-Apenas dois blocos no ficheiro `supabase/functions/axia-electrical-analysis/index.ts`:
+Objetivo: corrigir a cadeia **Planta → Axia → Compartimentos → Quantitativos → Mapeamento → Orçamento**, sem reescrever o módulo nem quebrar dados existentes. Trabalho dividido em 5 fases incrementais, cada uma entregável e testável de forma independente.
 
-1. **Expandir `SYMBOL_KEYS`** (hoje ~25 chaves) para o catálogo completo PT-PT (~55 chaves), agrupado por categoria. Manter `outro` como fallback.
-2. **Adicionar uma secção "SIMBOLOGIA DE REFERÊNCIA (PT-PT)"** ao `systemPrompt`, listando descrição visual + significado + `symbol_key` correspondente, para a Axia mapear rigorosamente.
+---
 
-Não há alterações em UI, BD nem outras funções. Os novos `symbol_key` já passam automaticamente para `plan_placed_elements.symbol_type_id` e aparecem nos quantitativos.
+## Fase 1 — Estabilizar análise e reanálise (Axia + persistência)
 
-## Catálogo a incluir (extraído do PDF)
+**Edge function `axia-plan-vision` + hook `usePlanAxiaPersistence`**
 
-### Proteção & quadros
-`interruptor_tetrapolar`, `interruptor_unipolar`, `interruptor_unipolar_chave`,
-`interruptor_diferencial_tetrapolar`, `interruptor_diferencial_bipolar`,
-`disjuntor_diferencial_tetrapolar`, `disjuntor_diferencial_bipolar`,
-`disjuntor_tetrapolar`, `disjuntor_tripolar`, `disjuntor_bipolar`, `disjuntor_unipolar`,
-`porta_fusivel_unipolar`, `porta_fusivel_bipolar`, `porta_fusivel_tripolar`,
-`tribloco_fusiveis`, `quadro_eletrico`, `portinhola`,
-`contador_energia`, `contador_energia_tripla_tarifa`,
-`caixa_coluna`, `caixa_derivacao`, `caixa_visita`, `caixa_alimentacao`,
-`ligacao_terra`, `ligador_amovivel`, `sinalizador_tensao_modular`
+- Introduzir estado explícito da análise: `pending | processing | completed | failed` + `error_message` técnico + `revision_number`.
+- Reanálise nunca apaga a análise anterior:
+  - Criar nova linha (revisão) e só promover a "ativa" se `completed`.
+  - Se falhar, manter a revisão anterior como ativa e devolver mensagem amigável.
+- Cadeia de fallback no edge function:
+  1. Análise completa (compartimentos + elementos + medições).
+  2. Se falhar, leitura simplificada (só compartimentos com área/perímetro).
+  3. Se falhar, leitura mínima (áreas/perímetros sem classificação).
+  4. `confidence < 0.6` → `review_required = true`.
+- Toast amigável no frontend + botão "Tentar novamente" sempre disponível.
 
-### Comando
-`interruptor_simples`, `comutador_escada`, `comutador_escada_duplo`,
-`comutador_lustre`, `comutador_chave`, `inversor`,
-`botao_pressao`, `botao_chave`, `botao_pressao_sinalizacao`,
-`detector_movimento`
+**Entrega:** reanalisar uma planta nunca deixa o módulo num estado quebrado.
 
-### Iluminação
-`ponto_luz`, `ponto_luz_embebido_parede`, `ponto_luz_parede`,
-`ponto_luz_downlight`, `ponto_luz_uplight`, `projetor_250w`,
-`bloco_emergencia_permanente`, `bloco_emergencia_nao_permanente`,
-`bloco_emergencia_protecao_mecanica`,
-`armadura_fluorescente_1x18`, `armadura_fluorescente_1x36`, `armadura_fluorescente_1x58`,
-`armadura_fluorescente_2x18`, `armadura_fluorescente_2x36`, `armadura_fluorescente_2x58`,
-`armadura_fluorescente_4x18`,
-`armadura_fluorescente_2x36_antideflagrante`,
-`armadura_incandescente_60w_antideflagrante`,
-`armadura_fluorescente_2x36_kit_emergencia`,
-`armadura_fluorescente_quadro_parede`,
-`luminaria_industrial_suspensa_250w`, `sinalizador_parede`
+---
 
-### Tomadas
-`tomada_schuko_obturadores`, `tomada_estabilizada_ups`, `tomada_trifasica_terra`
+## Fase 2 — Associação Compartimento ↔ Medição (núcleo do problema)
 
-### Outros
-`sirene`, `canalizacao_geral`, `canalizacao_geral_enterrada`
+**Novo módulo `src/lib/plan-compartment-association.ts`**
 
-(Mais `outro` como fallback obrigatório.)
+- Função `associateMeasurementsToCompartments(measurements, compartments)`:
+  1. Match por `compartment_id` explícito.
+  2. Match por nome no `etiqueta`/`description` (ex: "Rodapé — SALA").
+  3. Match geométrico: ponto/polígono da medição dentro do polígono do compartimento (point-in-polygon).
+  4. Match por proximidade espacial (centróide mais próximo).
+- **Deduplicação de nomes**: se existirem N compartimentos com o mesmo nome normalizado (`QUARTO`), renomear para `QUARTO 1`, `QUARTO 2`, `QUARTO 3` (display_name) mantendo `normalized_name` original.
+- Cálculo de derivados por compartimento quando faltam medições:
+  - `pavimento_m2 = area_m2`
+  - `teto_m2 = area_m2`
+  - `rodape_ml = perimetro_m - Σ largura_portas`
+  - `paredes_m2 = perimetro_m × pe_direito - Σ vãos`
+  - Premissas padrão configuráveis: `pe_direito=2.60`, `porta=0.80×2.00`. Marcar como `estimado=true`.
+- Nunca exibir `0,00 m²` quando o compartimento tem perímetro válido.
+
+**Migração DB:** adicionar `compartment_id` nullable em `plan_measurements` (se ainda não existir) + índice.
+
+**UI:** corrigir `PlanQuantitativosByCompartment` para usar a nova função antes de cair em "Sem compartimento".
+
+---
+
+## Fase 3 — Mapeamento inteligente + sugestão de artigo
+
+**Hook `usePlanMappings` + `src/lib/plan-base-precos-matching.ts`**
+
+- Reforçar matching automático com sinais combinados: tipo de medição + camada + unidade + nome compartimento + descrição.
+- Sugestões contextuais (top 5) por linha na aba Mapeamento (já existe parcialmente — completar para rodapé/paredes/teto/pavimento).
+- **Mapeamento em massa**: botão "Aplicar a todos do mesmo tipo" + checkboxes por linha + ação em lote.
+- Quando não há artigo compatível:
+  - Modal "Criar artigo sugerido pela Axia" (edge function `axia-plan-suggestions` já existe — estender prompt).
+  - Resultado: artigo com `status='suggested'`, sem preço obrigatório, marcado `review_required`.
+  - Ações: aceitar, editar, guardar na base, usar só neste orçamento, ignorar.
+
+---
+
+## Fase 4 — Perguntas de acabamento (Axia operacional)
+
+**Novo componente `src/components/plantas/FinishingChoicesStep.tsx`**
+
+- Step opcional antes do envio para orçamento.
+- Perguntas por tipo (Paredes / Rodapé / Pavimento / Teto / Portas / Janelas) com presets + "Definir depois".
+- Cada resposta resolve para um artigo da base ou cria sugestão.
+- Não bloqueia o fluxo; itens sem definição vão para orçamento com tag `pendente_definicao`.
+
+---
+
+## Fase 5 — Envio para Orçamento (novo ou existente)
+
+**Modal `SendToBudgetModal` + hook novo `useCreateBudgetFromPlan`**
+
+- Se existir orçamento na obra: dropdown + botão secundário "Criar novo orçamento".
+- Se não existir: CTA "Criar novo orçamento com estes quantitativos" + Cancelar.
+- Criação automática:
+  - Nome: `Orçamento gerado da planta — {nome_planta} (Rev. X)`.
+  - Reutilizar `generate_orcamento_codigo`.
+  - Organização escolhida: por compartimento / por tipo / por camada / por pavimento / capítulo único.
+  - Persistir rastreabilidade nos artigos: `plant_id`, `analysis_id`, `revision_id`, `measurement_id`, `compartment_id` (colunas novas em `artigos_orcamento`, nullable).
+- Redireciona para `/orcamentos/{id}/ver` após sucesso.
+
+---
 
 ## Detalhes técnicos
 
-- O `enum` em `toolSchema.placed_symbols.items.symbol_key`, `declared_quantities.items.symbol_key` e `legend_map.items.symbol_key` herda de `SYMBOL_KEYS`, portanto a expansão valida automaticamente as novas chaves.
-- A vista `plan_quantitativos_v` agrupa por `symbol_type_id`, logo os novos símbolos passam a aparecer em Quantitativos sem migração.
-- Mantém compatibilidade com chaves antigas (ex: `tomada_baixa`, `quadro_distribuicao`) — vou manter como aliases para não invalidar análises já persistidas.
-- O bloco de simbologia no system prompt vai ser uma tabela compacta no formato `símbolo visual → significado → symbol_key`, instruindo a Axia: *"Quando reconheceres um destes símbolos, usa exatamente esta `symbol_key`. Se não for nenhum destes, usa `outro` e descreve em `technical_note`."*
+**Migrações DB necessárias**
+- `plan_measurements`: adicionar `compartment_id uuid`, `mapping_status text`, `validation_status text` (se não existirem).
+- `plan_rooms`: adicionar `display_name text`, `normalized_name text`, `revision_number int`.
+- `plan_analyses` (nova ou estender existente): `status`, `error_message`, `revision_number`, `is_active`.
+- `artigos_orcamento`: colunas opcionais de rastreabilidade (`source_plant_id`, `source_measurement_id`, `source_compartment_id`).
+- Todas com RLS já cobertas pelos policies da obra/organização.
 
-## Resultado esperado
-A Axia, ao analisar uma planta T2DP (ou similar PT), passa a identificar com nome correto: ex. "armadura fluorescente 2x36W", "disjuntor diferencial tetrapolar", "bloco autónomo de emergência permanente", em vez de cair tudo em `outro` ou `fluorescente` genérico — e os quantitativos refletem isso.
+**Edge functions tocadas**
+- `axia-plan-vision`: status + fallback chain + retornar `compartment_id` por medição.
+- `axia-plan-suggestions`: estender para gerar artigos sugeridos completos (descrição + capítulo + unidade).
 
-Aprovas para implementar?
+**Frontend tocado**
+- `src/components/plantas/PlanAIAnalysis.tsx` — usa nova lógica de associação ao normalizar.
+- `src/components/plantas/PlanQuantitativosByCompartment.tsx` (novo ou refactor) — vista corrigida.
+- `src/components/plantas/PlanMappingTable.tsx` — bulk mapping + sugestão de artigo.
+- `src/components/plantas/SendToBudgetModal.tsx` — criação automática.
+- `src/lib/plan-compartment-association.ts` (novo).
+
+**Logs técnicos**
+- Console + tabela `plan_audit_log` (opcional, leve) com eventos: `analysis_started`, `analysis_failed`, `compartment_associated`, `mapping_auto`, `budget_created_from_plan`.
+
+---
+
+## Sequência de entrega proposta
+
+1. **Fase 1** (1 turno) — estabilização análise/reanálise.
+2. **Fase 2** (1 turno) — associação compartimento↔medição + derivados.
+3. **Fase 3** (1 turno) — mapeamento massa + sugestão.
+4. **Fase 4** (1 turno) — perguntas acabamento.
+5. **Fase 5** (1 turno) — envio/criação de orçamento.
+
+Cada fase fecha com testes manuais no preview e migração isolada.
+
+---
+
+**Pergunta antes de começar:** Aprovas começar já pela **Fase 1 + Fase 2** (que resolvem ~70% das queixas: reanálise quebrada e quantitativos em "Sem compartimento") num único turno, e seguir depois para 3→5? Ou preferes outra ordem (p.ex. começar pelo envio para orçamento da Fase 5)?
