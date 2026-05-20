@@ -23,6 +23,7 @@ import { Loader2, Send, Layers, AlertTriangle, ShieldAlert } from "lucide-react"
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
 import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
 import { Checkbox } from "@/components/ui/checkbox";
