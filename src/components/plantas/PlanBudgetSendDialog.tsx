@@ -186,9 +186,11 @@ export function PlanBudgetSendDialog({
         nextNum++;
       }
 
+      const createdMsg = orcamentoId === NEW_BUDGET ? " no novo orçamento" : "";
       toast.success(
-        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)`,
+        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)${createdMsg}`,
       );
+      console.info("[plan→budget] sent", { targetOrcamentoId, totalArticles, chapters: groups.length });
       onOpenChange(false);
     } catch (e: any) {
       toast.error("Erro ao enviar: " + (e.message ?? e));
