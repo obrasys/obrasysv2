@@ -159,7 +159,7 @@ export function PlanBudgetSendDialog({
         const { data: chapter, error: chErr } = await supabase
           .from("capitulos_orcamento")
           .insert({
-            orcamento_id: orcamentoId,
+            orcamento_id: targetOrcamentoId,
             numero: nextNum,
             titulo: title,
             ordem: nextNum,
