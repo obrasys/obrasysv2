@@ -67,7 +67,7 @@ export function PlanBudgetSendDialog({
   floorId,
   disciplina,
 }: Props) {
-  const { orcamentos } = useOrcamentos();
+  const { orcamentos, createOrcamento } = useOrcamentos();
   const obraOrcamentos = (orcamentos ?? []).filter((o) => o.obra_id === obraId);
 
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
@@ -75,7 +75,13 @@ export function PlanBudgetSendDialog({
     : null;
   const prefix = disciplineLabel ? `${disciplineLabel} — ` : "";
 
-  const [orcamentoId, setOrcamentoId] = useState("");
+  // "__new__" is a sentinel meaning "create a new budget on the fly".
+  const NEW_BUDGET = "__new__";
+  const [orcamentoId, setOrcamentoId] = useState<string>(
+    obraOrcamentos.length === 0 ? NEW_BUDGET : "",
+  );
+  const defaultNewTitle = planName ? `Orçamento — ${planName}` : "Orçamento da Planta";
+  const [newBudgetTitle, setNewBudgetTitle] = useState(defaultNewTitle);
   const [groupBy, setGroupBy] = useState<GroupBy>(disciplineLabel ? "single" : "source");
   const [chapterTitle, setChapterTitle] = useState(
     disciplineLabel
