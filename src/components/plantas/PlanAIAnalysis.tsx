@@ -247,6 +247,8 @@ export function PlanAIAnalysis({
   planName,
 }: PlanAIAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
   const [internalResult, setInternalResult] = useState<PlanAnalysisResult | null>(null);
   const [showTable, setShowTable] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({
