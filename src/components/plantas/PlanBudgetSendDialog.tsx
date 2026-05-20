@@ -125,13 +125,31 @@ export function PlanBudgetSendDialog({
       toast.warning("Confirme os avisos antes de enviar.");
       return;
     }
+    if (orcamentoId === NEW_BUDGET && !newBudgetTitle.trim()) {
+      toast.error("Indique o título do novo orçamento");
+      return;
+    }
     setSending(true);
     try {
+      // 0. Criar orçamento se o utilizador escolheu "Novo orçamento"
+      let targetOrcamentoId = orcamentoId;
+      if (orcamentoId === NEW_BUDGET) {
+        console.info("[plan→budget] creating new budget", { obraId, title: newBudgetTitle });
+        const created = await createOrcamento.mutateAsync({
+          titulo: newBudgetTitle.trim(),
+          obra_id: obraId,
+          cliente_id: "",
+          margem_lucro: 20,
+          custos_indiretos: { items: [] } as any,
+        } as any);
+        targetOrcamentoId = created.id;
+      }
+
       // Find next chapter number
       const { data: existing } = await supabase
         .from("capitulos_orcamento")
         .select("numero")
-        .eq("orcamento_id", orcamentoId)
+        .eq("orcamento_id", targetOrcamentoId)
         .order("numero", { ascending: false })
         .limit(1);
       let nextNum = (existing && existing.length > 0 ? existing[0].numero : 0) + 1;
