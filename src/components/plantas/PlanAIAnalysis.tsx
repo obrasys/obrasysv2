@@ -324,14 +324,19 @@ export function PlanAIAnalysis({
       return;
     }
 
+    const startedAt = Date.now();
+    console.info("[plan/axia] analyze start", { planImportId, page: currentPage, hasPrev: !!result });
+    setLastError(null);
     setIsAnalyzing(true);
+    // Importante: NÃO limpamos `result` durante a reanálise — se a Axia
+    // falhar mantemos os dados anteriores e mostramos um banner de erro
+    // com possibilidade de tentar de novo.
     try {
       const base64 = await downscaleForAI(imageDataUrl);
       let { data, error } = await callAxia(base64);
 
       if (error) {
         // Quando a edge devolve non-2xx, supabase-js entrega o body em `data` na mesma.
-        // Se houver um analysis fallback, não queremos rebentar — seguimos para o fluxo controlado.
         if (!data?.analysis && !data?.error) {
           const msg = (error as any)?.message || (typeof error === "string" ? error : "Falha na comunicação com a Axia");
           throw new Error(msg);
@@ -339,20 +344,17 @@ export function PlanAIAnalysis({
       }
       if (data?.error) {
         const errStr = typeof data.error === "string" ? data.error : (data.error?.message || data.error?.code || "");
-        if (errStr === "Rate limit exceeded") { toast.error("Limite de pedidos atingido. Tente novamente em breve."); return; }
-        if (errStr === "Credits exhausted") { toast.error("Créditos de IA esgotados."); return; }
-        // Se não há analysis de fallback, é erro terminal; caso contrário, segue para o ramo success:false.
+        if (errStr === "Rate limit exceeded") { toast.error("Limite de pedidos atingido. Tente novamente em breve."); setLastError("Limite de pedidos atingido"); return; }
+        if (errStr === "Credits exhausted") { toast.error("Créditos de IA esgotados."); setLastError("Créditos de IA esgotados"); return; }
         if (!data?.analysis && typeof data.error === "string") { throw new Error(errStr); }
       }
 
       const normalize = (a: PlanAnalysisResult): PlanAnalysisResult => normalizePlanAnalysisResult(a);
 
-      // Controlled failure from edge function (success:false but fallback analysis present)
       if (data?.success === false) {
-        toast.warning(
-          data?.error?.message ||
-            "A Axia não conseguiu interpretar esta planta automaticamente. Tente novamente, confirme a calibração ou continue com medições manuais.",
-        );
+        const msg = data?.error?.message || "A Axia não conseguiu interpretar esta planta automaticamente.";
+        toast.warning(msg);
+        setLastError(msg);
         if (data?.analysis) setResult(normalize(data.analysis as PlanAnalysisResult));
         return;
       }
@@ -360,8 +362,6 @@ export function PlanAIAnalysis({
       if (data?.analysis) {
         let safe = normalize(data.analysis as PlanAnalysisResult);
 
-        // Escalada automática: se o modelo devolveu tudo vazio mas avisou que
-        // a qualidade/legibilidade era baixa, re-tenta com o modelo Pro.
         const limitationsText = (safe.limitations ?? []).join(" ").toLowerCase();
         const lowLegibility =
           limitationsText.includes("resolu") ||
@@ -381,16 +381,27 @@ export function PlanAIAnalysis({
         }
 
         setResult(safe);
+        setAnalyzedAt(new Date());
+        console.info("[plan/axia] analyze ok", {
+          page: currentPage,
+          ms: Date.now() - startedAt,
+          dims: safe.dimensions.length,
+          rooms: safe.rooms.length,
+          elements: safe.elements.length,
+        });
         toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
         onAnalysisComplete?.();
       } else {
-        toast.warning("A IA não conseguiu analisar esta planta.");
+        const msg = "A IA não conseguiu analisar esta planta.";
+        toast.warning(msg);
+        setLastError(msg);
       }
     } catch (err: any) {
-      console.error("AI analysis error:", err);
+      console.error("[plan/axia] analyze error", err);
       const msg = err?.message && err.message !== "[object Object]"
         ? err.message
         : (typeof err === "string" ? err : (err?.error?.message || err?.code || "erro desconhecido"));
+      setLastError(msg);
       toast.error("Erro na análise: " + msg);
     } finally {
       setIsAnalyzing(false);
