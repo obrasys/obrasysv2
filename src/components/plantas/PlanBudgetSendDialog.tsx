@@ -23,6 +23,7 @@ import { Loader2, Send, Layers, AlertTriangle, ShieldAlert } from "lucide-react"
 import { useOrcamentos } from "@/hooks/useOrcamentos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
 import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,7 +67,7 @@ export function PlanBudgetSendDialog({
   floorId,
   disciplina,
 }: Props) {
-  const { orcamentos } = useOrcamentos();
+  const { orcamentos, createOrcamento } = useOrcamentos();
   const obraOrcamentos = (orcamentos ?? []).filter((o) => o.obra_id === obraId);
 
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
@@ -74,7 +75,13 @@ export function PlanBudgetSendDialog({
     : null;
   const prefix = disciplineLabel ? `${disciplineLabel} — ` : "";
 
-  const [orcamentoId, setOrcamentoId] = useState("");
+  // "__new__" is a sentinel meaning "create a new budget on the fly".
+  const NEW_BUDGET = "__new__";
+  const [orcamentoId, setOrcamentoId] = useState<string>(
+    obraOrcamentos.length === 0 ? NEW_BUDGET : "",
+  );
+  const defaultNewTitle = planName ? `Orçamento — ${planName}` : "Orçamento da Planta";
+  const [newBudgetTitle, setNewBudgetTitle] = useState(defaultNewTitle);
   const [groupBy, setGroupBy] = useState<GroupBy>(disciplineLabel ? "single" : "source");
   const [chapterTitle, setChapterTitle] = useState(
     disciplineLabel
@@ -118,13 +125,31 @@ export function PlanBudgetSendDialog({
       toast.warning("Confirme os avisos antes de enviar.");
       return;
     }
+    if (orcamentoId === NEW_BUDGET && !newBudgetTitle.trim()) {
+      toast.error("Indique o título do novo orçamento");
+      return;
+    }
     setSending(true);
     try {
+      // 0. Criar orçamento se o utilizador escolheu "Novo orçamento"
+      let targetOrcamentoId = orcamentoId;
+      if (orcamentoId === NEW_BUDGET) {
+        console.info("[plan→budget] creating new budget", { obraId, title: newBudgetTitle });
+        const created = await createOrcamento.mutateAsync({
+          titulo: newBudgetTitle.trim(),
+          obra_id: obraId,
+          cliente_id: "",
+          margem_lucro: 20,
+          custos_indiretos: { items: [] } as any,
+        } as any);
+        targetOrcamentoId = created.id;
+      }
+
       // Find next chapter number
       const { data: existing } = await supabase
         .from("capitulos_orcamento")
         .select("numero")
-        .eq("orcamento_id", orcamentoId)
+        .eq("orcamento_id", targetOrcamentoId)
         .order("numero", { ascending: false })
         .limit(1);
       let nextNum = (existing && existing.length > 0 ? existing[0].numero : 0) + 1;
@@ -134,7 +159,7 @@ export function PlanBudgetSendDialog({
         const { data: chapter, error: chErr } = await supabase
           .from("capitulos_orcamento")
           .insert({
-            orcamento_id: orcamentoId,
+            orcamento_id: targetOrcamentoId,
             numero: nextNum,
             titulo: title,
             ordem: nextNum,
@@ -161,9 +186,11 @@ export function PlanBudgetSendDialog({
         nextNum++;
       }
 
+      const createdMsg = orcamentoId === NEW_BUDGET ? " no novo orçamento" : "";
       toast.success(
-        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)`,
+        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)${createdMsg}`,
       );
+      console.info("[plan→budget] sent", { targetOrcamentoId, totalArticles, chapters: groups.length });
       onOpenChange(false);
     } catch (e: any) {
       toast.error("Erro ao enviar: " + (e.message ?? e));
@@ -227,9 +254,14 @@ export function PlanBudgetSendDialog({
                 <SelectValue placeholder="Selecionar orçamento desta obra…" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NEW_BUDGET}>
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-3.5 w-3.5" /> Criar novo orçamento para esta obra
+                  </span>
+                </SelectItem>
                 {obraOrcamentos.length === 0 ? (
                   <SelectItem value="__none" disabled>
-                    Nenhum orçamento nesta obra
+                    Nenhum orçamento existente nesta obra
                   </SelectItem>
                 ) : (
                   obraOrcamentos.map((o) => (
@@ -240,7 +272,22 @@ export function PlanBudgetSendDialog({
                 )}
               </SelectContent>
             </Select>
+            {orcamentoId === NEW_BUDGET && (
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs">Título do novo orçamento</Label>
+                <Input
+                  value={newBudgetTitle}
+                  onChange={(e) => setNewBudgetTitle(e.target.value)}
+                  placeholder="Ex: Orçamento — Moradia João"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Será criado um orçamento novo nesta obra com margem padrão de 20%.
+                  Os capítulos abaixo serão inseridos automaticamente.
+                </p>
+              </div>
+            )}
           </div>
+
 
           {/* Group by */}
           <div className="space-y-1.5">
