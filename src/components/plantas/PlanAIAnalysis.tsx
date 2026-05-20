@@ -478,6 +478,37 @@ export function PlanAIAnalysis({
             </div>
           ) : (
             <div className="max-h-[58vh] space-y-3 overflow-y-auto pr-2">
+              {/* Reanalisar + timestamp */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] text-muted-foreground">
+                  {analyzedAt ? `Última análise: ${analyzedAt.toLocaleTimeString()}` : "Análise em cache"}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing || !imageDataUrl}
+                  className="h-7 text-[11px]"
+                >
+                  {isAnalyzing ? (
+                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> A reanalisar…</>
+                  ) : (
+                    <>Reanalisar</>
+                  )}
+                </Button>
+              </div>
+
+              {/* Error banner — keeps previous result visible */}
+              {lastError && (
+                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-destructive leading-snug flex-1">
+                    <strong>Última reanálise falhou:</strong> {lastError}
+                    <div className="opacity-80">Os dados anteriores foram mantidos.</div>
+                  </div>
+                </div>
+              )}
+
               {/* Sheet classification header */}
               {result.sheet_classification && (
                 <div className="flex flex-wrap gap-1.5 items-center">
