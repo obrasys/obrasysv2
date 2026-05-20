@@ -254,9 +254,14 @@ export function PlanBudgetSendDialog({
                 <SelectValue placeholder="Selecionar orçamento desta obra…" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NEW_BUDGET}>
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-3.5 w-3.5" /> Criar novo orçamento para esta obra
+                  </span>
+                </SelectItem>
                 {obraOrcamentos.length === 0 ? (
                   <SelectItem value="__none" disabled>
-                    Nenhum orçamento nesta obra
+                    Nenhum orçamento existente nesta obra
                   </SelectItem>
                 ) : (
                   obraOrcamentos.map((o) => (
@@ -267,7 +272,22 @@ export function PlanBudgetSendDialog({
                 )}
               </SelectContent>
             </Select>
+            {orcamentoId === NEW_BUDGET && (
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs">Título do novo orçamento</Label>
+                <Input
+                  value={newBudgetTitle}
+                  onChange={(e) => setNewBudgetTitle(e.target.value)}
+                  placeholder="Ex: Orçamento — Moradia João"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Será criado um orçamento novo nesta obra com margem padrão de 20%.
+                  Os capítulos abaixo serão inseridos automaticamente.
+                </p>
+              </div>
+            )}
           </div>
+
 
           {/* Group by */}
           <div className="space-y-1.5">
