@@ -254,12 +254,57 @@ export function PlanMappingTable({
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="border rounded-lg p-3 bg-primary/5 flex items-center gap-3 flex-wrap">
+          <Badge className="bg-primary text-primary-foreground">
+            {selectedIds.size} selecionada{selectedIds.size > 1 ? "s" : ""}
+          </Badge>
+          <Input
+            placeholder="Pesquisar artigo..."
+            value={bulkArticleSearch}
+            onChange={(e) => setBulkArticleSearch(e.target.value)}
+            className="h-8 max-w-xs"
+          />
+          <Select value={bulkArticleId} onValueChange={setBulkArticleId}>
+            <SelectTrigger className="h-8 w-72">
+              <SelectValue placeholder="Aplicar artigo..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {bulkArticleOptions.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  <span className="font-mono text-xs mr-1">{a.codigo}</span>
+                  <span className="text-xs">{a.descricao.slice(0, 60)}</span>
+                  <span className="text-xs text-muted-foreground ml-1">({a.unidade})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={applyBulk} disabled={!bulkArticleId}>
+            <CopyCheck className="h-3.5 w-3.5 mr-1" />
+            Aplicar a selecionadas
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            Limpar
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={
+                    filteredMeasurements.length > 0 &&
+                    selectedIds.size === filteredMeasurements.length
+                  }
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Medição</TableHead>
               <TableHead className="text-right">Bruto</TableHead>
               <TableHead className="text-right">Ajustado</TableHead>
@@ -268,13 +313,13 @@ export function PlanMappingTable({
               <TableHead className="text-right">Coef.</TableHead>
               <TableHead className="text-right">Qtd Final</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead className="w-20"></TableHead>
+              <TableHead className="w-28"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredMeasurements.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                   Sem medições para mapear.
                 </TableCell>
               </TableRow>
@@ -284,9 +329,17 @@ export function PlanMappingTable({
                 const article = mapping?.artigo_base_id ? articleById.get(mapping.artigo_base_id) : null;
                 const qtdFinal = calcQuantidadeFinal(m, mapping);
                 const estado = mapping?.estado ?? "por_mapear";
+                const suggestions = !article ? suggestArticlesForMeasurement(m, articles, 3) : [];
+                const sameTypeOthers = article ? sameTypeCount(m) : 0;
 
                 return (
                   <TableRow key={m.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(m.id)}
+                        onCheckedChange={() => toggleSelect(m.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: m.cor || "#3b82f6" }} />
                     </TableCell>
@@ -321,6 +374,21 @@ export function PlanMappingTable({
                           <span className="font-medium">{article.codigo}</span>
                           <span className="text-muted-foreground ml-1 line-clamp-1">{article.descricao}</span>
                         </div>
+                      ) : suggestions.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 items-center">
+                          <Sparkles className="h-3 w-3 text-[#7C3AED] shrink-0" />
+                          {suggestions.map((s) => (
+                            <button
+                              key={s.article.id}
+                              type="button"
+                              onClick={() => applyArticleToMeasurement(m, s.article.id)}
+                              className="text-[10px] px-1.5 py-0.5 rounded border border-[#7C3AED]/30 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/15 text-foreground/80 max-w-[180px] truncate"
+                              title={`${s.article.codigo} — ${s.article.descricao} (${s.reason})`}
+                            >
+                              {s.article.codigo} · {s.article.descricao.slice(0, 22)}
+                            </button>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground italic">Sem artigo</span>
                       )}
@@ -340,10 +408,21 @@ export function PlanMappingTable({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(m)}>
                           {mapping ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                         </Button>
+                        {article && sameTypeOthers > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-1.5 text-[10px]"
+                            onClick={() => applyToAllOfSameType(m, article.id)}
+                            title={`Aplicar este artigo às outras ${sameTypeOthers} medições do mesmo tipo`}
+                          >
+                            <CopyCheck className="h-3 w-3 mr-0.5" />+{sameTypeOthers}
+                          </Button>
+                        )}
                         {mapping && (
                           <Button
                             size="icon"
@@ -363,6 +442,7 @@ export function PlanMappingTable({
           </TableBody>
         </Table>
       </div>
+
 
       {/* Edit/Create Mapping Dialog */}
       <Dialog open={!!editDialog} onOpenChange={(open) => !open && setEditDialog(null)}>
