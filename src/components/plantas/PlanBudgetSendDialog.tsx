@@ -145,6 +145,64 @@ export function PlanBudgetSendDialog({
         targetOrcamentoId = created.id;
       }
 
+      // 0.1 Carregar mapeamentos da planta (medição → artigo da Base de Preços)
+      //     para preservar a cadeia compartimento → medição → artigo → orçamento.
+      const measurementIds = rows
+        .filter((r) => r.source === "medicao")
+        .map((r) => r.id);
+      const mappingByMeasurement = new Map<string, {
+        artigo_base_id: string | null;
+        coeficiente: number;
+        fator_desperdicio: number;
+        unidade_artigo: string | null;
+      }>();
+      const articleById = new Map<string, {
+        codigo: string;
+        descricao: string;
+        unidade: string;
+        preco_unitario: number;
+      }>();
+      if (measurementIds.length > 0) {
+        const { data: mappings } = await supabase
+          .from("plan_measurement_mappings")
+          .select("measurement_id, artigo_base_id, coeficiente, fator_desperdicio, unidade_artigo, estado")
+          .in("measurement_id", measurementIds);
+        (mappings ?? []).forEach((m: any) => {
+          mappingByMeasurement.set(m.measurement_id, {
+            artigo_base_id: m.artigo_base_id ?? null,
+            coeficiente: Number(m.coeficiente) || 1,
+            fator_desperdicio: Number(m.fator_desperdicio) || 1,
+            unidade_artigo: m.unidade_artigo ?? null,
+          });
+        });
+        const artigoIds = Array.from(
+          new Set(
+            (mappings ?? [])
+              .map((m: any) => m.artigo_base_id)
+              .filter((v: string | null): v is string => !!v),
+          ),
+        );
+        if (artigoIds.length > 0) {
+          const { data: artigos } = await supabase
+            .from("base_precos_personalizada")
+            .select("id, codigo, descricao, unidade, preco_unitario")
+            .in("id", artigoIds);
+          (artigos ?? []).forEach((a: any) => {
+            articleById.set(a.id, {
+              codigo: a.codigo,
+              descricao: a.descricao,
+              unidade: a.unidade,
+              preco_unitario: Number(a.preco_unitario) || 0,
+            });
+          });
+        }
+      }
+      console.info("[plan→budget] mappings loaded", {
+        measurements: measurementIds.length,
+        mapped: mappingByMeasurement.size,
+        articles: articleById.size,
+      });
+
       // Find next chapter number
       const { data: existing } = await supabase
         .from("capitulos_orcamento")
@@ -155,6 +213,8 @@ export function PlanBudgetSendDialog({
       let nextNum = (existing && existing.length > 0 ? existing[0].numero : 0) + 1;
 
       let totalArticles = 0;
+      let totalLinks = 0;
+      let totalMapped = 0;
       for (const [title, items] of groups) {
         const { data: chapter, error: chErr } = await supabase
           .from("capitulos_orcamento")
@@ -168,31 +228,89 @@ export function PlanBudgetSendDialog({
           .single();
         if (chErr) throw chErr;
 
-        const articles = items.map((r, idx) => ({
-          capitulo_id: chapter.id,
-          descricao: r.descricao,
-          unidade: r.unidade,
-          quantidade: Number(r.valor) || 0,
-          preco_unitario: 0,
-          ordem: idx + 1,
-        }));
-        if (articles.length > 0) {
-          const { error: artErr } = await supabase
-            .from("artigos_orcamento")
-            .insert(articles);
-          if (artErr) throw artErr;
-          totalArticles += articles.length;
+        const articlesPayload = items.map((r, idx) => {
+          const mapping = r.source === "medicao" ? mappingByMeasurement.get(r.id) : undefined;
+          const artigo = mapping?.artigo_base_id
+            ? articleById.get(mapping.artigo_base_id)
+            : undefined;
+          const coef = mapping?.coeficiente ?? 1;
+          const desp = mapping?.fator_desperdicio ?? 1;
+          const qty = (Number(r.valor) || 0) * coef * desp;
+          if (artigo) totalMapped++;
+          return {
+            capitulo_id: chapter.id,
+            codigo: artigo?.codigo ?? null,
+            descricao: artigo?.descricao ?? r.descricao,
+            unidade: artigo?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
+            quantidade: Number(qty.toFixed(3)),
+            preco_unitario: artigo?.preco_unitario ?? 0,
+            ordem: idx + 1,
+            quantity_source: r.origem || "plan",
+            // row.id is the measurement uuid for source='medicao' (see plan_quantitativos_v).
+            linked_element_id: r.source === "medicao" ? r.id : null,
+          };
+        });
+
+        if (articlesPayload.length === 0) {
+          nextNum++;
+          continue;
+        }
+
+        const { data: insertedArticles, error: artErr } = await supabase
+          .from("artigos_orcamento")
+          .insert(articlesPayload)
+          .select("id, capitulo_id, linked_element_id, ordem");
+        if (artErr) throw artErr;
+        totalArticles += insertedArticles?.length ?? 0;
+
+        // Traceability: link each measurement-sourced article back to the plan.
+        // dedupe_key = measurement_id ensures re-sends update instead of duplicating.
+        const links = (insertedArticles ?? [])
+          .map((a) => {
+            const row = items[(a.ordem ?? 1) - 1];
+            if (!row || row.source !== "medicao") return null;
+            return {
+              measurement_id: row.id,
+              user_id: row.user_id,
+              orcamento_id: targetOrcamentoId,
+              artigo_orcamento_id: a.id,
+              dedupe_key: row.id,
+              source_type: row.source,
+              source_id: row.id,
+              quantity_origin: row.origem ?? null,
+              validation_status: row.estado_validacao ?? null,
+            };
+          })
+          .filter((l): l is NonNullable<typeof l> => l !== null);
+
+        if (links.length > 0) {
+          const { error: linkErr } = await supabase
+            .from("plan_budget_links")
+            .upsert(links, { onConflict: "orcamento_id,dedupe_key" });
+          if (linkErr) {
+            console.warn("[plan→budget] failed to persist traceability links", linkErr);
+          } else {
+            totalLinks += links.length;
+          }
         }
         nextNum++;
       }
 
       const createdMsg = orcamentoId === NEW_BUDGET ? " no novo orçamento" : "";
+      const mappedMsg = totalMapped > 0 ? ` · ${totalMapped} com preço da Base` : "";
       toast.success(
-        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)${createdMsg}`,
+        `${totalArticles} artigo(s) enviados em ${groups.length} capítulo(s)${createdMsg}${mappedMsg}`,
       );
-      console.info("[plan→budget] sent", { targetOrcamentoId, totalArticles, chapters: groups.length });
+      console.info("[plan→budget] sent", {
+        targetOrcamentoId,
+        totalArticles,
+        totalMapped,
+        totalLinks,
+        chapters: groups.length,
+      });
       onOpenChange(false);
     } catch (e: any) {
+      console.error("[plan→budget] send failed", e);
       toast.error("Erro ao enviar: " + (e.message ?? e));
     } finally {
       setSending(false);
