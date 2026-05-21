@@ -60,6 +60,9 @@ export function PlanMappingTable({
   onUpdateMeasurement,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkArticleId, setBulkArticleId] = useState("");
+  const [bulkArticleSearch, setBulkArticleSearch] = useState("");
   const [editDialog, setEditDialog] = useState<{
     measurement: PlanMeasurement;
     mapping?: PlanMeasurementMapping;
