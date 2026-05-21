@@ -153,6 +153,77 @@ export function PlanMappingTable({
     return { total, mapped, unmapped: total - mapped };
   }, [measurements, mappingByMeasurement]);
 
+  // Phase 3 — bulk + sugestões
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredMeasurements.length && filteredMeasurements.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredMeasurements.map((m) => m.id)));
+    }
+  };
+
+  const applyArticleToMeasurement = (m: PlanMeasurement, articleId: string) => {
+    const article = articleById.get(articleId);
+    if (!article) return;
+    const existing = mappingByMeasurement.get(m.id);
+    if (existing) {
+      onUpdateMapping({
+        id: existing.id,
+        artigoBaseId: articleId,
+        unidadeArtigo: article.unidade,
+        estado: "mapeado",
+      });
+    } else {
+      onCreateMapping({
+        measurementId: m.id,
+        artigoBaseId: articleId,
+        unidadeArtigo: article.unidade,
+      });
+    }
+  };
+
+  const applyToAllOfSameType = (source: PlanMeasurement, articleId: string) => {
+    const sig = measurementSignature(source);
+    const targets = measurements.filter(
+      (m) => measurementSignature(m) === sig && !mappingByMeasurement.get(m.id)?.artigo_base_id
+    );
+    targets.forEach((t) => applyArticleToMeasurement(t, articleId));
+  };
+
+  const applyBulk = () => {
+    if (!bulkArticleId) return;
+    measurements
+      .filter((m) => selectedIds.has(m.id))
+      .forEach((m) => applyArticleToMeasurement(m, bulkArticleId));
+    setSelectedIds(new Set());
+    setBulkArticleId("");
+    setBulkArticleSearch("");
+  };
+
+  const bulkArticleOptions = useMemo(() => {
+    if (!bulkArticleSearch) return articles.slice(0, 50);
+    const q = bulkArticleSearch.toLowerCase();
+    return articles
+      .filter((a) => a.descricao.toLowerCase().includes(q) || a.codigo.toLowerCase().includes(q))
+      .slice(0, 50);
+  }, [articles, bulkArticleSearch]);
+
+  const sameTypeCount = (m: PlanMeasurement) => {
+    const sig = measurementSignature(m);
+    return measurements.filter(
+      (x) => measurementSignature(x) === sig && !mappingByMeasurement.get(x.id)?.artigo_base_id
+    ).length;
+  };
+
   return (
     <div className="space-y-4">
       {/* Stats bar */}
