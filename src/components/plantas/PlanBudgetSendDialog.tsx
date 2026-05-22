@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PlanDisciplina } from "@/types/plan-measurements";
 import { DISCIPLINE_META } from "@/lib/plan-discipline";
+import { FinishingChoicesStep, type FinishingChoiceMap } from "./FinishingChoicesStep";
 
 type GroupBy = "source" | "camada" | "floor" | "single";
 
@@ -90,8 +91,34 @@ export function PlanBudgetSendDialog({
   );
   const [sending, setSending] = useState(false);
   const [confirmedWarnings, setConfirmedWarnings] = useState(false);
+  const [finishingChoices, setFinishingChoices] = useState<FinishingChoiceMap>(new Map());
+  const [mappedMeasurementIds, setMappedMeasurementIds] = useState<Set<string>>(new Set());
 
   const guard = useCanSendPlanToBudget(planImportId ?? null, pageId ?? null, floorId ?? null);
+
+  // Carrega medições já mapeadas a artigos para excluir do step de Acabamentos.
+  useEffect(() => {
+    if (!open) return;
+    const ids = rows.filter((r) => r.source === "medicao").map((r) => r.id);
+    if (ids.length === 0) {
+      setMappedMeasurementIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("plan_measurement_mappings")
+        .select("measurement_id, artigo_base_id")
+        .in("measurement_id", ids);
+      if (cancelled) return;
+      const s = new Set<string>();
+      (data ?? []).forEach((m: any) => {
+        if (m.artigo_base_id) s.add(m.measurement_id);
+      });
+      setMappedMeasurementIds(s);
+    })();
+    return () => { cancelled = true; };
+  }, [open, rows]);
 
   const groups = useMemo(() => {
     const map = new Map<string, PlanQuantitativoRow[]>();
@@ -233,17 +260,20 @@ export function PlanBudgetSendDialog({
           const artigo = mapping?.artigo_base_id
             ? articleById.get(mapping.artigo_base_id)
             : undefined;
+          const finishing = !artigo ? finishingChoices.get(r.id) : undefined;
           const coef = mapping?.coeficiente ?? 1;
           const desp = mapping?.fator_desperdicio ?? 1;
           const qty = (Number(r.valor) || 0) * coef * desp;
           if (artigo) totalMapped++;
+          const baseDesc = artigo?.descricao ?? finishing?.descricao ?? r.descricao;
+          const descricao = finishing?.pendente ? `[PENDENTE] ${baseDesc}` : baseDesc;
           return {
             capitulo_id: chapter.id,
             codigo: artigo?.codigo ?? null,
-            descricao: artigo?.descricao ?? r.descricao,
-            unidade: artigo?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
+            descricao,
+            unidade: artigo?.unidade ?? finishing?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
             quantidade: Number(qty.toFixed(3)),
-            preco_unitario: artigo?.preco_unitario ?? 0,
+            preco_unitario: artigo?.preco_unitario ?? finishing?.preco_unitario ?? 0,
             ordem: idx + 1,
             quantity_source: r.origem || "plan",
             // row.id is the measurement uuid for source='medicao' (see plan_quantitativos_v).
@@ -441,6 +471,17 @@ export function PlanBudgetSendDialog({
               />
             </div>
           )}
+
+          {/* Acabamentos (Fase 4) — opcional */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Acabamentos</Label>
+            <FinishingChoicesStep
+              rows={rows}
+              mappedMeasurementIds={mappedMeasurementIds}
+              value={finishingChoices}
+              onChange={setFinishingChoices}
+            />
+          </div>
 
           {/* Preview */}
           <div className="space-y-2">
