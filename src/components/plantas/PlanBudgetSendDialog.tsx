@@ -120,7 +120,7 @@ export function PlanBudgetSendDialog({
     return () => { cancelled = true; };
   }, [open, rows]);
 
-
+  const groups = useMemo(() => {
     const map = new Map<string, PlanQuantitativoRow[]>();
     for (const r of rows) {
       let key: string;
