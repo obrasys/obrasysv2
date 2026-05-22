@@ -260,17 +260,20 @@ export function PlanBudgetSendDialog({
           const artigo = mapping?.artigo_base_id
             ? articleById.get(mapping.artigo_base_id)
             : undefined;
+          const finishing = !artigo ? finishingChoices.get(r.id) : undefined;
           const coef = mapping?.coeficiente ?? 1;
           const desp = mapping?.fator_desperdicio ?? 1;
           const qty = (Number(r.valor) || 0) * coef * desp;
           if (artigo) totalMapped++;
+          const baseDesc = artigo?.descricao ?? finishing?.descricao ?? r.descricao;
+          const descricao = finishing?.pendente ? `[PENDENTE] ${baseDesc}` : baseDesc;
           return {
             capitulo_id: chapter.id,
             codigo: artigo?.codigo ?? null,
-            descricao: artigo?.descricao ?? r.descricao,
-            unidade: artigo?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
+            descricao,
+            unidade: artigo?.unidade ?? finishing?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
             quantidade: Number(qty.toFixed(3)),
-            preco_unitario: artigo?.preco_unitario ?? 0,
+            preco_unitario: artigo?.preco_unitario ?? finishing?.preco_unitario ?? 0,
             ordem: idx + 1,
             quantity_source: r.origem || "plan",
             // row.id is the measurement uuid for source='medicao' (see plan_quantitativos_v).
