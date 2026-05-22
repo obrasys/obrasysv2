@@ -91,6 +91,8 @@ export function PlanBudgetSendDialog({
   );
   const [sending, setSending] = useState(false);
   const [confirmedWarnings, setConfirmedWarnings] = useState(false);
+  const [finishingChoices, setFinishingChoices] = useState<FinishingChoiceMap>(new Map());
+  const [mappedMeasurementIds, setMappedMeasurementIds] = useState<Set<string>>(new Set());
 
   const guard = useCanSendPlanToBudget(planImportId ?? null, pageId ?? null, floorId ?? null);
 
