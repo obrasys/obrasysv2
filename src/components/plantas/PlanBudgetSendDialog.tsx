@@ -96,7 +96,31 @@ export function PlanBudgetSendDialog({
 
   const guard = useCanSendPlanToBudget(planImportId ?? null, pageId ?? null, floorId ?? null);
 
-  const groups = useMemo(() => {
+  // Carrega medições já mapeadas a artigos para excluir do step de Acabamentos.
+  useEffect(() => {
+    if (!open) return;
+    const ids = rows.filter((r) => r.source === "medicao").map((r) => r.id);
+    if (ids.length === 0) {
+      setMappedMeasurementIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("plan_measurement_mappings")
+        .select("measurement_id, artigo_base_id")
+        .in("measurement_id", ids);
+      if (cancelled) return;
+      const s = new Set<string>();
+      (data ?? []).forEach((m: any) => {
+        if (m.artigo_base_id) s.add(m.measurement_id);
+      });
+      setMappedMeasurementIds(s);
+    })();
+    return () => { cancelled = true; };
+  }, [open, rows]);
+
+
     const map = new Map<string, PlanQuantitativoRow[]>();
     for (const r of rows) {
       let key: string;
