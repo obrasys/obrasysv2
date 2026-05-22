@@ -29,6 +29,7 @@ import { useCanSendPlanToBudget } from "@/hooks/useCanSendPlanToBudget";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PlanDisciplina } from "@/types/plan-measurements";
 import { DISCIPLINE_META } from "@/lib/plan-discipline";
+import { FinishingChoicesStep, type FinishingChoiceMap } from "./FinishingChoicesStep";
 
 type GroupBy = "source" | "camada" | "floor" | "single";
 
