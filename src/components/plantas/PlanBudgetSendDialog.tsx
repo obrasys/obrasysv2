@@ -472,6 +472,17 @@ export function PlanBudgetSendDialog({
             </div>
           )}
 
+          {/* Acabamentos (Fase 4) — opcional */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Acabamentos</Label>
+            <FinishingChoicesStep
+              rows={rows}
+              mappedMeasurementIds={mappedMeasurementIds}
+              value={finishingChoices}
+              onChange={setFinishingChoices}
+            />
+          </div>
+
           {/* Preview */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
