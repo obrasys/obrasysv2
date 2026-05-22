@@ -39,11 +39,11 @@ const DERIVED_LABEL: Record<DerivedKey, string> = {
   rooms: "Pavimento e Teto (m²)",
 };
 
-const confidenceFromScore = (score?: number): "confirmado" | "provavel" | "incerto" => {
+const confidenceFromScore = (score?: number): "confirmado" | "provavel" | "precisa_validar" => {
   if (typeof score !== "number") return "provavel";
   if (score >= 0.85) return "confirmado";
   if (score >= 0.55) return "provavel";
-  return "incerto";
+  return "precisa_validar";
 };
 
 // Map Axia normalized room types → plan_rooms.tipo_compartimento taxonomy.
