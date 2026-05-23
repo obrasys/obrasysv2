@@ -414,6 +414,22 @@ export function ImportFornecedoresModal({
                 </p>
               )}
             </div>
+            {errors.length > 0 && (
+              <Alert variant="destructive" className="text-left">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-2">Detalhes dos erros:</p>
+                  <ScrollArea className="h-[160px]">
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      {errors.slice(0, 50).map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                      {errors.length > 50 && <li>… e mais {errors.length - 50}</li>}
+                    </ul>
+                  </ScrollArea>
+                </AlertDescription>
+              </Alert>
+            )}
             <Button onClick={handleClose}>Fechar</Button>
           </div>
         )}
