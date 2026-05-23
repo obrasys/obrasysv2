@@ -171,9 +171,11 @@ export function ImportFornecedoresModal({
 
     setIsImporting(true);
     setStep('importing');
+    setErrors([]);
 
     let success = 0;
     let failed = 0;
+    const errorMessages: string[] = [];
 
     for (let i = 0; i < csvData.rawData.length; i++) {
       const row = csvData.rawData[i];
@@ -183,17 +185,22 @@ export function ImportFornecedoresModal({
         try {
           await createFornecedor.mutateAsync(fornecedor);
           success++;
-        } catch {
+        } catch (err) {
           failed++;
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`[ImportFornecedores] Linha ${i + 2} falhou:`, msg, fornecedor);
+          errorMessages.push(`Linha ${i + 2} (${fornecedor.nome}): ${msg}`);
         }
       } else {
         failed++;
+        errorMessages.push(`Linha ${i + 2}: sem nome preenchido`);
       }
 
       setImportProgress(Math.round(((i + 1) / csvData.rawData.length) * 100));
       setImportResults({ success, failed });
     }
 
+    setErrors(errorMessages);
     setIsImporting(false);
     setStep('complete');
     onSuccess?.();
@@ -407,6 +414,22 @@ export function ImportFornecedoresModal({
                 </p>
               )}
             </div>
+            {errors.length > 0 && (
+              <Alert variant="destructive" className="text-left">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-2">Detalhes dos erros:</p>
+                  <ScrollArea className="h-[160px]">
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      {errors.slice(0, 50).map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                      {errors.length > 50 && <li>… e mais {errors.length - 50}</li>}
+                    </ul>
+                  </ScrollArea>
+                </AlertDescription>
+              </Alert>
+            )}
             <Button onClick={handleClose}>Fechar</Button>
           </div>
         )}
