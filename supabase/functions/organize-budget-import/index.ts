@@ -18,9 +18,9 @@ const toNumber = (value: unknown, fallback = 0) => {
 const normalizeText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
 
-const normalizeUnit = (value: unknown) => {
+const normalizeUnit = (value: unknown, fallback = "un") => {
   const raw = String(value ?? "").trim().toLowerCase();
-  if (!raw) return "un";
+  if (!raw) return fallback;
   if (["un", "uni", "unid", "unidade", "unidades"].includes(raw)) return "un";
   if (["m", "metro", "metros"].includes(raw)) return "m";
   if (["m2", "m²", "mq"].includes(raw)) return "m2";
@@ -29,6 +29,9 @@ const normalizeUnit = (value: unknown) => {
   if (["kg", "quilo", "quilos"].includes(raw)) return "kg";
   if (["l", "lt", "litro", "litros"].includes(raw)) return "l";
   if (["vg", "verba"].includes(raw)) return "vg";
+  if (["h", "hr", "hora", "horas"].includes(raw)) return "h";
+  if (["cj", "conj", "conjunto", "conj.", "conjuntos"].includes(raw)) return "cj";
+  if (["lote", "lot"].includes(raw)) return "lote";
   return raw.slice(0, 12);
 };
 
