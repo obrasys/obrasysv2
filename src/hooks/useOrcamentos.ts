@@ -82,6 +82,7 @@ export function useOrcamentos() {
           cliente_id: formData.cliente_id || null,
           margem_lucro: formData.margem_lucro,
           custos_indiretos: formData.custos_indiretos as unknown as Json,
+          project_metadata: (formData.project_metadata ?? {}) as unknown as Json,
         })
         .select()
         .single();
@@ -111,6 +112,9 @@ export function useOrcamentos() {
       const updateData: Record<string, unknown> = { ...formData };
       if (formData.custos_indiretos) {
         updateData.custos_indiretos = formData.custos_indiretos as unknown as Json;
+      }
+      if (formData.project_metadata) {
+        updateData.project_metadata = formData.project_metadata as unknown as Json;
       }
       
       const { data, error } = await supabase

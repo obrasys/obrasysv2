@@ -14,6 +14,35 @@ export interface ObraPartial {
   cliente?: string | null;
 }
 
+export interface ProjectMetadata {
+  nome_obra?: string;
+  numero_lote?: string;
+  designacao?: string;
+  dono_obra?: string;
+  regime_empreitada?: string;
+  tipo_obra?: string;
+  localizacao?: string;
+  prazo_meses?: number;
+  numero_fracoes?: number;
+  projeto_arquitectura?: string;
+  projeto_engenharia?: string;
+  responsavel_orcamento?: string;
+}
+
+export const REGIME_EMPREITADA_OPTIONS = [
+  'Série de Preços',
+  'Preço Global',
+  'Administração Direta',
+  'Outro',
+] as const;
+
+export const TIPO_OBRA_OPTIONS = [
+  'Nova',
+  'Reabilitação',
+  'Ampliação',
+  'Conservação',
+] as const;
+
 export interface Obra extends ObraPartial {
   user_id: string;
   endereco: string | null;
@@ -62,6 +91,7 @@ export interface Orcamento {
   commercial_validity_text?: string | null;
   commercial_notes_text?: string | null;
   show_signature_block?: boolean;
+  project_metadata?: ProjectMetadata;
   obra?: ObraPartial;
   cliente?: ClientePartial;
   capitulos?: Capitulo[];
@@ -178,6 +208,7 @@ export interface OrcamentoFormData {
   tipo_obra?: string;
   tipo_cliente?: string;
   tipo_operacao?: string;
+  project_metadata?: ProjectMetadata;
 }
 
 export interface CapituloFormData {

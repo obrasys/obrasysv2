@@ -6454,6 +6454,7 @@ export type Database = {
           margem_lucro: number | null
           numero_revisao: number | null
           obra_id: string | null
+          project_metadata: Json
           revisao_de: string | null
           show_signature_block: boolean | null
           status: string
@@ -6482,6 +6483,7 @@ export type Database = {
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
+          project_metadata?: Json
           revisao_de?: string | null
           show_signature_block?: boolean | null
           status?: string
@@ -6510,6 +6512,7 @@ export type Database = {
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
+          project_metadata?: Json
           revisao_de?: string | null
           show_signature_block?: boolean | null
           status?: string
