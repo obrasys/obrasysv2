@@ -898,7 +898,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
         <SubtotalRow label="TOTAL IVA" code="(6)" value={totals.total_iva} />
 
-        <Separator />
+
 
         {/* CUSTO TOTAL */}
         <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
