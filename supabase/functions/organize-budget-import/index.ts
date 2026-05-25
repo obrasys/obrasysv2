@@ -526,15 +526,12 @@ serve(async (req) => {
       : null;
 
     if (deterministicBudget) {
-      const expectedTotal = extractExpectedTotalFromRows(rows);
-      const parsedTotal = calculateBudgetTotal(deterministicBudget);
+      const expectedTotal = deterministicBudget._meta.original_total;
+      const parsedTotal = deterministicBudget._meta.imported_total;
       const ratio = expectedTotal > 0 && parsedTotal > 0 ? Math.max(expectedTotal, parsedTotal) / Math.min(expectedTotal, parsedTotal) : 1;
 
-      if (ratio <= 1.15 || expectedTotal === 0) {
-        return new Response(JSON.stringify({
-          titulo_sugerido: deterministicBudget.titulo_sugerido,
-          capitulos: deterministicBudget.capitulos,
-        }), {
+      if (ratio <= 1.15 || expectedTotal === 0 || deterministicBudget._meta.status === "ok") {
+        return new Response(JSON.stringify(deterministicBudget), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -543,6 +540,7 @@ serve(async (req) => {
         expectedTotal,
         parsedTotal,
         ratio,
+        diagnostics: deterministicBudget._meta,
       });
     }
 
@@ -632,7 +630,7 @@ serve(async (req) => {
 
     const organized = JSON.parse(toolCall.function.arguments);
 
-    const normalized = {
+    const normalized: OrganizedBudgetResult = {
       titulo_sugerido: String(organized?.titulo_sugerido || "Orçamento Importado"),
       capitulos: Array.isArray(organized?.capitulos)
         ? organized.capitulos.map((cap: any, index: number) => ({
@@ -658,26 +656,50 @@ serve(async (req) => {
               : [],
           }))
         : [],
+      _meta: {
+        original_total: hasTabular ? extractExpectedTotalFromRows(rows, headers ?? []) : 0,
+        imported_total: 0,
+        difference: 0,
+        status: "ok",
+        valid_articles: 0,
+        chapters_found: 0,
+        ignored_rows: 0,
+        included_rows: 0,
+        subtotal_rows: 0,
+        ref_rows: 0,
+        ignored_reasons: [],
+      },
     };
 
+    normalized._meta.imported_total = calculateBudgetTotal(normalized);
+    normalized._meta.difference = Math.abs(normalized._meta.original_total - normalized._meta.imported_total);
+    normalized._meta.valid_articles = normalized.capitulos.reduce((sum, cap) => sum + cap.artigos.length, 0);
+    normalized._meta.chapters_found = normalized.capitulos.length;
+    normalized._meta.status = normalized._meta.original_total > 0 && normalized._meta.difference > 0.5
+      ? "review_required"
+      : "ok";
+
     if (hasTabular) {
-      const expectedTotal = extractExpectedTotalFromRows(rows);
-      const aiTotal = calculateBudgetTotal(normalized);
+      const expectedTotal = normalized._meta.original_total;
+      const aiTotal = normalized._meta.imported_total;
       const ratio = expectedTotal > 0 && aiTotal > 0 ? Math.max(expectedTotal, aiTotal) / Math.min(expectedTotal, aiTotal) : 1;
 
       if (expectedTotal > 0 && ratio > 1.5) {
         const fallbackBudget = deriveBudgetFromRows(rows, headers, compactPriceCatalog, fileName);
         if (fallbackBudget) {
-          return new Response(JSON.stringify({
-            titulo_sugerido: fallbackBudget.titulo_sugerido,
-            capitulos: fallbackBudget.capitulos,
-          }), {
+          return new Response(JSON.stringify(fallbackBudget), {
             status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         return new Response(JSON.stringify({
-          error: "A importação gerou valores incoerentes face ao Excel original. Tente novamente ou use um ficheiro com colunas de quantidade/preço mais explícitas.",
+          error: "A importação gerou valores incoerentes face ao Excel original. Tente novamente ou reveja o ficheiro antes de gravar.",
+          validation: {
+            original_total: expectedTotal,
+            imported_total: aiTotal,
+            difference: Math.abs(expectedTotal - aiTotal),
+            status: "review_required",
+          },
         }), {
           status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
