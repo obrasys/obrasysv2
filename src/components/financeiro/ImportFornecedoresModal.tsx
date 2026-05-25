@@ -91,37 +91,40 @@ export function ImportFornecedoresModal({
     onOpenChange(false);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const delimiter = detectDelimiter(content);
-      const parsed = parseCSV(content, { delimiter });
+    try {
+      const parsed = await parseSpreadsheetFile(file);
       setCsvData(parsed);
 
-      // Auto-map columns
       const autoMapping: Record<string, string> = {};
       parsed.headers.forEach((header) => {
-        const normalizedHeader = header.toLowerCase().trim();
-        if (normalizedHeader.includes('nome') || normalizedHeader.includes('name')) {
-          autoMapping[header] = 'nome';
-        } else if (normalizedHeader.includes('email') || normalizedHeader.includes('mail')) {
-          autoMapping[header] = 'email';
-        } else if (normalizedHeader.includes('telefone') || normalizedHeader.includes('phone') || normalizedHeader.includes('tel')) {
-          autoMapping[header] = 'telefone';
-        } else if (normalizedHeader.includes('endereco') || normalizedHeader.includes('morada') || normalizedHeader.includes('address')) {
+        const h = header.toLowerCase().trim();
+        if (h.includes('empresa') || h.includes('razao') || h.includes('razão') || h.includes('company')) {
+          autoMapping[header] = 'nome'; // empresa becomes supplier name
+        } else if (h === 'nome' || (h.includes('nome') && !autoMapping[header]) || h.includes('responsavel') || h.includes('responsável') || h.includes('name')) {
+          // Only map "nome" if empresa wasn't already mapped to nome
+          if (!Object.values(autoMapping).includes('nome')) autoMapping[header] = 'nome';
+        } else if (h.includes('email') || h.includes('e-mail') || h.includes('mail')) {
+          if (!Object.values(autoMapping).includes('email')) autoMapping[header] = 'email';
+        } else if (h.includes('telemovel') || h.includes('telemóvel') || h.includes('mobile') || h.includes('tlm')) {
+          autoMapping[header] = 'telefone'; // fornecedor schema only has telefone
+        } else if (h.includes('telefone') || h.includes('phone') || h.includes('tel') || h.includes('fixo') || h.includes('tlf') || h.includes('contacto')) {
+          if (!Object.values(autoMapping).includes('telefone')) autoMapping[header] = 'telefone';
+        } else if (h.includes('morada') || h.includes('endereco') || h.includes('endereço') || h.includes('address')) {
           autoMapping[header] = 'endereco';
-        } else if (normalizedHeader.includes('nif') || normalizedHeader.includes('contribuinte')) {
+        } else if (h.includes('nif') || h.includes('contribuinte')) {
           autoMapping[header] = 'nif';
         }
       });
       setMapping(autoMapping);
       setStep('mapping');
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.error('[ImportFornecedores] erro a ler ficheiro:', err);
+      setErrors([`Não foi possível ler o ficheiro: ${err instanceof Error ? err.message : String(err)}`]);
+    }
   };
 
   const validateMapping = (): string[] => {
