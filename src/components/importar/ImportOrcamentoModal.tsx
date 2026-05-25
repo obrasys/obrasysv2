@@ -255,6 +255,10 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
   const handleSave = async () => {
     if (!organized || !user) return;
+    if (isImportBlocked) {
+      toast.error('A importação está bloqueada até o total coincidir com o ficheiro original.');
+      return;
+    }
     setIsSaving(true);
 
     try {
