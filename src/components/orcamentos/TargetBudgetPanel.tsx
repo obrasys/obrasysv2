@@ -56,6 +56,7 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
   const { label, short } = useOperationalLayerLabel();
   const { data: versions = [], isLoading } = useBudgetVersions(orcamentoId);
   const createNew = useCreateNewTargetVersion();
+  const update = useUpdateBudgetVersionItem();
 
   const targetVersions = useMemo(
     () => versions.filter((v) => v.version_type === "target"),
