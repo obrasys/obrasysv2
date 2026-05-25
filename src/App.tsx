@@ -50,6 +50,8 @@ const FinanceiroPage = lazy(() => import("./pages/financeiro/Index"));
 const FornecedoresPage = lazy(() => import("./pages/financeiro/Fornecedores"));
 const PerfilPage = lazy(() => import("./pages/Perfil"));
 const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
+const DefinicoesFolhaFechoQualidadesPage = lazy(() => import("./pages/DefinicoesFolhaFechoQualidades"));
+
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
 const PesquisaPage = lazy(() => import("./pages/Pesquisa"));
