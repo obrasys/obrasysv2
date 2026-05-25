@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 export type TipoBase = "geral" | "remodelacao";
 
@@ -177,9 +178,29 @@ export function useImportCsvToUser() {
   return useMutation({
     mutationFn: async (input: { file: File; tipoBase?: TipoBase }) => {
       const tipoBase: TipoBase = input.tipoBase ?? "geral";
-      const text = await input.file.text();
-      const rows = parseCsv(text);
-      if (rows.length === 0) throw new Error("CSV vazio ou formato inválido.");
+      const name = input.file.name.toLowerCase();
+      const isExcel = name.endsWith(".xlsx") || name.endsWith(".xls");
+      let rows: Record<string, string>[];
+      if (isExcel) {
+        const buf = await input.file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        // Prefer a sheet whose name suggests "base" / "precos"; fall back to first
+        const sheetName =
+          wb.SheetNames.find((n) => /base|prec|artig|item/i.test(n)) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: true });
+        rows = json.map((r) => {
+          const out: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            out[normalizeHeader(k)] = v == null ? "" : String(v).trim();
+          });
+          return mapAliases(out);
+        }).filter((r) => r.codigo && r.artigo);
+      } else {
+        const text = await input.file.text();
+        rows = parseCsv(text);
+      }
+      if (rows.length === 0) throw new Error("Ficheiro vazio ou sem linhas válidas (precisa de pelo menos código e descrição/artigo).");
 
       const { data: sess } = await supabase.auth.getSession();
       const user = sess?.session?.user;
@@ -195,10 +216,7 @@ export function useImportCsvToUser() {
         if (custo === 0) custo = mo + mat;
         const margem = num(r.margem_configuravel_pct, 25);
         let preco = num(r.preco_indicativo_eur);
-        if (preco === 0) {
-          // Aceita também coluna "preco_unitario" (formato Remodelação)
-          preco = num(r.preco_unitario);
-        }
+        if (preco === 0) preco = num(r.preco_unitario);
         if (preco === 0 && custo > 0) {
           preco = margem >= 100 ? custo : custo / (1 - margem / 100);
         }
@@ -211,7 +229,7 @@ export function useImportCsvToUser() {
           tipo_base: tipoBase,
           tipo_linha: tipoLinha,
           codigo: r.codigo,
-          capitulo: r.capitulo,
+          capitulo: r.capitulo || "Sem capítulo",
           subcapitulo: r.subcapitulo || null,
           artigo: r.artigo,
           unidade: r.unidade || "un",
@@ -220,7 +238,7 @@ export function useImportCsvToUser() {
           custo_direto_eur: Number(custo.toFixed(2)),
           margem_configuravel_pct: margem,
           preco_indicativo_eur: Number(preco.toFixed(2)),
-          fonte_base: r.fonte_base || (tipoBase === "remodelacao" ? "Importação Remodelação" : "Importação CSV"),
+          fonte_base: r.fonte_base || (isExcel ? "Importação Excel" : (tipoBase === "remodelacao" ? "Importação Remodelação" : "Importação CSV")),
           estado: r.estado || "Provisório",
           observacoes: r.observacoes || null,
         };
@@ -234,9 +252,9 @@ export function useImportCsvToUser() {
     },
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["base_artigos_user"] });
-      toast.success(`CSV importado (${r.inserted} artigos).`);
+      toast.success(`Importado (${r.inserted} artigos).`);
     },
-    onError: (e: Error) => toast.error(`Erro ao importar CSV: ${e.message}`),
+    onError: (e: Error) => toast.error(`Erro ao importar: ${e.message}`),
   });
 }
 
@@ -285,13 +303,13 @@ function parseCsv(text: string): Record<string, string>[] {
   const lines = clean.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
   const delim = lines[0].includes(";") ? ";" : ",";
-  const headers = lines[0].split(delim).map((h) => h.trim().toLowerCase());
+  const headers = lines[0].split(delim).map((h) => normalizeHeader(h));
   return lines.slice(1).map((line) => {
     const cells = splitCsvLine(line, delim);
     const row: Record<string, string> = {};
     headers.forEach((h, i) => (row[h] = (cells[i] ?? "").trim()));
-    return row;
-  }).filter((r) => r.codigo && r.artigo && r.capitulo);
+    return mapAliases(row);
+  }).filter((r) => r.codigo && r.artigo);
 }
 
 function splitCsvLine(line: string, delim: string): string[] {
@@ -307,3 +325,70 @@ function splitCsvLine(line: string, delim: string): string[] {
   out.push(cur);
   return out;
 }
+
+// Normaliza cabeçalhos: minúsculas, sem acentos, espaços/símbolos → _
+function normalizeHeader(h: string): string {
+  return String(h)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// Mapeia variantes de cabeçalho conhecidas → chaves canónicas do importador
+const ALIASES: Record<string, string> = {
+  // identificação
+  codigo: "codigo", cod: "codigo", ref: "codigo", referencia: "codigo",
+  // descrição
+  artigo: "artigo", descricao: "artigo", descricao_do_item: "artigo",
+  descricao_item: "artigo", designacao: "artigo", nome: "artigo", item: "artigo",
+  // hierarquia
+  capitulo: "capitulo", grupo: "capitulo", familia: "capitulo", categoria_principal: "capitulo",
+  subcapitulo: "subcapitulo", subgrupo: "subcapitulo", categoria: "subcapitulo", subfamilia: "subcapitulo",
+  // unidade
+  unidade: "unidade", un: "unidade", unid: "unidade",
+  // custos
+  mao_de_obra_estimada: "mao_obra_estimada_eur",
+  mao_obra_estimada: "mao_obra_estimada_eur",
+  mao_de_obra: "mao_obra_estimada_eur",
+  mao_obra: "mao_obra_estimada_eur",
+  mao_obra_estimada_eur: "mao_obra_estimada_eur",
+  material_estimado: "material_estimado_eur",
+  material_estimado_eur: "material_estimado_eur",
+  material: "material_estimado_eur",
+  custo: "custo_direto_eur",
+  custo_direto: "custo_direto_eur",
+  custo_direto_eur: "custo_direto_eur",
+  // margem
+  margem: "margem_configuravel_pct",
+  margem_padrao: "margem_configuravel_pct",
+  margem_configuravel: "margem_configuravel_pct",
+  margem_configuravel_pct: "margem_configuravel_pct",
+  // preço
+  preco: "preco_indicativo_eur",
+  preco_unitario: "preco_indicativo_eur",
+  preco_indicativo: "preco_indicativo_eur",
+  preco_indicativo_eur: "preco_indicativo_eur",
+  preco_venda: "preco_indicativo_eur",
+  preco_venda_sugerido: "preco_indicativo_eur",
+  preco_base_sem_iva: "preco_indicativo_eur",
+  preco_sem_iva: "preco_indicativo_eur",
+  // metadados
+  fonte: "fonte_base", fonte_base: "fonte_base", fonte_url: "fonte_base",
+  estado: "estado", tipo_de_preco: "estado", tipo_preco: "estado",
+  observacoes: "observacoes", obs: "observacoes", notas: "observacoes",
+  tipo_linha: "tipo_linha", tipolinha: "tipo_linha",
+};
+
+function mapAliases(row: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  Object.entries(row).forEach(([k, v]) => {
+    const canon = ALIASES[k] || k;
+    // não sobrescrever valor já preenchido por chave canónica
+    if (!out[canon] || out[canon] === "") out[canon] = v;
+  });
+  return out;
+}
+

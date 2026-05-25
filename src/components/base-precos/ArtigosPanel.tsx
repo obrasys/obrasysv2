@@ -170,12 +170,12 @@ export function ArtigosPanel() {
               ) : (
                 <Upload className="h-4 w-4 mr-2" />
               )}
-              Importar CSV
+              Importar CSV / Excel
             </Button>
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
               hidden
               onChange={onCsvUpload}
             />
