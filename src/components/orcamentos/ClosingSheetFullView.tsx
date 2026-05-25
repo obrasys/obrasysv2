@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2 } from "lucide-react";
+import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download } from "lucide-react";
+import { toast } from "sonner";
+
 import {
   Table,
   TableBody,
