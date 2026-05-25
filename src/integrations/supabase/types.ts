@@ -1555,6 +1555,200 @@ export type Database = {
           },
         ]
       }
+      budget_version_items: {
+        Row: {
+          awarded_amount: number
+          base_quantity: number
+          base_total: number
+          base_unit_price: number
+          budget_version_id: string
+          chapter_code: string | null
+          chapter_name: string | null
+          codigo: string | null
+          contracting_status: string
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          ordem: number
+          package_id: string | null
+          purchased_amount: number
+          remaining_amount: number
+          source_artigo_id: string | null
+          source_capitulo_id: string | null
+          supplier_id: string | null
+          target_quantity: number
+          target_total: number
+          target_unit_price: number
+          unit: string | null
+          updated_at: string
+          variance_from_base: number
+          variance_from_previous: number
+        }
+        Insert: {
+          awarded_amount?: number
+          base_quantity?: number
+          base_total?: number
+          base_unit_price?: number
+          budget_version_id: string
+          chapter_code?: string | null
+          chapter_name?: string | null
+          codigo?: string | null
+          contracting_status?: string
+          created_at?: string
+          description: string
+          id?: string
+          notes?: string | null
+          ordem?: number
+          package_id?: string | null
+          purchased_amount?: number
+          remaining_amount?: number
+          source_artigo_id?: string | null
+          source_capitulo_id?: string | null
+          supplier_id?: string | null
+          target_quantity?: number
+          target_total?: number
+          target_unit_price?: number
+          unit?: string | null
+          updated_at?: string
+          variance_from_base?: number
+          variance_from_previous?: number
+        }
+        Update: {
+          awarded_amount?: number
+          base_quantity?: number
+          base_total?: number
+          base_unit_price?: number
+          budget_version_id?: string
+          chapter_code?: string | null
+          chapter_name?: string | null
+          codigo?: string | null
+          contracting_status?: string
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          ordem?: number
+          package_id?: string | null
+          purchased_amount?: number
+          remaining_amount?: number
+          source_artigo_id?: string | null
+          source_capitulo_id?: string | null
+          supplier_id?: string | null
+          target_quantity?: number
+          target_total?: number
+          target_unit_price?: number
+          unit?: string | null
+          updated_at?: string
+          variance_from_base?: number
+          variance_from_previous?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_version_items_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          locked_at: string | null
+          obra_id: string | null
+          organization_id: string | null
+          parent_version_id: string | null
+          reason: string | null
+          source_budget_id: string
+          status: string
+          total_awarded: number
+          total_base: number
+          total_purchased: number
+          total_remaining: number
+          total_target: number
+          updated_at: string
+          user_id: string
+          variance_from_base: number
+          variance_from_previous: number
+          version_name: string | null
+          version_number: number
+          version_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          locked_at?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          parent_version_id?: string | null
+          reason?: string | null
+          source_budget_id: string
+          status?: string
+          total_awarded?: number
+          total_base?: number
+          total_purchased?: number
+          total_remaining?: number
+          total_target?: number
+          updated_at?: string
+          user_id: string
+          variance_from_base?: number
+          variance_from_previous?: number
+          version_name?: string | null
+          version_number?: number
+          version_type: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          locked_at?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          parent_version_id?: string | null
+          reason?: string | null
+          source_budget_id?: string
+          status?: string
+          total_awarded?: number
+          total_base?: number
+          total_purchased?: number
+          total_remaining?: number
+          total_target?: number
+          updated_at?: string
+          user_id?: string
+          variance_from_base?: number
+          variance_from_previous?: number
+          version_name?: string | null
+          version_number?: number
+          version_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_versions_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_versions_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caderno_item_match: {
         Row: {
           artigo_base_id: string | null
@@ -2199,6 +2393,105 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      closing_sheets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          budget_version_id: string | null
+          closing_type: string
+          contingency_amount: number
+          created_at: string
+          expected_result: number
+          final_result: number | null
+          id: string
+          locked_at: string | null
+          margin_amount: number
+          margin_percent: number
+          notes: string | null
+          obra_id: string | null
+          organization_id: string | null
+          sale_price: number
+          site_costs: number
+          snapshot: Json | null
+          source_budget_id: string | null
+          status: string
+          structure_costs: number
+          total_direct_cost: number
+          total_indirect_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_version_id?: string | null
+          closing_type: string
+          contingency_amount?: number
+          created_at?: string
+          expected_result?: number
+          final_result?: number | null
+          id?: string
+          locked_at?: string | null
+          margin_amount?: number
+          margin_percent?: number
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          sale_price?: number
+          site_costs?: number
+          snapshot?: Json | null
+          source_budget_id?: string | null
+          status?: string
+          structure_costs?: number
+          total_direct_cost?: number
+          total_indirect_cost?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_version_id?: string | null
+          closing_type?: string
+          contingency_amount?: number
+          created_at?: string
+          expected_result?: number
+          final_result?: number | null
+          id?: string
+          locked_at?: string | null
+          margin_amount?: number
+          margin_percent?: number
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          sale_price?: number
+          site_costs?: number
+          snapshot?: Json | null
+          source_budget_id?: string | null
+          status?: string
+          structure_costs?: number
+          total_direct_cost?: number
+          total_indirect_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closing_sheets_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closing_sheets_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_ai_settings: {
         Row: {
@@ -5869,6 +6162,9 @@ export type Database = {
           data_criacao: string
           data_envio: string | null
           id: string
+          is_locked: boolean
+          locked_at: string | null
+          locked_reason: string | null
           margem_lucro: number | null
           numero_revisao: number | null
           obra_id: string | null
@@ -5894,6 +6190,9 @@ export type Database = {
           data_criacao?: string
           data_envio?: string | null
           id?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
@@ -5919,6 +6218,9 @@ export type Database = {
           data_criacao?: string
           data_envio?: string | null
           id?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
@@ -11427,6 +11729,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_base_dry_budget: {
+        Args: { p_orcamento_id: string }
+        Returns: Json
+      }
       buscar_historico_match: {
         Args: { p_descricao: string; p_limite?: number; p_user_id: string }
         Returns: {
@@ -11444,6 +11750,10 @@ export type Database = {
       }
       can_access_rdo_photo: { Args: { _path: string }; Returns: boolean }
       classify_task_delay: { Args: { p_task_id: string }; Returns: string }
+      create_new_target_version: {
+        Args: { p_reason?: string; p_source_budget_id: string }
+        Returns: string
+      }
       determinar_regime_fiscal: {
         Args: {
           p_data_referencia?: string
