@@ -59,7 +59,11 @@ export function BudgetInsightsPanel({ orcamentoId }: { orcamentoId: string }) {
           <p className="text-sm text-destructive">
             Não foi possível obter insights: {(error as Error).message}
           </p>
-        ) : !data ? null : (
+        ) : !data || !data.totals ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Sem dados suficientes para gerar insights.
+          </p>
+        ) : (
           <>
             {data.summary && (
               <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed">
@@ -68,15 +72,15 @@ export function BudgetInsightsPanel({ orcamentoId }: { orcamentoId: string }) {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <Stat label="Base" value={fmt(data.totals.base)} />
-              <Stat label="Objetivo" value={fmt(data.totals.target)} />
+              <Stat label="Base" value={fmt(data.totals.base ?? 0)} />
+              <Stat label="Objetivo" value={fmt(data.totals.target ?? 0)} />
               <Stat
                 label="Desvio"
-                value={`${fmt(data.totals.variance)} (${data.totals.variancePct.toFixed(1)}%)`}
-                negative={data.totals.variance > 0}
-                positive={data.totals.variance < 0}
+                value={`${fmt(data.totals.variance ?? 0)} (${(data.totals.variancePct ?? 0).toFixed(1)}%)`}
+                negative={(data.totals.variance ?? 0) > 0}
+                positive={(data.totals.variance ?? 0) < 0}
               />
-              <Stat label="Consumido" value={`${data.totals.consumedPct.toFixed(0)}%`} />
+              <Stat label="Consumido" value={`${(data.totals.consumedPct ?? 0).toFixed(0)}%`} />
             </div>
 
             {data.insights.length === 0 ? (
