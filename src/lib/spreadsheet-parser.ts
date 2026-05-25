@@ -79,6 +79,7 @@ export function matrixToParsedCSV(matrix: unknown[][]): ParsedCSV {
   const headers: string[] = [];
   for (let c = 0; c < maxCols; c++) {
     let name = String(rawHeaders[c] ?? '').trim();
+    if (!name) name = resolveHeader(c);
     if (!name) name = `Coluna ${c + 1}`;
     let unique = name;
     let n = 2;
