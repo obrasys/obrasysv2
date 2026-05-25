@@ -178,9 +178,29 @@ export function useImportCsvToUser() {
   return useMutation({
     mutationFn: async (input: { file: File; tipoBase?: TipoBase }) => {
       const tipoBase: TipoBase = input.tipoBase ?? "geral";
-      const text = await input.file.text();
-      const rows = parseCsv(text);
-      if (rows.length === 0) throw new Error("CSV vazio ou formato inválido.");
+      const name = input.file.name.toLowerCase();
+      const isExcel = name.endsWith(".xlsx") || name.endsWith(".xls");
+      let rows: Record<string, string>[];
+      if (isExcel) {
+        const buf = await input.file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        // Prefer a sheet whose name suggests "base" / "precos"; fall back to first
+        const sheetName =
+          wb.SheetNames.find((n) => /base|prec|artig|item/i.test(n)) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: true });
+        rows = json.map((r) => {
+          const out: Record<string, string> = {};
+          Object.entries(r).forEach(([k, v]) => {
+            out[normalizeHeader(k)] = v == null ? "" : String(v).trim();
+          });
+          return mapAliases(out);
+        }).filter((r) => r.codigo && r.artigo);
+      } else {
+        const text = await input.file.text();
+        rows = parseCsv(text);
+      }
+      if (rows.length === 0) throw new Error("Ficheiro vazio ou sem linhas válidas (precisa de pelo menos código e descrição/artigo).");
 
       const { data: sess } = await supabase.auth.getSession();
       const user = sess?.session?.user;
@@ -196,10 +216,7 @@ export function useImportCsvToUser() {
         if (custo === 0) custo = mo + mat;
         const margem = num(r.margem_configuravel_pct, 25);
         let preco = num(r.preco_indicativo_eur);
-        if (preco === 0) {
-          // Aceita também coluna "preco_unitario" (formato Remodelação)
-          preco = num(r.preco_unitario);
-        }
+        if (preco === 0) preco = num(r.preco_unitario);
         if (preco === 0 && custo > 0) {
           preco = margem >= 100 ? custo : custo / (1 - margem / 100);
         }
@@ -212,7 +229,7 @@ export function useImportCsvToUser() {
           tipo_base: tipoBase,
           tipo_linha: tipoLinha,
           codigo: r.codigo,
-          capitulo: r.capitulo,
+          capitulo: r.capitulo || "Sem capítulo",
           subcapitulo: r.subcapitulo || null,
           artigo: r.artigo,
           unidade: r.unidade || "un",
@@ -221,7 +238,7 @@ export function useImportCsvToUser() {
           custo_direto_eur: Number(custo.toFixed(2)),
           margem_configuravel_pct: margem,
           preco_indicativo_eur: Number(preco.toFixed(2)),
-          fonte_base: r.fonte_base || (tipoBase === "remodelacao" ? "Importação Remodelação" : "Importação CSV"),
+          fonte_base: r.fonte_base || (isExcel ? "Importação Excel" : (tipoBase === "remodelacao" ? "Importação Remodelação" : "Importação CSV")),
           estado: r.estado || "Provisório",
           observacoes: r.observacoes || null,
         };
@@ -235,9 +252,9 @@ export function useImportCsvToUser() {
     },
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["base_artigos_user"] });
-      toast.success(`CSV importado (${r.inserted} artigos).`);
+      toast.success(`Importado (${r.inserted} artigos).`);
     },
-    onError: (e: Error) => toast.error(`Erro ao importar CSV: ${e.message}`),
+    onError: (e: Error) => toast.error(`Erro ao importar: ${e.message}`),
   });
 }
 
