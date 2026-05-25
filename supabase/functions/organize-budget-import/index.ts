@@ -185,7 +185,7 @@ serve(async (req) => {
 
     const priceCatalog = [...(userPriceRows ?? []), ...(defaultPriceRows ?? [])]
       .filter((item) => Number(item?.preco_unitario) > 0)
-      .slice(0, 1200);
+      .slice(0, 400);
 
     const compactPriceCatalog = priceCatalog.map((item) => ({
       codigo: item.codigo,
@@ -194,56 +194,66 @@ serve(async (req) => {
       preco_unitario: Number(item.preco_unitario),
     }));
 
-    // Build AI messages based on input type
-    const priceContext = `\n\nBASE DE PREÇOS (${compactPriceCatalog.length} itens):\n${JSON.stringify(compactPriceCatalog.slice(0, 400), null, 0)}`;
+    // Keep prompt small to stay under the 150s edge function timeout
+    const priceSample = compactPriceCatalog.slice(0, 150);
+    const priceContext = `\n\nBASE DE PREÇOS (amostra ${priceSample.length} de ${compactPriceCatalog.length}):\n${JSON.stringify(priceSample, null, 0)}`;
 
     let userMessages: Array<{ type: string; [key: string]: unknown }>;
 
     if (hasPdf) {
-      // Multimodal: send PDF as file content to Gemini
       userMessages = [
-        {
-          type: "image_url",
-          image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
-        },
-        {
-          type: "text",
-          text: `Analise este PDF de orçamento de construção e extraia todos os capítulos e artigos.\n\nFicheiro: ${fileName || "orcamento.pdf"}${priceContext}\n\nOrganize no formato JSON estruturado do ObraSys.`,
-        },
+        { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
+        { type: "text", text: `Analise este PDF de orçamento de construção e extraia todos os capítulos e artigos.\n\nFicheiro: ${fileName || "orcamento.pdf"}${priceContext}\n\nOrganize no formato JSON estruturado do ObraSys.` },
       ];
     } else if (hasRawText) {
-      const truncatedText = rawText.slice(0, 15000);
+      const truncatedText = rawText.slice(0, 12000);
       userMessages = [
-        {
-          type: "text",
-          text: `Texto extraído de um documento DOCX de orçamento de construção:\n\n${truncatedText}${rawText.length > 15000 ? "\n\n... (texto truncado)" : ""}${priceContext}\n\nOrganize no formato JSON estruturado do ObraSys.`,
-        },
+        { type: "text", text: `Texto extraído de um documento DOCX de orçamento de construção:\n\n${truncatedText}${rawText.length > 12000 ? "\n\n... (texto truncado)" : ""}${priceContext}\n\nOrganize no formato JSON estruturado do ObraSys.` },
       ];
     } else {
+      const MAX_ROWS_AI = 250;
+      const sampleRows = rows.slice(0, MAX_ROWS_AI);
       userMessages = [
-        {
-          type: "text",
-          text: `Ficheiro: ${fileName || "orcamento"}\nColunas do Excel: ${JSON.stringify(headers)}\n\nDados brutos (${rows.length} linhas):\n${JSON.stringify(rows.slice(0, 400), null, 0)}${rows.length > 400 ? `\n\n... e mais ${rows.length - 400} linhas adicionais.` : ""}${priceContext}\n\nOrganize estes dados no formato JSON estruturado do ObraSys.`,
-        },
+        { type: "text", text: `Ficheiro: ${fileName || "orcamento"}\nColunas: ${JSON.stringify(headers)}\n\nDados brutos (${rows.length} linhas totais, a mostrar ${sampleRows.length}):\n${JSON.stringify(sampleRows, null, 0)}${rows.length > MAX_ROWS_AI ? `\n\n... e mais ${rows.length - MAX_ROWS_AI} linhas (truncadas para evitar timeout).` : ""}${priceContext}\n\nOrganize estes dados no formato JSON estruturado do ObraSys.` },
       ];
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessages },
-        ],
-        tools: [TOOL_SCHEMA],
-        tool_choice: { type: "function", function: { name: "organize_budget" } },
-      }),
-    });
+    // Abort before the 150s edge function idle timeout
+    const aiAbort = new AbortController();
+    const aiTimer = setTimeout(() => aiAbort.abort(), 130_000);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userMessages },
+          ],
+          tools: [TOOL_SCHEMA],
+          tool_choice: { type: "function", function: { name: "organize_budget" } },
+        }),
+        signal: aiAbort.signal,
+      });
+    } catch (err) {
+      clearTimeout(aiTimer);
+      const isAbort = (err as Error)?.name === "AbortError";
+      return new Response(
+        JSON.stringify({
+          error: isAbort
+            ? "A IA demorou demasiado a processar o ficheiro. Tente um ficheiro mais pequeno (menos linhas ou páginas)."
+            : "Falha ao contactar a IA. Tente novamente.",
+        }),
+        { status: isAbort ? 504 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    clearTimeout(aiTimer);
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
