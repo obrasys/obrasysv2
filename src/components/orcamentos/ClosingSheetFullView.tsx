@@ -186,33 +186,23 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   };
 
   const handleExportPDF = async () => {
-    const node = printRef.current;
-    if (!node) return;
     setExporting(true);
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
-      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let heightLeft = imgH;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
-      heightLeft -= pageH;
-      while (heightLeft > 0) {
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
-        heightLeft -= pageH;
-      }
-      const fname = `Folha_Fecho_${isInitial ? "Inicial" : "Final"}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
-      pdf.save(fname);
+      const { exportClosingSheetPDF } = await import("@/lib/closing-sheet-pdf");
+      await exportClosingSheetPDF({
+        sheet,
+        details,
+        totals,
+        sheetCode,
+        company: {
+          empresa_nome: profile?.empresa_nome,
+          empresa_nif: profile?.empresa_nif,
+          empresa_morada: profile?.empresa_morada,
+          empresa_telefone: profile?.empresa_telefone,
+          empresa_email: profile?.empresa_email,
+          empresa_logo_url: profile?.empresa_logo_url,
+        },
+      });
       toast.success("PDF gerado com sucesso");
     } catch (err) {
       console.error(err);
