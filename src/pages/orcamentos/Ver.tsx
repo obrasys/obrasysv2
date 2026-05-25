@@ -279,14 +279,42 @@ export default function VerOrcamentoPage() {
 
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
-          <TabsList className="mb-4 no-print">
+          <TabsList className="mb-4 no-print flex flex-wrap h-auto">
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+            <TabsTrigger value="base">
+              <Lock className="h-3 w-3 mr-1.5" /> Base Seco
+            </TabsTrigger>
+            <TabsTrigger value="target">
+              <Target className="h-3 w-3 mr-1.5" /> {opLayerShort}
+            </TabsTrigger>
+            <TabsTrigger value="fecho">
+              <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
+            </TabsTrigger>
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="base">
+            <BaseDryBudgetPanel
+              orcamentoId={orcamento.id}
+              isLocked={isLocked}
+              lockedAt={lockedAt}
+              status={orcamento.status}
+              valorBase={valorBase}
+            />
+          </TabsContent>
+
+          <TabsContent value="target">
+            <TargetBudgetPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
+          <TabsContent value="fecho">
+            <ClosingSheetsPanel orcamentoId={orcamento.id} />
+          </TabsContent>
 
           <TabsContent value="cotacoes">
             <CotacoesTab orcamentoId={id!} />
           </TabsContent>
+
 
           <TabsContent value="orcamento">
             <div className="space-y-5">
