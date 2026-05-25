@@ -113,6 +113,9 @@ export function useOrcamentos() {
       if (formData.custos_indiretos) {
         updateData.custos_indiretos = formData.custos_indiretos as unknown as Json;
       }
+      if (formData.project_metadata) {
+        updateData.project_metadata = formData.project_metadata as unknown as Json;
+      }
       
       const { data, error } = await supabase
         .from('orcamentos')
