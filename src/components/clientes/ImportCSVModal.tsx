@@ -252,13 +252,13 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
                 <Label htmlFor="csv-upload" className="cursor-pointer">
                   <span className="text-lg font-medium">Clique para carregar</span>
                   <p className="text-sm text-muted-foreground mt-1">
-                    ou arraste o ficheiro CSV aqui
+                    ou arraste o ficheiro CSV ou Excel aqui
                   </p>
                 </Label>
                 <Input
                   id="csv-upload"
                   type="file"
-                  accept=".csv,.txt"
+                  accept=".csv,.txt,.xlsx,.xls"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -274,8 +274,9 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  O ficheiro deve estar em formato CSV com cabeçalhos na primeira linha.
-                  Separadores suportados: vírgula (,), ponto e vírgula (;), tab.
+                  Aceita CSV (.csv) e Excel (.xlsx, .xls). O cabeçalho é detetado
+                  automaticamente, mesmo que existam linhas de título por cima
+                  das colunas reais.
                 </AlertDescription>
               </Alert>
             </div>
