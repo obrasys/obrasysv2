@@ -158,7 +158,7 @@ serve(async (req) => {
       });
     }
 
-    if (hasTabular && rows.length > 500) {
+    if (hasTabular && rows.length > 5000) {
       return new Response(JSON.stringify({ error: "Limite de 500 linhas excedido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -223,7 +223,7 @@ serve(async (req) => {
       userMessages = [
         {
           type: "text",
-          text: `Colunas do Excel: ${JSON.stringify(headers)}\n\nDados brutos (${rows.length} linhas):\n${JSON.stringify(rows.slice(0, 200), null, 0)}${rows.length > 200 ? `\n\n... e mais ${rows.length - 200} linhas adicionais.` : ""}${priceContext}\n\nOrganize estes dados no formato JSON estruturado do ObraSys.`,
+          text: `Ficheiro: ${fileName || "orcamento"}\nColunas do Excel: ${JSON.stringify(headers)}\n\nDados brutos (${rows.length} linhas):\n${JSON.stringify(rows.slice(0, 400), null, 0)}${rows.length > 400 ? `\n\n... e mais ${rows.length - 400} linhas adicionais.` : ""}${priceContext}\n\nOrganize estes dados no formato JSON estruturado do ObraSys.`,
         },
       ];
     }
