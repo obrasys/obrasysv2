@@ -96,6 +96,89 @@ const normalizeCode = (value: unknown, fallback: string) => {
   return text || fallback;
 };
 
+const VALID_UNITS = new Set(["un", "m", "m2", "m3", "ml", "kg", "vg", "l", "h", "cj", "lote"]);
+const TOTAL_KEYWORDS = /(total geral|total orçamento|total orcamento|valor total|preco global|total final|total da proposta|importa[nc]ia total)/;
+const SUMMARY_KEYWORDS = /(subtotal|sub total|total|iva|imposto|resumo|transporte|pagina anterior|a transportar)/;
+const HEADER_KEYWORDS = /(art\.?º|artigo|designa[cç][aã]o|descricao|descri[cç][aã]o|unid|unidade|quant|qtd|pre[cç]o|unit[aá]rio|parcial|cliente|local|obra|morada|data)/;
+
+const sanitizeTextCell = (value: unknown) => String(value ?? "").replace(/\s+/g, " ").trim();
+
+const isReferenceErrorText = (value: unknown) => /#ref!?/i.test(sanitizeTextCell(value));
+
+const isIncludedText = (value: unknown) => /inclu[ií]d[oa]/i.test(normalizeText(String(value ?? "")));
+
+const isProbablyHeaderRow = (values: unknown[]) => {
+  const joined = normalizeText(values.map((value) => String(value ?? "")).join(" "));
+  return HEADER_KEYWORDS.test(joined);
+};
+
+const isMeaningfulDescription = (value: string) => {
+  if (!value) return false;
+  const normalized = normalizeText(value);
+  if (!normalized || SUMMARY_KEYWORDS.test(normalized) || HEADER_KEYWORDS.test(normalized)) return false;
+  return /[a-z]/i.test(value) && value.length >= 3;
+};
+
+const almostEqual = (a: number, b: number, tolerance = 0.02) => {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  if (a === 0 && b === 0) return true;
+  return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1) <= tolerance;
+};
+
+const extractRowNumbers = (values: unknown[]) => values
+  .map((value, index) => ({ index, raw: value, value: toNumber(value, Number.NaN) }))
+  .filter((entry) => Number.isFinite(entry.value));
+
+const detectFinalBudgetTotal = (rows: Array<Record<string, unknown>>, headers: string[] = []) => {
+  const totals: Array<{ rowIndex: number; value: number; label: string }> = [];
+  const normalizedHeaders = headers.map((header) => normalizeText(header));
+  const totalHeaderIndex = normalizedHeaders.findIndex((header) => /(total|parcial|valor)/.test(header));
+
+  rows.forEach((row, rowIndex) => {
+    const values = Object.values(row);
+    const label = normalizeText(values.map((value) => String(value ?? "")).join(" "));
+    if (!TOTAL_KEYWORDS.test(label)) return;
+
+    const numericEntries = extractRowNumbers(values);
+    if (!numericEntries.length) return;
+
+    const preferred = totalHeaderIndex >= 0
+      ? numericEntries.find((entry) => entry.index === totalHeaderIndex)
+      : undefined;
+    const picked = preferred ?? numericEntries[numericEntries.length - 1];
+    if (!picked || picked.value <= 0) return;
+
+    totals.push({ rowIndex, value: picked.value, label });
+  });
+
+  if (!totals.length) return 0;
+  return totals.sort((a, b) => (b.rowIndex - a.rowIndex) || (b.value - a.value))[0].value;
+};
+
+type ImportDiagnostics = {
+  original_total: number;
+  imported_total: number;
+  difference: number;
+  status: "ok" | "review_required";
+  valid_articles: number;
+  chapters_found: number;
+  ignored_rows: number;
+  included_rows: number;
+  subtotal_rows: number;
+  ref_rows: number;
+  ignored_reasons: string[];
+};
+
+type OrganizedBudgetResult = {
+  titulo_sugerido: string;
+  capitulos: Array<{
+    numero: number;
+    titulo: string;
+    artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }>;
+  }>;
+  _meta: ImportDiagnostics;
+};
+
 const deriveBudgetFromRows = (
   rows: Array<Record<string, unknown>>,
   headers: string[] | undefined,
