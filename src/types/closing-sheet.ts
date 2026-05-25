@@ -111,8 +111,28 @@ export interface ClosingConditions {
   observacoes: string;
 }
 
+export interface ClosingValidation {
+  direccao_geral: string;
+  validador_tecnico_economico: string;
+  percentagem_lucro_alvo: number; // ex 0.20
+  valor_medio_fraccao: number;
+  observacoes: string;
+}
+
+export interface ClosingApprovals {
+  administracao_nome: string;
+  administracao_data: string | null;
+  aprovacao_inicial_nome: string;
+  aprovacao_inicial_data: string | null;
+  assinatura_url: string;
+  notas: string;
+}
+
 export interface ClosingSheetDetails {
   header: ClosingHeader;
+  validation: ClosingValidation;
+  approvals: ClosingApprovals;
+  quality_specs_values: Record<string, string>; // spec_key -> valor descritivo
   direct_costs: ClosingDirectCostLine[];
   site_costs: ClosingSiteCostLine[];
   terrain: ClosingTerrainCosts;
@@ -170,6 +190,22 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
     proj_engenharia: "",
     responsavel_orcamento: "",
   },
+  validation: {
+    direccao_geral: "",
+    validador_tecnico_economico: "",
+    percentagem_lucro_alvo: 0.20,
+    valor_medio_fraccao: 0,
+    observacoes: "",
+  },
+  approvals: {
+    administracao_nome: "",
+    administracao_data: null,
+    aprovacao_inicial_nome: "",
+    aprovacao_inicial_data: null,
+    assinatura_url: "",
+    notas: "",
+  },
+  quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
   site_costs: DEFAULT_SITE_COST_LINES,
   terrain: {
@@ -354,6 +390,9 @@ export function mergeDetails(stored: Partial<ClosingSheetDetails> | null | undef
     ...DEFAULT_CLOSING_DETAILS,
     ...stored,
     header: { ...DEFAULT_CLOSING_DETAILS.header, ...(stored.header || {}) },
+    validation: { ...DEFAULT_CLOSING_DETAILS.validation, ...(stored.validation || {}) },
+    approvals: { ...DEFAULT_CLOSING_DETAILS.approvals, ...(stored.approvals || {}) },
+    quality_specs_values: { ...(stored.quality_specs_values || {}) },
     direct_costs: stored.direct_costs?.length ? stored.direct_costs : DEFAULT_CLOSING_DETAILS.direct_costs,
     site_costs: stored.site_costs?.length ? stored.site_costs : DEFAULT_CLOSING_DETAILS.site_costs,
     terrain: { ...DEFAULT_CLOSING_DETAILS.terrain, ...(stored.terrain || {}) },

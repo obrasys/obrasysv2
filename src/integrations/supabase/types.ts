@@ -2490,6 +2490,118 @@ export type Database = {
         }
         Relationships: []
       }
+      closing_sheet_sales_lines: {
+        Row: {
+          area_priv: number | null
+          closing_sheet_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          preco_m2: number | null
+          quantidade: number
+          sort_order: number
+          tipologia: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          area_priv?: number | null
+          closing_sheet_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          preco_m2?: number | null
+          quantidade?: number
+          sort_order?: number
+          tipologia: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          area_priv?: number | null
+          closing_sheet_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          preco_m2?: number | null
+          quantidade?: number
+          sort_order?: number
+          tipologia?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closing_sheet_sales_lines_closing_sheet_id_fkey"
+            columns: ["closing_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "closing_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      closing_sheet_site_detail_lines: {
+        Row: {
+          category: string
+          closing_sheet_id: string
+          created_at: string
+          description: string
+          id: string
+          monthly_cost: number | null
+          months: number | null
+          notes: string | null
+          organization_id: string
+          quantity: number | null
+          sort_order: number
+          total_amount: number | null
+          updated_at: string
+          useful_percent: number | null
+        }
+        Insert: {
+          category: string
+          closing_sheet_id: string
+          created_at?: string
+          description: string
+          id?: string
+          monthly_cost?: number | null
+          months?: number | null
+          notes?: string | null
+          organization_id: string
+          quantity?: number | null
+          sort_order?: number
+          total_amount?: number | null
+          updated_at?: string
+          useful_percent?: number | null
+        }
+        Update: {
+          category?: string
+          closing_sheet_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          monthly_cost?: number | null
+          months?: number | null
+          notes?: string | null
+          organization_id?: string
+          quantity?: number | null
+          sort_order?: number
+          total_amount?: number | null
+          updated_at?: string
+          useful_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closing_sheet_site_detail_lines_closing_sheet_id_fkey"
+            columns: ["closing_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "closing_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       closing_sheets: {
         Row: {
           approved_at: string | null
@@ -6542,6 +6654,47 @@ export type Database = {
             columns: ["revisao_de"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_quality_specs_catalog: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          label: string
+          ordem: number
+          organization_id: string
+          spec_key: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          ordem?: number
+          organization_id: string
+          spec_key: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          ordem?: number
+          organization_id?: string
+          spec_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_quality_specs_catalog_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -12297,6 +12450,10 @@ export type Database = {
           _unit_price?: number
         }
         Returns: string
+      }
+      seed_quality_specs_catalog: {
+        Args: { p_org_id: string }
+        Returns: undefined
       }
       sync_onboarding_progress: {
         Args: { p_user_id: string }
