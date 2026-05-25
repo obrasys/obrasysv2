@@ -301,6 +301,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="compras">
               <ShoppingCart className="h-3 w-3 mr-1.5" /> Compras
             </TabsTrigger>
+            <TabsTrigger value="axia">
+              <Sparkles className="h-3 w-3 mr-1.5" /> Axia
+            </TabsTrigger>
             <TabsTrigger value="historico">
               <History className="h-3 w-3 mr-1.5" /> Histórico
             </TabsTrigger>
