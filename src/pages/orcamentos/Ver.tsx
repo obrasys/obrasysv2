@@ -293,6 +293,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="fecho">
               <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
             </TabsTrigger>
+            <TabsTrigger value="pacotes">
+              <Package className="h-3 w-3 mr-1.5" /> Pacotes
+            </TabsTrigger>
             <TabsTrigger value="historico">
               <History className="h-3 w-3 mr-1.5" /> Histórico
             </TabsTrigger>
@@ -317,6 +320,10 @@ export default function VerOrcamentoPage() {
             <ClosingSheetsPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
+          <TabsContent value="pacotes">
+            <ContractingPackagesPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
           <TabsContent value="historico">
             <BudgetHistoryPanel orcamentoId={orcamento.id} />
           </TabsContent>
@@ -324,6 +331,7 @@ export default function VerOrcamentoPage() {
           <TabsContent value="cotacoes">
             <CotacoesTab orcamentoId={id!} />
           </TabsContent>
+
 
 
           <TabsContent value="orcamento">
