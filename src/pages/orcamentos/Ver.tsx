@@ -37,6 +37,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
+import { BaseDryBudgetPanel } from '@/components/orcamentos/BaseDryBudgetPanel';
+import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
+import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
+import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
