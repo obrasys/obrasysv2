@@ -2498,6 +2498,7 @@ export type Database = {
           closing_type: string
           contingency_amount: number
           created_at: string
+          details: Json
           expected_result: number
           final_result: number | null
           id: string
@@ -2525,6 +2526,7 @@ export type Database = {
           closing_type: string
           contingency_amount?: number
           created_at?: string
+          details?: Json
           expected_result?: number
           final_result?: number | null
           id?: string
@@ -2552,6 +2554,7 @@ export type Database = {
           closing_type?: string
           contingency_amount?: number
           created_at?: string
+          details?: Json
           expected_result?: number
           final_result?: number | null
           id?: string

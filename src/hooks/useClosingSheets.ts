@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { ClosingSheetDetails } from "@/types/closing-sheet";
 
 export type ClosingType = "initial" | "final";
 export type ClosingStatus = "draft" | "approved" | "locked";
@@ -27,6 +28,7 @@ export interface ClosingSheet {
   locked_at: string | null;
   notes: string | null;
   snapshot: any | null;
+  details: Partial<ClosingSheetDetails> | null;
   created_at: string;
   updated_at: string;
 }
