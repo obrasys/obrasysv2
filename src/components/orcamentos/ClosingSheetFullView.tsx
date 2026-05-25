@@ -149,9 +149,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const isInitial = sheet.closing_type === "initial";
   const isLocked = sheet.status === "locked";
   const readOnly = isLocked;
+  const { profile } = useAuth();
+
+  const sheetCode = `FF-${isInitial ? "INI" : "FIN"}-${sheet.id.slice(0, 8).toUpperCase()}`;
 
   const printRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+
 
   const [details, setDetails] = useState<ClosingSheetDetails>(() => seedFromLegacy(sheet));
   const update = useUpdateClosingSheetDetails(sheet.source_budget_id || undefined);
