@@ -44,6 +44,7 @@ import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
 import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { ContractingPackagesPanel } from '@/components/orcamentos/ContractingPackagesPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
+import { BudgetInsightsPanel } from '@/components/orcamentos/BudgetInsightsPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
