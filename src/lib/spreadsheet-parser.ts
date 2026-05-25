@@ -64,6 +64,17 @@ export function matrixToParsedCSV(matrix: unknown[][]): ParsedCSV {
     maxCols = Math.max(maxCols, (matrix[i] || []).length);
   }
 
+  // When a header cell is empty, walk upward to inherit a label from a
+  // group-header row (e.g. "EMPRESA"/"ESPECIALIDADE" above the actual columns).
+  const resolveHeader = (col: number): string => {
+    for (let r = bestIdx; r >= 0; r--) {
+      const v = (matrix[r] || [])[col];
+      const s = v == null ? '' : String(v).trim();
+      if (s) return s;
+    }
+    return '';
+  };
+
   const usedNames = new Set<string>();
   const headers: string[] = [];
   for (let c = 0; c < maxCols; c++) {
