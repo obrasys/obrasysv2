@@ -184,132 +184,191 @@ const deriveBudgetFromRows = (
   headers: string[] | undefined,
   catalog: Array<{ codigo: string | null; descricao: string; unidade: string | null; preco_unitario: number }>,
   fileName?: string,
-) => {
+): OrganizedBudgetResult | null => {
   if (!Array.isArray(rows) || rows.length === 0) return null;
 
   const normalizedHeaders = (headers ?? []).map((h) => normalizeText(h));
   const headerIndex = {
-    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref)/.test(h)),
-    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|artigo|item)/.test(h)),
-    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni)$/.test(h) || /unidade/.test(h)),
+    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref|art\.?º)/.test(h)),
+    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|designa|item)/.test(h)),
+    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni|unid)$/.test(h) || /unidade|unid/.test(h)),
     quantity: normalizedHeaders.findIndex((h) => /(quantidade|quant|qtd)/.test(h)),
-    price: normalizedHeaders.findIndex((h) => /(preco unit|preco|p unit|valor unit|unitario|c unit)/.test(h)),
+    unitPrice: normalizedHeaders.findIndex((h) => /(preco unit|preco\/ unitario|unitario|p unit|valor unit|precos unit)/.test(h)),
+    partial: normalizedHeaders.findIndex((h) => /(parcial|precos parcial|valor parcial|importe)/.test(h)),
+    total: normalizedHeaders.findIndex((h) => /(^|\s)(total|valor total)(\s|$)/.test(h)),
   };
 
-  const chapters: Array<{ numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> }> = [];
-  let currentChapter: { numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> } | null = null;
+  const chapters: OrganizedBudgetResult["capitulos"] = [];
+  let currentChapter: OrganizedBudgetResult["capitulos"][number] | null = null;
   let nextChapterNumber = 1;
   let articleCounter = 1;
-  let matchedArticles = 0;
+  let includedRows = 0;
+  let ignoredRows = 0;
+  let subtotalRows = 0;
+  let refRows = 0;
+  const ignoredReasons = new Set<string>();
 
   const getCell = (values: unknown[], idx: number) => (idx >= 0 && idx < values.length ? values[idx] : null);
+  const createChapter = (title: string) => {
+    const chapter = { numero: nextChapterNumber++, titulo: title, artigos: [] as OrganizedBudgetResult["capitulos"][number]["artigos"] };
+    chapters.push(chapter);
+    currentChapter = chapter;
+    return chapter;
+  };
 
   for (const row of rows) {
-    const entries = Object.entries(row);
-    const values = entries.map(([, value]) => value);
-    const textValues = values.map((value) => String(value ?? "").trim()).filter(Boolean);
-    if (!textValues.length || isSummaryRow(values)) continue;
+    const values = Object.values(row);
+    const textValues = values.map((value) => sanitizeTextCell(value)).filter(Boolean);
 
-    const descriptionCandidate = [
-      getCell(values, headerIndex.description),
-      ...values,
-    ].find((value) => {
-      const text = String(value ?? "").trim();
-      return text.length >= 4 && !looksLikeCode(text) && !isNumericLike(text);
-    });
-
-    const codeCandidate = [
-      getCell(values, headerIndex.code),
-      ...values,
-    ].find((value) => looksLikeCode(value));
-
-    const unitCandidate = [
-      getCell(values, headerIndex.unit),
-      ...values,
-    ].find((value) => {
-      const normalized = normalizeUnit(value);
-      return ["un", "m", "m2", "m3", "ml", "kg", "vg", "l"].includes(normalized);
-    });
-
-    const numericValues = values
-      .map((value) => toNumber(value, Number.NaN))
-      .filter((value) => Number.isFinite(value));
-
-    const quantityCandidate = getCell(values, headerIndex.quantity);
-    const priceCandidate = getCell(values, headerIndex.price);
-
-    // Detect if the last numeric column is a TOTAL (qty * price). If so, ignore it
-    // so we don't confuse price with total and inflate the budget many times over.
-    let qtyInferred: number = Number.NaN;
-    let priceInferred: number = Number.NaN;
-    if (numericValues.length >= 3) {
-      const a = numericValues[numericValues.length - 3];
-      const b = numericValues[numericValues.length - 2];
-      const c = numericValues[numericValues.length - 1];
-      const product = a * b;
-      const isTotalCol = product > 0 && c > 0 && Math.abs(product - c) / Math.max(product, c) < 0.02;
-      if (isTotalCol) {
-        qtyInferred = a;
-        priceInferred = b;
-      } else {
-        qtyInferred = b;
-        priceInferred = c;
-      }
-    } else if (numericValues.length === 2) {
-      qtyInferred = numericValues[0];
-      priceInferred = numericValues[1];
-    } else if (numericValues.length === 1) {
-      qtyInferred = 1;
-      priceInferred = numericValues[0];
-    }
-
-    const quantidade = Number.isFinite(toNumber(quantityCandidate, Number.NaN))
-      ? toNumber(quantityCandidate, 1)
-      : qtyInferred;
-    const precoInferido = Number.isFinite(toNumber(priceCandidate, Number.NaN))
-      ? toNumber(priceCandidate, 0)
-      : priceInferred;
-
-    const description = String(descriptionCandidate ?? "").trim();
-    const hasArticleShape = !!description && Number.isFinite(quantidade) && Number.isFinite(precoInferido);
-    const hasOnlyText = textValues.length <= 3 && numericValues.length === 0;
-
-    if (!hasArticleShape && hasOnlyText) {
-      const title = description || textValues[0];
-      if (isChapterLabel(title)) {
-        currentChapter = { numero: nextChapterNumber++, titulo: title, artigos: [] };
-        chapters.push(currentChapter);
-      }
+    if (!textValues.length) {
+      ignoredRows += 1;
+      ignoredReasons.add("linha vazia");
       continue;
     }
 
-    if (!hasArticleShape || !description) continue;
+    if (isProbablyHeaderRow(values)) {
+      ignoredRows += 1;
+      ignoredReasons.add("cabeçalho do Excel");
+      continue;
+    }
+
+    if (values.some((value) => isReferenceErrorText(value))) {
+      refRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add("linha com fórmula quebrada (#REF!)");
+      continue;
+    }
+
+    const numericEntries = extractRowNumbers(values);
+    const codeCandidate = [getCell(values, headerIndex.code), ...values].find((value) => looksLikeCode(value));
+    const descriptionCandidate = [getCell(values, headerIndex.description), ...values].find((value) => {
+      const text = sanitizeTextCell(value);
+      return isMeaningfulDescription(text) && !looksLikeCode(text) && !isNumericLike(text);
+    });
+    const description = sanitizeTextCell(descriptionCandidate);
+
+    const unitCandidate = headerIndex.unit >= 0 ? getCell(values, headerIndex.unit) : values.find((value) => VALID_UNITS.has(normalizeUnit(value, "")));
+    const normalizedUnit = normalizeUnit(unitCandidate, "");
+    const hasValidUnit = VALID_UNITS.has(normalizedUnit);
+
+    const quantityValue = headerIndex.quantity >= 0 ? toNumber(getCell(values, headerIndex.quantity), Number.NaN) : Number.NaN;
+    const unitPriceValue = headerIndex.unitPrice >= 0 ? toNumber(getCell(values, headerIndex.unitPrice), Number.NaN) : Number.NaN;
+    const partialValue = headerIndex.partial >= 0 ? toNumber(getCell(values, headerIndex.partial), Number.NaN) : Number.NaN;
+    const totalColumnValue = headerIndex.total >= 0 ? toNumber(getCell(values, headerIndex.total), Number.NaN) : Number.NaN;
+
+    const fallbackNumeric = [...numericEntries];
+    const likelyQty = Number.isFinite(quantityValue)
+      ? quantityValue
+      : fallbackNumeric.length >= 3
+        ? fallbackNumeric[Math.max(0, fallbackNumeric.length - 3)].value
+        : fallbackNumeric.length >= 2
+          ? fallbackNumeric[0].value
+          : Number.NaN;
+    const likelyUnitPrice = Number.isFinite(unitPriceValue)
+      ? unitPriceValue
+      : fallbackNumeric.length >= 2
+        ? fallbackNumeric[Math.max(0, fallbackNumeric.length - 2)].value
+        : Number.NaN;
+    let likelyPartial = Number.isFinite(partialValue)
+      ? partialValue
+      : fallbackNumeric.length >= 1
+        ? fallbackNumeric[fallbackNumeric.length - 1].value
+        : Number.NaN;
+
+    if (Number.isFinite(totalColumnValue) && almostEqual(likelyQty * likelyUnitPrice, totalColumnValue, 0.03)) {
+      likelyPartial = Number.isFinite(partialValue) ? partialValue : totalColumnValue;
+    }
+
+    const hasDescription = !!description;
+    const hasCode = !!sanitizeTextCell(codeCandidate);
+    const quantityIsNumeric = Number.isFinite(likelyQty);
+    const unitPriceIsNumeric = Number.isFinite(likelyUnitPrice);
+    const partialIsNumeric = Number.isFinite(likelyPartial);
+    const totalIsNumeric = Number.isFinite(totalColumnValue);
+    const containsIncludedText = values.some((value) => isIncludedText(value));
+    const textJoined = normalizeText(textValues.join(" "));
+    const isSummaryLike = SUMMARY_KEYWORDS.test(textJoined);
+
+    const isChapterOrSubtotal = hasCode && hasDescription && !hasValidUnit && !quantityIsNumeric && !unitPriceIsNumeric && totalIsNumeric;
+    const isChapterTextOnly = hasDescription && !hasValidUnit && !quantityIsNumeric && !unitPriceIsNumeric && !partialIsNumeric && (looksLikeCode(codeCandidate) || isChapterLabel(description));
+
+    if (containsIncludedText) {
+      includedRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add('linha "incluído no artigo"');
+      continue;
+    }
+
+    if (isChapterOrSubtotal || isChapterTextOnly) {
+      subtotalRows += 1;
+      createChapter(description || sanitizeTextCell(codeCandidate) || `Capítulo ${nextChapterNumber}`);
+      continue;
+    }
+
+    if (isSummaryLike) {
+      subtotalRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add("subtotal ou total agregado");
+      continue;
+    }
+
+    const matchesMath = quantityIsNumeric && unitPriceIsNumeric && partialIsNumeric && almostEqual(likelyQty * likelyUnitPrice, likelyPartial, 0.03);
+    const isBudgetItem = hasDescription && hasValidUnit && quantityIsNumeric && unitPriceIsNumeric && partialIsNumeric && matchesMath;
+
+    if (!isBudgetItem) {
+      ignoredRows += 1;
+      if (!hasDescription) ignoredReasons.add("linha sem descrição válida");
+      else if (!hasValidUnit) ignoredReasons.add("linha sem unidade válida");
+      else if (!partialIsNumeric) ignoredReasons.add("linha sem preço parcial válido");
+      else if (!matchesMath) ignoredReasons.add("parcial incompatível com quantidade × preço unitário");
+      else ignoredReasons.add("linha informativa ou nota");
+      continue;
+    }
 
     if (!currentChapter) {
-      currentChapter = { numero: nextChapterNumber++, titulo: "Geral", artigos: [] };
-      chapters.push(currentChapter);
+      createChapter("Geral");
     }
 
     const matched = findCatalogMatch({ codigo: String(codeCandidate ?? ""), descricao: description }, catalog);
-    const precoUnitario = precoInferido > 0 ? precoInferido : Number(matched?.preco_unitario || 0);
-    if (matched && precoInferido <= 0) matchedArticles += 1;
+    const finalUnitPrice = likelyUnitPrice > 0 ? likelyUnitPrice : Number(matched?.preco_unitario || 0);
+    if (!(finalUnitPrice > 0)) {
+      ignoredRows += 1;
+      ignoredReasons.add("artigo sem preço unitário válido");
+      continue;
+    }
 
-    currentChapter.artigos.push({
-      codigo: normalizeCode(codeCandidate, `${currentChapter.numero}.${articleCounter++}`),
+    currentChapter?.artigos.push({
+      codigo: normalizeCode(codeCandidate, `${currentChapter?.numero}.${articleCounter++}`),
       descricao: description,
       unidade: normalizeUnit(unitCandidate || matched?.unidade || "un"),
-      quantidade: quantidade > 0 ? quantidade : 1,
-      preco_unitario: precoUnitario,
+      quantidade: likelyQty,
+      preco_unitario: finalUnitPrice,
     });
   }
 
   const filteredChapters = chapters.filter((chapter) => chapter.artigos.length > 0);
   if (!filteredChapters.length) return null;
 
+  const importedTotal = calculateBudgetTotal({ capitulos: filteredChapters });
+  const originalTotal = detectFinalBudgetTotal(rows, headers ?? []);
+  const difference = Math.abs(originalTotal - importedTotal);
+
   return {
     titulo_sugerido: String(fileName || "Orçamento Importado").replace(/\.[^.]+$/, "") || "Orçamento Importado",
     capitulos: filteredChapters,
-    _meta: { matchedArticles },
+    _meta: {
+      original_total: originalTotal,
+      imported_total: importedTotal,
+      difference,
+      status: originalTotal > 0 && difference > 0.5 ? "review_required" : "ok",
+      valid_articles: filteredChapters.reduce((sum, chapter) => sum + chapter.artigos.length, 0),
+      chapters_found: chapters.length,
+      ignored_rows: ignoredRows,
+      included_rows: includedRows,
+      subtotal_rows: subtotalRows,
+      ref_rows: refRows,
+      ignored_reasons: Array.from(ignoredReasons),
+    },
   };
 };
 
