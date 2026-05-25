@@ -29,13 +29,12 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  parseCSV,
-  detectDelimiter,
   validateClientData,
   mapRowToClient,
   type ParsedCSV,
   type ValidationResult,
 } from '@/lib/csv-parser';
+import { parseSpreadsheetFile } from '@/lib/spreadsheet-parser';
 import { useClientes } from '@/hooks/useClientes';
 import type { ClienteFormData } from '@/types/clientes';
 import {
@@ -104,45 +103,42 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const content = await file.text();
-    const delimiter = detectDelimiter(content);
-    const parsed = parseCSV(content, { delimiter });
-    
+    const parsed = await parseSpreadsheetFile(file);
+
     setCsvData(parsed);
-    
+
     // Auto-map columns based on header names
     const autoMapping: Record<string, string> = {};
     parsed.headers.forEach(header => {
-      const normalizedHeader = header.toLowerCase().trim();
-      
-      // Try to auto-detect field mappings
-      if (normalizedHeader.includes('nome') || normalizedHeader === 'name') {
-        autoMapping[header] = 'nome';
-      } else if (normalizedHeader.includes('email') || normalizedHeader.includes('e-mail')) {
-        autoMapping[header] = 'email';
-      } else if (normalizedHeader.includes('telemovel') || normalizedHeader.includes('telemóvel') || normalizedHeader.includes('mobile')) {
-        autoMapping[header] = 'telemovel';
-      } else if (normalizedHeader.includes('telefone') || normalizedHeader.includes('phone')) {
-        autoMapping[header] = 'telefone';
-      } else if (normalizedHeader.includes('empresa') || normalizedHeader.includes('company')) {
+      const h = header.toLowerCase().trim();
+
+      if (h.includes('empresa') || h.includes('company') || h.includes('razão') || h.includes('razao')) {
         autoMapping[header] = 'empresa';
-      } else if (normalizedHeader.includes('nif') || normalizedHeader.includes('vat')) {
+      } else if (h === 'nome' || h.includes('nome') || h.includes('responsável') || h.includes('responsavel') || h === 'name') {
+        autoMapping[header] = 'nome';
+      } else if (h.includes('email') || h.includes('e-mail') || h.includes('mail')) {
+        autoMapping[header] = 'email';
+      } else if (h.includes('telemovel') || h.includes('telemóvel') || h.includes('mobile') || h.includes('tlm')) {
+        autoMapping[header] = 'telemovel';
+      } else if (h.includes('telefone') || h.includes('phone') || h.includes('tel') || h.includes('fixo') || h.includes('tlf') || h.includes('contacto')) {
+        autoMapping[header] = 'telefone';
+      } else if (h.includes('nif') || h.includes('contribuinte') || h.includes('vat')) {
         autoMapping[header] = 'nif';
-      } else if (normalizedHeader.includes('morada') || normalizedHeader.includes('endereco') || normalizedHeader.includes('address')) {
+      } else if (h.includes('morada') || h.includes('endereco') || h.includes('endereço') || h.includes('address')) {
         autoMapping[header] = 'endereco';
-      } else if (normalizedHeader.includes('codigo postal') || normalizedHeader.includes('código postal') || normalizedHeader.includes('zip')) {
+      } else if (h.includes('codigo postal') || h.includes('código postal') || h === 'cp' || h.includes('zip')) {
         autoMapping[header] = 'codigo_postal';
-      } else if (normalizedHeader.includes('cidade') || normalizedHeader.includes('city')) {
+      } else if (h.includes('cidade') || h.includes('localidade') || h.includes('city')) {
         autoMapping[header] = 'cidade';
-      } else if (normalizedHeader.includes('pais') || normalizedHeader.includes('país') || normalizedHeader.includes('country')) {
+      } else if (h.includes('pais') || h.includes('país') || h.includes('country')) {
         autoMapping[header] = 'pais';
-      } else if (normalizedHeader.includes('observ') || normalizedHeader.includes('notas') || normalizedHeader.includes('notes')) {
+      } else if (h.includes('observ') || h.includes('notas') || h.includes('notes') || h.includes('especialidade') || h.includes('categoria')) {
         autoMapping[header] = 'observacoes';
       } else {
         autoMapping[header] = 'ignore';
       }
     });
-    
+
     setMapping(autoMapping);
     setStep('mapping');
   };
@@ -151,10 +147,21 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     setMapping(prev => ({ ...prev, [csvColumn]: clientField }));
   };
 
+  const buildEffectiveMapping = useCallback(() => {
+    const effective = { ...mapping };
+    const values = Object.values(effective);
+    if (!values.includes('nome')) {
+      // If no nome, use empresa as nome surrogate so validation passes
+      const empresaCol = Object.keys(effective).find(k => effective[k] === 'empresa');
+      if (empresaCol) effective[empresaCol] = 'nome';
+    }
+    return effective;
+  }, [mapping]);
+
   const handleValidate = () => {
     if (!csvData) return;
-    
-    const result = validateClientData(csvData.rawData, mapping);
+    const effective = buildEffectiveMapping();
+    const result = validateClientData(csvData.rawData, effective);
     setValidation(result);
     setStep('preview');
   };
@@ -171,7 +178,12 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     for (let i = 0; i < csvData.rawData.length; i++) {
       const row = csvData.rawData[i];
       const mappedData = mapRowToClient(row, mapping);
-      
+
+      // Fallback: if no nome but empresa exists, use empresa as nome
+      if (!mappedData.nome && mappedData.empresa) {
+        mappedData.nome = mappedData.empresa;
+      }
+
       // Skip rows without nome
       if (!mappedData.nome) {
         failed++;
@@ -251,13 +263,13 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
                 <Label htmlFor="csv-upload" className="cursor-pointer">
                   <span className="text-lg font-medium">Clique para carregar</span>
                   <p className="text-sm text-muted-foreground mt-1">
-                    ou arraste o ficheiro CSV aqui
+                    ou arraste o ficheiro CSV ou Excel aqui
                   </p>
                 </Label>
                 <Input
                   id="csv-upload"
                   type="file"
-                  accept=".csv,.txt"
+                  accept=".csv,.txt,.xlsx,.xls"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -273,8 +285,9 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  O ficheiro deve estar em formato CSV com cabeçalhos na primeira linha.
-                  Separadores suportados: vírgula (,), ponto e vírgula (;), tab.
+                  Aceita CSV (.csv) e Excel (.xlsx, .xls). O cabeçalho é detetado
+                  automaticamente, mesmo que existam linhas de título por cima
+                  das colunas reais.
                 </AlertDescription>
               </Alert>
             </div>
@@ -331,11 +344,11 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
                 </Table>
               </ScrollArea>
 
-              {!Object.values(mapping).includes('nome') && (
+              {!Object.values(mapping).includes('nome') && !Object.values(mapping).includes('empresa') && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    O campo "Nome" é obrigatório. Por favor mapeie uma coluna para o nome.
+                    Mapeie pelo menos uma coluna para "Nome" ou "Empresa".
                   </AlertDescription>
                 </Alert>
               )}
