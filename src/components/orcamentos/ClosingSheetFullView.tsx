@@ -161,7 +161,10 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
 
   const [details, setDetails] = useState<ClosingSheetDetails>(() => seedFromLegacy(sheet));
+  const [siteDetailOpen, setSiteDetailOpen] = useState(false);
   const update = useUpdateClosingSheetDetails(sheet.source_budget_id || undefined);
+  const approve = useApproveClosingSheet(sheet.source_budget_id || undefined);
+  const qualitySpecs = useQualitySpecsCatalog();
 
   useEffect(() => {
     setDetails(seedFromLegacy(sheet));
