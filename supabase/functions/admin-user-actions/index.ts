@@ -221,7 +221,16 @@ serve(async (req: Request): Promise<Response> => {
 
       // Check if caller is super admin
       const { data: callerIsSuperAdmin } = await userClient.rpc("is_super_admin");
-      
+
+      // Require org admin/owner (or super admin) to invite users
+      const { data: callerIsOrgAdmin, error: orgAdminErr } = await userClient.rpc("is_org_admin");
+      if (!callerIsSuperAdmin && (orgAdminErr || !callerIsOrgAdmin)) {
+        return new Response(JSON.stringify({ error: "Apenas administradores da organização podem convidar utilizadores" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       // Non-super-admin users can only assign limited roles
       const allowedRolesForRegularUsers = ["gestor", "fiscal", "cliente", "financeiro", "sales"];
       const requestedRole = role || "gestor";
