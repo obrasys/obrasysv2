@@ -1495,6 +1495,72 @@ export type Database = {
           },
         ]
       }
+      budget_events: {
+        Row: {
+          budget_version_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          new_value: Json | null
+          obra_id: string | null
+          organization_id: string | null
+          previous_value: Json | null
+          source_budget_id: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_version_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          new_value?: Json | null
+          obra_id?: string | null
+          organization_id?: string | null
+          previous_value?: Json | null
+          source_budget_id?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_version_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          new_value?: Json | null
+          obra_id?: string | null
+          organization_id?: string | null
+          previous_value?: Json | null
+          source_budget_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_events_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_events_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_payment_plans: {
         Row: {
           amount: number
@@ -11934,6 +12000,19 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
+      log_budget_event: {
+        Args: {
+          p_budget_version_id?: string
+          p_description?: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_event_type: string
+          p_new_value?: Json
+          p_previous_value?: Json
+          p_source_budget_id: string
+        }
+        Returns: string
+      }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       propagate_dependency_impact: {
         Args: { p_task_id: string }
