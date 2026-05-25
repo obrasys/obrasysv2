@@ -147,10 +147,21 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     setMapping(prev => ({ ...prev, [csvColumn]: clientField }));
   };
 
+  const buildEffectiveMapping = useCallback(() => {
+    const effective = { ...mapping };
+    const values = Object.values(effective);
+    if (!values.includes('nome')) {
+      // If no nome, use empresa as nome surrogate so validation passes
+      const empresaCol = Object.keys(effective).find(k => effective[k] === 'empresa');
+      if (empresaCol) effective[empresaCol] = 'nome';
+    }
+    return effective;
+  }, [mapping]);
+
   const handleValidate = () => {
     if (!csvData) return;
-    
-    const result = validateClientData(csvData.rawData, mapping);
+    const effective = buildEffectiveMapping();
+    const result = validateClientData(csvData.rawData, effective);
     setValidation(result);
     setStep('preview');
   };
