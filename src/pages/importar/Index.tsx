@@ -20,6 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { ImportOrcamentoModal } from '@/components/importar/ImportOrcamentoModal';
+import { ImportCSVModal } from '@/components/clientes/ImportCSVModal';
+import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
 
 interface ImportCategory {
   id: string;
@@ -32,15 +34,6 @@ interface ImportCategory {
 }
 
 const IMPORT_CATEGORIES: ImportCategory[] = [
-  {
-    id: 'clientes',
-    title: 'Clientes',
-    description: 'Importe a sua lista de clientes com nome, email, telefone, NIF, empresa e morada.',
-    icon: <Users className="w-6 h-6" />,
-    acceptedColumns: ['nome', 'email', 'telefone', 'telemovel', 'empresa', 'nif', 'endereco', 'cidade', 'codigo_postal'],
-    redirectTo: '/clientes',
-    color: 'bg-blue-100 text-blue-600',
-  },
   {
     id: 'artigos',
     title: 'Artigos / Base de Preços',
@@ -59,21 +52,14 @@ const IMPORT_CATEGORIES: ImportCategory[] = [
     redirectTo: '/recursos',
     color: 'bg-orange-100 text-orange-600',
   },
-  {
-    id: 'fornecedores',
-    title: 'Tabela de Preços / Fornecedores',
-    description: 'Importe fornecedores com nome, email, telefone, NIF, endereço e especialidade.',
-    icon: <DollarSign className="w-6 h-6" />,
-    acceptedColumns: ['nome', 'email', 'telefone', 'nif', 'endereco', 'especialidade'],
-    redirectTo: '/financeiro/fornecedores',
-    color: 'bg-purple-100 text-purple-600',
-  },
 ];
 
 export default function ImportarPage() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [orcamentoModalOpen, setOrcamentoModalOpen] = useState(false);
+  const [clientesModalOpen, setClientesModalOpen] = useState(false);
+  const [fornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
 
   const handleFileDrop = (categoryId: string, acceptedFiles: File[]) => {
@@ -150,7 +136,60 @@ export default function ImportarPage() {
           </CardContent>
         </Card>
 
-        {/* Import Categories */}
+        {/* Clientes & Fornecedores - Dedicated import flows */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="border-blue-200 bg-blue-50/30 dark:bg-blue-950/10 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setClientesModalOpen(true)}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Clientes</CardTitle>
+                  <CardDescription className="mt-1">
+                    Importe a sua lista de clientes a partir de Excel ou CSV com mapeamento de colunas.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Upload className="w-4 h-4" />
+                <span>Clique para abrir o assistente de importação de clientes</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="border-purple-200 bg-purple-50/30 dark:bg-purple-950/10 cursor-pointer hover:shadow-md transition-all"
+            onClick={() => setFornecedoresModalOpen(true)}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600">
+                  <DollarSign className="w-6 h-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Fornecedores</CardTitle>
+                  <CardDescription className="mt-1">
+                    Importe a sua rede de fornecedores a partir de Excel ou CSV com mapeamento de colunas.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Upload className="w-4 h-4" />
+                <span>Clique para abrir o assistente de importação de fornecedores</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Other categories (redirect to module) */}
         <div className="grid gap-4 md:grid-cols-2">
           {IMPORT_CATEGORIES.map((category) => (
             <ImportCategoryCard
@@ -167,6 +206,8 @@ export default function ImportarPage() {
         </div>
 
         <ImportOrcamentoModal open={orcamentoModalOpen} onOpenChange={setOrcamentoModalOpen} />
+        <ImportCSVModal open={clientesModalOpen} onOpenChange={setClientesModalOpen} />
+        <ImportFornecedoresModal open={fornecedoresModalOpen} onOpenChange={setFornecedoresModalOpen} />
       </div>
     </AppLayout>
   );
