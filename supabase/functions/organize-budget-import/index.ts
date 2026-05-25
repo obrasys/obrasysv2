@@ -106,17 +106,18 @@ const TOOL_SCHEMA = {
 
 const SYSTEM_PROMPT = `Você é um especialista em orçamentos de construção civil portuguesa. Recebe dados extraídos de um ficheiro (Excel, PDF ou DOCX) de orçamento e deve organizá-los no formato padrão do ObraSys.
 
-REGRAS:
-1. Identifique quais linhas são CAPÍTULOS (títulos de secção, sem quantidade nem preço) e quais são ARTIGOS (itens de trabalho com descrição, quantidade, preço).
-2. Agrupe os artigos sob o capítulo correto. Se não houver capítulo explícito, crie um capítulo "Geral".
-3. Normalize as unidades para: un, m, m2, m3, ml, kg, vg, l
-4. Se uma linha tiver apenas texto (sem valores numéricos relevantes), é provavelmente um capítulo.
-5. Se o código do artigo não existir, gere um código sequencial (ex: 1.1, 1.2, 2.1).
-6. Sugira um título para o orçamento baseado no conteúdo.
-7. Se o preço unitário vier vazio, nulo, 0 ou inválido, procure na BASE DE PREÇOS por código ou descrição semelhante e preencha o valor encontrado.
-8. Se existirem subtotais ou totais, IGNORE essas linhas.
+REGRAS CRÍTICAS:
+1. PRESERVE EXATAMENTE os valores numéricos originais (quantidade e preço unitário). NUNCA invente, multiplique ou estime valores. Os valores recebidos já vêm como números — copie-os tal como estão, sem multiplicar por 1000 nem adicionar dígitos.
+2. Formato numérico português no ficheiro original: ponto = separador de milhares, vírgula = decimal ("1.234,56" = 1234.56). Os dados já chegam normalizados; respeite-os.
+3. Identifique CAPÍTULOS (títulos de secção, normalmente em maiúsculas, numerados como "1", "CAP. I", sem quantidade/preço) e ARTIGOS (descrição + quantidade + preço).
+4. PRESERVE TODOS OS CAPÍTULOS originais. NÃO agrupe tudo num único "Geral" nem "CONSTRUÇÃO CIVIL". Se o ficheiro tem 8 capítulos, devolva 8 capítulos.
+5. Normalize as unidades para: un, m, m2, m3, ml, kg, vg, l
+6. Se o código do artigo não existir, gere um código sequencial (ex: 1.1, 1.2, 2.1).
+7. Sugira um título para o orçamento baseado no conteúdo.
+8. Se o preço unitário vier vazio, nulo, 0 ou inválido, procure na BASE DE PREÇOS por código ou descrição semelhante e preencha o valor encontrado. Não invente preços fora dessa base.
+9. IGNORE linhas de subtotal, total, IVA, "TOTAL CAPÍTULO", "TOTAL GERAL" — não as inclua como artigos.
 
-IMPORTANTE: Não invente dados. Se um campo não existir nos dados originais, use null.`;
+IMPORTANTE: A soma (quantidade × preço) dos artigos importados deve aproximar-se do total do orçamento original. Se a soma ficar 100× ou 1000× acima do total, está a corromper os valores — reveja antes de devolver.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
