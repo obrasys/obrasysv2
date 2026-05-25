@@ -1,174 +1,118 @@
+# Módulo Orçamento, Reorçamento, Budget Objetivo e Fecho Económico
 
-# Plano: Orçamento Base Seco, Reorçamento e Folhas de Fecho
+## Estado atual vs. especificação
 
-Reorganização do módulo Orçamento para separar a **estimativa congelada** (Base Seco) da **camada operacional ativa** (Budget Objetivo / Reorçamento / Ficha de Produção), com fechos económicos inicial e final.
+Já implementado (Fase 1 parcial):
+- Tabelas `budget_versions`, `budget_version_items`, `closing_sheets`
+- Colunas `is_locked`/`locked_at`/`locked_reason` em `orcamentos`
+- RPCs `approve_base_dry_budget` e `create_new_target_version`
+- Triggers `prevent_locked_budget_edit` / `prevent_locked_closing_sheet_edit`
+- UI: tabs em `Ver.tsx` + `BaseDryBudgetPanel`, `TargetBudgetPanel`, `ClosingSheetsPanel`
+- Hooks `useBudgetVersions`, `useClosingSheets`, `useOperationalLayerLabel`
 
-## Visão de fluxo
+Tabelas existentes que vamos reaproveitar (não criar novas redundantes):
+- Adjudicações: `budget_awards`
+- Cotações: `quote_requests`, `quote_request_items`, `quote_request_suppliers`, `quote_responses`, `quote_response_items`
+- Fornecedores: `fornecedores`
+
+A spec pede `contracting_packages`, `supplier_quotes`, `awards`, `purchases`, `budget_events`. Vamos **mapear** para o que já existe em vez de duplicar — só criamos o que faltar mesmo.
+
+---
+
+## Lacunas a fechar
+
+### A. Modelo de dados
+1. Adicionar a `budget_versions`: `chapters_snapshot jsonb` (para preservar capítulos copiados) — opcional, decidir conforme estratégia de cópia.
+2. Criar `contracting_packages` (não existe equivalente genérico fora de installations).
+3. Adicionar a `budget_awards`: FK `budget_version_id`, `package_id`, gatilhos para escrever em `budget_version_items.awarded_amount`.
+4. Criar `obra_purchases` (compras directas / contratos de fornecimento) com FK `budget_version_id`.
+5. Criar `budget_events` (auditoria económica única do módulo).
+6. RLS multi-tenant em todas as novas tabelas via `get_org_member_ids()` (padrão já em uso).
+
+### B. Lógica server-side (RPCs/Triggers)
+1. `approve_base_dry_budget`: rever para também copiar **todos os artigos** do orçamento base para `budget_version_items` da v1 Target (hoje não faz a cópia explícita — confirmar e completar).
+2. `create_new_target_version`: já existe; adicionar parâmetro `reason` obrigatório quando houver versões > 1.
+3. Trigger `recalc_budget_version_totals` em `budget_version_items` (recalcula totais agregados da versão).
+4. RPC `confirm_award(p_award_id)`: valida Target ativo, escreve `awarded_amount` nos items, marca `contracting_status='awarded'`, recalcula.
+5. RPC `register_purchase(...)`: idem para `purchased_amount` e `remaining_amount`.
+6. RPC `generate_final_closing_sheet(p_orcamento_id)`: cria `closing_sheets` tipo `final` a partir da versão Target ativa + adjudicações + compras + custos reais.
+7. Função `log_budget_event(...)` chamada por todos os RPCs acima.
+
+### C. UI / UX
+1. **Aba Base Seco** (existe `BaseDryBudgetPanel`) — completar:
+   - Aviso visual quando bloqueado + ações: "Ver Folha de Fecho Inicial", "Comparar com Budget Objetivo", "Ver histórico".
+   - Quando não aprovado: "Editar", "Enviar para revisão", "Aprovar e gerar Folha de Fecho Inicial".
+2. **Aba Budget Objetivo** (existe `TargetBudgetPanel`) — completar:
+   - Tabela com colunas: Qtd base, Qtd atual, Valor base, Valor objetivo, Adjudicado, Comprado, Por adjudicar, Desvio base, Desvio versão anterior, Estado contratual, Fornecedor, Pacote.
+   - Botões: Criar nova versão (com modal de motivo), Criar pacote, Atualizar com adjudicações, Ver desvios, Gerar Folha de Fecho Final.
+   - Edição inline de `target_unit_price` e `target_quantity` (apenas versão `active`).
+3. **Nova aba Pacotes de Contratação**:
+   - Selecionar items do Target ativo → criar pacote.
+   - Listar pacotes com KPIs base/objetivo/consultado/adjudicado.
+4. **Nova aba Comparativos** (reaproveitar quote_responses):
+   - Quadro comparativo de propostas por pacote.
+5. **Nova aba Adjudicações & Compras**:
+   - Lista de `budget_awards` filtradas pelo orçamento.
+   - Form de registo de compra → RPC `register_purchase`.
+6. **Aba Fecho Económico** (existe `ClosingSheetsPanel`) — separar visualmente Inicial (bloqueado) vs Final (vivo); botão "Gerar Folha de Fecho Final".
+7. **Aba Histórico**: linha temporal a partir de `budget_events`.
+8. **Aba Axia**: card com insights consumindo edge function `axia-budget-insights` (a criar).
+
+### D. Integração de fluxos existentes
+- `useAdjudicacao` e fluxo de adjudicação atual escrevem em `artigos_orcamento`. Refactor para invocar `confirm_award` que escreve em `budget_version_items` da versão ativa, deixando `artigos_orcamento` imutável.
+- `quote_requests` passa a referenciar `budget_version_id` (não `orcamento_id` diretamente) — manter compat. via coluna opcional.
+
+### E. Axia
+Edge function `axia-budget-insights`:
+- Lê versão Target ativa + base + adjudicações + compras + eventos.
+- Devolve 3 níveis de mensagens (contexto, análise, sugestões) com guardrails: nunca propor edição directa do Base bloqueado.
+
+### F. Segurança / RLS
+- Reforçar policies usando `get_user_org_id()` e `get_org_member_ids()` (padrão actual).
+- Garantir que triggers `prevent_locked_*` cobrem **todas** as tabelas novas (packages/awards/purchases não devem alterar versão `superseded`/`locked`).
+
+---
+
+## Faseamento de entrega
 
 ```text
-Base Seco (rascunho → em revisão → aprovado)
-        │
-        ├─► Folha de Fecho Inicial   (snapshot bloqueado)
-        │
-        └─► Budget Objetivo v1 (ativo, editável)
-                 │
-                 ├── Pacotes de Contratação
-                 ├── Comparativos
-                 ├── Adjudicações / Compras  ──► atualiza v ativa
-                 │
-                 └─► v2 → v3 → … (versão final)
-                              │
-                              └─► Folha de Fecho Final
+Fase 1 — Fundação (parcialmente feita)
+  └─ Completar cópia de items na approve_base_dry_budget
+  └─ Criar budget_events + função log_budget_event
+  └─ Trigger recalc_budget_version_totals
+
+Fase 2 — UI Base/Objetivo/Fecho (em curso)
+  └─ Completar 3 panels existentes (colunas, edição inline, ações)
+  └─ Modal "Nova versão" com motivo
+  └─ Histórico (timeline budget_events)
+
+Fase 3 — Pacotes e Adjudicações
+  └─ Tabela contracting_packages + RLS
+  └─ FK em budget_awards (budget_version_id, package_id)
+  └─ RPC confirm_award + refactor do fluxo actual
+  └─ Aba Pacotes + Aba Comparativos + Aba Adjudicações
+
+Fase 4 — Compras e Fecho Final
+  └─ Tabela obra_purchases + RPC register_purchase
+  └─ RPC generate_final_closing_sheet
+  └─ Dashboard económico (KPIs base/objetivo/adjud/comp/desvios)
+
+Fase 5 — Axia operacional
+  └─ Edge function axia-budget-insights
+  └─ Aba Axia + alertas contextuais
 ```
 
-Regra de ouro: **adjudicações, compras e pacotes nunca alteram o Base Seco aprovado**. Atualizam sempre a versão ativa do Budget Objetivo.
-
 ---
 
-## 1. Estrutura de dados (novas tabelas)
+## Decisões pendentes (a confirmar antes de Fase 3)
 
-### `budget_versions`
-Representa cada versão de orçamento (base seco, objetivo v1/v2…, fechos).
-- `id`, `user_id`, `organization_id`, `obra_id`, `source_budget_id` (FK `orcamentos.id` original)
-- `version_type`: `base_dry` | `target` (v1..N) | `initial_closing` | `final_closing`
-- `version_number`, `version_name`, `parent_version_id`, `reason`
-- `status`: `draft` | `under_review` | `approved` | `locked` | `active` | `superseded` | `closed` | `archived`
-- Totais agregados: `total_base`, `total_target`, `total_awarded`, `total_purchased`, `total_remaining`, `variance_from_base`, `variance_from_previous`
-- `approved_by`, `approved_at`, `locked_at`, `created_by`, timestamps
+1. **Adjudicações existentes**: já decidido — caso a caso. Implementaremos botão "Migrar para Budget Objetivo" em cada adjudicação activa pré-existente, sem migração em massa.
+2. **Nomenclatura UI**: já decidido — dinâmica por perfil (`useOperationalLayerLabel` cobre isto).
+3. **`obra_purchases`**: confirmar se queres uma tabela nova só para este módulo ou reaproveitar `cotacoes_internas_adjudicadas` (referida na memory `internal-quotes`). Recomendação: nova tabela `obra_purchases` ligada a `budget_version_id` para manter o módulo coerente.
+4. **Edição da versão Target**: permitir alterar `target_quantity` (não só preço)? Recomendação: sim, mas com event log obrigatório.
 
-Constraint: para cada `obra_id`, apenas **uma** linha com `version_type='target' AND status='active'`.
+## Próximo passo proposto
 
-### `budget_version_items`
-Snapshot de linhas por versão (não mexe nas `artigos_orcamento` originais).
-- `id`, `budget_version_id`, `source_artigo_id`, `chapter_code/name`, `description`, `unit`
-- `base_quantity`, `base_unit_price`, `base_total`
-- `target_quantity`, `target_unit_price`, `target_total`
-- `awarded_amount`, `purchased_amount`, `remaining_amount`
-- `variance_from_base`, `variance_from_previous`
-- `contracting_status`: `open` | `in_quote` | `awarded` | `purchased` | `closed`
-- `package_id`, `supplier_id`, `notes`
+Avançar com **Fase 1 — completar fundação**: migration que (a) garante cópia de items na aprovação, (b) cria `budget_events` + `log_budget_event`, (c) adiciona trigger de recálculo de totais. Depois Fase 2 UI.
 
-### `closing_sheets`
-Folhas de Fecho Inicial e Final.
-- `id`, `obra_id`, `budget_version_id`, `closing_type`: `initial` | `final`
-- `status`: `draft` | `approved` | `locked`
-- Económicos: `total_direct_cost`, `total_indirect_cost`, `site_costs`, `structure_costs`, `contingency_amount`, `margin_amount`, `margin_percent`, `sale_price`, `expected_result`, `final_result`
-- `approved_by`, `approved_at`, `locked_at`, `notes`
-
-Triggers: `set_updated_at`, bloqueio de UPDATE quando `status='locked'` (exceto super admin).
-
-### Ajustes em `orcamentos`
-- Novos estados: `aprovado_fechado` (substitui terminal de `aprovado` no fluxo seco) e `bloqueado`.
-- Coluna `is_locked boolean default false`, `locked_at`, `locked_reason`.
-- Trigger `prevent_locked_budget_edit`: rejeita UPDATE/INSERT/DELETE em `orcamentos`, `capitulos_orcamento`, `artigos_orcamento` se a versão estiver `is_locked=true` (exceto admin com flag explícita de revisão controlada).
-
-### RLS
-- Todas as tabelas novas com RLS usando `get_org_member_ids()` (padrão multi-tenant já existente).
-- Política UPDATE em `closing_sheets` bloqueia se `status='locked'`.
-
----
-
-## 2. Lógica de transição (DB functions)
-
-- **`approve_base_dry_budget(p_orcamento_id)`** (SECURITY DEFINER):
-  1. Valida ownership + estado ≠ `aprovado_fechado`.
-  2. Cria `budget_versions` com `version_type='base_dry'`, `status='locked'`.
-  3. Copia capítulos/artigos para `budget_version_items` (snapshot base).
-  4. Gera `closing_sheets` (`closing_type='initial'`, `status='locked'`).
-  5. Marca `orcamentos.is_locked=true`, `status='aprovado_fechado'`.
-  6. Retorna `{ base_version_id, initial_closing_id }`.
-
-- **`create_target_budget(p_base_version_id, p_reason)`**:
-  - Copia items da versão base → nova versão `target` v1 com `status='active'`.
-  - Marca qualquer `target` anterior como `superseded`.
-
-- **`create_new_target_version(p_obra_id, p_reason)`**:
-  - Copia da `active` corrente, incrementa `version_number`, mantém anterior como `superseded` após aprovação da nova.
-
-- **`apply_award_to_target(p_award_id)`** (chamado pelo trigger de `budget_awards`):
-  - Atualiza `awarded_amount`, `contracting_status='awarded'`, recalcula `variance_*` na versão ativa.
-  - Nunca toca em `version_type='base_dry'`.
-
-- **`generate_final_closing_sheet(p_obra_id)`**:
-  - Consolida active target + compras + custos reais → `closing_sheets` `closing_type='final'`.
-
----
-
-## 3. UI / UX
-
-### Página de detalhe do Orçamento
-Tabs no topo: **Base** | **Budget Objetivo** | **Pacotes** | **Comparativos** | **Adjudicações/Compras** | **Fecho Económico**.
-
-**Tab Base**
-- Quando `is_locked=true`: badge `Fechado Inicial / Bloqueado`, banner amarelo com a mensagem padrão ("As adjudicações, compras e alterações devem ser feitas no Budget Objetivo."), tabela read-only com colunas reduzidas (Código, Descrição, Un, Qt, PU seco, Total, Capítulo, Estado).
-- Botões: `Ver Folha de Fecho Inicial`, `Criar / Ver Budget Objetivo`, `Histórico de versões`.
-- Quando não bloqueado: botões `Editar`, `Enviar para revisão`, `Aprovar e gerar Folha de Fecho Inicial` (com dialog de confirmação que explica o bloqueio).
-
-**Tab Budget Objetivo / Reorçamento / Ficha de Produção** (nome dinâmico — ver §5)
-- Selector de versão (v1, v2, …) + badge `Versão ativa`.
-- Tabela ampliada com colunas: Código, Descrição, Un, Qt base, Valor base seco, Valor objetivo, Adjudicado, Comprado, Por adjudicar, Δ base, Δ versão anterior, Estado contratual, Fornecedor, Pacote, Obs.
-- Botões: `Nova versão`, `Criar pacote`, `Atualizar com adjudicações`, `Ver desvios`, `Gerar Folha de Fecho Final`.
-
-**Tab Fecho Económico** — duas sub-vistas: `Folha de Fecho Inicial` (read-only) e `Folha de Fecho Final` (live).
-
-### Cards na lista de orçamentos
-- Badge `Bloqueado` quando `is_locked`. Substituir botão "Editar" por "Abrir Budget Objetivo" nesses casos.
-
-### Migração caso-a-caso
-- Em cada orçamento aprovado antigo (sem `budget_versions`), botão `Migrar para novo fluxo`: chama `approve_base_dry_budget` + `create_target_budget` e, se existir `budget_awards`, popula `awarded_amount` na v1.
-
----
-
-## 4. Integração com Adjudicações / Compras
-
-- Trigger AFTER INSERT/UPDATE em `budget_awards` → `apply_award_to_target` (versão ativa do `obra_id`).
-- Hook `useAdjudicacao` e fluxos de compras passam a ler/escrever em `budget_version_items` (já não tocam em `artigos_orcamento`).
-- Pacotes de contratação passam a referenciar `budget_version_item_id` em vez de `artigo_orcamento_id`.
-
----
-
-## 5. Nomenclatura dinâmica por perfil
-
-- Nova preferência em `user_settings` (ou `profiles.preferences`): `operational_layer_label` ∈ `auto` | `budget_objetivo` | `reorcamento` | `ficha_producao`.
-- Helper `useOperationalLayerLabel()` que devolve o termo. Default `auto`:
-  - `gestor`/`promotor` → "Budget Objetivo"
-  - `empreiteiro`/`fiscal` → "Ficha de Produção"
-  - fallback → "Reorçamento"
-- Setting alterável em **Definições → Preferências → Linguagem operacional**.
-- Aplicado em: tabs, breadcrumbs, badges, mensagens da Axia, PDF do reorçamento.
-
----
-
-## 6. Ajustes na Axia
-
-Em `supabase/functions/axia-*` adicionar guardrails de contexto:
-- Detectar `is_locked` antes de sugerir alterações. Substituir por mensagens-modelo do prompt ("Base Seco está bloqueado…").
-- Adicionar contexto da versão ativa em `axia-chat` e `axia-analysis` (totais base vs objetivo vs adjudicado, desvios).
-- Sugestões pró-ativas: poupança/excesso por capítulo, alerta quando v ativa > Fecho Inicial em ≥ X%.
-
----
-
-## 7. Critérios de aceite
-
-1. Aprovar Base Seco bloqueia edição (DB + UI) e gera `closing_sheets initial` + `budget_versions target v1 active`.
-2. Tentativa de update direto em orçamento bloqueado é rejeitada pelo trigger.
-3. Nova adjudicação atualiza apenas a versão `target` ativa; Base Seco e Fecho Inicial intactos.
-4. Só uma versão `target` por `obra_id` pode estar `active`.
-5. `create_new_target_version` preserva histórico (`superseded`).
-6. UI mostra tabs distintas e usa o termo correto por perfil.
-7. Migração caso-a-caso funciona sem perda de dados em orçamentos pré-existentes.
-8. Axia não propõe edição direta no Base bloqueado; usa as frases-modelo.
-9. Folha de Fecho Final consolida `target` final + adjudicações + compras.
-
----
-
-## 8. Detalhes técnicos resumidos
-
-- **DB**: 3 tabelas novas + 3 colunas em `orcamentos` + 5 funções RPC + 2 triggers + RLS multi-tenant.
-- **Front**: novas rotas/tabs em `src/pages/orcamentos/Ver.tsx` e `Editar.tsx`; hooks `useBudgetVersions`, `useClosingSheets`, `useOperationalLayerLabel`; refactor de `useAdjudicacao` para escrever em `budget_version_items`.
-- **Edge functions**: ajustar `axia-chat`, `axia-analysis`, `axia-suggestions` para o novo contexto e guardrails.
-- **Migração**: botão manual por orçamento (sem job automático).
-
----
-
-Este plano é grande — implementação real seria faseada (DB+bloqueio → criação Budget Objetivo → versões → pacotes/adjudicações → Folha de Fecho Final → Axia). Confirma antes de mudar para modo build.
+Confirmas este faseamento e queres que arranque pela Fase 1 (migration de fundação)?
