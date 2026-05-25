@@ -44,6 +44,42 @@ interface Props {
 type Step = 'upload' | 'processing' | 'preview' | 'confirm';
 type FileType = 'excel' | 'pdf' | 'docx';
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  if (!error || typeof error !== 'object') return null;
+
+  const maybeError = error as {
+    message?: string;
+    context?: {
+      json?: () => Promise<unknown>;
+      text?: () => Promise<string>;
+    };
+  };
+
+  if (maybeError.context?.json) {
+    try {
+      const payload = await maybeError.context.json();
+      if (payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'string') {
+        return payload.error;
+      }
+    } catch {
+      // ignore and try other fallbacks
+    }
+  }
+
+  if (maybeError.context?.text) {
+    try {
+      const text = await maybeError.context.text();
+      if (!text) return maybeError.message ?? null;
+      const payload = JSON.parse(text) as { error?: string };
+      return payload.error || maybeError.message || text;
+    } catch {
+      // ignore and fall through to default message
+    }
+  }
+
+  return maybeError.message ?? null;
+};
+
 const getFileType = (file: File): FileType => {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   if (['pdf'].includes(ext)) return 'pdf';
@@ -100,7 +136,8 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
     if (error) {
       console.error('Edge function error:', error);
-      toast.error('Erro ao processar o ficheiro com IA.');
+      const message = await getFunctionErrorMessage(error);
+      toast.error(message || 'Erro ao processar o ficheiro com IA.');
       setStep('upload');
       return;
     }
@@ -149,7 +186,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           setStep('upload');
           return;
         }
-        await processWithAI({ rows: parsed.rows, headers: parsed.headers });
+        await processWithAI({ rows: parsed.rows, headers: parsed.headers, fileName: f.name });
       }
     } catch (err) {
       console.error(err);
