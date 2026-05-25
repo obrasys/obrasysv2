@@ -19,9 +19,12 @@ import {
   useBudgetVersions,
   useBudgetVersionItems,
   useCreateNewTargetVersion,
+  useUpdateBudgetVersionItem,
   type BudgetVersion,
+  type BudgetVersionItem,
 } from "@/hooks/useBudgetVersions";
 import { useOperationalLayerLabel } from "@/hooks/useOperationalLayerLabel";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   orcamentoId: string;
