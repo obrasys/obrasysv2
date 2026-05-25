@@ -339,6 +339,12 @@ export default function VerOrcamentoPage() {
             />
           </TabsContent>
 
+          <TabsContent value="axia">
+            <BudgetInsightsPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
+
+
 
           <TabsContent value="historico">
             <BudgetHistoryPanel orcamentoId={orcamento.id} />
