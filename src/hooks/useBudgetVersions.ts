@@ -165,3 +165,52 @@ export function useCreateNewTargetVersion() {
     },
   });
 }
+
+/** Atualiza um item da versão ativa (preço/quantidade alvo). */
+export function useUpdateBudgetVersionItem() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (params: {
+      itemId: string;
+      versionId: string;
+      orcamentoId: string;
+      patch: Partial<Pick<BudgetVersionItem, "target_quantity" | "target_unit_price" | "notes">>;
+    }) => {
+      const patch: any = { ...params.patch };
+      if (patch.target_quantity != null || patch.target_unit_price != null) {
+        // Buscar valores actuais para calcular target_total e remaining
+        const { data: cur, error: e1 } = await supabase
+          .from("budget_version_items")
+          .select("target_quantity, target_unit_price, base_total, awarded_amount, purchased_amount")
+          .eq("id", params.itemId)
+          .single();
+        if (e1) throw e1;
+        const q = patch.target_quantity ?? cur!.target_quantity;
+        const p = patch.target_unit_price ?? cur!.target_unit_price;
+        const target_total = Number((q * p).toFixed(2));
+        patch.target_total = target_total;
+        patch.remaining_amount = Number(
+          (target_total - (cur!.awarded_amount ?? 0) - (cur!.purchased_amount ?? 0)).toFixed(2),
+        );
+        patch.variance_from_base = Number((target_total - (cur!.base_total ?? 0)).toFixed(2));
+      }
+      const { error } = await supabase
+        .from("budget_version_items")
+        .update(patch)
+        .eq("id", params.itemId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, p) => {
+      qc.invalidateQueries({ queryKey: ["budget-version-items", p.versionId] });
+      qc.invalidateQueries({ queryKey: ["budget-versions", p.orcamentoId] });
+    },
+    onError: (e: any) => {
+      toast({
+        title: "Erro a atualizar item",
+        description: e.message ?? "Não foi possível atualizar.",
+        variant: "destructive",
+      });
+    },
+  });
+}
