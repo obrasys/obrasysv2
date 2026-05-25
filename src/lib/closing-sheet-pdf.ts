@@ -445,7 +445,162 @@ export async function exportClosingSheetPDF(params: {
     styles: { fontSize: FS.body, textColor: INK, cellPadding: 2 },
     columnStyles: { 1: { halign: "right", fontStyle: "bold", cellWidth: 55 } },
   });
-  y = (doc as any).lastAutoTable.finalY + 4;
+  y = (doc as any).lastAutoTable.finalY + 5;
+
+  // =========================================================
+  // 5) ÁREAS ESTATÍSTICAS
+  // =========================================================
+  h1("5. Áreas Estatísticas");
+  const st = details.statistics;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M },
+    head: [["Área", "Valor (m²)", "Factor", "Área equivalente"]],
+    body: [
+      ["Construção (ABP)", String(st.area_construcao || 0), "1,00", (st.area_construcao || 0).toFixed(2)],
+      ["Caves", String(st.area_caves || 0), st.factor_caves.toFixed(2).replace(".", ","),
+        ((st.area_caves || 0) * (st.factor_caves || 0)).toFixed(2)],
+      ["Arranjos Exteriores", String(st.area_arranjos_ext || 0), st.factor_arranjos.toFixed(2).replace(".", ","),
+        ((st.area_arranjos_ext || 0) * (st.factor_arranjos || 0)).toFixed(2)],
+    ],
+    theme: "striped",
+    headStyles: { fillColor: TEAL, fontSize: FS.body, fontStyle: "bold" },
+    styles: { fontSize: FS.body, textColor: INK },
+    columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
+  });
+  y = (doc as any).lastAutoTable.finalY + 5;
+
+  // =========================================================
+  // 6) CONDICIONANTES
+  // =========================================================
+  const c = details.conditions;
+  const condRows: [string, string][] = [
+    ["Estudo geotécnico", c.estudo_geotecnico ? "Sim" : "Não"],
+    ["Zona urbana", c.zona_urbana ? "Sim" : "Não"],
+    ["Acessos", c.acessos ? "Sim" : "Não"],
+    ["Energia eléctrica", c.energia_electrica ? "Sim" : "Não"],
+    ["Canalização de água", c.canalizacao_agua ? "Sim" : "Não"],
+    ["Fundações indirectas", c.fundacoes_indirectas ? "Sim" : "Não"],
+    ["Rebaixamento freático", c.rebaixamento_freatico ? "Sim" : "Não"],
+    ["Condições de estaleiro", c.condicoes_estaleiro ? "Sim" : "Não"],
+    ["Ocupação via pública", c.ocupacao_via_publica ? "Sim" : "Não"],
+  ];
+  h1("6. Condicionantes");
+  const condPaired: string[][] = [];
+  for (let i = 0; i < condRows.length; i += 3) {
+    condPaired.push([
+      condRows[i][0], condRows[i][1],
+      condRows[i + 1]?.[0] || "", condRows[i + 1]?.[1] || "",
+      condRows[i + 2]?.[0] || "", condRows[i + 2]?.[1] || "",
+    ]);
+  }
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M },
+    body: condPaired,
+    theme: "plain",
+    styles: { fontSize: FS.body, textColor: INK, cellPadding: 1.4 },
+    columnStyles: {
+      0: { fontStyle: "bold", textColor: MUTED }, 1: {},
+      2: { fontStyle: "bold", textColor: MUTED }, 3: {},
+      4: { fontStyle: "bold", textColor: MUTED }, 5: {},
+    },
+  });
+  y = (doc as any).lastAutoTable.finalY + 3;
+  if (c.observacoes) {
+    h2("Observações");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(FS.body);
+    doc.setTextColor(...INK);
+    const wrapped = doc.splitTextToSize(c.observacoes, pageW - M * 2);
+    ensureSpace(wrapped.length * 4 + 2);
+    doc.text(wrapped, M, y);
+    y += wrapped.length * 4 + 3;
+  }
+
+  // =========================================================
+  // 7) ESPECIFICAÇÕES TÉCNICAS / QUALIDADES
+  // =========================================================
+  const qsEntries = Object.entries(details.quality_specs_values || {}).filter(([, v]) => v && v.trim());
+  if (qsEntries.length > 0) {
+    h1("7. Especificações Técnicas / Qualidades");
+    autoTable(doc, {
+      startY: y,
+      margin: { left: M, right: M },
+      head: [["Rúbrica", "Especificação"]],
+      body: qsEntries.map(([k, v]) => [k, v]),
+      theme: "striped",
+      headStyles: { fillColor: TEAL, fontSize: FS.body, fontStyle: "bold" },
+      styles: { fontSize: FS.body, textColor: INK },
+      columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
+    });
+    y = (doc as any).lastAutoTable.finalY + 5;
+  }
+
+  // =========================================================
+  // 8) VALIDAÇÃO TÉCNICO-ECONÓMICA
+  // =========================================================
+  const v = details.validation;
+  if (v.direccao_geral || v.validador_tecnico_economico || v.percentagem_lucro_alvo || v.valor_medio_fraccao || v.observacoes) {
+    h1("8. Validação Técnico-Económica");
+    autoTable(doc, {
+      startY: y,
+      margin: { left: M, right: M },
+      body: [
+        ["Direcção Geral", v.direccao_geral || "—"],
+        ["Validador Técnico-Económico", v.validador_tecnico_economico || "—"],
+        ["% Lucro Alvo", fmtPct(v.percentagem_lucro_alvo)],
+        ["Valor Médio Fracção", fmtEur(v.valor_medio_fraccao || 0)],
+      ],
+      theme: "plain",
+      styles: { fontSize: FS.body, textColor: INK, cellPadding: 1.6 },
+      columnStyles: { 0: { fontStyle: "bold", textColor: MUTED, cellWidth: 55 }, 1: {} },
+    });
+    y = (doc as any).lastAutoTable.finalY + 2;
+    if (v.observacoes) {
+      const wrapped = doc.splitTextToSize(`Obs.: ${v.observacoes}`, pageW - M * 2);
+      ensureSpace(wrapped.length * 4 + 2);
+      doc.setFont("helvetica", "italic"); doc.setFontSize(FS.body); doc.setTextColor(...MUTED);
+      doc.text(wrapped, M, y);
+      y += wrapped.length * 4 + 4;
+    }
+  }
+
+  // =========================================================
+  // 9) APROVAÇÕES
+  // =========================================================
+  h1("9. Aprovação da Administração");
+  const a = details.approvals;
+  ensureSpace(40);
+  const colW = (pageW - M * 2 - 6) / 2;
+  // duas caixas lado a lado
+  doc.setDrawColor(...TEAL); doc.setLineWidth(0.3);
+  doc.roundedRect(M, y, colW, 32, 1.5, 1.5);
+  doc.roundedRect(M + colW + 6, y, colW, 32, 1.5, 1.5);
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(FS.h2); doc.setTextColor(...TEAL);
+  doc.text("Aprovação Inicial", M + 3, y + 5);
+  doc.text("Administração", M + colW + 9, y + 5);
+
+  doc.setFont("helvetica", "normal"); doc.setFontSize(FS.body); doc.setTextColor(...INK);
+  doc.text(`Nome: ${a.aprovacao_inicial_nome || "_______________________"}`, M + 3, y + 13);
+  doc.text(`Data: ${a.aprovacao_inicial_data || "____ / ____ / ______"}`, M + 3, y + 20);
+  doc.text("Assinatura:", M + 3, y + 27);
+
+  doc.text(`Nome: ${a.administracao_nome || "_______________________"}`, M + colW + 9, y + 13);
+  doc.text(`Data: ${a.administracao_data || "____ / ____ / ______"}`, M + colW + 9, y + 20);
+  doc.text("Assinatura:", M + colW + 9, y + 27);
+  y += 36;
+
+  if (a.notas) {
+    h2("Notas");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(FS.body); doc.setTextColor(...INK);
+    const wrapped = doc.splitTextToSize(a.notas, pageW - M * 2);
+    ensureSpace(wrapped.length * 4 + 2);
+    doc.text(wrapped, M, y);
+    y += wrapped.length * 4 + 3;
+  }
+
 
   // Rodapés
   const pageCount = doc.getNumberOfPages();
