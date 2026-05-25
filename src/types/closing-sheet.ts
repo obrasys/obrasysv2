@@ -111,8 +111,28 @@ export interface ClosingConditions {
   observacoes: string;
 }
 
+export interface ClosingValidation {
+  direccao_geral: string;
+  validador_tecnico_economico: string;
+  percentagem_lucro_alvo: number; // ex 0.20
+  valor_medio_fraccao: number;
+  observacoes: string;
+}
+
+export interface ClosingApprovals {
+  administracao_nome: string;
+  administracao_data: string | null;
+  aprovacao_inicial_nome: string;
+  aprovacao_inicial_data: string | null;
+  assinatura_url: string;
+  notas: string;
+}
+
 export interface ClosingSheetDetails {
   header: ClosingHeader;
+  validation: ClosingValidation;
+  approvals: ClosingApprovals;
+  quality_specs_values: Record<string, string>; // spec_key -> valor descritivo
   direct_costs: ClosingDirectCostLine[];
   site_costs: ClosingSiteCostLine[];
   terrain: ClosingTerrainCosts;
