@@ -526,21 +526,8 @@ serve(async (req) => {
       : null;
 
     if (deterministicBudget) {
-      const expectedTotal = deterministicBudget._meta.original_total;
-      const parsedTotal = deterministicBudget._meta.imported_total;
-      const ratio = expectedTotal > 0 && parsedTotal > 0 ? Math.max(expectedTotal, parsedTotal) / Math.min(expectedTotal, parsedTotal) : 1;
-
-      if (ratio <= 1.15 || expectedTotal === 0 || deterministicBudget._meta.status === "ok") {
-        return new Response(JSON.stringify(deterministicBudget), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      console.warn("Deterministic parse total mismatch, falling back to AI", {
-        expectedTotal,
-        parsedTotal,
-        ratio,
-        diagnostics: deterministicBudget._meta,
+      return new Response(JSON.stringify(deterministicBudget), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
