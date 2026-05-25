@@ -292,6 +292,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="fecho">
               <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
             </TabsTrigger>
+            <TabsTrigger value="historico">
+              <History className="h-3 w-3 mr-1.5" /> Histórico
+            </TabsTrigger>
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
           </TabsList>
 
