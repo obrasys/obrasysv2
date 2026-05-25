@@ -26,6 +26,9 @@ import { useObras } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
 import { FiscalContextSection } from '@/components/orcamentos/FiscalContextSection';
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
+import { REGIME_EMPREITADA_OPTIONS, TIPO_OBRA_OPTIONS } from '@/types/orcamentos';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, FileText } from 'lucide-react';
 import { Loader2, Building2, User, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 const formSchema = z.object({
