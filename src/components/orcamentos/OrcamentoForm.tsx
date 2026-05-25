@@ -44,6 +44,20 @@ const formSchema = z.object({
   tipo_obra: z.string().optional(),
   tipo_cliente: z.string().optional(),
   tipo_operacao: z.string().optional(),
+  project_metadata: z.object({
+    nome_obra: z.string().optional(),
+    numero_lote: z.string().optional(),
+    designacao: z.string().optional(),
+    dono_obra: z.string().optional(),
+    regime_empreitada: z.string().optional(),
+    tipo_obra: z.string().optional(),
+    localizacao: z.string().optional(),
+    prazo_meses: z.number().optional(),
+    numero_fracoes: z.number().optional(),
+    projeto_arquitectura: z.string().optional(),
+    projeto_engenharia: z.string().optional(),
+    responsavel_orcamento: z.string().optional(),
+  }).optional(),
 });
 
 // Draft only requires title
