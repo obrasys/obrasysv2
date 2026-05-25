@@ -392,16 +392,3 @@ function mapAliases(row: Record<string, string>): Record<string, string> {
   return out;
 }
 
-function splitCsvLine(line: string, delim: string): string[] {
-  const out: string[] = [];
-  let cur = "", inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
-    } else if (c === delim && !inQ) { out.push(cur); cur = ""; }
-    else cur += c;
-  }
-  out.push(cur);
-  return out;
-}
