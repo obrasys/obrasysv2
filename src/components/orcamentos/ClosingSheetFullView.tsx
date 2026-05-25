@@ -1227,7 +1227,20 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* QUALIDADES DA OBRA / CADERNO DE ENCARGOS */}
-        <SectionTitle>Qualidades da Obra / Caderno de Encargos</SectionTitle>
+        <div className="flex items-center justify-between">
+          <SectionTitle>Qualidades da Obra / Caderno de Encargos</SectionTitle>
+          <Button
+            size="sm"
+            variant="ghost"
+            asChild
+            className="text-xs gap-1.5 ml-2"
+          >
+            <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
+              <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
+            </a>
+          </Button>
+        </div>
+
         {qualitySpecs.list.isLoading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : (qualitySpecs.list.data ?? []).length === 0 ? (
