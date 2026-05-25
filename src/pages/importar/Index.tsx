@@ -35,15 +35,6 @@ interface ImportCategory {
 
 const IMPORT_CATEGORIES: ImportCategory[] = [
   {
-    id: 'clientes',
-    title: 'Clientes',
-    description: 'Importe a sua lista de clientes com nome, email, telefone, NIF, empresa e morada.',
-    icon: <Users className="w-6 h-6" />,
-    acceptedColumns: ['nome', 'email', 'telefone', 'telemovel', 'empresa', 'nif', 'endereco', 'cidade', 'codigo_postal'],
-    redirectTo: '/clientes',
-    color: 'bg-blue-100 text-blue-600',
-  },
-  {
     id: 'artigos',
     title: 'Artigos / Base de Preços',
     description: 'Importe artigos de trabalho com código, descrição, unidade, preço unitário e categoria.',
@@ -60,15 +51,6 @@ const IMPORT_CATEGORIES: ImportCategory[] = [
     acceptedColumns: ['nome', 'cargo', 'email', 'telefone', 'nif', 'tipo_contrato', 'salario_base'],
     redirectTo: '/recursos',
     color: 'bg-orange-100 text-orange-600',
-  },
-  {
-    id: 'fornecedores',
-    title: 'Tabela de Preços / Fornecedores',
-    description: 'Importe fornecedores com nome, email, telefone, NIF, endereço e especialidade.',
-    icon: <DollarSign className="w-6 h-6" />,
-    acceptedColumns: ['nome', 'email', 'telefone', 'nif', 'endereco', 'especialidade'],
-    redirectTo: '/financeiro/fornecedores',
-    color: 'bg-purple-100 text-purple-600',
   },
 ];
 
