@@ -10,6 +10,7 @@ import { Loader2, FileCheck2, FileText, AlertTriangle } from "lucide-react";
 import { useClosingSheets } from "@/hooks/useClosingSheets";
 import { useGenerateFinalClosing } from "@/hooks/useObraPurchases";
 import { ClosingSheetFullView } from "./ClosingSheetFullView";
+import { ClosingSheetComparison } from "./ClosingSheetComparison";
 
 
 
@@ -54,6 +55,7 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
 
   return (
     <div className="space-y-4">
+      {initial && final && <ClosingSheetComparison initial={initial} final={final} />}
       {initial && <ClosingSheetFullView sheet={initial} />}
       {final && <ClosingSheetFullView sheet={final} />}
       {!final && initial && (

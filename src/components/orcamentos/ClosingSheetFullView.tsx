@@ -186,33 +186,23 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   };
 
   const handleExportPDF = async () => {
-    const node = printRef.current;
-    if (!node) return;
     setExporting(true);
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
-      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let heightLeft = imgH;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
-      heightLeft -= pageH;
-      while (heightLeft > 0) {
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
-        heightLeft -= pageH;
-      }
-      const fname = `Folha_Fecho_${isInitial ? "Inicial" : "Final"}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
-      pdf.save(fname);
+      const { exportClosingSheetPDF } = await import("@/lib/closing-sheet-pdf");
+      await exportClosingSheetPDF({
+        sheet,
+        details,
+        totals,
+        sheetCode,
+        company: {
+          empresa_nome: profile?.empresa_nome,
+          empresa_nif: profile?.empresa_nif,
+          empresa_morada: profile?.empresa_morada,
+          empresa_telefone: profile?.empresa_telefone,
+          empresa_email: profile?.empresa_email,
+          empresa_logo_url: profile?.empresa_logo_url,
+        },
+      });
       toast.success("PDF gerado com sucesso");
     } catch (err) {
       console.error(err);
@@ -352,7 +342,38 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.header.nome_obra}
               onChange={(v) => patch("header", { ...details.header, nome_obra: v })}
             />
-          </div>
+        </div>
+
+        {/* KPI HERO STRIP */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {[
+            { label: "Custo Industrial", value: fmt(totals.custo_industrial), tone: "muted" as const },
+            { label: "Custo Total", value: fmt(totals.custo_total), tone: "primary" as const },
+            { label: "Vendas", value: fmt(totals.valor_vendas), tone: "muted" as const },
+            { label: "RAI €", value: fmt(totals.rai_eur), tone: totals.rai_eur >= 0 ? "good" as const : "bad" as const },
+            { label: "RAI %", value: pct(totals.rai_pct), tone: totals.rai_pct >= 0 ? "good" as const : "bad" as const },
+          ].map((k) => (
+            <div
+              key={k.label}
+              className={
+                k.tone === "primary"
+                  ? "rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-3 shadow-md"
+                  : k.tone === "good"
+                    ? "rounded-xl bg-emerald-50 border border-emerald-200 p-3"
+                    : k.tone === "bad"
+                      ? "rounded-xl bg-rose-50 border border-rose-200 p-3"
+                      : "rounded-xl bg-muted/40 border p-3"
+              }
+            >
+              <p className={`text-[10px] uppercase tracking-wide ${k.tone === "primary" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                {k.label}
+              </p>
+              <p className={`text-base md:text-lg font-bold tabular-nums mt-1 ${k.tone === "good" ? "text-emerald-700" : k.tone === "bad" ? "text-rose-700" : ""}`}>
+                {k.value}
+              </p>
+            </div>
+          ))}
+        </div>
           <div>
             <Label className="text-[11px] uppercase">Nº / Lote Obra</Label>
             <TextCell
@@ -877,18 +898,16 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
         <SubtotalRow label="TOTAL IVA" code="(6)" value={totals.total_iva} />
 
-        <Separator />
+
 
         {/* CUSTO TOTAL */}
-        <div className="bg-primary text-primary-foreground rounded-lg px-4 py-3 flex items-center justify-between">
+        <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
           <div>
-            <p className="text-xs uppercase opacity-80">Custo Total da Obra</p>
-            <p className="text-[10px] opacity-70">(1) + (2) + (3) + (4) + (5) + (6)</p>
+            <p className="text-xs uppercase tracking-wider font-semibold opacity-90">Custo Total da Obra</p>
+            <p className="text-[10px] opacity-70 mt-0.5">(1) + (2) + (3) + (4) + (5) + (6)</p>
           </div>
-          <p className="text-2xl font-bold tabular-nums">{fmt(totals.custo_total)}</p>
+          <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(totals.custo_total)}</p>
         </div>
-
-        <Separator />
 
         {/* MAPA DE VENDAS */}
         <div className="flex items-center justify-between">
