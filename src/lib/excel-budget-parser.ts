@@ -13,8 +13,9 @@ export interface ParsedExcelData {
 /**
  * Detect the actual header row in a sheet by looking for known column names
  * common in Portuguese construction specs (cadernos de encargos / mapas de quantidades).
+ * Returns null when no reliable header row is found so we can preserve all rows.
  */
-function detectHeaderRow(sheet: XLSX.WorkSheet): number {
+function detectHeaderRow(sheet: XLSX.WorkSheet): number | null {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const knownHeaders = [
     'designação', 'descrição', 'descricao', 'designacao',
@@ -40,7 +41,7 @@ function detectHeaderRow(sheet: XLSX.WorkSheet): number {
       return r;
     }
   }
-  return range.s.r; // fallback to first row
+  return null;
 }
 
 /**
@@ -61,13 +62,21 @@ export async function parseExcelFile(file: File): Promise<ParsedExcelData> {
   // Detect the actual header row
   const headerRowIndex = detectHeaderRow(sheet);
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+  const hasDetectedHeader = headerRowIndex !== null;
+  const detectedHeaderRow = headerRowIndex ?? range.s.r;
+  const firstDataRow = hasDetectedHeader ? detectedHeaderRow + 1 : range.s.r;
 
-  // Extract headers from the detected row
+  // Extract headers from the detected row, or synthesize generic headers when the
+  // worksheet is pure tabular data without an explicit header row.
   const headers: string[] = [];
   for (let c = range.s.c; c <= range.e.c; c++) {
-    const cell = sheet[XLSX.utils.encode_cell({ r: headerRowIndex, c })];
-    if (cell && cell.v !== undefined && cell.v !== null && String(cell.v).trim() !== '') {
-      headers.push(String(cell.v).trim());
+    if (hasDetectedHeader) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: detectedHeaderRow, c })];
+      if (cell && cell.v !== undefined && cell.v !== null && String(cell.v).trim() !== '') {
+        headers.push(String(cell.v).trim());
+      } else {
+        headers.push(`Col_${c + 1}`);
+      }
     } else {
       headers.push(`Col_${c + 1}`);
     }
@@ -75,9 +84,9 @@ export async function parseExcelFile(file: File): Promise<ParsedExcelData> {
 
   // Extract all rows after the header, up to 5000
   const rows: RawExcelRow[] = [];
-  const maxRows = Math.min(range.e.r, headerRowIndex + 5000);
+  const maxRows = Math.min(range.e.r, firstDataRow + 4999);
 
-  for (let r = headerRowIndex + 1; r <= maxRows; r++) {
+  for (let r = firstDataRow; r <= maxRows; r++) {
     const row: RawExcelRow = {};
     let hasData = false;
 
