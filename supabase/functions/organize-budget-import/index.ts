@@ -61,6 +61,167 @@ const findCatalogMatch = (
   return bestScore >= 0.55 ? best : null;
 };
 
+const isNumericLike = (value: unknown) => {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "string") return false;
+  const cleaned = value.trim();
+  if (!cleaned) return false;
+  return Number.isFinite(toNumber(cleaned, Number.NaN));
+};
+
+const looksLikeCode = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  if (!text) return false;
+  return /^\d+(?:[.\-]\d+){0,5}$/.test(text) || /^[A-Z]{1,4}\d+(?:[.\-]\d+)*$/i.test(text);
+};
+
+const isChapterLabel = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  if (!text) return false;
+  const normalized = normalizeText(text);
+  return /^(cap(itulo)?\s*[ivxlcdm\d]+|\d+\s+[a-z].*|[a-z\s]{6,})$/i.test(text) &&
+    !/(subtotal|total|iva|transporte|pagina)/i.test(normalized);
+};
+
+const isSummaryRow = (values: unknown[]) => {
+  const joined = normalizeText(values.map((v) => String(v ?? "")).join(" "));
+  return /(subtotal|total|iva|imposto|resumo|transporte|pagina anterior|a transportar)/.test(joined);
+};
+
+const normalizeCode = (value: unknown, fallback: string) => {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+};
+
+const deriveBudgetFromRows = (
+  rows: Array<Record<string, unknown>>,
+  headers: string[] | undefined,
+  catalog: Array<{ codigo: string | null; descricao: string; unidade: string | null; preco_unitario: number }>,
+  fileName?: string,
+) => {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  const normalizedHeaders = (headers ?? []).map((h) => normalizeText(h));
+  const headerIndex = {
+    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref)/.test(h)),
+    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|artigo|item)/.test(h)),
+    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni)$/.test(h) || /unidade/.test(h)),
+    quantity: normalizedHeaders.findIndex((h) => /(quantidade|quant|qtd)/.test(h)),
+    price: normalizedHeaders.findIndex((h) => /(preco unit|preco|p unit|valor unit|unitario|c unit)/.test(h)),
+  };
+
+  const chapters: Array<{ numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> }> = [];
+  let currentChapter: { numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> } | null = null;
+  let nextChapterNumber = 1;
+  let articleCounter = 1;
+  let matchedArticles = 0;
+
+  const getCell = (values: unknown[], idx: number) => (idx >= 0 && idx < values.length ? values[idx] : null);
+
+  for (const row of rows) {
+    const entries = Object.entries(row);
+    const values = entries.map(([, value]) => value);
+    const textValues = values.map((value) => String(value ?? "").trim()).filter(Boolean);
+    if (!textValues.length || isSummaryRow(values)) continue;
+
+    const descriptionCandidate = [
+      getCell(values, headerIndex.description),
+      ...values,
+    ].find((value) => {
+      const text = String(value ?? "").trim();
+      return text.length >= 4 && !looksLikeCode(text) && !isNumericLike(text);
+    });
+
+    const codeCandidate = [
+      getCell(values, headerIndex.code),
+      ...values,
+    ].find((value) => looksLikeCode(value));
+
+    const unitCandidate = [
+      getCell(values, headerIndex.unit),
+      ...values,
+    ].find((value) => {
+      const normalized = normalizeUnit(value);
+      return ["un", "m", "m2", "m3", "ml", "kg", "vg", "l"].includes(normalized);
+    });
+
+    const numericValues = values
+      .map((value) => toNumber(value, Number.NaN))
+      .filter((value) => Number.isFinite(value));
+
+    const quantityCandidate = getCell(values, headerIndex.quantity);
+    const priceCandidate = getCell(values, headerIndex.price);
+    const quantidade = Number.isFinite(toNumber(quantityCandidate, Number.NaN))
+      ? toNumber(quantityCandidate, 1)
+      : (numericValues.length >= 2 ? numericValues[numericValues.length - 2] : Number.NaN);
+    const precoInferido = Number.isFinite(toNumber(priceCandidate, Number.NaN))
+      ? toNumber(priceCandidate, 0)
+      : (numericValues.length >= 1 ? numericValues[numericValues.length - 1] : Number.NaN);
+
+    const description = String(descriptionCandidate ?? "").trim();
+    const hasArticleShape = !!description && Number.isFinite(quantidade) && Number.isFinite(precoInferido);
+    const hasOnlyText = textValues.length <= 3 && numericValues.length === 0;
+
+    if (!hasArticleShape && hasOnlyText) {
+      const title = description || textValues[0];
+      if (isChapterLabel(title)) {
+        currentChapter = { numero: nextChapterNumber++, titulo: title, artigos: [] };
+        chapters.push(currentChapter);
+      }
+      continue;
+    }
+
+    if (!hasArticleShape || !description) continue;
+
+    if (!currentChapter) {
+      currentChapter = { numero: nextChapterNumber++, titulo: "Geral", artigos: [] };
+      chapters.push(currentChapter);
+    }
+
+    const matched = findCatalogMatch({ codigo: String(codeCandidate ?? ""), descricao: description }, catalog);
+    const precoUnitario = precoInferido > 0 ? precoInferido : Number(matched?.preco_unitario || 0);
+    if (matched && precoInferido <= 0) matchedArticles += 1;
+
+    currentChapter.artigos.push({
+      codigo: normalizeCode(codeCandidate, `${currentChapter.numero}.${articleCounter++}`),
+      descricao: description,
+      unidade: normalizeUnit(unitCandidate || matched?.unidade || "un"),
+      quantidade: quantidade > 0 ? quantidade : 1,
+      preco_unitario: precoUnitario,
+    });
+  }
+
+  const filteredChapters = chapters.filter((chapter) => chapter.artigos.length > 0);
+  if (!filteredChapters.length) return null;
+
+  return {
+    titulo_sugerido: String(fileName || "Orçamento Importado").replace(/\.[^.]+$/, "") || "Orçamento Importado",
+    capitulos: filteredChapters,
+    _meta: { matchedArticles },
+  };
+};
+
+const calculateBudgetTotal = (budget: { capitulos?: Array<{ artigos?: Array<{ quantidade?: number; preco_unitario?: number }> }> }) =>
+  (budget.capitulos ?? []).reduce(
+    (sum, chapter) => sum + (chapter.artigos ?? []).reduce(
+      (chapterSum, article) => chapterSum + toNumber(article.quantidade, 0) * toNumber(article.preco_unitario, 0),
+      0,
+    ),
+    0,
+  );
+
+const extractExpectedTotalFromRows = (rows: Array<Record<string, unknown>>) => {
+  const totals = rows.flatMap((row) => Object.values(row)).map((value) => String(value ?? "").trim());
+  for (let i = 0; i < totals.length - 1; i += 1) {
+    const label = normalizeText(totals[i]);
+    const value = totals[i + 1];
+    if (/(total geral|total orçamento|total orcamento|preco global|valor total)/.test(label) && isNumericLike(value)) {
+      return toNumber(value, 0);
+    }
+  }
+  return 0;
+};
+
 const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
