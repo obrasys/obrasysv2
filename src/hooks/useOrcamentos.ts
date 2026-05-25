@@ -618,9 +618,16 @@ export function useOrcamento(id: string | undefined) {
           margem_lucro_artigo: formData.margem_lucro_artigo || 0,
           preco_unitario: formData.preco_unitario,
           ordem: nextOrdem,
+          custo_mo: formData.custo_mo ?? 0,
+          custo_mat: formData.custo_mat ?? 0,
+          custo_sub: formData.custo_sub ?? 0,
+          custo_srv: formData.custo_srv ?? 0,
+          custo_alu: formData.custo_alu ?? 0,
+          custo_div: formData.custo_div ?? 0,
         })
         .select()
         .single();
+
 
       if (error) throw error;
       return data;
