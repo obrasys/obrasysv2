@@ -316,6 +316,10 @@ export default function VerOrcamentoPage() {
             <ClosingSheetsPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
+          <TabsContent value="historico">
+            <BudgetHistoryPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
           <TabsContent value="cotacoes">
             <CotacoesTab orcamentoId={id!} />
           </TabsContent>
