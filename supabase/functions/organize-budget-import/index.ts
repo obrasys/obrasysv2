@@ -381,17 +381,7 @@ const calculateBudgetTotal = (budget: { capitulos?: Array<{ artigos?: Array<{ qu
     0,
   );
 
-const extractExpectedTotalFromRows = (rows: Array<Record<string, unknown>>) => {
-  const totals = rows.flatMap((row) => Object.values(row)).map((value) => String(value ?? "").trim());
-  for (let i = 0; i < totals.length - 1; i += 1) {
-    const label = normalizeText(totals[i]);
-    const value = totals[i + 1];
-    if (/(total geral|total orçamento|total orcamento|preco global|valor total)/.test(label) && isNumericLike(value)) {
-      return toNumber(value, 0);
-    }
-  }
-  return 0;
-};
+const extractExpectedTotalFromRows = (rows: Array<Record<string, unknown>>, headers: string[] = []) => detectFinalBudgetTotal(rows, headers);
 
 const TOOL_SCHEMA = {
   type: "function" as const,
