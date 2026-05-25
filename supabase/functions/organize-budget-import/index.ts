@@ -360,6 +360,31 @@ serve(async (req) => {
     const priceSample = compactPriceCatalog.slice(0, 150);
     const priceContext = `\n\nBASE DE PREÇOS (amostra ${priceSample.length} de ${compactPriceCatalog.length}):\n${JSON.stringify(priceSample, null, 0)}`;
 
+    const deterministicBudget = hasTabular
+      ? deriveBudgetFromRows(rows, headers, compactPriceCatalog, fileName)
+      : null;
+
+    if (deterministicBudget) {
+      const expectedTotal = extractExpectedTotalFromRows(rows);
+      const parsedTotal = calculateBudgetTotal(deterministicBudget);
+      const ratio = expectedTotal > 0 && parsedTotal > 0 ? Math.max(expectedTotal, parsedTotal) / Math.min(expectedTotal, parsedTotal) : 1;
+
+      if (ratio <= 1.15 || expectedTotal === 0) {
+        return new Response(JSON.stringify({
+          titulo_sugerido: deterministicBudget.titulo_sugerido,
+          capitulos: deterministicBudget.capitulos,
+        }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.warn("Deterministic parse total mismatch, falling back to AI", {
+        expectedTotal,
+        parsedTotal,
+        ratio,
+      });
+    }
+
     let userMessages: Array<{ type: string; [key: string]: unknown }>;
 
     if (hasPdf) {
@@ -473,6 +498,30 @@ serve(async (req) => {
           }))
         : [],
     };
+
+    if (hasTabular) {
+      const expectedTotal = extractExpectedTotalFromRows(rows);
+      const aiTotal = calculateBudgetTotal(normalized);
+      const ratio = expectedTotal > 0 && aiTotal > 0 ? Math.max(expectedTotal, aiTotal) / Math.min(expectedTotal, aiTotal) : 1;
+
+      if (expectedTotal > 0 && ratio > 1.5) {
+        const fallbackBudget = deriveBudgetFromRows(rows, headers, compactPriceCatalog, fileName);
+        if (fallbackBudget) {
+          return new Response(JSON.stringify({
+            titulo_sugerido: fallbackBudget.titulo_sugerido,
+            capitulos: fallbackBudget.capitulos,
+          }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({
+          error: "A importação gerou valores incoerentes face ao Excel original. Tente novamente ou use um ficheiro com colunas de quantidade/preço mais explícitas.",
+        }), {
+          status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     return new Response(JSON.stringify(normalized), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
