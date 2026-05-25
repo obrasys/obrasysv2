@@ -38,10 +38,26 @@ const formSchema = z.object({
   preco_base: z.number().min(0, 'Preço base deve ser positivo'),
   margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(99.99, 'Margem deve ser inferior a 100%'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
+  custo_mo: z.number().min(0).optional(),
+  custo_mat: z.number().min(0).optional(),
+  custo_sub: z.number().min(0).optional(),
+  custo_srv: z.number().min(0).optional(),
+  custo_alu: z.number().min(0).optional(),
+  custo_div: z.number().min(0).optional(),
   quantity_source: z.enum(['manual', 'parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
   linked_rule_id: z.string().nullable().optional(),
 });
+
+const DECOMP_FIELDS = [
+  { key: 'custo_mo' as const,  label: 'MO',      title: 'Mão de Obra' },
+  { key: 'custo_mat' as const, label: 'MAT',     title: 'Materiais' },
+  { key: 'custo_sub' as const, label: 'SUB/INS', title: 'Subempreitadas / Instaladores' },
+  { key: 'custo_srv' as const, label: 'SRV',     title: 'Serviços' },
+  { key: 'custo_alu' as const, label: 'ALU',     title: 'Alugueres' },
+  { key: 'custo_div' as const, label: 'DIV',     title: 'Diversos' },
+];
+
 
 interface ArtigoFormProps {
   defaultValues?: Partial<ArtigoFormData>;
