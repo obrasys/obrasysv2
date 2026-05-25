@@ -55,6 +55,7 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
 
   return (
     <div className="space-y-4">
+      {initial && final && <ClosingSheetComparison initial={initial} final={final} />}
       {initial && <ClosingSheetFullView sheet={initial} />}
       {final && <ClosingSheetFullView sheet={final} />}
       {!final && initial && (
