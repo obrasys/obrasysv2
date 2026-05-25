@@ -151,7 +151,8 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
 export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const isInitial = sheet.closing_type === "initial";
   const isLocked = sheet.status === "locked";
-  const readOnly = isLocked;
+  // Folha de fecho sempre editável — mesmo após bloqueio o utilizador pode ajustar valores.
+  const readOnly = false;
   const { profile } = useAuth();
 
   const sheetCode = `FF-${isInitial ? "INI" : "FIN"}-${sheet.id.slice(0, 8).toUpperCase()}`;
