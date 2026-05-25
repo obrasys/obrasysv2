@@ -23,7 +23,7 @@ import {
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
   Zap, HardHat, MoreHorizontal, FileStack,
-  LockIcon, TargetIcon, FileCheck2,
+  LockIcon, TargetIcon, FileCheck2, History,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
