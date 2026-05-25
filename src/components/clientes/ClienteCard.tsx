@@ -59,19 +59,19 @@ export function ClienteCard({ cliente, onEdit, onDelete, onToggleAtivo }: Client
           {/* Info */}
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-foreground truncate">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground truncate" title={cliente.nome}>
                   {cliente.nome}
                 </h3>
                 {cliente.empresa && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    {cliente.empresa}
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 min-w-0" title={cliente.empresa}>
+                    <Building2 className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{cliente.empresa}</span>
                   </p>
                 )}
               </div>
-              
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2 shrink-0">
                 <ClienteStatusBadge nivel={cliente.nivel_acesso} />
                 {!cliente.ativo && (
                   <Badge variant="secondary">Inativo</Badge>
@@ -80,15 +80,15 @@ export function ClienteCard({ cliente, onEdit, onDelete, onToggleAtivo }: Client
             </div>
 
             {/* Contact info */}
-            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground min-w-0">
               {cliente.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="h-3.5 w-3.5" />
-                  {cliente.email}
+                <span className="flex items-center gap-1 min-w-0 max-w-full" title={cliente.email}>
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{cliente.email}</span>
                 </span>
               )}
               {(cliente.telefone || cliente.telemovel) && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 shrink-0">
                   <Phone className="h-3.5 w-3.5" />
                   {cliente.telemovel || cliente.telefone}
                 </span>
