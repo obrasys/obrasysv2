@@ -446,6 +446,47 @@ export function ArtigoForm({
           )}
         />
 
+        {/* Decomposição de custo por artigo (MO/MAT/SUB/SRV/ALU/DIV) */}
+        <Card className="border-dashed">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Decomposição de Custo</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {decompAtiva
+                  ? `Soma: ${formatCurrency(somaDecomp)} → alimenta Preço Base`
+                  : 'Opcional — preencher para permitir compras parciais por categoria'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {DECOMP_FIELDS.map((d) => (
+                <FormField
+                  key={d.key}
+                  control={form.control}
+                  name={d.key}
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-xs" title={d.title}>{d.label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={field.value ?? 0}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+
         {/* Secção de Medição Paramétrica */}
         {orcamentoId && (
           <Card className="border-dashed">
