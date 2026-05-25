@@ -287,13 +287,39 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                         </TableCell>
                         <TableCell className="text-xs">{it.unit ?? "—"}</TableCell>
                         <TableCell className="text-right text-xs">
-                          {it.target_quantity?.toFixed(2)}
+                          <InlineNumber
+                            value={it.target_quantity}
+                            editable={currentVersion?.status === "active"}
+                            onCommit={(v) =>
+                              update.mutate({
+                                itemId: it.id,
+                                versionId: currentVersion!.id,
+                                orcamentoId,
+                                patch: { target_quantity: v },
+                              })
+                            }
+                          />
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           {formatCurrency(it.base_total)}
                         </TableCell>
                         <TableCell className="text-right text-xs font-semibold">
-                          {formatCurrency(it.target_total)}
+                          <InlineNumber
+                            value={it.target_unit_price}
+                            editable={currentVersion?.status === "active"}
+                            prefix="€"
+                            onCommit={(v) =>
+                              update.mutate({
+                                itemId: it.id,
+                                versionId: currentVersion!.id,
+                                orcamentoId,
+                                patch: { target_unit_price: v },
+                              })
+                            }
+                          />
+                          <div className="text-[10px] text-muted-foreground">
+                            = {formatCurrency(it.target_total)}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           {formatCurrency(it.awarded_amount)}
