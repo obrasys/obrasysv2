@@ -50,6 +50,8 @@ const FinanceiroPage = lazy(() => import("./pages/financeiro/Index"));
 const FornecedoresPage = lazy(() => import("./pages/financeiro/Fornecedores"));
 const PerfilPage = lazy(() => import("./pages/Perfil"));
 const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
+const DefinicoesFolhaFechoQualidadesPage = lazy(() => import("./pages/DefinicoesFolhaFechoQualidades"));
+
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
 const PesquisaPage = lazy(() => import("./pages/Pesquisa"));
@@ -207,6 +209,8 @@ const App = () => (
                   <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
                   <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+                  <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
+
                   <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
                   <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />
                   <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
