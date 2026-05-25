@@ -38,10 +38,26 @@ const formSchema = z.object({
   preco_base: z.number().min(0, 'Preço base deve ser positivo'),
   margem_lucro_artigo: z.number().min(0, 'Margem deve ser positiva').max(99.99, 'Margem deve ser inferior a 100%'),
   preco_unitario: z.number().min(0, 'Preço deve ser positivo'),
+  custo_mo: z.number().min(0).optional(),
+  custo_mat: z.number().min(0).optional(),
+  custo_sub: z.number().min(0).optional(),
+  custo_srv: z.number().min(0).optional(),
+  custo_alu: z.number().min(0).optional(),
+  custo_div: z.number().min(0).optional(),
   quantity_source: z.enum(['manual', 'parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
   linked_rule_id: z.string().nullable().optional(),
 });
+
+const DECOMP_FIELDS = [
+  { key: 'custo_mo' as const,  label: 'MO',      title: 'Mão de Obra' },
+  { key: 'custo_mat' as const, label: 'MAT',     title: 'Materiais' },
+  { key: 'custo_sub' as const, label: 'SUB/INS', title: 'Subempreitadas / Instaladores' },
+  { key: 'custo_srv' as const, label: 'SRV',     title: 'Serviços' },
+  { key: 'custo_alu' as const, label: 'ALU',     title: 'Alugueres' },
+  { key: 'custo_div' as const, label: 'DIV',     title: 'Diversos' },
+];
+
 
 interface ArtigoFormProps {
   defaultValues?: Partial<ArtigoFormData>;
@@ -84,12 +100,34 @@ export function ArtigoForm({
       preco_base: defaultValues?.preco_base || defaultValues?.preco_unitario || 0,
       margem_lucro_artigo: defaultValues?.margem_lucro_artigo || 0,
       preco_unitario: defaultValues?.preco_unitario || 0,
+      custo_mo: defaultValues?.custo_mo ?? 0,
+      custo_mat: defaultValues?.custo_mat ?? 0,
+      custo_sub: defaultValues?.custo_sub ?? 0,
+      custo_srv: defaultValues?.custo_srv ?? 0,
+      custo_alu: defaultValues?.custo_alu ?? 0,
+      custo_div: defaultValues?.custo_div ?? 0,
       quantity_source: 'manual',
       linked_element_id: null,
       linked_rule_id: null,
       ...defaultValues,
     },
   });
+
+  // Auto-soma da decomposição → preco_base (quando o utilizador preenche os 6 componentes)
+  const cMo  = form.watch('custo_mo')  ?? 0;
+  const cMat = form.watch('custo_mat') ?? 0;
+  const cSub = form.watch('custo_sub') ?? 0;
+  const cSrv = form.watch('custo_srv') ?? 0;
+  const cAlu = form.watch('custo_alu') ?? 0;
+  const cDiv = form.watch('custo_div') ?? 0;
+  const somaDecomp = Number((cMo + cMat + cSub + cSrv + cAlu + cDiv).toFixed(2));
+  const decompAtiva = somaDecomp > 0;
+
+  useEffect(() => {
+    if (decompAtiva) {
+      form.setValue('preco_base', somaDecomp);
+    }
+  }, [decompAtiva, somaDecomp, form]);
 
   // Calcular preço unitário quando preço base ou margem mudam
   const precoBase = form.watch('preco_base');
@@ -103,6 +141,7 @@ export function ArtigoForm({
       form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
     }
   }, [precoBase, margemLucro, form]);
+
 
   // Carregar elementos do orçamento
   useEffect(() => {
@@ -326,15 +365,18 @@ export function ArtigoForm({
                     step={0.01}
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    readOnly={decompAtiva}
+                    className={decompAtiva ? 'bg-muted' : ''}
                   />
                 </FormControl>
                 <FormDescription className="text-xs h-4">
-                  Custo unitário
+                  {decompAtiva ? 'Soma da decomposição' : 'Custo unitário'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
 
           <FormField
             control={form.control}
@@ -403,6 +445,47 @@ export function ArtigoForm({
             </FormItem>
           )}
         />
+
+        {/* Decomposição de custo por artigo (MO/MAT/SUB/SRV/ALU/DIV) */}
+        <Card className="border-dashed">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Decomposição de Custo</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {decompAtiva
+                  ? `Soma: ${formatCurrency(somaDecomp)} → alimenta Preço Base`
+                  : 'Opcional — preencher para permitir compras parciais por categoria'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {DECOMP_FIELDS.map((d) => (
+                <FormField
+                  key={d.key}
+                  control={form.control}
+                  name={d.key}
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-xs" title={d.title}>{d.label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={field.value ?? 0}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
 
         {/* Secção de Medição Paramétrica */}
         {orcamentoId && (

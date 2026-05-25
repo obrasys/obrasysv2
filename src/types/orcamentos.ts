@@ -141,9 +141,16 @@ export interface ArtigoOrcamento {
   margem_lucro_artigo: number;
   valor_total: number;
   ordem: number;
+  custo_mo?: number;
+  custo_mat?: number;
+  custo_sub?: number;
+  custo_srv?: number;
+  custo_alu?: number;
+  custo_div?: number;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface ArtigoTrabalho {
   id: string;
@@ -226,11 +233,19 @@ export interface ArtigoFormData {
   // Campo de margem de lucro por artigo (não visível ao cliente)
   preco_base?: number;
   margem_lucro_artigo?: number;
+  // Decomposição de custo (6 componentes — somam ao preco_base)
+  custo_mo?: number;   // Mão de obra
+  custo_mat?: number;  // Materiais
+  custo_sub?: number;  // Subempreitadas / Instaladores
+  custo_srv?: number;  // Serviços
+  custo_alu?: number;  // Alugueres
+  custo_div?: number;  // Diversos
   // Campos paramétricos opcionais
   quantity_source?: 'manual' | 'parametric';
   linked_element_id?: string | null;
   linked_rule_id?: string | null;
 }
+
 
 // AI Validation types
 export interface AIValidationResult {
