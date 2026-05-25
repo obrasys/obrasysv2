@@ -35,7 +35,8 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { parseCSV, detectDelimiter, type ParsedCSV } from '@/lib/csv-parser';
+import { type ParsedCSV } from '@/lib/csv-parser';
+import { parseSpreadsheetFile } from '@/lib/spreadsheet-parser';
 import { useFornecedores } from '@/hooks/useFinanceiro';
 import type { FornecedorFormData } from '@/types/financeiro';
 
