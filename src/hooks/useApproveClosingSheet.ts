@@ -41,7 +41,7 @@ export function useApproveClosingSheet(orcamentoId: string | undefined) {
           approved_by: userId,
           locked_at: new Date().toISOString(),
           locked_by: userId,
-          snapshot,
+          snapshot: snapshot as any,
           notes: params.notes ?? null,
         })
         .eq("id", params.sheetId);
