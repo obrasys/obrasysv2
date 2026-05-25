@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   Table,
@@ -148,9 +149,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const isInitial = sheet.closing_type === "initial";
   const isLocked = sheet.status === "locked";
   const readOnly = isLocked;
+  const { profile } = useAuth();
+
+  const sheetCode = `FF-${isInitial ? "INI" : "FIN"}-${sheet.id.slice(0, 8).toUpperCase()}`;
 
   const printRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+
 
   const [details, setDetails] = useState<ClosingSheetDetails>(() => seedFromLegacy(sheet));
   const update = useUpdateClosingSheetDetails(sheet.source_budget_id || undefined);
@@ -299,8 +304,47 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </CardTitle>
       </CardHeader>
       <CardContent ref={printRef} className="space-y-6">
+        {/* CABEÇALHO EMPRESA + CÓDIGO */}
+        <div className="flex items-start justify-between gap-4 border-b pb-4">
+          <div className="flex items-start gap-3">
+            {profile?.empresa_logo_url ? (
+              <img
+                src={profile.empresa_logo_url}
+                alt="Logo"
+                crossOrigin="anonymous"
+                className="h-16 w-16 object-contain rounded-md border bg-white"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
+                SEM LOGO
+              </div>
+            )}
+            <div className="text-xs leading-snug">
+              <p className="text-sm font-bold text-foreground">{profile?.empresa_nome || "—"}</p>
+              {profile?.empresa_nif && <p className="text-muted-foreground">NIF: {profile.empresa_nif}</p>}
+              {profile?.empresa_morada && <p className="text-muted-foreground">{profile.empresa_morada}</p>}
+              <p className="text-muted-foreground">
+                {[profile?.empresa_telefone, profile?.empresa_email].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-xs">
+            <p className="font-bold uppercase text-primary">{isInitial ? "Folha de Fecho Inicial" : "Folha de Fecho Final"}</p>
+            <p className="font-mono text-sm font-semibold mt-1">{sheetCode}</p>
+            <p className="text-muted-foreground mt-1">
+              Emitido: {format(new Date(), "dd/MM/yyyy HH:mm", { locale: pt })}
+            </p>
+            {isLocked && sheet.locked_at && (
+              <p className="text-muted-foreground">
+                Bloqueada: {format(new Date(sheet.locked_at), "dd/MM/yyyy", { locale: pt })}
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* CABEÇALHO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+
           <div>
             <Label className="text-[11px] uppercase">Nome da Obra</Label>
             <TextCell
