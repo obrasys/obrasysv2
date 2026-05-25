@@ -333,11 +333,11 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
                 </Table>
               </ScrollArea>
 
-              {!Object.values(mapping).includes('nome') && (
+              {!Object.values(mapping).includes('nome') && !Object.values(mapping).includes('empresa') && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    O campo "Nome" é obrigatório. Por favor mapeie uma coluna para o nome.
+                    Mapeie pelo menos uma coluna para "Nome" ou "Empresa".
                   </AlertDescription>
                 </Alert>
               )}
