@@ -278,6 +278,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <Badge variant="outline" className="capitalize">
               {sheet.status}
             </Badge>
+            <Button size="sm" variant="outline" onClick={handlePrint} className="gap-2">
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleExportPDF} disabled={exporting} className="gap-2">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Exportar em PDF
+            </Button>
             {!readOnly && (
               <Button size="sm" onClick={handleSave} disabled={update.isPending} className="gap-2">
                 {update.isPending ? (
@@ -291,7 +298,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent ref={printRef} className="space-y-6">
         {/* CABEÇALHO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
