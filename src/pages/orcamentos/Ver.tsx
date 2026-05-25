@@ -58,6 +58,9 @@ export default function VerOrcamentoPage() {
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
   const { saveDocument } = useBudgetDocuments(id);
+  const { short: opLayerShort } = useOperationalLayerLabel();
+  const isLocked = Boolean((orcamento as any)?.is_locked);
+  const lockedAt = ((orcamento as any)?.locked_at as string | null) ?? null;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
