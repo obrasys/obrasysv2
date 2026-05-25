@@ -83,7 +83,7 @@ const POSITIVE_CASES: Array<[string, string]> = [
   ["impermeabilizacao", "Impermeabilizações"],
   ["impermeabilizacao", "Isolamento térmico"],
   ["imprevistos_tpu", "Trabalhos Diversos"],
-  ["imprevistos_tpu", "Despesas gerais"],
+  ["imprevistos_tpu", "Trabalhos diversos e imprevistos"],
   ["jardim", "Arranjos exteriores - Jardim"],
   ["jardim", "Paisagismo"],
   ["pavimentos_rodapes", "Pavimentos e Rodapés"],
