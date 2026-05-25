@@ -10,6 +10,7 @@ import { Loader2, FileCheck2, FileText, AlertTriangle } from "lucide-react";
 import { useClosingSheets } from "@/hooks/useClosingSheets";
 import { useGenerateFinalClosing } from "@/hooks/useObraPurchases";
 import { ClosingSheetFullView } from "./ClosingSheetFullView";
+import { ClosingSheetComparison } from "./ClosingSheetComparison";
 
 
 
