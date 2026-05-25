@@ -100,12 +100,34 @@ export function ArtigoForm({
       preco_base: defaultValues?.preco_base || defaultValues?.preco_unitario || 0,
       margem_lucro_artigo: defaultValues?.margem_lucro_artigo || 0,
       preco_unitario: defaultValues?.preco_unitario || 0,
+      custo_mo: defaultValues?.custo_mo ?? 0,
+      custo_mat: defaultValues?.custo_mat ?? 0,
+      custo_sub: defaultValues?.custo_sub ?? 0,
+      custo_srv: defaultValues?.custo_srv ?? 0,
+      custo_alu: defaultValues?.custo_alu ?? 0,
+      custo_div: defaultValues?.custo_div ?? 0,
       quantity_source: 'manual',
       linked_element_id: null,
       linked_rule_id: null,
       ...defaultValues,
     },
   });
+
+  // Auto-soma da decomposição → preco_base (quando o utilizador preenche os 6 componentes)
+  const cMo  = form.watch('custo_mo')  ?? 0;
+  const cMat = form.watch('custo_mat') ?? 0;
+  const cSub = form.watch('custo_sub') ?? 0;
+  const cSrv = form.watch('custo_srv') ?? 0;
+  const cAlu = form.watch('custo_alu') ?? 0;
+  const cDiv = form.watch('custo_div') ?? 0;
+  const somaDecomp = Number((cMo + cMat + cSub + cSrv + cAlu + cDiv).toFixed(2));
+  const decompAtiva = somaDecomp > 0;
+
+  useEffect(() => {
+    if (decompAtiva) {
+      form.setValue('preco_base', somaDecomp);
+    }
+  }, [decompAtiva, somaDecomp, form]);
 
   // Calcular preço unitário quando preço base ou margem mudam
   const precoBase = form.watch('preco_base');
@@ -119,6 +141,7 @@ export function ArtigoForm({
       form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
     }
   }, [precoBase, margemLucro, form]);
+
 
   // Carregar elementos do orçamento
   useEffect(() => {
