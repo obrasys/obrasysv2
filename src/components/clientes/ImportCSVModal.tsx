@@ -103,45 +103,42 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const content = await file.text();
-    const delimiter = detectDelimiter(content);
-    const parsed = parseCSV(content, { delimiter });
-    
+    const parsed = await parseSpreadsheetFile(file);
+
     setCsvData(parsed);
-    
+
     // Auto-map columns based on header names
     const autoMapping: Record<string, string> = {};
     parsed.headers.forEach(header => {
-      const normalizedHeader = header.toLowerCase().trim();
-      
-      // Try to auto-detect field mappings
-      if (normalizedHeader.includes('nome') || normalizedHeader === 'name') {
-        autoMapping[header] = 'nome';
-      } else if (normalizedHeader.includes('email') || normalizedHeader.includes('e-mail')) {
-        autoMapping[header] = 'email';
-      } else if (normalizedHeader.includes('telemovel') || normalizedHeader.includes('telemóvel') || normalizedHeader.includes('mobile')) {
-        autoMapping[header] = 'telemovel';
-      } else if (normalizedHeader.includes('telefone') || normalizedHeader.includes('phone')) {
-        autoMapping[header] = 'telefone';
-      } else if (normalizedHeader.includes('empresa') || normalizedHeader.includes('company')) {
+      const h = header.toLowerCase().trim();
+
+      if (h.includes('empresa') || h.includes('company') || h.includes('razão') || h.includes('razao')) {
         autoMapping[header] = 'empresa';
-      } else if (normalizedHeader.includes('nif') || normalizedHeader.includes('vat')) {
+      } else if (h === 'nome' || h.includes('nome') || h.includes('responsável') || h.includes('responsavel') || h === 'name') {
+        autoMapping[header] = 'nome';
+      } else if (h.includes('email') || h.includes('e-mail') || h.includes('mail')) {
+        autoMapping[header] = 'email';
+      } else if (h.includes('telemovel') || h.includes('telemóvel') || h.includes('mobile') || h.includes('tlm')) {
+        autoMapping[header] = 'telemovel';
+      } else if (h.includes('telefone') || h.includes('phone') || h.includes('tel') || h.includes('fixo') || h.includes('tlf') || h.includes('contacto')) {
+        autoMapping[header] = 'telefone';
+      } else if (h.includes('nif') || h.includes('contribuinte') || h.includes('vat')) {
         autoMapping[header] = 'nif';
-      } else if (normalizedHeader.includes('morada') || normalizedHeader.includes('endereco') || normalizedHeader.includes('address')) {
+      } else if (h.includes('morada') || h.includes('endereco') || h.includes('endereço') || h.includes('address')) {
         autoMapping[header] = 'endereco';
-      } else if (normalizedHeader.includes('codigo postal') || normalizedHeader.includes('código postal') || normalizedHeader.includes('zip')) {
+      } else if (h.includes('codigo postal') || h.includes('código postal') || h === 'cp' || h.includes('zip')) {
         autoMapping[header] = 'codigo_postal';
-      } else if (normalizedHeader.includes('cidade') || normalizedHeader.includes('city')) {
+      } else if (h.includes('cidade') || h.includes('localidade') || h.includes('city')) {
         autoMapping[header] = 'cidade';
-      } else if (normalizedHeader.includes('pais') || normalizedHeader.includes('país') || normalizedHeader.includes('country')) {
+      } else if (h.includes('pais') || h.includes('país') || h.includes('country')) {
         autoMapping[header] = 'pais';
-      } else if (normalizedHeader.includes('observ') || normalizedHeader.includes('notas') || normalizedHeader.includes('notes')) {
+      } else if (h.includes('observ') || h.includes('notas') || h.includes('notes') || h.includes('especialidade') || h.includes('categoria')) {
         autoMapping[header] = 'observacoes';
       } else {
         autoMapping[header] = 'ignore';
       }
     });
-    
+
     setMapping(autoMapping);
     setStep('mapping');
   };
