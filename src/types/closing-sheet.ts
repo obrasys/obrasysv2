@@ -190,6 +190,22 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
     proj_engenharia: "",
     responsavel_orcamento: "",
   },
+  validation: {
+    direccao_geral: "",
+    validador_tecnico_economico: "",
+    percentagem_lucro_alvo: 0.20,
+    valor_medio_fraccao: 0,
+    observacoes: "",
+  },
+  approvals: {
+    administracao_nome: "",
+    administracao_data: null,
+    aprovacao_inicial_nome: "",
+    aprovacao_inicial_data: null,
+    assinatura_url: "",
+    notas: "",
+  },
+  quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
   site_costs: DEFAULT_SITE_COST_LINES,
   terrain: {
