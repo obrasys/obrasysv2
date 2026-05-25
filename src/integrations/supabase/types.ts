@@ -12241,19 +12241,28 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
-      log_budget_event: {
-        Args: {
-          p_budget_version_id?: string
-          p_description?: string
-          p_entity_id?: string
-          p_entity_type?: string
-          p_event_type: string
-          p_new_value?: Json
-          p_previous_value?: Json
-          p_source_budget_id: string
-        }
-        Returns: string
-      }
+      log_budget_event:
+        | {
+            Args: {
+              p_budget_version_id: string
+              p_event_type: string
+              p_metadata: Json
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_budget_version_id?: string
+              p_description?: string
+              p_entity_id?: string
+              p_entity_type?: string
+              p_event_type: string
+              p_new_value?: Json
+              p_previous_value?: Json
+              p_source_budget_id: string
+            }
+            Returns: string
+          }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       propagate_dependency_impact: {
         Args: { p_task_id: string }
