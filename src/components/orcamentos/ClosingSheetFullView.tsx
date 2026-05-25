@@ -1158,17 +1158,111 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           />
         </div>
 
+        <Separator />
+
+        {/* VALIDAÇÃO TÉCNICO-ECONÓMICA */}
+        <SectionTitle>Validação Técnico-Económica</SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div>
+            <Label>Direcção Geral</Label>
+            <TextCell readOnly={readOnly} value={details.validation.direccao_geral}
+              onChange={(v) => patch("validation", { ...details.validation, direccao_geral: v })} />
+          </div>
+          <div>
+            <Label>Validador Técnico-Económico</Label>
+            <TextCell readOnly={readOnly} value={details.validation.validador_tecnico_economico}
+              onChange={(v) => patch("validation", { ...details.validation, validador_tecnico_economico: v })} />
+          </div>
+          <div>
+            <Label>% Lucro Alvo</Label>
+            <NumCell readOnly={readOnly} step="0.01" value={details.validation.percentagem_lucro_alvo * 100}
+              onChange={(v) => patch("validation", { ...details.validation, percentagem_lucro_alvo: v / 100 })} />
+          </div>
+          <div>
+            <Label>Valor Médio / Fracção (€)</Label>
+            <NumCell readOnly={readOnly} value={details.validation.valor_medio_fraccao}
+              onChange={(v) => patch("validation", { ...details.validation, valor_medio_fraccao: v })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Observações</Label>
+            <Textarea readOnly={readOnly} rows={2} value={details.validation.observacoes}
+              onChange={(e) => patch("validation", { ...details.validation, observacoes: e.target.value })} />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* APROVAÇÃO / ADMINISTRAÇÃO */}
+        <SectionTitle>Aprovação Inicial / Administração</SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div>
+            <Label>Aprovação Inicial — Nome</Label>
+            <TextCell readOnly={readOnly} value={details.approvals.aprovacao_inicial_nome}
+              onChange={(v) => patch("approvals", { ...details.approvals, aprovacao_inicial_nome: v })} />
+          </div>
+          <div>
+            <Label>Data Aprovação Inicial</Label>
+            <Input type="date" readOnly={readOnly} value={details.approvals.aprovacao_inicial_data ?? ""}
+              onChange={(e) => patch("approvals", { ...details.approvals, aprovacao_inicial_data: e.target.value || null })}
+              className="h-8" />
+          </div>
+          <div>
+            <Label>Administração — Nome</Label>
+            <TextCell readOnly={readOnly} value={details.approvals.administracao_nome}
+              onChange={(v) => patch("approvals", { ...details.approvals, administracao_nome: v })} />
+          </div>
+          <div>
+            <Label>Data Administração</Label>
+            <Input type="date" readOnly={readOnly} value={details.approvals.administracao_data ?? ""}
+              onChange={(e) => patch("approvals", { ...details.approvals, administracao_data: e.target.value || null })}
+              className="h-8" />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Notas de Aprovação</Label>
+            <Textarea readOnly={readOnly} rows={2} value={details.approvals.notas}
+              onChange={(e) => patch("approvals", { ...details.approvals, notas: e.target.value })} />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* QUALIDADES DA OBRA / CADERNO DE ENCARGOS */}
+        <SectionTitle>Qualidades da Obra / Caderno de Encargos</SectionTitle>
+        {qualitySpecs.list.isLoading ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : (qualitySpecs.list.data ?? []).length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">Catálogo vazio. Será populado automaticamente na próxima recarga.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            {(qualitySpecs.list.data ?? []).filter((s) => s.ativo).map((spec) => (
+              <div key={spec.id}>
+                <Label className="text-[11px]">{spec.label}</Label>
+                <TextCell
+                  readOnly={readOnly}
+                  value={details.quality_specs_values[spec.spec_key] || ""}
+                  onChange={(v) => patch("quality_specs_values", { ...details.quality_specs_values, [spec.spec_key]: v })}
+                  placeholder="Descrição técnica…"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ASSINATURAS / RODAPÉ */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-3 border-t">
-          <span>
-            Criada em {format(new Date(sheet.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}
-          </span>
+          <span>Criada em {format(new Date(sheet.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}</span>
           {sheet.locked_at && (
-            <span>
-              Bloqueada em {format(new Date(sheet.locked_at), "dd/MM/yyyy HH:mm", { locale: pt })}
-            </span>
+            <span>Bloqueada em {format(new Date(sheet.locked_at), "dd/MM/yyyy HH:mm", { locale: pt })}</span>
           )}
         </div>
       </CardContent>
+
+      <ClosingSheetSiteDetailDialog
+        open={siteDetailOpen}
+        onOpenChange={setSiteDetailOpen}
+        closingSheetId={sheet.id}
+        readOnly={readOnly}
+      />
     </Card>
   );
 }
