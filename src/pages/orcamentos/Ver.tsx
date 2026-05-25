@@ -22,7 +22,7 @@ import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
-  Zap, HardHat, MoreHorizontal, FileStack,
+  Zap, HardHat, MoreHorizontal, FileStack, ShoppingCart,
   LockIcon, TargetIcon, FileCheck2, History,
 } from 'lucide-react';
 import {
