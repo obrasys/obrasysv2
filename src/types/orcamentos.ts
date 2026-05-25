@@ -208,6 +208,7 @@ export interface OrcamentoFormData {
   tipo_obra?: string;
   tipo_cliente?: string;
   tipo_operacao?: string;
+  project_metadata?: ProjectMetadata;
 }
 
 export interface CapituloFormData {
