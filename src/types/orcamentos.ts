@@ -14,6 +14,35 @@ export interface ObraPartial {
   cliente?: string | null;
 }
 
+export interface ProjectMetadata {
+  nome_obra?: string;
+  numero_lote?: string;
+  designacao?: string;
+  dono_obra?: string;
+  regime_empreitada?: string;
+  tipo_obra?: string;
+  localizacao?: string;
+  prazo_meses?: number;
+  numero_fracoes?: number;
+  projeto_arquitectura?: string;
+  projeto_engenharia?: string;
+  responsavel_orcamento?: string;
+}
+
+export const REGIME_EMPREITADA_OPTIONS = [
+  'Série de Preços',
+  'Preço Global',
+  'Administração Direta',
+  'Outro',
+] as const;
+
+export const TIPO_OBRA_OPTIONS = [
+  'Nova',
+  'Reabilitação',
+  'Ampliação',
+  'Conservação',
+] as const;
+
 export interface Obra extends ObraPartial {
   user_id: string;
   endereco: string | null;
