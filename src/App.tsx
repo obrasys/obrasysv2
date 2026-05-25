@@ -209,6 +209,8 @@ const App = () => (
                   <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
                   <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+                  <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
+
                   <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
                   <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />
                   <Route path="/recursos" element={<ManagerRoute><RecursosPage /></ManagerRoute>} />
