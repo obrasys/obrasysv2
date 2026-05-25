@@ -141,9 +141,16 @@ export interface ArtigoOrcamento {
   margem_lucro_artigo: number;
   valor_total: number;
   ordem: number;
+  custo_mo?: number;
+  custo_mat?: number;
+  custo_sub?: number;
+  custo_srv?: number;
+  custo_alu?: number;
+  custo_div?: number;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface ArtigoTrabalho {
   id: string;
