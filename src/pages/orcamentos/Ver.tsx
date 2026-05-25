@@ -23,7 +23,7 @@ import {
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
   Zap, HardHat, MoreHorizontal, FileStack,
-  LockIcon, TargetIcon, FileCheck2,
+  LockIcon, TargetIcon, FileCheck2, History,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -41,6 +41,7 @@ import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel
 import { BaseDryBudgetPanel } from '@/components/orcamentos/BaseDryBudgetPanel';
 import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
+import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
@@ -291,6 +292,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="fecho">
               <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
             </TabsTrigger>
+            <TabsTrigger value="historico">
+              <History className="h-3 w-3 mr-1.5" /> Histórico
+            </TabsTrigger>
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
           </TabsList>
 
@@ -310,6 +314,10 @@ export default function VerOrcamentoPage() {
 
           <TabsContent value="fecho">
             <ClosingSheetsPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
+          <TabsContent value="historico">
+            <BudgetHistoryPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
           <TabsContent value="cotacoes">

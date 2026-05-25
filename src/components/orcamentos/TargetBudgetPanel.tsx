@@ -19,9 +19,12 @@ import {
   useBudgetVersions,
   useBudgetVersionItems,
   useCreateNewTargetVersion,
+  useUpdateBudgetVersionItem,
   type BudgetVersion,
+  type BudgetVersionItem,
 } from "@/hooks/useBudgetVersions";
 import { useOperationalLayerLabel } from "@/hooks/useOperationalLayerLabel";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   orcamentoId: string;
@@ -53,6 +56,7 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
   const { label, short } = useOperationalLayerLabel();
   const { data: versions = [], isLoading } = useBudgetVersions(orcamentoId);
   const createNew = useCreateNewTargetVersion();
+  const update = useUpdateBudgetVersionItem();
 
   const targetVersions = useMemo(
     () => versions.filter((v) => v.version_type === "target"),
@@ -284,13 +288,39 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                         </TableCell>
                         <TableCell className="text-xs">{it.unit ?? "—"}</TableCell>
                         <TableCell className="text-right text-xs">
-                          {it.target_quantity?.toFixed(2)}
+                          <InlineNumber
+                            value={it.target_quantity}
+                            editable={currentVersion?.status === "active"}
+                            onCommit={(v) =>
+                              update.mutate({
+                                itemId: it.id,
+                                versionId: currentVersion!.id,
+                                orcamentoId,
+                                patch: { target_quantity: v },
+                              })
+                            }
+                          />
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           {formatCurrency(it.base_total)}
                         </TableCell>
                         <TableCell className="text-right text-xs font-semibold">
-                          {formatCurrency(it.target_total)}
+                          <InlineNumber
+                            value={it.target_unit_price}
+                            editable={currentVersion?.status === "active"}
+                            prefix="€"
+                            onCommit={(v) =>
+                              update.mutate({
+                                itemId: it.id,
+                                versionId: currentVersion!.id,
+                                orcamentoId,
+                                patch: { target_unit_price: v },
+                              })
+                            }
+                          />
+                          <div className="text-[10px] text-muted-foreground">
+                            = {formatCurrency(it.target_total)}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           {formatCurrency(it.awarded_amount)}
@@ -324,5 +354,62 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+interface InlineNumberProps {
+  value: number;
+  editable?: boolean;
+  prefix?: string;
+  onCommit: (n: number) => void;
+}
+
+function InlineNumber({ value, editable, prefix, onCommit }: InlineNumberProps) {
+  const [editing, setEditing] = useState(false);
+  const [raw, setRaw] = useState(String(value ?? 0));
+  if (!editable) {
+    return (
+      <span>
+        {prefix ? `${prefix} ` : ""}
+        {Number(value ?? 0).toFixed(2).replace(".", ",")}
+      </span>
+    );
+  }
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        type="number"
+        step="0.01"
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={() => {
+          setEditing(false);
+          const n = Number(raw.replace(",", "."));
+          if (!isNaN(n) && n !== value) onCommit(n);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "Escape") {
+            setRaw(String(value));
+            setEditing(false);
+          }
+        }}
+        className="h-7 text-xs text-right w-24 inline-block"
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setRaw(String(value ?? 0));
+        setEditing(true);
+      }}
+      className="hover:bg-muted/60 rounded px-1.5 py-0.5 transition-colors"
+    >
+      {prefix ? `${prefix} ` : ""}
+      {Number(value ?? 0).toFixed(2).replace(".", ",")}
+    </button>
   );
 }
