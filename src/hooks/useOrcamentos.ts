@@ -82,6 +82,7 @@ export function useOrcamentos() {
           cliente_id: formData.cliente_id || null,
           margem_lucro: formData.margem_lucro,
           custos_indiretos: formData.custos_indiretos as unknown as Json,
+          project_metadata: (formData.project_metadata ?? {}) as unknown as Json,
         })
         .select()
         .single();
