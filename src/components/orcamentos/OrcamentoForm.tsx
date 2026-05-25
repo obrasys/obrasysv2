@@ -273,6 +273,78 @@ export function OrcamentoForm({
 
         <FiscalContextSection form={form} />
 
+        {/* Ficha Técnica da Obra — Opcional */}
+        <Collapsible className="border rounded-lg">
+          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors group">
+            <div className="flex items-center gap-2 text-left">
+              <FileText className="h-4 w-4 text-primary" />
+              <div>
+                <h4 className="font-medium text-sm">Dados da Obra (Ficha Técnica)</h4>
+                <p className="text-xs text-muted-foreground">
+                  Opcional — preenche automaticamente a Folha de Fecho e o PDF comercial
+                </p>
+              </div>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField control={form.control} name="project_metadata.nome_obra" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Nome da Obra</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.numero_lote" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Nº / Lote Obra</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.designacao" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Designação</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.dono_obra" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Dono de Obra</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.regime_empreitada" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs uppercase tracking-wide">Regime Empreitada</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger></FormControl>
+                    <SelectContent className="bg-popover">
+                      {REGIME_EMPREITADA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.tipo_obra" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs uppercase tracking-wide">Tipo de Obra</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger></FormControl>
+                    <SelectContent className="bg-popover">
+                      {TIPO_OBRA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.localizacao" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Localização</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.prazo_meses" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Prazo (meses)</FormLabel><FormControl><Input type="number" min={0} {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.numero_fracoes" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Nº Frações</FormLabel><FormControl><Input type="number" min={0} {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.projeto_arquitectura" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projecto Arquitectura</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.projeto_engenharia" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projecto Engenharia</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+              <FormField control={form.control} name="project_metadata.responsavel_orcamento" render={({ field }) => (
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Responsável Orçamento</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+              )} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         <div className="space-y-4">
           <h4 className="font-medium text-sm">Custos Indiretos</h4>
           
