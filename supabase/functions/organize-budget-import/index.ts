@@ -151,12 +151,38 @@ const deriveBudgetFromRows = (
 
     const quantityCandidate = getCell(values, headerIndex.quantity);
     const priceCandidate = getCell(values, headerIndex.price);
+
+    // Detect if the last numeric column is a TOTAL (qty * price). If so, ignore it
+    // so we don't confuse price with total and inflate the budget many times over.
+    let qtyInferred: number = Number.NaN;
+    let priceInferred: number = Number.NaN;
+    if (numericValues.length >= 3) {
+      const a = numericValues[numericValues.length - 3];
+      const b = numericValues[numericValues.length - 2];
+      const c = numericValues[numericValues.length - 1];
+      const product = a * b;
+      const isTotalCol = product > 0 && c > 0 && Math.abs(product - c) / Math.max(product, c) < 0.02;
+      if (isTotalCol) {
+        qtyInferred = a;
+        priceInferred = b;
+      } else {
+        qtyInferred = b;
+        priceInferred = c;
+      }
+    } else if (numericValues.length === 2) {
+      qtyInferred = numericValues[0];
+      priceInferred = numericValues[1];
+    } else if (numericValues.length === 1) {
+      qtyInferred = 1;
+      priceInferred = numericValues[0];
+    }
+
     const quantidade = Number.isFinite(toNumber(quantityCandidate, Number.NaN))
       ? toNumber(quantityCandidate, 1)
-      : (numericValues.length >= 2 ? numericValues[numericValues.length - 2] : Number.NaN);
+      : qtyInferred;
     const precoInferido = Number.isFinite(toNumber(priceCandidate, Number.NaN))
       ? toNumber(priceCandidate, 0)
-      : (numericValues.length >= 1 ? numericValues[numericValues.length - 1] : Number.NaN);
+      : priceInferred;
 
     const description = String(descriptionCandidate ?? "").trim();
     const hasArticleShape = !!description && Number.isFinite(quantidade) && Number.isFinite(precoInferido);
