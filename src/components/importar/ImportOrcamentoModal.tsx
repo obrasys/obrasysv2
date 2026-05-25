@@ -34,6 +34,19 @@ interface OrganizedChapter {
 interface OrganizedBudget {
   titulo_sugerido: string;
   capitulos: OrganizedChapter[];
+  _meta?: {
+    original_total: number;
+    imported_total: number;
+    difference: number;
+    status: 'ok' | 'review_required';
+    valid_articles: number;
+    chapters_found: number;
+    ignored_rows: number;
+    included_rows: number;
+    subtotal_rows: number;
+    ref_rows: number;
+    ignored_reasons: string[];
+  };
 }
 
 interface Props {
@@ -106,6 +119,8 @@ const readDocxAsText = async (file: File): Promise<string> => {
   const result = await mammoth.extractRawText({ arrayBuffer });
   return result.value;
 };
+
+const formatCurrency = (value: number) => `€${value.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
