@@ -365,15 +365,18 @@ export function ArtigoForm({
                     step={0.01}
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    readOnly={decompAtiva}
+                    className={decompAtiva ? 'bg-muted' : ''}
                   />
                 </FormControl>
                 <FormDescription className="text-xs h-4">
-                  Custo unitário
+                  {decompAtiva ? 'Soma da decomposição' : 'Custo unitário'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
 
           <FormField
             control={form.control}
