@@ -253,6 +253,17 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
   const handleSave = () => update.mutate({ sheetId: sheet.id, details, totals });
 
+  const handleApprove = () => {
+    if (!window.confirm("Aprovar e bloquear esta Folha de Fecho? Após bloqueio só poderá ser alterada via reabertura por Super Admin.")) return;
+    // grava primeiro para garantir consistência
+    update.mutate(
+      { sheetId: sheet.id, details, totals },
+      {
+        onSuccess: () => approve.mutate({ sheetId: sheet.id, details, totals }),
+      },
+    );
+  };
+
   return (
     <Card className={isInitial ? "border-amber-200" : "border-blue-200"}>
       <CardHeader className="pb-3">
