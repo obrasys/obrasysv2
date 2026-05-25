@@ -91,6 +91,7 @@ export interface Orcamento {
   commercial_validity_text?: string | null;
   commercial_notes_text?: string | null;
   show_signature_block?: boolean;
+  project_metadata?: ProjectMetadata;
   obra?: ObraPartial;
   cliente?: ClientePartial;
   capitulos?: Capitulo[];
