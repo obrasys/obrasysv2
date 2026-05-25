@@ -29,13 +29,12 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  parseCSV,
-  detectDelimiter,
   validateClientData,
   mapRowToClient,
   type ParsedCSV,
   type ValidationResult,
 } from '@/lib/csv-parser';
+import { parseSpreadsheetFile } from '@/lib/spreadsheet-parser';
 import { useClientes } from '@/hooks/useClientes';
 import type { ClienteFormData } from '@/types/clientes';
 import {
