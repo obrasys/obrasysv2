@@ -6148,6 +6148,108 @@ export type Database = {
           },
         ]
       }
+      obra_purchases: {
+        Row: {
+          budget_version_id: string | null
+          budget_version_item_id: string | null
+          created_at: string
+          description: string
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          notes: string | null
+          obra_id: string | null
+          organization_id: string | null
+          package_id: string | null
+          quantity: number
+          source_budget_id: string | null
+          status: string
+          supplier_id: string | null
+          total_amount: number
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_version_id?: string | null
+          budget_version_item_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          package_id?: string | null
+          quantity?: number
+          source_budget_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_version_id?: string | null
+          budget_version_item_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          package_id?: string | null
+          quantity?: number
+          source_budget_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_purchases_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_purchases_budget_version_item_id_fkey"
+            columns: ["budget_version_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_version_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_purchases_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_purchases_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "contracting_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_purchases_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           arquivada: boolean
@@ -11984,6 +12086,10 @@ export type Database = {
         }
         Returns: number
       }
+      generate_final_closing_sheet: {
+        Args: { _notes?: string; _orcamento_id: string }
+        Returns: string
+      }
       generate_icf_budget_transactional: {
         Args: {
           p_chapters: Json
@@ -12160,6 +12266,22 @@ export type Database = {
       refresh_engagement_status: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      register_purchase: {
+        Args: {
+          _budget_version_item_id?: string
+          _description: string
+          _invoice_date?: string
+          _invoice_number?: string
+          _notes?: string
+          _obra_id: string
+          _package_id?: string
+          _quantity?: number
+          _supplier_id?: string
+          _total_amount: number
+          _unit_price?: number
+        }
+        Returns: string
       }
       sync_onboarding_progress: {
         Args: { p_user_id: string }

@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileCheck2, Lock, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Loader2, FileCheck2, Lock, FileText, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useClosingSheets, type ClosingSheet } from "@/hooks/useClosingSheets";
+import { useGenerateFinalClosing } from "@/hooks/useObraPurchases";
 
 const formatCurrency = (v: number | null | undefined) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
@@ -103,6 +111,9 @@ function Metric({
 
 export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
   const { data: sheets = [], isLoading } = useClosingSheets(orcamentoId);
+  const generateFinal = useGenerateFinalClosing();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [notes, setNotes] = useState("");
 
   if (isLoading) {
     return (
@@ -114,6 +125,12 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
 
   const initial = sheets.find((s) => s.closing_type === "initial");
   const final = sheets.find((s) => s.closing_type === "final");
+
+  const handleGenerate = async () => {
+    await generateFinal.mutateAsync({ orcamentoId, notes: notes.trim() || undefined });
+    setConfirmOpen(false);
+    setNotes("");
+  };
 
   if (!initial && !final) {
     return (
@@ -136,10 +153,46 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
       {initial && <ClosingCard sheet={initial} />}
       {final && <ClosingCard sheet={final} />}
       {!final && initial && (
-        <p className="text-xs text-muted-foreground text-center">
-          A Folha de Fecho Final será gerada no encerramento do Budget Objetivo da obra.
-        </p>
+        <Card className="border-dashed">
+          <CardContent className="py-6 flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm">Gerar Folha de Fecho Final</p>
+                <p className="text-xs text-muted-foreground">
+                  Consolida valores reais (compras, adjudicações) do Budget Objetivo ativo e bloqueia a versão.
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => setConfirmOpen(true)} className="gap-2">
+              <FileCheck2 className="h-4 w-4" /> Gerar
+            </Button>
+          </CardContent>
+        </Card>
       )}
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar geração da Folha de Fecho Final</DialogTitle>
+            <DialogDescription>
+              Esta ação bloqueia o Budget Objetivo ativo e cria uma folha consolidada
+              final com todos os valores reais. Não pode ser revertida.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label>Notas (opcional)</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+            <Button onClick={handleGenerate} disabled={generateFinal.isPending}>
+              {generateFinal.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Gerar e bloquear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

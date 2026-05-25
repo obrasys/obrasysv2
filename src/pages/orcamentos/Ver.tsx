@@ -22,7 +22,7 @@ import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
-  Zap, HardHat, MoreHorizontal, FileStack,
+  Zap, HardHat, MoreHorizontal, FileStack, ShoppingCart,
   LockIcon, TargetIcon, FileCheck2, History,
 } from 'lucide-react';
 import {
@@ -43,6 +43,7 @@ import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
 import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { ContractingPackagesPanel } from '@/components/orcamentos/ContractingPackagesPanel';
+import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
@@ -296,6 +297,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="pacotes">
               <Package className="h-3 w-3 mr-1.5" /> Pacotes
             </TabsTrigger>
+            <TabsTrigger value="compras">
+              <ShoppingCart className="h-3 w-3 mr-1.5" /> Compras
+            </TabsTrigger>
             <TabsTrigger value="historico">
               <History className="h-3 w-3 mr-1.5" /> Histórico
             </TabsTrigger>
@@ -323,6 +327,14 @@ export default function VerOrcamentoPage() {
           <TabsContent value="pacotes">
             <ContractingPackagesPanel orcamentoId={orcamento.id} />
           </TabsContent>
+
+          <TabsContent value="compras">
+            <PurchasesPanel
+              orcamentoId={orcamento.id}
+              obraId={(orcamento as any).obra_id ?? null}
+            />
+          </TabsContent>
+
 
           <TabsContent value="historico">
             <BudgetHistoryPanel orcamentoId={orcamento.id} />
