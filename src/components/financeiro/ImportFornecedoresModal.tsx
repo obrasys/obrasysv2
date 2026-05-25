@@ -239,12 +239,12 @@ export function ImportFornecedoresModal({
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="font-medium mb-1">Clique para selecionar um ficheiro CSV</p>
-              <p className="text-sm text-muted-foreground">ou arraste e solte aqui</p>
+              <p className="font-medium mb-1">Clique para selecionar CSV ou Excel</p>
+              <p className="text-sm text-muted-foreground">.csv, .xlsx ou .xls — cabeçalho detetado automaticamente</p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.txt"
+                accept=".csv,.txt,.xlsx,.xls"
                 onChange={handleFileUpload}
                 className="hidden"
               />
