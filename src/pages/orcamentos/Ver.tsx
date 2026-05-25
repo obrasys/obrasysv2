@@ -283,10 +283,10 @@ export default function VerOrcamentoPage() {
           <TabsList className="mb-4 no-print flex flex-wrap h-auto">
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
             <TabsTrigger value="base">
-              <Lock className="h-3 w-3 mr-1.5" /> Base Seco
+              <LockIcon className="h-3 w-3 mr-1.5" /> Base Seco
             </TabsTrigger>
             <TabsTrigger value="target">
-              <Target className="h-3 w-3 mr-1.5" /> {opLayerShort}
+              <TargetIcon className="h-3 w-3 mr-1.5" /> {opLayerShort}
             </TabsTrigger>
             <TabsTrigger value="fecho">
               <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
