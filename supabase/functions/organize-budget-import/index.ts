@@ -159,7 +159,7 @@ serve(async (req) => {
     }
 
     if (hasTabular && rows.length > 5000) {
-      return new Response(JSON.stringify({ error: "Limite de 500 linhas excedido" }), {
+      return new Response(JSON.stringify({ error: "Limite de 5000 linhas excedido" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
