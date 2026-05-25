@@ -63,14 +63,15 @@ export async function parseExcelFile(file: File): Promise<ParsedExcelData> {
   const headerRowIndex = detectHeaderRow(sheet);
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const hasDetectedHeader = headerRowIndex !== null;
-  const firstDataRow = hasDetectedHeader ? headerRowIndex + 1 : range.s.r;
+  const detectedHeaderRow = headerRowIndex ?? range.s.r;
+  const firstDataRow = hasDetectedHeader ? detectedHeaderRow + 1 : range.s.r;
 
   // Extract headers from the detected row, or synthesize generic headers when the
   // worksheet is pure tabular data without an explicit header row.
   const headers: string[] = [];
   for (let c = range.s.c; c <= range.e.c; c++) {
     if (hasDetectedHeader) {
-      const cell = sheet[XLSX.utils.encode_cell({ r: headerRowIndex, c })];
+      const cell = sheet[XLSX.utils.encode_cell({ r: detectedHeaderRow, c })];
       if (cell && cell.v !== undefined && cell.v !== null && String(cell.v).trim() !== '') {
         headers.push(String(cell.v).trim());
       } else {
