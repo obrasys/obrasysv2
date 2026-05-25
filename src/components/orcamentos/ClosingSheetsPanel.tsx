@@ -54,8 +54,8 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
 
   return (
     <div className="space-y-4">
-      {initial && <ClosingCard sheet={initial} />}
-      {final && <ClosingCard sheet={final} />}
+      {initial && <ClosingSheetFullView sheet={initial} />}
+      {final && <ClosingSheetFullView sheet={final} />}
       {!final && initial && (
         <Card className="border-dashed">
           <CardContent className="py-6 flex items-center justify-between gap-4">
