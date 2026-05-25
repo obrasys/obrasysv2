@@ -18,9 +18,9 @@ const toNumber = (value: unknown, fallback = 0) => {
 const normalizeText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
 
-const normalizeUnit = (value: unknown) => {
+const normalizeUnit = (value: unknown, fallback = "un") => {
   const raw = String(value ?? "").trim().toLowerCase();
-  if (!raw) return "un";
+  if (!raw) return fallback;
   if (["un", "uni", "unid", "unidade", "unidades"].includes(raw)) return "un";
   if (["m", "metro", "metros"].includes(raw)) return "m";
   if (["m2", "m²", "mq"].includes(raw)) return "m2";
@@ -29,6 +29,9 @@ const normalizeUnit = (value: unknown) => {
   if (["kg", "quilo", "quilos"].includes(raw)) return "kg";
   if (["l", "lt", "litro", "litros"].includes(raw)) return "l";
   if (["vg", "verba"].includes(raw)) return "vg";
+  if (["h", "hr", "hora", "horas"].includes(raw)) return "h";
+  if (["cj", "conj", "conjunto", "conj.", "conjuntos"].includes(raw)) return "cj";
+  if (["lote", "lot"].includes(raw)) return "lote";
   return raw.slice(0, 12);
 };
 
@@ -93,137 +96,279 @@ const normalizeCode = (value: unknown, fallback: string) => {
   return text || fallback;
 };
 
+const VALID_UNITS = new Set(["un", "m", "m2", "m3", "ml", "kg", "vg", "l", "h", "cj", "lote"]);
+const TOTAL_KEYWORDS = /(total geral|total orçamento|total orcamento|valor total|preco global|total final|total da proposta|importa[nc]ia total)/;
+const SUMMARY_KEYWORDS = /(subtotal|sub total|total|iva|imposto|resumo|transporte|pagina anterior|a transportar)/;
+const HEADER_KEYWORDS = /(art\.?º|artigo|designa[cç][aã]o|descricao|descri[cç][aã]o|unid|unidade|quant|qtd|pre[cç]o|unit[aá]rio|parcial|cliente|local|obra|morada|data)/;
+
+const sanitizeTextCell = (value: unknown) => String(value ?? "").replace(/\s+/g, " ").trim();
+
+const isReferenceErrorText = (value: unknown) => /#ref!?/i.test(sanitizeTextCell(value));
+
+const isIncludedText = (value: unknown) => /inclu[ií]d[oa]/i.test(normalizeText(String(value ?? "")));
+
+const isProbablyHeaderRow = (values: unknown[]) => {
+  const joined = normalizeText(values.map((value) => String(value ?? "")).join(" "));
+  return HEADER_KEYWORDS.test(joined);
+};
+
+const isMeaningfulDescription = (value: string) => {
+  if (!value) return false;
+  const normalized = normalizeText(value);
+  if (!normalized || SUMMARY_KEYWORDS.test(normalized) || HEADER_KEYWORDS.test(normalized)) return false;
+  return /[a-z]/i.test(value) && value.length >= 3;
+};
+
+const almostEqual = (a: number, b: number, tolerance = 0.02) => {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  if (a === 0 && b === 0) return true;
+  return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1) <= tolerance;
+};
+
+const extractRowNumbers = (values: unknown[]) => values
+  .map((value, index) => ({ index, raw: value, value: toNumber(value, Number.NaN) }))
+  .filter((entry) => Number.isFinite(entry.value));
+
+const detectFinalBudgetTotal = (rows: Array<Record<string, unknown>>, headers: string[] = []) => {
+  const totals: Array<{ rowIndex: number; value: number; label: string }> = [];
+  const normalizedHeaders = headers.map((header) => normalizeText(header));
+  const totalHeaderIndex = normalizedHeaders.findIndex((header) => /(total|parcial|valor)/.test(header));
+
+  rows.forEach((row, rowIndex) => {
+    const values = Object.values(row);
+    const label = normalizeText(values.map((value) => String(value ?? "")).join(" "));
+    if (!TOTAL_KEYWORDS.test(label)) return;
+
+    const numericEntries = extractRowNumbers(values);
+    if (!numericEntries.length) return;
+
+    const preferred = totalHeaderIndex >= 0
+      ? numericEntries.find((entry) => entry.index === totalHeaderIndex)
+      : undefined;
+    const picked = preferred ?? numericEntries[numericEntries.length - 1];
+    if (!picked || picked.value <= 0) return;
+
+    totals.push({ rowIndex, value: picked.value, label });
+  });
+
+  if (!totals.length) return 0;
+  return totals.sort((a, b) => (b.rowIndex - a.rowIndex) || (b.value - a.value))[0].value;
+};
+
+type ImportDiagnostics = {
+  original_total: number;
+  imported_total: number;
+  difference: number;
+  status: "ok" | "review_required";
+  valid_articles: number;
+  chapters_found: number;
+  ignored_rows: number;
+  included_rows: number;
+  subtotal_rows: number;
+  ref_rows: number;
+  ignored_reasons: string[];
+};
+
+type OrganizedBudgetResult = {
+  titulo_sugerido: string;
+  capitulos: Array<{
+    numero: number;
+    titulo: string;
+    artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }>;
+  }>;
+  _meta: ImportDiagnostics;
+};
+
 const deriveBudgetFromRows = (
   rows: Array<Record<string, unknown>>,
   headers: string[] | undefined,
   catalog: Array<{ codigo: string | null; descricao: string; unidade: string | null; preco_unitario: number }>,
   fileName?: string,
-) => {
+): OrganizedBudgetResult | null => {
   if (!Array.isArray(rows) || rows.length === 0) return null;
 
   const normalizedHeaders = (headers ?? []).map((h) => normalizeText(h));
   const headerIndex = {
-    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref)/.test(h)),
-    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|artigo|item)/.test(h)),
-    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni)$/.test(h) || /unidade/.test(h)),
+    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref|art\.?º)/.test(h)),
+    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|designa|item)/.test(h)),
+    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni|unid)$/.test(h) || /unidade|unid/.test(h)),
     quantity: normalizedHeaders.findIndex((h) => /(quantidade|quant|qtd)/.test(h)),
-    price: normalizedHeaders.findIndex((h) => /(preco unit|preco|p unit|valor unit|unitario|c unit)/.test(h)),
+    unitPrice: normalizedHeaders.findIndex((h) => /(preco unit|preco\/ unitario|unitario|p unit|valor unit|precos unit)/.test(h)),
+    partial: normalizedHeaders.findIndex((h) => /(parcial|precos parcial|valor parcial|importe)/.test(h)),
+    total: normalizedHeaders.findIndex((h) => /(^|\s)(total|valor total)(\s|$)/.test(h)),
   };
 
-  const chapters: Array<{ numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> }> = [];
-  let currentChapter: { numero: number; titulo: string; artigos: Array<{ codigo: string; descricao: string; unidade: string; quantidade: number; preco_unitario: number }> } | null = null;
+  const chapters: OrganizedBudgetResult["capitulos"] = [];
+  let currentChapter: OrganizedBudgetResult["capitulos"][number] | null = null;
   let nextChapterNumber = 1;
   let articleCounter = 1;
-  let matchedArticles = 0;
+  let includedRows = 0;
+  let ignoredRows = 0;
+  let subtotalRows = 0;
+  let refRows = 0;
+  const ignoredReasons = new Set<string>();
 
   const getCell = (values: unknown[], idx: number) => (idx >= 0 && idx < values.length ? values[idx] : null);
+  const createChapter = (title: string) => {
+    const chapter = { numero: nextChapterNumber++, titulo: title, artigos: [] as OrganizedBudgetResult["capitulos"][number]["artigos"] };
+    chapters.push(chapter);
+    currentChapter = chapter;
+    return chapter;
+  };
 
   for (const row of rows) {
-    const entries = Object.entries(row);
-    const values = entries.map(([, value]) => value);
-    const textValues = values.map((value) => String(value ?? "").trim()).filter(Boolean);
-    if (!textValues.length || isSummaryRow(values)) continue;
+    const values = Object.values(row);
+    const textValues = values.map((value) => sanitizeTextCell(value)).filter(Boolean);
 
-    const descriptionCandidate = [
-      getCell(values, headerIndex.description),
-      ...values,
-    ].find((value) => {
-      const text = String(value ?? "").trim();
-      return text.length >= 4 && !looksLikeCode(text) && !isNumericLike(text);
-    });
-
-    const codeCandidate = [
-      getCell(values, headerIndex.code),
-      ...values,
-    ].find((value) => looksLikeCode(value));
-
-    const unitCandidate = [
-      getCell(values, headerIndex.unit),
-      ...values,
-    ].find((value) => {
-      const normalized = normalizeUnit(value);
-      return ["un", "m", "m2", "m3", "ml", "kg", "vg", "l"].includes(normalized);
-    });
-
-    const numericValues = values
-      .map((value) => toNumber(value, Number.NaN))
-      .filter((value) => Number.isFinite(value));
-
-    const quantityCandidate = getCell(values, headerIndex.quantity);
-    const priceCandidate = getCell(values, headerIndex.price);
-
-    // Detect if the last numeric column is a TOTAL (qty * price). If so, ignore it
-    // so we don't confuse price with total and inflate the budget many times over.
-    let qtyInferred: number = Number.NaN;
-    let priceInferred: number = Number.NaN;
-    if (numericValues.length >= 3) {
-      const a = numericValues[numericValues.length - 3];
-      const b = numericValues[numericValues.length - 2];
-      const c = numericValues[numericValues.length - 1];
-      const product = a * b;
-      const isTotalCol = product > 0 && c > 0 && Math.abs(product - c) / Math.max(product, c) < 0.02;
-      if (isTotalCol) {
-        qtyInferred = a;
-        priceInferred = b;
-      } else {
-        qtyInferred = b;
-        priceInferred = c;
-      }
-    } else if (numericValues.length === 2) {
-      qtyInferred = numericValues[0];
-      priceInferred = numericValues[1];
-    } else if (numericValues.length === 1) {
-      qtyInferred = 1;
-      priceInferred = numericValues[0];
-    }
-
-    const quantidade = Number.isFinite(toNumber(quantityCandidate, Number.NaN))
-      ? toNumber(quantityCandidate, 1)
-      : qtyInferred;
-    const precoInferido = Number.isFinite(toNumber(priceCandidate, Number.NaN))
-      ? toNumber(priceCandidate, 0)
-      : priceInferred;
-
-    const description = String(descriptionCandidate ?? "").trim();
-    const hasArticleShape = !!description && Number.isFinite(quantidade) && Number.isFinite(precoInferido);
-    const hasOnlyText = textValues.length <= 3 && numericValues.length === 0;
-
-    if (!hasArticleShape && hasOnlyText) {
-      const title = description || textValues[0];
-      if (isChapterLabel(title)) {
-        currentChapter = { numero: nextChapterNumber++, titulo: title, artigos: [] };
-        chapters.push(currentChapter);
-      }
+    if (!textValues.length) {
+      ignoredRows += 1;
+      ignoredReasons.add("linha vazia");
       continue;
     }
 
-    if (!hasArticleShape || !description) continue;
+    if (isProbablyHeaderRow(values)) {
+      ignoredRows += 1;
+      ignoredReasons.add("cabeçalho do Excel");
+      continue;
+    }
+
+    if (values.some((value) => isReferenceErrorText(value))) {
+      refRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add("linha com fórmula quebrada (#REF!)");
+      continue;
+    }
+
+    const numericEntries = extractRowNumbers(values);
+    const codeCandidate = [getCell(values, headerIndex.code), ...values].find((value) => looksLikeCode(value));
+    const descriptionCandidate = [getCell(values, headerIndex.description), ...values].find((value) => {
+      const text = sanitizeTextCell(value);
+      return isMeaningfulDescription(text) && !looksLikeCode(text) && !isNumericLike(text);
+    });
+    const description = sanitizeTextCell(descriptionCandidate);
+
+    const unitCandidate = headerIndex.unit >= 0 ? getCell(values, headerIndex.unit) : values.find((value) => VALID_UNITS.has(normalizeUnit(value, "")));
+    const normalizedUnit = normalizeUnit(unitCandidate, "");
+    const hasValidUnit = VALID_UNITS.has(normalizedUnit);
+
+    const quantityValue = headerIndex.quantity >= 0 ? toNumber(getCell(values, headerIndex.quantity), Number.NaN) : Number.NaN;
+    const unitPriceValue = headerIndex.unitPrice >= 0 ? toNumber(getCell(values, headerIndex.unitPrice), Number.NaN) : Number.NaN;
+    const partialValue = headerIndex.partial >= 0 ? toNumber(getCell(values, headerIndex.partial), Number.NaN) : Number.NaN;
+    const totalColumnValue = headerIndex.total >= 0 ? toNumber(getCell(values, headerIndex.total), Number.NaN) : Number.NaN;
+
+    const fallbackNumeric = [...numericEntries];
+    const likelyQty = Number.isFinite(quantityValue)
+      ? quantityValue
+      : fallbackNumeric.length >= 3
+        ? fallbackNumeric[Math.max(0, fallbackNumeric.length - 3)].value
+        : fallbackNumeric.length >= 2
+          ? fallbackNumeric[0].value
+          : Number.NaN;
+    const likelyUnitPrice = Number.isFinite(unitPriceValue)
+      ? unitPriceValue
+      : fallbackNumeric.length >= 2
+        ? fallbackNumeric[Math.max(0, fallbackNumeric.length - 2)].value
+        : Number.NaN;
+    let likelyPartial = Number.isFinite(partialValue)
+      ? partialValue
+      : fallbackNumeric.length >= 1
+        ? fallbackNumeric[fallbackNumeric.length - 1].value
+        : Number.NaN;
+
+    if (Number.isFinite(totalColumnValue) && almostEqual(likelyQty * likelyUnitPrice, totalColumnValue, 0.03)) {
+      likelyPartial = Number.isFinite(partialValue) ? partialValue : totalColumnValue;
+    }
+
+    const hasDescription = !!description;
+    const hasCode = !!sanitizeTextCell(codeCandidate);
+    const quantityIsNumeric = Number.isFinite(likelyQty);
+    const unitPriceIsNumeric = Number.isFinite(likelyUnitPrice);
+    const partialIsNumeric = Number.isFinite(likelyPartial);
+    const totalIsNumeric = Number.isFinite(totalColumnValue);
+    const containsIncludedText = values.some((value) => isIncludedText(value));
+    const textJoined = normalizeText(textValues.join(" "));
+    const isSummaryLike = SUMMARY_KEYWORDS.test(textJoined);
+
+    const isChapterOrSubtotal = hasCode && hasDescription && !hasValidUnit && !quantityIsNumeric && !unitPriceIsNumeric && totalIsNumeric;
+    const isChapterTextOnly = hasDescription && !hasValidUnit && !quantityIsNumeric && !unitPriceIsNumeric && !partialIsNumeric && (looksLikeCode(codeCandidate) || isChapterLabel(description));
+
+    if (containsIncludedText) {
+      includedRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add('linha "incluído no artigo"');
+      continue;
+    }
+
+    if (isChapterOrSubtotal || isChapterTextOnly) {
+      subtotalRows += 1;
+      createChapter(description || sanitizeTextCell(codeCandidate) || `Capítulo ${nextChapterNumber}`);
+      continue;
+    }
+
+    if (isSummaryLike) {
+      subtotalRows += 1;
+      ignoredRows += 1;
+      ignoredReasons.add("subtotal ou total agregado");
+      continue;
+    }
+
+    const matchesMath = quantityIsNumeric && unitPriceIsNumeric && partialIsNumeric && almostEqual(likelyQty * likelyUnitPrice, likelyPartial, 0.03);
+    const isBudgetItem = hasDescription && hasValidUnit && quantityIsNumeric && unitPriceIsNumeric && partialIsNumeric && matchesMath;
+
+    if (!isBudgetItem) {
+      ignoredRows += 1;
+      if (!hasDescription) ignoredReasons.add("linha sem descrição válida");
+      else if (!hasValidUnit) ignoredReasons.add("linha sem unidade válida");
+      else if (!partialIsNumeric) ignoredReasons.add("linha sem preço parcial válido");
+      else if (!matchesMath) ignoredReasons.add("parcial incompatível com quantidade × preço unitário");
+      else ignoredReasons.add("linha informativa ou nota");
+      continue;
+    }
 
     if (!currentChapter) {
-      currentChapter = { numero: nextChapterNumber++, titulo: "Geral", artigos: [] };
-      chapters.push(currentChapter);
+      createChapter("Geral");
     }
 
     const matched = findCatalogMatch({ codigo: String(codeCandidate ?? ""), descricao: description }, catalog);
-    const precoUnitario = precoInferido > 0 ? precoInferido : Number(matched?.preco_unitario || 0);
-    if (matched && precoInferido <= 0) matchedArticles += 1;
+    const finalUnitPrice = likelyUnitPrice > 0 ? likelyUnitPrice : Number(matched?.preco_unitario || 0);
+    if (!(finalUnitPrice > 0)) {
+      ignoredRows += 1;
+      ignoredReasons.add("artigo sem preço unitário válido");
+      continue;
+    }
 
-    currentChapter.artigos.push({
-      codigo: normalizeCode(codeCandidate, `${currentChapter.numero}.${articleCounter++}`),
+    currentChapter?.artigos.push({
+      codigo: normalizeCode(codeCandidate, `${currentChapter?.numero}.${articleCounter++}`),
       descricao: description,
       unidade: normalizeUnit(unitCandidate || matched?.unidade || "un"),
-      quantidade: quantidade > 0 ? quantidade : 1,
-      preco_unitario: precoUnitario,
+      quantidade: likelyQty,
+      preco_unitario: finalUnitPrice,
     });
   }
 
   const filteredChapters = chapters.filter((chapter) => chapter.artigos.length > 0);
   if (!filteredChapters.length) return null;
 
+  const importedTotal = calculateBudgetTotal({ capitulos: filteredChapters });
+  const originalTotal = detectFinalBudgetTotal(rows, headers ?? []);
+  const difference = Math.abs(originalTotal - importedTotal);
+
   return {
     titulo_sugerido: String(fileName || "Orçamento Importado").replace(/\.[^.]+$/, "") || "Orçamento Importado",
     capitulos: filteredChapters,
-    _meta: { matchedArticles },
+    _meta: {
+      original_total: originalTotal,
+      imported_total: importedTotal,
+      difference,
+      status: originalTotal > 0 && difference > 0.5 ? "review_required" : "ok",
+      valid_articles: filteredChapters.reduce((sum, chapter) => sum + chapter.artigos.length, 0),
+      chapters_found: chapters.length,
+      ignored_rows: ignoredRows,
+      included_rows: includedRows,
+      subtotal_rows: subtotalRows,
+      ref_rows: refRows,
+      ignored_reasons: Array.from(ignoredReasons),
+    },
   };
 };
 
@@ -236,17 +381,7 @@ const calculateBudgetTotal = (budget: { capitulos?: Array<{ artigos?: Array<{ qu
     0,
   );
 
-const extractExpectedTotalFromRows = (rows: Array<Record<string, unknown>>) => {
-  const totals = rows.flatMap((row) => Object.values(row)).map((value) => String(value ?? "").trim());
-  for (let i = 0; i < totals.length - 1; i += 1) {
-    const label = normalizeText(totals[i]);
-    const value = totals[i + 1];
-    if (/(total geral|total orçamento|total orcamento|preco global|valor total)/.test(label) && isNumericLike(value)) {
-      return toNumber(value, 0);
-    }
-  }
-  return 0;
-};
+const extractExpectedTotalFromRows = (rows: Array<Record<string, unknown>>, headers: string[] = []) => detectFinalBudgetTotal(rows, headers);
 
 const TOOL_SCHEMA = {
   type: "function" as const,
@@ -391,23 +526,8 @@ serve(async (req) => {
       : null;
 
     if (deterministicBudget) {
-      const expectedTotal = extractExpectedTotalFromRows(rows);
-      const parsedTotal = calculateBudgetTotal(deterministicBudget);
-      const ratio = expectedTotal > 0 && parsedTotal > 0 ? Math.max(expectedTotal, parsedTotal) / Math.min(expectedTotal, parsedTotal) : 1;
-
-      if (ratio <= 1.15 || expectedTotal === 0) {
-        return new Response(JSON.stringify({
-          titulo_sugerido: deterministicBudget.titulo_sugerido,
-          capitulos: deterministicBudget.capitulos,
-        }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      console.warn("Deterministic parse total mismatch, falling back to AI", {
-        expectedTotal,
-        parsedTotal,
-        ratio,
+      return new Response(JSON.stringify(deterministicBudget), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -497,7 +617,7 @@ serve(async (req) => {
 
     const organized = JSON.parse(toolCall.function.arguments);
 
-    const normalized = {
+    const normalized: OrganizedBudgetResult = {
       titulo_sugerido: String(organized?.titulo_sugerido || "Orçamento Importado"),
       capitulos: Array.isArray(organized?.capitulos)
         ? organized.capitulos.map((cap: any, index: number) => ({
@@ -523,26 +643,50 @@ serve(async (req) => {
               : [],
           }))
         : [],
+      _meta: {
+        original_total: hasTabular ? extractExpectedTotalFromRows(rows, headers ?? []) : 0,
+        imported_total: 0,
+        difference: 0,
+        status: "ok",
+        valid_articles: 0,
+        chapters_found: 0,
+        ignored_rows: 0,
+        included_rows: 0,
+        subtotal_rows: 0,
+        ref_rows: 0,
+        ignored_reasons: [],
+      },
     };
 
+    normalized._meta.imported_total = calculateBudgetTotal(normalized);
+    normalized._meta.difference = Math.abs(normalized._meta.original_total - normalized._meta.imported_total);
+    normalized._meta.valid_articles = normalized.capitulos.reduce((sum, cap) => sum + cap.artigos.length, 0);
+    normalized._meta.chapters_found = normalized.capitulos.length;
+    normalized._meta.status = normalized._meta.original_total > 0 && normalized._meta.difference > 0.5
+      ? "review_required"
+      : "ok";
+
     if (hasTabular) {
-      const expectedTotal = extractExpectedTotalFromRows(rows);
-      const aiTotal = calculateBudgetTotal(normalized);
+      const expectedTotal = normalized._meta.original_total;
+      const aiTotal = normalized._meta.imported_total;
       const ratio = expectedTotal > 0 && aiTotal > 0 ? Math.max(expectedTotal, aiTotal) / Math.min(expectedTotal, aiTotal) : 1;
 
       if (expectedTotal > 0 && ratio > 1.5) {
         const fallbackBudget = deriveBudgetFromRows(rows, headers, compactPriceCatalog, fileName);
         if (fallbackBudget) {
-          return new Response(JSON.stringify({
-            titulo_sugerido: fallbackBudget.titulo_sugerido,
-            capitulos: fallbackBudget.capitulos,
-          }), {
+          return new Response(JSON.stringify(fallbackBudget), {
             status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         return new Response(JSON.stringify({
-          error: "A importação gerou valores incoerentes face ao Excel original. Tente novamente ou use um ficheiro com colunas de quantidade/preço mais explícitas.",
+          error: "A importação gerou valores incoerentes face ao Excel original. Tente novamente ou reveja o ficheiro antes de gravar.",
+          validation: {
+            original_total: expectedTotal,
+            imported_total: aiTotal,
+            difference: Math.abs(expectedTotal - aiTotal),
+            status: "review_required",
+          },
         }), {
           status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

@@ -34,6 +34,19 @@ interface OrganizedChapter {
 interface OrganizedBudget {
   titulo_sugerido: string;
   capitulos: OrganizedChapter[];
+  _meta?: {
+    original_total: number;
+    imported_total: number;
+    difference: number;
+    status: 'ok' | 'review_required';
+    valid_articles: number;
+    chapters_found: number;
+    ignored_rows: number;
+    included_rows: number;
+    subtotal_rows: number;
+    ref_rows: number;
+    ignored_reasons: string[];
+  };
 }
 
 interface Props {
@@ -106,6 +119,8 @@ const readDocxAsText = async (file: File): Promise<string> => {
   const result = await mammoth.extractRawText({ arrayBuffer });
   return result.value;
 };
+
+const formatCurrency = (value: number) => `€${value.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
@@ -213,6 +228,8 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
     (sum, c) => sum + c.artigos.reduce((s, a) => s + Number(a.quantidade || 0) * Number(a.preco_unitario || 0), 0),
     0,
   ) ?? 0;
+  const validation = organized?._meta;
+  const isImportBlocked = validation?.status === 'review_required';
 
   const parseNumeric = (value: unknown, fallback = 0) => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -238,6 +255,10 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
 
   const handleSave = async () => {
     if (!organized || !user) return;
+    if (isImportBlocked) {
+      toast.error('A importação está bloqueada até o total coincidir com o ficheiro original.');
+      return;
+    }
     setIsSaving(true);
 
     try {
@@ -382,12 +403,40 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
           {step === 'preview' && organized && (
             <div className="space-y-4">
               <div className="flex items-center gap-4 flex-wrap">
-                <Badge variant="secondary">{organized.capitulos.length} capítulos</Badge>
-                <Badge variant="secondary">{totalArtigos} artigos</Badge>
-                <Badge variant="outline">
-                  Total: €{totalValor.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}
-                </Badge>
+                <Badge variant="secondary">{validation?.chapters_found ?? organized.capitulos.length} capítulos</Badge>
+                <Badge variant="secondary">{validation?.valid_articles ?? totalArtigos} artigos válidos</Badge>
+                <Badge variant="outline">Total importado: {formatCurrency(validation?.imported_total ?? totalValor)}</Badge>
+                {validation?.original_total ? (
+                  <Badge variant="outline">Total original: {formatCurrency(validation.original_total)}</Badge>
+                ) : null}
+                {validation ? (
+                  <Badge variant={validation.status === 'ok' ? 'secondary' : 'destructive'}>
+                    Diferença: {formatCurrency(validation.difference)}
+                  </Badge>
+                ) : null}
               </div>
+
+              {validation && (
+                <div className={`rounded-lg border p-4 text-sm space-y-2 ${validation.status === 'ok' ? 'border-border bg-muted/40' : 'border-destructive/40 bg-destructive/10'}`}>
+                  <div className="flex flex-wrap gap-x-6 gap-y-1">
+                    <span><strong>Estado:</strong> {validation.status === 'ok' ? 'OK' : 'Revisão obrigatória'}</span>
+                    <span><strong>Ignoradas:</strong> {validation.ignored_rows}</span>
+                    <span><strong>Subtotais/totais:</strong> {validation.subtotal_rows}</span>
+                    <span><strong>Incluído no artigo:</strong> {validation.included_rows}</span>
+                    <span><strong>#REF!:</strong> {validation.ref_rows}</span>
+                  </div>
+                  {validation.ignored_reasons.length > 0 ? (
+                    <p className="text-muted-foreground">
+                      <strong>Linhas excluídas:</strong> {validation.ignored_reasons.join(', ')}.
+                    </p>
+                  ) : null}
+                  {validation.status === 'review_required' ? (
+                    <p className="text-destructive font-medium">
+                      Atenção: o total importado não coincide com o total original do ficheiro. Possível duplicação de capítulos, subtotais ou linhas informativas.
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
               <ScrollArea className="h-[400px] border rounded-lg">
                 <div className="p-3 space-y-4">
@@ -440,8 +489,15 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
               <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-sm">
                 <p><strong>Capítulos:</strong> {organized?.capitulos.length}</p>
                 <p><strong>Artigos:</strong> {totalArtigos}</p>
-                <p><strong>Valor Base:</strong> €{totalValor.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</p>
+                <p><strong>Valor Base:</strong> {formatCurrency(validation?.imported_total ?? totalValor)}</p>
+                {validation?.original_total ? <p><strong>Total original:</strong> {formatCurrency(validation.original_total)}</p> : null}
+                {validation ? <p><strong>Diferença:</strong> {formatCurrency(validation.difference)}</p> : null}
               </div>
+              {isImportBlocked ? (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+                  A importação está bloqueada porque o total importado não coincide com o total original do ficheiro.
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -452,7 +508,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
               <Button variant="outline" onClick={() => { reset(); }}>
                 <ArrowLeft className="w-4 h-4 mr-1" /> Novo ficheiro
               </Button>
-              <Button onClick={() => setStep('confirm')}>
+              <Button onClick={() => setStep('confirm')} disabled={isImportBlocked}>
                 Continuar <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </>
@@ -462,7 +518,7 @@ export function ImportOrcamentoModal({ open, onOpenChange }: Props) {
               <Button variant="outline" onClick={() => setStep('preview')}>
                 <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
               </Button>
-              <Button onClick={handleSave} disabled={isSaving || !titulo.trim()}>
+              <Button onClick={handleSave} disabled={isSaving || !titulo.trim() || isImportBlocked}>
                 {isSaving ? (
                   <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> A guardar...</>
                 ) : (
