@@ -20,6 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { ImportOrcamentoModal } from '@/components/importar/ImportOrcamentoModal';
+import { ImportCSVModal } from '@/components/clientes/ImportCSVModal';
+import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
 
 interface ImportCategory {
   id: string;
