@@ -303,13 +303,93 @@ function parseCsv(text: string): Record<string, string>[] {
   const lines = clean.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
   const delim = lines[0].includes(";") ? ";" : ",";
-  const headers = lines[0].split(delim).map((h) => h.trim().toLowerCase());
+  const headers = lines[0].split(delim).map((h) => normalizeHeader(h));
   return lines.slice(1).map((line) => {
     const cells = splitCsvLine(line, delim);
     const row: Record<string, string> = {};
     headers.forEach((h, i) => (row[h] = (cells[i] ?? "").trim()));
-    return row;
-  }).filter((r) => r.codigo && r.artigo && r.capitulo);
+    return mapAliases(row);
+  }).filter((r) => r.codigo && r.artigo);
+}
+
+function splitCsvLine(line: string, delim: string): string[] {
+  const out: string[] = [];
+  let cur = "", inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+    } else if (c === delim && !inQ) { out.push(cur); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+// Normaliza cabeçalhos: minúsculas, sem acentos, espaços/símbolos → _
+function normalizeHeader(h: string): string {
+  return String(h)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\(.*?\)/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// Mapeia variantes de cabeçalho conhecidas → chaves canónicas do importador
+const ALIASES: Record<string, string> = {
+  // identificação
+  codigo: "codigo", cod: "codigo", ref: "codigo", referencia: "codigo",
+  // descrição
+  artigo: "artigo", descricao: "artigo", descricao_do_item: "artigo",
+  descricao_item: "artigo", designacao: "artigo", nome: "artigo", item: "artigo",
+  // hierarquia
+  capitulo: "capitulo", grupo: "capitulo", familia: "capitulo", categoria_principal: "capitulo",
+  subcapitulo: "subcapitulo", subgrupo: "subcapitulo", categoria: "subcapitulo", subfamilia: "subcapitulo",
+  // unidade
+  unidade: "unidade", un: "unidade", unid: "unidade",
+  // custos
+  mao_de_obra_estimada: "mao_obra_estimada_eur",
+  mao_obra_estimada: "mao_obra_estimada_eur",
+  mao_de_obra: "mao_obra_estimada_eur",
+  mao_obra: "mao_obra_estimada_eur",
+  mao_obra_estimada_eur: "mao_obra_estimada_eur",
+  material_estimado: "material_estimado_eur",
+  material_estimado_eur: "material_estimado_eur",
+  material: "material_estimado_eur",
+  custo: "custo_direto_eur",
+  custo_direto: "custo_direto_eur",
+  custo_direto_eur: "custo_direto_eur",
+  // margem
+  margem: "margem_configuravel_pct",
+  margem_padrao: "margem_configuravel_pct",
+  margem_configuravel: "margem_configuravel_pct",
+  margem_configuravel_pct: "margem_configuravel_pct",
+  // preço
+  preco: "preco_indicativo_eur",
+  preco_unitario: "preco_indicativo_eur",
+  preco_indicativo: "preco_indicativo_eur",
+  preco_indicativo_eur: "preco_indicativo_eur",
+  preco_venda: "preco_indicativo_eur",
+  preco_venda_sugerido: "preco_indicativo_eur",
+  preco_base_sem_iva: "preco_indicativo_eur",
+  preco_sem_iva: "preco_indicativo_eur",
+  // metadados
+  fonte: "fonte_base", fonte_base: "fonte_base", fonte_url: "fonte_base",
+  estado: "estado", tipo_de_preco: "estado", tipo_preco: "estado",
+  observacoes: "observacoes", obs: "observacoes", notas: "observacoes",
+  tipo_linha: "tipo_linha", tipolinha: "tipo_linha",
+};
+
+function mapAliases(row: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  Object.entries(row).forEach(([k, v]) => {
+    const canon = ALIASES[k] || k;
+    // não sobrescrever valor já preenchido por chave canónica
+    if (!out[canon] || out[canon] === "") out[canon] = v;
+  });
+  return out;
 }
 
 function splitCsvLine(line: string, delim: string): string[] {
