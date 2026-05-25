@@ -23,6 +23,7 @@ import {
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
   Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
   Zap, HardHat, MoreHorizontal, FileStack,
+  Lock as LockIcon, Target as TargetIcon, FileCheck2,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -37,6 +38,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
+import { BaseDryBudgetPanel } from '@/components/orcamentos/BaseDryBudgetPanel';
+import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
+import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
+import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +59,9 @@ export default function VerOrcamentoPage() {
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
   const { saveDocument } = useBudgetDocuments(id);
+  const { short: opLayerShort } = useOperationalLayerLabel();
+  const isLocked = Boolean((orcamento as any)?.is_locked);
+  const lockedAt = ((orcamento as any)?.locked_at as string | null) ?? null;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
@@ -272,14 +280,42 @@ export default function VerOrcamentoPage() {
 
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
-          <TabsList className="mb-4 no-print">
+          <TabsList className="mb-4 no-print flex flex-wrap h-auto">
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+            <TabsTrigger value="base">
+              <LockIcon className="h-3 w-3 mr-1.5" /> Base Seco
+            </TabsTrigger>
+            <TabsTrigger value="target">
+              <TargetIcon className="h-3 w-3 mr-1.5" /> {opLayerShort}
+            </TabsTrigger>
+            <TabsTrigger value="fecho">
+              <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
+            </TabsTrigger>
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="base">
+            <BaseDryBudgetPanel
+              orcamentoId={orcamento.id}
+              isLocked={isLocked}
+              lockedAt={lockedAt}
+              status={orcamento.status}
+              valorBase={valorBase}
+            />
+          </TabsContent>
+
+          <TabsContent value="target">
+            <TargetBudgetPanel orcamentoId={orcamento.id} />
+          </TabsContent>
+
+          <TabsContent value="fecho">
+            <ClosingSheetsPanel orcamentoId={orcamento.id} />
+          </TabsContent>
 
           <TabsContent value="cotacoes">
             <CotacoesTab orcamentoId={id!} />
           </TabsContent>
+
 
           <TabsContent value="orcamento">
             <div className="space-y-5">
