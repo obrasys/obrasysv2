@@ -100,6 +100,7 @@ export function OrcamentoForm({
       tipo_obra: undefined,
       tipo_cliente: undefined,
       tipo_operacao: undefined,
+      project_metadata: {},
       ...defaultValues,
     },
   });
