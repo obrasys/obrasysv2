@@ -252,6 +252,12 @@ export type Database = {
           capitulo_id: string
           codigo: string | null
           created_at: string
+          custo_alu: number
+          custo_div: number
+          custo_mat: number
+          custo_mo: number
+          custo_srv: number
+          custo_sub: number
           descricao: string
           id: string
           linked_element_id: string | null
@@ -270,6 +276,12 @@ export type Database = {
           capitulo_id: string
           codigo?: string | null
           created_at?: string
+          custo_alu?: number
+          custo_div?: number
+          custo_mat?: number
+          custo_mo?: number
+          custo_srv?: number
+          custo_sub?: number
           descricao: string
           id?: string
           linked_element_id?: string | null
@@ -288,6 +300,12 @@ export type Database = {
           capitulo_id?: string
           codigo?: string | null
           created_at?: string
+          custo_alu?: number
+          custo_div?: number
+          custo_mat?: number
+          custo_mo?: number
+          custo_srv?: number
+          custo_sub?: number
           descricao?: string
           id?: string
           linked_element_id?: string | null
@@ -6036,6 +6054,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      matriz_capitulos_padrao: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          ordem: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       member_module_permissions: {
         Row: {
@@ -12171,6 +12219,10 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_matriz_capitulos: {
+        Args: { p_orcamento_id: string }
+        Returns: number
+      }
       approve_base_dry_budget: {
         Args: { p_orcamento_id: string }
         Returns: Json
