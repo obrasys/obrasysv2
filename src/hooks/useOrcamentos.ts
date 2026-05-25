@@ -88,7 +88,19 @@ export function useOrcamentos() {
         .single();
 
       if (error) throw error;
+
+      // Aplicar matriz fixa de 37 capítulos (00 → 036) — modo Avançado
+      try {
+        await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>)(
+          'aplicar_matriz_capitulos',
+          { p_orcamento_id: data.id }
+        );
+      } catch (e) {
+        console.warn('[matriz] falha ao aplicar matriz de capítulos:', e);
+      }
+
       return data;
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
