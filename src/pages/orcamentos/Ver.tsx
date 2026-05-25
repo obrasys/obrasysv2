@@ -297,6 +297,9 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="pacotes">
               <Package className="h-3 w-3 mr-1.5" /> Pacotes
             </TabsTrigger>
+            <TabsTrigger value="compras">
+              <ShoppingCart className="h-3 w-3 mr-1.5" /> Compras
+            </TabsTrigger>
             <TabsTrigger value="historico">
               <History className="h-3 w-3 mr-1.5" /> Histórico
             </TabsTrigger>
@@ -324,6 +327,14 @@ export default function VerOrcamentoPage() {
           <TabsContent value="pacotes">
             <ContractingPackagesPanel orcamentoId={orcamento.id} />
           </TabsContent>
+
+          <TabsContent value="compras">
+            <PurchasesPanel
+              orcamentoId={orcamento.id}
+              obraId={(orcamento as any).obra_id ?? null}
+            />
+          </TabsContent>
+
 
           <TabsContent value="historico">
             <BudgetHistoryPanel orcamentoId={orcamento.id} />
