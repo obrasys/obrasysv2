@@ -342,7 +342,38 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.header.nome_obra}
               onChange={(v) => patch("header", { ...details.header, nome_obra: v })}
             />
-          </div>
+        </div>
+
+        {/* KPI HERO STRIP */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {[
+            { label: "Custo Industrial", value: fmt(totals.custo_industrial), tone: "muted" as const },
+            { label: "Custo Total", value: fmt(totals.custo_total), tone: "primary" as const },
+            { label: "Vendas", value: fmt(totals.valor_vendas), tone: "muted" as const },
+            { label: "RAI €", value: fmt(totals.rai_eur), tone: totals.rai_eur >= 0 ? "good" as const : "bad" as const },
+            { label: "RAI %", value: pct(totals.rai_pct), tone: totals.rai_pct >= 0 ? "good" as const : "bad" as const },
+          ].map((k) => (
+            <div
+              key={k.label}
+              className={
+                k.tone === "primary"
+                  ? "rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-3 shadow-md"
+                  : k.tone === "good"
+                    ? "rounded-xl bg-emerald-50 border border-emerald-200 p-3"
+                    : k.tone === "bad"
+                      ? "rounded-xl bg-rose-50 border border-rose-200 p-3"
+                      : "rounded-xl bg-muted/40 border p-3"
+              }
+            >
+              <p className={`text-[10px] uppercase tracking-wide ${k.tone === "primary" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                {k.label}
+              </p>
+              <p className={`text-base md:text-lg font-bold tabular-nums mt-1 ${k.tone === "good" ? "text-emerald-700" : k.tone === "bad" ? "text-rose-700" : ""}`}>
+                {k.value}
+              </p>
+            </div>
+          ))}
+        </div>
           <div>
             <Label className="text-[11px] uppercase">Nº / Lote Obra</Label>
             <TextCell
