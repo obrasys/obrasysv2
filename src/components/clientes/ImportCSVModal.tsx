@@ -167,7 +167,12 @@ export function ImportCSVModal({ open, onOpenChange, onSuccess }: ImportCSVModal
     for (let i = 0; i < csvData.rawData.length; i++) {
       const row = csvData.rawData[i];
       const mappedData = mapRowToClient(row, mapping);
-      
+
+      // Fallback: if no nome but empresa exists, use empresa as nome
+      if (!mappedData.nome && mappedData.empresa) {
+        mappedData.nome = mappedData.empresa;
+      }
+
       // Skip rows without nome
       if (!mappedData.nome) {
         failed++;
