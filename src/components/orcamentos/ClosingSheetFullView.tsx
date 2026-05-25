@@ -98,17 +98,62 @@ function SubtotalRow({ label, value, code }: { label: string; value: number; cod
   );
 }
 
+function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
+  const base = mergeDetails(sheet.details);
+  const detailsEmpty =
+    !sheet.details ||
+    Object.keys(sheet.details as object).length === 0 ||
+    (base.direct_costs.every((l) => !l.value) && base.site_costs.every((l) => !l.value));
+
+  if (!detailsEmpty) return base;
+
+  // Seed direct cost on the "Empreitada Geral c/ Exclusões" line
+  const dc = [...base.direct_costs];
+  const idxEmp = dc.findIndex((l) => l.key === "empreitada_exclusoes");
+  if (idxEmp >= 0) dc[idxEmp] = { ...dc[idxEmp], value: Number(sheet.total_direct_cost) || 0 };
+
+  // Seed estaleiro on Gestão Obra
+  const sc = [...base.site_costs];
+  const idxGo = sc.findIndex((l) => l.key === "gestao_obra");
+  if (idxGo >= 0) sc[idxGo] = { ...sc[idxGo], value: Number(sheet.site_costs) || 0 };
+
+  // Seed sales line from sale_price
+  const sales =
+    Number(sheet.sale_price) > 0
+      ? [
+          {
+            key: "legacy-sale",
+            tipologia: "Total proposta (importado)",
+            quantidade: 1,
+            area_priv: 1,
+            preco_m2: Number(sheet.sale_price),
+          },
+        ]
+      : [];
+
+  return {
+    ...base,
+    direct_costs: dc,
+    site_costs: sc,
+    admin: { ...base.admin, estrutura_overhead: Number(sheet.structure_costs) || 0 },
+    other: { ...base.other, outros_taxas_ramais: Number(sheet.contingency_amount) || 0 },
+    indirect: { ...base.indirect, honorarios_tecnicos: Number(sheet.total_indirect_cost) || 0 },
+    sales,
+  };
+}
+
 export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const isInitial = sheet.closing_type === "initial";
   const isLocked = sheet.status === "locked";
   const readOnly = isLocked;
 
-  const [details, setDetails] = useState<ClosingSheetDetails>(() => mergeDetails(sheet.details));
+  const [details, setDetails] = useState<ClosingSheetDetails>(() => seedFromLegacy(sheet));
   const update = useUpdateClosingSheetDetails(sheet.source_budget_id || undefined);
 
   useEffect(() => {
-    setDetails(mergeDetails(sheet.details));
+    setDetails(seedFromLegacy(sheet));
   }, [sheet.id, sheet.details]);
+
 
   const totals = useMemo(() => computeClosingTotals(details), [details]);
 
