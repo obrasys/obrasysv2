@@ -41,6 +41,7 @@ import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel
 import { BaseDryBudgetPanel } from '@/components/orcamentos/BaseDryBudgetPanel';
 import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
+import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
 
 export default function VerOrcamentoPage() {
