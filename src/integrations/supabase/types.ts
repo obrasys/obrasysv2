@@ -1388,14 +1388,17 @@ export type Database = {
           awarded_by_user_id: string
           awarded_total_amount: number
           budget_id: string
+          budget_version_id: string | null
           created_at: string
           deposit_amount: number
           deposit_percent: number
           id: string
           notes: string | null
           obra_id: string | null
+          package_id: string | null
           remaining_amount: number
           status: string
+          supplier_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1404,14 +1407,17 @@ export type Database = {
           awarded_by_user_id: string
           awarded_total_amount: number
           budget_id: string
+          budget_version_id?: string | null
           created_at?: string
           deposit_amount?: number
           deposit_percent?: number
           id?: string
           notes?: string | null
           obra_id?: string | null
+          package_id?: string | null
           remaining_amount?: number
           status?: string
+          supplier_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1420,14 +1426,17 @@ export type Database = {
           awarded_by_user_id?: string
           awarded_total_amount?: number
           budget_id?: string
+          budget_version_id?: string | null
           created_at?: string
           deposit_amount?: number
           deposit_percent?: number
           id?: string
           notes?: string | null
           obra_id?: string | null
+          package_id?: string | null
           remaining_amount?: number
           status?: string
+          supplier_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1440,10 +1449,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "budget_awards_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "budget_awards_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_awards_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "contracting_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -1715,6 +1738,13 @@ export type Database = {
             columns: ["budget_version_id"]
             isOneToOne: false
             referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bvi_package_fk"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "contracting_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -2826,6 +2856,91 @@ export type Database = {
             columns: ["source_voice_command_id"]
             isOneToOne: false
             referencedRelation: "voice_commands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracting_packages: {
+        Row: {
+          awarded_at: string | null
+          awarded_supplier_id: string | null
+          awarded_total: number
+          budget_version_id: string | null
+          chapter_code: string | null
+          chapter_name: string | null
+          created_at: string
+          description: string | null
+          estimated_total: number
+          id: string
+          name: string
+          notes: string | null
+          obra_id: string | null
+          organization_id: string | null
+          source_budget_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_supplier_id?: string | null
+          awarded_total?: number
+          budget_version_id?: string | null
+          chapter_code?: string | null
+          chapter_name?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_total?: number
+          id?: string
+          name: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          source_budget_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_supplier_id?: string | null
+          awarded_total?: number
+          budget_version_id?: string | null
+          chapter_code?: string | null
+          chapter_name?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_total?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
+          source_budget_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracting_packages_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracting_packages_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracting_packages_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -11816,6 +11931,26 @@ export type Database = {
       }
       can_access_rdo_photo: { Args: { _path: string }; Returns: boolean }
       classify_task_delay: { Args: { p_task_id: string }; Returns: string }
+      confirm_award: {
+        Args: {
+          _awarded_total: number
+          _notes?: string
+          _package_id: string
+          _supplier_id: string
+        }
+        Returns: string
+      }
+      create_contracting_package: {
+        Args: {
+          _budget_version_id: string
+          _chapter_code?: string
+          _chapter_name?: string
+          _description?: string
+          _item_ids: string[]
+          _name: string
+        }
+        Returns: string
+      }
       create_new_target_version: {
         Args: { p_reason?: string; p_source_budget_id: string }
         Returns: string
