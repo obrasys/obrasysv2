@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -19,14 +19,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArtigoRow } from './ArtigoRow';
 import type { Capitulo, ArtigoFormData } from '@/types/orcamentos';
-import { 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Plus, 
+import {
+  CAPITULO_COLUMNS,
+  GROUP_LABELS,
+  loadVisibleColumns,
+  saveVisibleColumns,
+  type CapituloColumnKey,
+} from '@/lib/capitulo-columns';
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  Plus,
   Search,
   Euro,
   FileText,
+  Columns3,
 } from 'lucide-react';
 
 interface CapituloAccordionProps {
