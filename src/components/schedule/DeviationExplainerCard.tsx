@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { ScheduleTask, ScheduleDependency } from '@/types/schedule';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   tasks: ScheduleTask[];
