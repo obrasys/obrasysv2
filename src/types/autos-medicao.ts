@@ -246,7 +246,7 @@ export const UNIDADES_MEDIDA = [
   { value: 'cj', label: 'Conjunto (cj)' },
   { value: 'kg', label: 'Quilograma (kg)' },
   { value: 't', label: 'Tonelada (t)' },
-  { value: 'vg', label: 'Verba Global (vg)' },
+  { value: 'vg', label: 'Valor Global (vg)' },
   { value: 'h', label: 'Hora (h)' },
   { value: 'dia', label: 'Dia' },
   { value: '%', label: 'Percentagem (%)' },
