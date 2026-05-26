@@ -171,7 +171,8 @@ export default function EditarOrcamentoPage() {
     );
   }
 
-  const isReadOnly = orcamento.status === 'adjudicado';
+  const isLocked = Boolean((orcamento as any)?.is_locked);
+  const isReadOnly = orcamento.status === 'adjudicado' || isLocked;
 
   const handleAddCapitulo = () => {
     const nextNumero = (orcamento.capitulos?.length || 0) + 1;
