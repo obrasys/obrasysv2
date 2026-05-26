@@ -283,10 +283,10 @@ export type Categoria = typeof CATEGORIAS[number];
 // Unidades disponíveis
 export const UNIDADES = [
   { value: 'un', label: 'Unidade (un)' },
-  { value: 'm', label: 'Metro linear (m)' },
   { value: 'm2', label: 'Metro quadrado (m²)' },
   { value: 'm3', label: 'Metro cúbico (m³)' },
   { value: 'ml', label: 'Metro linear (ml)' },
+  { value: 'cj', label: 'Conjunto (cj)' },
   { value: 'kg', label: 'Quilograma (kg)' },
   { value: 'vg', label: 'Verba global (vg)' },
 ] as const;
