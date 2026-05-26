@@ -30,11 +30,14 @@ export function FornecedorCard({ fornecedor, onEdit, onDelete }: FornecedorCardP
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="font-semibold text-lg truncate">{fornecedor.nome}</h3>
               <Badge variant={fornecedor.ativo ? "default" : "secondary"}>
                 {fornecedor.ativo ? 'Ativo' : 'Inativo'}
               </Badge>
+              {fornecedor.area_atuacao && (
+                <Badge variant="outline" className="text-xs">{fornecedor.area_atuacao}</Badge>
+              )}
             </div>
 
             <div className="space-y-1.5 text-sm text-muted-foreground">

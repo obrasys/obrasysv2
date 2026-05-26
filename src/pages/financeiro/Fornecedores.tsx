@@ -19,18 +19,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download } from 'lucide-react';
+import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download, Truck, UserCircle, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFornecedores } from '@/hooks/useFinanceiro';
 import { FornecedorCard } from '@/components/financeiro/FornecedorCard';
 import { FornecedorForm } from '@/components/financeiro/FornecedorForm';
 import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
-import type { Fornecedor, FornecedorFormData } from '@/types/financeiro';
+import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
 const FornecedoresPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterAtivo, setFilterAtivo] = useState<string>('all');
+  const [filterArea, setFilterArea] = useState<string>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -99,14 +100,27 @@ const FornecedoresPage = () => {
     const matchesSearch = 
       fornecedor.nome.toLowerCase().includes(search.toLowerCase()) ||
       fornecedor.email?.toLowerCase().includes(search.toLowerCase()) ||
-      fornecedor.nif?.toLowerCase().includes(search.toLowerCase());
+      fornecedor.nif?.toLowerCase().includes(search.toLowerCase()) ||
+      fornecedor.area_atuacao?.toLowerCase().includes(search.toLowerCase());
     
     const matchesAtivo = filterAtivo === 'all' || 
       (filterAtivo === 'ativo' && fornecedor.ativo) || 
       (filterAtivo === 'inativo' && !fornecedor.ativo);
 
-    return matchesSearch && matchesAtivo;
+    const matchesArea =
+      filterArea === 'all' ||
+      (filterArea === '__none__' && !fornecedor.area_atuacao) ||
+      fornecedor.area_atuacao === filterArea;
+
+    return matchesSearch && matchesAtivo && matchesArea;
   });
+
+  // Contagem por área (apenas fornecedores ativos visíveis)
+  const areaCounts = (fornecedores || []).reduce<Record<string, number>>((acc, f) => {
+    const key = f.area_atuacao || '__none__';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
   if (isLoading) {
     return (
@@ -136,18 +150,64 @@ const FornecedoresPage = () => {
           </div>
         </div>
 
+        {/* Separador visual: Fornecedores ≠ Clientes */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Truck className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Fornecedores (esta página)</p>
+              <p className="text-xs text-muted-foreground">
+                Contactos de quem te <strong>fornece</strong> materiais ou serviços (carpinteiros, eletricistas, etc.).
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/clientes')}
+            className="rounded-xl border bg-card p-4 flex items-start gap-3 hover:border-primary/40 hover:bg-accent transition text-left"
+          >
+            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <UserCircle className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Clientes (página separada)</p>
+              <p className="text-xs text-muted-foreground">
+                Quem te <strong>contrata</strong> obras e orçamentos. Clica para ir para a lista de clientes →
+              </p>
+            </div>
+          </button>
+        </div>
+
         {/* Filters and Actions */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="flex flex-1 gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Pesquisar por nome, email ou NIF..."
+                placeholder="Pesquisar por nome, email, NIF ou área..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
+
+            <Select value={filterArea} onValueChange={setFilterArea}>
+              <SelectTrigger className="w-[220px]">
+                <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Área de atuação" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[320px]">
+                <SelectItem value="all">Todas as áreas</SelectItem>
+                {AREAS_ATUACAO_FORNECEDOR.map((area) => (
+                  <SelectItem key={area} value={area}>
+                    {area}{areaCounts[area] ? ` (${areaCounts[area]})` : ''}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__none__">Sem área definida{areaCounts['__none__'] ? ` (${areaCounts['__none__']})` : ''}</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Select value={filterAtivo} onValueChange={setFilterAtivo}>
               <SelectTrigger className="w-[140px]">
