@@ -360,6 +360,20 @@ export default function EditarOrcamentoPage() {
           />
         </div>
 
+        {isLocked && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-semibold text-amber-900 dark:text-amber-200">
+                Orçamento bloqueado (Base Seco)
+              </p>
+              <p className="text-amber-800 dark:text-amber-300 mt-1">
+                {(orcamento as any).locked_reason || 'Este orçamento foi aprovado e congelado. Para adicionar ou alterar capítulos e artigos, utilize o Budget Objetivo.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
            <TabsList className="grid w-full max-w-2xl grid-cols-4">
