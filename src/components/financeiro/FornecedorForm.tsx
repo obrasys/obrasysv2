@@ -19,14 +19,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Fornecedor, FornecedorFormData } from '@/types/financeiro';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
-  telefone: z.string().optional(),
-  endereco: z.string().optional(),
-  nif: z.string().optional(),
+  nome: z.string().trim().min(1, 'Nome é obrigatório').max(200, 'Máx. 200 caracteres'),
+  email: z.string().trim().email('Email inválido').max(200).optional().or(z.literal('')),
+  telefone: z.string().trim().max(50).optional(),
+  endereco: z.string().trim().max(500).optional(),
+  nif: z.string().trim().max(20).optional(),
+  area_atuacao: z.string().trim().max(100).optional(),
   ativo: z.boolean().optional(),
 });
 
