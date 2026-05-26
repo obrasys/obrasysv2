@@ -270,6 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatePassword,
         refreshProfile,
         trialDaysRemaining,
+        mfaVerified,
+        setMfaVerified,
       }}
     >
       {children}
