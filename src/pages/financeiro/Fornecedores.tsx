@@ -19,13 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download } from 'lucide-react';
+import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download, Truck, UserCircle, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFornecedores } from '@/hooks/useFinanceiro';
 import { FornecedorCard } from '@/components/financeiro/FornecedorCard';
 import { FornecedorForm } from '@/components/financeiro/FornecedorForm';
 import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
-import type { Fornecedor, FornecedorFormData } from '@/types/financeiro';
+import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
 const FornecedoresPage = () => {
   const navigate = useNavigate();
