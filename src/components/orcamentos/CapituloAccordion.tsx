@@ -70,6 +70,25 @@ export function CapituloAccordion({
   const [summaryText, setSummaryText] = useState(capitulo.client_summary_text || '');
   const [exclusionsText, setExclusionsText] = useState(capitulo.client_exclusions_text || '');
   const [includeInSummary, setIncludeInSummary] = useState(capitulo.include_in_client_summary !== false);
+  const [visibleCols, setVisibleCols] = useState<CapituloColumnKey[]>(() => loadVisibleColumns());
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+
+  useEffect(() => {
+    saveVisibleColumns(visibleCols);
+  }, [visibleCols]);
+
+  const toggleCol = (key: CapituloColumnKey) => {
+    const def = CAPITULO_COLUMNS.find((c) => c.key === key);
+    if (def?.required) return;
+    setVisibleCols((prev) =>
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
+    );
+  };
+
+  const groupedCols = CAPITULO_COLUMNS.reduce<Record<string, typeof CAPITULO_COLUMNS>>((acc, col) => {
+    (acc[col.group] ||= []).push(col);
+    return acc;
+  }, {});
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
