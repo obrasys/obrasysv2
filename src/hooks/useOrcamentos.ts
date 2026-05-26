@@ -635,6 +635,13 @@ export function useOrcamento(id: string | undefined) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamento', id] });
     },
+    onError: (error: any) => {
+      toast({
+        title: 'Não foi possível criar o artigo',
+        description: error?.message || 'Erro desconhecido.',
+        variant: 'destructive',
+      });
+    },
   });
 
   // Atualizar artigo
@@ -663,6 +670,13 @@ export function useOrcamento(id: string | undefined) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamento', id] });
     },
+    onError: (error: any) => {
+      toast({
+        title: 'Não foi possível atualizar o artigo',
+        description: error?.message || 'Erro desconhecido.',
+        variant: 'destructive',
+      });
+    },
   });
 
   // Eliminar artigo
@@ -677,6 +691,13 @@ export function useOrcamento(id: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamento', id] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Não foi possível eliminar o artigo',
+        description: error?.message || 'Erro desconhecido.',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -714,6 +735,13 @@ export function useOrcamento(id: string | undefined) {
       toast({
         title: 'Sucesso',
         description: 'Artigos adicionados com sucesso',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Não foi possível adicionar os artigos',
+        description: error?.message || 'Erro desconhecido ao adicionar artigos.',
+        variant: 'destructive',
       });
     },
   });
