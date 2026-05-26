@@ -46,6 +46,8 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
   trialDaysRemaining: number;
+  mfaVerified: boolean;
+  setMfaVerified: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
