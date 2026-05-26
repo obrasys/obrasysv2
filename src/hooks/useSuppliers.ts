@@ -804,12 +804,12 @@ export function useAvailableSuppliers(categoryIds: string[]) {
       if (categoryIds.length === 0) {
         const { data, error } = await supabase
           .from('supplier_profiles')
-          .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+          .select(`${PUBLIC_SUPPLIER_COLS}, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
           .eq('status', 'active')
           .order('is_certified', { ascending: false })
           .order('rating_avg', { ascending: false });
         if (error) throw error;
-        return data as SupplierProfile[];
+        return ((data as unknown) as SupplierProfile[]);
       }
 
       // Get suppliers that have at least one of the requested categories
