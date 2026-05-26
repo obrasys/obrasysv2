@@ -17,12 +17,13 @@ const ACTION_MESSAGES: Record<string, { title: string; kind: "success" | "error"
  * mutation feedback.
  */
 export function useAxiaIntakeRealtimeNotifications() {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const seen = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (!organization?.id) return;
     const channel = supabase
-      .channel("axia-intake-history-notifications")
+      .channel(`org:${organization.id}:axia-intake-history-notifications`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "axia_intake_item_history" },
