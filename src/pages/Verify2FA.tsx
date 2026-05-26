@@ -24,11 +24,25 @@ export default function Verify2FA() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [sent, setSent] = useState(false);
 
-  // Send code on mount
+  // On mount: try trusted-device fast path, otherwise send code
   useEffect(() => {
-    if (user && !sent) {
+    if (!user || sent) return;
+    const tryTrustedOrSend = async () => {
+      const storedToken = localStorage.getItem(TRUSTED_DEVICE_KEY);
+      if (storedToken) {
+        const { data } = await supabase.functions.invoke("verify-2fa-code", {
+          body: { deviceToken: storedToken },
+        });
+        if (data?.verified) {
+          setMfaVerified(true);
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+        localStorage.removeItem(TRUSTED_DEVICE_KEY);
+      }
       sendCode();
-    }
+    };
+    tryTrustedOrSend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
