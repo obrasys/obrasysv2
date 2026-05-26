@@ -256,7 +256,7 @@ export function useAutosMedicao(obraId?: string) {
           dentro_tolerancia: dentroTolerancia,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
