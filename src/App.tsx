@@ -171,6 +171,7 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/criar-conta" element={<CriarConta />} />
                   <Route path="/auth/reset-password" element={<ResetPassword />} />
+                  <Route path="/verify-2fa" element={<Verify2FA />} />
                   <Route path="/dashboard" element={<ManagerRoute><Dashboard /></ManagerRoute>} />
                   <Route path="/orcamentos" element={<ManagerRoute><OrcamentosPage /></ManagerRoute>} />
                   <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />
