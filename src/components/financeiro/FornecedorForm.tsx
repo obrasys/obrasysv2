@@ -55,6 +55,7 @@ export function FornecedorForm({
       telefone: fornecedor?.telefone || '',
       endereco: fornecedor?.endereco || '',
       nif: fornecedor?.nif || '',
+      area_atuacao: fornecedor?.area_atuacao || '',
       ativo: fornecedor?.ativo ?? true,
     },
   });
@@ -66,6 +67,7 @@ export function FornecedorForm({
       telefone: data.telefone || undefined,
       endereco: data.endereco || undefined,
       nif: data.nif || undefined,
+      area_atuacao: data.area_atuacao || undefined,
     });
     form.reset();
     onOpenChange(false);
