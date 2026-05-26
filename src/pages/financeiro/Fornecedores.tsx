@@ -31,6 +31,7 @@ const FornecedoresPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterAtivo, setFilterAtivo] = useState<string>('all');
+  const [filterArea, setFilterArea] = useState<string>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
