@@ -55,6 +55,31 @@ serve(async (req) => {
     const code: string | undefined = body.code;
     const trustDevice: boolean = !!body.trustDevice;
     const deviceLabel: string = (body.deviceLabel ?? "Dispositivo desconhecido").toString().slice(0, 200);
+    const deviceTokenIn: string | undefined = body.deviceToken;
+
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Trusted device fast-path (no code required)
+    if (deviceTokenIn && !code) {
+      const tokenHash = await sha256(deviceTokenIn);
+      const { data: device } = await supabase
+        .from("mfa_trusted_devices")
+        .select("id, expires_at")
+        .eq("user_id", userId)
+        .eq("device_token_hash", tokenHash)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+      if (!device) {
+        return new Response(JSON.stringify({ error: "Dispositivo não confiável" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabase.from("mfa_trusted_devices").update({ last_used_at: new Date().toISOString() }).eq("id", device.id);
+      return new Response(JSON.stringify({ verified: true, trustedDevice: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!code || !/^\d{6}$/.test(code)) {
       return new Response(JSON.stringify({ error: "Código inválido" }), {
