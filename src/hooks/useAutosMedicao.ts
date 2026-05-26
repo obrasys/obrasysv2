@@ -377,7 +377,7 @@ export function useAutosMedicao(obraId?: string) {
       .from('autos_medicao')
       .select('taxa_iva')
       .eq('id', autoId)
-      .single();
+      .maybeSingle();
 
     const taxaIva = auto?.taxa_iva || 23;
     const valorIva = valorMedidoAtual * (taxaIva / 100);
