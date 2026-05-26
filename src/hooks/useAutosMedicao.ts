@@ -327,9 +327,9 @@ export function useAutosMedicao(obraId?: string) {
       queryClient.invalidateQueries({ queryKey: ['auto-medicao'] });
       toast.success('Item atualizado');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Erro ao atualizar item:', error);
-      toast.error('Erro ao atualizar item');
+      toast.error(error?.message || 'Erro ao atualizar item');
     },
   });
 
