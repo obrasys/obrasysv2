@@ -288,7 +288,7 @@ export const UNIDADES = [
   { value: 'ml', label: 'Metro linear (ml)' },
   { value: 'cj', label: 'Conjunto (cj)' },
   { value: 'kg', label: 'Quilograma (kg)' },
-  { value: 'vg', label: 'Verba global (vg)' },
+  { value: 'vg', label: 'Valor Global (vg)' },
 ] as const;
 
 // Status labels e cores
