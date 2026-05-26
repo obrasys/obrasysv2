@@ -141,7 +141,20 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
         preco_unitario: a.preco_unitario,
       }));
 
-    onAddArtigos(artigosToAdd);
+    // Add padrão (template) selections
+    const chapter = chapterTemplates?.find((c) => c.id === selectedChapterId);
+    const padraoToAdd: ArtigoFormData[] = (articleTemplates || [])
+      .filter((a) => selectedIds.has(`tpl_${a.id}`))
+      .map((a) => ({
+        codigo: a.code,
+        descricao: a.name + (a.description ? ` — ${a.description}` : ''),
+        unidade: a.suggested_unit || 'un',
+        quantidade: 1,
+        preco_unitario: 0,
+        categoria: a.category || chapter?.name,
+      }));
+
+    onAddArtigos([...artigosToAdd, ...padraoToAdd]);
     setSelectedIds(new Set());
     onClose();
   };
@@ -150,6 +163,7 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
     setSelectedIds(new Set());
     setSearchQuery('');
     setSelectedCategoria('all');
+    setSelectedChapterId(null);
     onClose();
   };
 
