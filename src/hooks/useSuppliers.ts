@@ -14,6 +14,21 @@ import type {
   CreateQuoteResponseForm,
 } from '@/types/suppliers';
 
+// Columns safe to expose in cross-org discovery listings. Sensitive PII
+// (nif, phone, telemovel, telefone_fixo, email_comercial, morada_completa,
+// codigo_postal, responsavel_nome, payment_terms) is column-level revoked
+// from `authenticated`. Owners read full row via `get_my_supplier_profile`,
+// Super Admins via `admin_get_all_supplier_profiles`.
+const PUBLIC_SUPPLIER_COLS =
+  'id, user_id, legal_name, trade_name, logo_url, status, is_certified, ' +
+  'rating_avg, rating_count, sla_response_hours, min_order_value, ' +
+  'delivery_capability, service_areas, location_district, location_municipality, ' +
+  'categoria_principal, subcategorias, certificacoes, zona_atuacao, ' +
+  'distritos_atuacao, raio_atuacao_km, tipo_fornecimento, prazo_medio_entrega, ' +
+  'trabalha_credito, prazo_pagamento_padrao, desconto_volume, ano_fundacao, ' +
+  'num_colaboradores, cae_principal, cae_secundario, website, created_at, updated_at';
+
+
 // ─── Supplier Identity ────────────────────────────────────────────────────────
 
 export function useIsSupplier() {
