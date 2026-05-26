@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -386,11 +387,13 @@ export default function AxiaInboxPage() {
   const { data, isLoading } = useIntakeItems();
   const items = (data ?? []) as IntakeItemWithObra[];
   const qc = useQueryClient();
+  const { organization } = useAuth();
   useAxiaIntakeRealtimeNotifications();
 
   useEffect(() => {
+    if (!organization?.id) return;
     const channel = supabase
-      .channel("axia-intake-realtime")
+      .channel(`org:${organization.id}:axia-intake-realtime`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "axia_intake_items" },
@@ -403,7 +406,7 @@ export default function AxiaInboxPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [qc]);
+  }, [qc, organization?.id]);
 
   // KPIs
   const kpis = useMemo(() => {

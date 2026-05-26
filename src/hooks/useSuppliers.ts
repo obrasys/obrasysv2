@@ -14,6 +14,21 @@ import type {
   CreateQuoteResponseForm,
 } from '@/types/suppliers';
 
+// Columns safe to expose in cross-org discovery listings. Sensitive PII
+// (nif, phone, telemovel, telefone_fixo, email_comercial, morada_completa,
+// codigo_postal, responsavel_nome, payment_terms) is column-level revoked
+// from `authenticated`. Owners read full row via `get_my_supplier_profile`,
+// Super Admins via `admin_get_all_supplier_profiles`.
+const PUBLIC_SUPPLIER_COLS =
+  'id, user_id, legal_name, trade_name, logo_url, status, is_certified, ' +
+  'rating_avg, rating_count, sla_response_hours, min_order_value, ' +
+  'delivery_capability, service_areas, location_district, location_municipality, ' +
+  'categoria_principal, subcategorias, certificacoes, zona_atuacao, ' +
+  'distritos_atuacao, raio_atuacao_km, tipo_fornecimento, prazo_medio_entrega, ' +
+  'trabalha_credito, prazo_pagamento_padrao, desconto_volume, ano_fundacao, ' +
+  'num_colaboradores, cae_principal, cae_secundario, website, created_at, updated_at';
+
+
 // ─── Supplier Identity ────────────────────────────────────────────────────────
 
 export function useIsSupplier() {
@@ -68,11 +83,12 @@ export function useUpsertSupplierProfile() {
       if (!user?.id) throw new Error('Não autenticado');
       const { category_ids, ...profileData } = updates;
 
-      // Upsert profile
+      // Upsert profile (select only id; PII columns are revoked from
+      // `authenticated` and must be read via `get_my_supplier_profile`).
       const { data, error } = await supabase
         .from('supplier_profiles')
         .upsert({ ...profileData, user_id: user.id }, { onConflict: 'user_id' })
-        .select()
+        .select('id')
         .single();
       if (error) throw error;
 
@@ -753,7 +769,7 @@ export function useDiscoverSuppliers(filters: DiscoverSuppliersFilters = {}) {
 
       let q = supabase
         .from('supplier_profiles')
-        .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+        .select(`${PUBLIC_SUPPLIER_COLS}, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
         .eq('status', 'active')
         .order('is_certified', { ascending: false })
         .order('rating_avg', { ascending: false });
@@ -766,7 +782,7 @@ export function useDiscoverSuppliers(filters: DiscoverSuppliersFilters = {}) {
       if (error) throw error;
 
       // Client-side search by name
-      let result = (data as SupplierProfile[]) || [];
+      let result = ((data as unknown) as SupplierProfile[]) || [];
       if (search.trim()) {
         const s = search.toLowerCase();
         result = result.filter(
@@ -788,12 +804,12 @@ export function useAvailableSuppliers(categoryIds: string[]) {
       if (categoryIds.length === 0) {
         const { data, error } = await supabase
           .from('supplier_profiles')
-          .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+          .select(`${PUBLIC_SUPPLIER_COLS}, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
           .eq('status', 'active')
           .order('is_certified', { ascending: false })
           .order('rating_avg', { ascending: false });
         if (error) throw error;
-        return data as SupplierProfile[];
+        return ((data as unknown) as SupplierProfile[]);
       }
 
       // Get suppliers that have at least one of the requested categories
@@ -807,13 +823,13 @@ export function useAvailableSuppliers(categoryIds: string[]) {
 
       const { data, error } = await supabase
         .from('supplier_profiles')
-        .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+        .select(`${PUBLIC_SUPPLIER_COLS}, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
         .eq('status', 'active')
         .in('id', supplierIds)
         .order('is_certified', { ascending: false })
         .order('rating_avg', { ascending: false });
       if (error) throw error;
-      return data as SupplierProfile[];
+      return ((data as unknown) as SupplierProfile[]);
     },
     enabled: true,
   });
@@ -874,12 +890,26 @@ export function useAdminSupplierProfiles() {
   return useQuery({
     queryKey: ['admin-supplier-profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('supplier_profiles')
-        .select(`*, supplier_category_link(supplier_categories(id, name))`)
-        .order('created_at', { ascending: false });
+      // Super-admin-only RPC. PII columns are revoked from `authenticated`
+      // at the column level, so we cannot select * from the table directly.
+      const { data: profiles, error } = await supabase.rpc('admin_get_all_supplier_profiles');
       if (error) throw error;
-      return data as SupplierProfile[];
+      const ids = (profiles as any[] | null)?.map((p) => p.id) ?? [];
+      if (ids.length === 0) return [] as SupplierProfile[];
+      const { data: links } = await supabase
+        .from('supplier_category_link')
+        .select('supplier_id, supplier_categories(id, name)')
+        .in('supplier_id', ids);
+      const byId = new Map<string, any[]>();
+      (links || []).forEach((l: any) => {
+        const arr = byId.get(l.supplier_id) || [];
+        arr.push({ supplier_categories: l.supplier_categories });
+        byId.set(l.supplier_id, arr);
+      });
+      return (profiles as any[]).map((p) => ({
+        ...p,
+        supplier_category_link: byId.get(p.id) || [],
+      })) as SupplierProfile[];
     },
   });
 }
