@@ -256,7 +256,7 @@ export function useAutosMedicao(obraId?: string) {
           dentro_tolerancia: dentroTolerancia,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -280,13 +280,14 @@ export function useAutosMedicao(obraId?: string) {
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AutoMedicaoItemFormData> }) => {
       // Get current item to get auto_id and calculate new values
-      const { data: currentItem } = await supabase
+      const { data: currentItem, error: fetchErr } = await supabase
         .from('autos_medicao_itens')
         .select('*, auto_id')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (!currentItem) throw new Error('Item não encontrado');
+      if (fetchErr) throw fetchErr;
+      if (!currentItem) throw new Error('Item não encontrado ou sem permissão para editar');
 
       const quantidadeAtual = data.quantidade_atual ?? currentItem.quantidade_atual ?? 0;
       const quantidadeAnterior = currentItem.quantidade_anterior ?? 0;
@@ -326,9 +327,9 @@ export function useAutosMedicao(obraId?: string) {
       queryClient.invalidateQueries({ queryKey: ['auto-medicao'] });
       toast.success('Item atualizado');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Erro ao atualizar item:', error);
-      toast.error('Erro ao atualizar item');
+      toast.error(error?.message || 'Erro ao atualizar item');
     },
   });
 
@@ -376,7 +377,7 @@ export function useAutosMedicao(obraId?: string) {
       .from('autos_medicao')
       .select('taxa_iva')
       .eq('id', autoId)
-      .single();
+      .maybeSingle();
 
     const taxaIva = auto?.taxa_iva || 23;
     const valorIva = valorMedidoAtual * (taxaIva / 100);
