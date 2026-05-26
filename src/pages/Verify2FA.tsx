@@ -96,7 +96,7 @@ export default function Verify2FA() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <SEO title="Verificação em dois passos — ObraSys" path="/verify-2fa" />
+      <SEO title="Verificação em dois passos — ObraSys" description="Confirme a sua identidade com o código enviado por email." path="/verify-2fa" />
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="flex flex-col items-center text-center space-y-3">
           <img src={logo} alt="ObraSys" className="h-10" />
