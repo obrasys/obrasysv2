@@ -4767,6 +4767,7 @@ export type Database = {
       }
       fornecedores: {
         Row: {
+          area_atuacao: string | null
           ativo: boolean
           created_at: string
           email: string | null
@@ -4779,6 +4780,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          area_atuacao?: string | null
           ativo?: boolean
           created_at?: string
           email?: string | null
@@ -4791,6 +4793,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          area_atuacao?: string | null
           ativo?: boolean
           created_at?: string
           email?: string | null
