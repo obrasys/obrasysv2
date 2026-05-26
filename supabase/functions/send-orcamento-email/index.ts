@@ -153,7 +153,7 @@ serve(async (req) => {
           <p style="color:#dbeafe;margin:4px 0 0">${senderName}</p>
         </div>
         <div style="padding:24px;border:1px solid #e5e7eb;border-top:none">
-          <p style="white-space:pre-line">${mensagem || ""}</p>
+          <p style="white-space:pre-line">${escapeHtml(mensagem || "")}</p>
           
           <table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:13px">
             <thead>
