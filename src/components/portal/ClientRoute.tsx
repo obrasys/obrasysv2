@@ -25,7 +25,7 @@ function PortalLoader() {
 }
 
 export function ClientRoute({ children }: ClientRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, mfaVerified } = useAuth();
   const navigate = useNavigate();
   const [hasPortalAccess, setHasPortalAccess] = useState<boolean | null>(null);
 
