@@ -82,5 +82,9 @@ export function ClientRoute({ children }: ClientRouteProps) {
     return null;
   }
 
+  if (!mfaVerified) {
+    return <Navigate to="/verify-2fa" replace />;
+  }
+
   return <>{children}</>;
 }
