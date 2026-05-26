@@ -21,8 +21,12 @@ import {
 } from '@/components/ui/select';
 import { useCatalogo } from '@/hooks/useOrcamentos';
 import { useBaseArtigosUser, type TipoBase } from '@/hooks/useBaseArtigos';
+import {
+  useBudgetChapterTemplates,
+  useBudgetArticleTemplates,
+} from '@/hooks/useBudgetCatalogTemplates';
 import { CATEGORIAS, type ArtigoFormData } from '@/types/orcamentos';
-import { Search, Plus, Loader2, Database } from 'lucide-react';
+import { Search, Plus, Loader2, Database, BookOpen } from 'lucide-react';
 
 interface CatalogoModalProps {
   open: boolean;
