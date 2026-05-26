@@ -62,10 +62,35 @@ export interface Fornecedor {
   telefone: string | null;
   endereco: string | null;
   nif: string | null;
+  area_atuacao: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
 }
+
+export const AREAS_ATUACAO_FORNECEDOR = [
+  'Carpintaria',
+  'Eletricidade',
+  'Canalização',
+  'Pichelaria',
+  'Pedreiro / Alvenaria',
+  'Pintura',
+  'Serralharia',
+  'Pavimentos',
+  'Vidraçaria',
+  'Climatização (AVAC)',
+  'Estuque / Tetos Falsos',
+  'Isolamentos',
+  'Cobertura',
+  'Jardinagem',
+  'Movimentação de Terras',
+  'Materiais de Construção',
+  'Transporte / Logística',
+  'Equipamentos / Aluguer',
+  'Outros',
+] as const;
+
+export type AreaAtuacaoFornecedor = typeof AREAS_ATUACAO_FORNECEDOR[number];
 
 export interface ContaFinanceiraFormData {
   obra_id?: string;
