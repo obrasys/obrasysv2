@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 // Lazy-loaded pages
 const CriarConta = lazy(() => import("./pages/CriarConta"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Verify2FA = lazy(() => import("./pages/Verify2FA"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const OrcamentosPage = lazy(() => import("./pages/orcamentos/Index"));
 const CriarOrcamentoPage = lazy(() => import("./pages/orcamentos/Criar"));
