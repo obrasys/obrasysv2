@@ -24,7 +24,7 @@ import {
 import type { PriceRawStatus } from "@/types/base-precos";
 
 export default function BasePrecosAuditoria() {
-  const { profile } = useAuth();
+  const { isSuperAdmin, loading: superAdminLoading } = useSuperAdmin();
   const [statusFilter, setStatusFilter] = useState<PriceRawStatus | "all">(
     "all"
   );
@@ -33,8 +33,15 @@ export default function BasePrecosAuditoria() {
     useAllMaterialPriceRaw();
   const { data: auditLogs, isLoading: logsLoading } = usePriceAuditLog();
 
-  // Verificar se é admin
-  if (profile && profile.role !== "admin") {
+  // Server-validated super admin guard (profile.role is self-editable, not trusted)
+  if (superAdminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+  if (!isSuperAdmin) {
     return <Navigate to="/base-precos" replace />;
   }
 
