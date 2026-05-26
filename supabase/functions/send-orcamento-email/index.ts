@@ -8,6 +8,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+const escapeHtml = (s: string) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
