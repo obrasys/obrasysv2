@@ -114,6 +114,7 @@ export interface FornecedorFormData {
   telefone?: string;
   endereco?: string;
   nif?: string;
+  area_atuacao?: string;
 }
 
 // Configurações de tipos
