@@ -782,7 +782,7 @@ export function useDiscoverSuppliers(filters: DiscoverSuppliersFilters = {}) {
       if (error) throw error;
 
       // Client-side search by name
-      let result = (data as SupplierProfile[]) || [];
+      let result = ((data as unknown) as SupplierProfile[]) || [];
       if (search.trim()) {
         const s = search.toLowerCase();
         result = result.filter(
