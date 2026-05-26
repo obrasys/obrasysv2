@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,7 +25,7 @@ function PortalLoader() {
 }
 
 export function ClientRoute({ children }: ClientRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, mfaVerified } = useAuth();
   const navigate = useNavigate();
   const [hasPortalAccess, setHasPortalAccess] = useState<boolean | null>(null);
 
@@ -80,6 +80,10 @@ export function ClientRoute({ children }: ClientRouteProps) {
 
   if (!user || !hasPortalAccess) {
     return null;
+  }
+
+  if (!mfaVerified) {
+    return <Navigate to="/verify-2fa" replace />;
   }
 
   return <>{children}</>;

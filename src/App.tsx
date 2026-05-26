@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 // Lazy-loaded pages
 const CriarConta = lazy(() => import("./pages/CriarConta"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Verify2FA = lazy(() => import("./pages/Verify2FA"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const OrcamentosPage = lazy(() => import("./pages/orcamentos/Index"));
 const CriarOrcamentoPage = lazy(() => import("./pages/orcamentos/Criar"));
@@ -170,6 +171,7 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/criar-conta" element={<CriarConta />} />
                   <Route path="/auth/reset-password" element={<ResetPassword />} />
+                  <Route path="/verify-2fa" element={<Verify2FA />} />
                   <Route path="/dashboard" element={<ManagerRoute><Dashboard /></ManagerRoute>} />
                   <Route path="/orcamentos" element={<ManagerRoute><OrcamentosPage /></ManagerRoute>} />
                   <Route path="/orcamentos/criar" element={<ManagerRoute><CriarOrcamentoPage /></ManagerRoute>} />

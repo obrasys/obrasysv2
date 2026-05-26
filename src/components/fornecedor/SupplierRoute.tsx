@@ -8,7 +8,7 @@ interface SupplierRouteProps {
 }
 
 export function SupplierRoute({ children }: SupplierRouteProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, mfaVerified } = useAuth();
   const { data: isSupplier, isLoading: supplierLoading } = useIsSupplier();
 
   const isLoading = authLoading || supplierLoading;
@@ -23,6 +23,10 @@ export function SupplierRoute({ children }: SupplierRouteProps) {
 
   if (!user) {
     return <Navigate to="/fornecedor/auth" replace />;
+  }
+
+  if (!mfaVerified) {
+    return <Navigate to="/verify-2fa" replace />;
   }
 
   if (!isSupplier) {
