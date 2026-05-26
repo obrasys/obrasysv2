@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { ScheduleTask, ScheduleDependency } from '@/types/schedule';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   tasks: ScheduleTask[];
@@ -102,11 +103,13 @@ Responde com:
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Sessão expirada');
       const resp = await fetch(`${supabaseUrl}/functions/v1/axia-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ question: prompt, history: [] }),
       });
