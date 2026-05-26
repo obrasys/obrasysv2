@@ -150,18 +150,64 @@ const FornecedoresPage = () => {
           </div>
         </div>
 
+        {/* Separador visual: Fornecedores ≠ Clientes */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Truck className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Fornecedores (esta página)</p>
+              <p className="text-xs text-muted-foreground">
+                Contactos de quem te <strong>fornece</strong> materiais ou serviços (carpinteiros, eletricistas, etc.).
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/clientes')}
+            className="rounded-xl border bg-card p-4 flex items-start gap-3 hover:border-primary/40 hover:bg-accent transition text-left"
+          >
+            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <UserCircle className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Clientes (página separada)</p>
+              <p className="text-xs text-muted-foreground">
+                Quem te <strong>contrata</strong> obras e orçamentos. Clica para ir para a lista de clientes →
+              </p>
+            </div>
+          </button>
+        </div>
+
         {/* Filters and Actions */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="flex flex-1 gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Pesquisar por nome, email ou NIF..."
+                placeholder="Pesquisar por nome, email, NIF ou área..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
+
+            <Select value={filterArea} onValueChange={setFilterArea}>
+              <SelectTrigger className="w-[220px]">
+                <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Área de atuação" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[320px]">
+                <SelectItem value="all">Todas as áreas</SelectItem>
+                {AREAS_ATUACAO_FORNECEDOR.map((area) => (
+                  <SelectItem key={area} value={area}>
+                    {area}{areaCounts[area] ? ` (${areaCounts[area]})` : ''}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__none__">Sem área definida{areaCounts['__none__'] ? ` (${areaCounts['__none__']})` : ''}</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Select value={filterAtivo} onValueChange={setFilterAtivo}>
               <SelectTrigger className="w-[140px]">
