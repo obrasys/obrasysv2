@@ -249,7 +249,11 @@ export type Database = {
       }
       artigos_orcamento: {
         Row: {
+          article_code: string | null
+          article_template_id: string | null
           capitulo_id: string
+          chapter_code: string | null
+          chapter_template_id: string | null
           codigo: string | null
           created_at: string
           custo_alu: number
@@ -268,12 +272,17 @@ export type Database = {
           preco_unitario: number
           quantidade: number
           quantity_source: string
+          source: string | null
           unidade: string
           updated_at: string
           valor_total: number | null
         }
         Insert: {
+          article_code?: string | null
+          article_template_id?: string | null
           capitulo_id: string
+          chapter_code?: string | null
+          chapter_template_id?: string | null
           codigo?: string | null
           created_at?: string
           custo_alu?: number
@@ -292,12 +301,17 @@ export type Database = {
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string
+          source?: string | null
           unidade: string
           updated_at?: string
           valor_total?: number | null
         }
         Update: {
+          article_code?: string | null
+          article_template_id?: string | null
           capitulo_id?: string
+          chapter_code?: string | null
+          chapter_template_id?: string | null
           codigo?: string | null
           created_at?: string
           custo_alu?: number
@@ -316,6 +330,7 @@ export type Database = {
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string
+          source?: string | null
           unidade?: string
           updated_at?: string
           valor_total?: number | null
@@ -1400,6 +1415,62 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_article_templates: {
+        Row: {
+          active: boolean
+          category: string | null
+          chapter_template_id: string
+          code: string
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          suggested_unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          chapter_template_id: string
+          code: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          suggested_unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          chapter_template_id?: string
+          code?: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          suggested_unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_article_templates_chapter_template_id_fkey"
+            columns: ["chapter_template_id"]
+            isOneToOne: false
+            referencedRelation: "budget_chapter_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_awards: {
         Row: {
           awarded_at: string
@@ -1488,6 +1559,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      budget_chapter_templates: {
+        Row: {
+          active: boolean
+          code: string
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       budget_documents: {
         Row: {
