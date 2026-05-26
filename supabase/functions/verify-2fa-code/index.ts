@@ -88,7 +88,6 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
     const codeHash = await sha256(code);
 
     const { data: otp } = await supabase
