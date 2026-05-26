@@ -1,75 +1,118 @@
 ## Objetivo
+Incorporar o Excel `Base_Capitulos_Artigos_ObraSys.xlsx` (38 capítulos / 423 artigos da folha `Importacao_ObraSys`) como **catálogo técnico padrão** do módulo Orçamentos, com seleção em cascata Capítulo → Artigo e gestão administrativa, sem afetar orçamentos existentes nem as estruturas já em uso (`matriz_capitulos_padrao`, `base_artigos_global/user`).
 
-Nos capítulos do **orçamento avançado**, mostrar os artigos no formato de tabela do orçamento essencial, mas expondo as **6 categorias completas de decomposição de custo** já existentes na BD (MO, MAT, SUB, SRV, ALU, DIV). **O PDF do orçamento passa a refletir exatamente as colunas que o utilizador marcou no ecrã.**
+## O que já existe (não mexer)
+- `capitulos_orcamento` / `artigos_orcamento` — linhas reais do orçamento
+- `matriz_capitulos_padrao` — matriz aplicada via RPC `aplicar_matriz_capitulos` (cria capítulos vazios num orçamento novo)
+- `base_artigos_global` / `base_artigos_user` — catálogo de preços livre (sem hierarquia por capítulo), usado no `CatalogoModal`
 
-## Colunas disponíveis
+Este novo catálogo é **complementar**, não substitui nada.
 
-Identificação + quantidade:
-- **Item** → `descricao` (com `codigo` em badge se existir)
-- **Unidade** → `unidade`
-- **Qtd** → `quantidade`
+## 1. Base de dados (migração)
 
-Preços unitários (decomposição — todas opcionais, escondidas por defeito):
-- **MO €/un** → `custo_mo` (Mão de Obra)
-- **MAT €/un** → `custo_mat` (Materiais)
-- **SUB €/un** → `custo_sub` (Subempreitadas)
-- **SRV €/un** → `custo_srv` (Serviços)
-- **ALU €/un** → `custo_alu` (Alugueres)
-- **DIV €/un** → `custo_div` (Diversos)
+### Tabela `budget_chapter_templates`
+Campos exatos do brief: `id`, `code`, `name`, `description`, `sort_order`, `is_default`, `company_id` (nullable = global Obra Sys), `active`, `created_at`, `updated_at`.
+- Unique: `(company_id, code)` — permite uma empresa ter o mesmo código sem colidir com o global.
 
-Totais por categoria (`quantidade × custo_X` — todos opcionais):
-- **Tot. MO**, **Tot. MAT**, **Tot. SUB**, **Tot. SRV**, **Tot. ALU**, **Tot. DIV**
+### Tabela `budget_article_templates`
+Campos exatos do brief: `id`, `chapter_template_id` (FK cascade), `code`, `name`, `description`, `suggested_unit`, `category`, `sort_order`, `is_default`, `company_id`, `active`, `created_at`, `updated_at`.
+- Unique: `(company_id, code)`.
+- Índice em `chapter_template_id`.
 
-Total final:
-- **Subtotal** → `valor_total` (sempre visível, não pode ser desligado)
+### Extensão de `artigos_orcamento` (não-destrutiva)
+Adicionar colunas nullable:
+- `chapter_template_id uuid`
+- `article_template_id uuid`
+- `chapter_code text`
+- `article_code text`
+- `source text default 'manual'` (`manual` | `catalog` | `ai` | `import`)
 
-Cada categoria mostra `—` quando o valor é `0`, para evitar ruído visual.
+Nenhuma coluna existente é removida; cálculos de totais/IVA/margens permanecem intactos.
 
-## Toggle de colunas (ecrã)
+### RLS
+- **SELECT** global: `company_id IS NULL AND active = true` (qualquer autenticado) **+** registos da própria org (`company_id = get_user_org_id()`).
+- **INSERT/UPDATE/DELETE** apenas em registos com `company_id = get_user_org_id()` e admin/owner (`is_org_admin()`).
+- Registos globais (`company_id IS NULL`) só editáveis por `is_super_admin()`.
 
-Barra de checkboxes por cima da tabela de artigos, agrupada por: **Identificação**, **Preços unitários**, **Totais por categoria**. Persistido em `localStorage` na chave `avancado_capitulo_columns` (partilhada entre capítulos).
+### Trigger
+`update_updated_at_column` já existe — reutilizar.
 
-Defaults visíveis: Item, Unidade, Qtd, Tot. MO, Tot. MAT, Subtotal.
-Defaults escondidas: as restantes (preços unitários e totais SUB/SRV/ALU/DIV) — utilizador liga as que precisa.
+## 2. Seed do Excel
+Edge function `seed-budget-catalog` (one-shot, idempotente):
+- Lê o Excel embebido no payload (ou faz parse no cliente e envia JSON normalizado pela folha `Importacao_ObraSys`).
+- Upsert dos 38 capítulos com `company_id = NULL`, `code = chapter_code`, `name = chapter_name`, `sort_order = ordem do Excel`.
+- Upsert dos 423 artigos com `chapter_template_id` resolvido pelo `code`, `code = item_code`, `name = item_name`, `suggested_unit = unit`, `category = category`, `sort_order` sequencial.
+- `ON CONFLICT (company_id, code) DO UPDATE SET name, ...` — re-execução não duplica.
 
-Item e Subtotal são obrigatórios e não podem ser desligados.
+Implementação preferida: copiar o ficheiro para `src/data/budget-catalog-seed.json` (gerado por script local) e correr o seed via botão "Sincronizar catálogo padrão" na página admin (chama RPC `seed_budget_catalog(jsonb)` com `SECURITY DEFINER` restrito a `is_super_admin`). Evita edge function pesada.
 
-## PDF respeita a escolha do utilizador
+## 3. UI — Seleção no orçamento
+Novo componente `BudgetCatalogPicker` integrado no `CapituloAccordion` / `ArtigoForm`:
 
-`src/lib/orcamento-pdf.ts` passa a:
+```text
+[ Capítulo ▾ ]  01 — TRABALHOS PREPARATÓRIOS...
+[ Pesquisar artigo: __________ ]
+┌──────────────────────────────────────────────┐
+│ 01.001  Pessoal técnico de obra      [mês]  │
+│ 01.002  Pessoal de apoio em obra     [mês]  │
+│ 01.003  Montagem e organização...    [vg]   │
+└──────────────────────────────────────────────┘
+[ + Adicionar selecionados ]   [ Artigo manual ]
+```
 
-1. Ler `localStorage.getItem('avancado_capitulo_columns')` no momento da geração (com fallback para os defaults caso esteja vazio ou inválido).
-2. Construir cabeçalho e linhas da tabela de artigos dinamicamente a partir dessa lista.
-3. Recalcular larguras de coluna proporcionalmente ao número de colunas ativas; se ultrapassar a largura útil da página, **rodar a página de artigos para landscape** automaticamente (mantendo o resto do PDF em portrait).
-4. Manter a paginação inteligente existente (sem orphans).
-5. Para valores `0` mostrar `—`.
+- Dropdown carrega capítulos globais + da empresa, ordenados por `sort_order`.
+- Tabela de artigos filtra por `chapter_template_id` selecionado + pesquisa (`name`, `code`, `description`).
+- Badges: unidade (`suggested_unit`) e categoria.
+- Empty state: "Nenhum artigo encontrado neste capítulo. Pode criar um artigo manual."
+- Ao confirmar: cria linha em `artigos_orcamento` com `descricao=name`, `unidade=suggested_unit`, `chapter_template_id`, `article_template_id`, `chapter_code`, `article_code`, `source='catalog'`. Preço/quantidade ficam editáveis pelo utilizador sem alterar o template.
+- Botão extra: "Guardar como modelo da empresa" → cria `budget_article_template` com `company_id = org_id`.
 
-O total do capítulo e total geral continuam a usar `valor_total` — **a escolha de colunas é puramente visual, não altera valores**.
+Integração no `CatalogoModal` atual: nova aba **"Catálogo Padrão"** ao lado de Base/Sistema/Empresa, usando o mesmo picker.
 
-## Compatibilidade com artigos antigos
+## 4. Página admin "Catálogo de Orçamento"
+Rota `/configuracoes/catalogo-orcamento` (apenas admin/owner):
+- Lista de capítulos (drag para reordenar, toggle `active`, editar `name`/`description`).
+- Painel lateral com artigos do capítulo selecionado (toggle `active`, editar campos editáveis, criar artigo da empresa, reordenar).
+- Botão "Sincronizar base global Obra Sys" (super-admin) — executa o seed idempotente.
+- Empresas **não** podem editar globais — UI mostra cadeado e oferece "Duplicar para a minha empresa".
 
-Artigos sem decomposição (todos os `custo_*` a `0`) mostram `—` em todas as colunas de categoria. Subtotal continua correto via `valor_total`.
+## 5. Ligação Axia (futuro hook, scaffolding)
+- Função utilitária `matchCatalogArticle(text)` em `src/lib/budget-catalog-match.ts`:
+  - Normaliza descrição (lowercase, sem acentos, sem unidades) — reutilizar `normalizar_descricao` (já existe na BD).
+  - Calcula similaridade contra `name + description + category` dos templates ativos.
+  - Retorna `{ chapter_template_id, article_template_id, confidence }`.
+  - `confidence < 0.6` → marca a linha com `review_required = true` (coluna a adicionar futuramente em `artigos_orcamento` se ainda não existir — fora deste plano).
+- Apenas exposto como helper; a Axia passa a chamá-lo quando gerar orçamento.
 
-## Ficheiros alterados
+## 6. Critérios de aceite
+1. Migração cria as 2 tabelas + 5 colunas em `artigos_orcamento` sem perda de dados.
+2. Seed importa 38 capítulos + 423 artigos com `company_id = NULL` e é idempotente.
+3. Capítulo dropdown lista os 38 capítulos por ordem.
+4. Selecionar capítulo → mostra só os artigos respetivos.
+5. Pesquisa por código/nome/descrição funciona.
+6. Inserir do catálogo cria linha real com `source='catalog'` e referências aos templates.
+7. Editar a linha não altera o template.
+8. Orçamentos existentes continuam a abrir/editar normalmente.
+9. RLS isola por empresa; globais visíveis a todos, editáveis apenas por super-admin.
+10. Página admin acessível só a admin/owner; ações de edição respeitam regras de scope.
 
-1. **`src/components/orcamentos/CapituloAccordion.tsx`**
-   - Substituir o header de 6 colunas pelo header dinâmico com até 16 colunas + ações.
-   - Adicionar barra de toggles agrupados, com persistência `localStorage`.
-   - Passar `visibleCols` ao `ArtigoRow`.
+## Ficheiros a criar/alterar
+**Novos**
+- `supabase/migrations/<ts>_budget_catalog_templates.sql`
+- `src/data/budget-catalog-seed.json` (gerado a partir do Excel)
+- `src/hooks/useBudgetCatalogTemplates.ts`
+- `src/components/orcamentos/BudgetCatalogPicker.tsx`
+- `src/pages/configuracoes/CatalogoOrcamento.tsx`
+- `src/lib/budget-catalog-match.ts`
 
-2. **`src/components/orcamentos/ArtigoRow.tsx`**
-   - Renderização dinâmica baseada em `visibleCols`.
-   - Calcular totais por categoria (`quantidade × custo_X`).
-   - Mostrar `—` para valores `0`.
+**Alterados**
+- `src/components/orcamentos/CatalogoModal.tsx` — nova aba "Catálogo Padrão"
+- `src/components/orcamentos/ArtigoForm.tsx` — receber/persistir refs do template quando vier do picker
+- `src/pages/orcamentos/Editar.tsx` — wiring do picker e nova fonte de artigos
+- `src/App.tsx` (ou router central) — rota da página admin
+- Sidebar de configurações — entrada "Catálogo de Orçamento"
 
-3. **`src/lib/orcamento-pdf.ts`**
-   - Ler `localStorage` e construir tabela dinâmica.
-   - Auto-landscape quando o número de colunas exceder o espaço útil.
-   - Larguras proporcionais, fonte ajustada se necessário.
-
-## Fora de scope
-
-- Schema da BD (as 6 colunas `custo_*` já existem).
-- `ArtigoForm.tsx` (já permite editar as 6 categorias — o utilizador irá ajustar a label "SUB/INS" → "SUB" no modal separadamente).
-- PDF comercial (`orcamento-pdf-comercial.ts`) — continua a usar a vista resumida atual para o cliente.
-- Cálculo de totais, margem e fiscalidade.
+**Fora de scope (não tocar)**
+- `matriz_capitulos_padrao`, RPC `aplicar_matriz_capitulos`
+- `base_artigos_global` / `base_artigos_user` e respetivo importador
+- Cálculos de IVA, margem, totais, PDF
