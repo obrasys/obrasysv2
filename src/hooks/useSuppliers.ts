@@ -68,11 +68,12 @@ export function useUpsertSupplierProfile() {
       if (!user?.id) throw new Error('Não autenticado');
       const { category_ids, ...profileData } = updates;
 
-      // Upsert profile
+      // Upsert profile (select only id; PII columns are revoked from
+      // `authenticated` and must be read via `get_my_supplier_profile`).
       const { data, error } = await supabase
         .from('supplier_profiles')
         .upsert({ ...profileData, user_id: user.id }, { onConflict: 'user_id' })
-        .select()
+        .select('id')
         .single();
       if (error) throw error;
 
