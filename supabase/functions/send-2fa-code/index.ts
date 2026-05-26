@@ -156,7 +156,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "ObraSys <noreply@obrasys.pt>",
         to: [userEmail],
-        subject: `🔐 Código de verificação: ${code}`,
+        subject: "🔐 O seu código de verificação ObraSys",
         html,
       }),
     });
