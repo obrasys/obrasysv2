@@ -52,7 +52,7 @@ const formSchema = z.object({
 const DECOMP_FIELDS = [
   { key: 'custo_mo' as const,  label: 'MO',      title: 'Mão de Obra' },
   { key: 'custo_mat' as const, label: 'MAT',     title: 'Materiais' },
-  { key: 'custo_sub' as const, label: 'SUB/INS', title: 'Subempreitadas / Instaladores' },
+  { key: 'custo_sub' as const, label: 'SUB',     title: 'Subempreitadas' },
   { key: 'custo_srv' as const, label: 'SRV',     title: 'Serviços' },
   { key: 'custo_alu' as const, label: 'ALU',     title: 'Alugueres' },
   { key: 'custo_div' as const, label: 'DIV',     title: 'Diversos' },

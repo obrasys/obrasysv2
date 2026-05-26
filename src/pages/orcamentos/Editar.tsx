@@ -292,12 +292,24 @@ export default function EditarOrcamentoPage() {
       const cap = orcamento.capitulos?.find((c) => c.id === editingArtigo.capituloId);
       const art = cap?.artigos?.find((a) => a.id === editingArtigo.id);
       if (art) {
+        const a = art as any;
         return {
           codigo: art.codigo || '',
           descricao: art.descricao,
           unidade: art.unidade,
           quantidade: art.quantidade,
+          preco_base: a.preco_base ?? art.preco_unitario,
+          margem_lucro_artigo: a.margem_lucro_artigo ?? 0,
           preco_unitario: art.preco_unitario,
+          custo_mo: a.custo_mo ?? 0,
+          custo_mat: a.custo_mat ?? 0,
+          custo_sub: a.custo_sub ?? 0,
+          custo_srv: a.custo_srv ?? 0,
+          custo_alu: a.custo_alu ?? 0,
+          custo_div: a.custo_div ?? 0,
+          quantity_source: a.quantity_source ?? 'manual',
+          linked_element_id: a.linked_element_id ?? null,
+          linked_rule_id: a.linked_rule_id ?? null,
         };
       }
     }
