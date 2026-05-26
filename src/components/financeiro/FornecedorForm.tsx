@@ -161,6 +161,9 @@ export function FornecedorForm({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+
 
             <FormField
               control={form.control}
