@@ -60,5 +60,5 @@ export function useAxiaIntakeRealtimeNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, organization?.id]);
 }
