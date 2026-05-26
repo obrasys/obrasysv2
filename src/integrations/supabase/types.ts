@@ -6159,6 +6159,69 @@ export type Database = {
           },
         ]
       }
+      mfa_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_trusted_devices: {
+        Row: {
+          created_at: string
+          device_label: string | null
+          device_token_hash: string
+          expires_at: string
+          id: string
+          last_used_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_label?: string | null
+          device_token_hash: string
+          expires_at: string
+          id?: string
+          last_used_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_label?: string | null
+          device_token_hash?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       migrated_users: {
         Row: {
           created_at: string
@@ -11840,6 +11903,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_mfa_settings: {
+        Row: {
+          enabled: boolean
+          enrolled_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          enrolled_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          enrolled_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           created_at: string
@@ -12244,6 +12328,7 @@ export type Database = {
       }
       can_access_rdo_photo: { Args: { _path: string }; Returns: boolean }
       classify_task_delay: { Args: { p_task_id: string }; Returns: string }
+      cleanup_expired_mfa_data: { Args: never; Returns: undefined }
       confirm_award: {
         Args: {
           _awarded_total: number
@@ -12452,6 +12537,7 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
+      is_trusted_device: { Args: { p_token_hash: string }; Returns: boolean }
       log_budget_event:
         | {
             Args: {
