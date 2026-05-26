@@ -1,70 +1,75 @@
+## Objetivo
 
-# Autenticação em Dois Fatores (2FA) por Email
+Nos capítulos do **orçamento avançado**, mostrar os artigos no formato de tabela do orçamento essencial, mas expondo as **6 categorias completas de decomposição de custo** já existentes na BD (MO, MAT, SUB, SRV, ALU, DIV). **O PDF do orçamento passa a refletir exatamente as colunas que o utilizador marcou no ecrã.**
 
-Implementação de 2FA **obrigatório** para todos os utilizadores, com envio de código OTP de 6 dígitos por email (via Resend já configurado) e opção "lembrar este dispositivo por 30 dias".
+## Colunas disponíveis
 
-## Abordagem
+Identificação + quantidade:
+- **Item** → `descricao` (com `codigo` em badge se existir)
+- **Unidade** → `unidade`
+- **Qtd** → `quantidade`
 
-Em vez do MFA nativo do Supabase (TOTP/app autenticadora), implementamos uma camada própria de OTP por email — mais simples para o utilizador final e reutiliza o pipeline Resend já existente.
+Preços unitários (decomposição — todas opcionais, escondidas por defeito):
+- **MO €/un** → `custo_mo` (Mão de Obra)
+- **MAT €/un** → `custo_mat` (Materiais)
+- **SUB €/un** → `custo_sub` (Subempreitadas)
+- **SRV €/un** → `custo_srv` (Serviços)
+- **ALU €/un** → `custo_alu` (Alugueres)
+- **DIV €/un** → `custo_div` (Diversos)
 
-O fluxo bloqueia o acesso à app **após** o login com password ser bem sucedido, até o utilizador validar o código enviado para o seu email.
+Totais por categoria (`quantidade × custo_X` — todos opcionais):
+- **Tot. MO**, **Tot. MAT**, **Tot. SUB**, **Tot. SRV**, **Tot. ALU**, **Tot. DIV**
 
-## Fluxo de utilizador
+Total final:
+- **Subtotal** → `valor_total` (sempre visível, não pode ser desligado)
 
-```text
-1. Login (email + password)  ✓ OK
-2. Sistema verifica:
-   - dispositivo confiável válido?  →  entra direto
-   - caso contrário:
-3. Gera código de 6 dígitos, envia por email, mostra ecrã "Introduzir código"
-4. Utilizador insere código + opcional ☑ "Confiar neste dispositivo (30 dias)"
-5. Validação OK → acesso liberado + (se marcado) emite trusted-device token
-6. Reentradas no mesmo dispositivo dentro de 30 dias saltam o passo 3-5
-```
+Cada categoria mostra `—` quando o valor é `0`, para evitar ruído visual.
 
-## Base de Dados (migration)
+## Toggle de colunas (ecrã)
 
-- **`user_mfa_settings`** — `user_id` (PK), `enabled` (bool, default true para todos), `enrolled_at`
-- **`mfa_otp_codes`** — `id`, `user_id`, `code_hash` (sha256), `expires_at` (5 min), `attempts` (max 5), `consumed_at`, `created_at`, `ip_address`
-- **`mfa_trusted_devices`** — `id`, `user_id`, `device_token_hash`, `device_label` (user-agent resumido), `expires_at` (30 dias), `last_used_at`, `created_at`
-- RLS estrita: cada utilizador só vê os seus próprios registos
-- Trigger `handle_new_user`: ao criar perfil, criar linha em `user_mfa_settings` com `enabled = true`
-- Função `cleanup_expired_otp_codes()` (apagar códigos > 1h e dispositivos expirados)
+Barra de checkboxes por cima da tabela de artigos, agrupada por: **Identificação**, **Preços unitários**, **Totais por categoria**. Persistido em `localStorage` na chave `avancado_capitulo_columns` (partilhada entre capítulos).
 
-## Edge Functions
+Defaults visíveis: Item, Unidade, Qtd, Tot. MO, Tot. MAT, Subtotal.
+Defaults escondidas: as restantes (preços unitários e totais SUB/SRV/ALU/DIV) — utilizador liga as que precisa.
 
-- **`send-2fa-code`** (verify_jwt = true)
-  - Gera código 6 dígitos, guarda hash em `mfa_otp_codes`, expira em 5 min
-  - Rate-limit: máx 3 envios / 10 min por user_id
-  - Envia email branded via Resend (assinado por António Cavalcanti, mantendo standard do projeto)
-  - Reutiliza padrão de `send-orcamento-email`
+Item e Subtotal são obrigatórios e não podem ser desligados.
 
-- **`verify-2fa-code`** (verify_jwt = true)
-  - Recebe `{ code, trustDevice }`
-  - Valida hash + expiração + tentativas
-  - Marca `consumed_at`
-  - Se `trustDevice`: gera token aleatório (32 bytes), guarda hash em `mfa_trusted_devices`, retorna token plain para o cliente
-  - Retorna `{ verified: true, deviceToken?: string }`
+## PDF respeita a escolha do utilizador
 
-## Frontend
+`src/lib/orcamento-pdf.ts` passa a:
 
-- **`src/contexts/AuthContext.tsx`**: adiciona estado `mfaVerified: boolean` e função `verifyMFA`. Considera dispositivo confiável lendo token em `localStorage` (`obrasys_trusted_device`) e validando contra a tabela via RPC `is_trusted_device(device_token)`.
-- **Novo `src/pages/Verify2FA.tsx`**: ecrã com `InputOTP` de 6 dígitos, botão "Reenviar código" (cooldown 60s), checkbox "Confiar neste dispositivo 30 dias", link "Sair".
-- **`src/components/layout/AppLayout.tsx`**: se `user && !mfaVerified` → redireciona para `/verify-2fa` (gate global).
-- **`src/App.tsx`**: regista rota pública `/verify-2fa`.
-- **`src/pages/Auth.tsx` e `src/pages/fornecedor/Auth.tsx`**: após `signIn` ok, em vez de ir direto ao dashboard, dispara `send-2fa-code` e navega para `/verify-2fa`.
-- **`src/pages/Perfil.tsx`** (secção Segurança): mostra estado MFA (sempre ativo), lista de dispositivos confiáveis com botão "Revogar".
+1. Ler `localStorage.getItem('avancado_capitulo_columns')` no momento da geração (com fallback para os defaults caso esteja vazio ou inválido).
+2. Construir cabeçalho e linhas da tabela de artigos dinamicamente a partir dessa lista.
+3. Recalcular larguras de coluna proporcionalmente ao número de colunas ativas; se ultrapassar a largura útil da página, **rodar a página de artigos para landscape** automaticamente (mantendo o resto do PDF em portrait).
+4. Manter a paginação inteligente existente (sem orphans).
+5. Para valores `0` mostrar `—`.
 
-## Segurança
+O total do capítulo e total geral continuam a usar `valor_total` — **a escolha de colunas é puramente visual, não altera valores**.
 
-- Códigos guardados como **hash SHA-256** (nunca em plaintext)
-- Tokens de dispositivo: 32 bytes aleatórios, guardados em hash, transmitidos por HTTPS only
-- Rate-limit no edge function (3 envios / 10 min, 5 tentativas de validação por código)
-- Códigos expiram em **5 min**; dispositivos em **30 dias**
-- Logs de eventos em `audit_logs` (envio, sucesso, falha, dispositivo revogado)
+## Compatibilidade com artigos antigos
 
-## Notas
+Artigos sem decomposição (todos os `custo_*` a `0`) mostram `—` em todas as colunas de categoria. Subtotal continua correto via `valor_total`.
 
-- O Resend já está configurado e funcional no projeto (`send-orcamento-email`), portanto **não é necessário** configurar domínio Lovable Emails. Reutilizamos o mesmo `RESEND_API_KEY` e remetente `noreply@obrasys.pt`.
-- Como é **obrigatório**, utilizadores existentes serão forçados a verificar no próximo login — o ecrã `/verify-2fa` é o gate global, não há opt-out.
-- Super Admins seguem a mesma regra (sem exceção).
+## Ficheiros alterados
+
+1. **`src/components/orcamentos/CapituloAccordion.tsx`**
+   - Substituir o header de 6 colunas pelo header dinâmico com até 16 colunas + ações.
+   - Adicionar barra de toggles agrupados, com persistência `localStorage`.
+   - Passar `visibleCols` ao `ArtigoRow`.
+
+2. **`src/components/orcamentos/ArtigoRow.tsx`**
+   - Renderização dinâmica baseada em `visibleCols`.
+   - Calcular totais por categoria (`quantidade × custo_X`).
+   - Mostrar `—` para valores `0`.
+
+3. **`src/lib/orcamento-pdf.ts`**
+   - Ler `localStorage` e construir tabela dinâmica.
+   - Auto-landscape quando o número de colunas exceder o espaço útil.
+   - Larguras proporcionais, fonte ajustada se necessário.
+
+## Fora de scope
+
+- Schema da BD (as 6 colunas `custo_*` já existem).
+- `ArtigoForm.tsx` (já permite editar as 6 categorias — o utilizador irá ajustar a label "SUB/INS" → "SUB" no modal separadamente).
+- PDF comercial (`orcamento-pdf-comercial.ts`) — continua a usar a vista resumida atual para o cliente.
+- Cálculo de totais, margem e fiscalidade.
