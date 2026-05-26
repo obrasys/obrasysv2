@@ -142,7 +142,6 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
       }));
 
     // Add padrão (template) selections
-    const chapter = chapterTemplates?.find((c) => c.id === selectedChapterId);
     const padraoToAdd: ArtigoFormData[] = (articleTemplates || [])
       .filter((a) => selectedIds.has(`tpl_${a.id}`))
       .map((a) => ({
@@ -151,7 +150,6 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
         unidade: a.suggested_unit || 'un',
         quantidade: 1,
         preco_unitario: 0,
-        categoria: a.category || chapter?.name,
       }));
 
     onAddArtigos([...artigosToAdd, ...padraoToAdd]);
