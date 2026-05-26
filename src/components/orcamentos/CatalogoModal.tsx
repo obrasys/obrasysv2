@@ -176,7 +176,11 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="padrao">
+              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+              Catálogo Padrão
+            </TabsTrigger>
             <TabsTrigger value="base">
               <Database className="h-3.5 w-3.5 mr-1.5" />
               Base de Preços
@@ -185,88 +189,192 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
             <TabsTrigger value="empresa">Meu Catálogo</TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center gap-2 my-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Pesquisar artigos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            {activeTab === 'base' ? (
-              <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="geral">Base Geral</SelectItem>
-                  <SelectItem value="remodelacao">Base Remodelação</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {CATEGORIAS.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+          {activeTab === 'padrao' ? (
+            <div className="my-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedChapterId ?? ''}
+                  onValueChange={(v) => setSelectedChapterId(v)}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder={loadingChapters ? 'A carregar capítulos...' : 'Selecione um capítulo'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover max-h-[300px]">
+                    {(chapterTemplates || []).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.code} — {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="relative w-[260px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filtrar artigos..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
 
-          <ScrollArea className="h-[400px] border rounded-md">
-            {(isLoading || (activeTab === 'base' && loadingBase)) ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredArticles.length > 0 ? (
-              <div className="divide-y">
-                {filteredArticles.map((artigo) => (
-                  <div
-                    key={artigo.id}
-                    className="flex items-center gap-4 p-3 hover:bg-muted/50 cursor-pointer"
-                    onClick={() => toggleSelection(artigo.id)}
-                  >
-                    <Checkbox
-                      checked={selectedIds.has(artigo.id)}
-                      onCheckedChange={() => toggleSelection(artigo.id)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono text-muted-foreground">
-                          {artigo.codigo}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {artigo.categoria}
-                        </Badge>
-                      </div>
-                      <p className="text-sm mt-1 line-clamp-2">{artigo.descricao}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-sm font-medium">
-                        {formatCurrency(artigo.preco_unitario)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        por {artigo.unidade}
-                      </div>
-                    </div>
+              <ScrollArea className="h-[400px] border rounded-md">
+                {!selectedChapterId ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-6 text-center">
+                    <BookOpen className="h-8 w-8 opacity-50" />
+                    <p className="text-sm">Selecione um capítulo para ver os artigos padrão</p>
                   </div>
-                ))}
+                ) : loadingArticles ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (() => {
+                  const q = searchQuery.toLowerCase();
+                  const items = (articleTemplates || []).filter(
+                    (a) =>
+                      !q ||
+                      a.name.toLowerCase().includes(q) ||
+                      a.code.toLowerCase().includes(q) ||
+                      (a.description || '').toLowerCase().includes(q),
+                  );
+                  if (items.length === 0) {
+                    return (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Nenhum artigo neste capítulo
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="divide-y">
+                      {items.map((a) => {
+                        const key = `tpl_${a.id}`;
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center gap-4 p-3 hover:bg-muted/50 cursor-pointer"
+                            onClick={() => toggleSelection(key)}
+                          >
+                            <Checkbox
+                              checked={selectedIds.has(key)}
+                              onCheckedChange={() => toggleSelection(key)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-mono text-muted-foreground">
+                                  {a.code}
+                                </span>
+                                {a.category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {a.category}
+                                  </Badge>
+                                )}
+                                {a.suggested_unit && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {a.suggested_unit}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm mt-1 font-medium">{a.name}</p>
+                              {a.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {a.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </ScrollArea>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 my-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar artigos..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                {activeTab === 'base' ? (
+                  <Select value={tipoBase} onValueChange={(v) => setTipoBase(v as TipoBase)}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="geral">Base Geral</SelectItem>
+                      <SelectItem value="remodelacao">Base Remodelação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="all">Todas as categorias</SelectItem>
+                      {CATEGORIAS.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Nenhum artigo encontrado
-              </div>
-            )}
-          </ScrollArea>
+
+              <ScrollArea className="h-[400px] border rounded-md">
+                {(isLoading || (activeTab === 'base' && loadingBase)) ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredArticles.length > 0 ? (
+                  <div className="divide-y">
+                    {filteredArticles.map((artigo) => (
+                      <div
+                        key={artigo.id}
+                        className="flex items-center gap-4 p-3 hover:bg-muted/50 cursor-pointer"
+                        onClick={() => toggleSelection(artigo.id)}
+                      >
+                        <Checkbox
+                          checked={selectedIds.has(artigo.id)}
+                          onCheckedChange={() => toggleSelection(artigo.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-mono text-muted-foreground">
+                              {artigo.codigo}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {artigo.categoria}
+                            </Badge>
+                          </div>
+                          <p className="text-sm mt-1 line-clamp-2">{artigo.descricao}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-sm font-medium">
+                            {formatCurrency(artigo.preco_unitario)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            por {artigo.unidade}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Nenhum artigo encontrado
+                  </div>
+                )}
+              </ScrollArea>
+            </>
+          )}
         </Tabs>
 
         <div className="flex items-center justify-between pt-4 border-t">
