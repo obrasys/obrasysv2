@@ -66,6 +66,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<OrganizationInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("obrasys_mfa_verified") === "1";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (mfaVerified) sessionStorage.setItem("obrasys_mfa_verified", "1");
+    else sessionStorage.removeItem("obrasys_mfa_verified");
+  }, [mfaVerified]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -260,6 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatePassword,
         refreshProfile,
         trialDaysRemaining,
+        mfaVerified,
+        setMfaVerified,
       }}
     >
       {children}
