@@ -39,8 +39,13 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('base');
+  const [activeTab, setActiveTab] = useState('padrao');
   const [tipoBase, setTipoBase] = useState<TipoBase>('geral');
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+
+  const { data: chapterTemplates, isLoading: loadingChapters } = useBudgetChapterTemplates();
+  const { data: articleTemplates, isLoading: loadingArticles } =
+    useBudgetArticleTemplates(selectedChapterId);
 
   const { data: baseArtigos, isLoading: loadingBase } = useBaseArtigosUser(
     searchQuery || undefined,
