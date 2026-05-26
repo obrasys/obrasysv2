@@ -769,7 +769,7 @@ export function useDiscoverSuppliers(filters: DiscoverSuppliersFilters = {}) {
 
       let q = supabase
         .from('supplier_profiles')
-        .select(`*, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
+        .select(`${PUBLIC_SUPPLIER_COLS}, supplier_category_link(category_id, supplier_categories(id, name, slug))`)
         .eq('status', 'active')
         .order('is_certified', { ascending: false })
         .order('rating_avg', { ascending: false });
