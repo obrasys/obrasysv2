@@ -142,6 +142,28 @@ export function FornecedorForm({
 
             <FormField
               control={form.control}
+              name="area_atuacao"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Área de Atuação</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a especialidade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {AREAS_ATUACAO_FORNECEDOR.map((area) => (
+                        <SelectItem key={area} value={area}>{area}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+
+            <FormField
+              control={form.control}
               name="endereco"
               render={({ field }) => (
                 <FormItem>
