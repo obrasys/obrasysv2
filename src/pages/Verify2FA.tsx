@@ -24,9 +24,12 @@ export default function Verify2FA() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [sent, setSent] = useState(false);
 
+  const initRan = useRef(false);
+
   // On mount: try trusted-device fast path, otherwise send code
   useEffect(() => {
-    if (!user || sent) return;
+    if (!user || initRan.current) return;
+    initRan.current = true;
     const tryTrustedOrSend = async () => {
       const storedToken = localStorage.getItem(TRUSTED_DEVICE_KEY);
       if (storedToken) {
