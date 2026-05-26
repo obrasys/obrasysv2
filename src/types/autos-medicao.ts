@@ -239,11 +239,11 @@ export const NORMAS_APLICAVEIS = {
 } as const;
 
 export const UNIDADES_MEDIDA = [
-  { value: 'm', label: 'Metro (m)' },
   { value: 'm²', label: 'Metro Quadrado (m²)' },
   { value: 'm³', label: 'Metro Cúbico (m³)' },
   { value: 'ml', label: 'Metro Linear (ml)' },
   { value: 'un', label: 'Unidade (un)' },
+  { value: 'cj', label: 'Conjunto (cj)' },
   { value: 'kg', label: 'Quilograma (kg)' },
   { value: 't', label: 'Tonelada (t)' },
   { value: 'vg', label: 'Verba Global (vg)' },
