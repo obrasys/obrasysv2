@@ -890,12 +890,26 @@ export function useAdminSupplierProfiles() {
   return useQuery({
     queryKey: ['admin-supplier-profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('supplier_profiles')
-        .select(`*, supplier_category_link(supplier_categories(id, name))`)
-        .order('created_at', { ascending: false });
+      // Super-admin-only RPC. PII columns are revoked from `authenticated`
+      // at the column level, so we cannot select * from the table directly.
+      const { data: profiles, error } = await supabase.rpc('admin_get_all_supplier_profiles');
       if (error) throw error;
-      return data as SupplierProfile[];
+      const ids = (profiles as any[] | null)?.map((p) => p.id) ?? [];
+      if (ids.length === 0) return [] as SupplierProfile[];
+      const { data: links } = await supabase
+        .from('supplier_category_link')
+        .select('supplier_id, supplier_categories(id, name)')
+        .in('supplier_id', ids);
+      const byId = new Map<string, any[]>();
+      (links || []).forEach((l: any) => {
+        const arr = byId.get(l.supplier_id) || [];
+        arr.push({ supplier_categories: l.supplier_categories });
+        byId.set(l.supplier_id, arr);
+      });
+      return (profiles as any[]).map((p) => ({
+        ...p,
+        supplier_category_link: byId.get(p.id) || [],
+      })) as SupplierProfile[];
     },
   });
 }
