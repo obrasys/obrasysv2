@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import type { Orcamento } from '@/types/orcamentos';
+import { CAPITULO_COLUMNS, loadVisibleColumns, getCellValue } from '@/lib/capitulo-columns';
 
 interface PdfProfile {
   empresa_nome?: string | null;
@@ -333,28 +334,35 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     // Articles table
     const artigos = cap.artigos || [];
     if (artigos.length > 0) {
-      const tableBody = artigos.map((art) => {
-        const precoComMargem = margemDecimal > 0 && margemDecimal < 1 ? art.preco_unitario / (1 - margemDecimal) : art.preco_unitario;
-        const totalComMargem = art.quantidade * precoComMargem;
-        return [
-          art.codigo || '-',
-          art.descricao,
-          art.unidade,
-          art.quantidade.toFixed(2),
-          fmt(precoComMargem),
-          fmt(totalComMargem),
-        ];
+      const visibleKeys = loadVisibleColumns();
+      const cols = CAPITULO_COLUMNS.filter((c) => visibleKeys.includes(c.key));
+      const marginMultiplier = margemDecimal > 0 && margemDecimal < 1 ? 1 / (1 - margemDecimal) : 1;
+
+      const head = [cols.map((c) => c.label)];
+      const tableBody = artigos.map((art) =>
+        cols.map((c) => getCellValue(art, c.key, { marginMultiplier }))
+      );
+
+      // Proportional column widths based on weights
+      const totalWeight = cols.reduce((s, c) => s + c.weight, 0);
+      const columnStyles: Record<number, any> = {};
+      cols.forEach((c, i) => {
+        columnStyles[i] = {
+          cellWidth: (usableW * c.weight) / totalWeight,
+          halign: c.numeric ? 'right' : c.key === 'unidade' ? 'center' : 'left',
+          fontStyle: c.key === 'subtotal' ? 'bold' : 'normal',
+        };
       });
 
       autoTable(doc, {
         startY: y,
         margin: { left: PAGE.marginLeft, right: PAGE.marginRight },
-        head: [['Código', 'Descrição', 'Un.', 'Qtd.', 'P. Unit.', 'Total']],
+        head,
         body: tableBody,
         theme: 'grid',
         styles: {
-          fontSize: 7.5,
-          cellPadding: 1.8,
+          fontSize: cols.length > 8 ? 6.5 : 7.5,
+          cellPadding: 1.6,
           textColor: COLORS.text,
           lineColor: COLORS.border,
           lineWidth: 0.2,
@@ -364,21 +372,11 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
           fillColor: COLORS.headerBg,
           textColor: COLORS.dark,
           fontStyle: 'bold',
-          fontSize: 7.5,
+          fontSize: cols.length > 8 ? 6.5 : 7.5,
           halign: 'left',
         },
-        columnStyles: {
-          0: { cellWidth: 18, halign: 'left', font: 'courier' },
-          1: { cellWidth: 'auto' },
-          2: { cellWidth: 14, halign: 'center' },
-          3: { cellWidth: 18, halign: 'right' },
-          4: { cellWidth: 24, halign: 'right' },
-          5: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
-        },
+        columnStyles,
         showHead: 'everyPage',
-        didDrawPage: () => {
-          // Header is repeated automatically by autoTable
-        },
       });
 
       y = (doc as any).lastAutoTable.finalY + 1;

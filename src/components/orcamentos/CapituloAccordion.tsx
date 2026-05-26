@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -19,14 +19,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArtigoRow } from './ArtigoRow';
 import type { Capitulo, ArtigoFormData } from '@/types/orcamentos';
-import { 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Plus, 
+import {
+  CAPITULO_COLUMNS,
+  GROUP_LABELS,
+  loadVisibleColumns,
+  saveVisibleColumns,
+  type CapituloColumnKey,
+} from '@/lib/capitulo-columns';
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  Plus,
   Search,
   Euro,
   FileText,
+  Columns3,
 } from 'lucide-react';
 
 interface CapituloAccordionProps {
@@ -62,6 +70,25 @@ export function CapituloAccordion({
   const [summaryText, setSummaryText] = useState(capitulo.client_summary_text || '');
   const [exclusionsText, setExclusionsText] = useState(capitulo.client_exclusions_text || '');
   const [includeInSummary, setIncludeInSummary] = useState(capitulo.include_in_client_summary !== false);
+  const [visibleCols, setVisibleCols] = useState<CapituloColumnKey[]>(() => loadVisibleColumns());
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+
+  useEffect(() => {
+    saveVisibleColumns(visibleCols);
+  }, [visibleCols]);
+
+  const toggleCol = (key: CapituloColumnKey) => {
+    const def = CAPITULO_COLUMNS.find((c) => c.key === key);
+    if (def?.required) return;
+    setVisibleCols((prev) =>
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
+    );
+  };
+
+  const groupedCols = CAPITULO_COLUMNS.reduce<Record<string, typeof CAPITULO_COLUMNS>>((acc, col) => {
+    (acc[col.group] ||= []).push(col);
+    return acc;
+  }, {});
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -158,6 +185,15 @@ export function CapituloAccordion({
                       className="pl-9"
                     />
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowColumnPicker((v) => !v)}
+                    title="Colunas visíveis"
+                  >
+                    <Columns3 className="mr-2 h-4 w-4" />
+                    Colunas
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => onOpenCatalog(capitulo.id)}>
                     <Search className="mr-2 h-4 w-4" />
                     Catálogo
@@ -169,15 +205,60 @@ export function CapituloAccordion({
                 </div>
               )}
 
+              {showColumnPicker && (
+                <div className="mb-3 rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                  {(['id', 'unit', 'total', 'final'] as const).map((group) => (
+                    <div key={group}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        {GROUP_LABELS[group]}
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                        {(groupedCols[group] || []).map((col) => (
+                          <label
+                            key={col.key}
+                            className={`flex items-center gap-1.5 select-none ${col.required ? 'opacity-60' : 'cursor-pointer'}`}
+                          >
+                            <Checkbox
+                              checked={visibleCols.includes(col.key)}
+                              onCheckedChange={() => toggleCol(col.key)}
+                              disabled={col.required}
+                              className="h-3.5 w-3.5"
+                            />
+                            <span className="text-xs">{col.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {filteredArtigos.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase border-b">
-                    <div className="col-span-1">Cód.</div>
-                    <div className="col-span-4">Descrição</div>
-                    <div className="col-span-1 text-center">Un.</div>
-                    <div className="col-span-2 text-right">Qtd.</div>
-                    <div className="col-span-2 text-right">P. Unit.</div>
-                    <div className="col-span-2 text-right">Total</div>
+                <div className="space-y-1 overflow-x-auto">
+                  <div
+                    className="grid gap-2 px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b"
+                    style={{
+                      gridTemplateColumns:
+                        CAPITULO_COLUMNS.filter((c) => visibleCols.includes(c.key))
+                          .map((c) => {
+                            if (c.key === 'item') return 'minmax(180px, 2.5fr)';
+                            if (c.key === 'unidade') return 'minmax(56px, 0.6fr)';
+                            if (c.key === 'qtd') return 'minmax(64px, 0.7fr)';
+                            if (c.key === 'subtotal') return 'minmax(96px, 1fr)';
+                            return 'minmax(84px, 0.9fr)';
+                          })
+                          .join(' ') + ' 64px',
+                    }}
+                  >
+                    {CAPITULO_COLUMNS.filter((c) => visibleCols.includes(c.key)).map((c) => (
+                      <div
+                        key={c.key}
+                        className={c.numeric ? 'text-right' : c.key === 'unidade' ? 'text-center' : 'text-left'}
+                      >
+                        {c.label}
+                      </div>
+                    ))}
+                    <div />
                   </div>
                   {filteredArtigos.map((artigo) => (
                     <ArtigoRow
@@ -186,6 +267,7 @@ export function CapituloAccordion({
                       onEdit={() => onEditArtigo(artigo.id)}
                       onDelete={() => onDeleteArtigo(artigo.id)}
                       isReadOnly={isReadOnly}
+                      visibleCols={visibleCols}
                     />
                   ))}
                 </div>
