@@ -100,14 +100,27 @@ const FornecedoresPage = () => {
     const matchesSearch = 
       fornecedor.nome.toLowerCase().includes(search.toLowerCase()) ||
       fornecedor.email?.toLowerCase().includes(search.toLowerCase()) ||
-      fornecedor.nif?.toLowerCase().includes(search.toLowerCase());
+      fornecedor.nif?.toLowerCase().includes(search.toLowerCase()) ||
+      fornecedor.area_atuacao?.toLowerCase().includes(search.toLowerCase());
     
     const matchesAtivo = filterAtivo === 'all' || 
       (filterAtivo === 'ativo' && fornecedor.ativo) || 
       (filterAtivo === 'inativo' && !fornecedor.ativo);
 
-    return matchesSearch && matchesAtivo;
+    const matchesArea =
+      filterArea === 'all' ||
+      (filterArea === '__none__' && !fornecedor.area_atuacao) ||
+      fornecedor.area_atuacao === filterArea;
+
+    return matchesSearch && matchesAtivo && matchesArea;
   });
+
+  // Contagem por área (apenas fornecedores ativos visíveis)
+  const areaCounts = (fornecedores || []).reduce<Record<string, number>>((acc, f) => {
+    const key = f.area_atuacao || '__none__';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
   if (isLoading) {
     return (
