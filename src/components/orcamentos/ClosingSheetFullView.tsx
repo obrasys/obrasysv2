@@ -738,7 +738,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <p className="text-xs text-muted-foreground italic px-1">
           Os valores das rubricas de estaleiro são calculados automaticamente a partir do botão &quot;Discriminar Estaleiro&quot;.
         </p>
-        <SubtotalRow label="TOTAL ESTALEIRO / CT" value={totals.total_estaleiro} />
+        <SubtotalRow label="TOTAL ESTALEIRO" value={totals.total_estaleiro} />
         </Section>
 
         <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
