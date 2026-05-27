@@ -90,6 +90,16 @@ export interface IcfProjectIssue {
   created_at: string;
 }
 
+export interface IcfAnalysisSnapshot {
+  id: string;
+  analysis_id: string;
+  version_number: number;
+  label: string | null;
+  payload: unknown;
+  created_by: string | null;
+  created_at: string;
+}
+
 export const DEFAULT_CHECKLIST: Array<{ key: string; label: string; required: boolean }> = [
   { key: 'plantas', label: 'Plantas de pisos', required: true },
   { key: 'cortes', label: 'Cortes técnicos', required: true },

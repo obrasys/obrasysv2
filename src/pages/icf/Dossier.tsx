@@ -34,6 +34,11 @@ import {
 } from '@/hooks/useIcfDossier';
 import type { IcfDocumentCategory } from '@/types/icf-dossier';
 import { supabase } from '@/integrations/supabase/client';
+import { DossierPanosTab } from '@/components/icf/dossier/DossierPanosTab';
+import { DossierComposicaoTab } from '@/components/icf/dossier/DossierComposicaoTab';
+import { DossierIsometricoTab } from '@/components/icf/dossier/DossierIsometricoTab';
+import { DossierManualTab } from '@/components/icf/dossier/DossierManualTab';
+import { DossierOrcamentoTab } from '@/components/icf/dossier/DossierOrcamentoTab';
 
 const CATEGORY_LABELS: Record<IcfDocumentCategory, string> = {
   planta: 'Planta',
@@ -362,26 +367,24 @@ export default function IcfDossier() {
 
         {/* Panos */}
         <TabsContent value="panos" className="mt-4">
-          <Card className="rounded-xl">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              A geração de panos a partir do dossiê será ligada na Fase 3.
-              <br />
-              Entretanto, use o assistente arquitetónico para gerar panos individuais.
-            </CardContent>
-          </Card>
+          <DossierPanosTab analysis={analysis} />
         </TabsContent>
 
-        {/* Placeholders F3 */}
-        {(['composicao', 'isometrico', 'manual', 'orcamento'] as const).map(tab => (
-          <TabsContent key={tab} value={tab} className="mt-4">
-            <Card className="rounded-xl">
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                Esta secção será ativada na Fase 3 (Composição HOMEBLOCK, modelo isométrico, manual técnico
-                e envio para orçamento).
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+        <TabsContent value="composicao" className="mt-4">
+          <DossierComposicaoTab analysisId={analysis.id} />
+        </TabsContent>
+
+        <TabsContent value="isometrico" className="mt-4">
+          <DossierIsometricoTab analysisId={analysis.id} />
+        </TabsContent>
+
+        <TabsContent value="manual" className="mt-4">
+          <DossierManualTab analysis={analysis} />
+        </TabsContent>
+
+        <TabsContent value="orcamento" className="mt-4">
+          <DossierOrcamentoTab analysis={analysis} />
+        </TabsContent>
       </Tabs>
     </div>
   );
