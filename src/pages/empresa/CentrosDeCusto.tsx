@@ -95,7 +95,7 @@ export default function CentrosDeCustoPage() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title="Centros de Custo">
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
