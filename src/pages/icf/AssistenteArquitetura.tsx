@@ -344,6 +344,11 @@ export default function AssistenteArquitetura() {
               );
             })()}
             {wallItems.length === 0 ? (
+              <Button onClick={runAxiaExtraction} disabled={analyzing}>
+                {analyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                Analisar planta com a Axia
+              </Button>
+            ) : (
               <>
                 <div className="border rounded-lg divide-y max-h-96 overflow-y-auto">
                   {wallItems.map((w) => (
