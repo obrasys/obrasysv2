@@ -28,7 +28,12 @@ const IcfMapaVisualPanos = () => {
   const [obraId, setObraId] = useState(params.get('obra') || '');
   const { data: panels, isLoading } = useIcfWallPanels(obraId);
   const { data: blocks } = useIcfBlockLibrary('bloco_principal');
+  const { data: configs } = useIcfConfiguracoes(obraId);
   const create = useCreateIcfWallPanel();
+  const sendBudget = useSendWallPanelsToBudget();
+
+  const validatedCount = (panels ?? []).filter(p => p.status === 'validado').length;
+  const latestConfig = configs?.[0];
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newPanel, setNewPanel] = useState({
