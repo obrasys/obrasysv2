@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type SiteDetailCategory =
-  | "site_labor"
   | "technical_staff"
-  | "site_equipment"
+  | "site_supervisors"
+  | "team_leaders"
   | "utilities"
+  | "site_equipment"
+  | "site_guard"
+  | "site_labor"
   | "other_site_costs";
 
 export interface SiteDetailLine {
@@ -27,11 +30,89 @@ export interface SiteDetailLine {
 }
 
 export const SITE_CATEGORY_LABELS: Record<SiteDetailCategory, string> = {
-  site_labor: "Pessoal de Obra",
-  technical_staff: "Pessoal Técnico",
-  site_equipment: "Equipamentos de Estaleiro",
-  utilities: "Utilities (Eléct./Água/Telef./Net)",
-  other_site_costs: "Outros Gastos",
+  technical_staff: "A - Pessoal Técnico",
+  site_supervisors: "B - Encarregados",
+  team_leaders: "C - Chefes de Equipa / Seguidor",
+  utilities: "D - Outros Gastos (Água / Electricidade / Telef. / Net)",
+  site_equipment: "E - Equipamentos de Estaleiro",
+  site_guard: "F - Guarda",
+  site_labor: "G - Pessoal de Obra",
+  other_site_costs: "G - Outro",
+};
+
+export const SITE_CATEGORY_DEFAULTS: Record<SiteDetailCategory, string[]> = {
+  technical_staff: [
+    "Director Projecto",
+    "Gestor Projecto",
+    "Técnico de Instalações Especiais",
+    "Coordenador Segurança",
+    "Decorador(a) Interiores / 3D Arquitecto(a)",
+  ],
+  site_supervisors: [
+    "Encarregado Geral",
+    "Encarregado",
+  ],
+  team_leaders: [
+    "Chefe de Equipa / Seguidor",
+  ],
+  utilities: [
+    "Água",
+    "Electricidade",
+    "Telefone + Internet",
+    "Aluguer",
+  ],
+  site_equipment: [
+    "Grua Torre",
+    "Grua Automontante (Rápida)",
+    "Grua Móvel",
+    "Bases em Betão",
+    "Montagem / Desmontagem Grua",
+    "Transporte Grua",
+    "Camião Grua",
+    "Carrinha",
+    "Retro",
+    "Escavadora",
+    "Camião",
+    "Outros Equipamentos Pesados",
+    "Transportes",
+    "Betoneira",
+    "Instalações Provisórias",
+    "Material Diversos",
+    "Gerador",
+    "Painéis Obra Amovíveis / Rede Bekahert (ml)",
+    "Vedação Obra com Chapa Opaca (ml)",
+    "Andaimes (Próprios)",
+    "Andaimes Montagem (m2)",
+    "Andaimes Aluguer (m2)",
+    "Topógrafo (Fase de Obra / Check in situ)",
+    "Reparações",
+    "Ocupação de Via Pública (m2)",
+    "Contentor / Bungalows (Base de Vida)",
+    "Escritório / Stand Vendas Mobiliário de Escritório de Obra",
+    "Limpeza dos Contentores da Base de Vida",
+    "Sanitários WC Fixo",
+    "Ferramentaria",
+    "Contentor de Lixo (Ecobaldes)",
+    "Sacos Big Bags",
+    "Painéis de Publicidade / Placa de Obra",
+    "Aluguer Diverso",
+    "Manta Protecção de Pavimentos",
+    "Protecções Colectivas (Guardas Seg.)",
+    "EPI's",
+    "Telas Finais",
+    "Desmontagem do Estaleiro",
+  ],
+  site_guard: [
+    "Guarda",
+  ],
+  site_labor: [
+    "Pedreiro",
+    "Servente",
+    "Gruista",
+  ],
+  other_site_costs: [
+    "Outro",
+  ],
 };
 
 async function getOrgId(): Promise<string | null> {
