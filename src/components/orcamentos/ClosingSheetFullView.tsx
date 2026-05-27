@@ -109,6 +109,8 @@ function Section({
   collapsed,
   onToggle,
   extra,
+  total,
+  totalLabel,
   children,
 }: {
   id: string;
@@ -116,6 +118,8 @@ function Section({
   collapsed: boolean;
   onToggle: () => void;
   extra?: React.ReactNode;
+  total?: number;
+  totalLabel?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -128,9 +132,17 @@ function Section({
           aria-expanded={!collapsed}
         >
           <h3 className="text-sm font-bold uppercase tracking-wide text-primary">{title}</h3>
-          <ChevronDown
-            className={`h-4 w-4 text-primary transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
-          />
+          <div className="flex items-center gap-3">
+            {collapsed && total !== undefined && (
+              <span className="text-sm font-bold tabular-nums text-primary bg-primary/10 px-2 py-0.5 rounded">
+                {totalLabel ? `${totalLabel}: ` : ""}
+                {new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(total)}
+              </span>
+            )}
+            <ChevronDown
+              className={`h-4 w-4 text-primary transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+            />
+          </div>
         </button>
         {extra}
       </div>
@@ -592,7 +604,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")}>
+        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total Directos">
         <Table>
           <TableHeader>
             <TableRow>
@@ -653,7 +665,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </Section>
 
         {/* ESTALEIRO */}
-        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")}>
+        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")} total={totals.total_estaleiro} totalLabel="Total Estaleiro">
         <Table>
           <TableHeader>
             <TableRow>
@@ -692,7 +704,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* TERRENO (2) */}
-        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")}>
+        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")} total={totals.total_terreno} totalLabel="Total Terreno">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Preço Aquisição Terreno (€)</Label>
@@ -795,7 +807,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* INDIRECTOS (3) */}
-        <Section id="indirectos" title="Custos Indirectos — (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")}>
+        <Section id="indirectos" title="Custos Indirectos — (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Honorários Técnicos (€)</Label>
@@ -887,7 +899,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* OUTROS (4) */}
-        <Section id="outros" title="Outros Custos — (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")}>
+        <Section id="outros" title="Outros Custos — (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")} total={totals.total_outros} totalLabel="Total Outros">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Contratos / Registos (€)</Label>
@@ -948,7 +960,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* ADMIN (5) */}
-        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")}>
+        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total Admin">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Estrutura / Fixos (Overhead) (€)</Label>
@@ -981,7 +993,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* IVA (6) */}
-        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")}>
+        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total IVA">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
@@ -1042,7 +1054,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
 
         {/* MAPA DE VENDAS */}
-        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")}>
+        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")} total={totals.valor_vendas} totalLabel="Vendas">
         <Table>
           <TableHeader>
             <TableRow>
@@ -1186,7 +1198,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* PROPOSTA FINAL — RAI */}
-        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")}>
+        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")} total={totals.rai_eur} totalLabel="RAI">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor de Vendas (Proposta)</p>
