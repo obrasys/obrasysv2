@@ -1,74 +1,122 @@
-# Assistente ICF a partir de Arquitetura
+# Camada de Centros de Custo, Gestão Financeira e Dossier de Promotor
 
-Novo fluxo dentro do módulo ICF que aceita plantas arquitetónicas comuns (não-ICF) e produz um pré-quantitativo com rastreabilidade total: o que foi extraído, calculado, sugerido pela Axia ou confirmado pelo utilizador. Mantém o módulo ICF atual intacto — é um caminho paralelo.
+Implementação **aditiva e faseada**. Nada do fluxo atual (Obras, Orçamentos, Folha de Fecho, Fornecedores, Faturas, Axia) é removido ou reescrito. Apenas adicionamos campos opcionais, novas tabelas e novos ecrãs que **consomem** o que já existe.
 
-## Entrega
+Dada a dimensão (22 blocos), proponho entregar em **6 fases** que podem ser aprovadas/lançadas independentemente. Esta proposta cobre **Fase 1 a Fase 3** em detalhe; Fases 4–6 ficam descritas em alto nível e detalhamos quando chegar a vez.
 
-### 1. Base de dados (1 migração)
+---
 
-Nova tabela `icf_assistant_sessions` (uma sessão = um upload + escolhas do utilizador) e `icf_assistant_items` (cada parede/fundação/laje proposta, com `source_type`, `review_required`, `confidence`, `assumptions`, `notes`, `user_confirmed`).
+## Princípios transversais
 
-Enum `icf_source_type`: `extraido_planta | calculado_sistema | sugerido_axia | confirmado_utilizador`.
+- **Multi-tenant**: tudo via `organization_id` (já é padrão do projeto) + RLS com `get_org_member_ids()`.
+- **Não-destrutivo**: novas colunas são `nullable`, sem `NOT NULL` em tabelas antigas. Sem renomes.
+- **Compatibilidade**: dados existentes continuam a funcionar sem `cost_center_id`. Os novos relatórios tratam `NULL` como "não classificado".
+- **Sem refazer Folha de Fecho, Orçamentos, MCE etc.** — onde já existe módulo (ex.: `contracting_packages` = MCE/Consultas, `budget_awards` = Adjudicações, `autos_medicao`, `obra_purchases`), **só adicionamos `cost_center_id` + `cost_nature`** e novos dashboards. O dossier da obra é uma **vista agregadora** sobre tabelas existentes.
+- **Axia**: estendemos o prompt central com glossário CE/OB, MB vs RAI, naturezas. Sem nova edge function nesta fase.
 
-Multi-tenant (`organization_id`), RLS + GRANTs no padrão do projeto.
+---
 
-### 2. Edge function `icf-architecture-assistant`
+## FASE 1 — Fundação: Centros de Custo + Naturezas (entrega imediata)
 
-Nova função (não toca `icf-plant-analysis`). Recebe planta + tipo declarado + escala calibrada. Usa Gemini 2.5 Pro com prompt específico:
-- Identifica paredes exteriores vs interiores, vãos, pisos, áreas, compartimentos
-- **Nunca inventa fundações** — quando ausentes, devolve `fundacoes_encontradas: false` com mensagem obrigatória
-- Marca cada parede com `candidata_icf` (exteriores por default, interiores nunca sem confirmação)
-- Cada item retornado tem `source_type`, `confidence`, `assumptions[]`
+### 1.1 Schema
 
-### 3. Motor de sugestão de fundações (`src/lib/icf-foundation-suggestions.ts`)
+**Nova tabela `cost_centers`** com `organization_id`, `code`, `name`, `type ∈ ('estrutura','obra')`, `parent_id`, `obra_id`, `location`, `fiscal_year`, `active`. Unique `(organization_id, code)`. RLS por org. GRANTs para `authenticated` + `service_role`.
 
-6 opções parametrizáveis (sapata contínua, laje térrea com bordo, stem wall, cave ICF, radier, sem fundações). Cada uma com schema de campos e cálculo de quantitativos a partir do perímetro/área das paredes ICF confirmadas. Todos os outputs com `source_type: sugerido_axia`, `review_required: true`.
+**Enum `cost_nature`**: `MO | MAT | SRV | INS | ALU | DIV`.
 
-### 4. UI — Wizard de 6 passos (`/icf/assistente`)
+**Sequência por org** via função `next_obra_cost_center_code(org_id)` → `OB.001`, `OB.002`...
+
+**Trigger `on_obra_created_create_cost_center`** em `public.obras AFTER INSERT`: cria automaticamente `OB.NNN — <nome> — <localizacao>` com `type='obra'` e `obra_id = NEW.id`.
+
+**Backfill**: gerar OB.NNN para todas as obras existentes (ordenadas por `created_at`) e ligar via `obras.cost_center_id`. Seed dos 8 CE padrão (CE.01–CE.08) por organização existente.
+
+### 1.2 Colunas opcionais (ADD COLUMN IF NOT EXISTS, todas nullable)
+
+Em: `obras`, `orcamentos`, `artigos_orcamento`, `capitulos_orcamento` (só `cost_nature` default por capítulo), `obra_purchases`, `budget_awards`, `contracting_packages`, `budget_version_items`, `autos_medicao`, `autos_medicao_itens`, `contas_financeiras` (faturas/pagamentos/recebimentos — verificar nome real), `supplier_*` quando aplicável.
+
+Campos: `cost_center_id uuid`, `cost_nature public.cost_nature`, `source text`.
+
+### 1.3 UI mínima Fase 1
+
+- Página **/empresa/centros-de-custo**: lista CE + OB, criar/editar CE manuais e subcentros, ver OB auto-gerados (read-only no código, editáveis no nome/local).
+- Componente `<CostCenterPicker />` + `<CostNaturePicker />` reutilizáveis.
+- Acrescentar como **filtro opcional** (não obrigatório) nos ecrãs financeiros existentes — sem mudar layout principal.
+
+**Critério de aceite Fase 1**: criar obra → aparece OB.NNN automaticamente; é possível lançar despesa CE sem obra; filtros funcionam; nada do fluxo atual quebra.
+
+---
+
+## FASE 2 — Gestão da Empresa (Dashboard + Cálculos MB/RAI)
+
+### 2.1 Funções SQL (views materializadas leves)
+
+- `fn_obra_result(obra_id, fiscal_year?)` → `{ receitas, custos, mb, mb_pct }`
+  - Receitas: soma de recebimentos/faturação de venda ligados ao OB.
+  - Custos: soma de `obra_purchases` + autos pagos + qualquer linha financeira com `cost_center_id` do OB.
+- `fn_ce_costs(org_id, fiscal_year)` → soma de custos com `cost_center.type='estrutura'`.
+- `fn_rai_empresa(org_id, fiscal_year)` → `SUM(fn_obra_result.mb) - fn_ce_costs`.
+- `fn_margem_sobre_venda(custo, margem_pct)` → `custo / (1 - margem_pct/100)` (helper para frontend e edge functions).
+
+### 2.2 Página `/empresa/gestao` com tabs
+
+`Centros de Custo` · `Custos de Estrutura` · `Resultado por Obra` · `Resultado Anual` · `Pagamentos` · `Recebimentos` · `Retenções de Garantia` · `Faturas Contabilista`.
+
+KPIs: Resultado total obras, Total CE, RAI anual, MB média, Adjudicado, Faturado, Pago, Recebido, A pagar, A receber, Retenções ativas, Custos SPV/obra. Todos calculados das tabelas existentes + `cost_center_id`.
+
+### 2.3 Helper `calcMargemSobreVenda` em `src/lib/finance.ts` + correção nos pontos onde hoje se usa `custo * (1+margem)` para o caso "margem sobre venda" (manter os dois modos: "markup sobre custo" e "margem sobre venda" explícitos na UI).
+
+---
+
+## FASE 3 — Dossier do Promotor (vista agregadora na página da Obra)
+
+Sem duplicar dados. Adicionar tabs ao detalhe da obra (`/obras/:id`):
+
+`Estudo Viabilidade` · `Orçamento Base` · `Folha de Fecho` · `Consultas` · `MCE` · `Adjudicações/NE` · `Contratos` · `Controlo de Custos` · `Autos` · `Faturas` · `Recebimentos` · `Receção Provisória` · `Fecho de Contas` · `Garantias` · `SPV`.
+
+Cada tab é um wrapper que filtra módulos existentes por `obra_id` (e por `cost_center_id` do OB). Tabs sem dados mostram CTA "iniciar".
+
+**Painel Controlo de Custos**: tabela cruzada Capítulo × {Base seco, Folha de Fecho, Adjudicado, Faturado, Pago, Saldo, Desvio %, % adjudicada, % executada}. Filtros por capítulo, natureza, fornecedor, contrato, CC.
+
+---
+
+## FASES 4–6 (resumo, detalhamos depois)
+
+- **Fase 4 — Receção/Garantias/Recebimentos faseados**: tabela `client_payment_plans` (frações × marcos: CPCV 15%, Início 15%, Estrutura 15%, Escritura 55%, editáveis), painel de retenções (já temos `retention_percent` em vários sítios — agregar), etapas Receção Provisória → Fecho de Contas.
+- **Fase 5 — SPV**: novo módulo `spv_occurrences` ligado a OB.NNN-SPV.XX com fotos, fornecedor, custo estimado/real, prioridade, estado; relatórios por motivo/fração/fornecedor.
+- **Fase 6 — Axia**: atualizar prompt central da Axia (`supabase/functions/axia-*`) com glossário CE/OB, MB vs RAI, naturezas MO/MAT/SRV/INS/ALU/DIV, regras de classificação automática com `review_required: true` em baixa confiança. Sugestão automática de `cost_center_id` + `cost_nature` ao lançar despesa.
+
+---
+
+## Detalhes técnicos (Fase 1)
 
 ```text
-1. Upload + tipo de planta (arquitetura/estrutural/ICF/não sei)
-2. Calibração por medida conhecida (reutiliza usePlanCalibration)
-3. Pisos & páginas (reutiliza usePlanFloors/usePlanPages)
-4. Extração + seleção: tabela com checkboxes "É ICF?" por parede;
-   exteriores pré-marcadas, interiores não
-5. Parâmetros ICF (núcleo, betão, aço — reutiliza IcfConfig)
-6. Fundações: se não encontradas → painel "Fundações não encontradas"
-   com 6 cards de opção e formulário paramétrico por opção
+migrations/
+  *_cost_centers_foundation.sql   -- enum, tabela, função sequencial, trigger, backfill, seed CE
+  *_add_cost_center_columns.sql   -- ADD COLUMN IF NOT EXISTS em ~12 tabelas
+
+src/types/cost-center.ts
+src/hooks/useCostCenters.ts
+src/components/finance/CostCenterPicker.tsx
+src/components/finance/CostNaturePicker.tsx
+src/pages/empresa/CentrosDeCusto.tsx
+src/lib/finance.ts                -- calcMargemSobreVenda, calcMB, calcRAI helpers
+
+App.tsx                            -- rota /empresa/centros-de-custo
+src/components/Sidebar (grupo "Empresa") -- novo item
 ```
 
-Painel final: 4 secções coloridas (Extraído / Calculado / Sugerido / Requer revisão) + 2 botões:
-- **Gerar pré-orçamento ICF** — inclui sugestões com flag visível
-- **Gerar orçamento validado** — só itens com `user_confirmed = true`
+Sem alterações em: `icf-*`, `orcamentos` (apenas ADD COLUMN), edge functions existentes, types.ts (regenera).
 
-Reutiliza `generate_icf_budget_transactional` existente; capítulo marca itens sugeridos com tag `[REVISÃO TÉCNICA]`.
+---
 
-### 5. Integração
+## Fora de scope (explícito)
 
-- Novo card no `IcfQuickNav`: "Assistente ICF (planta arquitetura)"
-- Rota `/icf/assistente` em `App.tsx` com `ManagerRoute`
-- Hooks: `useIcfAssistantSession`, `useIcfFoundationSuggestions`
-- Tipos em `src/types/icf-assistant.ts`
+- Integração SAF-T / ERP externo.
+- Reescrita do módulo de Orçamentos ou Folha de Fecho.
+- Migração de dados financeiros antigos para classificação obrigatória (fica `NULL` = "não classificado" até o utilizador rever).
 
-## Detalhes técnicos
+---
 
-**Source tracking:** cada item passa pelo banco com origem auditável. View `icf_assistant_audit_v` para relatórios.
+## Pergunta antes de avançar
 
-**Confidence thresholds:** `<0.6` força badge vermelho "Requer revisão"; mesmo com confirmação do utilizador, mantém histórico no `assumptions[]`.
-
-**Mensagem obrigatória** (constante exportada, usada na UI + função): _"Não foram identificadas fundações ou sapatas na planta arquitetónica. A Axia pode sugerir uma solução preliminar para orçamento, mas a definição final deve ser validada por técnico/engenheiro responsável."_
-
-**Não inclui:** refazer `icf-plant-analysis` (continua válido para plantas ICF nativas); alterar `IcfPlantAnalyzer` (fluxo paralelo).
-
-## Ficheiros novos
-- `supabase/migrations/*_icf_assistant.sql`
-- `supabase/functions/icf-architecture-assistant/index.ts`
-- `src/types/icf-assistant.ts`
-- `src/lib/icf-foundation-suggestions.ts` (+ teste)
-- `src/hooks/useIcfAssistantSession.ts`
-- `src/pages/icf/AssistenteArquitetura.tsx` (wizard)
-- `src/components/icf/assistant/` (StepUpload, StepWallSelection, StepFoundations, AuditPanel, FoundationOptionCard, SourceBadge)
-
-## Ficheiros editados (mínimo)
-- `src/App.tsx` — rota nova
-- `src/components/icf/IcfQuickNav.tsx` — atalho novo
+Confirmas que entrego **só a Fase 1 agora** (fundação + seed + UI mínima), e depois avançamos Fase 2 e 3? Ou queres que eu já agrupe Fase 1 + 2 numa entrega (mais demorada mas com dashboard "Gestão da Empresa" funcional logo)?
