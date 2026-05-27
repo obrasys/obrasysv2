@@ -199,7 +199,7 @@ Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundac
             role: "user",
             content: [
               { type: "text", text: userPrompt },
-              { type: "image_url", image_url: { url: signed.signedUrl } },
+              { type: "image_url", image_url: { url: dataUrl } },
             ],
           },
         ],
