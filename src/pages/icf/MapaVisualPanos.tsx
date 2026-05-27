@@ -69,9 +69,28 @@ const IcfMapaVisualPanos = () => {
   };
 
   const handleSendToBudget = (p: ICFWallPanel) => {
-    // Por agora encaminhar para fluxo ICF existente (gera orçamento da configuração)
-    toast.info('A integração com orçamento usa o fluxo ICF existente. Abrindo módulo ICF…');
-    navigate(`/icf?obra=${p.obra_id}`);
+    if (p.status !== 'validado') {
+      toast.info('Valide o pano antes de o enviar para orçamento.');
+      return;
+    }
+    handleSendAll();
+  };
+
+  const handleSendAll = () => {
+    if (!obraId) return;
+    if (!latestConfig) {
+      toast.error('Crie uma configuração ICF para esta obra antes de enviar para orçamento.');
+      navigate(`/icf?obra=${obraId}`);
+      return;
+    }
+    if (validatedCount === 0) {
+      toast.info('Não há panos validados para enviar.');
+      return;
+    }
+    sendBudget.mutate(
+      { obraId, configuracaoId: latestConfig.id },
+      { onSuccess: (out) => navigate(`/orcamentos/${out.orcamento_id}`) },
+    );
   };
 
   return (
