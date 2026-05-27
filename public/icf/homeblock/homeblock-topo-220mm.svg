@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Inter, sans-serif">
+  <defs>
+    <pattern id="topo220" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#f4f1ea"/>
+      <circle cx="3" cy="3" r="0.9" fill="#d9d2c2"/>
+    </pattern>
+  </defs>
+  <path d="M40 50 L360 50 L360 210 L40 210 Z" fill="url(#topo220)" stroke="#0F4C5C" stroke-width="2"/>
+  <rect x="40" y="50" width="320" height="28" fill="#e8e2d4" stroke="#0F4C5C" stroke-width="1.2"/>
+  <text x="200" y="35" text-anchor="middle" font-size="13" font-weight="600" fill="#0F4C5C">Topo / Remate 22 cm</text>
+  <text x="200" y="232" text-anchor="middle" font-size="11" fill="#555">Peça de fecho horizontal — 220 mm</text>
+  <text x="200" y="250" text-anchor="middle" font-size="10" fill="#888">Compatível com paredes HOMEBLOCK 22 cm</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Inter, sans-serif">
+  <defs>
+    <pattern id="eps300" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#f4f1ea"/>
+      <circle cx="4" cy="4" r="1.1" fill="#d9d2c2"/>
+    </pattern>
+  </defs>
+  <rect x="10" y="30" width="380" height="180" fill="url(#eps300)" stroke="#0F4C5C" stroke-width="2" rx="4"/>
+  <rect x="10" y="105" width="380" height="30" fill="#e8e2d4" stroke="#0F4C5C" stroke-width="1.2"/>
+  <line x1="30" y1="105" x2="30" y2="135" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="115" y1="105" x2="115" y2="135" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="200" y1="105" x2="200" y2="135" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="285" y1="105" x2="285" y2="135" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="370" y1="105" x2="370" y2="135" stroke="#0F4C5C" stroke-width="1"/>
+  <text x="200" y="22" text-anchor="middle" font-size="13" font-weight="600" fill="#0F4C5C">HOMEBLOCK 30 cm</text>
+  <text x="200" y="232" text-anchor="middle" font-size="11" fill="#555">900 × 270 × 300 mm — módulo 75 mm</text>
+  <text x="200" y="250" text-anchor="middle" font-size="10" fill="#888">EPS + núcleo de betão Ø ≈ 200 mm</text>
+</svg>
