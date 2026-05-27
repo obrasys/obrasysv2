@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles } from 'lucide-react';
+import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles, FolderTree, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
@@ -20,6 +20,8 @@ import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
 import { ICFAnalysisModeSelector } from '@/components/icf/ICFAnalysisModeSelector';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { useIcfAnalyses } from '@/hooks/useIcfDossier';
+import { Badge } from '@/components/ui/badge';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 
