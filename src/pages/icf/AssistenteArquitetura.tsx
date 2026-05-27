@@ -399,33 +399,87 @@ export default function AssistenteArquitetura() {
       )}
 
       {step === 6 && (
-        <Card className="rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" /> Resumo auditável
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AuditPanel
-              items={items.data ?? []}
-              onToggleConfirm={(it, v) =>
-                updateItem.mutate({
-                  id: it.id,
-                  patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
-                })
-              }
-              onGeneratePre={() => {
-                updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
-                toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
-              }}
-              onGenerateValidated={() => {
-                updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
-                toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
-              }}
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" /> Resumo auditável
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!sessionObraId && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-sm font-medium">Associe esta sessão a uma obra</p>
+                  <p className="text-xs text-muted-foreground">
+                    A obra é necessária para gerar o Mapa Visual de Panos, o Manual ICF e enviar para orçamento.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={linkObraId} onValueChange={setLinkObraId}>
+                      <SelectTrigger className="h-9 sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
+                      <SelectContent>
+                        {obras?.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={handleLinkObra} disabled={!linkObraId || updateSession.isPending}>
+                      Associar obra
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <AuditPanel
+                items={items.data ?? []}
+                onToggleConfirm={(it, v) =>
+                  updateItem.mutate({
+                    id: it.id,
+                    patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
+                  })
+                }
+                onGeneratePre={() => {
+                  updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
+                  toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
+                }}
+                onGenerateValidated={() => {
+                  updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
+                  toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border-primary/30">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" /> Próximos passos
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Os panos extraídos pela Axia são materializados na obra para visualização técnica e composição
+                HOMEBLOCK. {icfSelectedWalls.length} pano(s) ICF selecionados ({icfWallLength.toFixed(1)} m totais).
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => handleMaterializePanels('mapa')}
+                disabled={materializing || icfSelectedWalls.length === 0 || (!sessionObraId && !linkObraId)}
+              >
+                {materializing
+                  ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  : <Layers className="h-4 w-4 mr-2" />}
+                Abrir Mapa Visual de Panos
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleMaterializePanels('manual')}
+                disabled={materializing || icfSelectedWalls.length === 0 || (!sessionObraId && !linkObraId)}
+              >
+                <Box className="h-4 w-4 mr-2" />
+                Abrir Manual ICF
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
+
     </div>
   );
 }
