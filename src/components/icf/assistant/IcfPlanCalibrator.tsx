@@ -56,6 +56,9 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
   const [imgDims, setImgDims] = useState({ w: 0, h: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [tool, setTool] = useState<'measure' | 'pan'>('measure');
+  const [isDragging, setIsDragging] = useState(false);
+  const [spacePan, setSpacePan] = useState(false);
 
   const pdf = usePdfRenderer({ url: isPdf ? signedUrl : null, page, scale: 2 });
 
