@@ -36,10 +36,13 @@ import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useC
 
 // Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
 const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
-  site_labor: "pessoal_producao",
   technical_staff: "gestao_obra",
-  site_equipment: "equipamentos",
+  site_supervisors: "gestao_obra",
+  team_leaders: "pessoal_producao",
   utilities: "utilities",
+  site_equipment: "equipamentos",
+  site_guard: "arvorado",
+  site_labor: "pessoal_producao",
   other_site_costs: "arvorado",
 };
 
