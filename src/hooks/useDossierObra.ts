@@ -60,8 +60,9 @@ export function useDossierObra(obraId: string | undefined) {
       // 2. Autos de medição → valor_acumulado por capitulo
       const { data: autos } = await supabase
         .from('autos_medicao')
-        .select('id, status, itens:auto_medicao_itens(capitulo, valor_acumulado)')
+        .select('id, status, itens:autos_medicao_itens(capitulo, valor_acumulado)')
         .eq('obra_id', obraId!);
+
 
       const faturadoPorCap = new Map<string, number>();
       (autos || []).forEach((a: any) => {
