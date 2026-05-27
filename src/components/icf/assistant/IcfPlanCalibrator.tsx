@@ -142,7 +142,35 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
     return 'calibrado';
   }, [method, pointA, pointB, realDistanceM, distancePx, computedMpp]);
 
+  const panActive = tool === 'pan' || spacePan;
+
+  // Atalho: espaço pressionado = modo pan temporário
+  useEffect(() => {
+    const isTypingTarget = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || t.isContentEditable;
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        setSpacePan(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space') setSpacePan(false);
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
+
   const handleStageClick = (e: any) => {
+    if (panActive) return;
     if (method !== 'known_distance') return;
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
