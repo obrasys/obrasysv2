@@ -122,6 +122,59 @@ export default function AssistenteArquitetura() {
     [icfSelectedWalls],
   );
 
+  const handleLinkObra = () => {
+    if (!activeSessionId || !linkObraId) return;
+    updateSession.mutate(
+      { id: activeSessionId, patch: { obra_id: linkObraId } as any },
+      { onSuccess: () => toast({ title: 'Obra associada à sessão' }) },
+    );
+  };
+
+  const handleMaterializePanels = async (target: 'mapa' | 'manual') => {
+    if (!activeSessionId) return;
+    const obra = sessionObraId || linkObraId;
+    if (!obra) {
+      toast({ title: 'Associe uma obra à sessão primeiro', variant: 'destructive' });
+      return;
+    }
+    if (icfSelectedWalls.length === 0) {
+      toast({ title: 'Sem panos ICF selecionados', variant: 'destructive' });
+      return;
+    }
+    setMaterializing(true);
+    try {
+      const espessuraMm = Math.round((session.data?.espessura_nucleo || 0.15) * 1000) + 130;
+      for (let i = 0; i < icfSelectedWalls.length; i++) {
+        const w = icfSelectedWalls[i];
+        const length_m = Number(w.attributes?.comprimento) || 4;
+        const height_m = Number(w.attributes?.altura) || 2.7;
+        await createPanel.mutateAsync({
+          obra_id: obra,
+          source_pano_id: w.id,
+          label: w.reference || `Pano ${i + 1}`,
+          floor: (w.attributes?.piso as string) || null,
+          room: (w.attributes?.compartimento as string) || null,
+          length_m,
+          height_m,
+          thickness_mm: espessuraMm,
+          selected_block_code: 'HB-BLOCO-220',
+          openings: [],
+          status: 'rascunho',
+        } as any);
+      }
+      toast({
+        title: 'Panos materializados',
+        description: `${icfSelectedWalls.length} pano(s) criados na obra.`,
+      });
+      const qs = `?obra=${obra}&session=${activeSessionId}`;
+      navigate(target === 'mapa' ? `/icf/mapa-visual${qs}` : `/icf/manual${qs}`);
+    } catch (e: any) {
+      toast({ title: 'Erro ao materializar', description: e.message, variant: 'destructive' });
+    } finally {
+      setMaterializing(false);
+    }
+  };
+
   if (!activeSessionId || !session.data) {
     return (
       <div className="container max-w-5xl py-6 space-y-6">
