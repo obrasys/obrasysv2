@@ -221,6 +221,13 @@ Parâmetros de referência:
 - Classe de betão: ${classe_betao || "C25/30"}
 - Classe de aço: ${classe_aco || "A500NR"}
 
+BIBLIOTECA TÉCNICA HOMEBLOCK (fonte primária para composição):
+- Catálogo oficial de peças: HB-BLOCO-220 (1200×300×220 mm), HB-BLOCO-300 (1200×300×300 mm), HB-TOPO-150, HB-TOPO-220, HB-ESPACADOR-150, HB-ESPACADOR-220, HB-DETALHE-CORTE.
+- A geometria das peças e a sua modulação (1200 mm de comprimento, 300 mm de altura) são a única fonte de verdade dimensional. Os SVGs associados são APENAS referência visual — nunca extrair medidas dos desenhos.
+- Nunca inventar peças, dimensões ou códigos fora desta biblioteca.
+- Ao sugerir composição de panos, escolher a peça pela espessura do núcleo (220 → HB-BLOCO-220, 300 → HB-BLOCO-300) e indicar review_required=true sempre que haja sobras horizontais/verticais relevantes (>0 mm).
+- Sempre que a confidence dimensional for <=0.6 ou faltarem cotas, sinalizar o pano para revisão humana antes de qualquer envio para orçamento.
+
 Responde exclusivamente por tool call no schema definido.`;
 
     const userPrompt = `Analise a planta e extraia os elementos ICF.
