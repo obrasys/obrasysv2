@@ -50,7 +50,7 @@ export function useDossierObra(obraId: string | undefined) {
       let capitulosBase: any[] = [];
       if (adjudicado?.id) {
         const { data: caps } = await supabase
-          .from('capitulos')
+          .from('capitulos_orcamento')
           .select('id, numero, titulo, valor_total')
           .eq('orcamento_id', adjudicado.id);
         capitulosBase = caps || [];
