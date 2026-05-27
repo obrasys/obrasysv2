@@ -122,12 +122,22 @@ const IcfMapaVisualPanos = () => {
     >
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <Select value={obraId} onValueChange={handleObraChange}>
-            <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
-            <SelectContent>
-              {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {sessionLocked ? (
+            <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Sessão Axia:</span>
+              <span className="font-medium">{selectedObra?.nome ?? 'Obra associada'}</span>
+              <Badge variant="outline" className="ml-1 text-[10px]">{session.data?.plan_kind}</Badge>
+            </div>
+          ) : (
+            <Select value={obraId} onValueChange={handleObraChange}>
+              <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
+              <SelectContent>
+                {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
 
           {obraId && (
             <>
