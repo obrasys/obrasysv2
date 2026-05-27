@@ -103,6 +103,42 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function Section({
+  id,
+  title,
+  collapsed,
+  onToggle,
+  extra,
+  children,
+}: {
+  id: string;
+  title: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  extra?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3" data-section-id={id}>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 bg-primary/10 border-l-4 border-primary px-3 py-2 rounded-md flex items-center justify-between hover:bg-primary/15 transition-colors text-left"
+          aria-expanded={!collapsed}
+        >
+          <h3 className="text-sm font-bold uppercase tracking-wide text-primary">{title}</h3>
+          <ChevronDown
+            className={`h-4 w-4 text-primary transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+          />
+        </button>
+        {extra}
+      </div>
+      {!collapsed && <div className="space-y-3">{children}</div>}
+    </div>
+  );
+}
+
 function SubtotalRow({ label, value, code }: { label: string; value: number; code?: string }) {
   return (
     <div className="flex items-center justify-between bg-muted/60 border rounded-md px-3 py-2 text-sm">
