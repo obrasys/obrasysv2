@@ -320,11 +320,16 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                   const dir = e.evt.deltaY > 0 ? 1 / 1.1 : 1.1;
                   setZoom((z) => Math.min(Math.max(z * dir, 0.25), 6));
                 }}
-                draggable={method !== 'known_distance' || (!!pointA && !!pointB)}
-                onDragEnd={(e) => setPan({ x: e.target.x(), y: e.target.y() })}
+                draggable={panActive || method !== 'known_distance' || (!!pointA && !!pointB)}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={(e) => { setIsDragging(false); setPan({ x: e.target.x(), y: e.target.y() }); }}
                 x={pan.x}
                 y={pan.y}
-                style={{ cursor: method === 'known_distance' ? 'crosshair' : 'grab' }}
+                style={{
+                  cursor: panActive
+                    ? (isDragging ? 'grabbing' : 'grab')
+                    : method === 'known_distance' ? 'crosshair' : 'grab',
+                }}
               >
                 <Layer>
                   {imgEl && (
