@@ -592,436 +592,93 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <SectionTitle>Custos Directos / Preços Secos — Valores s/ IVA</SectionTitle>
+        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")}>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[40%]">Rubrica</TableHead>
-              <TableHead className="w-[15%] text-right">Valor (€)</TableHead>
-              <TableHead className="w-[10%] text-right">% s/ Total</TableHead>
-              <TableHead className="w-[20%]">Empresa</TableHead>
-              <TableHead>Notas</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {details.direct_costs.map((line, idx) => (
-              <TableRow key={line.key}>
-                <TableCell className="font-medium text-xs">{line.label}</TableCell>
-                <TableCell>
-                  <NumCell
-                    readOnly={readOnly}
-                    value={line.value}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, value: v };
-                      patch("direct_costs", next);
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                  {totals.total_directos > 0
-                    ? `${((line.value / totals.total_directos) * 100).toFixed(2)}%`
-                    : "—"}
-                </TableCell>
-                <TableCell>
-                  <TextCell
-                    readOnly={readOnly}
-                    value={line.empresa || ""}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, empresa: v };
-                      patch("direct_costs", next);
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <TextCell
-                    readOnly={readOnly}
-                    value={line.notas || ""}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, notas: v };
-                      patch("direct_costs", next);
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+...
           </TableBody>
         </Table>
         <SubtotalRow label="TOTAL CUSTOS DIRECTOS / CT" value={totals.total_directos} />
+        </Section>
 
         {/* ESTALEIRO */}
-        <SectionTitle>Custos de Estaleiro</SectionTitle>
+        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")}>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[60%]">Rubrica</TableHead>
-              <TableHead className="text-right">Valor (€)</TableHead>
-              <TableHead className="w-[80px]">Ref.</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {details.site_costs.map((line, idx) => (
-              <TableRow key={line.key}>
-                <TableCell className="font-medium text-xs">{line.label}</TableCell>
-                <TableCell>
-                  <NumCell
-                    readOnly={readOnly}
-                    value={line.value}
-                    onChange={(v) => {
-                      const next = [...details.site_costs];
-                      next[idx] = { ...line, value: v };
-                      patch("site_costs", next);
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  ({String.fromCharCode(65 + idx)})
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+...
         <SubtotalRow label="TOTAL ESTALEIRO / CT" value={totals.total_estaleiro} />
 
         <SubtotalRow label="CUSTO INDUSTRIAL" code="(1) = Directos + Estaleiro" value={totals.custo_industrial} />
+        </Section>
 
         <Separator />
 
         {/* TERRENO (2) */}
-        <SectionTitle>Custos do Terreno / Arranjos Exteriores — (2)</SectionTitle>
+        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Preço Aquisição Terreno (€)</Label>
             <NumCell
-              readOnly={readOnly}
-              value={details.terrain.preco_aquisicao}
-              onChange={(v) => patch("terrain", { ...details.terrain, preco_aquisicao: v })}
-            />
-          </div>
-          <div>
-            <Label>Área Terreno (m²)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.area_terreno ?? 0}
-              onChange={(v) => patch("terrain", { ...details.terrain, area_terreno: v })}
-            />
-          </div>
-          <div>
-            <Label>Custo Loteamento / Infraestruturas (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.custo_loteamento}
-              onChange={(v) => patch("terrain", { ...details.terrain, custo_loteamento: v })}
-            />
-          </div>
-          <div>
-            <Label>Taxa IMT (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.taxa_imt_pct * 100}
-              onChange={(v) => patch("terrain", { ...details.terrain, taxa_imt_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Imposto do Selo (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.imposto_selo_pct * 100}
-              onChange={(v) => patch("terrain", { ...details.terrain, imposto_selo_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Custos Notário (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.custos_notario_pct * 100}
-              onChange={(v) =>
-                patch("terrain", { ...details.terrain, custos_notario_pct: v / 100 })
-              }
-            />
-          </div>
-          <div>
-            <Label>Comissões Intermediários (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.comissoes_intermediarios}
-              onChange={(v) =>
-                patch("terrain", { ...details.terrain, comissoes_intermediarios: v })
-              }
-            />
-          </div>
-          <div>
-            <Label>Ensaios Geotécnicos / Sondagens (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.ensaios_geotecnicos}
-              onChange={(v) => patch("terrain", { ...details.terrain, ensaios_geotecnicos: v })}
-            />
-          </div>
-          <div>
-            <Label>Levantamento Topográfico (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.levantamento_topografico}
-              onChange={(v) =>
-                patch("terrain", { ...details.terrain, levantamento_topografico: v })
-              }
-            />
-          </div>
-          <div>
-            <Label>Demolições Diversas (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.demolicoes_diversas}
-              onChange={(v) => patch("terrain", { ...details.terrain, demolicoes_diversas: v })}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Arranjos Exteriores (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.terrain.arranjos_exteriores}
-              onChange={(v) => patch("terrain", { ...details.terrain, arranjos_exteriores: v })}
-            />
-          </div>
+...
         </div>
         <SubtotalRow label="TOTAL CUSTOS DO TERRENO" code="(2)" value={totals.total_terreno} />
+        </Section>
 
         <Separator />
 
         {/* INDIRECTOS (3) */}
-        <SectionTitle>Custos Indirectos — (3)</SectionTitle>
+        <Section id="indirectos" title="Custos Indirectos — (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Honorários Técnicos (€)</Label>
             <NumCell
-              readOnly={readOnly}
-              value={details.indirect.honorarios_tecnicos}
-              onChange={(v) => patch("indirect", { ...details.indirect, honorarios_tecnicos: v })}
-            />
-          </div>
-          <div>
-            <Label>Seguros (% s/ constr.)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.seguros_pct * 100}
-              onChange={(v) => patch("indirect", { ...details.indirect, seguros_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Custos Financeiros (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.indirect.financeiros}
-              onChange={(v) => patch("indirect", { ...details.indirect, financeiros: v })}
-            />
-          </div>
-          <div>
-            <Label>Taxas/Impostos/Encargos Prediais (% s/ constr.)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.taxas_impostos_prediais_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  taxas_impostos_prediais_pct: v / 100,
-                })
-              }
-            />
-          </div>
-          <div>
-            <Label>Publicidade / Marketing (% s/ vendas)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.publicidade_marketing_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  publicidade_marketing_pct: v / 100,
-                })
-              }
-            />
-          </div>
-          <div>
-            <Label>Honorários Gestão (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.indirect.honorarios_gestao}
-              onChange={(v) => patch("indirect", { ...details.indirect, honorarios_gestao: v })}
-            />
-          </div>
-          <div>
-            <Label>Honorários Comercialização (% s/ vendas)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.honorarios_comercializacao_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  honorarios_comercializacao_pct: v / 100,
-                })
-              }
-            />
-          </div>
-          <div>
-            <Label>Garantias / Pós-Venda (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.indirect.garantias_pos_venda}
-              onChange={(v) => patch("indirect", { ...details.indirect, garantias_pos_venda: v })}
-            />
-          </div>
+...
         </div>
         <SubtotalRow label="TOTAL CUSTOS INDIRECTOS" code="(3)" value={totals.total_indirectos} />
+        </Section>
 
         <Separator />
 
         {/* OUTROS (4) */}
-        <SectionTitle>Outros Custos — (4)</SectionTitle>
+        <Section id="outros" title="Outros Custos — (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Contratos / Registos (€)</Label>
             <NumCell
-              readOnly={readOnly}
-              value={details.other.contratos_registos}
-              onChange={(v) => patch("other", { ...details.other, contratos_registos: v })}
-            />
-          </div>
-          <div>
-            <Label>Projectos (Arq. + Especialidades) (% s/ constr.)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.other.projectos_pct * 100}
-              onChange={(v) => patch("other", { ...details.other, projectos_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Imprevistos / Áleas (% s/ indirectos)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.other.imprevistos_aleas_pct * 100}
-              onChange={(v) =>
-                patch("other", { ...details.other, imprevistos_aleas_pct: v / 100 })
-              }
-            />
-          </div>
-          <div>
-            <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.other.outros_taxas_ramais}
-              onChange={(v) => patch("other", { ...details.other, outros_taxas_ramais: v })}
-            />
-          </div>
-          <div>
-            <Label>Segurança & Higiene (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.other.seguranca_higiene}
-              onChange={(v) => patch("other", { ...details.other, seguranca_higiene: v })}
-            />
-          </div>
-          <div>
-            <Label>Controlo Qualidade / Certificações (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.other.controlo_qualidade}
-              onChange={(v) => patch("other", { ...details.other, controlo_qualidade: v })}
-            />
-          </div>
+...
         </div>
         <SubtotalRow label="TOTAL OUTROS CUSTOS" code="(4)" value={totals.total_outros} />
+        </Section>
 
         <Separator />
 
         {/* ADMIN (5) */}
-        <SectionTitle>Custos Administrativos — (5)</SectionTitle>
+        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Estrutura / Fixos (Overhead) (€)</Label>
             <NumCell
-              readOnly={readOnly}
-              value={details.admin.estrutura_overhead}
-              onChange={(v) => patch("admin", { ...details.admin, estrutura_overhead: v })}
-            />
-          </div>
-          <div>
-            <Label>Fee Gestão Inter-Grupo (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.admin.fee_inter_grupo}
-              onChange={(v) => patch("admin", { ...details.admin, fee_inter_grupo: v })}
-            />
-          </div>
-          <div>
-            <Label>Outros Administrativos (€)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.admin.outros_administrativos}
-              onChange={(v) => patch("admin", { ...details.admin, outros_administrativos: v })}
-            />
-          </div>
+...
         </div>
         <SubtotalRow label="TOTAL CUSTOS ADMINISTRATIVOS" code="(5)" value={totals.total_admin} />
+        </Section>
 
         <Separator />
 
         {/* IVA (6) */}
-        <SectionTitle>Custos de IVA — (6)</SectionTitle>
+        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
               id="aru"
-              checked={details.iva.zona_aru}
-              disabled={readOnly}
-              onCheckedChange={(c) => patch("iva", { ...details.iva, zona_aru: !!c })}
-            />
-            <Label htmlFor="aru" className="text-xs">Terreno em zona ARU</Label>
-          </div>
-          <div className="flex items-center gap-2 pt-5">
-            <Checkbox
-              id="oru"
-              checked={details.iva.zona_oru}
-              disabled={readOnly}
-              onCheckedChange={(c) => patch("iva", { ...details.iva, zona_oru: !!c })}
-            />
-            <Label htmlFor="oru" className="text-xs">Terreno em zona ORU</Label>
-          </div>
-          <div />
-          <div>
-            <Label>Taxa IVA Terreno (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.iva.taxa_terreno_pct * 100}
-              onChange={(v) => patch("iva", { ...details.iva, taxa_terreno_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Taxa IVA Construção Civil (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.iva.taxa_construcao_pct * 100}
-              onChange={(v) => patch("iva", { ...details.iva, taxa_construcao_pct: v / 100 })}
-            />
-          </div>
-          <div>
-            <Label>Taxa IVA Honorários & Outros (%)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.iva.taxa_honorarios_pct * 100}
-              onChange={(v) => patch("iva", { ...details.iva, taxa_honorarios_pct: v / 100 })}
-            />
-          </div>
+...
         </div>
         <SubtotalRow label="TOTAL IVA" code="(6)" value={totals.total_iva} />
+        </Section>
 
 
 
@@ -1035,304 +692,105 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
 
         {/* MAPA DE VENDAS */}
-        <div className="flex items-center justify-between">
-          <SectionTitle>Mapa de Vendas Comercial — Decomposição das Frações</SectionTitle>
-        </div>
+        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")}>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Tipologia</TableHead>
-              <TableHead className="w-[80px] text-right">Quant.</TableHead>
-              <TableHead className="w-[110px] text-right">Área B.Priv (m²)</TableHead>
-              <TableHead className="w-[120px] text-right">Preço m² (€)</TableHead>
-              <TableHead className="w-[140px] text-right">Preço UN (€)</TableHead>
-              <TableHead className="w-[160px] text-right">Total (€)</TableHead>
-              {!readOnly && <TableHead className="w-[40px]" />}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {details.sales.map((line) => {
-              const precoUn = (line.area_priv || 0) * (line.preco_m2 || 0);
-              const total = precoUn * (line.quantidade || 0);
-              return (
-                <TableRow key={line.key}>
-                  <TableCell>
-                    <TextCell
-                      readOnly={readOnly}
-                      value={line.tipologia}
-                      onChange={(v) => updateSalesLine(line.key, { tipologia: v })}
-                      placeholder="Ex: MORADIAS T3 - A1"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <NumCell
-                      readOnly={readOnly}
-                      value={line.quantidade}
-                      onChange={(v) => updateSalesLine(line.key, { quantidade: v })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <NumCell
-                      readOnly={readOnly}
-                      value={line.area_priv}
-                      onChange={(v) => updateSalesLine(line.key, { area_priv: v })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <NumCell
-                      readOnly={readOnly}
-                      value={line.preco_m2}
-                      onChange={(v) => updateSalesLine(line.key, { preco_m2: v })}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-xs">
-                    {fmt(precoUn)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-semibold">
-                    {fmt(total)}
-                  </TableCell>
-                  {!readOnly && (
-                    <TableCell>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => removeSalesLine(line.key)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
-            <TableRow className="bg-muted/40 font-semibold">
-              <TableCell>TOTAL</TableCell>
-              <TableCell className="text-right tabular-nums">{totalQt}</TableCell>
-              <TableCell className="text-right text-xs text-muted-foreground">
-                Rácio médio: {rácioMedio.toFixed(1)} m²
-              </TableCell>
-              <TableCell />
-              <TableCell />
-              <TableCell className="text-right tabular-nums">{fmt(totals.valor_vendas)}</TableCell>
-              {!readOnly && <TableCell />}
-            </TableRow>
-          </TableBody>
-        </Table>
+...
         {!readOnly && (
           <Button variant="outline" size="sm" onClick={addSalesLine} className="gap-2">
             <Plus className="h-4 w-4" /> Adicionar tipologia
           </Button>
         )}
+        </Section>
 
         <Separator />
 
         {/* DADOS ESTATÍSTICOS */}
-        <SectionTitle>Dados Estatísticos (Valor m² Área Construída Equivalente)</SectionTitle>
+        <Section id="estatistica" title="Dados Estatísticos (Valor m² Área Construída Equivalente)" collapsed={isCol("estatistica")} onToggle={() => toggleSection("estatistica")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Área Bruta Privativa (m²)</Label>
             <NumCell
-              readOnly={readOnly}
-              value={details.statistics.area_construcao}
-              onChange={(v) => patch("statistics", { ...details.statistics, area_construcao: v })}
-            />
-          </div>
-          <div>
-            <Label>Área Caves (m²)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.statistics.area_caves}
-              onChange={(v) => patch("statistics", { ...details.statistics, area_caves: v })}
-            />
-          </div>
-          <div>
-            <Label>Área Arranjos Exteriores (m²)</Label>
-            <NumCell
-              readOnly={readOnly}
-              value={details.statistics.area_arranjos_ext}
-              onChange={(v) =>
-                patch("statistics", { ...details.statistics, area_arranjos_ext: v })
-              }
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="bg-muted/40 rounded-md p-3">
-            <p className="text-[11px] uppercase text-muted-foreground">Custo / m² equivalente</p>
-            <p className="text-lg font-bold tabular-nums">{fmt(totals.custo_m2_equivalente)}</p>
-          </div>
-          <div className="bg-muted/40 rounded-md p-3">
-            <p className="text-[11px] uppercase text-muted-foreground">K (coef. Venda)</p>
-            <p className="text-lg font-bold tabular-nums">{totals.k_venda.toFixed(3)}</p>
-          </div>
-          <div className="bg-muted/40 rounded-md p-3">
-            <p className="text-[11px] uppercase text-muted-foreground">Valor (m²) das Vendas</p>
-            <p className="text-lg font-bold tabular-nums">
-              {fmt(
-                totals.valor_vendas /
-                  Math.max(1, details.statistics.area_construcao || 1),
-              )}
+...
             </p>
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* PROPOSTA FINAL — RAI */}
-        <SectionTitle>Proposta Final | Venda — RAI</SectionTitle>
+        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor de Vendas (Proposta)</p>
             <p className="text-xl font-bold tabular-nums">{fmt(totals.valor_vendas)}</p>
-          </div>
-          <div
-            className={`rounded-md p-3 ${totals.rai_eur >= 0 ? "bg-emerald-50 border border-emerald-200" : "bg-rose-50 border border-rose-200"}`}
-          >
-            <p className="text-[11px] uppercase text-muted-foreground">RAI €</p>
-            <p
-              className={`text-xl font-bold tabular-nums ${totals.rai_eur >= 0 ? "text-emerald-700" : "text-rose-700"}`}
-            >
-              {fmt(totals.rai_eur)}
-            </p>
-          </div>
-          <div
-            className={`rounded-md p-3 ${totals.rai_pct >= 0 ? "bg-emerald-50 border border-emerald-200" : "bg-rose-50 border border-rose-200"}`}
-          >
-            <p className="text-[11px] uppercase text-muted-foreground">RAI %</p>
-            <p
-              className={`text-xl font-bold tabular-nums ${totals.rai_pct >= 0 ? "text-emerald-700" : "text-rose-700"}`}
-            >
-              {pct(totals.rai_pct)}
+...
             </p>
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* CONDICIONANTES */}
-        <SectionTitle>Dados Terreno / Condicionantes de Obra</SectionTitle>
+        <Section id="condicionantes" title="Dados Terreno / Condicionantes de Obra" collapsed={isCol("condicionantes")} onToggle={() => toggleSection("condicionantes")}>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
           {(
             [
               ["estudo_geotecnico", "Estudo Geotécnico"],
-              ["zona_urbana", "Loc. Zona Urbana"],
-              ["acessos", "Existem Acessos"],
-              ["energia_electrica", "Energia Eléctrica"],
-              ["canalizacao_agua", "Canalização de Água"],
-              ["fundacoes_indirectas", "Fundações Indirectas"],
-              ["rebaixamento_freatico", "Rebaixamento Nível Freático"],
-              ["condicoes_estaleiro", "Condições p/ Estaleiro"],
-              ["ocupacao_via_publica", "Ocupação Via Pública"],
-            ] as const
-          ).map(([key, label]) => (
-            <div key={key} className="flex items-center gap-2 border rounded-md px-3 py-2">
-              <Checkbox
-                id={key}
-                disabled={readOnly}
-                checked={(details.conditions as any)[key]}
-                onCheckedChange={(c) =>
-                  patch("conditions", { ...details.conditions, [key]: !!c })
-                }
-              />
-              <Label htmlFor={key} className="text-xs cursor-pointer">{label}</Label>
-            </div>
-          ))}
-        </div>
-        <div>
-          <Label className="text-[11px] uppercase">Observações</Label>
-          <Textarea
-            readOnly={readOnly}
-            rows={3}
-            value={details.conditions.observacoes}
-            onChange={(e) =>
-              patch("conditions", { ...details.conditions, observacoes: e.target.value })
+...
             }
           />
         </div>
+        </Section>
 
         <Separator />
 
         {/* VALIDAÇÃO TÉCNICO-ECONÓMICA */}
-        <SectionTitle>Validação Técnico-Económica</SectionTitle>
+        <Section id="validacao" title="Validação Técnico-Económica" collapsed={isCol("validacao")} onToggle={() => toggleSection("validacao")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Direcção Geral</Label>
             <TextCell readOnly={readOnly} value={details.validation.direccao_geral}
-              onChange={(v) => patch("validation", { ...details.validation, direccao_geral: v })} />
-          </div>
-          <div>
-            <Label>Validador Técnico-Económico</Label>
-            <TextCell readOnly={readOnly} value={details.validation.validador_tecnico_economico}
-              onChange={(v) => patch("validation", { ...details.validation, validador_tecnico_economico: v })} />
-          </div>
-          <div>
-            <Label>% Lucro Alvo</Label>
-            <NumCell readOnly={readOnly} step="0.01" value={details.validation.percentagem_lucro_alvo * 100}
-              onChange={(v) => patch("validation", { ...details.validation, percentagem_lucro_alvo: v / 100 })} />
-          </div>
-          <div>
-            <Label>Valor Médio / Fracção (€)</Label>
-            <NumCell readOnly={readOnly} value={details.validation.valor_medio_fraccao}
-              onChange={(v) => patch("validation", { ...details.validation, valor_medio_fraccao: v })} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Observações</Label>
-            <Textarea readOnly={readOnly} rows={2} value={details.validation.observacoes}
+...
               onChange={(e) => patch("validation", { ...details.validation, observacoes: e.target.value })} />
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* APROVAÇÃO / ADMINISTRAÇÃO */}
-        <SectionTitle>Aprovação Inicial / Administração</SectionTitle>
+        <Section id="aprovacao" title="Aprovação Inicial / Administração" collapsed={isCol("aprovacao")} onToggle={() => toggleSection("aprovacao")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Aprovação Inicial — Nome</Label>
             <TextCell readOnly={readOnly} value={details.approvals.aprovacao_inicial_nome}
-              onChange={(v) => patch("approvals", { ...details.approvals, aprovacao_inicial_nome: v })} />
-          </div>
-          <div>
-            <Label>Data Aprovação Inicial</Label>
-            <Input type="date" readOnly={readOnly} value={details.approvals.aprovacao_inicial_data ?? ""}
-              onChange={(e) => patch("approvals", { ...details.approvals, aprovacao_inicial_data: e.target.value || null })}
-              className="h-8" />
-          </div>
-          <div>
-            <Label>Administração — Nome</Label>
-            <TextCell readOnly={readOnly} value={details.approvals.administracao_nome}
-              onChange={(v) => patch("approvals", { ...details.approvals, administracao_nome: v })} />
-          </div>
-          <div>
-            <Label>Data Administração</Label>
-            <Input type="date" readOnly={readOnly} value={details.approvals.administracao_data ?? ""}
-              onChange={(e) => patch("approvals", { ...details.approvals, administracao_data: e.target.value || null })}
-              className="h-8" />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Notas de Aprovação</Label>
-            <Textarea readOnly={readOnly} rows={2} value={details.approvals.notas}
+...
               onChange={(e) => patch("approvals", { ...details.approvals, notas: e.target.value })} />
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* QUALIDADES DA OBRA / CADERNO DE ENCARGOS */}
-        <div className="flex items-center justify-between">
-          <SectionTitle>Qualidades da Obra / Caderno de Encargos</SectionTitle>
-          <Button
-            size="sm"
-            variant="ghost"
-            asChild
-            className="text-xs gap-1.5 ml-2"
-          >
-            <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
-              <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
-            </a>
-          </Button>
-        </div>
-
+        <Section
+          id="qualidades"
+          title="Qualidades da Obra / Caderno de Encargos"
+          collapsed={isCol("qualidades")}
+          onToggle={() => toggleSection("qualidades")}
+          extra={
+            <Button size="sm" variant="ghost" asChild className="text-xs gap-1.5">
+              <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
+                <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
+              </a>
+            </Button>
+          }
+        >
         {qualitySpecs.list.isLoading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : (qualitySpecs.list.data ?? []).length === 0 ? (
@@ -1352,6 +810,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             ))}
           </div>
         )}
+        </Section>
 
         {/* ASSINATURAS / RODAPÉ */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-3 border-t">
