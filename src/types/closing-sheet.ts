@@ -395,7 +395,7 @@ export function mergeDetails(stored: Partial<ClosingSheetDetails> | null | undef
     approvals: { ...DEFAULT_CLOSING_DETAILS.approvals, ...(stored.approvals || {}) },
     quality_specs_values: { ...(stored.quality_specs_values || {}) },
     direct_costs: stored.direct_costs?.length ? stored.direct_costs : DEFAULT_CLOSING_DETAILS.direct_costs,
-    site_costs: stored.site_costs?.length ? stored.site_costs : DEFAULT_CLOSING_DETAILS.site_costs,
+    site_costs: migrateSiteCostLines(stored.site_costs),
     terrain: { ...DEFAULT_CLOSING_DETAILS.terrain, ...(stored.terrain || {}) },
     indirect: { ...DEFAULT_CLOSING_DETAILS.indirect, ...(stored.indirect || {}) },
     other: { ...DEFAULT_CLOSING_DETAILS.other, ...(stored.other || {}) },
