@@ -497,9 +497,11 @@ export function useOrcamentos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-versions'] });
+      queryClient.invalidateQueries({ queryKey: ['closing-sheets'] });
       toast({
         title: 'Sucesso',
-        description: 'Revisão do orçamento criada com sucesso',
+        description: 'Revisão criada com novo Budget Objetivo e Folha de Fecho',
       });
     },
     onError: (error: Error) => {
