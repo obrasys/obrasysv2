@@ -712,7 +712,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* TERRENO (2) */}
-        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")} total={totals.total_terreno} totalLabel="Total Terreno">
+        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")} total={totals.total_terreno} totalLabel="Total C. Terreno">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Preço Aquisição Terreno (€)</Label>
