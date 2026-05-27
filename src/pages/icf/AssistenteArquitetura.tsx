@@ -198,7 +198,6 @@ export default function AssistenteArquitetura() {
         const height_m = Number(w.attributes?.altura) || 2.7;
         await createPanel.mutateAsync({
           obra_id: obra,
-          source_pano_id: w.id,
           label: w.reference || `Pano ${i + 1}`,
           floor: (w.attributes?.piso as string) || null,
           room: (w.attributes?.compartimento as string) || null,
@@ -208,6 +207,8 @@ export default function AssistenteArquitetura() {
           selected_block_code: 'HB-BLOCO-220',
           openings: [],
           status: 'rascunho',
+          source: 'axia',
+          notes: `Assistente ICF — item ${w.id}`,
         } as any);
       }
       toast({
