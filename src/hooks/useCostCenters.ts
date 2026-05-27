@@ -28,11 +28,12 @@ export function useCreateCostCenter() {
       fiscal_year?: number | null;
       notes?: string | null;
     }) => {
-      const { data: org } = await supabase.rpc('get_user_org_id' as never);
-      if (!org) throw new Error('Sem organização associada ao utilizador');
+      const { data: orgId, error: orgErr } = await supabase.rpc('get_user_org_id');
+      if (orgErr) throw orgErr;
+      if (!orgId) throw new Error('Sem organização associada ao utilizador');
       const { data, error } = await supabase
         .from('cost_centers')
-        .insert({ ...input, organization_id: org as unknown as string })
+        .insert({ ...input, organization_id: orgId })
         .select()
         .single();
       if (error) throw error;
