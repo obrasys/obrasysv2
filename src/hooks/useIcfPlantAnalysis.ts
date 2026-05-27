@@ -231,6 +231,7 @@ export function useIcfPlantAnalysis() {
       qc.invalidateQueries({ queryKey: ['icf-fundacoes', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-lajes', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-resumo', params.configuracaoId] });
+      qc.invalidateQueries({ queryKey: ['icf-wall-panels', params.obraId] });
       setAnalysisResult(null);
       toast({
         title: 'Dados ICF criados com sucesso',
