@@ -102,11 +102,17 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
     if (authErr || !user) return jsonResponse({ error: "Não autenticado" }, 401);
 
-    const body = await req.json();
+    let body: any = {};
+    try {
+      const raw = await req.text();
+      body = raw ? JSON.parse(raw) : {};
+    } catch {
+      return jsonResponse({ error: "Corpo do pedido inválido (JSON malformado)" }, 400);
+    }
     const { file_path, obra_id, configuracao_id, espessura_nucleo, classe_betao, classe_aco } = body;
 
     if (!file_path || !obra_id || !configuracao_id) {
-      return jsonResponse({ error: "Campos obrigatórios em falta" }, 400);
+      return jsonResponse({ error: "Campos obrigatórios em falta: file_path, obra_id, configuracao_id" }, 400);
     }
 
     // Authorization: user must belong to an organization that owns the obra
