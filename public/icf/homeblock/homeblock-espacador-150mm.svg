@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Inter, sans-serif">
+  <rect x="170" y="40" width="60" height="180" fill="#f0ede4" stroke="#0F4C5C" stroke-width="2" rx="3"/>
+  <line x1="170" y1="70" x2="230" y2="70" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="170" y1="110" x2="230" y2="110" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="170" y1="150" x2="230" y2="150" stroke="#0F4C5C" stroke-width="1"/>
+  <line x1="170" y1="190" x2="230" y2="190" stroke="#0F4C5C" stroke-width="1"/>
+  <path d="M120 130 L170 130" stroke="#0F4C5C" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <path d="M230 130 L280 130" stroke="#0F4C5C" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <text x="200" y="28" text-anchor="middle" font-size="13" font-weight="600" fill="#0F4C5C">Espaçador 15 cm</text>
+  <text x="200" y="245" text-anchor="middle" font-size="11" fill="#555">Conector interno — espessura 150 mm</text>
+</svg>

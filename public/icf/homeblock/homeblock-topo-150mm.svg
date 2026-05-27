@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Inter, sans-serif">
+  <defs>
+    <pattern id="topo150" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#f4f1ea"/>
+      <circle cx="3" cy="3" r="0.9" fill="#d9d2c2"/>
+    </pattern>
+  </defs>
+  <path d="M60 60 L340 60 L340 200 L60 200 Z" fill="url(#topo150)" stroke="#0F4C5C" stroke-width="2"/>
+  <rect x="60" y="60" width="280" height="20" fill="#e8e2d4" stroke="#0F4C5C" stroke-width="1.2"/>
+  <text x="200" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#0F4C5C">Topo / Remate 15 cm</text>
+  <text x="200" y="225" text-anchor="middle" font-size="11" fill="#555">Peça de fecho horizontal — 150 mm</text>
+  <text x="200" y="245" text-anchor="middle" font-size="10" fill="#888">Aplicação: topo de muro / remate de laje</text>
+</svg>
