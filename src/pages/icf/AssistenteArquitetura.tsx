@@ -23,6 +23,7 @@ import { FOUNDATIONS_NOT_FOUND_MESSAGE, type IcfPlanKind, type FoundationOptionK
 import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
+import { IcfPlanCalibrator, type CalibrationPayload } from '@/components/icf/assistant/IcfPlanCalibrator';
 
 
 const STEPS = [
@@ -86,9 +87,47 @@ export default function AssistenteArquitetura() {
     }
   };
 
+  // STEP 2 — guardar calibração
+  const handleSaveCalibration = (p: CalibrationPayload) => {
+    if (!activeSessionId) return;
+    updateSession.mutate(
+      {
+        id: activeSessionId,
+        patch: {
+          calibration_method: p.method,
+          calibration_point_a: p.point_a ?? null,
+          calibration_point_b: p.point_b ?? null,
+          calibration_distance_px: p.distance_px ?? null,
+          calibration_real_distance_m: p.real_distance_m ?? null,
+          calibration_declared_scale: p.declared_scale ?? null,
+          calibration_confidence: p.confidence,
+          calibration_page: p.page,
+          calibration_override: p.override,
+          scale_m_per_px: p.scale_m_per_px,
+          current_step: 3,
+        } as any,
+      },
+      {
+        onSuccess: () =>
+          toast({
+            title: p.override ? 'A continuar sem calibração precisa' : 'Calibração guardada',
+            description: p.override
+              ? 'Quantitativos marcados como baixa confiança.'
+              : `Método: ${p.method} · confiança ${p.confidence}.`,
+          }),
+      },
+    );
+  };
+
   // STEP 3 — chamar Axia para extrair paredes
   const runAxiaExtraction = async () => {
     if (!activeSessionId || !session.data?.file_path) return;
+    const s: any = session.data;
+    if (!s.calibration_method && !s.calibration_override) {
+      toast({ title: 'Calibre a planta antes de analisar', variant: 'destructive' });
+      goStep(2);
+      return;
+    }
     setAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('icf-architecture-assistant', {
@@ -98,6 +137,15 @@ export default function AssistenteArquitetura() {
           plan_kind: session.data.plan_kind,
           scale_m_per_px: session.data.scale_m_per_px,
           espessura_nucleo: session.data.espessura_nucleo,
+          calibration: {
+            method: s.calibration_method ?? 'uncalibrated',
+            confidence: s.calibration_confidence ?? 'baixa',
+            page: s.calibration_page ?? 1,
+            real_distance_m: s.calibration_real_distance_m ?? null,
+            distance_px: s.calibration_distance_px ?? null,
+            declared_scale: s.calibration_declared_scale ?? null,
+            override: !!s.calibration_override,
+          },
         },
       });
       if (error) throw new Error(error.message);
@@ -231,40 +279,28 @@ export default function AssistenteArquitetura() {
         <StepReUpload session={session.data} onContinue={() => goStep(2)} />
       )}
 
-      {step === 2 && (
-        <Card className="rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Ruler className="h-4 w-4 text-primary" /> Calibração da planta
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Informe a escala estimada da planta (metros por pixel). Pode ser refinada depois.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="max-w-xs">
-              <Label className="text-xs">Escala (m/px)</Label>
-              <Input
-                type="number"
-                step="0.0001"
-                value={scale || (session.data.scale_m_per_px ?? '')}
-                onChange={(e) => setScale(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={() => {
-                const v = parseFloat(scale);
-                if (!Number.isFinite(v) || v <= 0) {
-                  toast({ title: 'Escala inválida', variant: 'destructive' });
-                  return;
-                }
-                updateSession.mutate({ id: activeSessionId, patch: { scale_m_per_px: v, current_step: 3 } });
-              }}
-            >
-              Guardar e continuar <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardContent>
-        </Card>
+      {step === 2 && session.data.file_path && (
+        <div className="space-y-3">
+          <div className="text-xs text-muted-foreground">
+            Visualize a planta e calibre a escala antes de prosseguir. A calibração por medida
+            conhecida (cota) é o método mais fiável.
+          </div>
+          <IcfPlanCalibrator
+            filePath={session.data.file_path}
+            initialPage={(session.data as any).calibration_page ?? 1}
+            initial={{
+              method: (session.data as any).calibration_method ?? undefined,
+              point_a: (session.data as any).calibration_point_a ?? null,
+              point_b: (session.data as any).calibration_point_b ?? null,
+              real_distance_m: (session.data as any).calibration_real_distance_m ?? null,
+              declared_scale: (session.data as any).calibration_declared_scale ?? null,
+              page: (session.data as any).calibration_page ?? 1,
+              override: (session.data as any).calibration_override ?? false,
+            }}
+            isSaving={updateSession.isPending}
+            onConfirm={handleSaveCalibration}
+          />
+        </div>
       )}
 
       {step === 3 && (
@@ -278,6 +314,35 @@ export default function AssistenteArquitetura() {
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
+            {(() => {
+              const s: any = session.data;
+              const cal = s.calibration_method as string | null;
+              if (cal && !s.calibration_override) {
+                return (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-2 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                    Planta calibrada · método {cal} · confiança {s.calibration_confidence}
+                  </div>
+                );
+              }
+              if (s.calibration_override) {
+                return (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                    A continuar sem calibração precisa — quantitativos terão baixa confiança.
+                  </div>
+                );
+              }
+              return (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                    Planta sem calibração.
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => goStep(2)}>Calibrar</Button>
+                </div>
+              );
+            })()}
             {wallItems.length === 0 ? (
               <Button onClick={runAxiaExtraction} disabled={analyzing}>
                 {analyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}

@@ -18,6 +18,15 @@ interface ReqBody {
   plan_kind: "arquitetura" | "estrutural" | "icf" | "desconhecido";
   scale_m_per_px?: number | null;
   espessura_nucleo?: number;
+  calibration?: {
+    method?: "known_distance" | "declared_scale" | "uncalibrated" | null;
+    confidence?: "alta" | "media" | "baixa" | null;
+    page?: number | null;
+    real_distance_m?: number | null;
+    distance_px?: number | null;
+    declared_scale?: string | null;
+    override?: boolean;
+  };
 }
 
 const SYSTEM_PROMPT = `Você é a Axia, motor de leitura de plantas para o sistema ICF (HOMEBLOCK) em Portugal.
@@ -134,8 +143,25 @@ Deno.serve(async (req) => {
       .createSignedUrl(body.file_path, 600);
     if (urlErr || !signed?.signedUrl) return json({ error: "Não foi possível ler a planta" }, 500);
 
+    const cal = body.calibration ?? {};
+    const calMethod = cal.method ?? "uncalibrated";
+    const calConf = cal.confidence ?? "baixa";
+    const calGuard = `\nCONTEXTO DE CALIBRAÇÃO DA PLANTA:
+- Método: ${calMethod}
+- Confiança declarada: ${calConf}
+- Página calibrada: ${cal.page ?? 1}
+- Medida real de referência: ${cal.real_distance_m ?? "n/d"} m sobre ${cal.distance_px ?? "n/d"} px
+- Escala declarada: ${cal.declared_scale ?? "n/d"}
+- Override manual: ${cal.override ? "sim" : "não"}
+
+REGRA DE CALIBRAÇÃO (OBRIGATÓRIA):
+- Nunca assumir escala se não houver calibração confirmada. Usa exclusivamente o fator m/px fornecido (${body.scale_m_per_px ?? "n/d"}).
+- Se método = known_distance → confidence pode ser alta.
+- Se método = declared_scale → confidence máxima é média.
+- Se método = uncalibrated OU override = true → marca TODOS os quantitativos como baixa confiança e review_required = true.`;
+
     const userPrompt = `Analise a planta. Tipo declarado: ${body.plan_kind}. Escala: ${body.scale_m_per_px ?? "desconhecida"} m/px.
-Espessura núcleo ICF desejada: ${body.espessura_nucleo ?? 0.15} m.
+Espessura núcleo ICF desejada: ${body.espessura_nucleo ?? 0.15} m.${calGuard}
 Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundacoes_encontradas=false e use a mensagem oficial.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
