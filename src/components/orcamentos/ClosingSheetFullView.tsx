@@ -1054,7 +1054,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
 
         {/* MAPA DE VENDAS */}
-        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")}>
+        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")} total={totals.valor_vendas} totalLabel="Vendas">
         <Table>
           <TableHeader>
             <TableRow>
