@@ -604,7 +604,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")}>
+        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total Directos">
         <Table>
           <TableHeader>
             <TableRow>
