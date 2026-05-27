@@ -687,7 +687,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
-              <TableCell className="text-xs">Total</TableCell>
+              <TableCell className="text-xs text-right">Total %</TableCell>
               <TableCell />
               <TableCell className="text-right text-xs tabular-nums">
                 {totals.total_directos > 0
