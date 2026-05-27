@@ -31,7 +31,8 @@ export default function AssistenteArquitetura() {
   const [params] = useSearchParams();
   const { toast } = useToast();
   const { user, organization } = useAuth();
-  const obraId = params.get('obra') || null;
+  const { obras } = useObras();
+  const initialObra = params.get('obra') || null;
   const sessionIdParam = params.get('s');
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(sessionIdParam);
@@ -42,19 +43,24 @@ export default function AssistenteArquitetura() {
   const updateSession = useUpdateAssistantSession();
   const updateItem = useUpdateAssistantItem();
   const applyFoundation = useApplyFoundationSuggestion(activeSessionId ?? '');
+  const createPanel = useCreateIcfWallPanel();
 
   const [planKind, setPlanKind] = useState<IcfPlanKind>('arquitetura');
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [materializing, setMaterializing] = useState(false);
   const [scale, setScale] = useState<string>('');
+  const [linkObraId, setLinkObraId] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const step = session.data?.current_step ?? 1;
+  const sessionObraId = session.data?.obra_id || null;
 
   const goStep = (n: number) => {
     if (!activeSessionId) return;
     updateSession.mutate({ id: activeSessionId, patch: { current_step: n } });
   };
+
 
   // STEP 1 — upload + tipo
   const handleUpload = async (file: File) => {
