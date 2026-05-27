@@ -18,6 +18,15 @@ interface ReqBody {
   plan_kind: "arquitetura" | "estrutural" | "icf" | "desconhecido";
   scale_m_per_px?: number | null;
   espessura_nucleo?: number;
+  calibration?: {
+    method?: "known_distance" | "declared_scale" | "uncalibrated" | null;
+    confidence?: "alta" | "media" | "baixa" | null;
+    page?: number | null;
+    real_distance_m?: number | null;
+    distance_px?: number | null;
+    declared_scale?: string | null;
+    override?: boolean;
+  };
 }
 
 const SYSTEM_PROMPT = `Você é a Axia, motor de leitura de plantas para o sistema ICF (HOMEBLOCK) em Portugal.
