@@ -271,6 +271,32 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
     });
   }, [siteDetailLines]);
 
+  // Sincronização: totais por capítulo do Orçamento → rubricas em details.direct_costs.
+  // Os 38 capítulos são alimentados exclusivamente a partir do Orçamento
+  // (capitulos_orcamento). O utilizador não pode editar este valor.
+  const chapterTotals = useBudgetChapterTotals(sheet.source_budget_id || undefined);
+  const chapterTotalsData = chapterTotals.data;
+  useEffect(() => {
+    if (!chapterTotalsData) return;
+    const byKey: Record<string, number> = {};
+    for (const c of chapterTotalsData) {
+      const key = `cap_${String(c.numero).padStart(2, "0")}`;
+      byKey[key] = (byKey[key] || 0) + (Number(c.total) || 0);
+    }
+    setDetails((d) => {
+      let changed = false;
+      const next = d.direct_costs.map((line) => {
+        const v = byKey[line.key] ?? 0;
+        if (Math.abs((line.value || 0) - v) > 0.001) {
+          changed = true;
+          return { ...line, value: v };
+        }
+        return line;
+      });
+      return changed ? { ...d, direct_costs: next } : d;
+    });
+  }, [chapterTotalsData]);
+
   const handlePrint = () => {
     const node = printRef.current;
     if (!node) return;
