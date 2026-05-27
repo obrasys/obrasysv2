@@ -314,12 +314,36 @@ export default function AssistenteArquitetura() {
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
+            {(() => {
+              const s: any = session.data;
+              const cal = s.calibration_method as string | null;
+              if (cal && !s.calibration_override) {
+                return (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-2 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                    Planta calibrada · método {cal} · confiança {s.calibration_confidence}
+                  </div>
+                );
+              }
+              if (s.calibration_override) {
+                return (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                    A continuar sem calibração precisa — quantitativos terão baixa confiança.
+                  </div>
+                );
+              }
+              return (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                    Planta sem calibração.
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => goStep(2)}>Calibrar</Button>
+                </div>
+              );
+            })()}
             {wallItems.length === 0 ? (
-              <Button onClick={runAxiaExtraction} disabled={analyzing}>
-                {analyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                Analisar planta com a Axia
-              </Button>
-            ) : (
               <>
                 <div className="border rounded-lg divide-y max-h-96 overflow-y-auto">
                   {wallItems.map((w) => (
