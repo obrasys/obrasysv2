@@ -10,6 +10,7 @@ import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
 import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig, useIcfPanos } from '@/hooks/useIcfData';
 import { IcfPanelsIsometric } from '@/components/icf/IcfPanelsIsometric';
+import { IcfPlanBuilding3D } from '@/components/icf/IcfPlanBuilding3D';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
@@ -271,6 +272,8 @@ const IcfIndex = () => {
               }))}
               emptyHint="Adicione panos de parede a esta configuração para ver o modelo isométrico esquemático."
             />
+
+            <IcfPlanBuilding3D obraId={selectedObraId} defaultHeightM={activeConfig.altura_piso_padrao ?? 2.7} />
           </>
         )}
 
