@@ -108,10 +108,11 @@ const IcfMapaVisualPanos = () => {
           </Select>
 
           {obraId && (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" /> Novo pano</Button>
-              </DialogTrigger>
+            <>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline"><Plus className="h-4 w-4 mr-2" /> Novo pano</Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Novo pano de parede</DialogTitle></DialogHeader>
                 <div className="grid grid-cols-2 gap-3">
