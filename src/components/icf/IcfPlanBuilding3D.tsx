@@ -105,7 +105,7 @@ export function IcfPlanBuilding3D({ obraId, defaultHeightM = 2.7 }: Props) {
     return map;
   }, [openings, walls]);
 
-  if (planImportsQuery.isLoading) {
+  if (plansLoading) {
     return (
       <Card className="rounded-xl"><CardContent className="py-10 text-center text-muted-foreground">
         <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin" /> A carregar plantas…
