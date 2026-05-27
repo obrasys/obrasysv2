@@ -138,10 +138,31 @@ Deno.serve(async (req) => {
       .single();
     if (sessErr || !sess) return json({ error: "Sessão não encontrada" }, 404);
 
-    const { data: signed, error: urlErr } = await admin.storage
+    // Download plant file and convert to data URL (Gemini requires data URL for PDFs)
+    const { data: fileBlob, error: dlErr } = await admin.storage
       .from("plan-files")
-      .createSignedUrl(body.file_path, 600);
-    if (urlErr || !signed?.signedUrl) return json({ error: "Não foi possível ler a planta" }, 500);
+      .download(body.file_path);
+    if (dlErr || !fileBlob) return json({ error: "Não foi possível ler a planta" }, 500);
+
+    const lowerPath = body.file_path.toLowerCase();
+    let mimeType = fileBlob.type || "";
+    if (!mimeType || mimeType === "application/octet-stream") {
+      if (lowerPath.endsWith(".pdf")) mimeType = "application/pdf";
+      else if (lowerPath.endsWith(".png")) mimeType = "image/png";
+      else if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) mimeType = "image/jpeg";
+      else if (lowerPath.endsWith(".webp")) mimeType = "image/webp";
+      else if (lowerPath.endsWith(".gif")) mimeType = "image/gif";
+      else mimeType = "application/pdf";
+    }
+
+    const arrBuf = await fileBlob.arrayBuffer();
+    const bytes = new Uint8Array(arrBuf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
+    }
+    const dataUrl = `data:${mimeType};base64,${btoa(binary)}`;
 
     const cal = body.calibration ?? {};
     const calMethod = cal.method ?? "uncalibrated";
@@ -178,7 +199,7 @@ Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundac
             role: "user",
             content: [
               { type: "text", text: userPrompt },
-              { type: "image_url", image_url: { url: signed.signedUrl } },
+              { type: "image_url", image_url: { url: dataUrl } },
             ],
           },
         ],
