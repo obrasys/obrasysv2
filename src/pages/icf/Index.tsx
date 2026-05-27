@@ -18,6 +18,7 @@ import { IcfQuickNav } from '@/components/icf/IcfQuickNav';
 import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
 import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
+import { ICFAnalysisModeSelector } from '@/components/icf/ICFAnalysisModeSelector';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
@@ -48,6 +49,7 @@ const IcfIndex = () => {
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
   const [pendingScope, setPendingScope] = useState<IcfScopeSelection | null>(null);
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo || !selectedObraId) return;
@@ -152,7 +154,11 @@ const IcfIndex = () => {
               <Plus className="h-4 w-4 mr-2" />Nova Configuração ICF
             </Button>
           )}
-          <div className="sm:ml-auto">
+          <div className="sm:ml-auto flex items-center gap-2">
+            <Button variant="outline" onClick={() => setModeSelectorOpen(true)} className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Nova Análise ICF</span>
+            </Button>
             <IcfConstantsDialog />
           </div>
         </div>
@@ -262,6 +268,12 @@ const IcfIndex = () => {
         open={scopeDialogOpen}
         onOpenChange={setScopeDialogOpen}
         onConfirm={handleScopeConfirmed}
+      />
+
+      <ICFAnalysisModeSelector
+        open={modeSelectorOpen}
+        onOpenChange={setModeSelectorOpen}
+        obraId={selectedObraId || null}
       />
 
       <IcfBudgetConfigDialog

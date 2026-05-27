@@ -5151,6 +5151,7 @@ export type Database = {
       }
       icf_assistant_sessions: {
         Row: {
+          analysis_mode: string
           axia_audit: Json | null
           calibration_confidence: string | null
           calibration_declared_scale: string | null
@@ -5181,6 +5182,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis_mode?: string
           axia_audit?: Json | null
           calibration_confidence?: string | null
           calibration_declared_scale?: string | null
@@ -5211,6 +5213,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis_mode?: string
           axia_audit?: Json | null
           calibration_confidence?: string | null
           calibration_declared_scale?: string | null

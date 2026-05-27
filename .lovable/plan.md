@@ -1,122 +1,157 @@
-# Camada de Centros de Custo, Gestão Financeira e Dossier de Promotor
 
-Implementação **aditiva e faseada**. Nada do fluxo atual (Obras, Orçamentos, Folha de Fecho, Fornecedores, Faturas, Axia) é removido ou reescrito. Apenas adicionamos campos opcionais, novas tabelas e novos ecrãs que **consomem** o que já existe.
+# Evolução Incremental do Módulo ICF — Plano em 3 Fases
 
-Dada a dimensão (22 blocos), proponho entregar em **6 fases** que podem ser aprovadas/lançadas independentemente. Esta proposta cobre **Fase 1 a Fase 3** em detalhe; Fases 4–6 ficam descritas em alto nível e detalhamos quando chegar a vez.
-
----
-
-## Princípios transversais
-
-- **Multi-tenant**: tudo via `organization_id` (já é padrão do projeto) + RLS com `get_org_member_ids()`.
-- **Não-destrutivo**: novas colunas são `nullable`, sem `NOT NULL` em tabelas antigas. Sem renomes.
-- **Compatibilidade**: dados existentes continuam a funcionar sem `cost_center_id`. Os novos relatórios tratam `NULL` como "não classificado".
-- **Sem refazer Folha de Fecho, Orçamentos, MCE etc.** — onde já existe módulo (ex.: `contracting_packages` = MCE/Consultas, `budget_awards` = Adjudicações, `autos_medicao`, `obra_purchases`), **só adicionamos `cost_center_id` + `cost_nature`** e novos dashboards. O dossier da obra é uma **vista agregadora** sobre tabelas existentes.
-- **Axia**: estendemos o prompt central com glossário CE/OB, MB vs RAI, naturezas. Sem nova edge function nesta fase.
+Princípios transversais:
+- **Não remover nem reescrever** lógica ICF existente (Configuração, Panos, Fundações, Lajes, Resumo, Manual, MapaVisualPanos, AssistenteArquitetura, motor de composição já existente).
+- Reaproveitar tabelas e tipos atuais (`icf_block_library`, `icf_wall_panels`, `icf_assistant_sessions`, `icf_panos_parede`, etc.).
+- Multi-tenant via `organization_id`/`empresa_id` + RLS + GRANTs no padrão do projeto.
+- Axia sempre como **assistida** (`confidence`, `review_required`, `issues`), nunca executiva.
+- UI: Deep Teal, cards `rounded-xl`, abas com scroll horizontal em mobile, padrão Obra Sys.
 
 ---
 
-## FASE 1 — Fundação: Centros de Custo + Naturezas (entrega imediata)
+## FASE 1 — Fundação (Biblioteca + Seletor de Modo)
 
-### 1.1 Schema
+### 1.1 Biblioteca Técnica HOMEBLOCK (SVGs)
+- Receber os 7 SVGs anexados pelo utilizador e gravar em `public/icf/homeblock/` (nomes conforme spec).
+- Página `BibliotecaTecnica.tsx` **já existe**: estender card (`ICFBlockCard`) para renderizar SVG via `<img>`/`<object>` seguro (sem `dangerouslySetInnerHTML`) e abrir modal com zoom básico (wheel + +/−).
+- Novo componente `ICFBlockSvgViewer.tsx` (modal com zoom/reset).
+- Seed/atualização dos 7 itens HOMEBLOCK em `icf_block_library` via `supabase--insert` (não migration — só dados), mantendo `system_seed = true` e `empresa_id = NULL` (catálogo global).
 
-**Nova tabela `cost_centers`** com `organization_id`, `code`, `name`, `type ∈ ('estrutura','obra')`, `parent_id`, `obra_id`, `location`, `fiscal_year`, `active`. Unique `(organization_id, code)`. RLS por org. GRANTs para `authenticated` + `service_role`.
+### 1.2 Seletor de Modo de Análise ICF
+- Novo componente `ICFAnalysisModeSelector.tsx` exibido como dialog/page inicial ao criar nova análise ICF (entry point a partir de `icf/Index.tsx` e da página da obra).
+- 3 opções: **Planta Arquitetónica para ICF** (ativa), **Projeto ICF Completo** (ativa em F2), **Modelo IFC/BIM** (desativada — "Em breve").
+- Opção 1 → encaminha para `AssistenteArquitetura.tsx` existente (com calibração já implementada). **Reaproveitamento puro, sem fluxo paralelo.**
+- Opção 2 → encaminha para nova rota `/icf/dossier/novo` (F2).
 
-**Enum `cost_nature`**: `MO | MAT | SRV | INS | ALU | DIV`.
+### 1.3 Tipo `ICFAnalysisMode` e marcação de origem
+- Adicionar coluna `analysis_mode` (`text`, default `'architectural_to_icf'`) em `icf_assistant_sessions` para distinguir origem; sessões antigas mantêm default.
 
-**Sequência por org** via função `next_obra_cost_center_code(org_id)` → `OB.001`, `OB.002`...
-
-**Trigger `on_obra_created_create_cost_center`** em `public.obras AFTER INSERT`: cria automaticamente `OB.NNN — <nome> — <localizacao>` com `type='obra'` e `obra_id = NEW.id`.
-
-**Backfill**: gerar OB.NNN para todas as obras existentes (ordenadas por `created_at`) e ligar via `obras.cost_center_id`. Seed dos 8 CE padrão (CE.01–CE.08) por organização existente.
-
-### 1.2 Colunas opcionais (ADD COLUMN IF NOT EXISTS, todas nullable)
-
-Em: `obras`, `orcamentos`, `artigos_orcamento`, `capitulos_orcamento` (só `cost_nature` default por capítulo), `obra_purchases`, `budget_awards`, `contracting_packages`, `budget_version_items`, `autos_medicao`, `autos_medicao_itens`, `contas_financeiras` (faturas/pagamentos/recebimentos — verificar nome real), `supplier_*` quando aplicável.
-
-Campos: `cost_center_id uuid`, `cost_nature public.cost_nature`, `source text`.
-
-### 1.3 UI mínima Fase 1
-
-- Página **/empresa/centros-de-custo**: lista CE + OB, criar/editar CE manuais e subcentros, ver OB auto-gerados (read-only no código, editáveis no nome/local).
-- Componente `<CostCenterPicker />` + `<CostNaturePicker />` reutilizáveis.
-- Acrescentar como **filtro opcional** (não obrigatório) nos ecrãs financeiros existentes — sem mudar layout principal.
-
-**Critério de aceite Fase 1**: criar obra → aparece OB.NNN automaticamente; é possível lançar despesa CE sem obra; filtros funcionam; nada do fluxo atual quebra.
+**Entregáveis F1:** seletor funcional, biblioteca técnica com SVGs reais e modal de zoom, seed HOMEBLOCK aplicado, modo arquitetónico ligado ao seletor sem regressão.
 
 ---
 
-## FASE 2 — Gestão da Empresa (Dashboard + Cálculos MB/RAI)
+## FASE 2 — Modo "Projeto ICF Completo" + Dossiê Técnico
 
-### 2.1 Funções SQL (views materializadas leves)
+### 2.1 Schema (migration única)
+Novas tabelas (todas com `organization_id`, GRANTs, RLS, policies `auth.uid()`-scoped via org membership — mesmo padrão de `icf_assistant_sessions`):
 
-- `fn_obra_result(obra_id, fiscal_year?)` → `{ receitas, custos, mb, mb_pct }`
-  - Receitas: soma de recebimentos/faturação de venda ligados ao OB.
-  - Custos: soma de `obra_purchases` + autos pagos + qualquer linha financeira com `cost_center_id` do OB.
-- `fn_ce_costs(org_id, fiscal_year)` → soma de custos com `cost_center.type='estrutura'`.
-- `fn_rai_empresa(org_id, fiscal_year)` → `SUM(fn_obra_result.mb) - fn_ce_costs`.
-- `fn_margem_sobre_venda(custo, margem_pct)` → `custo / (1 - margem_pct/100)` (helper para frontend e edge functions).
+- `icf_project_analyses` — `id, organization_id, obra_id, user_id, mode, title, status, system_code, created_at, updated_at`. Status enum: `draft | uploading | classifying_documents | extracting_data | crosschecking | review_required | validated | sent_to_budget`.
+- `icf_project_documents` — `id, analysis_id, organization_id, file_name, file_path, file_type, declared_category, axia_detected_category, page_number, confidence, review_required, notes`.
+- `icf_project_checklist_items` — `id, analysis_id, organization_id, key, label, status, confidence, notes` (status: `found | missing | partial | manual_required`).
+- `icf_project_issues` — `id, analysis_id, organization_id, severity, category, title, description, related_wall_panel_id, related_document_ids jsonb, resolution_status`.
+- `icf_analysis_snapshots` — `id, analysis_id, organization_id, version, status, summary_json jsonb, wall_panels_json jsonb, composition_json jsonb, issues_json jsonb, created_at, created_by`.
 
-### 2.2 Página `/empresa/gestao` com tabs
+Reutilizar `icf_wall_panels` existente para os panos (já tem `source: 'axia' | 'manual' | 'corrigido'`, `confidence`, `openings`, `composition_result`).
 
-`Centros de Custo` · `Custos de Estrutura` · `Resultado por Obra` · `Resultado Anual` · `Pagamentos` · `Recebimentos` · `Retenções de Garantia` · `Faturas Contabilista`.
+Storage: bucket privado **já existente** `plan-files` é reaproveitado (não criar novo) — pasta `icf-dossier/{analysis_id}/`.
 
-KPIs: Resultado total obras, Total CE, RAI anual, MB média, Adjudicado, Faturado, Pago, Recebido, A pagar, A receber, Retenções ativas, Custos SPV/obra. Todos calculados das tabelas existentes + `cost_center_id`.
+### 2.2 Edge Function `icf-complete-project-analyzer`
+- Recebe `{ analysis_id, document_ids[] }`.
+- Para cada documento: download → `data:` URL (padrão já usado em `icf-architecture-assistant`) → chamada Gemini 2.5 Pro via Lovable AI Gateway.
+- Prompt da spec (secção 16), output JSON estruturado por tool-calling (`AxiaCompleteICFProjectOutput`).
+- Persistência transacional: docs classificados, checklist gerado, panos criados em `icf_wall_panels`, issues registadas.
+- Validações Zod no body; rate limit / 402 / 429 propagados ao cliente.
 
-### 2.3 Helper `calcMargemSobreVenda` em `src/lib/finance.ts` + correção nos pontos onde hoje se usa `custo * (1+margem)` para o caso "margem sobre venda" (manter os dois modos: "markup sobre custo" e "margem sobre venda" explícitos na UI).
+### 2.3 UI — Dossiê Técnico ICF
+Nova página `src/pages/icf/Dossier.tsx` (rota `/icf/dossier/:id`) com abas (apenas as desta fase):
 
----
-
-## FASE 3 — Dossier do Promotor (vista agregadora na página da Obra)
-
-Sem duplicar dados. Adicionar tabs ao detalhe da obra (`/obras/:id`):
-
-`Estudo Viabilidade` · `Orçamento Base` · `Folha de Fecho` · `Consultas` · `MCE` · `Adjudicações/NE` · `Contratos` · `Controlo de Custos` · `Autos` · `Faturas` · `Recebimentos` · `Receção Provisória` · `Fecho de Contas` · `Garantias` · `SPV`.
-
-Cada tab é um wrapper que filtra módulos existentes por `obra_id` (e por `cost_center_id` do OB). Tabs sem dados mostram CTA "iniciar".
-
-**Painel Controlo de Custos**: tabela cruzada Capítulo × {Base seco, Folha de Fecho, Adjudicado, Faturado, Pago, Saldo, Desvio %, % adjudicada, % executada}. Filtros por capítulo, natureza, fornecedor, contrato, CC.
-
----
-
-## FASES 4–6 (resumo, detalhamos depois)
-
-- **Fase 4 — Receção/Garantias/Recebimentos faseados**: tabela `client_payment_plans` (frações × marcos: CPCV 15%, Início 15%, Estrutura 15%, Escritura 55%, editáveis), painel de retenções (já temos `retention_percent` em vários sítios — agregar), etapas Receção Provisória → Fecho de Contas.
-- **Fase 5 — SPV**: novo módulo `spv_occurrences` ligado a OB.NNN-SPV.XX com fotos, fornecedor, custo estimado/real, prioridade, estado; relatórios por motivo/fração/fornecedor.
-- **Fase 6 — Axia**: atualizar prompt central da Axia (`supabase/functions/axia-*`) com glossário CE/OB, MB vs RAI, naturezas MO/MAT/SRV/INS/ALU/DIV, regras de classificação automática com `review_required: true` em baixa confiança. Sugestão automática de `cost_center_id` + `cost_nature` ao lançar despesa.
-
----
-
-## Detalhes técnicos (Fase 1)
-
-```text
-migrations/
-  *_cost_centers_foundation.sql   -- enum, tabela, função sequencial, trigger, backfill, seed CE
-  *_add_cost_center_columns.sql   -- ADD COLUMN IF NOT EXISTS em ~12 tabelas
-
-src/types/cost-center.ts
-src/hooks/useCostCenters.ts
-src/components/finance/CostCenterPicker.tsx
-src/components/finance/CostNaturePicker.tsx
-src/pages/empresa/CentrosDeCusto.tsx
-src/lib/finance.ts                -- calcMargemSobreVenda, calcMB, calcRAI helpers
-
-App.tsx                            -- rota /empresa/centros-de-custo
-src/components/Sidebar (grupo "Empresa") -- novo item
+```
+[Resumo] [Documentos] [Checklist] [Panos]
 ```
 
-Sem alterações em: `icf-*`, `orcamentos` (apenas ADD COLUMN), edge functions existentes, types.ts (regenera).
+Componentes novos:
+- `ICFCompleteProjectUpload.tsx` — upload múltiplo com categoria declarada por ficheiro.
+- `ICFDossierSummaryTab.tsx` — KPIs (sistema, pisos, panos, aberturas, confiança média, pendências).
+- `ICFDocumentsTab.tsx` + `ICFDocumentClassifierBadge.tsx` — lista, comparação categoria declarada vs Axia, corrigir categoria.
+- `ICFChecklistTab.tsx` — itens com estados visuais (found/partial/missing/manual_required).
+- `ICFWallPanelsTab.tsx` + `ICFWallPanelCard.tsx` + `ICFWallPanelDetailsDrawer.tsx` — listar P01…, separar por piso, editar dimensões/aberturas, confirmar/excluir.
+- `ICFIssueList.tsx` — lista de issues filtrável por severidade.
+
+Hooks:
+- `useIcfProjectAnalysis(id)`, `useIcfProjectDocuments`, `useIcfChecklist`, `useIcfProjectIssues`, `useUploadIcfDocuments`, `useClassifyDocuments` (invoca edge function).
+
+**Entregáveis F2:** criar análise → upload multi-categoria → Axia classifica → checklist + panos + issues → utilizador corrige/confirma panos. Sem composição/manual/orçamento ainda.
 
 ---
 
-## Fora de scope (explícito)
+## FASE 3 — Composição, Visualização, Manual, Orçamento, Snapshots
 
-- Integração SAF-T / ERP externo.
-- Reescrita do módulo de Orçamentos ou Folha de Fecho.
-- Migração de dados financeiros antigos para classificação obrigatória (fica `NULL` = "não classificado" até o utilizador rever).
+### 3.1 Composição HOMEBLOCK
+- Motor `src/lib/icf-homeblock-composition.ts` **já existe** e cobre 80% da spec (`calculateICFWallComposition`). Estender para:
+  - Acessórios (topo + espaçador) configuráveis por sistema (HB-220 → HB-TOPO-220 + HB-ESP-220; HB-300 → derivar).
+  - Helper `composeAllPanelsForAnalysis(analysisId)` que itera panos confirmados/corrigidos.
+- Nova aba `ICFHomeblockCompositionTab.tsx` + `ICFCompositionSummary.tsx` no dossiê.
+
+### 3.2 Mapa Visual dos Panos
+- Componente `ICFWallPanelVisualizer.tsx` **já existe** — reaproveitar e integrar dentro do `ICFWallPanelDetailsDrawer` e em vista de mapa agregada (grid de panos por piso).
+
+### 3.3 Modelo Isométrico (esquemático)
+- Componente `ICFIsometricModelViewer.tsx` novo — SVG 2.5D simples:
+  - Panos enfileirados por piso, sem coordenadas reais.
+  - Altura/comprimento proporcionais, aberturas como recortes, cor por estado.
+  - Filtro por piso, toggle de panos excluídos, aviso "estimativa".
+- Tipo `ICFWallSegmentGeometry` derivado dos panos (sem XY real).
+
+### 3.4 Manual Técnico ICF Dinâmico
+- Nova aba `ICFManualTab.tsx` agregando: identificação, sistema, docs, checklist, panos, composição, cortes, aberturas, isométrico, materiais, pendências, aviso legal.
+- Botão "Preparar relatório" → render HTML pronto para `window.print()` (sem jsPDF agora; preparar estrutura para PDF futuro reaproveitando engine vetorial existente).
+
+### 3.5 Envio para Orçamento + Snapshot
+- Aba `ICFBudgetTab.tsx` + dialog `ICFBudgetSendDialog.tsx`.
+- Reaproveitar fluxo de envio para orçamento já existente no módulo ICF (`useIcfBudget`, `useIcfBudgetSnapshot`).
+- Regras de bloqueio: só panos `validado`/`corrigido` entram silenciosamente; `em_revisao` exige confirmação; `excluido` ignorado.
+- Capítulo "Sistema ICF / HOMEBLOCK" com artigos pré-mapeados aos códigos da biblioteca.
+- Ao validar ou enviar → criar registo em `icf_analysis_snapshots` (versão incremental por análise).
+
+### 3.6 Testes mínimos (Vitest)
+- `icf-homeblock-composition.test.ts` **já existe** — adicionar casos: HB-300, sobra horizontal, remate superior, desconto por aberturas.
+- `icf-project-checklist.test.ts` — geração de checklist com mapa de vãos em falta gera issue.
+- `icf-analysis-mode.test.ts` — seletor encaminha rotas corretamente.
+
+**Entregáveis F3:** dossiê completo com 8 abas, composição automática, mapa visual + isométrico, manual imprimível, envio para orçamento com snapshot versionado.
 
 ---
 
-## Pergunta antes de avançar
+## Detalhes Técnicos
 
-Confirmas que entrego **só a Fase 1 agora** (fundação + seed + UI mínima), e depois avançamos Fase 2 e 3? Ou queres que eu já agrupe Fase 1 + 2 numa entrega (mais demorada mas com dashboard "Gestão da Empresa" funcional logo)?
+### Rotas novas
+- `/icf/dossier/novo` — seletor + upload (F2)
+- `/icf/dossier/:id` — dossiê com abas (F2/F3)
+
+### Padrões de segurança aplicados
+- Todas as edge functions: Zod + JWT validation + CORS shared + 402/429 surfaced.
+- RLS via `is_member_of_organization(auth.uid(), organization_id)` (padrão do projeto).
+- GRANT block obrigatório por tabela nova: `authenticated` (CRUD scoped por RLS) + `service_role` (ALL). Sem `anon`.
+- Storage: bucket privado, paths prefixados com `organization_id`.
+
+### Memória a criar após F3
+- `mem://features/icf/dossier-completo` — arquitetura do dossiê e fluxo das 8 abas.
+- `mem://features/icf/biblioteca-homeblock` — fonte de medidas e uso dos SVGs como referência visual.
+
+### ASCII — fluxo geral
+
+```text
+[Nova Análise ICF]
+        |
+        v
+[ICFAnalysisModeSelector]
+    /        |              \
+   v         v               v
+[Arq->ICF] [Projeto Completo] [IFC/BIM]
+(existente)        |          (desativado)
+                   v
+            [Upload multi-doc]
+                   v
+       [Edge: icf-complete-project-analyzer]
+                   v
+   [Dossiê: Resumo|Docs|Checklist|Panos|Composição|Isométrico|Manual|Orçamento]
+                   v
+            [Snapshot + Envio Orçamento]
+```
+
+---
+
+## Confirmação para arrancar
+
+Após aprovação, começo pela **Fase 1**: aguardo o upload dos 7 SVGs HOMEBLOCK, implemento seletor + viewer + seed, e só avanço para F2 com nova aprovação.
