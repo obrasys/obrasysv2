@@ -13370,6 +13370,45 @@ export type Database = {
         }
         Returns: string
       }
+      create_budget_revision: {
+        Args: { p_orcamento_id: string }
+        Returns: {
+          client_document_mode_default: string | null
+          cliente_id: string | null
+          codigo: string | null
+          commercial_intro_text: string | null
+          commercial_notes_text: string | null
+          commercial_payment_terms_text: string | null
+          commercial_validity_text: string | null
+          cost_center_id: string | null
+          created_at: string
+          custos_indiretos: Json | null
+          data_criacao: string
+          data_envio: string | null
+          id: string
+          is_locked: boolean
+          locked_at: string | null
+          locked_reason: string | null
+          margem_lucro: number | null
+          numero_revisao: number | null
+          obra_id: string | null
+          project_metadata: Json
+          revisao_de: string | null
+          show_signature_block: boolean | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          valor_adjudicado: number | null
+          valor_total: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orcamentos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_contracting_package: {
         Args: {
           _budget_version_id: string
