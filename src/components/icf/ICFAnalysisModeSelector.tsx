@@ -33,7 +33,7 @@ const OPTIONS: Array<{
     description:
       'Use quando possui projeto técnico ICF com plantas, cortes, alçados, detalhes, mapa de vãos, fundações e documentação complementar.',
     icon: FolderTree,
-    status: 'soon',
+    status: 'active',
   },
   {
     mode: 'ifc_bim',
@@ -56,9 +56,9 @@ export const ICFAnalysisModeSelector = ({ open, onOpenChange, obraId }: Props) =
       return;
     }
     if (mode === 'complete_icf_project') {
-      toast.info('Projeto ICF Completo', {
-        description: 'Em breve — fluxo de dossiê técnico multi-documento em preparação (Fase 2).',
-      });
+      onOpenChange(false);
+      const qs = obraId ? `?obra=${obraId}` : '';
+      navigate(`/icf/dossier/novo${qs}`);
       return;
     }
     toast.info('Modelo IFC / BIM', { description: 'Funcionalidade em desenvolvimento.' });

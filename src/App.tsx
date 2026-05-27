@@ -113,6 +113,8 @@ const IcfBibliotecaTecnica = lazy(() => import("./pages/icf/BibliotecaTecnica"))
 const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
 const IcfManual = lazy(() => import("./pages/icf/Manual"));
 const IcfAssistenteArquitetura = lazy(() => import("./pages/icf/AssistenteArquitetura"));
+const IcfNovoDossier = lazy(() => import("./pages/icf/NovoDossier"));
+const IcfDossier = lazy(() => import("./pages/icf/Dossier"));
 const CentrosDeCustoPage = lazy(() => import("./pages/empresa/CentrosDeCusto"));
 const GestaoEmpresaPage = lazy(() => import("./pages/empresa/GestaoEmpresa"));
 
@@ -254,6 +256,8 @@ const App = () => (
                   <Route path="/icf/mapa-visual" element={<ManagerRoute><IcfMapaVisualPanos /></ManagerRoute>} />
                   <Route path="/icf/manual" element={<ManagerRoute><IcfManual /></ManagerRoute>} />
                   <Route path="/icf/assistente" element={<ManagerRoute><IcfAssistenteArquitetura /></ManagerRoute>} />
+                  <Route path="/icf/dossier/novo" element={<ManagerRoute><IcfNovoDossier /></ManagerRoute>} />
+                  <Route path="/icf/dossier/:id" element={<ManagerRoute><IcfDossier /></ManagerRoute>} />
 
                   <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
                   <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
