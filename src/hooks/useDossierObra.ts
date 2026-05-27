@@ -41,11 +41,21 @@ export function useDossierObra(obraId: string | undefined) {
       // 1. Orçamentos da obra (preferimos adjudicado)
       const { data: orcamentos } = await supabase
         .from('orcamentos')
-        .select('id, status, valor_total, capitulos:capitulos(id, numero, titulo, valor_total)')
+        .select('id, status, valor_total')
         .eq('obra_id', obraId!);
 
-      const adjudicado = orcamentos?.find((o: any) => o.status === 'adjudicado') || orcamentos?.[0];
-      const capitulosBase: any[] = adjudicado?.capitulos || [];
+      const adjudicado =
+        (orcamentos || []).find((o: any) => o.status === 'adjudicado') || (orcamentos || [])[0];
+
+      let capitulosBase: any[] = [];
+      if (adjudicado?.id) {
+        const { data: caps } = await supabase
+          .from('capitulos')
+          .select('id, numero, titulo, valor_total')
+          .eq('orcamento_id', adjudicado.id);
+        capitulosBase = caps || [];
+      }
+
 
       // 2. Autos de medição → valor_acumulado por capitulo
       const { data: autos } = await supabase
