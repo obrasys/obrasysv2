@@ -688,9 +688,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
               <TableCell className="text-xs">Total</TableCell>
-              <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-              </TableCell>
+              <TableCell />
               <TableCell className="text-right text-xs tabular-nums">
                 {totals.total_directos > 0
                   ? `${details.direct_costs.reduce((acc, l) => acc + (l.value / totals.total_directos) * 100, 0).toFixed(2)}%`
