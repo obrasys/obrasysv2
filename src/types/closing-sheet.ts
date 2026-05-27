@@ -172,6 +172,27 @@ export const DEFAULT_SITE_COST_LINES: ClosingSiteCostLine[] = [
   { key: "outro", label: "OUTRO", value: 0 },
 ];
 
+// Remapeia chaves antigas para o novo conjunto A-G de rubricas de estaleiro.
+const LEGACY_SITE_KEY_MAP: Record<string, string> = {
+  gestao_obra: "pessoal_tecnico",
+  encarregado: "encarregados",
+  arvorado: "chefes_equipa",
+  pessoal_producao: "pessoal_obra",
+};
+
+export function migrateSiteCostLines(
+  stored: ClosingSiteCostLine[] | undefined | null,
+): ClosingSiteCostLine[] {
+  const defaults = DEFAULT_SITE_COST_LINES;
+  if (!stored?.length) return defaults.map((l) => ({ ...l }));
+  const byKey = new Map<string, number>();
+  for (const line of stored) {
+    const newKey = LEGACY_SITE_KEY_MAP[line.key] ?? line.key;
+    byKey.set(newKey, (byKey.get(newKey) || 0) + (Number(line.value) || 0));
+  }
+  return defaults.map((d) => ({ ...d, value: byKey.get(d.key) ?? 0 }));
+}
+
 export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
   header: {
     nome_obra: "",
