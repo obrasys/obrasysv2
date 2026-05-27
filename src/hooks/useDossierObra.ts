@@ -74,18 +74,10 @@ export function useDossierObra(obraId: string | undefined) {
       });
 
       // 3. Pagamentos (contas financeiras pagas da obra)
-      const { data: contas } = await supabase
-        .from('contas_financeiras')
-        .select('valor, tipo, status, capitulo')
-        .eq('obra_id', obraId!);
-
+      // Nota: hoje contas_financeiras não tem coluna `capitulo`. Mantemos o mapa vazio
+      // até existir esse vínculo (fase futura via cost_center/capitulo nas contas).
       const pagoPorCap = new Map<string, number>();
-      (contas || []).forEach((c: any) => {
-        if (c.status !== 'pago' && c.status !== 'paga' && c.status !== 'concluido') return;
-        const k = ((c as any).capitulo || '').trim().toLowerCase();
-        if (!k) return;
-        pagoPorCap.set(k, (pagoPorCap.get(k) || 0) + Number(c.valor || 0));
-      });
+
 
       const capitulos: CapituloControlo[] = capitulosBase
         .sort((a, b) => (a.numero || 0) - (b.numero || 0))
