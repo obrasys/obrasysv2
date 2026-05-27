@@ -112,6 +112,7 @@ const IcfResumo = lazy(() => import("./pages/icf/Resumo"));
 const IcfBibliotecaTecnica = lazy(() => import("./pages/icf/BibliotecaTecnica"));
 const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
 const IcfManual = lazy(() => import("./pages/icf/Manual"));
+const IcfAssistenteArquitetura = lazy(() => import("./pages/icf/AssistenteArquitetura"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
@@ -248,6 +249,7 @@ const App = () => (
                   <Route path="/icf/biblioteca" element={<ManagerRoute><IcfBibliotecaTecnica /></ManagerRoute>} />
                   <Route path="/icf/mapa-visual" element={<ManagerRoute><IcfMapaVisualPanos /></ManagerRoute>} />
                   <Route path="/icf/manual" element={<ManagerRoute><IcfManual /></ManagerRoute>} />
+                  <Route path="/icf/assistente" element={<ManagerRoute><IcfAssistenteArquitetura /></ManagerRoute>} />
 
                   <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
                   <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />

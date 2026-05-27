@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
-import { Layers, Box, BarChart3, BookOpen, LayoutGrid, FileText } from 'lucide-react';
+import { Layers, Box, BarChart3, BookOpen, LayoutGrid, FileText, Sparkles } from 'lucide-react';
 
 interface Props {
   configId: string;
@@ -19,6 +19,7 @@ export const IcfQuickNav = ({ configId }: Props) => {
     { icon: BookOpen, label: 'Biblioteca Técnica', href: `/icf/biblioteca` },
     { icon: LayoutGrid, label: 'Mapa Visual de Panos', href: `/icf/mapa-visual${obraQs}` },
     { icon: FileText, label: 'Manual ICF', href: `/icf/manual${obraQs}` },
+    { icon: Sparkles, label: 'Assistente ICF (Arquitetura)', href: `/icf/assistente${obraQs}` },
   ];
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
