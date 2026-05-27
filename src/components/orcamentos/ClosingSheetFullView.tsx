@@ -33,6 +33,7 @@ import { useApproveClosingSheet } from "@/hooks/useApproveClosingSheet";
 import { useQualitySpecsCatalog } from "@/hooks/useQualitySpecsCatalog";
 import { ClosingSheetSiteDetailDialog } from "./ClosingSheetSiteDetailDialog";
 import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useClosingSheetSiteDetail";
+import { useBudgetChapterTotals } from "@/hooks/useBudgetChapterTotals";
 
 // Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
 const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
