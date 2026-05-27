@@ -8,7 +8,8 @@ import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles, FolderT
 import { toast } from 'sonner';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
-import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
+import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig, useIcfPanos } from '@/hooks/useIcfData';
+import { IcfPanelsIsometric } from '@/components/icf/IcfPanelsIsometric';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
@@ -48,6 +49,7 @@ const IcfIndex = () => {
   const updateConfig = useUpdateIcfConfig();
   const generateBudget = useGenerateIcfBudget();
   const { data: dossiers = [] } = useIcfAnalyses(selectedObraId || null);
+  const { data: configPanos = [] } = useIcfPanos(activeConfig?.id);
 
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
@@ -257,6 +259,17 @@ const IcfIndex = () => {
             />
 
             <IcfQuickNav configId={activeConfig.id} />
+
+            <IcfPanelsIsometric
+              title="Vista Isométrica dos Panos"
+              panels={configPanos.map(p => ({
+                id: p.id,
+                label: p.referencia,
+                length_m: Number(p.comprimento) || 0,
+                height_m: Number(p.altura_util) || 0,
+              }))}
+              emptyHint="Adicione panos de parede a esta configuração para ver o modelo isométrico esquemático."
+            />
           </>
         )}
 
