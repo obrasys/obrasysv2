@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import {
   Ruler, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight,
-  Crosshair, CheckCircle2, AlertTriangle, Loader2,
+  Crosshair, CheckCircle2, AlertTriangle, Loader2, Hand,
 } from 'lucide-react';
 import { usePdfRenderer } from '@/hooks/usePdfRenderer';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
@@ -56,6 +56,9 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
   const [imgDims, setImgDims] = useState({ w: 0, h: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [tool, setTool] = useState<'measure' | 'pan'>('measure');
+  const [isDragging, setIsDragging] = useState(false);
+  const [spacePan, setSpacePan] = useState(false);
 
   const pdf = usePdfRenderer({ url: isPdf ? signedUrl : null, page, scale: 2 });
 
@@ -139,7 +142,35 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
     return 'calibrado';
   }, [method, pointA, pointB, realDistanceM, distancePx, computedMpp]);
 
+  const panActive = tool === 'pan' || spacePan;
+
+  // Atalho: espaço pressionado = modo pan temporário
+  useEffect(() => {
+    const isTypingTarget = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || t.isContentEditable;
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        setSpacePan(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space') setSpacePan(false);
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
+
   const handleStageClick = (e: any) => {
+    if (panActive) return;
     if (method !== 'known_distance') return;
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
@@ -239,6 +270,11 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                 Página {page} / {pdf.totalPages}
               </Badge>
             )}
+            {panActive && (
+              <Badge variant="default" className="text-[10px] gap-1">
+                <Hand className="h-3 w-3" /> Modo Pan
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {isPdf && pdf.totalPages > 1 && (
@@ -251,13 +287,21 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                 </Button>
               </>
             )}
-            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(z * 1.25, 6))}>
+            <Button
+              size="icon"
+              variant={panActive ? 'default' : 'ghost'}
+              onClick={() => setTool((t) => (t === 'pan' ? 'measure' : 'pan'))}
+              title="Mover planta (Pan) — segure Espaço para ativar temporariamente"
+            >
+              <Hand className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(z * 1.25, 6))} title="Aproximar">
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(z / 1.25, 0.25))}>
+            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(z / 1.25, 0.25))} title="Afastar">
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>
+            <Button size="icon" variant="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="Repor vista">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -281,11 +325,16 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                   const dir = e.evt.deltaY > 0 ? 1 / 1.1 : 1.1;
                   setZoom((z) => Math.min(Math.max(z * dir, 0.25), 6));
                 }}
-                draggable={method !== 'known_distance' || (!!pointA && !!pointB)}
-                onDragEnd={(e) => setPan({ x: e.target.x(), y: e.target.y() })}
+                draggable={panActive || method !== 'known_distance' || (!!pointA && !!pointB)}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={(e) => { setIsDragging(false); setPan({ x: e.target.x(), y: e.target.y() }); }}
                 x={pan.x}
                 y={pan.y}
-                style={{ cursor: method === 'known_distance' ? 'crosshair' : 'grab' }}
+                style={{
+                  cursor: panActive
+                    ? (isDragging ? 'grabbing' : 'grab')
+                    : method === 'known_distance' ? 'crosshair' : 'grab',
+                }}
               >
                 <Layer>
                   {imgEl && (
