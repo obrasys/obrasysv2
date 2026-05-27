@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Plus, Inbox } from 'lucide-react';
+import { Loader2, Plus, Inbox, Send } from 'lucide-react';
 import { useObras } from '@/hooks/useObras';
 import { useIcfBlockLibrary } from '@/hooks/useIcfBlockLibrary';
-import { useIcfWallPanels, useCreateIcfWallPanel } from '@/hooks/useIcfWallPanels';
+import { useIcfConfiguracoes } from '@/hooks/useIcfData';
+import { useIcfWallPanels, useCreateIcfWallPanel, useSendWallPanelsToBudget } from '@/hooks/useIcfWallPanels';
 import { ICFWallPanelCard } from '@/components/icf/panels/ICFWallPanelCard';
 import type { ICFWallPanel } from '@/types/icf-homeblock';
 import { toast } from 'sonner';
@@ -27,7 +28,12 @@ const IcfMapaVisualPanos = () => {
   const [obraId, setObraId] = useState(params.get('obra') || '');
   const { data: panels, isLoading } = useIcfWallPanels(obraId);
   const { data: blocks } = useIcfBlockLibrary('bloco_principal');
+  const { data: configs } = useIcfConfiguracoes(obraId);
   const create = useCreateIcfWallPanel();
+  const sendBudget = useSendWallPanelsToBudget();
+
+  const validatedCount = (panels ?? []).filter(p => p.status === 'validado').length;
+  const latestConfig = configs?.[0];
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newPanel, setNewPanel] = useState({
@@ -63,9 +69,28 @@ const IcfMapaVisualPanos = () => {
   };
 
   const handleSendToBudget = (p: ICFWallPanel) => {
-    // Por agora encaminhar para fluxo ICF existente (gera orçamento da configuração)
-    toast.info('A integração com orçamento usa o fluxo ICF existente. Abrindo módulo ICF…');
-    navigate(`/icf?obra=${p.obra_id}`);
+    if (p.status !== 'validado') {
+      toast.info('Valide o pano antes de o enviar para orçamento.');
+      return;
+    }
+    handleSendAll();
+  };
+
+  const handleSendAll = () => {
+    if (!obraId) return;
+    if (!latestConfig) {
+      toast.error('Crie uma configuração ICF para esta obra antes de enviar para orçamento.');
+      navigate(`/icf?obra=${obraId}`);
+      return;
+    }
+    if (validatedCount === 0) {
+      toast.info('Não há panos validados para enviar.');
+      return;
+    }
+    sendBudget.mutate(
+      { obraId, configuracaoId: latestConfig.id },
+      { onSuccess: (out) => navigate(`/orcamentos/${out.orcamento_id}`) },
+    );
   };
 
   return (
@@ -83,10 +108,11 @@ const IcfMapaVisualPanos = () => {
           </Select>
 
           {obraId && (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" /> Novo pano</Button>
-              </DialogTrigger>
+            <>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline"><Plus className="h-4 w-4 mr-2" /> Novo pano</Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Novo pano de parede</DialogTitle></DialogHeader>
                 <div className="grid grid-cols-2 gap-3">
@@ -111,6 +137,16 @@ const IcfMapaVisualPanos = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              onClick={handleSendAll}
+              disabled={sendBudget.isPending || validatedCount === 0}
+            >
+              {sendBudget.isPending
+                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                : <Send className="h-4 w-4 mr-2" />}
+              Enviar {validatedCount} validado(s) para orçamento
+            </Button>
+            </>
           )}
         </div>
 
