@@ -282,13 +282,21 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                 </Button>
               </>
             )}
-            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(z * 1.25, 6))}>
+            <Button
+              size="icon"
+              variant={panActive ? 'default' : 'ghost'}
+              onClick={() => setTool((t) => (t === 'pan' ? 'measure' : 'pan'))}
+              title="Mover planta (Pan) — segure Espaço para ativar temporariamente"
+            >
+              <Hand className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(z * 1.25, 6))} title="Aproximar">
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(z / 1.25, 0.25))}>
+            <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(z / 1.25, 0.25))} title="Afastar">
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>
+            <Button size="icon" variant="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="Repor vista">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
