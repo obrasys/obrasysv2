@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import {
   Ruler, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight,
-  Crosshair, CheckCircle2, AlertTriangle, Loader2,
+  Crosshair, CheckCircle2, AlertTriangle, Loader2, Hand,
 } from 'lucide-react';
 import { usePdfRenderer } from '@/hooks/usePdfRenderer';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
