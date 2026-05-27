@@ -5152,6 +5152,15 @@ export type Database = {
       icf_assistant_sessions: {
         Row: {
           axia_audit: Json | null
+          calibration_confidence: string | null
+          calibration_declared_scale: string | null
+          calibration_distance_px: number | null
+          calibration_method: string | null
+          calibration_override: boolean | null
+          calibration_page: number | null
+          calibration_point_a: Json | null
+          calibration_point_b: Json | null
+          calibration_real_distance_m: number | null
           classe_aco: string | null
           classe_betao: string | null
           created_at: string | null
@@ -5173,6 +5182,15 @@ export type Database = {
         }
         Insert: {
           axia_audit?: Json | null
+          calibration_confidence?: string | null
+          calibration_declared_scale?: string | null
+          calibration_distance_px?: number | null
+          calibration_method?: string | null
+          calibration_override?: boolean | null
+          calibration_page?: number | null
+          calibration_point_a?: Json | null
+          calibration_point_b?: Json | null
+          calibration_real_distance_m?: number | null
           classe_aco?: string | null
           classe_betao?: string | null
           created_at?: string | null
@@ -5194,6 +5212,15 @@ export type Database = {
         }
         Update: {
           axia_audit?: Json | null
+          calibration_confidence?: string | null
+          calibration_declared_scale?: string | null
+          calibration_distance_px?: number | null
+          calibration_method?: string | null
+          calibration_override?: boolean | null
+          calibration_page?: number | null
+          calibration_point_a?: Json | null
+          calibration_point_b?: Json | null
+          calibration_real_distance_m?: number | null
           classe_aco?: string | null
           classe_betao?: string | null
           created_at?: string | null
