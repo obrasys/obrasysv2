@@ -448,13 +448,60 @@ export function useOrcamentos() {
         }
       }
 
+      // Se o orçamento original tinha Budget Objetivo e/ou Folha de Fecho,
+      // gerar automaticamente as novas versões na revisão (chain de versões).
+      const [{ data: origVersions }, { data: origSheets }] = await Promise.all([
+        supabase
+          .from('budget_versions')
+          .select('id, version_type, version_number, created_at')
+          .eq('source_budget_id', orcamentoId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('closing_sheets')
+          .select('id')
+          .eq('source_budget_id', orcamentoId)
+          .limit(1),
+      ]);
+
+      const hadBudgetOrClosing =
+        (origVersions && origVersions.length > 0) ||
+        (origSheets && origSheets.length > 0);
+
+      if (hadBudgetOrClosing) {
+        // Aprovar a nova revisão: cria Base Seco + Folha de Fecho Inicial + Budget Objetivo v1
+        const { error: approveError } = await supabase.rpc('approve_base_dry_budget', {
+          p_orcamento_id: novoOrcamento.id,
+        });
+        if (approveError) throw approveError;
+
+        // Encadear parent_version_id: nova base_dry → última versão (target) do original
+        const lastOrigTarget = (origVersions ?? []).find((v) => v.version_type === 'target')
+          ?? (origVersions ?? [])[0];
+        if (lastOrigTarget) {
+          const { data: newBase } = await supabase
+            .from('budget_versions')
+            .select('id')
+            .eq('source_budget_id', novoOrcamento.id)
+            .eq('version_type', 'base_dry')
+            .maybeSingle();
+          if (newBase?.id) {
+            await supabase
+              .from('budget_versions')
+              .update({ parent_version_id: lastOrigTarget.id })
+              .eq('id', newBase.id);
+          }
+        }
+      }
+
       return novoOrcamento;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-versions'] });
+      queryClient.invalidateQueries({ queryKey: ['closing-sheets'] });
       toast({
         title: 'Sucesso',
-        description: 'Revisão do orçamento criada com sucesso',
+        description: 'Revisão criada com novo Budget Objetivo e Folha de Fecho',
       });
     },
     onError: (error: Error) => {
