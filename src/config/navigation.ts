@@ -85,6 +85,7 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Wallet,
     items: [
       { icon: Wallet, label: "Financeiro", href: "/financeiro" },
+      { icon: BarChart3, label: "Gestão da Empresa", href: "/empresa/gestao" },
       { icon: Blocks, label: "Centros de Custo", href: "/empresa/centros-de-custo" },
     ],
   },

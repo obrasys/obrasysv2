@@ -114,6 +114,7 @@ const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
 const IcfManual = lazy(() => import("./pages/icf/Manual"));
 const IcfAssistenteArquitetura = lazy(() => import("./pages/icf/AssistenteArquitetura"));
 const CentrosDeCustoPage = lazy(() => import("./pages/empresa/CentrosDeCusto"));
+const GestaoEmpresaPage = lazy(() => import("./pages/empresa/GestaoEmpresa"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
@@ -215,6 +216,7 @@ const App = () => (
                   <Route path="/financeiro" element={<ManagerRoute><FinanceiroPage /></ManagerRoute>} />
                   <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
                   <Route path="/empresa/centros-de-custo" element={<ManagerRoute><CentrosDeCustoPage /></ManagerRoute>} />
+                  <Route path="/empresa/gestao" element={<ManagerRoute><GestaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
                   <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
                   <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
