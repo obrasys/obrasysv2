@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Printer, AlertTriangle } from 'lucide-react';
+import { Printer, AlertTriangle, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useObras } from '@/hooks/useObras';
 import { useIcfBlockLibrary } from '@/hooks/useIcfBlockLibrary';
 import { useIcfWallPanels } from '@/hooks/useIcfWallPanels';
+import { useIcfAssistantSession } from '@/hooks/useIcfAssistantSession';
 import { ICFBlockSvgViewer } from '@/components/icf/library/ICFBlockSvgViewer';
 import { calculateICFWallComposition } from '@/lib/icf-homeblock-composition';
 
@@ -19,7 +20,20 @@ const ICF_DISCLAIMER =
 const IcfManual = () => {
   const [params, setParams] = useSearchParams();
   const { obras } = useObras();
+  const sessionParam = params.get('session');
+  const session = useIcfAssistantSession(sessionParam ?? undefined);
   const [obraId, setObraId] = useState(params.get('obra') || '');
+
+  useEffect(() => {
+    if (sessionParam && session.data?.obra_id && !obraId) {
+      setObraId(session.data.obra_id);
+      const next = new URLSearchParams(params);
+      next.set('obra', session.data.obra_id);
+      setParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionParam, session.data?.obra_id]);
+
   const { data: panels } = useIcfWallPanels(obraId);
   const { data: blocks } = useIcfBlockLibrary();
 
@@ -37,23 +51,38 @@ const IcfManual = () => {
 
   const handleObra = (v: string) => {
     setObraId(v);
-    setParams({ obra: v });
+    const next = new URLSearchParams(params);
+    next.set('obra', v);
+    setParams(next, { replace: true });
   };
+
+  const sessionLocked = !!sessionParam && !!session.data?.obra_id;
+  const selectedObra = obras?.find(o => o.id === obraId);
 
   return (
     <AppLayout title="Manual ICF" subtitle="Manual técnico dinâmico HOMEBLOCK">
       <div className="p-4 md:p-6 space-y-6 print:p-0">
         <div className="flex items-center justify-between gap-3 print:hidden">
-          <Select value={obraId} onValueChange={handleObra}>
-            <SelectTrigger className="w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
-            <SelectContent>
-              {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {sessionLocked ? (
+            <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Sessão Axia:</span>
+              <span className="font-medium">{selectedObra?.nome ?? 'Obra associada'}</span>
+              <Badge variant="outline" className="ml-1 text-[10px]">{session.data?.plan_kind}</Badge>
+            </div>
+          ) : (
+            <Select value={obraId} onValueChange={handleObra}>
+              <SelectTrigger className="w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
+              <SelectContent>
+                {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <Button variant="outline" onClick={() => window.print()} disabled={!obraId}>
             <Printer className="h-4 w-4 mr-2" /> Preparar para PDF
           </Button>
         </div>
+
 
         {!obraId ? (
           <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">

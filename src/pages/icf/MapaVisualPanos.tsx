@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Plus, Inbox, Send } from 'lucide-react';
+import { Loader2, Plus, Inbox, Send, Sparkles } from 'lucide-react';
 import { useObras } from '@/hooks/useObras';
 import { useIcfBlockLibrary } from '@/hooks/useIcfBlockLibrary';
 import { useIcfConfiguracoes } from '@/hooks/useIcfData';
 import { useIcfWallPanels, useCreateIcfWallPanel, useSendWallPanelsToBudget } from '@/hooks/useIcfWallPanels';
+import { useIcfAssistantSession } from '@/hooks/useIcfAssistantSession';
 import { ICFWallPanelCard } from '@/components/icf/panels/ICFWallPanelCard';
 import type { ICFWallPanel } from '@/types/icf-homeblock';
 import { toast } from 'sonner';
@@ -25,7 +27,21 @@ const IcfMapaVisualPanos = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { obras } = useObras();
+  const sessionParam = params.get('session');
+  const session = useIcfAssistantSession(sessionParam ?? undefined);
   const [obraId, setObraId] = useState(params.get('obra') || '');
+
+  // Auto-resolve obra a partir da sessão do assistente (evita re-selecionar)
+  useEffect(() => {
+    if (sessionParam && session.data?.obra_id && !obraId) {
+      setObraId(session.data.obra_id);
+      const next = new URLSearchParams(params);
+      next.set('obra', session.data.obra_id);
+      setParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionParam, session.data?.obra_id]);
+
   const { data: panels, isLoading } = useIcfWallPanels(obraId);
   const { data: blocks } = useIcfBlockLibrary('bloco_principal');
   const { data: configs } = useIcfConfiguracoes(obraId);
@@ -48,8 +64,14 @@ const IcfMapaVisualPanos = () => {
 
   const handleObraChange = (v: string) => {
     setObraId(v);
-    setParams({ obra: v });
+    const next = new URLSearchParams(params);
+    next.set('obra', v);
+    setParams(next, { replace: true });
   };
+
+  const sessionLocked = !!sessionParam && !!session.data?.obra_id;
+  const selectedObra = obras?.find(o => o.id === obraId);
+
 
   const handleCreate = () => {
     if (!obraId) return;
@@ -100,12 +122,22 @@ const IcfMapaVisualPanos = () => {
     >
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <Select value={obraId} onValueChange={handleObraChange}>
-            <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
-            <SelectContent>
-              {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          {sessionLocked ? (
+            <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Sessão Axia:</span>
+              <span className="font-medium">{selectedObra?.nome ?? 'Obra associada'}</span>
+              <Badge variant="outline" className="ml-1 text-[10px]">{session.data?.plan_kind}</Badge>
+            </div>
+          ) : (
+            <Select value={obraId} onValueChange={handleObraChange}>
+              <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
+              <SelectContent>
+                {obras?.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
 
           {obraId && (
             <>

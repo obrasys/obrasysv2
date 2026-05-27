@@ -17,10 +17,13 @@ import {
   useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession,
   useUpdateAssistantSession, useUpdateAssistantItem, useApplyFoundationSuggestion,
 } from '@/hooks/useIcfAssistantSession';
+import { useObras } from '@/hooks/useObras';
+import { useCreateIcfWallPanel } from '@/hooks/useIcfWallPanels';
 import { FOUNDATIONS_NOT_FOUND_MESSAGE, type IcfPlanKind, type FoundationOptionKey } from '@/types/icf-assistant';
 import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
+
 
 const STEPS = [
   'Planta', 'Calibração', 'Paredes ICF', 'Parâmetros', 'Fundações', 'Resumo',
@@ -31,7 +34,8 @@ export default function AssistenteArquitetura() {
   const [params] = useSearchParams();
   const { toast } = useToast();
   const { user, organization } = useAuth();
-  const obraId = params.get('obra') || null;
+  const { obras } = useObras();
+  const initialObra = params.get('obra') || null;
   const sessionIdParam = params.get('s');
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(sessionIdParam);
@@ -42,19 +46,24 @@ export default function AssistenteArquitetura() {
   const updateSession = useUpdateAssistantSession();
   const updateItem = useUpdateAssistantItem();
   const applyFoundation = useApplyFoundationSuggestion(activeSessionId ?? '');
+  const createPanel = useCreateIcfWallPanel();
 
   const [planKind, setPlanKind] = useState<IcfPlanKind>('arquitetura');
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [materializing, setMaterializing] = useState(false);
   const [scale, setScale] = useState<string>('');
+  const [linkObraId, setLinkObraId] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const step = session.data?.current_step ?? 1;
+  const sessionObraId = session.data?.obra_id || null;
 
   const goStep = (n: number) => {
     if (!activeSessionId) return;
     updateSession.mutate({ id: activeSessionId, patch: { current_step: n } });
   };
+
 
   // STEP 1 — upload + tipo
   const handleUpload = async (file: File) => {
@@ -65,14 +74,15 @@ export default function AssistenteArquitetura() {
       const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('plan-files').upload(path, file);
       if (upErr) throw upErr;
-      const created = await createSession.mutateAsync({ obra_id: obraId, plan_kind: planKind, file_path: path });
+      const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
       setActiveSessionId(created.id);
-      navigate(`/icf/assistente?${obraId ? `obra=${obraId}&` : ''}s=${created.id}`, { replace: true });
+      navigate(`/icf/assistente?${initialObra ? `obra=${initialObra}&` : ''}s=${created.id}`, { replace: true });
       toast({ title: 'Planta carregada', description: 'Avance para a calibração.' });
     } catch (e: any) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
+
     }
   };
 
@@ -111,6 +121,59 @@ export default function AssistenteArquitetura() {
     () => icfSelectedWalls.reduce((s, w) => s + (Number(w.attributes?.comprimento) || 0), 0),
     [icfSelectedWalls],
   );
+
+  const handleLinkObra = () => {
+    if (!activeSessionId || !linkObraId) return;
+    updateSession.mutate(
+      { id: activeSessionId, patch: { obra_id: linkObraId } as any },
+      { onSuccess: () => toast({ title: 'Obra associada à sessão' }) },
+    );
+  };
+
+  const handleMaterializePanels = async (target: 'mapa' | 'manual') => {
+    if (!activeSessionId) return;
+    const obra = sessionObraId || linkObraId;
+    if (!obra) {
+      toast({ title: 'Associe uma obra à sessão primeiro', variant: 'destructive' });
+      return;
+    }
+    if (icfSelectedWalls.length === 0) {
+      toast({ title: 'Sem panos ICF selecionados', variant: 'destructive' });
+      return;
+    }
+    setMaterializing(true);
+    try {
+      const espessuraMm = Math.round((session.data?.espessura_nucleo || 0.15) * 1000) + 130;
+      for (let i = 0; i < icfSelectedWalls.length; i++) {
+        const w = icfSelectedWalls[i];
+        const length_m = Number(w.attributes?.comprimento) || 4;
+        const height_m = Number(w.attributes?.altura) || 2.7;
+        await createPanel.mutateAsync({
+          obra_id: obra,
+          source_pano_id: w.id,
+          label: w.reference || `Pano ${i + 1}`,
+          floor: (w.attributes?.piso as string) || null,
+          room: (w.attributes?.compartimento as string) || null,
+          length_m,
+          height_m,
+          thickness_mm: espessuraMm,
+          selected_block_code: 'HB-BLOCO-220',
+          openings: [],
+          status: 'rascunho',
+        } as any);
+      }
+      toast({
+        title: 'Panos materializados',
+        description: `${icfSelectedWalls.length} pano(s) criados na obra.`,
+      });
+      const qs = `?obra=${obra}&session=${activeSessionId}`;
+      navigate(target === 'mapa' ? `/icf/mapa-visual${qs}` : `/icf/manual${qs}`);
+    } catch (e: any) {
+      toast({ title: 'Erro ao materializar', description: e.message, variant: 'destructive' });
+    } finally {
+      setMaterializing(false);
+    }
+  };
 
   if (!activeSessionId || !session.data) {
     return (
@@ -336,33 +399,87 @@ export default function AssistenteArquitetura() {
       )}
 
       {step === 6 && (
-        <Card className="rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" /> Resumo auditável
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AuditPanel
-              items={items.data ?? []}
-              onToggleConfirm={(it, v) =>
-                updateItem.mutate({
-                  id: it.id,
-                  patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
-                })
-              }
-              onGeneratePre={() => {
-                updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
-                toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
-              }}
-              onGenerateValidated={() => {
-                updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
-                toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
-              }}
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" /> Resumo auditável
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!sessionObraId && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-sm font-medium">Associe esta sessão a uma obra</p>
+                  <p className="text-xs text-muted-foreground">
+                    A obra é necessária para gerar o Mapa Visual de Panos, o Manual ICF e enviar para orçamento.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={linkObraId} onValueChange={setLinkObraId}>
+                      <SelectTrigger className="h-9 sm:w-72"><SelectValue placeholder="Selecionar obra…" /></SelectTrigger>
+                      <SelectContent>
+                        {obras?.map((o) => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={handleLinkObra} disabled={!linkObraId || updateSession.isPending}>
+                      Associar obra
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <AuditPanel
+                items={items.data ?? []}
+                onToggleConfirm={(it, v) =>
+                  updateItem.mutate({
+                    id: it.id,
+                    patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
+                  })
+                }
+                onGeneratePre={() => {
+                  updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
+                  toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
+                }}
+                onGenerateValidated={() => {
+                  updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
+                  toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border-primary/30">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" /> Próximos passos
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Os panos extraídos pela Axia são materializados na obra para visualização técnica e composição
+                HOMEBLOCK. {icfSelectedWalls.length} pano(s) ICF selecionados ({icfWallLength.toFixed(1)} m totais).
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => handleMaterializePanels('mapa')}
+                disabled={materializing || icfSelectedWalls.length === 0 || (!sessionObraId && !linkObraId)}
+              >
+                {materializing
+                  ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  : <Layers className="h-4 w-4 mr-2" />}
+                Abrir Mapa Visual de Panos
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleMaterializePanels('manual')}
+                disabled={materializing || icfSelectedWalls.length === 0 || (!sessionObraId && !linkObraId)}
+              >
+                <Box className="h-4 w-4 mr-2" />
+                Abrir Manual ICF
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
+
     </div>
   );
 }
