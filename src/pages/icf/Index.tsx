@@ -260,6 +260,46 @@ const IcfIndex = () => {
           </>
         )}
 
+        {selectedObraId && (
+          <Card className="rounded-xl border-primary/20">
+            <CardContent className="pt-5 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <FolderTree className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-sm">Dossiês ICF Completos</h3>
+                  <Badge variant="outline" className="text-[10px]">{dossiers.length}</Badge>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => navigate(`/icf/dossier/novo?obra=${selectedObraId}`)}>
+                  <Plus className="h-4 w-4 mr-1" /> Novo Dossiê
+                </Button>
+              </div>
+              {dossiers.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Crie um Dossiê para carregar plantas, cortes, alçados e gerar o modelo isométrico, composição HOMEBLOCK e orçamento.
+                </p>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {dossiers.slice(0, 6).map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => navigate(`/icf/dossier/${d.id}`)}
+                      className="text-left rounded-lg border p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors flex items-center gap-3"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{d.titulo}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {d.sistema_icf ?? 'ICF'} · {d.status}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {selectedObraId && !configsLoading && !configsError && configs && configs.length > 0 && (
           <IcfConfigsList configs={configs} onDelete={handleDeleteConfig} />
         )}
