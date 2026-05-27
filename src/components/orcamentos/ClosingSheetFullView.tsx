@@ -668,7 +668,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </Section>
 
         {/* ESTALEIRO */}
-        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")} total={totals.total_estaleiro} totalLabel="Total Estaleiro">
+        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")} total={totals.total_estaleiro} totalLabel="Total C. Estaleiro">
         <Table>
           <TableHeader>
             <TableRow>
