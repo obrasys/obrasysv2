@@ -1,105 +1,74 @@
-# Evolução do Módulo ICF — HOMEBLOCK
+# Assistente ICF a partir de Arquitetura
 
-Implementação incremental e segura, sem mexer na lógica de cálculo atual nem nas integrações existentes (Axia, orçamento, plantas, RLS multi-tenant).
+Novo fluxo dentro do módulo ICF que aceita plantas arquitetónicas comuns (não-ICF) e produz um pré-quantitativo com rastreabilidade total: o que foi extraído, calculado, sugerido pela Axia ou confirmado pelo utilizador. Mantém o módulo ICF atual intacto — é um caminho paralelo.
 
-## 1. Assets dos SVGs
+## Entrega
 
-Copiar os 7 SVGs anexados para:
+### 1. Base de dados (1 migração)
 
-```
-public/icf/homeblock/
-  homeblock-bloco-220mm.svg
-  homeblock-bloco-300mm.svg
-  homeblock-detalhes-corte.svg
-  homeblock-espacador-150mm.svg
-  homeblock-espacador-220mm.svg
-  homeblock-topo-150mm.svg
-  homeblock-topo-220mm.svg
-```
+Nova tabela `icf_assistant_sessions` (uma sessão = um upload + escolhas do utilizador) e `icf_assistant_items` (cada parede/fundação/laje proposta, com `source_type`, `review_required`, `confidence`, `assumptions`, `notes`, `user_confirmed`).
 
-Renderizados via `<object type="image/svg+xml">` ou `<img src>` (assets estáticos, sem `dangerouslySetInnerHTML`, sem execução de scripts embutidos).
+Enum `icf_source_type`: `extraido_planta | calculado_sistema | sugerido_axia | confirmado_utilizador`.
 
-## 2. Base de Dados (Supabase, multi-tenant)
+Multi-tenant (`organization_id`), RLS + GRANTs no padrão do projeto.
 
-Migration que cria duas novas tabelas com `organization_id`, RLS via `get_org_member_ids()`, e GRANTs conforme padrão do projeto.
+### 2. Edge function `icf-architecture-assistant`
 
-### `icf_block_library`
-Catálogo de peças HOMEBLOCK (e futuras famílias):
-- `code` (único por org), `name`, `category` (enum: bloco_principal, topo, espacador, detalhe_tecnico, canto, meio_bloco, especial)
-- `length_mm`, `height_mm`, `thickness_mm`, `module_mm`
-- `drawing_file` (caminho público), `can_be_cut`, `use_case`, `notes`
-- `system_seed boolean` para distinguir biblioteca semente (HOMEBLOCK oficial) de itens criados pelo utilizador
+Nova função (não toca `icf-plant-analysis`). Recebe planta + tipo declarado + escala calibrada. Usa Gemini 2.5 Pro com prompt específico:
+- Identifica paredes exteriores vs interiores, vãos, pisos, áreas, compartimentos
+- **Nunca inventa fundações** — quando ausentes, devolve `fundacoes_encontradas: false` com mensagem obrigatória
+- Marca cada parede com `candidata_icf` (exteriores por default, interiores nunca sem confirmação)
+- Cada item retornado tem `source_type`, `confidence`, `assumptions[]`
 
-RLS: leitura para membros da org **OR** itens com `organization_id IS NULL` (seed global); escrita só para org owner/admin.
+### 3. Motor de sugestão de fundações (`src/lib/icf-foundation-suggestions.ts`)
 
-Seed: inserir os 7 itens HOMEBLOCK com `organization_id = NULL` (visíveis a todos).
+6 opções parametrizáveis (sapata contínua, laje térrea com bordo, stem wall, cave ICF, radier, sem fundações). Cada uma com schema de campos e cálculo de quantitativos a partir do perímetro/área das paredes ICF confirmadas. Todos os outputs com `source_type: sugerido_axia`, `review_required: true`.
 
-### `icf_wall_panels`
-Mapa visual de panos analisados (separado dos `icf_panos_parede` existentes para **não quebrar** o cálculo atual). Liga-se opcionalmente a um `icf_panos_parede` por `source_pano_id`.
-- `obra_id`, `configuracao_id`, `floor`, `room`, `label`
-- `length_m`, `height_m`, `thickness_mm`, `selected_block_code`
-- `gross_area_m2`, `net_area_m2` (gerados)
-- `openings jsonb` (array de `{type, width_m, height_m, sill_height_m?, position_m?}`)
-- `status` enum: rascunho, em_revisao, validado, enviado_orcamento, bloqueado
-- `confidence numeric`, `source` enum (axia, manual, corrigido)
-- `composition_result jsonb` (último resultado calculado, para rastreabilidade)
+### 4. UI — Wizard de 6 passos (`/icf/assistente`)
 
-RLS multi-tenant padrão.
-
-## 3. Motor de Composição (puro, testável)
-
-`src/lib/icf-homeblock-composition.ts`:
-
-```ts
-calculateICFWallComposition(panel, block): ICFWallCompositionResult
+```text
+1. Upload + tipo de planta (arquitetura/estrutural/ICF/não sei)
+2. Calibração por medida conhecida (reutiliza usePlanCalibration)
+3. Pisos & páginas (reutiliza usePlanFloors/usePlanPages)
+4. Extração + seleção: tabela com checkboxes "É ICF?" por parede;
+   exteriores pré-marcadas, interiores não
+5. Parâmetros ICF (núcleo, betão, aço — reutiliza IcfConfig)
+6. Fundações: se não encontradas → painel "Fundações não encontradas"
+   com 6 cards de opção e formulário paramétrico por opção
 ```
 
-Regras:
-- `rows = floor(H_mm / block.heightMm)`, sobra altura → warning + remate
-- `blocksPerRow = floor(L_mm / block.lengthMm)`, sobra horizontal → warning + corte sugerido
-- `baseQty = rows * blocksPerRow`
-- Aberturas: desconto por **área equivalente** com `Math.ceil(opArea / blockArea)` + warning explícito
-- Acessórios estimados: topo (perímetro superior/L_topo), espaçador (1 a cada 2 fiadas — heurística inicial), perdas 5%
-- Devolve `cutSuggestions[]`, `accessories[]`, `warnings[]`
+Painel final: 4 secções coloridas (Extraído / Calculado / Sugerido / Requer revisão) + 2 botões:
+- **Gerar pré-orçamento ICF** — inclui sugestões com flag visível
+- **Gerar orçamento validado** — só itens com `user_confirmed = true`
 
-Testes vitest em `src/lib/icf-homeblock-composition.test.ts`: fiadas, sobras, desconto de aberturas, resumo.
+Reutiliza `generate_icf_budget_transactional` existente; capítulo marca itens sugeridos com tag `[REVISÃO TÉCNICA]`.
 
-## 4. UI — Nova aba "Biblioteca Técnica" e "Mapa Visual"
+### 5. Integração
 
-Adicionar na navegação ICF existente (`src/pages/icf/`):
-- `BibliotecaTecnica.tsx` — grid de cards (`ICFBlockCard`) com SVG (`ICFBlockSvgViewer`), abre modal com zoom
-- `MapaVisualPanos.tsx` — lista de `icf_wall_panels` por obra, filtros por estado, cards com `ICFWallPanelVisualizer` (SVG proporcional: fiadas, divisões, aberturas, sobras)
-- `ManualICF.tsx` — manual dinâmico (sistema, peças, composição por pano, avisos, disclaimer obrigatório), botão "Preparar PDF" (placeholder export)
+- Novo card no `IcfQuickNav`: "Assistente ICF (planta arquitetura)"
+- Rota `/icf/assistente` em `App.tsx` com `ManagerRoute`
+- Hooks: `useIcfAssistantSession`, `useIcfFoundationSuggestions`
+- Tipos em `src/types/icf-assistant.ts`
 
-Componentes em `src/components/icf/library/` e `src/components/icf/panels/`.
+## Detalhes técnicos
 
-Padrão visual: cards `rounded-xl`, deep teal, sem sobrecarga, alertas para baixa confiança, badges de estado.
+**Source tracking:** cada item passa pelo banco com origem auditável. View `icf_assistant_audit_v` para relatórios.
 
-## 5. Hooks
+**Confidence thresholds:** `<0.6` força badge vermelho "Requer revisão"; mesmo com confirmação do utilizador, mantém histórico no `assumptions[]`.
 
-`src/hooks/useIcfBlockLibrary.ts` — list + CRUD da biblioteca  
-`src/hooks/useIcfWallPanels.ts` — list/create/update/validate/sendToBudget  
-Mutação `sendICFCompositionToBudget` reaproveita `generate_icf_budget_transactional` existente (sem alterar a função), envia um capítulo "Sistema ICF / HOMEBLOCK" com os artigos sugeridos.
+**Mensagem obrigatória** (constante exportada, usada na UI + função): _"Não foram identificadas fundações ou sapatas na planta arquitetónica. A Axia pode sugerir uma solução preliminar para orçamento, mas a definição final deve ser validada por técnico/engenheiro responsável."_
 
-## 6. Axia
+**Não inclui:** refazer `icf-plant-analysis` (continua válido para plantas ICF nativas); alterar `IcfPlantAnalyzer` (fluxo paralelo).
 
-Estender o prompt do edge function `icf-plant-analysis` (e/ou `axia-analysis`) com o bloco "Biblioteca Técnica como fonte primária / SVGs apenas referência visual / nunca inventar medidas / classificar confiança / sinalizar revisão humana". Sem alterar o contrato de I/O atual.
+## Ficheiros novos
+- `supabase/migrations/*_icf_assistant.sql`
+- `supabase/functions/icf-architecture-assistant/index.ts`
+- `src/types/icf-assistant.ts`
+- `src/lib/icf-foundation-suggestions.ts` (+ teste)
+- `src/hooks/useIcfAssistantSession.ts`
+- `src/pages/icf/AssistenteArquitetura.tsx` (wizard)
+- `src/components/icf/assistant/` (StepUpload, StepWallSelection, StepFoundations, AuditPanel, FoundationOptionCard, SourceBadge)
 
-## 7. Disclaimer obrigatório
-
-Renderizado no Manual e no rodapé do Mapa Visual:
-
-> As medições e composições ICF geradas pela Axia são estimativas assistidas… O Obra Sys não substitui projeto executivo, cálculo estrutural ou responsabilidade técnica de obra.
-
-## O que NÃO muda
-
-- `icf_configuracoes`, `icf_panos_parede`, `icf_vaos`, `icf_fundacoes`, `icf_lajes`, triggers de cálculo, snapshots, função `generate_icf_budget_transactional`.
-- Fluxo atual de "Análise de Planta ICF" (`IcfPlantAnalyzer`) continua a funcionar; o novo Mapa Visual é uma camada paralela opcional.
-
-## Ordem de entrega
-
-1. Copiar SVGs + migration (biblioteca + panos + seed HOMEBLOCK)
-2. Motor de composição + testes
-3. Hooks + páginas Biblioteca Técnica e Mapa Visual
-4. Manual ICF + envio para orçamento
-5. Ajuste do prompt Axia
+## Ficheiros editados (mínimo)
+- `src/App.tsx` — rota nova
+- `src/components/icf/IcfQuickNav.tsx` — atalho novo

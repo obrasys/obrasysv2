@@ -4917,6 +4917,143 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_assistant_items: {
+        Row: {
+          assumptions: Json | null
+          attributes: Json | null
+          category: string
+          confidence: number | null
+          created_at: string | null
+          id: string
+          is_icf_candidate: boolean | null
+          notes: string | null
+          ordem: number | null
+          organization_id: string
+          quantity: number | null
+          reference: string | null
+          review_required: boolean | null
+          session_id: string
+          source_type: Database["public"]["Enums"]["icf_source_type"]
+          unit: string | null
+          updated_at: string | null
+          user_confirmed: boolean | null
+        }
+        Insert: {
+          assumptions?: Json | null
+          attributes?: Json | null
+          category: string
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          is_icf_candidate?: boolean | null
+          notes?: string | null
+          ordem?: number | null
+          organization_id: string
+          quantity?: number | null
+          reference?: string | null
+          review_required?: boolean | null
+          session_id: string
+          source_type: Database["public"]["Enums"]["icf_source_type"]
+          unit?: string | null
+          updated_at?: string | null
+          user_confirmed?: boolean | null
+        }
+        Update: {
+          assumptions?: Json | null
+          attributes?: Json | null
+          category?: string
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          is_icf_candidate?: boolean | null
+          notes?: string | null
+          ordem?: number | null
+          organization_id?: string
+          quantity?: number | null
+          reference?: string | null
+          review_required?: boolean | null
+          session_id?: string
+          source_type?: Database["public"]["Enums"]["icf_source_type"]
+          unit?: string | null
+          updated_at?: string | null
+          user_confirmed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_assistant_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "icf_assistant_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_assistant_sessions: {
+        Row: {
+          axia_audit: Json | null
+          classe_aco: string | null
+          classe_betao: string | null
+          created_at: string | null
+          current_step: number | null
+          espessura_nucleo: number | null
+          file_path: string | null
+          foundation_option: string | null
+          foundation_params: Json | null
+          foundations_found: boolean | null
+          id: string
+          notes: string | null
+          obra_id: string | null
+          organization_id: string
+          plan_kind: Database["public"]["Enums"]["icf_assistant_plan_kind"]
+          scale_m_per_px: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          axia_audit?: Json | null
+          classe_aco?: string | null
+          classe_betao?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          espessura_nucleo?: number | null
+          file_path?: string | null
+          foundation_option?: string | null
+          foundation_params?: Json | null
+          foundations_found?: boolean | null
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id: string
+          plan_kind?: Database["public"]["Enums"]["icf_assistant_plan_kind"]
+          scale_m_per_px?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          axia_audit?: Json | null
+          classe_aco?: string | null
+          classe_betao?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          espessura_nucleo?: number | null
+          file_path?: string | null
+          foundation_option?: string | null
+          foundation_params?: Json | null
+          foundations_found?: boolean | null
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string
+          plan_kind?: Database["public"]["Enums"]["icf_assistant_plan_kind"]
+          scale_m_per_px?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       icf_audit_log: {
         Row: {
           created_at: string
@@ -12950,6 +13087,16 @@ export type Database = {
       validate_formula: { Args: { p_formula: string }; Returns: boolean }
     }
     Enums: {
+      icf_assistant_plan_kind:
+        | "arquitetura"
+        | "estrutural"
+        | "icf"
+        | "desconhecido"
+      icf_source_type:
+        | "extraido_planta"
+        | "calculado_sistema"
+        | "sugerido_axia"
+        | "confirmado_utilizador"
       pricebook_status_enum: "draft" | "published" | "archived"
       quote_request_status_enum:
         | "open"
@@ -13110,6 +13257,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      icf_assistant_plan_kind: [
+        "arquitetura",
+        "estrutural",
+        "icf",
+        "desconhecido",
+      ],
+      icf_source_type: [
+        "extraido_planta",
+        "calculado_sistema",
+        "sugerido_axia",
+        "confirmado_utilizador",
+      ],
       pricebook_status_enum: ["draft", "published", "archived"],
       quote_request_status_enum: [
         "open",
