@@ -109,6 +109,9 @@ const IcfPanos = lazy(() => import("./pages/icf/Panos"));
 const IcfFundacoes = lazy(() => import("./pages/icf/Fundacoes"));
 const IcfLajes = lazy(() => import("./pages/icf/Lajes"));
 const IcfResumo = lazy(() => import("./pages/icf/Resumo"));
+const IcfBibliotecaTecnica = lazy(() => import("./pages/icf/BibliotecaTecnica"));
+const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
+const IcfManual = lazy(() => import("./pages/icf/Manual"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
