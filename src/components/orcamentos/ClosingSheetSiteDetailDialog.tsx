@@ -147,22 +147,31 @@ function LineRow({
   onUpdate: (payload: Partial<SiteDetailLine> & { id: string }) => void;
   onRemove: (id: string) => void;
 }) {
+  // useful_percent é armazenado como fracção (0–1). A UI mostra como percentagem (0–100).
   const [local, setLocal] = useState({
     description: line.description,
-    useful_percent: Number(line.useful_percent ?? 1),
+    useful_percent_pct: Number(line.useful_percent ?? 1) * 100,
     quantity: Number(line.quantity ?? 1),
     months: Number(line.months ?? 1),
     monthly_cost: Number(line.monthly_cost ?? 0),
   });
 
-  const total = local.useful_percent * local.quantity * local.months * local.monthly_cost;
+  const fraction = (local.useful_percent_pct || 0) / 100;
+  const total = fraction * local.quantity * local.months * local.monthly_cost;
 
   const commit = (patch: Partial<typeof local>) => {
     const next = { ...local, ...patch };
     setLocal(next);
   };
 
-  const save = () => onUpdate({ id: line.id, ...local });
+  const save = () => onUpdate({
+    id: line.id,
+    description: local.description,
+    useful_percent: fraction,
+    quantity: local.quantity,
+    months: local.months,
+    monthly_cost: local.monthly_cost,
+  });
 
   return (
     <TableRow>
@@ -176,8 +185,8 @@ function LineRow({
         />
       </TableCell>
       <TableCell>
-        <Input type="number" step="0.01" value={local.useful_percent} readOnly={readOnly}
-          onChange={(e) => commit({ useful_percent: parseFloat(e.target.value || "0") })}
+        <Input type="number" step="1" min={0} max={100} value={local.useful_percent_pct} readOnly={readOnly}
+          onChange={(e) => commit({ useful_percent_pct: parseFloat(e.target.value || "0") })}
           onBlur={save} className="h-8 text-right" />
       </TableCell>
       <TableCell>
