@@ -968,7 +968,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* ADMIN (5) */}
-        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total Admin">
+        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total C. Admin">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Estrutura / Fixos (Overhead) (€)</Label>
