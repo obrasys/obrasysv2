@@ -19,7 +19,7 @@ export function FoundationOptionCard({ option, selected, baseIcfWallLength, onAp
   const [params, setParams] = useState<Record<string, number | boolean>>(() => {
     const defaults: Record<string, number | boolean> = {};
     option.fields.forEach((f) => {
-      defaults[f.name] = f.defaultValue ?? (f.type === 'boolean' ? false : 0);
+      defaults[f.name] = (f.defaultValue ?? (f.type === 'boolean' ? false : 0)) as number | boolean;
     });
     return defaults;
   });

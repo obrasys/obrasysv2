@@ -17,8 +17,8 @@ import {
   useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession,
   useUpdateAssistantSession, useUpdateAssistantItem, useApplyFoundationSuggestion,
 } from '@/hooks/useIcfAssistantSession';
-import { FOUNDATIONS_NOT_FOUND_MESSAGE, type IcfPlanKind } from '@/types/icf-assistant';
-import { FOUNDATION_OPTIONS, type FoundationOptionKey } from '@/lib/icf-foundation-suggestions';
+import { FOUNDATIONS_NOT_FOUND_MESSAGE, type IcfPlanKind, type FoundationOptionKey } from '@/types/icf-assistant';
+import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
 
