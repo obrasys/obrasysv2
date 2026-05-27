@@ -112,7 +112,10 @@ export function useIcfPlantAnalysis() {
         throw new Error('Organização não encontrada para criar os registos ICF.');
       }
 
-      // Create paredes
+      // Create paredes (+ espelho em icf_wall_panels p/ Mapa Visual e Manual ICF)
+      const thicknessMm = Math.round((espessuraNucleo || 0.15) * 1000) + 130;
+      const wallPanelsPayload: Record<string, unknown>[] = [];
+
       for (let i = 0; i < result.paredes.length; i++) {
         const p = result.paredes[i];
         const vaosArea = (p.vaos || []).reduce((sum, v) => sum + v.largura * v.altura * v.quantidade, 0);
@@ -155,6 +158,35 @@ export function useIcfPlantAnalysis() {
           const { error: vaosErr } = await supabase.from('icf_vaos').insert(vaosInsert as any);
           if (vaosErr) throw vaosErr;
         }
+
+        // Espelho em icf_wall_panels (para Mapa Visual + Manual ICF)
+        wallPanelsPayload.push({
+          empresa_id: empresaId,
+          obra_id: obraId,
+          configuracao_id: configuracaoId,
+          label: p.referencia || `Pano ${i + 1}`,
+          floor: p.piso_inicial || null,
+          room: null,
+          length_m: p.comprimento,
+          height_m: p.altura_util,
+          thickness_mm: thicknessMm,
+          selected_block_code: 'HB-BLOCO-220',
+          openings: (p.vaos || []).map(v => ({
+            type: (v.tipo_vao || '').toLowerCase().includes('porta') ? 'porta' : 'janela',
+            width_m: v.largura,
+            height_m: v.altura,
+          })),
+          status: 'rascunho',
+          source: 'axia',
+          notes: 'Gerado por Axia™ — análise de planta',
+        });
+      }
+
+      if (wallPanelsPayload.length > 0) {
+        const { error: wpErr } = await supabase
+          .from('icf_wall_panels' as any)
+          .insert(wallPanelsPayload as any);
+        if (wpErr) throw wpErr;
       }
 
       // Create fundações
