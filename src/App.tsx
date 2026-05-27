@@ -113,6 +113,7 @@ const IcfBibliotecaTecnica = lazy(() => import("./pages/icf/BibliotecaTecnica"))
 const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
 const IcfManual = lazy(() => import("./pages/icf/Manual"));
 const IcfAssistenteArquitetura = lazy(() => import("./pages/icf/AssistenteArquitetura"));
+const CentrosDeCustoPage = lazy(() => import("./pages/empresa/CentrosDeCusto"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
