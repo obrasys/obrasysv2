@@ -376,6 +376,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <Badge variant="outline" className="capitalize">
               {sheet.status}
             </Badge>
+            <Button size="sm" variant="outline" onClick={collapseAll} className="gap-2" title="Recolher todas as secções">
+              <ChevronsDownUp className="h-4 w-4" /> Recolher
+            </Button>
+            <Button size="sm" variant="outline" onClick={expandAll} className="gap-2" title="Expandir todas as secções">
+              <ChevronsUpDown className="h-4 w-4" /> Expandir
+            </Button>
             <Button size="sm" variant="outline" onClick={handlePrint} className="gap-2">
               <Printer className="h-4 w-4" /> Imprimir
             </Button>
