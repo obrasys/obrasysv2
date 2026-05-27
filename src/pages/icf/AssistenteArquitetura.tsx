@@ -87,9 +87,47 @@ export default function AssistenteArquitetura() {
     }
   };
 
+  // STEP 2 — guardar calibração
+  const handleSaveCalibration = (p: CalibrationPayload) => {
+    if (!activeSessionId) return;
+    updateSession.mutate(
+      {
+        id: activeSessionId,
+        patch: {
+          calibration_method: p.method,
+          calibration_point_a: p.point_a ?? null,
+          calibration_point_b: p.point_b ?? null,
+          calibration_distance_px: p.distance_px ?? null,
+          calibration_real_distance_m: p.real_distance_m ?? null,
+          calibration_declared_scale: p.declared_scale ?? null,
+          calibration_confidence: p.confidence,
+          calibration_page: p.page,
+          calibration_override: p.override,
+          scale_m_per_px: p.scale_m_per_px,
+          current_step: 3,
+        } as any,
+      },
+      {
+        onSuccess: () =>
+          toast({
+            title: p.override ? 'A continuar sem calibração precisa' : 'Calibração guardada',
+            description: p.override
+              ? 'Quantitativos marcados como baixa confiança.'
+              : `Método: ${p.method} · confiança ${p.confidence}.`,
+          }),
+      },
+    );
+  };
+
   // STEP 3 — chamar Axia para extrair paredes
   const runAxiaExtraction = async () => {
     if (!activeSessionId || !session.data?.file_path) return;
+    const s: any = session.data;
+    if (!s.calibration_method && !s.calibration_override) {
+      toast({ title: 'Calibre a planta antes de analisar', variant: 'destructive' });
+      goStep(2);
+      return;
+    }
     setAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('icf-architecture-assistant', {
@@ -99,6 +137,15 @@ export default function AssistenteArquitetura() {
           plan_kind: session.data.plan_kind,
           scale_m_per_px: session.data.scale_m_per_px,
           espessura_nucleo: session.data.espessura_nucleo,
+          calibration: {
+            method: s.calibration_method ?? 'uncalibrated',
+            confidence: s.calibration_confidence ?? 'baixa',
+            page: s.calibration_page ?? 1,
+            real_distance_m: s.calibration_real_distance_m ?? null,
+            distance_px: s.calibration_distance_px ?? null,
+            declared_scale: s.calibration_declared_scale ?? null,
+            override: !!s.calibration_override,
+          },
         },
       });
       if (error) throw new Error(error.message);
