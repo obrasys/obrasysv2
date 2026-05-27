@@ -14,7 +14,7 @@ export default function NovoDossierIcf() {
   const [params] = useSearchParams();
   const initialObra = params.get('obra') ?? undefined;
   const create = useCreateIcfAnalysis();
-  const { data: obras = [] } = useObras();
+  const { obras = [] } = useObras();
 
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
