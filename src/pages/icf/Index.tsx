@@ -272,6 +272,8 @@ const IcfIndex = () => {
               }))}
               emptyHint="Adicione panos de parede a esta configuração para ver o modelo isométrico esquemático."
             />
+
+            <IcfPlanBuilding3D obraId={selectedObraId} defaultHeightM={activeConfig.altura_piso_padrao ?? 2.7} />
           </>
         )}
 
