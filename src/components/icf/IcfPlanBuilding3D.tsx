@@ -21,8 +21,7 @@ function iso(x: number, y: number, z: number, scale: number) {
 }
 
 export function IcfPlanBuilding3D({ obraId, defaultHeightM = 2.7 }: Props) {
-  const { planImportsQuery } = useImports(obraId);
-  const planImports = planImportsQuery.data ?? [];
+  const { plans: planImports, isLoading: plansLoading } = usePlanImports(obraId);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
   // Auto-selecionar: arquitetura mais recente, ou primeira
