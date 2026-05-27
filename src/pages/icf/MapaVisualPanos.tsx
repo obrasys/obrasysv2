@@ -137,6 +137,16 @@ const IcfMapaVisualPanos = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              onClick={handleSendAll}
+              disabled={sendBudget.isPending || validatedCount === 0}
+            >
+              {sendBudget.isPending
+                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                : <Send className="h-4 w-4 mr-2" />}
+              Enviar {validatedCount} validado(s) para orçamento
+            </Button>
+            </>
           )}
         </div>
 
