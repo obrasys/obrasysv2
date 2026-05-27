@@ -701,7 +701,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <SubtotalRow label="TOTAL ESTALEIRO / CT" value={totals.total_estaleiro} />
         </Section>
 
-        <SubtotalRow label="CUSTO INDUSTRIAL" code="(1) = Directos + Estaleiro" value={totals.custo_industrial} />
+        <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
+          <div>
+            <p className="text-sm uppercase tracking-wider font-bold opacity-90">Custo Industrial</p>
+            <p className="text-xs opacity-70 mt-0.5">(1) = Directos + Estaleiro</p>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(totals.custo_industrial)}</p>
+        </div>
 
         <Separator />
 
