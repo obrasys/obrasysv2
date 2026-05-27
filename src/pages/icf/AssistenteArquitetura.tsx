@@ -17,10 +17,13 @@ import {
   useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession,
   useUpdateAssistantSession, useUpdateAssistantItem, useApplyFoundationSuggestion,
 } from '@/hooks/useIcfAssistantSession';
+import { useObras } from '@/hooks/useObras';
+import { useCreateIcfWallPanel } from '@/hooks/useIcfWallPanels';
 import { FOUNDATIONS_NOT_FOUND_MESSAGE, type IcfPlanKind, type FoundationOptionKey } from '@/types/icf-assistant';
 import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
+
 
 const STEPS = [
   'Planta', 'Calibração', 'Paredes ICF', 'Parâmetros', 'Fundações', 'Resumo',
@@ -71,14 +74,15 @@ export default function AssistenteArquitetura() {
       const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('plan-files').upload(path, file);
       if (upErr) throw upErr;
-      const created = await createSession.mutateAsync({ obra_id: obraId, plan_kind: planKind, file_path: path });
+      const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
       setActiveSessionId(created.id);
-      navigate(`/icf/assistente?${obraId ? `obra=${obraId}&` : ''}s=${created.id}`, { replace: true });
+      navigate(`/icf/assistente?${initialObra ? `obra=${initialObra}&` : ''}s=${created.id}`, { replace: true });
       toast({ title: 'Planta carregada', description: 'Avance para a calibração.' });
     } catch (e: any) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
+
     }
   };
 
