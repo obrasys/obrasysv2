@@ -267,6 +267,7 @@ const IcfIndex = () => {
                 label: p.referencia,
                 length_m: Number(p.comprimento) || 0,
                 height_m: Number(p.altura_util) || 0,
+                floor: p.piso_inicial ?? '0',
               }))}
               emptyHint="Adicione panos de parede a esta configuração para ver o modelo isométrico esquemático."
             />
