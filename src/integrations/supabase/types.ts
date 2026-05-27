@@ -255,6 +255,8 @@ export type Database = {
           chapter_code: string | null
           chapter_template_id: string | null
           codigo: string | null
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           custo_alu: number
           custo_div: number
@@ -284,6 +286,8 @@ export type Database = {
           chapter_code?: string | null
           chapter_template_id?: string | null
           codigo?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           custo_alu?: number
           custo_div?: number
@@ -313,6 +317,8 @@ export type Database = {
           chapter_code?: string | null
           chapter_template_id?: string | null
           codigo?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           custo_alu?: number
           custo_div?: number
@@ -341,6 +347,13 @@ export type Database = {
             columns: ["capitulo_id"]
             isOneToOne: false
             referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
         ]
@@ -455,6 +468,7 @@ export type Database = {
           codigo_referencia: string | null
           condicoes_execucao: string | null
           contrato_referencia: string | null
+          cost_center_id: string | null
           created_at: string
           data_emissao: string
           data_fim: string
@@ -495,6 +509,7 @@ export type Database = {
           codigo_referencia?: string | null
           condicoes_execucao?: string | null
           contrato_referencia?: string | null
+          cost_center_id?: string | null
           created_at?: string
           data_emissao?: string
           data_fim: string
@@ -535,6 +550,7 @@ export type Database = {
           codigo_referencia?: string | null
           condicoes_execucao?: string | null
           contrato_referencia?: string | null
+          cost_center_id?: string | null
           created_at?: string
           data_emissao?: string
           data_fim?: string
@@ -572,6 +588,13 @@ export type Database = {
           zona_medicao?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "autos_medicao_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "autos_medicao_obra_id_fkey"
             columns: ["obra_id"]
@@ -781,6 +804,8 @@ export type Database = {
           auto_id: string
           capitulo: string | null
           codigo: string
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           dentro_tolerancia: boolean | null
           descricao: string
@@ -810,6 +835,8 @@ export type Database = {
           auto_id: string
           capitulo?: string | null
           codigo: string
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           dentro_tolerancia?: boolean | null
           descricao: string
@@ -839,6 +866,8 @@ export type Database = {
           auto_id?: string
           capitulo?: string | null
           codigo?: string
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           dentro_tolerancia?: boolean | null
           descricao?: string
@@ -876,6 +905,13 @@ export type Database = {
             columns: ["auto_id"]
             isOneToOne: false
             referencedRelation: "autos_medicao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_itens_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
         ]
@@ -1478,6 +1514,8 @@ export type Database = {
           awarded_total_amount: number
           budget_id: string
           budget_version_id: string | null
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           deposit_amount: number
           deposit_percent: number
@@ -1497,6 +1535,8 @@ export type Database = {
           awarded_total_amount: number
           budget_id: string
           budget_version_id?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           deposit_amount?: number
           deposit_percent?: number
@@ -1516,6 +1556,8 @@ export type Database = {
           awarded_total_amount?: number
           budget_id?: string
           budget_version_id?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           deposit_amount?: number
           deposit_percent?: number
@@ -1542,6 +1584,13 @@ export type Database = {
             columns: ["budget_version_id"]
             isOneToOne: false
             referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_awards_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
           {
@@ -1783,6 +1832,8 @@ export type Database = {
           chapter_name: string | null
           codigo: string | null
           contracting_status: string
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           description: string
           id: string
@@ -1812,6 +1863,8 @@ export type Database = {
           chapter_name?: string | null
           codigo?: string | null
           contracting_status?: string
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description: string
           id?: string
@@ -1841,6 +1894,8 @@ export type Database = {
           chapter_name?: string | null
           codigo?: string | null
           contracting_status?: string
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description?: string
           id?: string
@@ -1866,6 +1921,13 @@ export type Database = {
             columns: ["budget_version_id"]
             isOneToOne: false
             referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_version_items_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
           {
@@ -2327,6 +2389,7 @@ export type Database = {
           client_summary_text: string | null
           client_summary_title: string | null
           created_at: string
+          default_cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           descricao: string | null
           id: string
           include_in_client_summary: boolean | null
@@ -2343,6 +2406,9 @@ export type Database = {
           client_summary_text?: string | null
           client_summary_title?: string | null
           created_at?: string
+          default_cost_nature?:
+            | Database["public"]["Enums"]["cost_nature"]
+            | null
           descricao?: string | null
           id?: string
           include_in_client_summary?: boolean | null
@@ -2359,6 +2425,9 @@ export type Database = {
           client_summary_text?: string | null
           client_summary_title?: string | null
           created_at?: string
+          default_cost_nature?:
+            | Database["public"]["Enums"]["cost_nature"]
+            | null
           descricao?: string | null
           id?: string
           include_in_client_summary?: boolean | null
@@ -2977,6 +3046,8 @@ export type Database = {
           cliente_id: string | null
           colaborador_id: string | null
           comprovante_url: string | null
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           created_from: string
           data_pagamento: string | null
@@ -2989,6 +3060,7 @@ export type Database = {
           orcamento_id: string | null
           origem: string
           pago: boolean
+          source: string | null
           source_axia_intake_item_id: string | null
           source_voice_command_id: string | null
           tipo: string
@@ -3001,6 +3073,8 @@ export type Database = {
           cliente_id?: string | null
           colaborador_id?: string | null
           comprovante_url?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           created_from?: string
           data_pagamento?: string | null
@@ -3013,6 +3087,7 @@ export type Database = {
           orcamento_id?: string | null
           origem: string
           pago?: boolean
+          source?: string | null
           source_axia_intake_item_id?: string | null
           source_voice_command_id?: string | null
           tipo: string
@@ -3025,6 +3100,8 @@ export type Database = {
           cliente_id?: string | null
           colaborador_id?: string | null
           comprovante_url?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           created_from?: string
           data_pagamento?: string | null
@@ -3037,6 +3114,7 @@ export type Database = {
           orcamento_id?: string | null
           origem?: string
           pago?: boolean
+          source?: string | null
           source_axia_intake_item_id?: string | null
           source_voice_command_id?: string | null
           tipo?: string
@@ -3064,6 +3142,13 @@ export type Database = {
             columns: ["colaborador_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
           {
@@ -3111,6 +3196,8 @@ export type Database = {
           budget_version_id: string | null
           chapter_code: string | null
           chapter_name: string | null
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           description: string | null
           estimated_total: number
@@ -3131,6 +3218,8 @@ export type Database = {
           budget_version_id?: string | null
           chapter_code?: string | null
           chapter_name?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description?: string | null
           estimated_total?: number
@@ -3151,6 +3240,8 @@ export type Database = {
           budget_version_id?: string | null
           chapter_code?: string | null
           chapter_name?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description?: string | null
           estimated_total?: number
@@ -3173,6 +3264,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contracting_packages_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contracting_packages_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
@@ -3184,6 +3282,69 @@ export type Database = {
             columns: ["source_budget_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_centers: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          fiscal_year: number | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          obra_id: string | null
+          organization_id: string
+          parent_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          fiscal_year?: number | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id: string
+          parent_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          fiscal_year?: number | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string
+          parent_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_centers_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
         ]
@@ -6792,6 +6953,8 @@ export type Database = {
         Row: {
           budget_version_id: string | null
           budget_version_item_id: string | null
+          cost_center_id: string | null
+          cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           description: string
           id: string
@@ -6813,6 +6976,8 @@ export type Database = {
         Insert: {
           budget_version_id?: string | null
           budget_version_item_id?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description: string
           id?: string
@@ -6834,6 +6999,8 @@ export type Database = {
         Update: {
           budget_version_id?: string | null
           budget_version_item_id?: string | null
+          cost_center_id?: string | null
+          cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description?: string
           id?: string
@@ -6868,6 +7035,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obra_purchases_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obra_purchases_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
@@ -6895,6 +7069,7 @@ export type Database = {
           arquivada: boolean
           cliente: string | null
           cliente_id: string | null
+          cost_center_id: string | null
           created_at: string
           data_fim: string | null
           data_inicio: string | null
@@ -6912,6 +7087,7 @@ export type Database = {
           arquivada?: boolean
           cliente?: string | null
           cliente_id?: string | null
+          cost_center_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
@@ -6929,6 +7105,7 @@ export type Database = {
           arquivada?: boolean
           cliente?: string | null
           cliente_id?: string | null
+          cost_center_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string | null
@@ -6948,6 +7125,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
           {
@@ -7080,6 +7264,7 @@ export type Database = {
           commercial_notes_text: string | null
           commercial_payment_terms_text: string | null
           commercial_validity_text: string | null
+          cost_center_id: string | null
           created_at: string
           custos_indiretos: Json | null
           data_criacao: string
@@ -7109,6 +7294,7 @@ export type Database = {
           commercial_notes_text?: string | null
           commercial_payment_terms_text?: string | null
           commercial_validity_text?: string | null
+          cost_center_id?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -7138,6 +7324,7 @@ export type Database = {
           commercial_notes_text?: string | null
           commercial_payment_terms_text?: string | null
           commercial_validity_text?: string | null
+          cost_center_id?: string | null
           created_at?: string
           custos_indiretos?: Json | null
           data_criacao?: string
@@ -7165,6 +7352,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
           {
@@ -11337,6 +11531,7 @@ export type Database = {
           certificacoes: string[] | null
           codigo_postal: string | null
           created_at: string
+          default_cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           delivery_capability: string | null
           desconto_volume: boolean | null
           distritos_atuacao: string[] | null
@@ -11389,6 +11584,9 @@ export type Database = {
           certificacoes?: string[] | null
           codigo_postal?: string | null
           created_at?: string
+          default_cost_nature?:
+            | Database["public"]["Enums"]["cost_nature"]
+            | null
           delivery_capability?: string | null
           desconto_volume?: boolean | null
           distritos_atuacao?: string[] | null
@@ -11441,6 +11639,9 @@ export type Database = {
           certificacoes?: string[] | null
           codigo_postal?: string | null
           created_at?: string
+          default_cost_nature?:
+            | Database["public"]["Enums"]["cost_nature"]
+            | null
           delivery_capability?: string | null
           desconto_volume?: boolean | null
           distritos_atuacao?: string[] | null
@@ -12731,6 +12932,7 @@ export type Database = {
           certificacoes: string[] | null
           codigo_postal: string | null
           created_at: string
+          default_cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           delivery_capability: string | null
           desconto_volume: boolean | null
           distritos_atuacao: string[] | null
@@ -12900,6 +13102,7 @@ export type Database = {
           certificacoes: string[] | null
           codigo_postal: string | null
           created_at: string
+          default_cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           delivery_capability: string | null
           desconto_volume: boolean | null
           distritos_atuacao: string[] | null
@@ -13035,6 +13238,7 @@ export type Database = {
             }
             Returns: string
           }
+      next_obra_cost_center_code: { Args: { _org_id: string }; Returns: string }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       propagate_dependency_impact: {
         Args: { p_task_id: string }
@@ -13064,6 +13268,10 @@ export type Database = {
         }
         Returns: string
       }
+      seed_default_estrutura_cost_centers: {
+        Args: { _org_id: string }
+        Returns: undefined
+      }
       seed_quality_specs_catalog: {
         Args: { p_org_id: string }
         Returns: undefined
@@ -13087,6 +13295,7 @@ export type Database = {
       validate_formula: { Args: { p_formula: string }; Returns: boolean }
     }
     Enums: {
+      cost_nature: "MO" | "MAT" | "SRV" | "INS" | "ALU" | "DIV"
       icf_assistant_plan_kind:
         | "arquitetura"
         | "estrutural"
@@ -13257,6 +13466,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      cost_nature: ["MO", "MAT", "SRV", "INS", "ALU", "DIV"],
       icf_assistant_plan_kind: [
         "arquitetura",
         "estrutural",
