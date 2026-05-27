@@ -5078,6 +5078,47 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_analysis_snapshots: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          label: string | null
+          payload: Json
+          version_number: number
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          label?: string | null
+          payload: Json
+          version_number: number
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          label?: string | null
+          payload?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_analysis_snapshots_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       icf_assistant_items: {
         Row: {
           assumptions: Json | null
@@ -5892,6 +5933,280 @@ export type Database = {
           },
         ]
       }
+      icf_project_analyses: {
+        Row: {
+          analysis_mode: string
+          axia_confidence: number | null
+          axia_summary: Json | null
+          configuracao_id: string | null
+          created_at: string
+          descricao: string | null
+          empresa_id: string
+          espessura_nucleo_mm: number | null
+          id: string
+          obra_id: string | null
+          sistema_icf: string | null
+          status: string
+          titulo: string
+          totals_snapshot: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_mode?: string
+          axia_confidence?: number | null
+          axia_summary?: Json | null
+          configuracao_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string
+          espessura_nucleo_mm?: number | null
+          id?: string
+          obra_id?: string | null
+          sistema_icf?: string | null
+          status?: string
+          titulo: string
+          totals_snapshot?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          analysis_mode?: string
+          axia_confidence?: number | null
+          axia_summary?: Json | null
+          configuracao_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string
+          espessura_nucleo_mm?: number | null
+          id?: string
+          obra_id?: string | null
+          sistema_icf?: string | null
+          status?: string
+          titulo?: string
+          totals_snapshot?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_project_analyses_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_configuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_project_analyses_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_resumo_obra"
+            referencedColumns: ["configuracao_id"]
+          },
+          {
+            foreignKeyName: "icf_project_analyses_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_project_checklist_items: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          empresa_id: string
+          id: string
+          item_key: string
+          item_label: string
+          notes: string | null
+          ordem: number
+          related_document_id: string | null
+          required: boolean
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          item_key: string
+          item_label: string
+          notes?: string | null
+          ordem?: number
+          related_document_id?: string | null
+          required?: boolean
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          item_key?: string
+          item_label?: string
+          notes?: string | null
+          ordem?: number
+          related_document_id?: string | null
+          required?: boolean
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_project_checklist_items_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_project_checklist_items_related_document_id_fkey"
+            columns: ["related_document_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_project_documents: {
+        Row: {
+          analysis_id: string
+          axia_category: string | null
+          axia_confidence: number | null
+          axia_summary: string | null
+          created_at: string
+          empresa_id: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          page_count: number | null
+          size_bytes: number | null
+          status: string
+          updated_at: string
+          user_category: string | null
+        }
+        Insert: {
+          analysis_id: string
+          axia_category?: string | null
+          axia_confidence?: number | null
+          axia_summary?: string | null
+          created_at?: string
+          empresa_id?: string
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          page_count?: number | null
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
+          user_category?: string | null
+        }
+        Update: {
+          analysis_id?: string
+          axia_category?: string | null
+          axia_confidence?: number | null
+          axia_summary?: string | null
+          created_at?: string
+          empresa_id?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          page_count?: number | null
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
+          user_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_project_documents_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_project_issues: {
+        Row: {
+          analysis_id: string
+          category: string
+          created_at: string
+          empresa_id: string
+          id: string
+          message: string | null
+          related_document_id: string | null
+          related_panel_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_id: string
+          category: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          message?: string | null
+          related_document_id?: string | null
+          related_panel_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string
+          category?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          message?: string | null
+          related_document_id?: string | null
+          related_panel_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_project_issues_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_project_issues_related_document_id_fkey"
+            columns: ["related_document_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_project_issues_related_panel_id_fkey"
+            columns: ["related_panel_id"]
+            isOneToOne: false
+            referencedRelation: "icf_wall_panels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       icf_vaos: {
         Row: {
           altura: number
@@ -5941,6 +6256,7 @@ export type Database = {
       }
       icf_wall_panels: {
         Row: {
+          analysis_id: string | null
           composition_result: Json | null
           confidence: number | null
           configuracao_id: string | null
@@ -5966,6 +6282,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          analysis_id?: string | null
           composition_result?: Json | null
           confidence?: number | null
           configuracao_id?: string | null
@@ -5991,6 +6308,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          analysis_id?: string | null
           composition_result?: Json | null
           confidence?: number | null
           configuracao_id?: string | null
@@ -6016,6 +6334,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "icf_wall_panels_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "icf_project_analyses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "icf_wall_panels_configuracao_id_fkey"
             columns: ["configuracao_id"]
