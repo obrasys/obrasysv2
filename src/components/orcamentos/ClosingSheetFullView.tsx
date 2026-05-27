@@ -213,6 +213,22 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const approve = useApproveClosingSheet(sheet.source_budget_id || undefined);
   const qualitySpecs = useQualitySpecsCatalog();
 
+  // Estado de recolher/expandir secções
+  const SECTION_IDS = [
+    "directos","estaleiro","terreno","indirectos","outros","admin","iva",
+    "vendas","estatistica","rai","condicionantes","validacao","aprovacao","qualidades",
+  ] as const;
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleSection = (id: string) =>
+    setCollapsed((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  const collapseAll = () => setCollapsed(new Set(SECTION_IDS));
+  const expandAll = () => setCollapsed(new Set());
+  const isCol = (id: string) => collapsed.has(id);
+
   useEffect(() => {
     setDetails(seedFromLegacy(sheet));
   }, [sheet.id, sheet.details]);
