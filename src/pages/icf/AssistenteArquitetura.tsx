@@ -279,40 +279,28 @@ export default function AssistenteArquitetura() {
         <StepReUpload session={session.data} onContinue={() => goStep(2)} />
       )}
 
-      {step === 2 && (
-        <Card className="rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Ruler className="h-4 w-4 text-primary" /> Calibração da planta
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Informe a escala estimada da planta (metros por pixel). Pode ser refinada depois.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="max-w-xs">
-              <Label className="text-xs">Escala (m/px)</Label>
-              <Input
-                type="number"
-                step="0.0001"
-                value={scale || (session.data.scale_m_per_px ?? '')}
-                onChange={(e) => setScale(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={() => {
-                const v = parseFloat(scale);
-                if (!Number.isFinite(v) || v <= 0) {
-                  toast({ title: 'Escala inválida', variant: 'destructive' });
-                  return;
-                }
-                updateSession.mutate({ id: activeSessionId, patch: { scale_m_per_px: v, current_step: 3 } });
-              }}
-            >
-              Guardar e continuar <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardContent>
-        </Card>
+      {step === 2 && session.data.file_path && (
+        <div className="space-y-3">
+          <div className="text-xs text-muted-foreground">
+            Visualize a planta e calibre a escala antes de prosseguir. A calibração por medida
+            conhecida (cota) é o método mais fiável.
+          </div>
+          <IcfPlanCalibrator
+            filePath={session.data.file_path}
+            initialPage={(session.data as any).calibration_page ?? 1}
+            initial={{
+              method: (session.data as any).calibration_method ?? undefined,
+              point_a: (session.data as any).calibration_point_a ?? null,
+              point_b: (session.data as any).calibration_point_b ?? null,
+              real_distance_m: (session.data as any).calibration_real_distance_m ?? null,
+              declared_scale: (session.data as any).calibration_declared_scale ?? null,
+              page: (session.data as any).calibration_page ?? 1,
+              override: (session.data as any).calibration_override ?? false,
+            }}
+            isSaving={updateSession.isPending}
+            onConfirm={handleSaveCalibration}
+          />
+        </div>
       )}
 
       {step === 3 && (
