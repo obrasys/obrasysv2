@@ -109,6 +109,9 @@ const IcfPanos = lazy(() => import("./pages/icf/Panos"));
 const IcfFundacoes = lazy(() => import("./pages/icf/Fundacoes"));
 const IcfLajes = lazy(() => import("./pages/icf/Lajes"));
 const IcfResumo = lazy(() => import("./pages/icf/Resumo"));
+const IcfBibliotecaTecnica = lazy(() => import("./pages/icf/BibliotecaTecnica"));
+const IcfMapaVisualPanos = lazy(() => import("./pages/icf/MapaVisualPanos"));
+const IcfManual = lazy(() => import("./pages/icf/Manual"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
@@ -242,6 +245,10 @@ const App = () => (
                   <Route path="/icf/fundacoes/:configId" element={<ManagerRoute><IcfFundacoes /></ManagerRoute>} />
                   <Route path="/icf/lajes/:configId" element={<ManagerRoute><IcfLajes /></ManagerRoute>} />
                   <Route path="/icf/resumo/:configId" element={<ManagerRoute><IcfResumo /></ManagerRoute>} />
+                  <Route path="/icf/biblioteca" element={<ManagerRoute><IcfBibliotecaTecnica /></ManagerRoute>} />
+                  <Route path="/icf/mapa-visual" element={<ManagerRoute><IcfMapaVisualPanos /></ManagerRoute>} />
+                  <Route path="/icf/manual" element={<ManagerRoute><IcfManual /></ManagerRoute>} />
+
                   <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
                   <Route path="/admin/utilizadores" element={<SuperAdminRoute><AdminUtilizadores /></SuperAdminRoute>} />
                   <Route path="/admin/financeiro" element={<SuperAdminRoute><AdminFinanceiroGlobal /></SuperAdminRoute>} />

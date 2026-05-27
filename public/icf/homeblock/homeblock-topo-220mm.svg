@@ -1,0 +1,748 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_1" data-name="Camada 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 343.65 582.38">
+  <defs>
+    <style>
+      .cls-1 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke: #000;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: .25px;
+      }
+
+      .cls-3 {
+        font-size: 7.72px;
+      }
+
+      .cls-3, .cls-4, .cls-5 {
+        font-family: ArialMT, Arial;
+      }
+
+      .cls-4 {
+        font-size: 2.76px;
+      }
+
+      .cls-5 {
+        font-size: 18.76px;
+      }
+    </style>
+  </defs>
+  <g id="LINE">
+    <line class="cls-2" x1="30" y1="89.44" x2="46.79" y2="89.44"/>
+  </g>
+  <g id="LINE-2" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="89.44" x2="92.1" y2="89.44"/>
+  </g>
+  <g id="LINE-3" data-name="LINE">
+    <line class="cls-2" x1="196" y1="89.44" x2="212.78" y2="89.44"/>
+  </g>
+  <g id="LINE-4" data-name="LINE">
+    <line class="cls-2" x1="30" y1="82.41" x2="46.79" y2="82.41"/>
+  </g>
+  <g id="LINE-5" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="82.41" x2="92.1" y2="82.41"/>
+  </g>
+  <g id="LINE-6" data-name="LINE">
+    <line class="cls-2" x1="196" y1="82.41" x2="212.78" y2="82.41"/>
+  </g>
+  <g id="CIRCLE">
+    <circle class="cls-2" cx="62.81" cy="85.92" r="16.4"/>
+  </g>
+  <g id="LINE-7" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="115.22" x2="59.29" y2="101.95"/>
+  </g>
+  <g id="LINE-8" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="69.9" x2="59.29" y2="58.39"/>
+  </g>
+  <g id="LINE-9" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="115.22" x2="66.32" y2="101.95"/>
+  </g>
+  <g id="LINE-10" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="69.9" x2="66.32" y2="58.39"/>
+  </g>
+  <g id="CIRCLE-2" data-name="CIRCLE">
+    <circle class="cls-2" cx="179.98" cy="85.92" r="16.4"/>
+  </g>
+  <g id="LINE-11" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="115.22" x2="176.46" y2="101.95"/>
+  </g>
+  <g id="LINE-12" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="69.9" x2="176.46" y2="58.39"/>
+  </g>
+  <g id="LINE-13" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="115.22" x2="183.49" y2="101.95"/>
+  </g>
+  <g id="LINE-14" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="69.9" x2="183.49" y2="58.39"/>
+  </g>
+  <g id="CIRCLE-3" data-name="CIRCLE">
+    <circle class="cls-2" cx="121.39" cy="85.92" r="16.4"/>
+  </g>
+  <g id="LINE-15" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="115.22" x2="117.88" y2="101.95"/>
+  </g>
+  <g id="LINE-16" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="69.9" x2="117.88" y2="58.39"/>
+  </g>
+  <g id="LINE-17" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="115.22" x2="124.91" y2="101.95"/>
+  </g>
+  <g id="LINE-18" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="69.9" x2="124.91" y2="58.39"/>
+  </g>
+  <g id="LINE-19" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="115.22" x2="207.31" y2="115.22"/>
+  </g>
+  <g id="LINE-20" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="115.22" x2="207.31" y2="97.25"/>
+  </g>
+  <g id="LINE-21" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="97.25" x2="212.78" y2="74.6"/>
+  </g>
+  <g id="LINE-22" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="74.6" x2="207.31" y2="58.39"/>
+  </g>
+  <g id="LINE-23" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="58.39" x2="35.47" y2="58.39"/>
+  </g>
+  <g id="LINE-24" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="58.39" x2="35.47" y2="74.6"/>
+  </g>
+  <g id="LINE-25" data-name="LINE">
+    <line class="cls-2" x1="30" y1="74.6" x2="30" y2="97.25"/>
+  </g>
+  <g id="LINE-26" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="97.25" x2="35.47" y2="115.22"/>
+  </g>
+  <g id="LWPOLYLINE">
+    <path class="cls-2" d="M163.95,82.41h-26.54,26.54Z"/>
+  </g>
+  <g id="LWPOLYLINE-2" data-name="LWPOLYLINE">
+    <polygon class="cls-2" points="92.1 82.41 105.37 82.41 92.1 82.41 92.1 82.41"/>
+  </g>
+  <g id="LWPOLYLINE-3" data-name="LWPOLYLINE">
+    <path class="cls-2" d="M163.95,89.44h-26.54,26.54Z"/>
+  </g>
+  <g id="LWPOLYLINE-4" data-name="LWPOLYLINE">
+    <polygon class="cls-2" points="92.1 89.44 105.37 89.44 92.1 89.44 92.1 89.44"/>
+  </g>
+  <g id="LINE-27" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="97.25" x2="207.31" y2="97.25"/>
+  </g>
+  <g id="LINE-28" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="97.25" x2="30" y2="97.25"/>
+  </g>
+  <g id="LINE-29" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="74.6" x2="207.31" y2="74.6"/>
+  </g>
+  <g id="LINE-30" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="74.6" x2="30" y2="74.6"/>
+  </g>
+  <g id="DIMENSION">
+    <g id="LINE-31" data-name="LINE">
+      <line class="cls-2" x1="226.17" y1="87.49" x2="226.17" y2="84.36"/>
+    </g>
+    <g id="SOLID">
+      <polygon points="225.85 87.49 226.5 87.49 226.17 89.44 226.17 89.44 225.85 87.49"/>
+    </g>
+    <g id="SOLID-2" data-name="SOLID">
+      <polygon points="226.5 84.36 225.85 84.36 226.17 82.41 226.17 82.41 226.5 84.36"/>
+    </g>
+    <g id="MTEXT">
+      <text class="cls-3" transform="translate(225.59 88.05) rotate(-90)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-2" data-name="DIMENSION">
+    <g id="LINE-32" data-name="LINE">
+      <line class="cls-2" x1="178.02" y1="139.02" x2="123.35" y2="139.02"/>
+    </g>
+    <g id="SOLID-3" data-name="SOLID">
+      <polygon points="178.02 139.34 178.02 138.69 179.98 139.02 179.98 139.02 178.02 139.34"/>
+    </g>
+    <g id="SOLID-4" data-name="SOLID">
+      <polygon points="123.35 138.69 123.35 139.34 121.39 139.02 121.39 139.02 123.35 138.69"/>
+    </g>
+    <g id="MTEXT-2" data-name="MTEXT">
+      <text class="cls-3" transform="translate(146.41 138.44)"><tspan x="0" y="0">75</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-3" data-name="DIMENSION">
+    <g id="LINE-33" data-name="LINE">
+      <line class="cls-2" x1="64.76" y1="139.02" x2="119.44" y2="139.02"/>
+    </g>
+    <g id="SOLID-5" data-name="SOLID">
+      <polygon points="64.76 138.69 64.76 139.34 62.81 139.02 62.81 139.02 64.76 138.69"/>
+    </g>
+    <g id="SOLID-6" data-name="SOLID">
+      <polygon points="119.44 139.34 119.44 138.69 121.39 139.02 121.39 139.02 119.44 139.34"/>
+    </g>
+    <g id="MTEXT-3" data-name="MTEXT">
+      <text class="cls-3" transform="translate(87.84 138.44)"><tspan x="0" y="0">75</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-4" data-name="DIMENSION">
+    <g id="LINE-34" data-name="LINE">
+      <line class="cls-2" x1="37.42" y1="43.15" x2="205.36" y2="43.15"/>
+    </g>
+    <g id="SOLID-7" data-name="SOLID">
+      <polygon points="37.42 42.83 37.42 43.48 35.47 43.15 35.47 43.15 37.42 42.83"/>
+    </g>
+    <g id="SOLID-8" data-name="SOLID">
+      <polygon points="205.36 43.48 205.36 42.83 207.31 43.15 207.31 43.15 205.36 43.48"/>
+    </g>
+    <g id="MTEXT-4" data-name="MTEXT">
+      <text class="cls-3" transform="translate(115.1 42.57)"><tspan x="0" y="0">220</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-5" data-name="DIMENSION">
+    <g id="LINE-35" data-name="LINE">
+      <line class="cls-2" x1="178.41" y1="54.7" x2="181.54" y2="54.7"/>
+    </g>
+    <g id="SOLID-9" data-name="SOLID">
+      <polygon points="178.41 54.38 178.41 55.03 176.46 54.7 176.46 54.7 178.41 54.38"/>
+    </g>
+    <g id="SOLID-10" data-name="SOLID">
+      <polygon points="181.54 55.03 181.54 54.38 183.49 54.7 183.49 54.7 181.54 55.03"/>
+    </g>
+    <g id="MTEXT-5" data-name="MTEXT">
+      <text class="cls-3" transform="translate(177.87 54.12)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-6" data-name="DIMENSION">
+    <g id="LINE-36" data-name="LINE">
+      <line class="cls-2" x1="171.28" y1="74.34" x2="190.23" y2="96.16"/>
+    </g>
+    <g id="SOLID-11" data-name="SOLID">
+      <polygon points="171.52 74.13 171.03 74.56 169.99 72.87 169.99 72.87 171.52 74.13"/>
+    </g>
+    <g id="SOLID-12" data-name="SOLID">
+      <polygon points="189.98 96.37 190.47 95.94 191.51 97.63 191.51 97.63 189.98 96.37"/>
+    </g>
+    <g id="MTEXT-6" data-name="MTEXT">
+      <text class="cls-4" transform="translate(174.59 77.36) rotate(49.02)"><tspan x="0" y="0">3 X 42 PROF 16</tspan></text>
+    </g>
+  </g>
+  <g id="LINE-37" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="206.06" x2="59.29" y2="196.69"/>
+  </g>
+  <g id="LINE-38" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="206.06" x2="66.32" y2="196.69"/>
+  </g>
+  <g id="LINE-39" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="206.06" x2="176.46" y2="196.69"/>
+  </g>
+  <g id="LINE-40" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="206.06" x2="183.49" y2="196.69"/>
+  </g>
+  <g id="LINE-41" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="206.06" x2="117.88" y2="196.69"/>
+  </g>
+  <g id="LINE-42" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="206.06" x2="124.91" y2="196.69"/>
+  </g>
+  <g id="LINE-43" data-name="LINE">
+    <line class="cls-2" x1="30" y1="206.06" x2="59.29" y2="206.06"/>
+  </g>
+  <g id="LINE-44" data-name="LINE">
+    <line class="cls-2" x1="30" y1="416.96" x2="59.29" y2="416.96"/>
+  </g>
+  <g id="LINE-45" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="416.96" x2="117.88" y2="416.96"/>
+  </g>
+  <g id="LINE-46" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="416.96" x2="176.46" y2="416.96"/>
+  </g>
+  <g id="LINE-47" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="416.96" x2="212.78" y2="416.96"/>
+  </g>
+  <g id="LINE-48" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="407.59" x2="66.32" y2="407.59"/>
+  </g>
+  <g id="LINE-49" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="407.59" x2="124.91" y2="407.59"/>
+  </g>
+  <g id="LINE-50" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="407.59" x2="183.49" y2="407.59"/>
+  </g>
+  <g id="LINE-51" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="206.06" x2="117.88" y2="206.06"/>
+  </g>
+  <g id="LINE-52" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="206.06" x2="176.46" y2="206.06"/>
+  </g>
+  <g id="LINE-53" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="206.06" x2="212.78" y2="206.06"/>
+  </g>
+  <g id="LINE-54" data-name="LINE">
+    <line class="cls-2" x1="46.79" y1="193.56" x2="78.83" y2="193.56"/>
+  </g>
+  <g id="LINE-55" data-name="LINE">
+    <line class="cls-2" x1="105.37" y1="193.56" x2="137.42" y2="193.56"/>
+  </g>
+  <g id="LINE-56" data-name="LINE">
+    <line class="cls-2" x1="163.95" y1="193.56" x2="196" y2="193.56"/>
+  </g>
+  <g id="LINE-57" data-name="LINE">
+    <line class="cls-2" x1="30" y1="196.69" x2="46.79" y2="196.69"/>
+  </g>
+  <g id="LINE-58" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="196.69" x2="66.32" y2="196.69"/>
+  </g>
+  <g id="LINE-59" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="196.69" x2="105.37" y2="196.69"/>
+  </g>
+  <g id="LINE-60" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="196.69" x2="124.91" y2="196.69"/>
+  </g>
+  <g id="LINE-61" data-name="LINE">
+    <line class="cls-2" x1="137.42" y1="196.69" x2="163.95" y2="196.69"/>
+  </g>
+  <g id="LINE-62" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="196.69" x2="183.49" y2="196.69"/>
+  </g>
+  <g id="LINE-63" data-name="LINE">
+    <line class="cls-2" x1="196" y1="196.69" x2="212.78" y2="196.69"/>
+  </g>
+  <g id="LINE-64" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="206.06" x2="35.47" y2="416.96"/>
+  </g>
+  <g id="LINE-65" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="206.06" x2="207.31" y2="416.96"/>
+  </g>
+  <g id="LINE-66" data-name="LINE">
+    <line class="cls-2" x1="163.95" y1="193.56" x2="163.95" y2="206.06"/>
+  </g>
+  <g id="LINE-67" data-name="LINE">
+    <line class="cls-2" x1="196" y1="193.56" x2="196" y2="206.06"/>
+  </g>
+  <g id="LINE-68" data-name="LINE">
+    <line class="cls-2" x1="137.42" y1="193.56" x2="137.42" y2="206.06"/>
+  </g>
+  <g id="LINE-69" data-name="LINE">
+    <line class="cls-2" x1="105.37" y1="193.56" x2="105.37" y2="206.06"/>
+  </g>
+  <g id="LINE-70" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="193.56" x2="78.83" y2="206.06"/>
+  </g>
+  <g id="LINE-71" data-name="LINE">
+    <line class="cls-2" x1="46.79" y1="193.56" x2="46.79" y2="206.06"/>
+  </g>
+  <g id="LINE-72" data-name="LINE">
+    <line class="cls-2" x1="30" y1="196.69" x2="30" y2="416.96"/>
+  </g>
+  <g id="LINE-73" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="196.69" x2="212.78" y2="416.96"/>
+  </g>
+  <g id="LINE-74" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="407.59" x2="183.49" y2="416.96"/>
+  </g>
+  <g id="LINE-75" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="407.59" x2="176.46" y2="416.96"/>
+  </g>
+  <g id="LINE-76" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="407.59" x2="124.91" y2="416.96"/>
+  </g>
+  <g id="LINE-77" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="407.59" x2="117.88" y2="416.96"/>
+  </g>
+  <g id="LINE-78" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="407.59" x2="66.32" y2="416.96"/>
+  </g>
+  <g id="LINE-79" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="407.59" x2="59.29" y2="416.96"/>
+  </g>
+  <g id="LWPOLYLINE-5" data-name="LWPOLYLINE">
+    <rect class="cls-2" x="51.53" y="279.15" width="139.17" height="54.55"/>
+  </g>
+  <g id="MTEXT-7" data-name="MTEXT">
+    <text class="cls-5" transform="translate(60.57 312.99)"><tspan x="0" y="0">HOMEBLOCK</tspan></text>
+  </g>
+  <g id="DIMENSION-7" data-name="DIMENSION">
+    <g id="LINE-80" data-name="LINE">
+      <line class="cls-2" x1="235.22" y1="204.11" x2="235.22" y2="198.64"/>
+    </g>
+    <g id="SOLID-13" data-name="SOLID">
+      <polygon points="234.89 204.11 235.54 204.11 235.22 206.06 235.22 206.06 234.89 204.11"/>
+    </g>
+    <g id="SOLID-14" data-name="SOLID">
+      <polygon points="235.54 198.64 234.89 198.64 235.22 196.69 235.22 196.69 235.54 198.64"/>
+    </g>
+    <g id="MTEXT-8" data-name="MTEXT">
+      <text class="cls-3" transform="translate(234.73 205.83) rotate(-90)"><tspan x="0" y="0">12</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-8" data-name="DIMENSION">
+    <g id="LINE-81" data-name="LINE">
+      <line class="cls-2" x1="7.21" y1="204.11" x2="7.21" y2="195.52"/>
+    </g>
+    <g id="SOLID-15" data-name="SOLID">
+      <polygon points="6.88 204.11 7.53 204.11 7.21 206.06 7.21 206.06 6.88 204.11"/>
+    </g>
+    <g id="SOLID-16" data-name="SOLID">
+      <polygon points="7.53 195.52 6.88 195.52 7.21 193.56 7.21 193.56 7.53 195.52"/>
+    </g>
+    <g id="MTEXT-9" data-name="MTEXT">
+      <text class="cls-3" transform="translate(6.63 204.29) rotate(-90)"><tspan x="0" y="0">16</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-9" data-name="DIMENSION">
+    <g id="LINE-82" data-name="LINE">
+      <line class="cls-2" x1="7.21" y1="208.01" x2="7.21" y2="415.01"/>
+    </g>
+    <g id="SOLID-17" data-name="SOLID">
+      <polygon points="7.53 208.01 6.88 208.01 7.21 206.06 7.21 206.06 7.53 208.01"/>
+    </g>
+    <g id="SOLID-18" data-name="SOLID">
+      <polygon points="6.88 415.01 7.53 415.01 7.21 416.96 7.21 416.96 6.88 415.01"/>
+    </g>
+    <g id="MTEXT-10" data-name="MTEXT">
+      <text class="cls-3" transform="translate(6.63 317.8) rotate(-90)"><tspan x="0" y="0">270</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-10" data-name="DIMENSION">
+    <g id="LINE-83" data-name="LINE">
+      <line class="cls-2" x1="237.49" y1="409.54" x2="237.49" y2="415.01"/>
+    </g>
+    <g id="SOLID-19" data-name="SOLID">
+      <polygon points="237.81 409.54 237.16 409.54 237.49 407.59 237.49 407.59 237.81 409.54"/>
+    </g>
+    <g id="SOLID-20" data-name="SOLID">
+      <polygon points="237.16 415.01 237.81 415.01 237.49 416.96 237.49 416.96 237.16 415.01"/>
+    </g>
+    <g id="MTEXT-11" data-name="MTEXT">
+      <text class="cls-3" transform="translate(237 416.73) rotate(-90)"><tspan x="0" y="0">12</tspan></text>
+    </g>
+  </g>
+  <g id="LINE-84" data-name="LINE">
+    <line class="cls-2" x1="30" y1="530.87" x2="46.79" y2="530.87"/>
+  </g>
+  <g id="LINE-85" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="530.87" x2="92.1" y2="530.87"/>
+  </g>
+  <g id="LINE-86" data-name="LINE">
+    <line class="cls-2" x1="196" y1="530.87" x2="212.78" y2="530.87"/>
+  </g>
+  <g id="LINE-87" data-name="LINE">
+    <line class="cls-2" x1="30" y1="523.84" x2="46.79" y2="523.84"/>
+  </g>
+  <g id="LINE-88" data-name="LINE">
+    <line class="cls-2" x1="78.83" y1="523.84" x2="92.1" y2="523.84"/>
+  </g>
+  <g id="LINE-89" data-name="LINE">
+    <line class="cls-2" x1="196" y1="523.84" x2="212.78" y2="523.84"/>
+  </g>
+  <g id="CIRCLE-4" data-name="CIRCLE">
+    <circle class="cls-2" cx="62.81" cy="527.36" r="16.4"/>
+  </g>
+  <g id="LINE-90" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="556.65" x2="59.29" y2="543.38"/>
+  </g>
+  <g id="LINE-91" data-name="LINE">
+    <line class="cls-2" x1="59.29" y1="511.34" x2="59.29" y2="499.82"/>
+  </g>
+  <g id="LINE-92" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="556.65" x2="66.32" y2="543.38"/>
+  </g>
+  <g id="LINE-93" data-name="LINE">
+    <line class="cls-2" x1="66.32" y1="511.34" x2="66.32" y2="499.82"/>
+  </g>
+  <g id="CIRCLE-5" data-name="CIRCLE">
+    <circle class="cls-2" cx="179.98" cy="527.36" r="16.4"/>
+  </g>
+  <g id="LINE-94" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="556.65" x2="176.46" y2="543.38"/>
+  </g>
+  <g id="LINE-95" data-name="LINE">
+    <line class="cls-2" x1="176.46" y1="511.34" x2="176.46" y2="499.82"/>
+  </g>
+  <g id="LINE-96" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="556.65" x2="183.49" y2="543.38"/>
+  </g>
+  <g id="LINE-97" data-name="LINE">
+    <line class="cls-2" x1="183.49" y1="511.34" x2="183.49" y2="499.82"/>
+  </g>
+  <g id="CIRCLE-6" data-name="CIRCLE">
+    <circle class="cls-2" cx="121.39" cy="527.36" r="16.4"/>
+  </g>
+  <g id="LINE-98" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="556.65" x2="117.88" y2="543.38"/>
+  </g>
+  <g id="LINE-99" data-name="LINE">
+    <line class="cls-2" x1="117.88" y1="511.34" x2="117.88" y2="499.82"/>
+  </g>
+  <g id="LINE-100" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="556.65" x2="124.91" y2="543.38"/>
+  </g>
+  <g id="LINE-101" data-name="LINE">
+    <line class="cls-2" x1="124.91" y1="511.34" x2="124.91" y2="499.82"/>
+  </g>
+  <g id="LINE-102" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="556.65" x2="207.31" y2="556.65"/>
+  </g>
+  <g id="LINE-103" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="556.65" x2="207.31" y2="538.68"/>
+  </g>
+  <g id="LINE-104" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="538.68" x2="212.78" y2="516.03"/>
+  </g>
+  <g id="LINE-105" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="516.03" x2="207.31" y2="499.82"/>
+  </g>
+  <g id="LINE-106" data-name="LINE">
+    <line class="cls-2" x1="207.31" y1="499.82" x2="35.47" y2="499.82"/>
+  </g>
+  <g id="LINE-107" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="499.82" x2="35.47" y2="516.03"/>
+  </g>
+  <g id="LINE-108" data-name="LINE">
+    <line class="cls-2" x1="30" y1="516.03" x2="30" y2="538.68"/>
+  </g>
+  <g id="LINE-109" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="538.68" x2="35.47" y2="556.65"/>
+  </g>
+  <g id="LWPOLYLINE-6" data-name="LWPOLYLINE">
+    <path class="cls-2" d="M163.95,523.84h-26.54,26.54Z"/>
+  </g>
+  <g id="LWPOLYLINE-7" data-name="LWPOLYLINE">
+    <polygon class="cls-2" points="92.1 523.84 105.37 523.84 92.1 523.84 92.1 523.84"/>
+  </g>
+  <g id="LWPOLYLINE-8" data-name="LWPOLYLINE">
+    <path class="cls-2" d="M163.95,530.87h-26.54,26.54Z"/>
+  </g>
+  <g id="LWPOLYLINE-9" data-name="LWPOLYLINE">
+    <polygon class="cls-2" points="92.1 530.87 105.37 530.87 92.1 530.87 92.1 530.87"/>
+  </g>
+  <g id="LINE-110" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="538.68" x2="207.31" y2="538.68"/>
+  </g>
+  <g id="LINE-111" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="538.68" x2="30" y2="538.68"/>
+  </g>
+  <g id="LINE-112" data-name="LINE">
+    <line class="cls-2" x1="212.78" y1="516.03" x2="207.31" y2="516.03"/>
+  </g>
+  <g id="LINE-113" data-name="LINE">
+    <line class="cls-2" x1="35.47" y1="516.03" x2="30" y2="516.03"/>
+  </g>
+  <g id="DIMENSION-11" data-name="DIMENSION">
+    <g id="LINE-114" data-name="LINE">
+      <line class="cls-2" x1="235.09" y1="517.99" x2="235.09" y2="536.73"/>
+    </g>
+    <g id="SOLID-21" data-name="SOLID">
+      <polygon points="235.42 517.99 234.77 517.99 235.09 516.03 235.09 516.03 235.42 517.99"/>
+    </g>
+    <g id="SOLID-22" data-name="SOLID">
+      <polygon points="234.77 536.73 235.42 536.73 235.09 538.68 235.09 538.68 234.77 536.73"/>
+    </g>
+    <g id="MTEXT-12" data-name="MTEXT">
+      <text class="cls-3" transform="translate(234.52 531.54) rotate(-90)"><tspan x="0" y="0">29</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-12" data-name="DIMENSION">
+    <g id="LINE-115" data-name="LINE">
+      <line class="cls-2" x1="226.17" y1="528.92" x2="226.17" y2="525.8"/>
+    </g>
+    <g id="SOLID-23" data-name="SOLID">
+      <polygon points="225.85 528.92 226.5 528.92 226.17 530.87 226.17 530.87 225.85 528.92"/>
+    </g>
+    <g id="SOLID-24" data-name="SOLID">
+      <polygon points="226.5 525.8 225.85 525.8 226.17 523.84 226.17 523.84 226.5 525.8"/>
+    </g>
+    <g id="MTEXT-13" data-name="MTEXT">
+      <text class="cls-3" transform="translate(225.59 529.47) rotate(-90)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-13" data-name="DIMENSION">
+    <g id="LINE-116" data-name="LINE">
+      <line class="cls-2" x1="178.02" y1="580.45" x2="123.35" y2="580.45"/>
+    </g>
+    <g id="SOLID-25" data-name="SOLID">
+      <polygon points="178.02 580.78 178.02 580.13 179.98 580.45 179.98 580.45 178.02 580.78"/>
+    </g>
+    <g id="SOLID-26" data-name="SOLID">
+      <polygon points="123.35 580.13 123.35 580.78 121.39 580.45 121.39 580.45 123.35 580.13"/>
+    </g>
+    <g id="MTEXT-14" data-name="MTEXT">
+      <text class="cls-3" transform="translate(146.41 579.87)"><tspan x="0" y="0">75</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-14" data-name="DIMENSION">
+    <g id="LINE-117" data-name="LINE">
+      <line class="cls-2" x1="64.76" y1="580.45" x2="119.44" y2="580.45"/>
+    </g>
+    <g id="SOLID-27" data-name="SOLID">
+      <polygon points="64.76 580.13 64.76 580.78 62.81 580.45 62.81 580.45 64.76 580.13"/>
+    </g>
+    <g id="SOLID-28" data-name="SOLID">
+      <polygon points="119.44 580.78 119.44 580.13 121.39 580.45 121.39 580.45 119.44 580.78"/>
+    </g>
+    <g id="MTEXT-15" data-name="MTEXT">
+      <text class="cls-3" transform="translate(87.84 579.87)"><tspan x="0" y="0">75</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-15" data-name="DIMENSION">
+    <g id="LINE-118" data-name="LINE">
+      <line class="cls-2" x1="8.4" y1="554.7" x2="8.4" y2="501.78"/>
+    </g>
+    <g id="SOLID-29" data-name="SOLID">
+      <polygon points="8.07 554.7 8.72 554.7 8.4 556.65 8.4 556.65 8.07 554.7"/>
+    </g>
+    <g id="SOLID-30" data-name="SOLID">
+      <polygon points="8.72 501.78 8.07 501.78 8.4 499.82 8.4 499.82 8.72 501.78"/>
+    </g>
+    <g id="MTEXT-16" data-name="MTEXT">
+      <text class="cls-3" transform="translate(6.84 537.82) rotate(-90)"><tspan x="0" y="0">72,75</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-16" data-name="DIMENSION">
+    <g id="LINE-119" data-name="LINE">
+      <line class="cls-2" x1="21.2" y1="529.31" x2="21.2" y2="554.7"/>
+    </g>
+    <g id="SOLID-31" data-name="SOLID">
+      <polygon points="21.53 529.31 20.88 529.31 21.2 527.36 21.2 527.36 21.53 529.31"/>
+    </g>
+    <g id="SOLID-32" data-name="SOLID">
+      <polygon points="20.88 554.7 21.53 554.7 21.2 556.65 21.2 556.65 20.88 554.7"/>
+    </g>
+    <g id="MTEXT-17" data-name="MTEXT">
+      <text class="cls-3" transform="translate(19.64 549.44) rotate(-90)"><tspan x="0" y="0">37,5</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-17" data-name="DIMENSION">
+    <g id="LINE-120" data-name="LINE">
+      <line class="cls-2" x1="21.43" y1="525.41" x2="21.43" y2="501.78"/>
+    </g>
+    <g id="SOLID-33" data-name="SOLID">
+      <polygon points="21.11 525.41 21.76 525.41 21.43 527.36 21.43 527.36 21.11 525.41"/>
+    </g>
+    <g id="SOLID-34" data-name="SOLID">
+      <polygon points="21.76 501.78 21.11 501.78 21.43 499.82 21.43 499.82 21.76 501.78"/>
+    </g>
+    <g id="MTEXT-18" data-name="MTEXT">
+      <text class="cls-3" transform="translate(19.86 523.15) rotate(-90)"><tspan x="0" y="0">35,25</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-18" data-name="DIMENSION">
+    <g id="LINE-121" data-name="LINE">
+      <line class="cls-2" x1="37.42" y1="484.59" x2="205.36" y2="484.59"/>
+    </g>
+    <g id="SOLID-35" data-name="SOLID">
+      <polygon points="37.42 484.26 37.42 484.91 35.47 484.59 35.47 484.59 37.42 484.26"/>
+    </g>
+    <g id="SOLID-36" data-name="SOLID">
+      <polygon points="205.36 484.91 205.36 484.26 207.31 484.59 207.31 484.59 205.36 484.91"/>
+    </g>
+    <g id="MTEXT-19" data-name="MTEXT">
+      <text class="cls-3" transform="translate(115.1 484.01)"><tspan x="0" y="0">220</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-19" data-name="DIMENSION">
+    <g id="LINE-122" data-name="LINE">
+      <line class="cls-2" x1="209.27" y1="484.59" x2="210.83" y2="484.59"/>
+    </g>
+    <g id="SOLID-37" data-name="SOLID">
+      <polygon points="209.27 484.26 209.27 484.91 207.31 484.59 207.31 484.59 209.27 484.26"/>
+    </g>
+    <g id="SOLID-38" data-name="SOLID">
+      <polygon points="210.83 484.91 210.83 484.26 212.78 484.59 212.78 484.59 210.83 484.91"/>
+    </g>
+    <g id="MTEXT-20" data-name="MTEXT">
+      <text class="cls-3" transform="translate(207.93 484.1)"><tspan x="0" y="0">7</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-20" data-name="DIMENSION">
+    <g id="LINE-123" data-name="LINE">
+      <line class="cls-2" x1="178.41" y1="496.14" x2="181.54" y2="496.14"/>
+    </g>
+    <g id="SOLID-39" data-name="SOLID">
+      <polygon points="178.41 495.81 178.41 496.46 176.46 496.14 176.46 496.14 178.41 495.81"/>
+    </g>
+    <g id="SOLID-40" data-name="SOLID">
+      <polygon points="181.54 496.46 181.54 495.81 183.49 496.14 183.49 496.14 181.54 496.46"/>
+    </g>
+    <g id="MTEXT-21" data-name="MTEXT">
+      <text class="cls-3" transform="translate(177.87 495.56)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+  </g>
+  <g id="DIMENSION-21" data-name="DIMENSION">
+    <g id="LINE-124" data-name="LINE">
+      <line class="cls-2" x1="171.28" y1="515.78" x2="190.23" y2="537.59"/>
+    </g>
+    <g id="SOLID-41" data-name="SOLID">
+      <polygon points="171.52 515.56 171.03 515.99 169.99 514.3 169.99 514.3 171.52 515.56"/>
+    </g>
+    <g id="SOLID-42" data-name="SOLID">
+      <polygon points="189.98 537.81 190.47 537.38 191.51 539.07 191.51 539.07 189.98 537.81"/>
+    </g>
+    <g id="MTEXT-22" data-name="MTEXT">
+      <text class="cls-3" transform="translate(178.44 523.28) rotate(49.02)"><tspan x="0" y="0">42</tspan></text>
+    </g>
+  </g>
+  <g id="MTEXT-23" data-name="MTEXT">
+    <text class="cls-5" transform="translate(61.62 16.1)"><tspan class="cls-1" x="0" y="0">T</tspan><tspan x="11.12" y="0">OPO DE 22 cm</tspan></text>
+  </g>
+  <g id="LINE-125" data-name="LINE">
+    <line class="cls-2" x1="312.1" y1="206.06" x2="312.1" y2="196.69"/>
+  </g>
+  <g id="LINE-126" data-name="LINE">
+    <line class="cls-2" x1="319.13" y1="206.06" x2="319.13" y2="196.69"/>
+  </g>
+  <g id="LINE-127" data-name="LINE">
+    <line class="cls-2" x1="286.7" y1="206.06" x2="312.1" y2="206.06"/>
+  </g>
+  <g id="LINE-128" data-name="LINE">
+    <line class="cls-2" x1="286.7" y1="416.96" x2="312.1" y2="416.96"/>
+  </g>
+  <g id="LINE-129" data-name="LINE">
+    <line class="cls-2" x1="319.13" y1="416.96" x2="343.53" y2="416.96"/>
+  </g>
+  <g id="LINE-130" data-name="LINE">
+    <line class="cls-2" x1="312.1" y1="407.59" x2="319.13" y2="407.59"/>
+  </g>
+  <g id="LINE-131" data-name="LINE">
+    <line class="cls-2" x1="319.13" y1="206.06" x2="343.53" y2="206.06"/>
+  </g>
+  <g id="LINE-132" data-name="LINE">
+    <line class="cls-2" x1="299.59" y1="193.56" x2="331.63" y2="193.56"/>
+  </g>
+  <g id="LINE-133" data-name="LINE">
+    <line class="cls-2" x1="286.7" y1="196.69" x2="299.59" y2="196.69"/>
+  </g>
+  <g id="LINE-134" data-name="LINE">
+    <line class="cls-2" x1="312.1" y1="196.69" x2="319.13" y2="196.69"/>
+  </g>
+  <g id="LINE-135" data-name="LINE">
+    <line class="cls-2" x1="331.63" y1="196.69" x2="343.53" y2="196.69"/>
+  </g>
+  <g id="LINE-136" data-name="LINE">
+    <line class="cls-2" x1="331.63" y1="193.56" x2="331.63" y2="206.06"/>
+  </g>
+  <g id="LINE-137" data-name="LINE">
+    <line class="cls-2" x1="299.59" y1="193.56" x2="299.59" y2="206.06"/>
+  </g>
+  <g id="LINE-138" data-name="LINE">
+    <line class="cls-2" x1="286.7" y1="196.69" x2="286.7" y2="416.96"/>
+  </g>
+  <g id="LINE-139" data-name="LINE">
+    <line class="cls-2" x1="319.13" y1="407.59" x2="319.13" y2="416.96"/>
+  </g>
+  <g id="LINE-140" data-name="LINE">
+    <line class="cls-2" x1="312.1" y1="407.59" x2="312.1" y2="416.96"/>
+  </g>
+  <g id="LINE-141" data-name="LINE">
+    <line class="cls-2" x1="343.53" y1="206.06" x2="343.53" y2="416.96"/>
+  </g>
+  <g id="LINE-142" data-name="LINE">
+    <line class="cls-2" x1="343.53" y1="206.06" x2="343.53" y2="196.69"/>
+  </g>
+  <g id="LINE-143" data-name="LINE">
+    <line class="cls-2" x1="304.67" y1="206.06" x2="304.67" y2="416.96"/>
+  </g>
+  <g id="LINE-144" data-name="LINE">
+    <line class="cls-2" x1="327.32" y1="206.06" x2="327.32" y2="416.96"/>
+  </g>
+</svg>

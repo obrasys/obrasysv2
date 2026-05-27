@@ -4953,6 +4953,63 @@ export type Database = {
         }
         Relationships: []
       }
+      icf_block_library: {
+        Row: {
+          can_be_cut: boolean
+          category: string
+          code: string
+          created_at: string
+          drawing_file: string | null
+          empresa_id: string | null
+          height_mm: number | null
+          id: string
+          length_mm: number | null
+          module_mm: number | null
+          name: string
+          notes: string | null
+          system_seed: boolean
+          thickness_mm: number | null
+          updated_at: string
+          use_case: string | null
+        }
+        Insert: {
+          can_be_cut?: boolean
+          category: string
+          code: string
+          created_at?: string
+          drawing_file?: string | null
+          empresa_id?: string | null
+          height_mm?: number | null
+          id?: string
+          length_mm?: number | null
+          module_mm?: number | null
+          name: string
+          notes?: string | null
+          system_seed?: boolean
+          thickness_mm?: number | null
+          updated_at?: string
+          use_case?: string | null
+        }
+        Update: {
+          can_be_cut?: boolean
+          category?: string
+          code?: string
+          created_at?: string
+          drawing_file?: string | null
+          empresa_id?: string | null
+          height_mm?: number | null
+          id?: string
+          length_mm?: number | null
+          module_mm?: number | null
+          name?: string
+          notes?: string | null
+          system_seed?: boolean
+          thickness_mm?: number | null
+          updated_at?: string
+          use_case?: string | null
+        }
+        Relationships: []
+      }
       icf_budget_audit_log: {
         Row: {
           config_snapshot: Json
@@ -5548,6 +5605,113 @@ export type Database = {
           {
             foreignKeyName: "icf_vaos_pano_id_fkey"
             columns: ["pano_id"]
+            isOneToOne: false
+            referencedRelation: "icf_panos_parede"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      icf_wall_panels: {
+        Row: {
+          composition_result: Json | null
+          confidence: number | null
+          configuracao_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          floor: string | null
+          gross_area_m2: number | null
+          height_m: number
+          id: string
+          label: string
+          length_m: number
+          net_area_m2: number | null
+          notes: string | null
+          obra_id: string
+          openings: Json
+          room: string | null
+          selected_block_code: string
+          source: string
+          source_pano_id: string | null
+          status: string
+          thickness_mm: number
+          updated_at: string
+        }
+        Insert: {
+          composition_result?: Json | null
+          confidence?: number | null
+          configuracao_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          floor?: string | null
+          gross_area_m2?: number | null
+          height_m: number
+          id?: string
+          label: string
+          length_m: number
+          net_area_m2?: number | null
+          notes?: string | null
+          obra_id: string
+          openings?: Json
+          room?: string | null
+          selected_block_code: string
+          source?: string
+          source_pano_id?: string | null
+          status?: string
+          thickness_mm: number
+          updated_at?: string
+        }
+        Update: {
+          composition_result?: Json | null
+          confidence?: number | null
+          configuracao_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          floor?: string | null
+          gross_area_m2?: number | null
+          height_m?: number
+          id?: string
+          label?: string
+          length_m?: number
+          net_area_m2?: number | null
+          notes?: string | null
+          obra_id?: string
+          openings?: Json
+          room?: string | null
+          selected_block_code?: string
+          source?: string
+          source_pano_id?: string | null
+          status?: string
+          thickness_mm?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "icf_wall_panels_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_configuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_wall_panels_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "icf_resumo_obra"
+            referencedColumns: ["configuracao_id"]
+          },
+          {
+            foreignKeyName: "icf_wall_panels_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "icf_wall_panels_source_pano_id_fkey"
+            columns: ["source_pano_id"]
             isOneToOne: false
             referencedRelation: "icf_panos_parede"
             referencedColumns: ["id"]
