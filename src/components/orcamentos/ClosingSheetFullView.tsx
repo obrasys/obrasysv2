@@ -33,6 +33,7 @@ import { useApproveClosingSheet } from "@/hooks/useApproveClosingSheet";
 import { useQualitySpecsCatalog } from "@/hooks/useQualitySpecsCatalog";
 import { ClosingSheetSiteDetailDialog } from "./ClosingSheetSiteDetailDialog";
 import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useClosingSheetSiteDetail";
+import { useBudgetChapterTotals } from "@/hooks/useBudgetChapterTotals";
 
 // Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
 const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
@@ -174,10 +175,9 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
 
   if (!detailsEmpty) return base;
 
-  // Seed direct cost on the "Empreitada Geral c/ Exclusões" line
-  const dc = [...base.direct_costs];
-  const idxEmp = dc.findIndex((l) => l.key === "empreitada_exclusoes");
-  if (idxEmp >= 0) dc[idxEmp] = { ...dc[idxEmp], value: Number(sheet.total_direct_cost) || 0 };
+  // Custos directos: já não pré-seedamos rubricas individuais — os 38
+  // capítulos são alimentados em runtime via `useBudgetChapterTotals`.
+  const dc = base.direct_costs;
 
   // Seed estaleiro on Pessoal Técnico (rubrica A)
   const sc = [...base.site_costs];
@@ -270,6 +270,32 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
       return changed ? { ...d, site_costs: next } : d;
     });
   }, [siteDetailLines]);
+
+  // Sincronização: totais por capítulo do Orçamento → rubricas em details.direct_costs.
+  // Os 38 capítulos são alimentados exclusivamente a partir do Orçamento
+  // (capitulos_orcamento). O utilizador não pode editar este valor.
+  const chapterTotals = useBudgetChapterTotals(sheet.source_budget_id || undefined);
+  const chapterTotalsData = chapterTotals.data;
+  useEffect(() => {
+    if (!chapterTotalsData) return;
+    const byKey: Record<string, number> = {};
+    for (const c of chapterTotalsData) {
+      const key = `cap_${String(c.numero).padStart(2, "0")}`;
+      byKey[key] = (byKey[key] || 0) + (Number(c.total) || 0);
+    }
+    setDetails((d) => {
+      let changed = false;
+      const next = d.direct_costs.map((line) => {
+        const v = byKey[line.key] ?? 0;
+        if (Math.abs((line.value || 0) - v) > 0.001) {
+          changed = true;
+          return { ...line, value: v };
+        }
+        return line;
+      });
+      return changed ? { ...d, direct_costs: next } : d;
+    });
+  }, [chapterTotalsData]);
 
   const handlePrint = () => {
     const node = printRef.current;
@@ -624,13 +650,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 <TableCell className="font-medium text-xs">{line.label}</TableCell>
                 <TableCell>
                   <NumCell
-                    readOnly={readOnly}
+                    readOnly
                     value={line.value}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, value: v };
-                      patch("direct_costs", next);
-                    }}
+                    onChange={() => {}}
                   />
                 </TableCell>
                 <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
@@ -664,6 +686,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             ))}
           </TableBody>
         </Table>
+        <p className="text-xs text-muted-foreground italic px-1">
+          Os valores são calculados automaticamente a partir do Orçamento (total por capítulo) e não podem ser editados aqui.
+        </p>
         <SubtotalRow label="TOTAL CUSTOS DIRECTOS / CT" value={totals.total_directos} />
         </Section>
 
