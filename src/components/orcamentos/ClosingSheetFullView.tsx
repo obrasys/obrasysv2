@@ -656,8 +656,8 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                   />
                 </TableCell>
                 <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                  {totals.total_directos > 0
-                    ? `${((line.value / totals.total_directos) * 100).toFixed(2)}%`
+                  {totals.custo_total > 0
+                    ? `${((line.value / totals.custo_total) * 100).toFixed(2)}%`
                     : "—"}
                 </TableCell>
                 <TableCell>
@@ -690,8 +690,8 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               <TableCell className="text-xs text-right">​</TableCell>
               <TableCell />
               <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos > 0
-                  ? `Total: ${details.direct_costs.reduce((acc, l) => acc + Number(((l.value / totals.total_directos) * 100).toFixed(2)), 0).toFixed(2)}%`
+                {totals.custo_total > 0
+                  ? `Total: ${details.direct_costs.reduce((acc, l) => acc + Number(((l.value / totals.custo_total) * 100).toFixed(2)), 0).toFixed(2)}%`
                   : "—"}
               </TableCell>
               <TableCell />
