@@ -689,7 +689,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <p className="text-xs text-muted-foreground italic px-1">
           Os valores são calculados automaticamente a partir do Orçamento (total por capítulo) e não podem ser editados aqui.
         </p>
-        <SubtotalRow label="TOTAL CUSTOS DIRECTOS" value={totals.total_directos} />
+        <SubtotalRow label="TOTAL CUSTOS DIRECTOS " value={totals.total_directos} />
         </Section>
 
         {/* ESTALEIRO */}
