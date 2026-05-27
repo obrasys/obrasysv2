@@ -105,7 +105,11 @@ const sanitizeTextCell = (value: unknown) => String(value ?? "").replace(/\s+/g,
 
 const isReferenceErrorText = (value: unknown) => /#ref!?/i.test(sanitizeTextCell(value));
 
-const isIncludedText = (value: unknown) => /inclu[ií]d[oa]/i.test(normalizeText(String(value ?? "")));
+// Only treat a cell as "included in another article" when the cell text STARTS with
+// "Incluíd…" (e.g. unit-price cell "Incluído no artigo 1.1.1.2"). This prevents
+// descriptions that contain mid-sentence phrases like "(não incluída neste artigo)"
+// from being wrongly discarded.
+const isIncludedText = (value: unknown) => /^\s*inclu[ií]d[oa]\b/i.test(sanitizeTextCell(value));
 
 const isProbablyHeaderRow = (values: unknown[]) => {
   const joined = normalizeText(values.map((value) => String(value ?? "")).join(" "));
