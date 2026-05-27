@@ -357,143 +357,14 @@ export function useOrcamentos() {
   const createRevisao = useMutation({
     mutationFn: async (orcamentoId: string) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
+      const { data, error } = await supabase.rpc('create_budget_revision', {
+        p_orcamento_id: orcamentoId,
+      });
 
-      // Buscar orçamento original com capítulos e artigos
-      const { data: original, error: fetchError } = await supabase
-        .from('orcamentos')
-        .select(`
-          *,
-          capitulos:capitulos_orcamento(
-            *,
-            artigos:artigos_orcamento(*)
-          )
-        `)
-        .eq('id', orcamentoId)
-        .single();
+      if (error) throw error;
+      if (!data) throw new Error('Não foi possível criar a revisão');
 
-      if (fetchError) throw fetchError;
-
-      // Calcular próximo número de revisão
-      const { data: revisoes } = await supabase
-        .from('orcamentos')
-        .select('numero_revisao')
-        .eq('revisao_de', orcamentoId)
-        .order('numero_revisao', { ascending: false })
-        .limit(1);
-
-      const nextNumeroRevisao = revisoes && revisoes.length > 0 
-        ? (revisoes[0].numero_revisao || 0) + 1 
-        : 1;
-
-      // Código da revisão: (ORC-2026-0001)-01
-      const codigoOriginal = original.codigo || 'ORC-0000-0000';
-      const codigoRevisao = `(${codigoOriginal})-${String(nextNumeroRevisao).padStart(2, '0')}`;
-
-      // Criar novo orçamento como revisão
-      const { data: novoOrcamento, error: createError } = await supabase
-        .from('orcamentos')
-        .insert({
-          user_id: user.id,
-          titulo: `${original.titulo} - Revisão ${nextNumeroRevisao}`,
-          codigo: codigoRevisao,
-          obra_id: original.obra_id,
-          cliente_id: original.cliente_id,
-          margem_lucro: original.margem_lucro,
-          custos_indiretos: original.custos_indiretos as Json,
-          status: 'rascunho',
-          revisao_de: orcamentoId,
-          numero_revisao: nextNumeroRevisao,
-        })
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      // Duplicar capítulos e artigos
-      const capitulos = original.capitulos || [];
-      for (const cap of capitulos) {
-        const { data: novoCapitulo, error: capError } = await supabase
-          .from('capitulos_orcamento')
-          .insert({
-            orcamento_id: novoOrcamento.id,
-            numero: cap.numero,
-            titulo: cap.titulo,
-            descricao: cap.descricao,
-            ordem: cap.ordem,
-          })
-          .select()
-          .single();
-
-        if (capError) throw capError;
-
-        const artigos = cap.artigos || [];
-        if (artigos.length > 0) {
-          const artigosInsert = artigos.map((art: ArtigoOrcamento) => ({
-            capitulo_id: novoCapitulo.id,
-            codigo: art.codigo,
-            descricao: art.descricao,
-            unidade: art.unidade,
-            quantidade: art.quantidade,
-            preco_base: art.preco_base || art.preco_unitario,
-            margem_lucro_artigo: art.margem_lucro_artigo || 0,
-            preco_unitario: art.preco_unitario,
-            ordem: art.ordem,
-          }));
-
-          const { error: artError } = await supabase
-            .from('artigos_orcamento')
-            .insert(artigosInsert);
-
-          if (artError) throw artError;
-        }
-      }
-
-      // Se o orçamento original tinha Budget Objetivo e/ou Folha de Fecho,
-      // gerar automaticamente as novas versões na revisão (chain de versões).
-      const [{ data: origVersions }, { data: origSheets }] = await Promise.all([
-        supabase
-          .from('budget_versions')
-          .select('id, version_type, version_number, created_at')
-          .eq('source_budget_id', orcamentoId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('closing_sheets')
-          .select('id')
-          .eq('source_budget_id', orcamentoId)
-          .limit(1),
-      ]);
-
-      const hadBudgetOrClosing =
-        (origVersions && origVersions.length > 0) ||
-        (origSheets && origSheets.length > 0);
-
-      if (hadBudgetOrClosing) {
-        // Aprovar a nova revisão: cria Base Seco + Folha de Fecho Inicial + Budget Objetivo v1
-        const { error: approveError } = await supabase.rpc('approve_base_dry_budget', {
-          p_orcamento_id: novoOrcamento.id,
-        });
-        if (approveError) throw approveError;
-
-        // Encadear parent_version_id: nova base_dry → última versão (target) do original
-        const lastOrigTarget = (origVersions ?? []).find((v) => v.version_type === 'target')
-          ?? (origVersions ?? [])[0];
-        if (lastOrigTarget) {
-          const { data: newBase } = await supabase
-            .from('budget_versions')
-            .select('id')
-            .eq('source_budget_id', novoOrcamento.id)
-            .eq('version_type', 'base_dry')
-            .maybeSingle();
-          if (newBase?.id) {
-            await supabase
-              .from('budget_versions')
-              .update({ parent_version_id: lastOrigTarget.id })
-              .eq('id', newBase.id);
-          }
-        }
-      }
-
-      return novoOrcamento;
+      return data as Orcamento;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
