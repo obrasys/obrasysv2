@@ -1001,7 +1001,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* IVA (6) */}
-        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total IVA">
+        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total C. IVA">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
