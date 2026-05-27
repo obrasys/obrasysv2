@@ -36,14 +36,14 @@ import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useC
 
 // Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
 const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
-  technical_staff: "gestao_obra",
-  site_supervisors: "gestao_obra",
-  team_leaders: "pessoal_producao",
+  technical_staff: "pessoal_tecnico",
+  site_supervisors: "encarregados",
+  team_leaders: "chefes_equipa",
   utilities: "utilities",
   site_equipment: "equipamentos",
-  site_guard: "arvorado",
-  site_labor: "pessoal_producao",
-  other_site_costs: "arvorado",
+  site_guard: "guarda",
+  site_labor: "pessoal_obra",
+  other_site_costs: "outro",
 };
 
 const fmt = (v: number | null | undefined) =>
@@ -179,9 +179,9 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
   const idxEmp = dc.findIndex((l) => l.key === "empreitada_exclusoes");
   if (idxEmp >= 0) dc[idxEmp] = { ...dc[idxEmp], value: Number(sheet.total_direct_cost) || 0 };
 
-  // Seed estaleiro on Gestão Obra
+  // Seed estaleiro on Pessoal Técnico (rubrica A)
   const sc = [...base.site_costs];
-  const idxGo = sc.findIndex((l) => l.key === "gestao_obra");
+  const idxGo = sc.findIndex((l) => l.key === "pessoal_tecnico");
   if (idxGo >= 0) sc[idxGo] = { ...sc[idxGo], value: Number(sheet.site_costs) || 0 };
 
   // Seed sales line from sale_price

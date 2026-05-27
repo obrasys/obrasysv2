@@ -162,14 +162,36 @@ export const DEFAULT_DIRECT_COST_LINES: ClosingDirectCostLine[] = [
 ];
 
 export const DEFAULT_SITE_COST_LINES: ClosingSiteCostLine[] = [
-  { key: "gestao_obra", label: "GESTÃO OBRA / PROJECTO", value: 0 },
-  { key: "encarregado", label: "ENCARREGADO", value: 0 },
-  { key: "arvorado", label: "ARVORADO", value: 0 },
-  { key: "utilities", label: "ELECT./ÁGUA/TELEF./NET", value: 0 },
-  { key: "equipamentos", label: "EQUIPAMENTOS", value: 0 },
+  { key: "pessoal_tecnico", label: "PESSOAL TÉCNICO", value: 0 },
+  { key: "encarregados", label: "ENCARREGADOS", value: 0 },
+  { key: "chefes_equipa", label: "CHEFES DE EQUIPA / SEGUIDOR", value: 0 },
+  { key: "utilities", label: "OUTROS GASTOS (ÁGUA/ELECT./TELEF./NET)", value: 0 },
+  { key: "equipamentos", label: "EQUIPAMENTOS DE ESTALEIRO", value: 0 },
   { key: "guarda", label: "GUARDA", value: 0 },
-  { key: "pessoal_producao", label: "PESSOAL PRODUÇÃO", value: 0 },
+  { key: "pessoal_obra", label: "PESSOAL DE OBRA", value: 0 },
+  { key: "outro", label: "OUTRO", value: 0 },
 ];
+
+// Remapeia chaves antigas para o novo conjunto A-G de rubricas de estaleiro.
+const LEGACY_SITE_KEY_MAP: Record<string, string> = {
+  gestao_obra: "pessoal_tecnico",
+  encarregado: "encarregados",
+  arvorado: "chefes_equipa",
+  pessoal_producao: "pessoal_obra",
+};
+
+export function migrateSiteCostLines(
+  stored: ClosingSiteCostLine[] | undefined | null,
+): ClosingSiteCostLine[] {
+  const defaults = DEFAULT_SITE_COST_LINES;
+  if (!stored?.length) return defaults.map((l) => ({ ...l }));
+  const byKey = new Map<string, number>();
+  for (const line of stored) {
+    const newKey = LEGACY_SITE_KEY_MAP[line.key] ?? line.key;
+    byKey.set(newKey, (byKey.get(newKey) || 0) + (Number(line.value) || 0));
+  }
+  return defaults.map((d) => ({ ...d, value: byKey.get(d.key) ?? 0 }));
+}
 
 export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
   header: {
@@ -394,7 +416,7 @@ export function mergeDetails(stored: Partial<ClosingSheetDetails> | null | undef
     approvals: { ...DEFAULT_CLOSING_DETAILS.approvals, ...(stored.approvals || {}) },
     quality_specs_values: { ...(stored.quality_specs_values || {}) },
     direct_costs: stored.direct_costs?.length ? stored.direct_costs : DEFAULT_CLOSING_DETAILS.direct_costs,
-    site_costs: stored.site_costs?.length ? stored.site_costs : DEFAULT_CLOSING_DETAILS.site_costs,
+    site_costs: migrateSiteCostLines(stored.site_costs),
     terrain: { ...DEFAULT_CLOSING_DETAILS.terrain, ...(stored.terrain || {}) },
     indirect: { ...DEFAULT_CLOSING_DETAILS.indirect, ...(stored.indirect || {}) },
     other: { ...DEFAULT_CLOSING_DETAILS.other, ...(stored.other || {}) },
