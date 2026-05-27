@@ -270,6 +270,11 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
                 Página {page} / {pdf.totalPages}
               </Badge>
             )}
+            {panActive && (
+              <Badge variant="default" className="text-[10px] gap-1">
+                <Hand className="h-3 w-3" /> Modo Pan
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {isPdf && pdf.totalPages > 1 && (
