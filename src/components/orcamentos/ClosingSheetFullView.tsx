@@ -109,6 +109,8 @@ function Section({
   collapsed,
   onToggle,
   extra,
+  total,
+  totalLabel,
   children,
 }: {
   id: string;
@@ -116,6 +118,8 @@ function Section({
   collapsed: boolean;
   onToggle: () => void;
   extra?: React.ReactNode;
+  total?: number;
+  totalLabel?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -128,9 +132,17 @@ function Section({
           aria-expanded={!collapsed}
         >
           <h3 className="text-sm font-bold uppercase tracking-wide text-primary">{title}</h3>
-          <ChevronDown
-            className={`h-4 w-4 text-primary transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
-          />
+          <div className="flex items-center gap-3">
+            {collapsed && total !== undefined && (
+              <span className="text-sm font-bold tabular-nums text-primary bg-primary/10 px-2 py-0.5 rounded">
+                {totalLabel ? `${totalLabel}: ` : ""}
+                {new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(total)}
+              </span>
+            )}
+            <ChevronDown
+              className={`h-4 w-4 text-primary transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+            />
+          </div>
         </button>
         {extra}
       </div>
