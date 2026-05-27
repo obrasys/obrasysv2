@@ -162,14 +162,14 @@ export const DEFAULT_DIRECT_COST_LINES: ClosingDirectCostLine[] = [
 ];
 
 export const DEFAULT_SITE_COST_LINES: ClosingSiteCostLine[] = [
-  { key: "pessoal_tecnico", label: "PESSOAL TÉCNICO", value: 0 },
-  { key: "encarregados", label: "ENCARREGADOS", value: 0 },
-  { key: "chefes_equipa", label: "CHEFES DE EQUIPA / SEGUIDOR", value: 0 },
-  { key: "utilities", label: "OUTROS GASTOS (ÁGUA/ELECT./TELEF./NET)", value: 0 },
-  { key: "equipamentos", label: "EQUIPAMENTOS DE ESTALEIRO", value: 0 },
-  { key: "guarda", label: "GUARDA", value: 0 },
-  { key: "pessoal_obra", label: "PESSOAL DE OBRA", value: 0 },
-  { key: "outro", label: "OUTRO", value: 0 },
+  { key: "pessoal_tecnico", label: "A - PESSOAL TÉCNICO", value: 0 },
+  { key: "encarregados", label: "B - ENCARREGADOS", value: 0 },
+  { key: "chefes_equipa", label: "C - CHEFES DE EQUIPA / SEGUIDOR", value: 0 },
+  { key: "utilities", label: "D - OUTROS GASTOS (ÁGUA/ELECT./TELEF./NET)", value: 0 },
+  { key: "equipamentos", label: "E - EQUIPAMENTOS DE ESTALEIRO", value: 0 },
+  { key: "guarda", label: "F - GUARDA", value: 0 },
+  { key: "pessoal_obra", label: "G - PESSOAL DE OBRA", value: 0 },
+  { key: "outro", label: "H - OUTRO", value: 0 },
 ];
 
 // Remapeia chaves antigas para o novo conjunto A-G de rubricas de estaleiro.

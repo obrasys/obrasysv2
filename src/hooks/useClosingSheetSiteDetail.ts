@@ -37,7 +37,7 @@ export const SITE_CATEGORY_LABELS: Record<SiteDetailCategory, string> = {
   site_equipment: "E - Equipamentos de Estaleiro",
   site_guard: "F - Guarda",
   site_labor: "G - Pessoal de Obra",
-  other_site_costs: "G - Outro",
+  other_site_costs: "H - Outro",
 };
 
 export const SITE_CATEGORY_DEFAULTS: Record<SiteDetailCategory, string[]> = {
