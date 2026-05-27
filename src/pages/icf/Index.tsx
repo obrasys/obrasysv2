@@ -47,6 +47,7 @@ const IcfIndex = () => {
   const deleteConfig = useDeleteIcfConfig();
   const updateConfig = useUpdateIcfConfig();
   const generateBudget = useGenerateIcfBudget();
+  const { data: dossiers = [] } = useIcfAnalyses(selectedObraId || null);
 
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
