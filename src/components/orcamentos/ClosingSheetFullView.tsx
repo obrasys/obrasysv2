@@ -1198,7 +1198,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* PROPOSTA FINAL — RAI */}
-        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")}>
+        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")} total={totals.rai_eur} totalLabel="RAI">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor de Vendas (Proposta)</p>
