@@ -175,10 +175,9 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
 
   if (!detailsEmpty) return base;
 
-  // Seed direct cost on the "Empreitada Geral c/ Exclusões" line
-  const dc = [...base.direct_costs];
-  const idxEmp = dc.findIndex((l) => l.key === "empreitada_exclusoes");
-  if (idxEmp >= 0) dc[idxEmp] = { ...dc[idxEmp], value: Number(sheet.total_direct_cost) || 0 };
+  // Custos directos: já não pré-seedamos rubricas individuais — os 38
+  // capítulos são alimentados em runtime via `useBudgetChapterTotals`.
+  const dc = base.direct_costs;
 
   // Seed estaleiro on Pessoal Técnico (rubrica A)
   const sc = [...base.site_costs];
