@@ -181,6 +181,29 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
     setDetails(seedFromLegacy(sheet));
   }, [sheet.id, sheet.details]);
 
+  // Sincronização: subtotais do Discriminado de Estaleiro → rubricas em details.site_costs
+  const siteDetail = useClosingSheetSiteDetail(sheet.id);
+  const siteDetailLines = siteDetail.list.data;
+  useEffect(() => {
+    if (!siteDetailLines || siteDetailLines.length === 0) return;
+    const subtotals: Record<string, number> = {};
+    for (const l of siteDetailLines) {
+      const key = SITE_DETAIL_TO_RUBRICA[l.category];
+      subtotals[key] = (subtotals[key] || 0) + Number(l.total_amount || 0);
+    }
+    setDetails((d) => {
+      let changed = false;
+      const next = d.site_costs.map((line) => {
+        if (subtotals[line.key] !== undefined && Math.abs((line.value || 0) - subtotals[line.key]) > 0.001) {
+          changed = true;
+          return { ...line, value: subtotals[line.key] };
+        }
+        return line;
+      });
+      return changed ? { ...d, site_costs: next } : d;
+    });
+  }, [siteDetailLines]);
+
   const handlePrint = () => {
     const node = printRef.current;
     if (!node) return;
