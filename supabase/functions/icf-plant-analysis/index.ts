@@ -222,11 +222,25 @@ Parâmetros de referência:
 - Classe de aço: ${classe_aco || "A500NR"}
 
 BIBLIOTECA TÉCNICA HOMEBLOCK (fonte primária para composição):
-- Catálogo oficial de peças: HB-BLOCO-220 (1200×300×220 mm), HB-BLOCO-300 (1200×300×300 mm), HB-TOPO-150, HB-TOPO-220, HB-ESPACADOR-150, HB-ESPACADOR-220, HB-DETALHE-CORTE.
-- A geometria das peças e a sua modulação (1200 mm de comprimento, 300 mm de altura) são a única fonte de verdade dimensional. Os SVGs associados são APENAS referência visual — nunca extrair medidas dos desenhos.
-- Nunca inventar peças, dimensões ou códigos fora desta biblioteca.
-- Ao sugerir composição de panos, escolher a peça pela espessura do núcleo (220 → HB-BLOCO-220, 300 → HB-BLOCO-300) e indicar review_required=true sempre que haja sobras horizontais/verticais relevantes (>0 mm).
-- Sempre que a confidence dimensional for <=0.6 ou faltarem cotas, sinalizar o pano para revisão humana antes de qualquer envio para orçamento.
+- Catálogo oficial fechado de códigos (NÃO inventar outros):
+  * HB-BLOCO-220 — bloco principal 1200 × 300 × 220 mm (núcleo 150 mm), unidade "un".
+  * HB-BLOCO-300 — bloco principal 1200 × 300 × 300 mm (núcleo 220 mm), unidade "un".
+  * HB-TOPO-150 / HB-TOPO-220 — peça de remate de topo, unidade "un".
+  * HB-ESPACADOR-150 / HB-ESPACADOR-220 — espaçador interno, unidade "un".
+  * HB-DETALHE-CORTE — peça técnica de corte/remate, unidade "un".
+- Os SVGs em /icf/homeblock/*.svg são APENAS referência visual para o utilizador. NUNCA extrair medidas, escalas ou contagens a partir dos desenhos SVG. As únicas dimensões válidas são as canónicas acima (1200 mm comprimento × 300 mm altura).
+- Modulação obrigatória: 1200 mm horizontal × 300 mm vertical por fiada. Qualquer composição deve ser feita por número inteiro de blocos por fiada × número inteiro de fiadas.
+- Escolha do bloco principal pela espessura do núcleo declarada: 150 mm → HB-BLOCO-220; 220 mm → HB-BLOCO-300. Nunca misturar blocos principais no mesmo pano.
+- Sobras: se length_mm % 1200 > 0 OU height_mm % 300 > 0, emitir sempre cut_suggestion + review_required=true. Não arredondar silenciosamente.
+- Vãos: descontar por área equivalente em blocos (área_vão_mm² / (1200×300)), arredondando para cima; marcar review_required=true.
+- Perdas: aplicar fator de perdas standard 5% (0.05) sobre a quantidade líquida final de blocos principais.
+- Confidence: se confidence dimensional <= 0.6 ou faltarem cotas/escala, o pano é "review_required" e NÃO pode ir para orçamento sem confirmação humana.
+
+ALINHAMENTO COM O MODELO DE ORÇAMENTO (saída a jusante):
+- Todo o sistema ICF é enviado para orçamento como UM ÚNICO capítulo "Sistema ICF / HOMEBLOCK".
+- Cada linha do capítulo corresponde a um código exato da biblioteca acima, agregando quantitativos por código entre todos os panos validados.
+- Unidades aceites no orçamento: "un" para blocos/topos/espaçadores/detalhes, "m²" apenas para indicadores agregados auxiliares (nunca substituem o "un" dos blocos).
+- Preços unitários são geridos pelo sistema (HOMEBLOCK_FALLBACK_PRICES); a Axia NÃO inventa preços, apenas devolve quantidades e códigos.
 
 Responde exclusivamente por tool call no schema definido.`;
 
