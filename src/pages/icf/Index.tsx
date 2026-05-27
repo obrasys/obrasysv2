@@ -259,6 +259,17 @@ const IcfIndex = () => {
             />
 
             <IcfQuickNav configId={activeConfig.id} />
+
+            <IcfPanelsIsometric
+              title="Vista Isométrica dos Panos"
+              panels={configPanos.map(p => ({
+                id: p.id,
+                label: p.referencia,
+                length_m: Number(p.comprimento) || 0,
+                height_m: Number(p.altura_util) || 0,
+              }))}
+              emptyHint="Adicione panos de parede a esta configuração para ver o modelo isométrico esquemático."
+            />
           </>
         )}
 
