@@ -683,6 +683,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                   />
                 </TableCell>
               </TableRow>
+            ))}
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
