@@ -689,7 +689,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <TableRow className="bg-muted/40 font-semibold">
               <TableCell className="text-xs">Total</TableCell>
               <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ​
               </TableCell>
               <TableCell className="text-right text-xs tabular-nums">
                 {totals.total_directos > 0
