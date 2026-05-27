@@ -4,17 +4,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import {
   DEFAULT_CHECKLIST,
+  type IcfAnalysisSnapshot,
   type IcfChecklistItem,
   type IcfDocumentCategory,
   type IcfProjectAnalysis,
   type IcfProjectDocument,
   type IcfProjectIssue,
 } from '@/types/icf-dossier';
+import type {
+  ICFAccessoryEstimate,
+  ICFWallCompositionResult,
+  ICFWallPanel,
+} from '@/types/icf-homeblock';
 
 const T_ANALYSES = 'icf_project_analyses' as const;
 const T_DOCS = 'icf_project_documents' as const;
 const T_CHECKLIST = 'icf_project_checklist_items' as const;
 const T_ISSUES = 'icf_project_issues' as const;
+const T_SNAPSHOTS = 'icf_analysis_snapshots' as const;
+const T_PANELS = 'icf_wall_panels' as const;
 
 const sb = supabase as any;
 
