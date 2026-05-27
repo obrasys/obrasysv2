@@ -592,7 +592,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <SectionTitle>Custos Directos / Preços Secos — Valores s/ IVA</SectionTitle>
+        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -650,9 +650,10 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </TableBody>
         </Table>
         <SubtotalRow label="TOTAL CUSTOS DIRECTOS / CT" value={totals.total_directos} />
+        </Section>
 
         {/* ESTALEIRO */}
-        <SectionTitle>Custos de Estaleiro</SectionTitle>
+        <Section id="estaleiro" title="Custos de Estaleiro" collapsed={isCol("estaleiro")} onToggle={() => toggleSection("estaleiro")}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -684,13 +685,14 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </TableBody>
         </Table>
         <SubtotalRow label="TOTAL ESTALEIRO / CT" value={totals.total_estaleiro} />
+        </Section>
 
         <SubtotalRow label="CUSTO INDUSTRIAL" code="(1) = Directos + Estaleiro" value={totals.custo_industrial} />
 
         <Separator />
 
         {/* TERRENO (2) */}
-        <SectionTitle>Custos do Terreno / Arranjos Exteriores — (2)</SectionTitle>
+        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Preço Aquisição Terreno (€)</Label>
@@ -788,11 +790,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </div>
         <SubtotalRow label="TOTAL CUSTOS DO TERRENO" code="(2)" value={totals.total_terreno} />
+        </Section>
 
         <Separator />
 
         {/* INDIRECTOS (3) */}
-        <SectionTitle>Custos Indirectos — (3)</SectionTitle>
+        <Section id="indirectos" title="Custos Indirectos — (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Honorários Técnicos (€)</Label>
@@ -879,11 +882,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </div>
         <SubtotalRow label="TOTAL CUSTOS INDIRECTOS" code="(3)" value={totals.total_indirectos} />
+        </Section>
 
         <Separator />
 
         {/* OUTROS (4) */}
-        <SectionTitle>Outros Custos — (4)</SectionTitle>
+        <Section id="outros" title="Outros Custos — (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Contratos / Registos (€)</Label>
@@ -939,11 +943,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </div>
         <SubtotalRow label="TOTAL OUTROS CUSTOS" code="(4)" value={totals.total_outros} />
+        </Section>
 
         <Separator />
 
         {/* ADMIN (5) */}
-        <SectionTitle>Custos Administrativos — (5)</SectionTitle>
+        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Estrutura / Fixos (Overhead) (€)</Label>
@@ -971,11 +976,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </div>
         <SubtotalRow label="TOTAL CUSTOS ADMINISTRATIVOS" code="(5)" value={totals.total_admin} />
+        </Section>
 
         <Separator />
 
         {/* IVA (6) */}
-        <SectionTitle>Custos de IVA — (6)</SectionTitle>
+        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
@@ -1022,6 +1028,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
         </div>
         <SubtotalRow label="TOTAL IVA" code="(6)" value={totals.total_iva} />
+        </Section>
 
 
 
@@ -1035,9 +1042,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
 
         {/* MAPA DE VENDAS */}
-        <div className="flex items-center justify-between">
-          <SectionTitle>Mapa de Vendas Comercial — Decomposição das Frações</SectionTitle>
-        </div>
+        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -1123,11 +1128,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <Plus className="h-4 w-4" /> Adicionar tipologia
           </Button>
         )}
+        </Section>
 
         <Separator />
 
         {/* DADOS ESTATÍSTICOS */}
-        <SectionTitle>Dados Estatísticos (Valor m² Área Construída Equivalente)</SectionTitle>
+        <Section id="estatistica" title="Dados Estatísticos (Valor m² Área Construída Equivalente)" collapsed={isCol("estatistica")} onToggle={() => toggleSection("estatistica")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Área Bruta Privativa (m²)</Label>
@@ -1175,11 +1181,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* PROPOSTA FINAL — RAI */}
-        <SectionTitle>Proposta Final | Venda — RAI</SectionTitle>
+        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor de Vendas (Proposta)</p>
@@ -1206,11 +1213,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* CONDICIONANTES */}
-        <SectionTitle>Dados Terreno / Condicionantes de Obra</SectionTitle>
+        <Section id="condicionantes" title="Dados Terreno / Condicionantes de Obra" collapsed={isCol("condicionantes")} onToggle={() => toggleSection("condicionantes")}>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
           {(
             [
@@ -1249,11 +1257,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             }
           />
         </div>
+        </Section>
 
         <Separator />
 
         {/* VALIDAÇÃO TÉCNICO-ECONÓMICA */}
-        <SectionTitle>Validação Técnico-Económica</SectionTitle>
+        <Section id="validacao" title="Validação Técnico-Económica" collapsed={isCol("validacao")} onToggle={() => toggleSection("validacao")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Direcção Geral</Label>
@@ -1281,11 +1290,12 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(e) => patch("validation", { ...details.validation, observacoes: e.target.value })} />
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* APROVAÇÃO / ADMINISTRAÇÃO */}
-        <SectionTitle>Aprovação Inicial / Administração</SectionTitle>
+        <Section id="aprovacao" title="Aprovação Inicial / Administração" collapsed={isCol("aprovacao")} onToggle={() => toggleSection("aprovacao")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Aprovação Inicial — Nome</Label>
@@ -1315,23 +1325,24 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(e) => patch("approvals", { ...details.approvals, notas: e.target.value })} />
           </div>
         </div>
+        </Section>
 
         <Separator />
 
         {/* QUALIDADES DA OBRA / CADERNO DE ENCARGOS */}
-        <div className="flex items-center justify-between">
-          <SectionTitle>Qualidades da Obra / Caderno de Encargos</SectionTitle>
-          <Button
-            size="sm"
-            variant="ghost"
-            asChild
-            className="text-xs gap-1.5 ml-2"
-          >
-            <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
-              <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
-            </a>
-          </Button>
-        </div>
+        <Section
+          id="qualidades"
+          title="Qualidades da Obra / Caderno de Encargos"
+          collapsed={isCol("qualidades")}
+          onToggle={() => toggleSection("qualidades")}
+          extra={
+            <Button size="sm" variant="ghost" asChild className="text-xs gap-1.5">
+              <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
+                <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
+              </a>
+            </Button>
+          }
+        >
 
         {qualitySpecs.list.isLoading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
@@ -1352,6 +1363,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             ))}
           </div>
         )}
+        </Section>
 
         {/* ASSINATURAS / RODAPÉ */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-3 border-t">
