@@ -34,6 +34,8 @@ import { DailyReportForm } from '@/components/daily-reports/DailyReportForm';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { MilestonesTimeline } from '@/components/financial-forecast/MilestonesTimeline';
 import { KpiCard } from '@/components/relatorios/KpiCard';
+import { ObraDossierTab } from '@/components/obras/dossier/ObraDossierTab';
+
 import { useObra, useObras } from '@/hooks/useObras';
 import { useRDOs } from '@/hooks/useRDOs';
 import { useProjectResourceSummary } from '@/hooks/useProjectResources';
@@ -501,7 +503,9 @@ export default function VerObraPage() {
               <TabsTrigger value="execucao" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Activity className="h-3.5 w-3.5" /><span className="hidden sm:inline">Execução</span></TabsTrigger>
               <TabsTrigger value="controlo" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Target className="h-3.5 w-3.5" /><span className="hidden sm:inline">Controlo</span></TabsTrigger>
               <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><DollarSign className="h-3.5 w-3.5" /><span className="hidden sm:inline">Financeiro</span></TabsTrigger>
+              <TabsTrigger value="dossier" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><BookOpen className="h-3.5 w-3.5" /><span className="hidden sm:inline">Dossier</span></TabsTrigger>
             </TabsList>
+
           </div>
 
           {/* Tab: Geral */}
@@ -833,7 +837,13 @@ export default function VerObraPage() {
           <TabsContent value="financeiro-previsto" className="mt-4">
             <MilestonesTimeline obraId={id!} />
           </TabsContent>
+
+          {/* Tab: Dossier do Promotor */}
+          <TabsContent value="dossier" className="mt-4">
+            <ObraDossierTab obraId={id!} />
+          </TabsContent>
         </Tabs>
+
       </div>
 
       <FinalizarObraModal
