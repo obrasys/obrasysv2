@@ -8,7 +8,8 @@ import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles, FolderT
 import { toast } from 'sonner';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { useObras } from '@/hooks/useObras';
-import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig } from '@/hooks/useIcfData';
+import { useIcfConfiguracoes, useIcfResumo, useDeleteIcfConfig, useCreateIcfConfig, useUpdateIcfConfig, useIcfPanos } from '@/hooks/useIcfData';
+import { IcfPanelsIsometric } from '@/components/icf/IcfPanelsIsometric';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { useGenerateIcfBudget } from '@/hooks/useIcfBudget';
 import { IcfBudgetConfigDialog, type IcfBudgetFinancials } from '@/components/icf/IcfBudgetConfigDialog';
