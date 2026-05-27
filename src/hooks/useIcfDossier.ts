@@ -278,3 +278,250 @@ export function useResolveIssue() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['icf-issues'] }),
   });
 }
+
+// ------- Panels (dossier-scoped) -------
+export function useIcfDossierPanels(analysisId?: string) {
+  return useQuery({
+    queryKey: ['icf-dossier-panels', analysisId],
+    enabled: !!analysisId,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from(T_PANELS)
+        .select('*')
+        .eq('analysis_id', analysisId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ICFWallPanel[];
+    },
+  });
+}
+
+export function useCreateDossierPanel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<ICFWallPanel> & { analysis_id: string; obra_id: string }) => {
+      const { data, error } = await sb.from(T_PANELS).insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ['icf-dossier-panels', v.analysis_id] });
+      qc.invalidateQueries({ queryKey: ['icf-wall-panels'] });
+      toast.success('Pano adicionado ao dossiê');
+    },
+    onError: (e: any) => toast.error('Erro a criar pano', { description: e.message }),
+  });
+}
+
+// ------- Composition aggregation -------
+export interface DossierCompositionAgg {
+  panelsTotal: number;
+  panelsValidated: number;
+  grossAreaM2: number;
+  netAreaM2: number;
+  blocks: Array<{ code: string; qty: number }>;
+  accessories: Array<{ code: string; name: string; qty: number; unit: string }>;
+  warnings: string[];
+}
+
+export function aggregateDossierComposition(panels: ICFWallPanel[]): DossierCompositionAgg {
+  const blockQty: Record<string, number> = {};
+  const accQty: Record<string, { name: string; qty: number; unit: string }> = {};
+  let gross = 0, net = 0;
+  const warnings: string[] = [];
+  let validated = 0;
+  for (const p of panels) {
+    gross += Number(p.gross_area_m2) || 0;
+    net += Number(p.net_area_m2 ?? 0) || 0;
+    if (p.status === 'validado' || p.status === 'enviado_orcamento') validated++;
+    const r = p.composition_result as ICFWallCompositionResult | null;
+    if (!r) {
+      warnings.push(`Pano "${p.label}" sem composição calculada.`);
+      continue;
+    }
+    blockQty[r.block_code] = (blockQty[r.block_code] || 0) + (r.estimated_final_block_qty || 0);
+    for (const a of (r.accessories || []) as ICFAccessoryEstimate[]) {
+      if (!accQty[a.code]) accQty[a.code] = { name: a.name, qty: 0, unit: a.unit || 'un' };
+      accQty[a.code].qty += a.estimated_qty || 0;
+    }
+    for (const w of r.warnings || []) warnings.push(`[${p.label}] ${w}`);
+  }
+  return {
+    panelsTotal: panels.length,
+    panelsValidated: validated,
+    grossAreaM2: gross,
+    netAreaM2: net,
+    blocks: Object.entries(blockQty).map(([code, qty]) => ({ code, qty })),
+    accessories: Object.entries(accQty).map(([code, a]) => ({ code, name: a.name, qty: a.qty, unit: a.unit })),
+    warnings,
+  };
+}
+
+// ------- Snapshots -------
+export function useIcfSnapshots(analysisId?: string) {
+  return useQuery({
+    queryKey: ['icf-snapshots', analysisId],
+    enabled: !!analysisId,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from(T_SNAPSHOTS)
+        .select('*')
+        .eq('analysis_id', analysisId)
+        .order('version_number', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as IcfAnalysisSnapshot[];
+    },
+  });
+}
+
+export function useCreateIcfSnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      analysisId,
+      label,
+      payload,
+    }: { analysisId: string; label?: string; payload: unknown }) => {
+      const { data: existing } = await sb
+        .from(T_SNAPSHOTS)
+        .select('version_number')
+        .eq('analysis_id', analysisId)
+        .order('version_number', { ascending: false })
+        .limit(1);
+      const next = ((existing?.[0]?.version_number as number) ?? 0) + 1;
+      const { error } = await sb.from(T_SNAPSHOTS).insert({
+        analysis_id: analysisId,
+        version_number: next,
+        label: label ?? `v${next}`,
+        payload: payload as any,
+      });
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ['icf-snapshots', v.analysisId] });
+      toast.success('Snapshot criado');
+    },
+    onError: (e: any) => toast.error('Erro a criar snapshot', { description: e.message }),
+  });
+}
+
+// ------- Send dossier panels to budget -------
+const HOMEBLOCK_FALLBACK_PRICES: Record<string, number> = {
+  'HB-BLOCO-220': 14.5, 'HB-BLOCO-300': 17.9,
+  'HB-TOPO-150': 2.4, 'HB-TOPO-220': 2.8,
+  'HB-ESP-150': 1.2, 'HB-ESP-220': 1.3,
+};
+const BLOCK_NAME: Record<string, string> = {
+  'HB-BLOCO-220': 'HOMEBLOCK Bloco 22 cm',
+  'HB-BLOCO-300': 'HOMEBLOCK Bloco 30 cm',
+  'HB-TOPO-150': 'HOMEBLOCK Topo 15 cm',
+  'HB-TOPO-220': 'HOMEBLOCK Topo 22 cm',
+  'HB-ESP-150': 'HOMEBLOCK Espaçador 15 cm',
+  'HB-ESP-220': 'HOMEBLOCK Espaçador 22 cm',
+};
+
+export function useSendDossierToBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      analysisId,
+      obraId,
+      configuracaoId,
+      margem_lucro = 0.2,
+      iva_percent = 23,
+    }: {
+      analysisId: string;
+      obraId: string;
+      configuracaoId: string;
+      margem_lucro?: number;
+      iva_percent?: number;
+    }) => {
+      const { data: panelsData, error: pErr } = await sb
+        .from(T_PANELS)
+        .select('*')
+        .eq('analysis_id', analysisId)
+        .eq('status', 'validado');
+      if (pErr) throw pErr;
+      const panels = (panelsData ?? []) as unknown as ICFWallPanel[];
+      if (panels.length === 0) throw new Error('Nenhum pano validado para enviar.');
+
+      const agg = aggregateDossierComposition(panels);
+      const { data: configData, error: cErr } = await supabase
+        .from('icf_configuracoes')
+        .select('*')
+        .eq('id', configuracaoId)
+        .single();
+      if (cErr) throw cErr;
+      const config = configData as any;
+
+      const artigos: any[] = [];
+      agg.blocks.forEach(b => {
+        if (b.qty <= 0) return;
+        artigos.push({
+          codigo: b.code,
+          descricao: BLOCK_NAME[b.code] || b.code,
+          unidade: 'un',
+          quantidade: b.qty,
+          preco_unitario: HOMEBLOCK_FALLBACK_PRICES[b.code] ?? 0,
+        });
+      });
+      agg.accessories.forEach(a => {
+        if (a.qty <= 0) return;
+        artigos.push({
+          codigo: a.code,
+          descricao: BLOCK_NAME[a.code] || a.name,
+          unidade: a.unit,
+          quantidade: Math.ceil(a.qty),
+          preco_unitario: HOMEBLOCK_FALLBACK_PRICES[a.code] ?? 0,
+        });
+      });
+      if (artigos.length === 0) throw new Error('Sem artigos — recalcule a composição dos panos.');
+
+      const chapters = [{
+        numero: 1,
+        titulo: 'Sistema ICF / HOMEBLOCK',
+        descricao: `Dossiê ICF · ${panels.length} pano(s) validado(s). Área bruta ${agg.grossAreaM2.toFixed(2)} m² · líquida ${agg.netAreaM2.toFixed(2)} m².`,
+        artigos,
+      }];
+
+      const { data: result, error: rpcErr } = await supabase.rpc(
+        'generate_icf_budget_transactional',
+        {
+          p_obra_id: obraId,
+          p_configuracao_id: configuracaoId,
+          p_titulo: `Dossiê ICF — ${config.nome}`,
+          p_margem_lucro: margem_lucro,
+          p_custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0, iva_percent, indiretos_percent: 0 },
+          p_chapters: chapters as any,
+          p_config_snapshot: {
+            id: config.id, nome: config.nome, versao: config.versao,
+            espessura_nucleo: config.espessura_nucleo,
+            classe_betao: config.classe_betao, classe_aco: config.classe_aco,
+          } as any,
+          p_resumo_snapshot: {
+            source: 'icf_dossier',
+            analysis_id: analysisId,
+            panels_count: panels.length,
+            gross_area_m2: agg.grossAreaM2,
+            net_area_m2: agg.netAreaM2,
+            warnings: agg.warnings,
+          } as any,
+        } as any,
+      );
+      if (rpcErr) throw rpcErr;
+
+      await sb.from(T_PANELS).update({ status: 'enviado_orcamento' })
+        .in('id', panels.map(p => p.id));
+      await sb.from(T_ANALYSES).update({ status: 'enviado_orcamento' }).eq('id', analysisId);
+
+      return result as { orcamento_id: string; codigo: string };
+    },
+    onSuccess: (out, v) => {
+      qc.invalidateQueries({ queryKey: ['icf-dossier-panels', v.analysisId] });
+      qc.invalidateQueries({ queryKey: ['icf-analysis', v.analysisId] });
+      toast.success('Orçamento gerado', { description: `Código ${out.codigo}` });
+    },
+    onError: (e: any) => toast.error('Erro a enviar para orçamento', { description: e.message }),
+  });
+}
