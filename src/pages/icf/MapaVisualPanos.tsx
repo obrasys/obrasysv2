@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Plus, Inbox } from 'lucide-react';
+import { Loader2, Plus, Inbox, Send } from 'lucide-react';
 import { useObras } from '@/hooks/useObras';
 import { useIcfBlockLibrary } from '@/hooks/useIcfBlockLibrary';
-import { useIcfWallPanels, useCreateIcfWallPanel } from '@/hooks/useIcfWallPanels';
+import { useIcfConfiguracoes } from '@/hooks/useIcfData';
+import { useIcfWallPanels, useCreateIcfWallPanel, useSendWallPanelsToBudget } from '@/hooks/useIcfWallPanels';
 import { ICFWallPanelCard } from '@/components/icf/panels/ICFWallPanelCard';
 import type { ICFWallPanel } from '@/types/icf-homeblock';
 import { toast } from 'sonner';
