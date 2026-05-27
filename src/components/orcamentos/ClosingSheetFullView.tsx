@@ -32,6 +32,16 @@ import { useUpdateClosingSheetDetails } from "@/hooks/useClosingSheetDetails";
 import { useApproveClosingSheet } from "@/hooks/useApproveClosingSheet";
 import { useQualitySpecsCatalog } from "@/hooks/useQualitySpecsCatalog";
 import { ClosingSheetSiteDetailDialog } from "./ClosingSheetSiteDetailDialog";
+import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useClosingSheetSiteDetail";
+
+// Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
+const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
+  site_labor: "pessoal_producao",
+  technical_staff: "gestao_obra",
+  site_equipment: "equipamentos",
+  utilities: "utilities",
+  other_site_costs: "arvorado",
+};
 
 const fmt = (v: number | null | undefined) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
