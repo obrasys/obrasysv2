@@ -179,9 +179,9 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
   const idxEmp = dc.findIndex((l) => l.key === "empreitada_exclusoes");
   if (idxEmp >= 0) dc[idxEmp] = { ...dc[idxEmp], value: Number(sheet.total_direct_cost) || 0 };
 
-  // Seed estaleiro on Gestão Obra
+  // Seed estaleiro on Pessoal Técnico (rubrica A)
   const sc = [...base.site_costs];
-  const idxGo = sc.findIndex((l) => l.key === "gestao_obra");
+  const idxGo = sc.findIndex((l) => l.key === "pessoal_tecnico");
   if (idxGo >= 0) sc[idxGo] = { ...sc[idxGo], value: Number(sheet.site_costs) || 0 };
 
   // Seed sales line from sale_price
