@@ -364,7 +364,10 @@ export function useOrcamentos() {
       if (error) throw error;
       if (!data) throw new Error('Não foi possível criar a revisão');
 
-      return data as Orcamento;
+      return {
+        ...(data as Record<string, unknown>),
+        custos_indiretos: parseCustosIndiretos((data as { custos_indiretos?: Json | null }).custos_indiretos ?? null),
+      } as Orcamento;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
