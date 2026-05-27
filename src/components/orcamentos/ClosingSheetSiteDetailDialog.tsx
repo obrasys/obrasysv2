@@ -1,23 +1,32 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Sparkles } from "lucide-react";
 import {
   useClosingSheetSiteDetail,
   SITE_CATEGORY_LABELS,
+  SITE_CATEGORY_DEFAULTS,
   type SiteDetailCategory,
   type SiteDetailLine,
 } from "@/hooks/useClosingSheetSiteDetail";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
 
 const CATEGORIES: SiteDetailCategory[] = [
-  "site_labor", "technical_staff", "site_equipment", "utilities", "other_site_costs",
+  "technical_staff",
+  "site_supervisors",
+  "team_leaders",
+  "utilities",
+  "site_equipment",
+  "site_guard",
+  "site_labor",
+  "other_site_costs",
 ];
 
 interface Props {
