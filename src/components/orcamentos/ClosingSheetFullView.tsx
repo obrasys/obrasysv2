@@ -650,13 +650,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 <TableCell className="font-medium text-xs">{line.label}</TableCell>
                 <TableCell>
                   <NumCell
-                    readOnly={readOnly}
+                    readOnly
                     value={line.value}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, value: v };
-                      patch("direct_costs", next);
-                    }}
+                    onChange={() => {}}
                   />
                 </TableCell>
                 <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
