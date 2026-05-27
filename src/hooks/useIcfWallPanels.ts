@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { ICFWallPanel, ICFWallCompositionResult } from '@/types/icf-homeblock';
+import type {
+  ICFWallPanel,
+  ICFWallCompositionResult,
+  ICFAccessoryEstimate,
+} from '@/types/icf-homeblock';
 
 export function useIcfWallPanels(obraId?: string) {
   return useQuery({
