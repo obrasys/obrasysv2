@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download, ListChecks, ShieldCheck } from "lucide-react";
+import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download, ListChecks, ShieldCheck, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
