@@ -687,11 +687,11 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
-              <TableCell className="text-xs text-right">Total %</TableCell>
+              <TableCell className="text-xs text-right">​</TableCell>
               <TableCell />
               <TableCell className="text-right text-xs tabular-nums">
                 {totals.total_directos > 0
-                  ? `${details.direct_costs.reduce((acc, l) => acc + (l.value / totals.total_directos) * 100, 0).toFixed(2)}%`
+                  ? `Total: ${details.direct_costs.reduce((acc, l) => acc + (l.value / totals.total_directos) * 100, 0).toFixed(2)}%`
                   : "—"}
               </TableCell>
               <TableCell />
