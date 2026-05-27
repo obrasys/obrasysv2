@@ -36,14 +36,14 @@ import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useC
 
 // Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
 const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
-  technical_staff: "gestao_obra",
-  site_supervisors: "gestao_obra",
-  team_leaders: "pessoal_producao",
+  technical_staff: "pessoal_tecnico",
+  site_supervisors: "encarregados",
+  team_leaders: "chefes_equipa",
   utilities: "utilities",
   site_equipment: "equipamentos",
-  site_guard: "arvorado",
-  site_labor: "pessoal_producao",
-  other_site_costs: "arvorado",
+  site_guard: "guarda",
+  site_labor: "pessoal_obra",
+  other_site_costs: "outro",
 };
 
 const fmt = (v: number | null | undefined) =>
