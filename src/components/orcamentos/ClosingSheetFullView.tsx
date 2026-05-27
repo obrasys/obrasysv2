@@ -32,6 +32,16 @@ import { useUpdateClosingSheetDetails } from "@/hooks/useClosingSheetDetails";
 import { useApproveClosingSheet } from "@/hooks/useApproveClosingSheet";
 import { useQualitySpecsCatalog } from "@/hooks/useQualitySpecsCatalog";
 import { ClosingSheetSiteDetailDialog } from "./ClosingSheetSiteDetailDialog";
+import { useClosingSheetSiteDetail, type SiteDetailCategory } from "@/hooks/useClosingSheetSiteDetail";
+
+// Mapeamento: categoria do Discriminado → key da rubrica em details.site_costs
+const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
+  site_labor: "pessoal_producao",
+  technical_staff: "gestao_obra",
+  site_equipment: "equipamentos",
+  utilities: "utilities",
+  other_site_costs: "arvorado",
+};
 
 const fmt = (v: number | null | undefined) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
@@ -170,6 +180,29 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   useEffect(() => {
     setDetails(seedFromLegacy(sheet));
   }, [sheet.id, sheet.details]);
+
+  // Sincronização: subtotais do Discriminado de Estaleiro → rubricas em details.site_costs
+  const siteDetail = useClosingSheetSiteDetail(sheet.id);
+  const siteDetailLines = siteDetail.list.data;
+  useEffect(() => {
+    if (!siteDetailLines || siteDetailLines.length === 0) return;
+    const subtotals: Record<string, number> = {};
+    for (const l of siteDetailLines) {
+      const key = SITE_DETAIL_TO_RUBRICA[l.category];
+      subtotals[key] = (subtotals[key] || 0) + Number(l.total_amount || 0);
+    }
+    setDetails((d) => {
+      let changed = false;
+      const next = d.site_costs.map((line) => {
+        if (subtotals[line.key] !== undefined && Math.abs((line.value || 0) - subtotals[line.key]) > 0.001) {
+          changed = true;
+          return { ...line, value: subtotals[line.key] };
+        }
+        return line;
+      });
+      return changed ? { ...d, site_costs: next } : d;
+    });
+  }, [siteDetailLines]);
 
   const handlePrint = () => {
     const node = printRef.current;
