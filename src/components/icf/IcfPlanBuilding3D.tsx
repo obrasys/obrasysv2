@@ -171,12 +171,7 @@ export function IcfPlanBuilding3D({ obraId, defaultHeightM = 2.7 }: Props) {
   );
 }
 
-// helper: dois imports juntos
-function useImports(obraId: string) {
-  const planImportsQuery = (usePlanImports(obraId) as any).planImportsQuery
-    ?? { data: (usePlanImports(obraId) as any).planImports ?? [], isLoading: false };
-  return { planImportsQuery };
-}
+
 
 // ───────── Cena ─────────
 interface WorldWall { id: string; x1: number; z1: number; x2: number; z2: number; thickness: number; tipo: string; length_m: number; }
