@@ -124,7 +124,7 @@ export default function PlanQuantitativos() {
       <AppLayout title="Planta não encontrada">
         <div className="text-center py-16">
           <p className="text-muted-foreground">Planta não encontrada.</p>
-          <Button className="mt-4" onClick={() => navigate(`/obras/${obraId}/plantas`)}>
+          <Button className="mt-4" onClick={() => navigate(baseRoute)}>
             Voltar
           </Button>
         </div>
