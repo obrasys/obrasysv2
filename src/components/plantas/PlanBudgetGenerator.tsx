@@ -11,11 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+import type { PlanMeasurement, PlanMeasurementMapping, PlanRoom } from "@/types/plan-measurements";
 import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { buildDedupePayload } from "@/lib/plan-dedupe";
 import { DISCIPLINE_META } from "@/lib/plan-discipline";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+type WorkMode = "remodelacao" | "construcao_nova";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
@@ -71,6 +74,7 @@ interface Props {
   planName: string;
   measurements: PlanMeasurement[];
   mappings: PlanMeasurementMapping[];
+  rooms?: PlanRoom[];
   articles: Article[];
   tipoBase?: TipoBase;
   disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
@@ -78,16 +82,17 @@ interface Props {
   autoOpen?: boolean;
 }
 
-export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
+export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, measurements, mappings, rooms = [], articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(autoOpen);
+  const [workMode, setWorkMode] = useState<WorkMode>(tipoBase === "remodelacao" ? "remodelacao" : "construcao_nova");
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
     ? DISCIPLINE_META[disciplina]?.label
     : null;
   const chapterPrefix = disciplineLabel ? `${disciplineLabel} - ` : "";
-  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} - ${planName}` : `Pré-Orçamento - ${planName}`);
+  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} - ${planName}` : `Orçamento - ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
@@ -175,15 +180,21 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
         let descricao: string;
         let placeholderId: string;
         if (bucket === "Acabamentos - Rodapé") {
-          descricao = "Rodapé - fornecimento e aplicação";
+          descricao = workMode === "remodelacao"
+            ? "Substituição de rodapé"
+            : "Rodapé - fornecimento e aplicação";
           placeholderId = `derived::rodape::${unidade}`;
         } else if (bucket === "Acabamentos - Paredes") {
-          descricao = "Paredes - revestimento/pintura";
+          descricao = workMode === "remodelacao"
+            ? "Pintura de paredes"
+            : "Paredes - revestimento/pintura";
           placeholderId = `derived::paredes::${unidade}`;
         } else if (bucket === "Acabamentos - Pavimentos e Tetos") {
           const isTeto = (measurement.camada ?? "").toLowerCase() === "teto" ||
             (measurement.etiqueta ?? "").toLowerCase().startsWith("teto");
-          descricao = isTeto ? "Teto - pintura/acabamento" : "Pavimento - fornecimento e aplicação";
+          descricao = isTeto
+            ? (workMode === "remodelacao" ? "Pintura de teto" : "Teto - pintura/acabamento")
+            : (workMode === "remodelacao" ? "Substituição de pavimento" : "Pavimento - fornecimento e aplicação");
           placeholderId = `derived::${isTeto ? "teto" : "pavimento"}::${unidade}`;
         } else {
           descricao =
@@ -221,6 +232,89 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
       }
     });
 
+    // Derivar artigos a partir dos compartimentos (plan_rooms) quando a Axia
+    // analisou a planta mas o utilizador não criou medições manuais. Cada
+    // compartimento contribui com: área de pavimento, perímetro de rodapé e
+    // área aproximada de paredes (perímetro × pé-direito).
+    const measurementIdsAlreadyConsumed = new Set<string>();
+    byArticle.forEach((row) => row.measurementIds.forEach((id) => measurementIdsAlreadyConsumed.add(id)));
+    const hasAnyMappedArea = Array.from(byArticle.values()).some((r) =>
+      ["m²", "ml"].includes(r.article.unidade) && r.measurementIds.length > 0,
+    );
+
+    if (rooms.length > 0 && !hasAnyMappedArea) {
+      const pushDerivedFromRooms = (
+        key: string,
+        descricao: string,
+        unidade: "m²" | "ml",
+        qtd: number,
+        categoria: string,
+      ) => {
+        if (qtd <= 0) return;
+        const existing = byArticle.get(key);
+        if (existing) {
+          existing.quantidade += qtd;
+          return;
+        }
+        byArticle.set(key, {
+          artigoId: key,
+          article: {
+            id: key,
+            codigo: "A DEFINIR",
+            descricao,
+            unidade,
+            preco_unitario: 0,
+            categoria,
+          },
+          categoria,
+          quantidade: qtd,
+          valorTotal: 0,
+          measurementIds: [],
+        });
+      };
+
+      let totalArea = 0;
+      let totalPerimetro = 0;
+      let totalParedes = 0;
+      rooms.forEach((r) => {
+        const area = r.area_m2 ?? 0;
+        const perim = r.perimetro_m ?? 0;
+        const pd = r.pe_direito_m ?? 2.6;
+        totalArea += area;
+        totalPerimetro += perim;
+        totalParedes += perim * pd;
+      });
+
+      pushDerivedFromRooms(
+        "room-derived::pavimento",
+        workMode === "remodelacao" ? "Substituição de pavimento" : "Pavimento - fornecimento e aplicação",
+        "m²",
+        totalArea,
+        "Acabamentos - Pavimentos e Tetos",
+      );
+      pushDerivedFromRooms(
+        "room-derived::rodape",
+        workMode === "remodelacao" ? "Substituição de rodapé" : "Rodapé - fornecimento e aplicação",
+        "ml",
+        totalPerimetro,
+        "Acabamentos - Rodapé",
+      );
+      pushDerivedFromRooms(
+        "room-derived::paredes",
+        workMode === "remodelacao" ? "Pintura de paredes" : "Paredes - revestimento/pintura",
+        "m²",
+        totalParedes,
+        "Acabamentos - Paredes",
+      );
+      pushDerivedFromRooms(
+        "room-derived::teto",
+        workMode === "remodelacao" ? "Pintura de teto" : "Teto - pintura/acabamento",
+        "m²",
+        totalArea,
+        "Acabamentos - Pavimentos e Tetos",
+      );
+    }
+
     // Adicionar vãos (portas/janelas) agrupados por dimensão como capítulo dedicado
     const openingsBucket = new Map<string, { descricao: string; qtd: number }>();
     openings.forEach((o) => {
@@ -250,7 +344,7 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
     });
 
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
-  }, [mappings, measurements, measurementById, articleById, openings]);
+  }, [mappings, measurements, measurementById, articleById, openings, rooms, workMode]);
 
   // Apply auto-matches: substitui código/descrição/preço dos placeholders/vãos
   // que tiveram match contra a Base (user ou global). Recalcula valorTotal.
@@ -491,7 +585,11 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
       queryClient.invalidateQueries({ queryKey: ["plan-imports"] });
 
-      toast.success(`Pré-orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`);
+      toast.success(
+        targetBudgetId
+          ? `${artigoInserts.length} artigos em ${chapters.length} capítulos adicionados ao orçamento`
+          : `Orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`,
+      );
       setShowDialog(false);
       navigate(`/orcamentos/${orcamento.id}/editar`);
     } catch (err: any) {
@@ -501,7 +599,11 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
     }
   };
 
-  const canGenerate = consolidatedEnriched.length > 0 || measurements.length > 0 || openings.length > 0;
+  const canGenerate =
+    consolidatedEnriched.length > 0 ||
+    measurements.length > 0 ||
+    openings.length > 0 ||
+    rooms.length > 0;
 
   return (
     <>
@@ -511,17 +613,48 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
         className="gap-1.5"
       >
         <FileSpreadsheet className="w-4 h-4" />
-        Gerar Pré-Orçamento
+        {targetBudgetId ? "Enviar para Orçamento" : "Gerar Pré-Orçamento"}
       </Button>
 
       <Dialog open={showDialog} onOpenChange={(open) => !isGenerating && setShowDialog(open)}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Gerar Pré-Orçamento a partir da Planta</DialogTitle>
+            <DialogTitle>
+              {targetBudgetId ? "Enviar Quantitativos para o Orçamento" : "Gerar Orçamento a partir da Planta"}
+            </DialogTitle>
             <DialogDescription>
-              Consolidar medições mapeadas e criar um orçamento com capítulos e artigos automaticamente.
+              Consolidar medições e compartimentos para gerar capítulos e artigos automaticamente.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Tipo de obra desta planta */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <p className="text-xs font-medium text-foreground">Tipo de obra desta planta</p>
+            <RadioGroup
+              value={workMode}
+              onValueChange={(v) => setWorkMode(v as WorkMode)}
+              className="grid grid-cols-2 gap-2"
+            >
+              <label className="flex items-start gap-2 rounded-md border bg-background p-2 cursor-pointer hover:bg-accent/50">
+                <RadioGroupItem value="remodelacao" className="mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Remodelação</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Pintura, substituição de pavimentos/rodapés.
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 rounded-md border bg-background p-2 cursor-pointer hover:bg-accent/50">
+                <RadioGroupItem value="construcao_nova" className="mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Construção Nova</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Fornecimento e aplicação de revestimentos novos.
+                  </p>
+                </div>
+              </label>
+            </RadioGroup>
+          </div>
 
           <div className="space-y-4 py-2">
             {/* Auto-match status */}
