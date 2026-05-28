@@ -73,6 +73,7 @@ const isNumericLike = (value: unknown) => {
 };
 
 const looksLikeCode = (value: unknown) => {
+  if (typeof value === "number") return false;
   const text = String(value ?? "").trim();
   if (!text) return false;
   return /^\d+(?:[.\-]\d+){0,5}$/.test(text) || /^[A-Z]{1,4}\d+(?:[.\-]\d+)*$/i.test(text);
@@ -129,8 +130,8 @@ const almostEqual = (a: number, b: number, tolerance = 0.02) => {
   return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1) <= tolerance;
 };
 
-const extractRowNumbers = (values: unknown[]) => values
-  .map((value, index) => ({ index, raw: value, value: toNumber(value, Number.NaN) }))
+const extractRowNumbers = (values: unknown[], ignoredIndices: number[] = []) => values
+  .map((value, index) => ({ index, raw: value, value: ignoredIndices.includes(index) ? Number.NaN : toNumber(value, Number.NaN) }))
   .filter((entry) => Number.isFinite(entry.value));
 
 const detectFinalBudgetTotal = (rows: Array<Record<string, unknown>>, headers: string[] = []) => {
