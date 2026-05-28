@@ -4,10 +4,12 @@ import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DEFAULT_BUDGET_OBSERVATIONS } from '@/lib/orcamento-pdf';
 import { 
   User, 
   Building2, 
@@ -44,7 +46,30 @@ export default function PerfilPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [observations, setObservations] = useState<string>(
+    (profile as any)?.default_budget_observations ?? DEFAULT_BUDGET_OBSERVATIONS
+  );
+  const [savingObservations, setSavingObservations] = useState(false);
   const { tier } = useFeatureGate();
+
+  const handleSaveObservations = async () => {
+    if (!user) return;
+    setSavingObservations(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ default_budget_observations: observations || null } as any)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await refreshProfile();
+      toast.success('Observações padrão atualizadas');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao guardar observações');
+    } finally {
+      setSavingObservations(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
@@ -475,6 +500,42 @@ export default function PerfilPage() {
                     </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Observações padrão dos orçamentos */}
+            <Card className="mt-4">
+              <CardContent className="pt-6 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-semibold text-foreground">Observações padrão dos orçamentos</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Estas observações aparecem no rodapé do PDF de todos os orçamentos. Uma observação por linha. Pode ser substituído individualmente em cada orçamento (Editar → Apresentação ao Cliente → Observações do rodapé).
+                </p>
+                <Textarea
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  rows={6}
+                  className="resize-none font-mono text-sm"
+                  placeholder="Ex: Os preços apresentados não incluem materiais, salvo indicação em contrário."
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setObservations(DEFAULT_BUDGET_OBSERVATIONS)}
+                  >
+                    Repor padrão
+                  </Button>
+                  <Button onClick={handleSaveObservations} disabled={savingObservations}>
+                    {savingObservations ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />A guardar...</>
+                    ) : (
+                      <><Save className="w-4 h-4 mr-2" />Guardar</>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

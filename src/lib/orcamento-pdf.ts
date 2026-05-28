@@ -19,7 +19,15 @@ interface PdfProfile {
   empresa_email?: string | null;
   email?: string | null;
   empresa_logo_url?: string | null;
+  default_budget_observations?: string | null;
 }
+
+export const DEFAULT_BUDGET_OBSERVATIONS = [
+  'Este orçamento é válido por 30 dias a contar da data de emissão.',
+  'Os preços apresentados incluem todos os materiais e mão de obra necessários.',
+  'Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.',
+  'Condições de pagamento a acordar.',
+].join('\n');
 
 interface PdfOptions {
   orcamento: Orcamento;
@@ -484,17 +492,25 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.text);
 
-  const observations = [
-    '• Este orçamento é válido por 30 dias a contar da data de emissão.',
-    '• Os preços apresentados incluem todos os materiais e mão de obra necessários.',
-    '• Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.',
-    '• Condições de pagamento a acordar.',
-  ];
+  const rawObservations =
+    (orcamento.observations_text && orcamento.observations_text.trim()) ||
+    (profile?.default_budget_observations && profile.default_budget_observations.trim()) ||
+    DEFAULT_BUDGET_OBSERVATIONS;
+
+  const observations = rawObservations
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => (l.startsWith('•') || l.startsWith('-') ? l : `• ${l}`));
 
   for (const obs of observations) {
     y = ensureSpace(doc, 5, y);
-    doc.text(obs, PAGE.marginLeft + 3, y);
-    y += 3.5;
+    const wrapped = doc.splitTextToSize(obs, usableW - 6);
+    for (const line of wrapped) {
+      y = ensureSpace(doc, 4, y);
+      doc.text(line, PAGE.marginLeft + 3, y);
+      y += 3.5;
+    }
   }
 
   // Legal note
