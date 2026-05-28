@@ -1299,7 +1299,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
         {/* DADOS ESTATÍSTICOS */}
         <Section id="estatistica" title="Dados Estatísticos (Valor m² Área Construída Equivalente)" collapsed={isCol("estatistica")} onToggle={() => toggleSection("estatistica")}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
           <div>
             <Label>Área Bruta Privativa (m²)</Label>
             <NumCell
