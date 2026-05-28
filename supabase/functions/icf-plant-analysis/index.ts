@@ -502,9 +502,11 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
       paredes_duplicadas_removidas: dedupeResult.duplicados,
       possivel_contagem_dupla: possibleDoubleCounting,
       baixa_confianca_detectada: lowConfidenceDetected,
+      modelo_utilizado: modelUsed,
       requer_revisao_humana:
         possibleDoubleCounting || lowConfidenceDetected || dedupeResult.duplicados.length > 0,
     };
+
 
     return jsonResponse({ success: true, data: extracted, audit: extracted.validacao });
   } catch (e) {
