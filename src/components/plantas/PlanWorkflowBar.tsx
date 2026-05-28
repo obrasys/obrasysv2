@@ -60,35 +60,41 @@ interface ChecklistContext {
   openingCount: number;
   hasAnalysis: boolean;
   placedElementsCount: number;
+  /** Axia already produced rooms/quantitativos -> calibration not strictly required */
+  axiaQuantitativesReady: boolean;
 }
 
 function buildChecklist(step: WorkflowStep, ctx: ChecklistContext): ChecklistItem[] {
+  const scaleReady = ctx.canMeasure || ctx.axiaQuantitativesReady;
+  const scaleHint = ctx.axiaQuantitativesReady
+    ? "Axia já gerou os quantitativos automaticamente."
+    : "Use 'Iniciar Calibração' e selecione 2 pontos com distância conhecida.";
   switch (step) {
     case "calibrate":
       return [
         { label: "Planta carregada e visível", done: true },
-        { label: "Calibração da escala guardada", done: ctx.canMeasure, hint: "Use 'Iniciar Calibração' e selecione 2 pontos com distância conhecida." },
+        { label: "Calibração da escala guardada", done: scaleReady, hint: scaleHint },
       ];
     case "measure":
       return [
-        { label: "Escala calibrada", done: ctx.canMeasure, hint: "Volte ao passo Calibrar para definir a escala." },
+        { label: "Escala calibrada", done: scaleReady, hint: "Volte ao passo Calibrar para definir a escala." },
         {
           label: "Pelo menos 1 medição/compartimento/parede",
-          done: ctx.measurementCount + ctx.roomCount + ctx.wallCount > 0,
+          done: ctx.measurementCount + ctx.roomCount + ctx.wallCount > 0 || ctx.axiaQuantitativesReady,
           hint: "Use a barra de ferramentas (Linha, Área, Compart., Parede).",
         },
       ];
     case "analyze":
       return [
-        { label: "Escala calibrada", done: ctx.canMeasure },
-        { label: "Análise Axia™ executada", done: ctx.hasAnalysis, hint: "Clique em 'Analisar com Axia™' no painel à direita." },
+        { label: "Escala calibrada", done: scaleReady },
+        { label: "Análise Axia™ executada", done: ctx.hasAnalysis || ctx.axiaQuantitativesReady, hint: "Clique em 'Analisar com Axia™' no painel à direita." },
       ];
     case "budget":
       return [
-        { label: "Escala calibrada", done: ctx.canMeasure },
+        { label: "Escala calibrada", done: scaleReady },
         {
           label: "Tem medições ou compartimentos",
-          done: ctx.measurementCount + ctx.roomCount > 0,
+          done: ctx.measurementCount + ctx.roomCount > 0 || ctx.axiaQuantitativesReady,
           hint: "Sem dados a quantificar, o orçamento ficará vazio.",
         },
       ];
@@ -96,15 +102,16 @@ function buildChecklist(step: WorkflowStep, ctx: ChecklistContext): ChecklistIte
 }
 
 function isStepUnlocked(step: WorkflowStep, ctx: ChecklistContext): boolean {
+  const scaleReady = ctx.canMeasure || ctx.axiaQuantitativesReady;
   switch (step) {
     case "calibrate":
       return true;
     case "measure":
-      return ctx.canMeasure;
+      return scaleReady;
     case "analyze":
-      return ctx.canMeasure;
+      return scaleReady;
     case "budget":
-      return ctx.canMeasure && ctx.measurementCount + ctx.roomCount > 0;
+      return scaleReady && (ctx.measurementCount + ctx.roomCount > 0 || ctx.axiaQuantitativesReady);
   }
 }
 
@@ -154,6 +161,7 @@ interface Props {
   wallCount?: number;
   openingCount?: number;
   placedElementsCount?: number;
+  axiaQuantitativesReady?: boolean;
 }
 
 export function PlanWorkflowBar({
@@ -173,6 +181,7 @@ export function PlanWorkflowBar({
   wallCount = 0,
   openingCount = 0,
   placedElementsCount = 0,
+  axiaQuantitativesReady = false,
 }: Props) {
   const ctx: ChecklistContext = {
     canMeasure,
@@ -182,12 +191,13 @@ export function PlanWorkflowBar({
     openingCount,
     hasAnalysis,
     placedElementsCount,
+    axiaQuantitativesReady,
   };
   const guide = STEP_HINTS[currentStep];
   const message = guide.getMessage(measurementCount, hasAnalysis);
   const showAction = guide.actionLabel && onPrimaryAction && (
-    (currentStep === "calibrate" && !canMeasure) ||
-    (currentStep === "analyze" && !hasAnalysis) ||
+    (currentStep === "calibrate" && !canMeasure && !axiaQuantitativesReady) ||
+    (currentStep === "analyze" && !hasAnalysis && !axiaQuantitativesReady) ||
     currentStep === "budget"
   );
   const activeHint = mode !== "view" ? MODE_HINTS[mode] : null;
