@@ -60,7 +60,7 @@ serve(async (req) => {
     }
 
     const startedAt = Date.now();
-    const callModel = "google/gemini-2.5-flash";
+    let callModel = "google/gemini-2.5-flash";
     const callType = "axia_plan_vision";
     const inputSizeBytes = approxBytes;
     let logStatus: "ok" | "error" | "timeout" = "ok";
@@ -610,6 +610,7 @@ REGRAS CRÍTICAS:
         break;
       }
 
+      callModel = att.model;
       const resp = await callAI(att.model, att.mode, att.timeoutMs);
 
       if (!resp.ok) {
