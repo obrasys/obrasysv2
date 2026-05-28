@@ -338,7 +338,7 @@ REGRAS CRÍTICAS:
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 105_000; // margem ampla para evitar idle timeout da edge runtime
+    const HARD_DEADLINE_MS = 90_000; // margem confortável para terminar antes do idle timeout da runtime
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
@@ -352,223 +352,226 @@ REGRAS CRÍTICAS:
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
-      const budget = Math.min(timeoutMs, Math.max(4_000, remainingMs() - 4_000));
+      const budget = Math.min(timeoutMs, Math.max(6_000, remainingMs() - 6_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
-        if (remainingMs() < 4_000) {
-          return new Response(JSON.stringify({ error: "deadline" }), { status: 599 });
+        if (remainingMs() < 6_000) {
+          return { ok: false, status: 599, text: "", error: "deadline" };
         }
-        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        signal: ctrl.signal,
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: modelName,
-          ...tokenLimit(modelName, mode),
-          temperature: 0.1,
-          messages: [
-            { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
-            { role: "user", content: userContent },
-          ],
-          ...(mode === "json"
-            ? {
-                response_format: { type: "json_object" },
-              }
-            : {
-                tools: [
-                  {
-                    type: "function",
-                    function: {
-                      name: "plan_analysis",
-                      description: "Return structured analysis of a construction plan image (Axia spec).",
-                      parameters: {
-                        type: "object",
-                        properties: {
-                  sheet_classification: {
-                    type: "object",
-                    properties: {
-                      type: {
-                        type: "string",
-                        enum: ["planta_piso", "implantacao", "corte", "alcado", "detalhe", "legenda", "outro"],
-                      },
-                      piso: { type: "string" },
-                      titulo: { type: "string" },
-                      escala: { type: "string" },
-                      norte_presente: { type: "boolean" },
-                      legenda_presente: { type: "boolean" },
-                      carimbo_presente: { type: "boolean" },
-                    },
-                    additionalProperties: false,
-                  },
-                  scale_detected: {
-                    type: "object",
-                    properties: {
-                      found: { type: "boolean" },
-                      value: { type: "string" },
-                      reference_dimension: { type: "string" },
-                    },
-                    required: ["found"],
-                    additionalProperties: false,
-                  },
-                  dimensions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        value: { type: "number" },
-                        unit: { type: "string" },
-                        label: { type: "string" },
-                        raw_text: { type: "string" },
-                        valor_nao_legivel: { type: "boolean" },
-                        position_x: { type: "number" },
-                        position_y: { type: "number" },
-                        bbox: bboxSchema,
-                        confidence: { type: "number" },
-                        review_required: { type: "boolean" },
-                        associated_to: { type: "string" },
-                      },
-                      required: ["value", "unit", "label", "position_x", "position_y", "confidence"],
-                      additionalProperties: false,
-                    },
-                  },
-                  rooms: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        tipo_normalizado: {
-                          type: "string",
-                          enum: [
-                            "sala", "cozinha", "sala_cozinha", "quarto", "suite",
-                            "instalacao_sanitaria", "circulacao", "escada", "arrumos",
-                            "zona_tecnica", "garagem", "estacionamento", "terraco",
-                            "varanda", "jardim", "churrasqueira", "exterior", "indefinido",
-                          ],
+        const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          signal: ctrl.signal,
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: modelName,
+            ...tokenLimit(modelName, mode),
+            temperature: 0.1,
+            messages: [
+              { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
+              { role: "user", content: userContent },
+            ],
+            ...(mode === "json"
+              ? {
+                  response_format: { type: "json_object" },
+                }
+              : {
+                  tools: [
+                    {
+                      type: "function",
+                      function: {
+                        name: "plan_analysis",
+                        description: "Return structured analysis of a construction plan image (Axia spec).",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            sheet_classification: {
+                              type: "object",
+                              properties: {
+                                type: {
+                                  type: "string",
+                                  enum: ["planta_piso", "implantacao", "corte", "alcado", "detalhe", "legenda", "outro"],
+                                },
+                                piso: { type: "string" },
+                                titulo: { type: "string" },
+                                escala: { type: "string" },
+                                norte_presente: { type: "boolean" },
+                                legenda_presente: { type: "boolean" },
+                                carimbo_presente: { type: "boolean" },
+                              },
+                              additionalProperties: false,
+                            },
+                            scale_detected: {
+                              type: "object",
+                              properties: {
+                                found: { type: "boolean" },
+                                value: { type: "string" },
+                                reference_dimension: { type: "string" },
+                              },
+                              required: ["found"],
+                              additionalProperties: false,
+                            },
+                            dimensions: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  value: { type: "number" },
+                                  unit: { type: "string" },
+                                  label: { type: "string" },
+                                  raw_text: { type: "string" },
+                                  valor_nao_legivel: { type: "boolean" },
+                                  position_x: { type: "number" },
+                                  position_y: { type: "number" },
+                                  bbox: bboxSchema,
+                                  confidence: { type: "number" },
+                                  review_required: { type: "boolean" },
+                                  associated_to: { type: "string" },
+                                },
+                                required: ["value", "unit", "label", "position_x", "position_y", "confidence"],
+                                additionalProperties: false,
+                              },
+                            },
+                            rooms: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  name: { type: "string" },
+                                  tipo_normalizado: {
+                                    type: "string",
+                                    enum: [
+                                      "sala", "cozinha", "sala_cozinha", "quarto", "suite",
+                                      "instalacao_sanitaria", "circulacao", "escada", "arrumos",
+                                      "zona_tecnica", "garagem", "estacionamento", "terraco",
+                                      "varanda", "jardim", "churrasqueira", "exterior", "indefinido",
+                                    ],
+                                  },
+                                  estimated_area: { type: "number" },
+                                  area_legivel: { type: "boolean" },
+                                  perimetro_estimado_m: { type: "number" },
+                                  vaos_porta_associados: { type: "array", items: { type: "string" } },
+                                  center_x: { type: "number" },
+                                  center_y: { type: "number" },
+                                  bbox: bboxSchema,
+                                  confidence: { type: "number" },
+                                  review_required: { type: "boolean" },
+                                  evidencias: { type: "array", items: { type: "string" } },
+                                },
+                                required: ["name", "center_x", "center_y", "confidence", "estimated_area", "perimetro_estimado_m"],
+                                additionalProperties: false,
+                              },
+                            },
+                            elements: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  type: {
+                                    type: "string",
+                                    enum: [
+                                      "porta", "janela", "pilar", "escada", "parede", "outro",
+                                      "porta_interior", "porta_exterior", "porta_correr",
+                                      "portao_garagem", "portao_lote", "vao_indefinido",
+                                    ],
+                                  },
+                                  label: { type: "string" },
+                                  position_x: { type: "number" },
+                                  position_y: { type: "number" },
+                                  bbox: bboxSchema,
+                                  count: { type: "number" },
+                                  largura_cm: { type: "number" },
+                                  altura_cm: { type: "number" },
+                                  dimensao_legivel: { type: "boolean" },
+                                  parede_associada: { type: "string" },
+                                  compartimentos_conectados: { type: "array", items: { type: "string" } },
+                                  largura_legivel: { type: "boolean" },
+                                  confidence_score: { type: "number" },
+                                  review_required: { type: "boolean" },
+                                },
+                                required: ["type", "label", "position_x", "position_y"],
+                                additionalProperties: false,
+                              },
+                            },
+                            walls: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  tipo: {
+                                    type: "string",
+                                    enum: ["parede_exterior", "parede_interior", "muro_lote", "muro_contencao", "parede_indefinida"],
+                                  },
+                                  orientacao: {
+                                    type: "string",
+                                    enum: ["horizontal", "vertical", "diagonal", "irregular"],
+                                  },
+                                  bbox: bboxSchema,
+                                  compartimento_associado: { type: "string" },
+                                  confidence_score: { type: "number" },
+                                  review_required: { type: "boolean" },
+                                  evidencias: { type: "array", items: { type: "string" } },
+                                  notes: { type: "string" },
+                                },
+                                required: ["tipo", "orientacao", "confidence_score"],
+                                additionalProperties: false,
+                              },
+                            },
+                            exterior_elements: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  tipo: {
+                                    type: "string",
+                                    enum: [
+                                      "lote", "rua", "acesso", "estacionamento", "jardim",
+                                      "vegetacao", "muro", "patio", "terraco", "cota_altimetrica", "confrontacao",
+                                    ],
+                                  },
+                                  bbox: bboxSchema,
+                                  confidence_score: { type: "number" },
+                                  notes: { type: "string" },
+                                },
+                                required: ["tipo", "confidence_score"],
+                                additionalProperties: false,
+                              },
+                            },
+                            reading_quality: {
+                              type: "object",
+                              properties: {
+                                overall_confidence: { type: "number" },
+                                image_quality: { type: "string", enum: ["alta", "media", "baixa"] },
+                                text_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
+                                dimensions_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
+                                risk_level: { type: "string", enum: ["baixo", "medio", "alto"] },
+                                human_intervention_required: { type: "boolean" },
+                              },
+                              additionalProperties: false,
+                            },
+                            limitations: { type: "array", items: { type: "string" } },
+                            validation_questions: { type: "array", items: { type: "string" } },
+                            summary: { type: "string" },
+                          },
+                          required: ["scale_detected", "dimensions", "rooms", "elements", "summary"],
+                          additionalProperties: false,
                         },
-                        estimated_area: { type: "number" },
-                        area_legivel: { type: "boolean" },
-                        perimetro_estimado_m: { type: "number" },
-                        vaos_porta_associados: { type: "array", items: { type: "string" } },
-                        center_x: { type: "number" },
-                        center_y: { type: "number" },
-                        bbox: bboxSchema,
-                        confidence: { type: "number" },
-                        review_required: { type: "boolean" },
-                        evidencias: { type: "array", items: { type: "string" } },
-                      },
-                      required: ["name", "center_x", "center_y", "confidence", "estimated_area", "perimetro_estimado_m"],
-                      additionalProperties: false,
-                    },
-                  },
-                  elements: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: {
-                          type: "string",
-                          enum: [
-                            "porta", "janela", "pilar", "escada", "parede", "outro",
-                            "porta_interior", "porta_exterior", "porta_correr",
-                            "portao_garagem", "portao_lote", "vao_indefinido",
-                          ],
-                        },
-                        label: { type: "string" },
-                        position_x: { type: "number" },
-                        position_y: { type: "number" },
-                        bbox: bboxSchema,
-                        count: { type: "number" },
-                        largura_cm: { type: "number" },
-                        altura_cm: { type: "number" },
-                        dimensao_legivel: { type: "boolean" },
-                        parede_associada: { type: "string" },
-                        compartimentos_conectados: { type: "array", items: { type: "string" } },
-                        largura_legivel: { type: "boolean" },
-                        confidence_score: { type: "number" },
-                        review_required: { type: "boolean" },
-                      },
-                      required: ["type", "label", "position_x", "position_y"],
-                      additionalProperties: false,
-                    },
-                  },
-                  walls: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        tipo: {
-                          type: "string",
-                          enum: ["parede_exterior", "parede_interior", "muro_lote", "muro_contencao", "parede_indefinida"],
-                        },
-                        orientacao: {
-                          type: "string",
-                          enum: ["horizontal", "vertical", "diagonal", "irregular"],
-                        },
-                        bbox: bboxSchema,
-                        compartimento_associado: { type: "string" },
-                        confidence_score: { type: "number" },
-                        review_required: { type: "boolean" },
-                        evidencias: { type: "array", items: { type: "string" } },
-                        notes: { type: "string" },
-                      },
-                      required: ["tipo", "orientacao", "confidence_score"],
-                      additionalProperties: false,
-                    },
-                  },
-                  exterior_elements: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        tipo: {
-                          type: "string",
-                          enum: [
-                            "lote", "rua", "acesso", "estacionamento", "jardim",
-                            "vegetacao", "muro", "patio", "terraco", "cota_altimetrica", "confrontacao",
-                          ],
-                        },
-                        bbox: bboxSchema,
-                        confidence_score: { type: "number" },
-                        notes: { type: "string" },
-                      },
-                      required: ["tipo", "confidence_score"],
-                      additionalProperties: false,
-                    },
-                  },
-                  reading_quality: {
-                    type: "object",
-                    properties: {
-                      overall_confidence: { type: "number" },
-                      image_quality: { type: "string", enum: ["alta", "media", "baixa"] },
-                      text_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
-                      dimensions_legibility: { type: "string", enum: ["alta", "media", "baixa"] },
-                      risk_level: { type: "string", enum: ["baixo", "medio", "alto"] },
-                      human_intervention_required: { type: "boolean" },
-                    },
-                    additionalProperties: false,
-                  },
-                  limitations: { type: "array", items: { type: "string" } },
-                  validation_questions: { type: "array", items: { type: "string" } },
-                  summary: { type: "string" },
-                },
-                        required: ["scale_detected", "dimensions", "rooms", "elements", "summary"],
-                        additionalProperties: false,
                       },
                     },
-                  },
-                ],
-                tool_choice: { type: "function", function: { name: "plan_analysis" } },
-              }),
-        }),
-      });
+                  ],
+                  tool_choice: { type: "function", function: { name: "plan_analysis" } },
+                }),
+          }),
+        });
+
+        const text = await resp.text();
+        return { ok: resp.ok, status: resp.status, text };
       } catch (e) {
         const isAbort = (e as any)?.name === "AbortError" || /aborted/i.test(String((e as any)?.message ?? e));
         console.warn(`callAI(${modelName},${mode}) ${isAbort ? "aborted (timeout)" : "failed"}:`, (e as any)?.message ?? e);
-        return new Response(JSON.stringify({ error: isAbort ? "timeout" : "fetch_failed" }), { status: 599 });
+        return { ok: false, status: 599, text: "", error: isAbort ? "timeout" : "fetch_failed" };
       } finally {
         clearTimeout(timer);
       }
@@ -586,24 +589,22 @@ REGRAS CRÍTICAS:
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "json", timeoutMs: 45_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 28_000 },
-          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 16_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 28_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
+          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 10_000 },
         ]
       : [
           ...(isDenseImage
             ? [
-                { model: visionChain.fallback, mode: "json", timeoutMs: 22_000 },
-                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 14_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
+                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
+                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 12_000 },
+                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 8_000 },
               ]
             : [
-                { model: visionChain.fallback, mode: "json", timeoutMs: 24_000 },
-                { model: visionChain.primary, mode: "json", timeoutMs: 22_000 },
-                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 14_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
+                { model: visionChain.fallback, mode: "json", timeoutMs: 20_000 },
+                { model: visionChain.primary, mode: "json", timeoutMs: 16_000 },
+                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 10_000 },
               ]),
-          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 10_000 },
         ];
 
 
@@ -643,14 +644,20 @@ REGRAS CRÍTICAS:
           console.warn(`${att.model}/${att.mode} timeout - trying next fallback.`);
           continue;
         }
-        const errText = await resp.text().catch(() => "");
-        console.error(`AI gateway error on ${att.model}/${att.mode}:`, resp.status, errText);
+        console.error(`AI gateway error on ${att.model}/${att.mode}:`, resp.status, resp.text);
         lastErrCode = "AI_GATEWAY_ERROR";
         lastErrDetail = `Gateway respondeu ${resp.status}.`;
         continue;
       }
 
-      const aiData: any = await resp.json().catch(() => ({}));
+      const aiData: any = (() => {
+        try {
+          return resp.text ? JSON.parse(resp.text) : {};
+        } catch (e) {
+          console.warn(`AI gateway returned non-JSON payload on ${att.model}/${att.mode}:`, e instanceof Error ? e.message : String(e));
+          return {};
+        }
+      })();
       const choice = aiData.choices?.[0];
       finishReason = choice?.finish_reason;
       const toolCall = choice?.message?.tool_calls?.[0];
