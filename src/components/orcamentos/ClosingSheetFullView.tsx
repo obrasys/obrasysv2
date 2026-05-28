@@ -65,12 +65,13 @@ function NumCell({
   align?: "left" | "right";
   step?: string;
 }) {
+  const safe = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
   return (
     <Input
       type="number"
       step={step}
       readOnly={readOnly}
-      value={Number.isFinite(value) ? value : 0}
+      value={safe}
       onChange={(e) => onChange(parseFloat(e.target.value || "0"))}
       className={`h-8 ${align === "right" ? "text-right" : ""} ${readOnly ? "bg-muted" : ""}`}
     />
