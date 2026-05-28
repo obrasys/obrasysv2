@@ -164,6 +164,7 @@ export default function EssencialPage() {
     setDiscountPercent(0);
     setVatPercent(23);
     setMarginPercent(0);
+    setObservationsText('');
     setClientInfo(getDefaultClientInfo());
     localStorage.removeItem(DRAFT_KEY);
     setShowClearDialog(false);
