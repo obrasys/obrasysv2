@@ -146,6 +146,10 @@ export interface ClosingSheetDetails {
   statistics: ClosingStatistics;
   conditions: ClosingConditions;
   margem_lucro_pct: number; // 0.30
+  /** Linha editável (estimativa) que acresce ao total de Custos Directos.
+   *  Permite trabalhar com um valor previsto antes de ter os custos por capítulo
+   *  consolidados; pode ser zerada/eliminada quando os reais estiverem ok. */
+  direct_costs_estimate?: number;
 }
 
 // 38 capítulos canónicos do orçamento — alimentados exclusivamente a partir do
@@ -368,7 +372,9 @@ export interface ClosingTotals {
 }
 
 export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
-  const total_directos = d.direct_costs.reduce((s, l) => s + (l.value || 0), 0);
+  const total_directos =
+    d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
+    (Number(d.direct_costs_estimate) || 0);
   const total_estaleiro = d.site_costs.reduce((s, l) => s + (l.value || 0), 0);
   const custo_industrial = total_directos + total_estaleiro;
 
