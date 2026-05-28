@@ -85,6 +85,114 @@ function detectPossibleDoubleCounting(originalTotal: number, correctedTotal: num
   return ratio >= 1.85 && ratio <= 2.15;
 }
 
+const ICF_TOOL_SCHEMA = {
+  type: "object",
+  properties: {
+    paredes: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          referencia: { type: "string" },
+          comprimento: {
+            type: "number",
+            minimum: 0.01,
+            maximum: 200,
+            description: "Comprimento linear da parede em metros, medido uma única vez pelo eixo médio.",
+          },
+          altura_util: {
+            type: "number",
+            minimum: 1.5,
+            maximum: 6,
+            description: "Altura útil da parede em metros.",
+          },
+          espessura_nucleo: {
+            type: "number",
+            minimum: 0.1,
+            maximum: 0.4,
+            description: "Espessura do núcleo de betão em metros.",
+          },
+          piso_inicial: { type: "string" },
+          piso_final: { type: "string" },
+          vaos: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                tipo_vao: { type: "string" },
+                largura: { type: "number" },
+                altura: { type: "number" },
+                quantidade: { type: "number" },
+              },
+              required: ["tipo_vao", "largura", "altura", "quantidade"],
+            },
+          },
+          metodo_medicao: {
+            type: "string",
+            enum: ["cota", "escala", "estimativa_visual"],
+            description: "Método usado para obter a medição.",
+          },
+          confianca: {
+            type: "number",
+            minimum: 0,
+            maximum: 1,
+            description: "Confiança da medição entre 0 e 1.",
+          },
+          notas_validacao: {
+            type: "string",
+            description: "Notas sobre incerteza, escala, duplicação ou limitação da leitura.",
+          },
+        },
+        required: [
+          "referencia",
+          "comprimento",
+          "altura_util",
+          "espessura_nucleo",
+          "piso_inicial",
+          "piso_final",
+          "vaos",
+          "metodo_medicao",
+          "confianca",
+        ],
+      },
+    },
+    fundacoes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          tipo_fundacao: { type: "string", enum: ["sapata_continua", "sapata_isolada", "outra"] },
+          referencia: { type: "string" },
+          comprimento: { type: "number" },
+          largura: { type: "number" },
+          altura: { type: "number" },
+          quantidade: { type: "number" },
+        },
+        required: ["tipo_fundacao", "comprimento", "largura", "altura", "quantidade"],
+      },
+    },
+    lajes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          referencia: { type: "string" },
+          piso: { type: "string" },
+          tipologia_laje: { type: "string" },
+          area: { type: "number" },
+          espessura_total: { type: "number" },
+        },
+        required: ["area", "espessura_total"],
+      },
+    },
+    notas: { type: "string" },
+  },
+  required: ["paredes", "fundacoes", "lajes"],
+} as const;
+
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Método não permitido" }, 405);
