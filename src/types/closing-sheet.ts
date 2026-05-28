@@ -72,12 +72,13 @@ export interface ClosingSalesLine {
 }
 
 export interface ClosingStatistics {
-  area_construcao: number; // ABP
+  area_construcao: number; // ABP — override manual; se null usa soma do mapa de vendas
   area_caves: number;
   area_arranjos_ext: number;
   factor_caves: number; // 0.7
   factor_arranjos: number; // 0.5
   area_total_construcao?: number | null; // override manual; se null = ABP + Caves
+  area_construcao_override?: boolean; // true se o utilizador editou manualmente a ABP
 }
 
 export interface ClosingHeader {
