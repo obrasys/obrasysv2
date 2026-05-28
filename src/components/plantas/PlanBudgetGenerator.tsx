@@ -11,11 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { PlanMeasurement, PlanMeasurementMapping } from "@/types/plan-measurements";
+import type { PlanMeasurement, PlanMeasurementMapping, PlanRoom } from "@/types/plan-measurements";
 import { autoMatchPlaceholdersAgainstBase, type BaseArticleMatch, type PlaceholderToMatch } from "@/lib/plan-base-precos-matching";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { buildDedupePayload } from "@/lib/plan-dedupe";
 import { DISCIPLINE_META } from "@/lib/plan-discipline";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+type WorkMode = "remodelacao" | "construcao_nova";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categorização inteligente (capítulos do orçamento)
