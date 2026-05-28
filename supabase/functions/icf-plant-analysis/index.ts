@@ -268,154 +268,84 @@ Antes de devolver o JSON:
 
 Devolva a análise usando exclusivamente a tool call configurada.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
-            ],
+    // ModelRouter: cadeia primary → fallback. Permite override via
+    // AXIA_MODEL_ICF_ANALYSIS_PRIMARY / _FALLBACK.
+    const chain = resolveChain("icf_analysis");
+    const callIcfAi = async (modelName: string, timeoutMs = 110_000) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          signal: ctrl.signal,
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
           },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_icf_elements",
-              description: "Extrair elementos construtivos ICF de uma planta",
-              parameters: {
-                type: "object",
-                properties: {
-                  paredes: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      additionalProperties: false,
-                      properties: {
-                        referencia: { type: "string" },
-                        comprimento: {
-                          type: "number",
-                          minimum: 0.01,
-                          maximum: 200,
-                          description: "Comprimento linear da parede em metros, medido uma única vez pelo eixo médio.",
-                        },
-                        altura_util: {
-                          type: "number",
-                          minimum: 1.5,
-                          maximum: 6,
-                          description: "Altura útil da parede em metros.",
-                        },
-                        espessura_nucleo: {
-                          type: "number",
-                          minimum: 0.1,
-                          maximum: 0.4,
-                          description: "Espessura do núcleo de betão em metros.",
-                        },
-                        piso_inicial: { type: "string" },
-                        piso_final: { type: "string" },
-                        vaos: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              tipo_vao: { type: "string" },
-                              largura: { type: "number" },
-                              altura: { type: "number" },
-                              quantidade: { type: "number" },
-                            },
-                            required: ["tipo_vao", "largura", "altura", "quantidade"],
-                          },
-                        },
-                        metodo_medicao: {
-                          type: "string",
-                          enum: ["cota", "escala", "estimativa_visual"],
-                          description: "Método usado para obter a medição.",
-                        },
-                        confianca: {
-                          type: "number",
-                          minimum: 0,
-                          maximum: 1,
-                          description: "Confiança da medição entre 0 e 1.",
-                        },
-                        notas_validacao: {
-                          type: "string",
-                          description: "Notas sobre incerteza, escala, duplicação ou limitação da leitura.",
-                        },
-                      },
-                      required: [
-                        "referencia",
-                        "comprimento",
-                        "altura_util",
-                        "espessura_nucleo",
-                        "piso_inicial",
-                        "piso_final",
-                        "vaos",
-                        "metodo_medicao",
-                        "confianca",
-                      ],
-                    },
-                  },
-                  fundacoes: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        tipo_fundacao: { type: "string", enum: ["sapata_continua", "sapata_isolada", "outra"] },
-                        referencia: { type: "string" },
-                        comprimento: { type: "number" },
-                        largura: { type: "number" },
-                        altura: { type: "number" },
-                        quantidade: { type: "number" },
-                      },
-                      required: ["tipo_fundacao", "comprimento", "largura", "altura", "quantidade"],
-                    },
-                  },
-                  lajes: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        referencia: { type: "string" },
-                        piso: { type: "string" },
-                        tipologia_laje: { type: "string" },
-                        area: { type: "number" },
-                        espessura_total: { type: "number" },
-                      },
-                      required: ["area", "espessura_total"],
-                    },
-                  },
-                  notas: { type: "string" },
-                },
-                required: ["paredes", "fundacoes", "lajes"],
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: userPrompt },
+                  { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+                ],
               },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "extract_icf_elements" } },
-      }),
-    });
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "extract_icf_elements",
+                  description: "Extrair elementos construtivos ICF de uma planta",
+                  parameters: ICF_TOOL_SCHEMA,
+                },
+              },
+            ],
+            tool_choice: { type: "function", function: { name: "extract_icf_elements" } },
+          }),
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+    };
 
-    if (!aiResponse.ok) {
-      const status = aiResponse.status;
-      if (status === 429) {
-        return jsonResponse({ error: "Limite de pedidos excedido, tente novamente em breve." }, 429);
+    const attempts: Array<{ model: string; timeoutMs: number }> = [
+      { model: chain.primary, timeoutMs: 110_000 },
+      { model: chain.fallback, timeoutMs: 90_000 },
+    ];
+
+    let aiResponse: Response | null = null;
+    let modelUsed = chain.primary;
+    let lastErr = "";
+    for (const att of attempts) {
+      try {
+        const r = await callIcfAi(att.model, att.timeoutMs);
+        if (r.ok) {
+          aiResponse = r;
+          modelUsed = att.model;
+          break;
+        }
+        if (r.status === 429) {
+          return jsonResponse({ error: "Limite de pedidos excedido, tente novamente em breve." }, 429);
+        }
+        if (r.status === 402) {
+          return jsonResponse({ error: "Créditos AI esgotados. Adicione créditos em Definições." }, 402);
+        }
+        lastErr = await r.text().catch(() => `status ${r.status}`);
+        console.warn(`icf-plant-analysis ${att.model} falhou (${r.status}): ${lastErr.slice(0, 200)}`);
+      } catch (e) {
+        lastErr = (e as Error)?.message ?? String(e);
+        console.warn(`icf-plant-analysis ${att.model} abort/timeout: ${lastErr}`);
       }
-      if (status === 402) {
-        return jsonResponse({ error: "Créditos AI esgotados. Adicione créditos em Definições." }, 402);
-      }
-      const errText = await aiResponse.text();
-      console.error("AI error:", status, errText);
-      return jsonResponse({ error: `Erro na análise AI: ${status}` }, 500);
     }
+
+    if (!aiResponse) {
+      return jsonResponse({ error: `Erro na análise AI: ${lastErr || "indisponível"}` }, 504);
+    }
+
 
     const aiData = await aiResponse.json();
 
