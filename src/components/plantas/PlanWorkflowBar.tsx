@@ -161,6 +161,7 @@ interface Props {
   wallCount?: number;
   openingCount?: number;
   placedElementsCount?: number;
+  axiaQuantitativesReady?: boolean;
 }
 
 export function PlanWorkflowBar({
@@ -180,6 +181,7 @@ export function PlanWorkflowBar({
   wallCount = 0,
   openingCount = 0,
   placedElementsCount = 0,
+  axiaQuantitativesReady = false,
 }: Props) {
   const ctx: ChecklistContext = {
     canMeasure,
@@ -189,6 +191,7 @@ export function PlanWorkflowBar({
     openingCount,
     hasAnalysis,
     placedElementsCount,
+    axiaQuantitativesReady,
   };
   const guide = STEP_HINTS[currentStep];
   const message = guide.getMessage(measurementCount, hasAnalysis);
