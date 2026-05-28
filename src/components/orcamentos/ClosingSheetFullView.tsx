@@ -791,16 +791,39 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <NumCell
               readOnly={readOnly}
               value={details.terrain.area_terreno ?? 0}
-              onChange={(v) => patch("terrain", { ...details.terrain, area_terreno: v })}
+              onChange={(v) => {
+                const precoM2 =
+                  (details.terrain.area_terreno ?? 0) > 0
+                    ? (details.terrain.preco_aquisicao || 0) /
+                      (details.terrain.area_terreno as number)
+                    : 0;
+                patch("terrain", {
+                  ...details.terrain,
+                  area_terreno: v,
+                  preco_aquisicao: precoM2 > 0 ? precoM2 * v : details.terrain.preco_aquisicao,
+                });
+              }}
             />
-            <p className="text-[11px] text-muted-foreground mt-1 text-right">
-              Preço/m²:{" "}
-              {fmt(
+          </div>
+          <div>
+            <Label>Preço por m² do Terreno (€)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={
                 (details.terrain.area_terreno ?? 0) > 0
                   ? (details.terrain.preco_aquisicao || 0) /
-                      (details.terrain.area_terreno as number)
-                  : 0,
-              )}
+                    (details.terrain.area_terreno as number)
+                  : 0
+              }
+              onChange={(v) => {
+                const area = details.terrain.area_terreno ?? 0;
+                if (area > 0) {
+                  patch("terrain", { ...details.terrain, preco_aquisicao: v * area });
+                }
+              }}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              Custo Aquisição: {fmt(details.terrain.preco_aquisicao || 0)}
             </p>
           </div>
           <div>
