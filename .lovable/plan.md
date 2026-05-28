@@ -1,46 +1,20 @@
-# Observações padrão do PDF de orçamento editáveis
+# Adicionar "Observações do rodapé" ao Orçamento Essencial
 
 ## Contexto
-Hoje a frase que a cliente refere está **fixa no código** em `src/lib/orcamento-pdf.ts` (linhas 487-492), na secção "Observações" do PDF técnico do orçamento:
+No fluxo Avançado (Editar) já existe o campo. No Essencial (`src/pages/orcamentos/Essencial.tsx`) — wizard que cria orçamento no fim — não há esse campo, por isso o PDF gerado a partir do Essencial usa só o `default_budget_observations` global (ou fallback hardcoded).
 
-```
-• Este orçamento é válido por 30 dias a contar da data de emissão.
-• Os preços apresentados incluem todos os materiais e mão de obra necessários.
-• Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.
-• Condições de pagamento a acordar.
-```
+## Alterações
 
-Não existe nenhum sítio na app onde estes textos possam ser alterados — por isso a cliente não os consegue editar. Já existem campos editáveis (`commercial_payment_terms_text`, `commercial_validity_text`, `commercial_notes_text`) mas só são usados no PDF **Comercial** (`orcamento-pdf-comercial.ts`), e estão por orçamento.
+### 1. `src/pages/orcamentos/Essencial.tsx`
+- Novo estado `observationsText: string` (default `''`).
+- Adicionar um `<Textarea>` "Observações do rodapé" entre `TotalsAdjustments` e `ClientIdentification` (passo E.1), envolvido num `Card` simples com texto de ajuda: "Deixe em branco para usar o padrão definido em Perfil → Empresa." (4 linhas).
+- Incluir `observations_text: observationsText || null` no `insert` para `orcamentos` (linha ~392).
+- Incluir `observations_text: observationsText || null` no objeto `orcamento` do `buildMockOrcamento` (linha ~240) para que o preview do PDF respeite o que foi escrito antes de gravar.
 
-## O que vou fazer
+### 2. Limpeza
+- Adicionar `setObservationsText('')` no `handleClear` (junto com os outros resets).
 
-### 1. Adicionar default global em Definições
-- Nova coluna `default_budget_observations text` em `profiles` (texto multi-linha, uma observação por linha).
-- Em **Definições → Empresa / Orçamentos**, novo bloco "Observações padrão dos orçamentos" com `Textarea` e botão guardar, pré-preenchido com os 4 bullets atuais (para não quebrar nada para quem não alterar).
-- Texto de ajuda: "Uma observação por linha. Aparece no rodapé de todos os PDFs de orçamento. Pode ser substituído individualmente em cada orçamento."
+Sem alterações em BD, hooks, types ou no PDF — a coluna `orcamentos.observations_text` e a lógica de prioridade no `orcamento-pdf.ts` já estão prontas da iteração anterior.
 
-### 2. Permitir override por orçamento
-- Nova coluna `observations_text text null` em `orcamentos`.
-- Na página **Editar orçamento**, na secção "Apresentação ao Cliente" (onde já estão Condições de pagamento / Validade / Notas), adicionar campo `Textarea` "Observações do rodapé" — quando preenchido sobrepõe o default global.
-
-### 3. PDF técnico (`src/lib/orcamento-pdf.ts`)
-- Substituir o array fixo por: `orcamento.observations_text` → senão `profile.default_budget_observations` → senão fallback aos 4 bullets atuais.
-- Dividir por linhas (`\n`), prefixar com `• ` se a linha ainda não começar com bullet.
-
-### 4. PDF comercial
-- Sem alterações de comportamento; continua a usar `commercial_notes_text` (que já é editável).
-
-## Como a cliente vai editar (caminho a comunicar)
-> "**Definições → Empresa → Observações padrão dos orçamentos**" para alterar para todos os orçamentos novos, ou
-> "**Orçamento → Editar → Apresentação ao Cliente → Observações do rodapé**" para alterar só naquele orçamento.
-
-## Resposta sugerida à cliente (PT-PT)
-> Olá [Nome], obrigado pelo feedback. Já passou a ser possível editar essas observações: vá a **Definições → Empresa → Observações padrão dos orçamentos** e altere o texto (uma observação por linha). Se quiser uma redação diferente apenas para um orçamento específico, edite-o e use o campo **Observações do rodapé** na secção "Apresentação ao Cliente". Esse texto passa a substituir o padrão nesse PDF. Qualquer coisa, estamos cá. — Antonio Cavalcanti
-
-## Ficheiros
-- migration: nova coluna em `profiles` e `orcamentos`
-- `src/types/orcamentos.ts` — adicionar `observations_text?: string | null`
-- `src/pages/Definicoes.tsx` (ou `empresa/GestaoEmpresa.tsx`, confirmo no momento) — novo bloco
-- `src/pages/orcamentos/Editar.tsx` — novo Textarea
-- `src/lib/orcamento-pdf.ts` — passar a ler de profile/orcamento
-- `src/hooks/useGestaoEmpresa.ts` — incluir o novo campo
+## Como o utilizador vai usar
+No final do Essencial, antes de identificar o cliente, aparece o campo "Observações do rodapé"; preenchido aplica-se a esse orçamento, vazio usa o padrão global.
