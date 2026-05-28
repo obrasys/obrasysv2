@@ -12,7 +12,7 @@ export function useUpdateClosingSheetDetails(orcamentoId: string | undefined) {
       details: ClosingSheetDetails;
       totals: ClosingTotals;
     }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("closing_sheets")
         .update({
           details: params.details as any,
@@ -26,8 +26,12 @@ export function useUpdateClosingSheetDetails(orcamentoId: string | undefined) {
           sale_price: params.totals.valor_vendas,
           expected_result: params.totals.rai_eur,
         })
-        .eq("id", params.sheetId);
+        .eq("id", params.sheetId)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Sem permissão para gravar (folha bloqueada).");
+      }
     },
     onSuccess: () => {
       if (orcamentoId) qc.invalidateQueries({ queryKey: ["closing-sheets", orcamentoId] });
