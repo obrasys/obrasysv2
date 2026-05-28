@@ -190,9 +190,20 @@ REGRA DE CALIBRAÇÃO (OBRIGATÓRIA):
 - Se método = declared_scale → confidence máxima é média.
 - Se método = uncalibrated OU override = true → marca TODOS os quantitativos como baixa confiança e review_required = true.`;
 
-    const userPrompt = `Analise a planta. Tipo declarado: ${body.plan_kind}. Escala: ${body.scale_m_per_px ?? "desconhecida"} m/px.
-Espessura núcleo ICF desejada: ${body.espessura_nucleo ?? 0.15} m.${calGuard}
-Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundacoes_encontradas=false e use a mensagem oficial.`;
+    const userPrompt = `Analise a planta para pré-avaliação ICF.
+Tipo declarado: ${body.plan_kind}.
+Escala/calibração: ${body.scale_m_per_px ?? "desconhecida"} m/px.
+Espessura do núcleo ICF desejada: ${body.espessura_nucleo ?? 0.15} m.${calGuard}
+
+Tarefas:
+1. Classificar se a folha é planta arquitetónica horizontal, corte, alçado, detalhe, implantação, legenda ou outro (regista em notas).
+2. Identificar paredes/panos relevantes para ICF SEM duplicar faces paralelas.
+3. Identificar vãos visíveis quando possível.
+4. Verificar se há fundações desenhadas.
+5. Se NÃO houver fundações desenhadas → fundacoes_encontradas=false e usa a mensagem oficial.
+6. Se faltar escala/cotas/calibração → NÃO devolvas medições definitivas; pede calibração em notas/assumptions.
+
+Devolve JSON via tool call, com confidence, review_required, notas e limitações. Todas as medições entram como draft_ai até validação humana.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
