@@ -742,6 +742,20 @@ export default function EditarOrcamentoPage() {
                        onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, commercial_notes_text: e.target.value || null } as any)}
                      />
                    </div>
+                   <div>
+                     <Label className="text-xs text-muted-foreground">Observações do rodapé (PDF técnico)</Label>
+                     <Textarea
+                       placeholder={"Uma observação por linha. Deixe em branco para usar o texto padrão definido em Perfil → Empresa."}
+                       defaultValue={(orcamento as any).observations_text || ''}
+                       rows={4}
+                       disabled={isReadOnly}
+                       className="resize-none mt-1"
+                       onBlur={(e) => updateOrcamento.mutateAsync({ id: orcamento.id, observations_text: e.target.value || null } as any)}
+                     />
+                     <p className="text-[11px] text-muted-foreground mt-1">
+                       Substitui as observações padrão apenas neste orçamento.
+                     </p>
+                   </div>
                  </CardContent>
                </Card>
                <Card>
