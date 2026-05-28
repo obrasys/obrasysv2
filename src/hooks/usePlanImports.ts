@@ -4,42 +4,56 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { PlanImport, PlanDisciplina } from "@/types/plan-measurements";
 
-export function usePlanImports(obraId?: string) {
+type Ctx = { obraId?: string; budgetId?: string };
+
+function normalizeCtx(input?: string | Ctx): Ctx {
+  if (!input) return {};
+  if (typeof input === "string") return { obraId: input };
+  return input;
+}
+
+export function usePlanImports(input?: string | Ctx) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { obraId, budgetId } = normalizeCtx(input);
+  const scopeKey = budgetId ? `budget:${budgetId}` : obraId ? `obra:${obraId}` : "none";
 
   const planImportsQuery = useQuery({
-    queryKey: ["plan-imports", obraId],
+    queryKey: ["plan-imports", scopeKey],
     queryFn: async () => {
-      if (!obraId) return [];
-      const { data, error } = await supabase
+      if (!obraId && !budgetId) return [];
+      let q = supabase
         .from("plan_imports")
         .select("*")
-        .eq("obra_id", obraId)
         .order("revision_number", { ascending: false });
+      if (budgetId) q = q.eq("budget_id", budgetId);
+      else if (obraId) q = q.eq("obra_id", obraId);
+      const { data, error } = await q;
       if (error) throw error;
       return data as PlanImport[];
     },
-    enabled: !!obraId && !!user,
+    enabled: (!!obraId || !!budgetId) && !!user,
   });
 
   const uploadPlan = useMutation({
-    mutationFn: async ({
-      file,
-      obraId,
-      disciplina,
-      dataPlanta,
-      observacoes,
-    }: {
+    mutationFn: async (params: {
       file: File;
-      obraId: string;
+      obraId?: string;
+      budgetId?: string;
       disciplina: PlanDisciplina;
       dataPlanta?: string;
       observacoes?: string;
     }) => {
       if (!user) throw new Error("Não autenticado");
+      const targetObra = params.obraId ?? obraId ?? null;
+      const targetBudget = params.budgetId ?? budgetId ?? null;
+      if (!targetObra && !targetBudget) {
+        throw new Error("É necessário associar a planta a um orçamento ou obra.");
+      }
 
-      // ── Validação de upload (Fase 5) ───────────────────────────────────────
+      const { file, disciplina, dataPlanta, observacoes } = params;
+
+      // ── Validação de upload ─────────────────────────────────────────────
       const MAX_BYTES = 25 * 1024 * 1024;
       const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
       const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg"];
@@ -54,37 +68,38 @@ export function usePlanImports(obraId?: string) {
         throw new Error("Este ficheiro não é suportado. Use PDF, PNG ou JPG.");
       }
 
-      // Get next revision number
-      const { data: existing } = await supabase
+      // Next revision number (scoped to the link in use)
+      let revQuery = supabase
         .from("plan_imports")
         .select("revision_number")
-        .eq("obra_id", obraId)
         .order("revision_number", { ascending: false })
         .limit(1);
-
+      if (targetBudget) revQuery = revQuery.eq("budget_id", targetBudget);
+      else if (targetObra) revQuery = revQuery.eq("obra_id", targetObra);
+      const { data: existing } = await revQuery;
       const nextRevision = (existing?.[0]?.revision_number ?? 0) + 1;
 
       // Upload file
       const fileExt = ext || "pdf";
-      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${fileExt}`;
+      const scopeFolder = targetBudget ?? targetObra;
+      const filePath = `${user.id}/${scopeFolder}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("plan-files")
         .upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      // Determine file type
       const fileType = file.type.includes("pdf")
         ? "pdf"
         : file.type.includes("png")
         ? "png"
         : "jpg";
 
-      // Insert record
       const { data, error } = await supabase
         .from("plan_imports")
         .insert({
-          obra_id: obraId,
+          obra_id: targetObra,
+          budget_id: targetBudget,
           user_id: user.id,
           file_path: filePath,
           file_type: fileType,
@@ -93,14 +108,14 @@ export function usePlanImports(obraId?: string) {
           revision_number: nextRevision,
           data_planta: dataPlanta || null,
           observacoes: observacoes || null,
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
       return data as PlanImport;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plan-imports", obraId] });
+      queryClient.invalidateQueries({ queryKey: ["plan-imports", scopeKey] });
       toast.success("Planta importada com sucesso");
     },
     onError: (err: Error) => {
@@ -121,7 +136,7 @@ export function usePlanImports(obraId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plan-imports", obraId] });
+      queryClient.invalidateQueries({ queryKey: ["plan-imports", scopeKey] });
       toast.success("Planta eliminada");
     },
     onError: (err: Error) => {
