@@ -77,6 +77,7 @@ export interface ClosingStatistics {
   area_arranjos_ext: number;
   factor_caves: number; // 0.7
   factor_arranjos: number; // 0.5
+  area_total_construcao?: number | null; // override manual; se null = ABP + Caves
 }
 
 export interface ClosingHeader {
