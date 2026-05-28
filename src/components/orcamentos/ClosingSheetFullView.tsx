@@ -812,15 +812,22 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label>Custo Aquisição por Fração</Label>
-            <div className="h-8 px-3 flex items-center justify-end rounded-md border bg-muted/40 text-sm font-medium">
-              {fmt(
+            <Label>Custo Aquisição por Fração (€)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={
                 (details.header.num_fraccoes ?? 0) > 0
                   ? (details.terrain.preco_aquisicao || 0) /
-                      (details.header.num_fraccoes as number)
-                  : 0,
-              )}
-            </div>
+                    (details.header.num_fraccoes as number)
+                  : 0
+              }
+              onChange={(v) => {
+                const n = details.header.num_fraccoes ?? 0;
+                if (n > 0) {
+                  patch("terrain", { ...details.terrain, preco_aquisicao: v * n });
+                }
+              }}
+            />
           </div>
           <div>
             <Label>Custo Loteamento / Infraestruturas (€)</Label>
