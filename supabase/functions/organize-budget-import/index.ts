@@ -207,12 +207,16 @@ const deriveBudgetFromRows = (
     }));
   });
 
+  const firstRowValues = rows.length > 0 ? Object.values(rows[0]) : [];
+  const secondRowValues = rows.length > 1 ? Object.values(rows[1]) : [];
   const effectiveHeaders = (headers ?? []).map((header, colIndex) => {
     const base = sanitizeTextCell(header);
-    const nextHeader = rowIndexSafe(normalizedRows, 0)?.[headers?.[colIndex] ?? ""];
-    if (!base || !nextHeader || nextHeader === base) return base;
-    if (/(pre[cç]os?|valor)/i.test(base) && /(unit[aá]rio|parcial|total)/i.test(String(nextHeader))) {
-      return `${base} ${nextHeader}`;
+    const firstRowText = sanitizeTextCell(firstRowValues[colIndex]);
+    const secondRowText = sanitizeTextCell(secondRowValues[colIndex]);
+    const candidate = firstRowText || secondRowText;
+    if (!base || !candidate || candidate === base) return base;
+    if (/(pre[cç]os?|valor)/i.test(base) && /(unit[aá]rio|parcial|total)/i.test(candidate)) {
+      return `${base} ${candidate}`;
     }
     return base;
   });
