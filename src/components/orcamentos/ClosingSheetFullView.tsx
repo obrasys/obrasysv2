@@ -1299,14 +1299,47 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
         {/* DADOS ESTATÍSTICOS */}
         <Section id="estatistica" title="Dados Estatísticos (Valor m² Área Construída Equivalente)" collapsed={isCol("estatistica")} onToggle={() => toggleSection("estatistica")}>
+        {(() => {
+          const abpFromSales = details.sales.reduce(
+            (s, l) => s + (Number(l.quantidade) || 0) * (Number(l.area_priv) || 0),
+            0,
+          );
+          const abpEffective = details.statistics.area_construcao_override
+            ? (details.statistics.area_construcao || 0)
+            : abpFromSales;
+          return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
           <div>
             <Label>Área Bruta Privativa (m²)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.statistics.area_construcao}
-              onChange={(v) => patch("statistics", { ...details.statistics, area_construcao: v })}
+              value={abpEffective}
+              onChange={(v) =>
+                patch("statistics", {
+                  ...details.statistics,
+                  area_construcao: v,
+                  area_construcao_override: true,
+                })
+              }
             />
+            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
+              <span>Auto (mapa vendas): {fmt(abpFromSales)} m²</span>
+              {details.statistics.area_construcao_override && !readOnly && (
+                <button
+                  type="button"
+                  className="underline text-primary"
+                  onClick={() =>
+                    patch("statistics", {
+                      ...details.statistics,
+                      area_construcao: abpFromSales,
+                      area_construcao_override: false,
+                    })
+                  }
+                >
+                  repor auto
+                </button>
+              )}
+            </p>
           </div>
           <div>
             <Label>Área Caves (m²)</Label>
@@ -1332,17 +1365,19 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               readOnly={readOnly}
               value={
                 details.statistics.area_total_construcao ??
-                ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0))
+                (abpEffective + (details.statistics.area_caves || 0))
               }
               onChange={(v) =>
                 patch("statistics", { ...details.statistics, area_total_construcao: v })
               }
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              Auto: {fmt((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0))} m² — editável
+              Auto: {fmt(abpEffective + (details.statistics.area_caves || 0))} m² — editável
             </p>
           </div>
         </div>
+          );
+        })()}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Custo / m² equivalente</p>
