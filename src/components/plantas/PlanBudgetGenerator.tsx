@@ -74,6 +74,7 @@ interface Props {
   planName: string;
   measurements: PlanMeasurement[];
   mappings: PlanMeasurementMapping[];
+  rooms?: PlanRoom[];
   articles: Article[];
   tipoBase?: TipoBase;
   disciplina?: import("@/types/plan-measurements").PlanDisciplina | null;
@@ -81,16 +82,17 @@ interface Props {
   autoOpen?: boolean;
 }
 
-export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
+export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, measurements, mappings, rooms = [], articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(autoOpen);
+  const [workMode, setWorkMode] = useState<WorkMode>(tipoBase === "remodelacao" ? "remodelacao" : "construcao_nova");
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
     ? DISCIPLINE_META[disciplina]?.label
     : null;
   const chapterPrefix = disciplineLabel ? `${disciplineLabel} - ` : "";
-  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} - ${planName}` : `Pré-Orçamento - ${planName}`);
+  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} - ${planName}` : `Orçamento - ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
