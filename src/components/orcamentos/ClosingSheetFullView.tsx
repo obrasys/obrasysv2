@@ -830,12 +830,26 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label>Custo Loteamento / Infraestruturas (€)</Label>
+            <Label>Custo Loteamento / Infraestruturas — por Fração (€)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.terrain.custo_loteamento}
-              onChange={(v) => patch("terrain", { ...details.terrain, custo_loteamento: v })}
+              value={
+                (details.header.num_fraccoes ?? 0) > 0
+                  ? (details.terrain.custo_loteamento || 0) /
+                    (details.header.num_fraccoes as number)
+                  : details.terrain.custo_loteamento
+              }
+              onChange={(v) => {
+                const n = details.header.num_fraccoes ?? 0;
+                patch("terrain", {
+                  ...details.terrain,
+                  custo_loteamento: n > 0 ? v * n : v,
+                });
+              }}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              Total: {fmt(details.terrain.custo_loteamento || 0)}
+            </p>
           </div>
           <div>
             <Label>Taxa IMT (%)</Label>
