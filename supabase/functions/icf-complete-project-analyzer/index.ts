@@ -5,6 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { resolveChain } from "../_shared/axia/model-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,7 +66,7 @@ async function classifyOne(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: resolveChain("classification").primary,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         {

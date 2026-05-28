@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -265,7 +267,9 @@ REGRAS CRÍTICAS:
 2. Extrai ABSOLUTAMENTE TODOS os itens de trabalho - NÃO OMITAS NENHUM
 3. Linhas com "0.00 €" ou completamente vazias NÃO são itens
 4. Notas explicativas longas sem unidade/quantidade NÃO são itens de trabalho
-5. Para cada item: descricao, unidade, quantidade, texto_original e classificacao`;
+5. Para cada item: descricao, unidade, quantidade, texto_original e classificacao
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
   const userPrompt = `Analisa o seguinte mapa de quantidades / caderno de encargos e extrai a estrutura completa com ABSOLUTAMENTE TODOS os itens de trabalho.${chunkContext}
 
@@ -321,8 +325,9 @@ ${text}`;
     },
   ];
 
+  const cadChain = resolveChain("budget_import");
   const primaryResponse = await callLovableAi(apiKey, {
-    model: "google/gemini-2.5-flash",
+    model: cadChain.primary,
     temperature: 0,
     messages: [
       { role: "system", content: systemPrompt },
@@ -347,7 +352,7 @@ ${text}`;
   }
 
   const retryResponse = await callLovableAi(apiKey, {
-    model: "google/gemini-2.5-flash",
+    model: cadChain.fallback,
     temperature: 0,
     messages: [
       { role: "system", content: `${systemPrompt}\n\nResponde APENAS com JSON válido neste formato: {"secoes":[...]} sem markdown.` },

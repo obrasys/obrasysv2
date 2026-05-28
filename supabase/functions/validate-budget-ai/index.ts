@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,11 +125,11 @@ Responde em formato JSON usando a tool 'validate_budget'.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: resolveChain("budget_validation").primary,
         messages: [
           {
             role: "system",
-            content: "És um especialista em orçamentação de construção civil em Portugal. Analisa orçamentos e identifica problemas, inconsistências e oportunidades de melhoria. Sê conciso e prático.",
+            content: "És um especialista em orçamentação de construção civil em Portugal. Analisa orçamentos e identifica problemas, inconsistências e oportunidades de melhoria. Sê conciso e prático.\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK,
           },
           {
             role: "user",

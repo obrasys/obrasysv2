@@ -1,6 +1,7 @@
 // Axia Budget Insights - analisa orçamento (Base vs Target vs Adjudicado vs Comprado)
 // e gera insights proativos via Lovable AI.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { resolveChain } from "../_shared/axia/model-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,7 +156,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: resolveChain("suggestions").primary,
           messages: [
             {
               role: "system",

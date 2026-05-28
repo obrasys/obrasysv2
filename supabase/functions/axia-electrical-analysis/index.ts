@@ -4,6 +4,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -142,6 +145,9 @@ serve(async (req) => {
 
     const systemPrompt = `Tu és a Axia, motor de inteligência operacional do Obra Sys, em PT-PT.
 Analisas plantas e desenhos elétricos. NUNCA inventas dados. Sem evidência → confidence baixa e review_required=true.
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}
+
 
 ETAPA 1 - sheet_classification (OBRIGATÓRIA)
 Classifica o tipo de folha em "sheet_subtype" usando UMA destas chaves:
@@ -479,7 +485,8 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
       });
     };
 
-    let resp = await callAI("google/gemini-2.5-flash", "tool");
+    const elecChain = resolveChain("critical_vision_analysis");
+    let resp = await callAI(elecChain.primary, "tool");
     if (!resp.ok && resp.status !== 400) {
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
@@ -508,7 +515,7 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
       const toolErrText = resp.ok ? "" : await resp.text();
       if (toolErrText) console.error("AI gateway tool error:", resp.status, toolErrText);
 
-      const fallbackResp = await callAI("google/gemini-2.5-flash", "json");
+      const fallbackResp = await callAI(elecChain.fallback, "json");
       if (fallbackResp.ok) {
         aiData = await fallbackResp.json();
         choice = aiData.choices?.[0];
