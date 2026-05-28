@@ -7631,6 +7631,7 @@ export type Database = {
           margem_lucro: number | null
           numero_revisao: number | null
           obra_id: string | null
+          observations_text: string | null
           project_metadata: Json
           revisao_de: string | null
           show_signature_block: boolean | null
@@ -7661,6 +7662,7 @@ export type Database = {
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
+          observations_text?: string | null
           project_metadata?: Json
           revisao_de?: string | null
           show_signature_block?: boolean | null
@@ -7691,6 +7693,7 @@ export type Database = {
           margem_lucro?: number | null
           numero_revisao?: number | null
           obra_id?: string | null
+          observations_text?: string | null
           project_metadata?: Json
           revisao_de?: string | null
           show_signature_block?: boolean | null
@@ -9532,6 +9535,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          default_budget_observations: string | null
           email: string
           empresa: string | null
           empresa_cidade: string | null
@@ -9557,6 +9561,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          default_budget_observations?: string | null
           email: string
           empresa?: string | null
           empresa_cidade?: string | null
@@ -9582,6 +9587,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          default_budget_observations?: string | null
           email?: string
           empresa?: string | null
           empresa_cidade?: string | null
@@ -13392,6 +13398,7 @@ export type Database = {
           margem_lucro: number | null
           numero_revisao: number | null
           obra_id: string | null
+          observations_text: string | null
           project_metadata: Json
           revisao_de: string | null
           show_signature_block: boolean | null
