@@ -708,45 +708,67 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 </TableCell>
               </TableRow>
             ))}
-            {/* Linha editável: ESTIMATIVA (acresce ao total). Pode ser zerada quando os custos reais estiverem consolidados. */}
-            <TableRow className="bg-amber-50 dark:bg-amber-950/20">
-              <TableCell className="font-medium text-xs italic">
-                ESTIMATIVA (editável - eliminar quando custos reais estiverem ok)
-              </TableCell>
-              <TableCell>
-                <NumCell
-                  readOnly={readOnly}
-                  value={Number(details.direct_costs_estimate) || 0}
-                  onChange={(v) => patch("direct_costs_estimate", v)}
-                />
-              </TableCell>
-              <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                {totals.total_directos > 0
-                  ? `${(((Number(details.direct_costs_estimate) || 0) / totals.total_directos) * 100).toFixed(2)}%`
-                  : "-"}
-              </TableCell>
-              <TableCell colSpan={2} className="text-xs text-muted-foreground italic">
-                Valor provisório - coloque 0 para remover do total.
-              </TableCell>
-            </TableRow>
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
-              <TableCell className="text-xs">Total</TableCell>
+              <TableCell className="text-xs">Total (Capítulos do Orçamento)</TableCell>
               <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ​
+                {details.direct_costs.reduce((s, l) => s + (l.value || 0), 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </TableCell>
-              <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos > 0 ? "100.00%" : "-"}
-              </TableCell>
+              <TableCell />
               <TableCell />
               <TableCell />
             </TableRow>
           </tfoot>
         </Table>
         <p className="text-xs text-muted-foreground italic px-1">
-          Os valores por capítulo são calculados automaticamente a partir do Orçamento. A linha "ESTIMATIVA" é editável para projecções iniciais.
+          Os valores por capítulo são calculados automaticamente a partir do Orçamento.
         </p>
+
+        {/* Estimativa editável - colocada ABAIXO do total. Calcula-se por área × preço/m² e soma ao total se houver orçamento. */}
+        {(() => {
+          const areaConstrucao =
+            details.statistics.area_total_construcao ??
+            ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0));
+          const precoM2 = Number(details.direct_costs_estimate_price_m2) || 0;
+          const estimativa = precoM2 * areaConstrucao;
+          const totalCapitulos = details.direct_costs.reduce((s, l) => s + (l.value || 0), 0);
+          return (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 rounded-md p-3 space-y-2">
+              <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                ESTIMATIVA (editável - calculada por área × preço/m²)
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Área de Construção</div>
+                  <div className="font-semibold tabular-nums">
+                    {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m²
+                  </div>
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Preço / m² (editável)</div>
+                  <NumCell
+                    readOnly={readOnly}
+                    value={precoM2}
+                    onChange={(v) => patch("direct_costs_estimate_price_m2", v)}
+                  />
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Estimativa</div>
+                  <div className="font-semibold tabular-nums">{fmt(estimativa)}</div>
+                </div>
+                <div className="text-xs">
+                  <div className="text-muted-foreground">Total Capítulos + Estimativa</div>
+                  <div className="font-bold tabular-nums text-primary">{fmt(totalCapitulos + estimativa + (Number(details.direct_costs_estimate) || 0))}</div>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground italic">
+                Coloque 0 no preço/m² para remover a estimativa quando os custos reais por capítulo estiverem consolidados.
+              </p>
+            </div>
+          );
+        })()}
+
         <SubtotalRow label="TOTAL CUSTOS DIRECTOS " value={totals.total_directos} />
         {(() => {
           const areaConstrucao =

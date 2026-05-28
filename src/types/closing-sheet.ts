@@ -150,6 +150,9 @@ export interface ClosingSheetDetails {
    *  Permite trabalhar com um valor previsto antes de ter os custos por capítulo
    *  consolidados; pode ser zerada/eliminada quando os reais estiverem ok. */
   direct_costs_estimate?: number;
+  /** Preço por m² (editável) usado para calcular a estimativa de Custos Directos
+   *  quando ainda não há valores consolidados. Estimativa = área construção × preço/m². */
+  direct_costs_estimate_price_m2?: number;
 }
 
 // 38 capítulos canónicos do orçamento - alimentados exclusivamente a partir do
@@ -372,9 +375,14 @@ export interface ClosingTotals {
 }
 
 export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
+  const areaConstrucao =
+    d.statistics?.area_total_construcao ??
+    ((d.statistics?.area_construcao || 0) + (d.statistics?.area_caves || 0));
+  const estimativaCalc = (Number(d.direct_costs_estimate_price_m2) || 0) * (areaConstrucao || 0);
   const total_directos =
     d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
-    (Number(d.direct_costs_estimate) || 0);
+    (Number(d.direct_costs_estimate) || 0) +
+    estimativaCalc;
   const total_estaleiro = d.site_costs.reduce((s, l) => s + (l.value || 0), 0);
   const custo_industrial = total_directos + total_estaleiro;
 
@@ -440,9 +448,6 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
 
   // Custo/m² calculado EXCLUSIVAMENTE pela Área de Construção
   // (override manual ou, por defeito, ABP + Caves - sem factores)
-  const areaConstrucao =
-    d.statistics.area_total_construcao ??
-    ((d.statistics.area_construcao || 0) + (d.statistics.area_caves || 0));
   const custo_m2_equivalente = areaConstrucao > 0 ? custo_total / areaConstrucao : 0;
 
   return {
