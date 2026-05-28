@@ -595,7 +595,11 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
     }
   };
 
-  const canGenerate = consolidatedEnriched.length > 0 || measurements.length > 0 || openings.length > 0;
+  const canGenerate =
+    consolidatedEnriched.length > 0 ||
+    measurements.length > 0 ||
+    openings.length > 0 ||
+    rooms.length > 0;
 
   return (
     <>
@@ -605,17 +609,48 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
         className="gap-1.5"
       >
         <FileSpreadsheet className="w-4 h-4" />
-        Gerar Pré-Orçamento
+        {targetBudgetId ? "Enviar para Orçamento" : "Gerar Pré-Orçamento"}
       </Button>
 
       <Dialog open={showDialog} onOpenChange={(open) => !isGenerating && setShowDialog(open)}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Gerar Pré-Orçamento a partir da Planta</DialogTitle>
+            <DialogTitle>
+              {targetBudgetId ? "Enviar Quantitativos para o Orçamento" : "Gerar Orçamento a partir da Planta"}
+            </DialogTitle>
             <DialogDescription>
-              Consolidar medições mapeadas e criar um orçamento com capítulos e artigos automaticamente.
+              Consolidar medições e compartimentos para gerar capítulos e artigos automaticamente.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Tipo de obra desta planta */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+            <p className="text-xs font-medium text-foreground">Tipo de obra desta planta</p>
+            <RadioGroup
+              value={workMode}
+              onValueChange={(v) => setWorkMode(v as WorkMode)}
+              className="grid grid-cols-2 gap-2"
+            >
+              <label className="flex items-start gap-2 rounded-md border bg-background p-2 cursor-pointer hover:bg-accent/50">
+                <RadioGroupItem value="remodelacao" className="mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Remodelação</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Pintura, substituição de pavimentos/rodapés.
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 rounded-md border bg-background p-2 cursor-pointer hover:bg-accent/50">
+                <RadioGroupItem value="construcao_nova" className="mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Construção Nova</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    Fornecimento e aplicação de revestimentos novos.
+                  </p>
+                </div>
+              </label>
+            </RadioGroup>
+          </div>
 
           <div className="space-y-4 py-2">
             {/* Auto-match status */}
