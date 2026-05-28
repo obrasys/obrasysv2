@@ -65,7 +65,7 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
 
   const handleSubmit = async () => {
     if (!file || !disciplina) return;
-    await onUpload({ file, obraId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
+    await onUpload({ file, obraId, budgetId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
   };
 
   const isPdf = file?.type.includes("pdf");
