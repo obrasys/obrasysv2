@@ -793,6 +793,34 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.area_terreno ?? 0}
               onChange={(v) => patch("terrain", { ...details.terrain, area_terreno: v })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              Preço/m²:{" "}
+              {fmt(
+                (details.terrain.area_terreno ?? 0) > 0
+                  ? (details.terrain.preco_aquisicao || 0) /
+                      (details.terrain.area_terreno as number)
+                  : 0,
+              )}
+            </p>
+          </div>
+          <div>
+            <Label>Nº de Frações no Terreno</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.header.num_fraccoes ?? 0}
+              onChange={(v) => patch("header", { ...details.header, num_fraccoes: v || null })}
+            />
+          </div>
+          <div>
+            <Label>Custo Aquisição por Fração</Label>
+            <div className="h-8 px-3 flex items-center justify-end rounded-md border bg-muted/40 text-sm font-medium">
+              {fmt(
+                (details.header.num_fraccoes ?? 0) > 0
+                  ? (details.terrain.preco_aquisicao || 0) /
+                      (details.header.num_fraccoes as number)
+                  : 0,
+              )}
+            </div>
           </div>
           <div>
             <Label>Custo Loteamento / Infraestruturas (€)</Label>
