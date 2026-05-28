@@ -338,7 +338,13 @@ export default function PlanQuantitativos() {
             </TabsContent>
 
             <TabsContent value="infra" className="mt-4">
-              <PlanInfraTab obraId={obraId!} />
+              {obraId ? (
+                <PlanInfraTab obraId={obraId} />
+              ) : (
+                <div className="p-6 text-center text-sm text-muted-foreground bg-muted/40 rounded-lg">
+                  Os cenários de infraestrutura ficam disponíveis depois de a obra ser criada (adjudicação do orçamento).
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
