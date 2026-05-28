@@ -793,6 +793,34 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.area_terreno ?? 0}
               onChange={(v) => patch("terrain", { ...details.terrain, area_terreno: v })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              Preço/m²:{" "}
+              {fmt(
+                (details.terrain.area_terreno ?? 0) > 0
+                  ? (details.terrain.preco_aquisicao || 0) /
+                      (details.terrain.area_terreno as number)
+                  : 0,
+              )}
+            </p>
+          </div>
+          <div>
+            <Label>Nº de Frações no Terreno</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.header.num_fraccoes ?? 0}
+              onChange={(v) => patch("header", { ...details.header, num_fraccoes: v || null })}
+            />
+          </div>
+          <div>
+            <Label>Custo Aquisição por Fração</Label>
+            <div className="h-8 px-3 flex items-center justify-end rounded-md border bg-muted/40 text-sm font-medium">
+              {fmt(
+                (details.header.num_fraccoes ?? 0) > 0
+                  ? (details.terrain.preco_aquisicao || 0) /
+                      (details.header.num_fraccoes as number)
+                  : 0,
+              )}
+            </div>
           </div>
           <div>
             <Label>Custo Loteamento / Infraestruturas (€)</Label>
@@ -880,26 +908,6 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.arranjos_exteriores}
               onChange={(v) => patch("terrain", { ...details.terrain, arranjos_exteriores: v })}
             />
-          </div>
-          <div className="md:col-span-2 border-t pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label>Nº de Frações no Terreno</Label>
-              <NumCell
-                readOnly={readOnly}
-                value={details.header.num_fraccoes ?? 0}
-                onChange={(v) => patch("header", { ...details.header, num_fraccoes: v || null })}
-              />
-            </div>
-            <div>
-              <Label>Valor por Fração</Label>
-              <div className="h-8 px-3 flex items-center justify-end rounded-md border bg-muted/40 text-sm font-medium">
-                {fmt(
-                  (details.header.num_fraccoes ?? 0) > 0
-                    ? totals.total_terreno / (details.header.num_fraccoes as number)
-                    : 0,
-                )}
-              </div>
-            </div>
           </div>
         </div>
         <SubtotalRow label="TOTAL CUSTOS DO TERRENO" code="(2)" value={totals.total_terreno} />
