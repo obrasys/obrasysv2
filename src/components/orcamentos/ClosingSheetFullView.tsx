@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,15 @@ const fmt = (v: number | null | undefined) =>
 const pct = (v: number | null | undefined) =>
   `${((v ?? 0) * 100).toFixed(2).replace(".", ",")}%`;
 
+// Formata número como "0 000 000,00" (espaço como separador de milhares, vírgula decimal)
+const fmtNumber = (v: number | null | undefined) => {
+  const n = Number.isFinite(v as number) ? (v as number) : 0;
+  const rounded = Math.round(n * 100) / 100;
+  const parts = rounded.toFixed(2).split(".");
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return `${intPart},${parts[1]}`;
+};
+
 function NumCell({
   value,
   onChange,
@@ -66,13 +75,27 @@ function NumCell({
   step?: string;
 }) {
   const safe = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  const [focused, setFocused] = React.useState(false);
+  const [draft, setDraft] = React.useState<string>("");
+  const display = focused ? draft : fmtNumber(safe);
   return (
     <Input
-      type="number"
-      step={step}
+      type="text"
+      inputMode="decimal"
       readOnly={readOnly}
-      value={safe}
-      onChange={(e) => onChange(parseFloat(e.target.value || "0"))}
+      value={display}
+      onFocus={() => {
+        setDraft(String(safe).replace(".", ","));
+        setFocused(true);
+      }}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const normalized = e.target.value.replace(/\s/g, "").replace(",", ".");
+        const parsed = parseFloat(normalized);
+        if (!Number.isNaN(parsed)) onChange(parsed);
+        else if (e.target.value.trim() === "") onChange(0);
+      }}
+      onBlur={() => setFocused(false)}
       className={`h-8 ${align === "right" ? "text-right" : ""} ${readOnly ? "bg-muted" : ""}`}
     />
   );
@@ -786,6 +809,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.taxa_imt_pct * 100}
               onChange={(v) => patch("terrain", { ...details.terrain, taxa_imt_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.taxa_imt_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Imposto do Selo (%)</Label>
@@ -794,6 +820,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.imposto_selo_pct * 100}
               onChange={(v) => patch("terrain", { ...details.terrain, imposto_selo_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.imposto_selo_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Custos Notário (%)</Label>
@@ -804,6 +833,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 patch("terrain", { ...details.terrain, custos_notario_pct: v / 100 })
               }
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.custos_notario_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Comissões Intermediários (€)</Label>
