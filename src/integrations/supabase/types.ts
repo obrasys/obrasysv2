@@ -179,6 +179,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "alocacoes_obra_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "alocacoes_obra_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
@@ -239,10 +246,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "aprovacoes_aprovador_id_fkey"
+            columns: ["aprovador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "aprovacoes_solicitante_id_fkey"
             columns: ["solicitante_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacoes_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
         ]
@@ -623,6 +644,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "autos_medicao_validado_por_fkey"
+            columns: ["validado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       autos_medicao_anexos: {
@@ -787,6 +815,13 @@ export type Database = {
             columns: ["alterado_por"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autos_medicao_historico_alterado_por_fkey"
+            columns: ["alterado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
           {
@@ -2578,6 +2613,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checklist_conformidade_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_obra_access: {
@@ -3138,10 +3180,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_financeiras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contas_financeiras_colaborador_id_fkey"
             columns: ["colaborador_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_financeiras_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
           {
@@ -3377,6 +3433,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4416,6 +4479,13 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
         ]
@@ -6757,10 +6827,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "livro_obra_fiscal_id_fkey"
+            columns: ["fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "livro_obra_gestor_id_fkey"
             columns: ["gestor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "livro_obra_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
           {
@@ -7483,6 +7567,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_cost_center_id_fkey"
             columns: ["cost_center_id"]
             isOneToOne: false
@@ -7494,6 +7585,13 @@ export type Database = {
             columns: ["gestor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
             referencedColumns: ["id"]
           },
         ]
@@ -7710,6 +7808,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
             referencedColumns: ["id"]
           },
           {
@@ -9427,6 +9532,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pre_budgets_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pre_budgets_converted_orcamento_id_fkey"
             columns: ["converted_orcamento_id"]
             isOneToOne: false
@@ -9691,6 +9803,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_daily_plan_tasks_assigned_worker_id_fkey"
+            columns: ["assigned_worker_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_daily_plan_tasks_daily_plan_id_fkey"
             columns: ["daily_plan_id"]
             isOneToOne: false
@@ -9835,6 +9954,13 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_labor_cost_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers_view"
             referencedColumns: ["id"]
           },
         ]
@@ -10832,6 +10958,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
             referencedColumns: ["id"]
           },
           {
@@ -12264,6 +12397,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       tarefas_cronograma: {
@@ -12327,6 +12467,13 @@ export type Database = {
             columns: ["membro_id"]
             isOneToOne: false
             referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_cronograma_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros_view"
             referencedColumns: ["id"]
           },
           {
@@ -12773,6 +12920,13 @@ export type Database = {
             referencedRelation: "workers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "timesheet_allocations_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       timesheets: {
@@ -12833,6 +12987,13 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheets_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers_view"
             referencedColumns: ["id"]
           },
         ]
@@ -13173,6 +13334,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "workers_equipa_membro_id_fkey"
+            columns: ["equipa_membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "workers_subempreiteiro_id_fkey"
             columns: ["subempreiteiro_id"]
             isOneToOne: false
@@ -13183,6 +13351,144 @@ export type Database = {
       }
     }
     Views: {
+      clientes_view: {
+        Row: {
+          ativo: boolean | null
+          cidade: string | null
+          codigo_postal: string | null
+          created_at: string | null
+          criado_por: string | null
+          email: string | null
+          empresa: string | null
+          endereco: string | null
+          id: string | null
+          nif: string | null
+          nivel_acesso: string | null
+          nome: string | null
+          observacoes: string | null
+          pais: string | null
+          telefone: string | null
+          telemovel: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cidade?: string | null
+          codigo_postal?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          email?: string | null
+          empresa?: string | null
+          endereco?: string | null
+          id?: string | null
+          nif?: never
+          nivel_acesso?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          pais?: string | null
+          telefone?: string | null
+          telemovel?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cidade?: string | null
+          codigo_postal?: string | null
+          created_at?: string | null
+          criado_por?: string | null
+          email?: string | null
+          empresa?: string | null
+          endereco?: string | null
+          id?: string | null
+          nif?: never
+          nivel_acesso?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          pais?: string | null
+          telefone?: string | null
+          telemovel?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      equipa_membros_view: {
+        Row: {
+          ativo: boolean | null
+          cargo: string | null
+          created_at: string | null
+          data_admissao: string | null
+          email: string | null
+          foto_url: string | null
+          id: string | null
+          nif: string | null
+          nome: string | null
+          obra_atual_id: string | null
+          observacoes: string | null
+          salario_base: number | null
+          subempreiteiro_id: string | null
+          telefone: string | null
+          tipo_contrato: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          foto_url?: string | null
+          id?: string | null
+          nif?: never
+          nome?: string | null
+          obra_atual_id?: string | null
+          observacoes?: string | null
+          salario_base?: never
+          subempreiteiro_id?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          foto_url?: string | null
+          id?: string | null
+          nif?: never
+          nome?: string | null
+          obra_atual_id?: string | null
+          observacoes?: string | null
+          salario_base?: never
+          subempreiteiro_id?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipa_membros_obra_atual_id_fkey"
+            columns: ["obra_atual_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipa_membros_subempreiteiro_id_fkey"
+            columns: ["subempreiteiro_id"]
+            isOneToOne: false
+            referencedRelation: "subempreiteiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       icf_resumo_obra: {
         Row: {
           aco_total_fundacoes: number | null
@@ -13241,6 +13547,87 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_view: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          default_budget_observations: string | null
+          email: string | null
+          empresa: string | null
+          empresa_cidade: string | null
+          empresa_codigo_postal: string | null
+          empresa_email: string | null
+          empresa_logo_url: string | null
+          empresa_morada: string | null
+          empresa_nif: string | null
+          empresa_nome: string | null
+          empresa_pais: string | null
+          empresa_telefone: string | null
+          id: string | null
+          nif: string | null
+          nome: string | null
+          role: string | null
+          telefone: string | null
+          trial_end: string | null
+          trial_expired: boolean | null
+          trial_start: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          default_budget_observations?: string | null
+          email?: string | null
+          empresa?: string | null
+          empresa_cidade?: string | null
+          empresa_codigo_postal?: string | null
+          empresa_email?: string | null
+          empresa_logo_url?: string | null
+          empresa_morada?: string | null
+          empresa_nif?: never
+          empresa_nome?: string | null
+          empresa_pais?: string | null
+          empresa_telefone?: string | null
+          id?: string | null
+          nif?: never
+          nome?: string | null
+          role?: string | null
+          telefone?: string | null
+          trial_end?: string | null
+          trial_expired?: boolean | null
+          trial_start?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          default_budget_observations?: string | null
+          email?: string | null
+          empresa?: string | null
+          empresa_cidade?: string | null
+          empresa_codigo_postal?: string | null
+          empresa_email?: string | null
+          empresa_logo_url?: string | null
+          empresa_morada?: string | null
+          empresa_nif?: never
+          empresa_nome?: string | null
+          empresa_pais?: string | null
+          empresa_telefone?: string | null
+          id?: string | null
+          nif?: never
+          nome?: string | null
+          role?: string | null
+          telefone?: string | null
+          trial_end?: string | null
+          trial_expired?: boolean | null
+          trial_start?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_subscription: {
         Row: {
           created_at: string | null
@@ -13276,6 +13663,109 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      workers_view: {
+        Row: {
+          active: boolean | null
+          compensation_type: string | null
+          created_at: string | null
+          default_daily_cost: number | null
+          default_hourly_cost: number | null
+          email: string | null
+          employee_code: string | null
+          employment_type: string | null
+          end_date: string | null
+          equipa_membro_id: string | null
+          full_name: string | null
+          hourly_rate: number | null
+          id: string | null
+          monthly_salary: number | null
+          nif: string | null
+          overtime_hourly_cost: number | null
+          phone: string | null
+          role: string | null
+          start_date: string | null
+          subempreiteiro_id: string | null
+          unit_rate_m2: number | null
+          unit_rate_ml: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          compensation_type?: string | null
+          created_at?: string | null
+          default_daily_cost?: never
+          default_hourly_cost?: never
+          email?: string | null
+          employee_code?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          equipa_membro_id?: string | null
+          full_name?: string | null
+          hourly_rate?: never
+          id?: string | null
+          monthly_salary?: never
+          nif?: never
+          overtime_hourly_cost?: never
+          phone?: string | null
+          role?: string | null
+          start_date?: string | null
+          subempreiteiro_id?: string | null
+          unit_rate_m2?: never
+          unit_rate_ml?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          compensation_type?: string | null
+          created_at?: string | null
+          default_daily_cost?: never
+          default_hourly_cost?: never
+          email?: string | null
+          employee_code?: string | null
+          employment_type?: string | null
+          end_date?: string | null
+          equipa_membro_id?: string | null
+          full_name?: string | null
+          hourly_rate?: never
+          id?: string | null
+          monthly_salary?: never
+          nif?: never
+          overtime_hourly_cost?: never
+          phone?: string | null
+          role?: string | null
+          start_date?: string | null
+          subempreiteiro_id?: string | null
+          unit_rate_m2?: never
+          unit_rate_ml?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workers_equipa_membro_id_fkey"
+            columns: ["equipa_membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workers_equipa_membro_id_fkey"
+            columns: ["equipa_membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipa_membros_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workers_subempreiteiro_id_fkey"
+            columns: ["subempreiteiro_id"]
+            isOneToOne: false
+            referencedRelation: "subempreiteiros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -13606,6 +14096,7 @@ export type Database = {
       get_user_org_id: { Args: never; Returns: string }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_org_admin: { Args: never; Returns: boolean }
+      is_org_admin_or_self: { Args: { _target: string }; Returns: boolean }
       is_quote_request_owner: {
         Args: { _quote_request_id: string }
         Returns: boolean
