@@ -4,32 +4,40 @@ import { usePlanImports } from "@/hooks/usePlanImports";
 import { PlanUploadForm } from "@/components/plantas/PlanUploadForm";
 import { PlanCard } from "@/components/plantas/PlanCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
 export default function PlantasIndex() {
-  const { id: obraId } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string; budgetId?: string }>();
+  const obraId = params.id;
+  const budgetId = params.budgetId;
+  const isBudgetScope = !!budgetId;
   const navigate = useNavigate();
-  const { plans, isLoading, uploadPlan, deletePlan } = usePlanImports(obraId);
+  const { plans, isLoading, uploadPlan, deletePlan } = usePlanImports(
+    isBudgetScope ? { budgetId } : { obraId },
+  );
   const [showUpload, setShowUpload] = useState(false);
+
+  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
+  const backRoute = isBudgetScope ? `/orcamentos/${budgetId}/editar` : `/obras/${obraId}`;
+  const backLabel = isBudgetScope ? "Voltar ao orçamento" : "Voltar à obra";
 
   return (
     <AppLayout title="Medição Assistida por Planta" subtitle="Importe plantas, meça quantitativos e gere pré-orçamentos">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à obra
+          <Button variant="ghost" size="sm" onClick={() => navigate(backRoute)}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> {backLabel}
           </Button>
           <Button onClick={() => setShowUpload(true)}>
             Importar Planta
           </Button>
         </div>
 
-        {/* Upload Form */}
         {showUpload && (
           <PlanUploadForm
-            obraId={obraId!}
+            obraId={obraId}
+            budgetId={budgetId}
             onUpload={async (data) => {
               await uploadPlan.mutateAsync(data);
               setShowUpload(false);
@@ -39,7 +47,6 @@ export default function PlantasIndex() {
           />
         )}
 
-        {/* Plans List */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
@@ -48,16 +55,8 @@ export default function PlantasIndex() {
           </div>
         ) : plans.length === 0 && !showUpload ? (
           <div className="text-center py-16 bg-card rounded-xl border">
-            <MapPin className="w-12 h-12 mx-auto text-muted-foreground/40 mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Nenhuma planta importada
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Importe uma planta em PDF ou imagem para começar a medir quantitativos.
-            </p>
-            <Button onClick={() => setShowUpload(true)}>
-              Importar Primeira Planta
-            </Button>
+            <p className="text-muted-foreground mb-4">Nenhuma planta importada.</p>
+            <Button onClick={() => setShowUpload(true)}>Importar primeira planta</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -65,7 +64,7 @@ export default function PlantasIndex() {
               <PlanCard
                 key={plan.id}
                 plan={plan}
-                onOpen={() => navigate(`/obras/${obraId}/plantas/${plan.id}`)}
+                onOpen={() => navigate(`${baseRoute}/${plan.id}`)}
                 onDelete={() => deletePlan.mutate(plan.id)}
               />
             ))}

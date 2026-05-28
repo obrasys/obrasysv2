@@ -11,10 +11,12 @@ import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
 import { cn } from "@/lib/utils";
 
 interface PlanUploadFormProps {
-  obraId: string;
+  obraId?: string;
+  budgetId?: string;
   onUpload: (data: {
     file: File;
-    obraId: string;
+    obraId?: string;
+    budgetId?: string;
     disciplina: PlanDisciplina;
     dataPlanta?: string;
     observacoes?: string;
@@ -23,7 +25,7 @@ interface PlanUploadFormProps {
   onCancel: () => void;
 }
 
-export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
+export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [disciplina, setDisciplina] = useState<PlanDisciplina | null>(null);
   const [dataPlanta, setDataPlanta] = useState("");
@@ -63,7 +65,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
 
   const handleSubmit = async () => {
     if (!file || !disciplina) return;
-    await onUpload({ file, obraId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
+    await onUpload({ file, obraId, budgetId, disciplina, dataPlanta: dataPlanta || undefined, observacoes: observacoes || undefined });
   };
 
   const isPdf = file?.type.includes("pdf");

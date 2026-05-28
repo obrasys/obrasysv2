@@ -1,73 +1,80 @@
+# Plantas a partir do Orçamento (sem depender de Obra)
+
 ## Objetivo
+Atualmente o módulo "Plantas" exige uma `obra_id`, mas obras só existem após adjudicação. Vamos permitir importar uma planta diretamente ao **criar/editar um orçamento**, com extração de quantitativos, e linkar tudo ao orçamento. Quando o orçamento for adjudicado e gerar a obra, as plantas seguem automaticamente para a obra criada.
 
-Restringir a leitura de **NIF** e **dados salariais** apenas a admins/owners da organização. Restantes campos (nome, email, telefone, morada) continuam visíveis a todos os membros, preservando a colaboração atual.
+Sem quebrar nada: rotas atuais `/obras/:id/plantas/*` continuam a funcionar.
 
-## Abordagem
+## 1. Backend (migration)
 
-Em vez de mexer no RLS coluna-a-coluna (não suportado nativamente em RLS) ou refactorizar todo o frontend, vamos:
+**`plan_imports`**
+- Tornar `obra_id` nullable.
+- Adicionar `budget_id uuid` (FK → `orcamentos(id) ON DELETE CASCADE`), index.
+- Constraint: `CHECK (obra_id IS NOT NULL OR budget_id IS NOT NULL)` — sempre ligado a um dos dois.
+- RLS atualizada: utilizador pode ler/escrever plantas se for dono do orçamento OU dono da obra (manter policies existentes + nova condição via `budget_id`).
+- GRANTs preservados.
 
-1. **Criar função** `public.is_org_admin_or_self(_target_user_id uuid)` — `SECURITY DEFINER`, devolve `true` se o utilizador atual é admin/owner da organização **ou** se é o próprio dono da linha.
+**Sincronização automática (trigger)**
+- No momento da adjudicação, quando o `budget_award` cria/associa uma `obra_id` ao orçamento, um trigger faz `UPDATE plan_imports SET obra_id = <nova_obra> WHERE budget_id = <orcamento>` (sem apagar `budget_id`). Assim a planta passa a estar visível também dentro da obra adjudicada.
 
-2. **Adicionar trigger `BEFORE SELECT`** — não existe em Postgres. Em vez disso, aplicar **máscara via VIEWS** que substituem as tabelas no acesso normal e devolvem `NULL` nos campos sensíveis quando o utilizador não é admin/owner.
+## 2. Hooks
 
-3. **Plano final escolhido (mínimo impacto):** manter tabelas tal como estão, mas adicionar **colunas geradas via VIEW** + atualizar apenas os hooks que mostram os campos sensíveis na UI.
+**`usePlanImports`**
+- Aceitar `{ obraId?, budgetId? }`. Query filtra por um ou outro.
+- Upload: passar `budget_id` ou `obra_id` consoante o contexto. File path passa a usar `${user.id}/${budgetId ?? obraId}/...`.
 
-## Mudanças concretas
+Nenhuma chamada existente quebra — assinatura permanece compatível (parâmetro string continua a ser `obraId`, novo overload por objeto).
 
-### Base de dados (1 migração)
+## 3. Rotas e páginas
 
-- Criar `public.is_org_admin_or_self(uuid)` (SECURITY DEFINER, STABLE).
-- Criar 4 views com colunas mascaradas:
-  - `clientes_view` → `nif` mascarado.
-  - `equipa_membros_view` → `nif`, `salario_*` mascarados.
-  - `profiles_view` → `nif`, `empresa_nif` mascarados.
-  - `workers_view` → `nif`, `monthly_salary`, `hourly_rate`, `default_*_cost`, `unit_rate_*`, `overtime_*` mascarados.
-- Cada view usa `WITH (security_invoker = on)` para herdar RLS da tabela base.
-- `GRANT SELECT` das views a `authenticated`.
+Adicionar rotas paralelas para o contexto de orçamento (reaproveitando as páginas existentes):
+- `/orcamentos/:budgetId/plantas`
+- `/orcamentos/:budgetId/plantas/:planId`
+- `/orcamentos/:budgetId/plantas/:planId/quantitativos`
 
-### Frontend (hooks de listagem)
+As páginas `plantas/Index.tsx`, `Detail.tsx`, `Quantitativos.tsx` passam a detetar o contexto via `useParams` (`obraId` vs `budgetId`) e ajustam:
+- Botão "Voltar" → `/orcamentos/:id/editar` ou `/obras/:id`.
+- Hooks recebem o id correto.
 
-- `useClientes`, `useTeamManagement`, `useRecursos`, `useLivroPonto` (listagens) → apontar para as views em vez das tabelas.
-- Escritas (insert/update) continuam a ir para as tabelas base — não muda nada.
-- Páginas de **edição** (`clientes/Editar`, `recursos/VerMembro`, `livro-ponto/Trabalhadores`) continuam a ler da tabela base; RLS atual já restringe ao próprio ou org. Adicionalmente, na UI, esconder NIF/salário se utilizador não for admin (via `useSuperAdmin`/`is_org_admin`).
+Rotas antigas mantidas tal e qual.
 
-### Detalhes técnicos
+## 4. UI no fluxo de criação/edição do orçamento
 
-- Função de verificação:
-  ```sql
-  CREATE FUNCTION public.is_org_admin_or_self(_target uuid)
-  RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
-    SELECT _target = auth.uid()
-        OR EXISTS (
-          SELECT 1 FROM organization_members om1
-          JOIN organization_members om2 ON om2.organization_id = om1.organization_id
-          WHERE om1.user_id = auth.uid()
-            AND om1.role IN ('admin','owner')
-            AND om2.user_id = _target
-        );
-  $$;
-  ```
-- Padrão de máscara em view:
-  ```sql
-  CREATE VIEW public.clientes_view WITH (security_invoker = on) AS
-  SELECT c.id, c.user_id, c.nome, c.email, c.telefone, c.telemovel,
-         c.empresa, c.endereco, c.codigo_postal, c.cidade, c.pais,
-         c.nivel_acesso, c.ativo, c.observacoes, c.created_at, c.updated_at,
-         CASE WHEN public.is_org_admin_or_self(c.user_id) THEN c.nif ELSE NULL END AS nif
-  FROM public.clientes c;
-  ```
+**`src/pages/orcamentos/Criar.tsx`** e **`src/pages/orcamentos/Essencial.tsx`**
+- Logo após o orçamento ser criado (já existe `createOrcamento.mutateAsync` que devolve `id`), exibir, ao lado do card "Importar Excel", um segundo card **"Importar Planta"** com o mesmo padrão visual.
+- Antes de existir `budget_id`, o botão fica desativado com tooltip "Guarde o orçamento primeiro" — alternativamente, dispara `handleSaveDraft` automaticamente e depois redireciona.
 
-### Findings cobertos
+**`src/pages/orcamentos/Editar.tsx`**
+- Adicionar uma secção/CTA "Plantas e Quantitativos" que lista as plantas ligadas ao orçamento (via `usePlanImports({ budgetId })`) e botão para importar/abrir.
+- A partir dos quantitativos, manter a ação já existente "Enviar para orçamento" — passa a alimentar diretamente o orçamento atual (sem precisar de obra).
 
-- ✅ `clientes_pii_org_readable`
-- ✅ `equipa_membros_nif_salary_org_readable`
-- ✅ `profiles_org_member_pii_exposure`
-- ✅ `workers_table_missing_org_isolation_nif`
+## 5. Linkagem quantitativos → orçamento
 
-## Não incluído
+O fluxo "Enviar para orçamento" (`useCanSendPlanToBudget`, `plan-budget-mapping`) hoje gera artigos a partir de uma obra. Ajuste mínimo: quando a planta tem `budget_id`, usa-se esse `budget_id` diretamente em vez de procurar o orçamento da obra.
 
-- Não vão ser mexidas funcionalidades existentes nem o fluxo de gestão de equipa.
-- Não são alteradas políticas RLS das tabelas base (continuam a permitir leitura para a app funcionar; o que muda é que os hooks de listagem passam a usar views mascaradas).
-- O `useSuperAdmin` / verificação `is_org_admin` é só refinamento de UI — opcional nesta fase.
+## 6. Compatibilidade
 
-Confirma para avançar?
+- Botão "Importar Planta" dentro de obras continua a existir.
+- Plantas antigas (só com `obra_id`) continuam a funcionar.
+- Após adjudicação, o trigger garante que plantas criadas no orçamento aparecem também na obra.
+
+## Detalhes técnicos
+
+```text
+plan_imports
+├── obra_id    uuid NULL  (FK obras)
+├── budget_id  uuid NULL  (FK orcamentos)  ← novo
+└── CHECK (obra_id IS NOT NULL OR budget_id IS NOT NULL)
+
+trigger orcamentos.adjudicacao:
+  on award → UPDATE plan_imports
+             SET obra_id = NEW.obra_id
+             WHERE budget_id = NEW.budget_id AND obra_id IS NULL
+```
+
+## Fora de âmbito
+- Não tocar no engine de medição/Konva.
+- Não alterar permissões além do necessário para `budget_id`.
+- Não remover rotas/fluxos antigos.
+
+Confirmas que avanço com esta abordagem (manter ambos `obra_id` e `budget_id`, com sincronização automática na adjudicação)?

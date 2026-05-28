@@ -199,6 +199,9 @@ const App = () => (
                   <Route path="/obras/:id/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />
+                  <Route path="/orcamentos/:budgetId/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
+                  <Route path="/orcamentos/:budgetId/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
+                  <Route path="/orcamentos/:budgetId/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />
                   <Route path="/obras/:id/especialidades" element={<ManagerRoute><EspecialidadesPage /></ManagerRoute>} />
                   <Route path="/obras/:id/especialidades/:planId" element={<ManagerRoute><EspecialidadeDetailPage /></ManagerRoute>} />
                   <Route path="/clientes" element={<ManagerRoute><ClientesPage /></ManagerRoute>} />

@@ -53,11 +53,18 @@ import { disciplineScope, DISCIPLINE_META } from "@/lib/plan-discipline";
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
 export default function PlanDetail() {
-  const { id: obraId, planId } = useParams<{ id: string; planId: string }>();
+  const params = useParams<{ id?: string; budgetId?: string; planId: string }>();
+  const obraId = params.id;
+  const budgetId = params.budgetId;
+  const isBudgetScope = !!budgetId;
+  const planId = params.planId;
+  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
   const navigate = useNavigate();
 
   // Data
-  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(
+    isBudgetScope ? { budgetId } : { obraId },
+  );
   const plan = plans.find((p) => p.id === planId);
   const scope = disciplineScope((plan as any)?.disciplina);
   const disciplineMeta = (plan as any)?.disciplina ? DISCIPLINE_META[(plan as any).disciplina as keyof typeof DISCIPLINE_META] : null;
@@ -797,7 +804,7 @@ export default function PlanDetail() {
       <AppLayout title="Planta não encontrada">
         <div className="text-center py-16">
           <p className="text-muted-foreground">Planta não encontrada.</p>
-          <Button className="mt-4" onClick={() => navigate(`/obras/${obraId}/plantas`)}>Voltar</Button>
+          <Button className="mt-4" onClick={() => navigate(`${baseRoute}`)}>Voltar</Button>
         </div>
       </AppLayout>
     );
@@ -817,7 +824,7 @@ export default function PlanDetail() {
         {/* Top bar - simplified */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas`)}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${baseRoute}`)}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Plantas
             </Button>
             <div className="flex items-center gap-2">
@@ -838,13 +845,13 @@ export default function PlanDetail() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                  onClick={() => navigate(`${baseRoute}/${planId}/quantitativos`)}
                 >
                   <Table2 className="w-4 h-4 mr-1.5" /> Quantitativos
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos?openBudget=1`)}
+                  onClick={() => navigate(`${baseRoute}/${planId}/quantitativos?openBudget=1`)}
                 >
                   <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Orçamentar
                 </Button>
@@ -874,7 +881,7 @@ export default function PlanDetail() {
           hasAnalysis={hasAnalysis}
           onPrimaryAction={() => {
             if (effectiveStep === "calibrate") handleStartCalibration();
-            if (effectiveStep === "budget") navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`);
+            if (effectiveStep === "budget") navigate(`${baseRoute}/${planId}/quantitativos`);
           }}
           rightSlot={
             <div className="flex items-center gap-2">
@@ -1058,7 +1065,7 @@ export default function PlanDetail() {
                 document.getElementById("plan-floor-selector")?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
               onStartMeasure={() => handleModeChange("measure_area")}
-              onOpenValidation={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+              onOpenValidation={() => navigate(`${baseRoute}/${planId}/quantitativos`)}
             />
 
             {/* Pavimentos */}
@@ -1259,7 +1266,7 @@ export default function PlanDetail() {
             {effectiveStep === "budget" && (
               <Button
                 className="w-full"
-                onClick={() => navigate(`/obras/${obraId}/plantas/${planId}/quantitativos`)}
+                onClick={() => navigate(`${baseRoute}/${planId}/quantitativos`)}
                 disabled={measurements.length === 0 && rooms.length === 0}
               >
                 <Table2 className="w-4 h-4 mr-2" />
@@ -1631,16 +1638,17 @@ export default function PlanDetail() {
       {/* Upload new plan dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
-          {obraId && (
+          {(obraId || budgetId) && (
             <PlanUploadForm
               obraId={obraId}
+              budgetId={budgetId}
               isUploading={uploadPlan.isPending}
               onCancel={() => setShowUploadDialog(false)}
               onUpload={async (data) => {
                 const created = await uploadPlan.mutateAsync(data);
                 setShowUploadDialog(false);
                 if (created?.id) {
-                  navigate(`/obras/${obraId}/plantas/${created.id}`);
+                  navigate(`${baseRoute}/${created.id}`);
                 }
               }}
             />

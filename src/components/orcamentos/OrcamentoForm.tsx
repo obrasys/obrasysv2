@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,7 +28,7 @@ import { FiscalContextSection } from '@/components/orcamentos/FiscalContextSecti
 import type { OrcamentoFormData, CustosIndiretos } from '@/types/orcamentos';
 import { REGIME_EMPREITADA_OPTIONS, TIPO_OBRA_OPTIONS } from '@/types/orcamentos';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, FileText } from 'lucide-react';
+import { ChevronDown, FileText, Map } from 'lucide-react';
 import { Loader2, Building2, User, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -69,6 +69,7 @@ interface OrcamentoFormProps {
   defaultValues?: Partial<OrcamentoFormData>;
   onSubmit: (data: OrcamentoFormData) => void;
   onSaveDraft?: (data: OrcamentoFormData) => void;
+  onImportPlanta?: (data: OrcamentoFormData) => void;
   isLoading?: boolean;
   isSavingDraft?: boolean;
   submitLabel?: string;
@@ -78,6 +79,7 @@ export function OrcamentoForm({
   defaultValues,
   onSubmit,
   onSaveDraft,
+  onImportPlanta,
   isLoading,
   isSavingDraft,
   submitLabel = 'Criar Orçamento',
@@ -414,7 +416,7 @@ export function OrcamentoForm({
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           {onSaveDraft && (
             <Button
               type="button"
@@ -432,6 +434,26 @@ export function OrcamentoForm({
             >
               {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Guardar Rascunho
+            </Button>
+          )}
+          {onImportPlanta && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1"
+              disabled={isLoading || isSavingDraft}
+              data-orcamento-import-planta
+              onClick={() => {
+                const values = form.getValues();
+                if (values.titulo) {
+                  onImportPlanta(values);
+                } else {
+                  form.setError('titulo', { message: 'Título é obrigatório' });
+                }
+              }}
+            >
+              <Map className="mr-2 h-4 w-4" />
+              Criar e Importar Planta
             </Button>
           )}
           <Button type="submit" className="flex-1" disabled={isLoading || isSavingDraft}>

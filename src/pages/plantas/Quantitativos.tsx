@@ -29,12 +29,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function PlanQuantitativos() {
-  const { id: obraId, planId } = useParams<{ id: string; planId: string }>();
+  const params = useParams<{ id?: string; budgetId?: string; planId: string }>();
+  const obraId = params.id;
+  const budgetId = params.budgetId;
+  const planId = params.planId;
+  const isBudgetScope = !!budgetId;
+  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const autoOpenBudget = searchParams.get("openBudget") === "1";
 
-  const { plans, isLoading: plansLoading } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading } = usePlanImports(
+    isBudgetScope ? { budgetId } : { obraId },
+  );
   const plan = plans.find((p) => p.id === planId);
   const { measurements, updateMeasurement, bulkUpdateValidation } = usePlanMeasurements(planId);
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
@@ -117,7 +124,7 @@ export default function PlanQuantitativos() {
       <AppLayout title="Planta não encontrada">
         <div className="text-center py-16">
           <p className="text-muted-foreground">Planta não encontrada.</p>
-          <Button className="mt-4" onClick={() => navigate(`/obras/${obraId}/plantas`)}>
+          <Button className="mt-4" onClick={() => navigate(baseRoute)}>
             Voltar
           </Button>
         </div>
@@ -190,7 +197,7 @@ export default function PlanQuantitativos() {
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas/${planId}`)}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${baseRoute}/${planId}`)}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Planta
             </Button>
             <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
@@ -213,7 +220,8 @@ export default function PlanQuantitativos() {
               </Badge>
             </div>
             <PlanBudgetGenerator
-              obraId={obraId!}
+              obraId={obraId}
+              targetBudgetId={budgetId}
               planId={planId!}
               planName={plan.nome_ficheiro}
               measurements={measurements}
@@ -330,7 +338,13 @@ export default function PlanQuantitativos() {
             </TabsContent>
 
             <TabsContent value="infra" className="mt-4">
-              <PlanInfraTab obraId={obraId!} />
+              {obraId ? (
+                <PlanInfraTab obraId={obraId} />
+              ) : (
+                <div className="p-6 text-center text-sm text-muted-foreground bg-muted/40 rounded-lg">
+                  Os cenários de infraestrutura ficam disponíveis depois de a obra ser criada (adjudicação do orçamento).
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
