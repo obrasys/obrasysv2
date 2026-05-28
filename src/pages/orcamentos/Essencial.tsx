@@ -24,6 +24,9 @@ import type { Orcamento, Capitulo, ArtigoOrcamento } from '@/types/orcamentos';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,6 +97,7 @@ export default function EssencialPage() {
   const [discountPercent, setDiscountPercent] = useState(draft?.discountPercent ?? 0);
   const [vatPercent, setVatPercent] = useState(draft?.vatPercent ?? 23);
   const [marginPercent, setMarginPercent] = useState(draft?.marginPercent ?? 0);
+  const [observationsText, setObservationsText] = useState<string>((draft as any)?.observationsText ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -160,6 +164,7 @@ export default function EssencialPage() {
     setDiscountPercent(0);
     setVatPercent(23);
     setMarginPercent(0);
+    setObservationsText('');
     setClientInfo(getDefaultClientInfo());
     localStorage.removeItem(DRAFT_KEY);
     setShowClearDialog(false);
@@ -254,6 +259,7 @@ export default function EssencialPage() {
       updated_at: new Date().toISOString(),
       capitulos,
       cliente: clientInfo.clientName ? { id: 'preview', nome: clientInfo.clientName } : undefined,
+      observations_text: observationsText || null,
     };
 
     return { orcamento, valorBase: subtotalBeforeVat, valorIVA: vatValue, valorFinal: totalFinal };
@@ -399,6 +405,7 @@ export default function EssencialPage() {
           valor_total: totalFinal,
           custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
           data_envio: new Date().toISOString(),
+          observations_text: observationsText || null,
         })
         .select('id')
         .single();
@@ -557,6 +564,26 @@ export default function EssencialPage() {
               onVatChange={setVatPercent}
             />
           )}
+
+          {/* E.1 - Observações do rodapé */}
+          {budgetType && items.length > 0 && (
+            <Card>
+              <CardContent className="pt-6 space-y-2">
+                <Label className="text-sm font-semibold">Observações do rodapé (PDF)</Label>
+                <Textarea
+                  value={observationsText}
+                  onChange={(e) => setObservationsText(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                  placeholder="Uma observação por linha. Deixe em branco para usar o padrão definido em Perfil → Empresa."
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Substitui as observações padrão apenas neste orçamento.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
 
           {/* F - Client Identification */}
           {budgetType && items.length > 0 && (
