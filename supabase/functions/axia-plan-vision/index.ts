@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -570,16 +572,23 @@ REGRAS CRÍTICAS:
     // por baixa legibilidade), arrancamos com o modelo Pro: mais lento mas
     // muito superior em texto fino e leitura de cotas.
     type Attempt = { model: string; mode: "tool" | "json"; timeoutMs: number };
+    // ModelRouter: cadeia para vision crítica. Pode-se sobrepor via
+    // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
+    const visionChain = resolveChain("critical_vision_analysis");
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: "google/gemini-2.5-pro", mode: "json", timeoutMs: 110_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 110_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 60_000 },
           { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 45_000 },
         ]
       : [
-          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 50_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 40_000 },
-          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 35_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 90_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 50_000 },
+          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 40_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 30_000 },
+          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 30_000 },
         ];
+
 
     let analysis: any = null;
     let finishReason: string | undefined;
