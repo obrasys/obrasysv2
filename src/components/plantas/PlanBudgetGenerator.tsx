@@ -332,31 +332,47 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
     setIsGenerating(true);
 
     try {
-      // 1. Generate orcamento code
-      const { data: codigo, error: codeErr } = await supabase.rpc("generate_orcamento_codigo", { p_user_id: user.id });
-      if (codeErr) throw codeErr;
+      let orcamento: { id: string };
+      let baseChapterOrder = 0;
 
-      // 2. Create orcamento
-      const { data: orcamento, error: orcErr } = await supabase
-        .from("orcamentos")
-        .insert({
-          user_id: user.id,
-          titulo,
-          codigo,
-          obra_id: obraId,
-          margem_lucro: parseFloat(margemLucro) || 0,
-          status: "rascunho",
-        })
-        .select()
-        .single();
-      if (orcErr) throw orcErr;
+      if (targetBudgetId) {
+        // Append-mode: use the existing budget passed in.
+        orcamento = { id: targetBudgetId };
+        const { data: existingChapters } = await supabase
+          .from("capitulos_orcamento")
+          .select("ordem")
+          .eq("orcamento_id", targetBudgetId)
+          .order("ordem", { ascending: false })
+          .limit(1);
+        baseChapterOrder = existingChapters?.[0]?.ordem ?? 0;
+      } else {
+        // 1. Generate orcamento code
+        const { data: codigo, error: codeErr } = await supabase.rpc("generate_orcamento_codigo", { p_user_id: user.id });
+        if (codeErr) throw codeErr;
+
+        // 2. Create orcamento
+        const { data: created, error: orcErr } = await supabase
+          .from("orcamentos")
+          .insert({
+            user_id: user.id,
+            titulo,
+            codigo,
+            obra_id: obraId ?? null,
+            margem_lucro: parseFloat(margemLucro) || 0,
+            status: "rascunho",
+          })
+          .select()
+          .single();
+        if (orcErr) throw orcErr;
+        orcamento = created;
+      }
 
       // 3. Create chapters (one per category)
       const chapterInserts = chapters.map(([cat], idx) => ({
         orcamento_id: orcamento.id,
-        numero: idx + 1,
+        numero: baseChapterOrder + idx + 1,
         titulo: `${chapterPrefix}${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
-        ordem: idx + 1,
+        ordem: baseChapterOrder + idx + 1,
       }));
 
       const { data: createdChapters, error: chapErr } = await supabase
