@@ -809,6 +809,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.taxa_imt_pct * 100}
               onChange={(v) => patch("terrain", { ...details.terrain, taxa_imt_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.taxa_imt_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Imposto do Selo (%)</Label>
@@ -817,6 +820,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.terrain.imposto_selo_pct * 100}
               onChange={(v) => patch("terrain", { ...details.terrain, imposto_selo_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.imposto_selo_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Custos Notário (%)</Label>
@@ -827,6 +833,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 patch("terrain", { ...details.terrain, custos_notario_pct: v / 100 })
               }
             />
+            <p className="text-[11px] text-muted-foreground mt-1 text-right">
+              = {fmt((details.terrain.preco_aquisicao || 0) * (details.terrain.custos_notario_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Comissões Intermediários (€)</Label>
