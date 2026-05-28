@@ -431,11 +431,12 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   const rai_pct = valor_vendas > 0 ? rai_eur / valor_vendas : 0;
   const k_venda = custo_industrial > 0 ? valor_vendas / custo_industrial : 0;
 
-  const areaEq =
-    (d.statistics.area_construcao || 0) +
-    (d.statistics.area_caves || 0) * (d.statistics.factor_caves || 0) +
-    (d.statistics.area_arranjos_ext || 0) * (d.statistics.factor_arranjos || 0);
-  const custo_m2_equivalente = areaEq > 0 ? custo_industrial / areaEq : 0;
+  // Custo/m² calculado EXCLUSIVAMENTE pela Área de Construção
+  // (override manual ou, por defeito, ABP + Caves — sem factores)
+  const areaConstrucao =
+    d.statistics.area_total_construcao ??
+    ((d.statistics.area_construcao || 0) + (d.statistics.area_caves || 0));
+  const custo_m2_equivalente = areaConstrucao > 0 ? custo_industrial / areaConstrucao : 0;
 
   return {
     custo_industrial,
