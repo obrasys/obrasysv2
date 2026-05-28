@@ -140,7 +140,7 @@ export function IcfPlanBuilding3D({ obraId, defaultHeightM = 2.7 }: Props) {
           <SelectContent>
             {planImports.map((p: any) => (
               <SelectItem key={p.id} value={p.id} className="text-xs">
-                Rev {p.revision_number} · {p.disciplina ?? '—'}
+                Rev {p.revision_number} · {p.disciplina ?? '-'}
               </SelectItem>
             ))}
           </SelectContent>

@@ -388,7 +388,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
       y += 7;
     }
 
-    // Chapter subtotal bar — compute from articles to avoid stale cap.valor_total
+    // Chapter subtotal bar - compute from articles to avoid stale cap.valor_total
     const capRaw = (cap.artigos || []).reduce(
       (acc, a) => acc + (a.valor_total ?? a.quantidade * a.preco_unitario),
       0

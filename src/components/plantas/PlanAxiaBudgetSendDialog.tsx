@@ -25,7 +25,7 @@ interface Props {
   /** Map of pageNumber -> analysis result (only analyzed pages). */
   resultsByPage: Record<number, PlanAnalysisResult>;
   obraId: string;
-  /** Plan import id — required to attach quantitativos to the source plan. */
+  /** Plan import id - required to attach quantitativos to the source plan. */
   planImportId: string;
   planName?: string;
 }
@@ -34,8 +34,8 @@ type DerivedKey = "openings" | "baseboards" | "wallSurfaces" | "rooms";
 
 const DERIVED_LABEL: Record<DerivedKey, string> = {
   openings: "Vãos por dimensão (un)",
-  baseboards: "Rodapé — perímetro útil (m)",
-  wallSurfaces: "Paredes — m² para revestir/pintar",
+  baseboards: "Rodapé - perímetro útil (m)",
+  wallSurfaces: "Paredes - m² para revestir/pintar",
   rooms: "Pavimento e Teto (m²)",
 };
 
@@ -98,7 +98,7 @@ export function PlanAxiaBudgetSendDialog({
   const [replacePrevious, setReplacePrevious] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Recompute when pages change (e.g. dialog re-opened) — useEffect, não useMemo
+  // Recompute when pages change (e.g. dialog re-opened) - useEffect, não useMemo
   useEffect(() => {
     setSelectedPages((prev) => {
       if (prev.size === 0) return new Set(pages);
@@ -172,7 +172,7 @@ export function PlanAxiaBudgetSendDialog({
         const folhaTag = `Folha ${page}`;
 
         // 1. Compartimentos (pavimento + teto). Inserimos sempre o room
-        //    quando há rooms ou wallSurfaces ou baseboards a enviar — o
+        //    quando há rooms ou wallSurfaces ou baseboards a enviar - o
         //    perímetro real vai para perimetro_m e a área para area_m2.
         if (
           includeDerived.rooms ||
@@ -202,7 +202,7 @@ export function PlanAxiaBudgetSendDialog({
           });
         }
 
-        // 2. Rodapé — registos lineares por compartimento
+        // 2. Rodapé - registos lineares por compartimento
         if (includeDerived.baseboards) {
           quantities.baseboards.forEach((b) => {
             if (b.valor <= 0) return;
@@ -213,7 +213,7 @@ export function PlanAxiaBudgetSendDialog({
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: b.valor,
               unidade: "ml",
-              etiqueta: `Rodapé — ${b.room_name}`,
+              etiqueta: `Rodapé - ${b.room_name}`,
               camada: "rodape",
               cor: "#f59e0b",
               estado_validacao: "pendente",
@@ -224,7 +224,7 @@ export function PlanAxiaBudgetSendDialog({
           });
         }
 
-        // 3. Paredes — m² líquidos para revestir/pintar/barrar
+        // 3. Paredes - m² líquidos para revestir/pintar/barrar
         if (includeDerived.wallSurfaces) {
           quantities.wallSurfaces.forEach((w) => {
             if (w.valor <= 0) return;
@@ -235,7 +235,7 @@ export function PlanAxiaBudgetSendDialog({
               coordinates: [{ x: 0, y: 0 }],
               valor_bruto: w.valor,
               unidade: "m²",
-              etiqueta: `Paredes — ${w.room_name}`,
+              etiqueta: `Paredes - ${w.room_name}`,
               camada: "paredes",
               cor: "#8b5cf6",
               estado_validacao: "pendente",
@@ -263,7 +263,7 @@ export function PlanAxiaBudgetSendDialog({
               user_id: user.id,
               symbol_type_id: `${o.type}_${o.largura_cm}x${o.altura_cm}`,
               category: "vaos",
-              subcategory: o.label, // ex: "Porta interior 80×210" — vira a descrição na view
+              subcategory: o.label, // ex: "Porta interior 80×210" - vira a descrição na view
               x,
               y,
               quantity: o.qtd,
@@ -300,7 +300,7 @@ export function PlanAxiaBudgetSendDialog({
         removed += oldRooms?.length ?? 0;
 
         // 3. plan_placed_elements desta planta criados pela Axia
-        //    (apaga apenas elementos com origin='axia' — nunca toca em
+        //    (apaga apenas elementos com origin='axia' - nunca toca em
         //    elementos colocados manualmente pelo utilizador)
         const { data: oldEl, error: oldElErr } = await supabase
           .from("plan_placed_elements")

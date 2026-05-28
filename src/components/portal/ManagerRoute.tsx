@@ -6,7 +6,7 @@ import { ContentLoader } from "@/components/layout/ContentLoader";
 export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading, mfaVerified } = useAuth();
 
-  // Still loading auth state — show app shell with content skeleton
+  // Still loading auth state - show app shell with content skeleton
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex">
@@ -19,17 +19,17 @@ export const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Auth fully loaded, no user — redirect to login
+  // Auth fully loaded, no user - redirect to login
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // 2FA gate — require verification before accessing any app route
+  // 2FA gate - require verification before accessing any app route
   if (!mfaVerified) {
     return <Navigate to="/verify-2fa" replace />;
   }
 
-  // User exists but profile not yet loaded — show shell with skeleton
+  // User exists but profile not yet loaded - show shell with skeleton
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex">

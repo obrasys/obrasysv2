@@ -7,7 +7,7 @@ export interface AxiaAnalysisResult {
 
 /**
  * Rule-based Axia analysis for a single plan_measurement.
- * Pure function — no IO, no IA call. Safe to run on every save.
+ * Pure function - no IO, no IA call. Safe to run on every save.
  */
 export function analyzePlanMeasurement(m: PlanMeasurement): AxiaAnalysisResult {
   const notes: AxiaNote[] = [];
@@ -64,7 +64,7 @@ export function analyzePlanMeasurement(m: PlanMeasurement): AxiaAnalysisResult {
         severity: "warning",
         type: "area_high",
         message: "Área da parede parece elevada.",
-        explanation: `Calculei ${m.wall_area.toFixed(2)} m² para uma parede isolada — confirme a escala da planta.`,
+        explanation: `Calculei ${m.wall_area.toFixed(2)} m² para uma parede isolada - confirme a escala da planta.`,
         suggested_action: "Verifique a calibração ou divida em vários segmentos.",
         related_field: "wall_area",
       });

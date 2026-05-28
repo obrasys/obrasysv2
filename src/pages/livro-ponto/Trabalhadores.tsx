@@ -79,8 +79,8 @@ export default function TrabalhadoresPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">{w.role || "—"}</TableCell>
-                        <TableCell className="text-sm">{w.subempreiteiro?.nome || "—"}</TableCell>
+                        <TableCell className="text-sm">{w.role || "-"}</TableCell>
+                        <TableCell className="text-sm">{w.subempreiteiro?.nome || "-"}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
                             {w.compensation_type === "salary" ? "Ordenado" : "Por hora"}

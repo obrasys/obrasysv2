@@ -146,7 +146,7 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
       .filter((a) => selectedIds.has(`tpl_${a.id}`))
       .map((a) => ({
         codigo: a.code,
-        descricao: a.name + (a.description ? ` — ${a.description}` : ''),
+        descricao: a.name + (a.description ? ` - ${a.description}` : ''),
         unidade: a.suggested_unit || 'un',
         quantidade: 1,
         preco_unitario: 0,
@@ -202,7 +202,7 @@ export function CatalogoModal({ open, onClose, onAddArtigos }: CatalogoModalProp
                   <SelectContent className="bg-popover max-h-[300px]">
                     {(chapterTemplates || []).map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.code} — {c.name}
+                        {c.code} - {c.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

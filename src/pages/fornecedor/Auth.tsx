@@ -81,7 +81,7 @@ export default function FornecedorAuth() {
   return (
     <div className="min-h-screen bg-background flex">
       <SEO
-        title={mode === 'register' ? 'Registar como fornecedor — ObraSys' : 'Portal Fornecedor — Entrar — ObraSys'}
+        title={mode === 'register' ? 'Registar como fornecedor - ObraSys' : 'Portal Fornecedor - Entrar - ObraSys'}
         description={mode === 'register'
           ? 'Junte-se à rede de fornecedores ObraSys e receba pedidos de cotação de empresas de construção.'
           : 'Aceda ao Portal de Fornecedores ObraSys para responder a pedidos de cotação e gerir tabelas de preços.'}

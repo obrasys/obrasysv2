@@ -109,7 +109,7 @@ export function PlanGlobalQuantityTable({ totals }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* KPI strip — métricas principais */}
+        {/* KPI strip - métricas principais */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <KpiBlock
             icon={LayoutGrid}
@@ -175,14 +175,14 @@ export function PlanGlobalQuantityTable({ totals }: Props) {
         {/* Doors / Windows grouped */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <GroupedTable
-            title="Portas — agrupadas por tamanho"
+            title="Portas - agrupadas por tamanho"
             icon={DoorOpen}
             items={totals.doorsByDim}
             totalQtd={totals.doors_qtd_total}
             emptyLabel="Sem portas detetadas."
           />
           <GroupedTable
-            title="Janelas — agrupadas por tamanho"
+            title="Janelas - agrupadas por tamanho"
             icon={AppWindow}
             items={totals.windowsByDim}
             totalQtd={totals.windows_qtd_total}

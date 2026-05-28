@@ -89,8 +89,8 @@ export default function ObrasPage() {
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 
   const formatDate = (d: string | null) => {
-    if (!d) return '—';
-    try { return format(parseISO(d), 'dd/MM/yyyy', { locale: pt }); } catch { return '—'; }
+    if (!d) return '-';
+    try { return format(parseISO(d), 'dd/MM/yyyy', { locale: pt }); } catch { return '-'; }
   };
 
   const handleDelete = () => {
@@ -237,7 +237,7 @@ export default function ObrasPage() {
                             <Euro className="h-4 w-4" />
                             Valor Previsto
                           </span>
-                          <span className="text-primary">{obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '—'}</span>
+                          <span className="text-primary">{obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '-'}</span>
                         </div>
 
                         {/* Action Buttons */}
@@ -311,7 +311,7 @@ export default function ObrasPage() {
                       {archivedPageData.map((obra) => (
                         <TableRow key={obra.id} className="opacity-75">
                           <TableCell className="font-medium text-sm">{obra.nome}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{obra.cliente || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{obra.cliente || '-'}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button variant="outline" size="sm" onClick={() => archiveObra.mutate({ id: obra.id, arquivada: false })}>Restaurar</Button>

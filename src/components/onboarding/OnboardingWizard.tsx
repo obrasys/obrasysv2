@@ -52,7 +52,7 @@ export function OnboardingWizard({
           {/* Top accent line */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
-          {/* Stepper — hidden on welcome */}
+          {/* Stepper - hidden on welcome */}
           {step > 0 && (
             <div className="px-6 pt-6 pb-2">
               <div className="flex items-center justify-center gap-1">

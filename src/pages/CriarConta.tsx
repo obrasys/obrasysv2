@@ -75,7 +75,7 @@ const CriarConta = () => {
   return (
     <div className="min-h-screen bg-background flex">
       <SEO
-        title="Criar conta grátis — ObraSys"
+        title="Criar conta grátis - ObraSys"
         description="Comece grátis no ObraSys. Crie a sua conta e gira orçamentos, obras e equipas com 30 dias de teste."
         path="/criar-conta"
       />
@@ -99,7 +99,7 @@ const CriarConta = () => {
           </h1>
 
           <p className="text-lg text-primary-foreground/70 mb-10 max-w-lg">
-            O Obra Sys ajuda construtores, arquitetos e gestores de obra a organizar tudo — do orçamento à execução — sem Excel e sem dor de cabeça.
+            O Obra Sys ajuda construtores, arquitetos e gestores de obra a organizar tudo - do orçamento à execução - sem Excel e sem dor de cabeça.
           </p>
 
           <div className="space-y-4">
@@ -138,7 +138,7 @@ const CriarConta = () => {
                   <span className="text-accent">Controle custos, prazos e orçamentos num só lugar.</span>
                 </h1>
                 <p className="text-base text-muted-foreground">
-                  O Obra Sys ajuda construtores, arquitetos e gestores de obra a organizar tudo — sem Excel e sem dor de cabeça.
+                  O Obra Sys ajuda construtores, arquitetos e gestores de obra a organizar tudo - sem Excel e sem dor de cabeça.
                 </p>
               </div>
 

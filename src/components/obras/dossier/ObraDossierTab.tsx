@@ -77,7 +77,7 @@ export function ObraDossierTab({ obraId }: Props) {
             Dossier do Promotor
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Vista agregadora do ciclo completo da obra — desde estudo de viabilidade ao serviço pós-venda.
+            Vista agregadora do ciclo completo da obra - desde estudo de viabilidade ao serviço pós-venda.
           </p>
         </CardHeader>
       </Card>

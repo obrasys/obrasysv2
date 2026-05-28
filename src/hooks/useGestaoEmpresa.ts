@@ -93,7 +93,7 @@ export function useGestaoEmpresa(year: number = new Date().getFullYear()) {
       const somaMB = obraResults.reduce((s, o) => s + o.mb, 0);
       const somaMBRealizada = obraResults.reduce((s, o) => s + o.mb_realizada, 0);
 
-      // CE (estrutura) breakdown — contas a pagar com cost_center_id em estrutura
+      // CE (estrutura) breakdown - contas a pagar com cost_center_id em estrutura
       const ceMap = new Map<string, { total: number; pago: number }>();
       for (const c of contas) {
         if (c.tipo !== 'pagar' || !c.cost_center_id) continue;
@@ -107,8 +107,8 @@ export function useGestaoEmpresa(year: number = new Date().getFullYear()) {
         const cc = ccById.get(id);
         return {
           cost_center_id: id,
-          code: cc?.code ?? '—',
-          name: cc?.name ?? '—',
+          code: cc?.code ?? '-',
+          name: cc?.name ?? '-',
           total: Math.round(v.total * 100) / 100,
           pago: Math.round(v.pago * 100) / 100,
         };

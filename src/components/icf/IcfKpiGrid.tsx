@@ -20,7 +20,7 @@ export const IcfKpiGrid = ({ resumo }: Props) => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
     <Kpi label="Volume Betão Total" value={`${resumo.volume_total_obra?.toFixed(2) ?? '0.00'} m³`} />
     <Kpi label="Área Líquida Paredes" value={`${resumo.area_liquida_total?.toFixed(2) ?? '0.00'} m²`} />
-    <Kpi label="Índice m³/m²" value={resumo.indice_m3_m2?.toFixed(4) ?? '—'} />
-    <Kpi label="Índice kg/m²" value={resumo.indice_kg_m2?.toFixed(2) ?? '—'} />
+    <Kpi label="Índice m³/m²" value={resumo.indice_m3_m2?.toFixed(4) ?? '-'} />
+    <Kpi label="Índice kg/m²" value={resumo.indice_kg_m2?.toFixed(2) ?? '-'} />
   </div>
 );

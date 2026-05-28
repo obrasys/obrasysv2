@@ -170,7 +170,7 @@ export function RDOProductionEditor({ reportId, obraId, scheduleVersionId, readO
                       {(prod as any).schedule_task && (
                         <div className="flex items-center gap-1 mt-1">
                           <GitBranch className="h-3 w-3 text-primary" />
-                          <span className="text-[10px] text-primary">{(prod as any).schedule_task.wbs_code} — {(prod as any).schedule_task.name}</span>
+                          <span className="text-[10px] text-primary">{(prod as any).schedule_task.wbs_code} - {(prod as any).schedule_task.name}</span>
                         </div>
                       )}
                     </div>
@@ -245,7 +245,7 @@ export function RDOProductionEditor({ reportId, obraId, scheduleVersionId, readO
                   <SelectContent>
                     {scheduleTasks.map(t => (
                       <SelectItem key={t.id} value={t.id} className="text-xs">
-                        {t.wbs_code ? `${t.wbs_code} — ` : ''}{t.name}
+                        {t.wbs_code ? `${t.wbs_code} - ` : ''}{t.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -261,7 +261,7 @@ export function RDOProductionEditor({ reportId, obraId, scheduleVersionId, readO
                   <SelectContent>
                     {activities.map(a => (
                       <SelectItem key={a.id} value={a.id} className="text-xs">
-                        {a.work_area || 'Atividade'} — {a.wbs_code || a.id.slice(0, 8)}
+                        {a.work_area || 'Atividade'} - {a.wbs_code || a.id.slice(0, 8)}
                       </SelectItem>
                     ))}
                   </SelectContent>

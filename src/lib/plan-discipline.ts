@@ -67,7 +67,7 @@ export const DISCIPLINE_META: Record<PlanDisciplina, DisciplineMeta> = {
     value: "outra",
     label: "Outra / Modo livre",
     icon: Shapes,
-    description: "Disciplina não especificada — todas as ferramentas ficam disponíveis.",
+    description: "Disciplina não especificada - todas as ferramentas ficam disponíveis.",
     badgeClass: "bg-muted text-muted-foreground border-border",
   },
 };

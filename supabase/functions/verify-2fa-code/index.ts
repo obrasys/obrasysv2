@@ -123,7 +123,7 @@ serve(async (req) => {
       });
     }
 
-    // Sucesso — consumir código
+    // Sucesso - consumir código
     await supabase.from("mfa_otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", otp.id);
 
     let deviceToken: string | null = null;

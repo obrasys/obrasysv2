@@ -93,7 +93,7 @@ export function DossierPanosTab({ analysis }: { analysis: IcfProjectAnalysis }) 
           <div className="grid gap-3">
             <div>
               <Label className="text-xs">Identificação</Label>
-              <Input value={form.label} placeholder="Ex: P1 — Sala" onChange={e => setForm({ ...form, label: e.target.value })} />
+              <Input value={form.label} placeholder="Ex: P1 - Sala" onChange={e => setForm({ ...form, label: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -129,7 +129,7 @@ export function DossierPanosTab({ analysis }: { analysis: IcfProjectAnalysis }) 
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {blocks.map(b => (
-                    <SelectItem key={b.code} value={b.code}>{b.code} — {b.name}</SelectItem>
+                    <SelectItem key={b.code} value={b.code}>{b.code} - {b.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

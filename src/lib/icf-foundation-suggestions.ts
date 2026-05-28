@@ -104,7 +104,7 @@ export const FOUNDATION_OPTIONS: FoundationOptionDef[] = [
 export interface FoundationSuggestionInput {
   option: FoundationOptionKey;
   params: Record<string, number | boolean>;
-  /** Comprimento total das paredes ICF candidatas (m) — usado quando o campo perimetro/comprimento não é fornecido. */
+  /** Comprimento total das paredes ICF candidatas (m) - usado quando o campo perimetro/comprimento não é fornecido. */
   baseIcfWallLength?: number;
 }
 
@@ -204,7 +204,7 @@ export function suggestFoundationItems(input: FoundationSuggestionInput): Sugges
       const area = p('area');
       const esp = p('espessura', 0.25);
       const vol = area * esp * (1 + perdas);
-      push({ reference: 'Radier — laje de fundação', quantity: round(area), unit: 'm²' });
+      push({ reference: 'Radier - laje de fundação', quantity: round(area), unit: 'm²' });
       push({ reference: 'Betão radier', quantity: round(vol), unit: 'm³' });
       if (f('incluir_aco')) push({ reference: 'Aço radier (estimativa 100 kg/m³)', quantity: round(vol * 100), unit: 'kg' });
       if (f('incluir_isolamento')) push({ reference: 'Isolamento sob radier', quantity: round(area), unit: 'm²' });

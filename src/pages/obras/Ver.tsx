@@ -247,7 +247,7 @@ export default function VerObraPage() {
               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {obra.data_inicio ? format(new Date(obra.data_inicio), "dd/MM/yyyy", { locale: pt }) : '—'}
+                  {obra.data_inicio ? format(new Date(obra.data_inicio), "dd/MM/yyyy", { locale: pt }) : '-'}
                   {obra.data_fim && (<> → {format(new Date(obra.data_fim), "dd/MM/yyyy", { locale: pt })}</>)}
                 </span>
               </div>
@@ -278,7 +278,7 @@ export default function VerObraPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-3xl md:text-4xl font-bold tracking-tight text-muted-foreground">—</p>
+                      <p className="text-3xl md:text-4xl font-bold tracking-tight text-muted-foreground">-</p>
                       <p className="text-sm text-muted-foreground mt-1">Sem orçamento adjudicado</p>
                     </>
                   )}
@@ -401,7 +401,7 @@ export default function VerObraPage() {
             title="Progresso"
             value={`${Math.round(obra.progresso || 0)}%`}
             icon={Percent}
-            description={`${elapsedDays} de ${totalDays || '—'} dias`}
+            description={`${elapsedDays} de ${totalDays || '-'} dias`}
             iconClassName="bg-primary/10"
           />
           <KpiCard
@@ -420,7 +420,7 @@ export default function VerObraPage() {
           />
           <KpiCard
             title="Prazo Restante"
-            value={remainingDays > 0 ? `${remainingDays} dias` : totalDays > 0 ? 'Expirado' : '—'}
+            value={remainingDays > 0 ? `${remainingDays} dias` : totalDays > 0 ? 'Expirado' : '-'}
             icon={Clock}
             description={endDate ? format(endDate, "dd/MM/yyyy") : 'Sem data fim'}
             iconClassName="bg-amber-500/10"
@@ -437,10 +437,10 @@ export default function VerObraPage() {
             <Progress value={obra.progresso || 0} className="h-2.5" />
             <div className="flex justify-between mt-1.5">
               <span className="text-[11px] text-muted-foreground">
-                {startDate ? format(startDate, "dd MMM yyyy", { locale: pt }) : '—'}
+                {startDate ? format(startDate, "dd MMM yyyy", { locale: pt }) : '-'}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {endDate ? format(endDate, "dd MMM yyyy", { locale: pt }) : '—'}
+                {endDate ? format(endDate, "dd MMM yyyy", { locale: pt }) : '-'}
               </span>
             </div>
           </CardContent>

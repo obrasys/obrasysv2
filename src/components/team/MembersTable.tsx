@@ -110,7 +110,7 @@ export function MembersTable({ members, onEditPermissions, onSuspend, onReactiva
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <span className="text-sm text-muted-foreground">{member.job_title || '—'}</span>
+                    <span className="text-sm text-muted-foreground">{member.job_title || '-'}</span>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[member.role]}`}>
@@ -127,7 +127,7 @@ export function MembersTable({ members, onEditPermissions, onSuspend, onReactiva
                     <span className="text-xs text-muted-foreground">
                       {member.last_seen_at
                         ? format(new Date(member.last_seen_at), "d MMM yyyy", { locale: pt })
-                        : '—'}
+                        : '-'}
                     </span>
                   </TableCell>
                   <TableCell>

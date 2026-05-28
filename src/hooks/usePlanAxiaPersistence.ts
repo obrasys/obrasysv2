@@ -144,7 +144,7 @@ export function usePlanAxiaPersistence(planImportId?: string | null) {
         migratedRef.current = true;
       } catch (e: any) {
         console.error("[axia-persist] saveAnalysis failed", e);
-        // Não apaga análise existente — mantém o módulo funcional
+        // Não apaga análise existente - mantém o módulo funcional
         // Mensagem amigável fica a cargo do chamador (toast contextual)
       }
     },

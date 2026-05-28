@@ -115,7 +115,7 @@ export function IcfPanelsIsometric({
           <SpreadList panels={enriched} />
         )}
         <p className="text-xs text-muted-foreground italic mt-3">
-          Modelo isométrico esquemático — representação visual sem precisão construtiva.
+          Modelo isométrico esquemático - representação visual sem precisão construtiva.
           {hasOrient && mode === 'assembled' && ' Panos agrupados por orientação (N/E/S/W) e piso.'}
         </p>
       </CardContent>
@@ -225,7 +225,7 @@ function AssembledBuilding({ panels }: { panels: IsometricPanelInput[] }) {
 
         {floorLayers.map(layer => (
           <g key={layer.floor}>
-            {/* Parede N (fundo) — desenhada primeiro */}
+            {/* Parede N (fundo) - desenhada primeiro */}
             {layer.wallN.map(({ panel, start, end }) => {
               const pts = `${P(start, layer.y0, 0)} ${P(end, layer.y0, 0)} ${P(end, layer.y1, 0)} ${P(start, layer.y1, 0)}`;
               return (
@@ -246,7 +246,7 @@ function AssembledBuilding({ panels }: { panels: IsometricPanelInput[] }) {
                 <polygon key={`E-${panel.id}`} points={pts} fill={fillE} stroke={stroke} strokeWidth={0.9} />
               );
             })}
-            {/* Parede S (frente) — última */}
+            {/* Parede S (frente) - última */}
             {layer.wallS.map(({ panel, start, end }) => {
               const pts = `${P(start, layer.y0, depthZ)} ${P(end, layer.y0, depthZ)} ${P(end, layer.y1, depthZ)} ${P(start, layer.y1, depthZ)}`;
               return (

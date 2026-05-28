@@ -74,7 +74,7 @@ export async function exportClosingSheetPDF(params: {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(FS.h2);
     doc.setTextColor(...INK);
-    doc.text(company.empresa_nome || "—", M + 20, 14);
+    doc.text(company.empresa_nome || "-", M + 20, 14);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(FS.micro);
@@ -127,7 +127,7 @@ export async function exportClosingSheetPDF(params: {
     }
   };
 
-  // H1 — título de secção
+  // H1 - título de secção
   const h1 = (label: string) => {
     ensureSpace(12);
     doc.setFillColor(...TEAL);
@@ -139,7 +139,7 @@ export async function exportClosingSheetPDF(params: {
     y += 9;
   };
 
-  // H2 — subtítulo
+  // H2 - subtítulo
   const h2 = (label: string) => {
     ensureSpace(7);
     doc.setFont("helvetica", "bold");
@@ -156,18 +156,18 @@ export async function exportClosingSheetPDF(params: {
   // =========================================================
   h1("1. Dados da Obra");
   const headerRows: [string, string][] = [
-    ["Nome da Obra", details.header.nome_obra || "—"],
-    ["Nº / Lote", details.header.numero_lote || "—"],
-    ["Designação", details.header.designacao || "—"],
-    ["Dono de Obra", details.header.dono_obra || "—"],
-    ["Regime", details.header.regime_empreitada || "—"],
-    ["Tipo de Obra", details.header.tipo_obra || "—"],
-    ["Localização", details.header.localizacao || "—"],
-    ["Prazo (meses)", String(details.header.prazo_meses ?? "—")],
-    ["Nº Frações", String(details.header.num_fraccoes ?? "—")],
-    ["Proj. Arquitectura", details.header.proj_arquitectura || "—"],
-    ["Proj. Engenharia", details.header.proj_engenharia || "—"],
-    ["Responsável Orçamento", details.header.responsavel_orcamento || "—"],
+    ["Nome da Obra", details.header.nome_obra || "-"],
+    ["Nº / Lote", details.header.numero_lote || "-"],
+    ["Designação", details.header.designacao || "-"],
+    ["Dono de Obra", details.header.dono_obra || "-"],
+    ["Regime", details.header.regime_empreitada || "-"],
+    ["Tipo de Obra", details.header.tipo_obra || "-"],
+    ["Localização", details.header.localizacao || "-"],
+    ["Prazo (meses)", String(details.header.prazo_meses ?? "-")],
+    ["Nº Frações", String(details.header.num_fraccoes ?? "-")],
+    ["Proj. Arquitectura", details.header.proj_arquitectura || "-"],
+    ["Proj. Engenharia", details.header.proj_engenharia || "-"],
+    ["Responsável Orçamento", details.header.responsavel_orcamento || "-"],
   ];
   const pairedRows: string[][] = [];
   for (let i = 0; i < headerRows.length; i += 2) {
@@ -206,8 +206,8 @@ export async function exportClosingSheetPDF(params: {
       .filter((l) => l.value > 0)
       .map((l) => [
         l.label,
-        l.empresa || "—",
-        totals.total_directos > 0 ? `${((l.value / totals.total_directos) * 100).toFixed(1)}%` : "—",
+        l.empresa || "-",
+        totals.total_directos > 0 ? `${((l.value / totals.total_directos) * 100).toFixed(1)}%` : "-",
         fmtEur(l.value),
       ]),
     foot: [["Subtotal A · Custos Directos", "", "", fmtEur(totals.total_directos)]],
@@ -235,7 +235,7 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // (1) Custo Industrial = A + B  — destaque
+  // (1) Custo Industrial = A + B  - destaque
   ensureSpace(14);
   doc.setFillColor(...LIGHT);
   doc.roundedRect(M, y, pageW - M * 2, 11, 1.5, 1.5, "F");
@@ -248,7 +248,7 @@ export async function exportClosingSheetPDF(params: {
   doc.text(fmtEur(totals.custo_industrial), pageW - M - 3, y + 7, { align: "right" });
   y += 15;
 
-  // (2) Terreno — detalhado
+  // (2) Terreno - detalhado
   h2("(2) Terreno");
   const t = details.terrain;
   const base = t.preco_aquisicao || 0;
@@ -257,16 +257,16 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      ["Preço de Aquisição", "—", fmtEur(base)],
-      ["Custo de Loteamento", "—", fmtEur(t.custo_loteamento || 0)],
+      ["Preço de Aquisição", "-", fmtEur(base)],
+      ["Custo de Loteamento", "-", fmtEur(t.custo_loteamento || 0)],
       [`IMT (${fmtPct(t.taxa_imt_pct)})`, fmtEur(base), fmtEur(base * (t.taxa_imt_pct || 0))],
       [`Imposto de Selo (${fmtPct(t.imposto_selo_pct)})`, fmtEur(base), fmtEur(base * (t.imposto_selo_pct || 0))],
       [`Notário / Registos (${fmtPct(t.custos_notario_pct)})`, fmtEur(base), fmtEur(base * (t.custos_notario_pct || 0))],
-      ["Comissões intermediários", "—", fmtEur(t.comissoes_intermediarios || 0)],
-      ["Ensaios geotécnicos", "—", fmtEur(t.ensaios_geotecnicos || 0)],
-      ["Levantamento topográfico", "—", fmtEur(t.levantamento_topografico || 0)],
-      ["Demolições diversas", "—", fmtEur(t.demolicoes_diversas || 0)],
-      ["Arranjos exteriores", "—", fmtEur(t.arranjos_exteriores || 0)],
+      ["Comissões intermediários", "-", fmtEur(t.comissoes_intermediarios || 0)],
+      ["Ensaios geotécnicos", "-", fmtEur(t.ensaios_geotecnicos || 0)],
+      ["Levantamento topográfico", "-", fmtEur(t.levantamento_topografico || 0)],
+      ["Demolições diversas", "-", fmtEur(t.demolicoes_diversas || 0)],
+      ["Arranjos exteriores", "-", fmtEur(t.arranjos_exteriores || 0)],
     ],
     foot: [["Subtotal (2) Terreno", "", fmtEur(totals.total_terreno)]],
     theme: "striped",
@@ -277,7 +277,7 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // (3) Indirectos — detalhado
+  // (3) Indirectos - detalhado
   h2("(3) Custos Indirectos");
   const ind = details.indirect;
   const ci = totals.custo_industrial;
@@ -287,14 +287,14 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      ["Honorários técnicos", "—", fmtEur(ind.honorarios_tecnicos || 0)],
+      ["Honorários técnicos", "-", fmtEur(ind.honorarios_tecnicos || 0)],
       [`Seguros (${fmtPct(ind.seguros_pct)})`, fmtEur(ci), fmtEur(ci * (ind.seguros_pct || 0))],
-      ["Financeiros", "—", fmtEur(ind.financeiros || 0)],
+      ["Financeiros", "-", fmtEur(ind.financeiros || 0)],
       [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)})`, fmtEur(ci), fmtEur(ci * (ind.taxas_impostos_prediais_pct || 0))],
       [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)})`, fmtEur(vv), fmtEur(vv * (ind.publicidade_marketing_pct || 0))],
-      ["Honorários de Gestão", "—", fmtEur(ind.honorarios_gestao || 0)],
+      ["Honorários de Gestão", "-", fmtEur(ind.honorarios_gestao || 0)],
       [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)})`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_pct || 0))],
-      ["Garantias Pós-Venda", "—", fmtEur(ind.garantias_pos_venda || 0)],
+      ["Garantias Pós-Venda", "-", fmtEur(ind.garantias_pos_venda || 0)],
     ],
     foot: [["Subtotal (3) Indirectos", "", fmtEur(totals.total_indirectos)]],
     theme: "striped",
@@ -305,7 +305,7 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // (4) Outros — detalhado
+  // (4) Outros - detalhado
   h2("(4) Outros Custos");
   const o = details.other;
   autoTable(doc, {
@@ -313,12 +313,12 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      ["Contratos e Registos", "—", fmtEur(o.contratos_registos || 0)],
+      ["Contratos e Registos", "-", fmtEur(o.contratos_registos || 0)],
       [`Projectos (${fmtPct(o.projectos_pct)})`, fmtEur(ci), fmtEur(ci * (o.projectos_pct || 0))],
       [`Imprevistos / Áleas (${fmtPct(o.imprevistos_aleas_pct)})`, fmtEur(totals.total_indirectos), fmtEur(totals.total_indirectos * (o.imprevistos_aleas_pct || 0))],
-      ["Outras taxas / Ramais", "—", fmtEur(o.outros_taxas_ramais || 0)],
-      ["Segurança e Higiene", "—", fmtEur(o.seguranca_higiene || 0)],
-      ["Controlo de Qualidade", "—", fmtEur(o.controlo_qualidade || 0)],
+      ["Outras taxas / Ramais", "-", fmtEur(o.outros_taxas_ramais || 0)],
+      ["Segurança e Higiene", "-", fmtEur(o.seguranca_higiene || 0)],
+      ["Controlo de Qualidade", "-", fmtEur(o.controlo_qualidade || 0)],
     ],
     foot: [["Subtotal (4) Outros", "", fmtEur(totals.total_outros)]],
     theme: "striped",
@@ -349,7 +349,7 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // (6) IVA — detalhado
+  // (6) IVA - detalhado
   h2("(6) IVA");
   const ivaTerr = (details.iva.zona_aru || details.iva.zona_oru) ? 0 : totals.total_terreno * (details.iva.taxa_terreno_pct || 0);
   const ivaCon = totals.base_iva_construcao * (details.iva.taxa_construcao_pct || 0);
@@ -360,7 +360,7 @@ export async function exportClosingSheetPDF(params: {
     head: [["Componente", "Base", "Taxa", "Valor"]],
     body: [
       [
-        `Terreno${(details.iva.zona_aru || details.iva.zona_oru) ? " (isento — ARU/ORU)" : ""}`,
+        `Terreno${(details.iva.zona_aru || details.iva.zona_oru) ? " (isento - ARU/ORU)" : ""}`,
         fmtEur(totals.total_terreno),
         fmtPct(details.iva.taxa_terreno_pct),
         fmtEur(ivaTerr),
@@ -377,7 +377,7 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 5;
 
-  // Custo Total da Obra — banner final
+  // Custo Total da Obra - banner final
   ensureSpace(18);
   doc.setFillColor(...TEAL);
   doc.roundedRect(M, y, pageW - M * 2, 14, 2, 2, "F");
@@ -405,7 +405,7 @@ export async function exportClosingSheetPDF(params: {
       margin: { left: M, right: M },
       head: [["Tipologia", "Quant.", "Área (m²)", "Preço m²", "Total"]],
       body: details.sales.map((l) => [
-        l.tipologia || "—",
+        l.tipologia || "-",
         String(l.quantidade),
         String(l.area_priv),
         fmtEur(l.preco_m2),
@@ -425,7 +425,7 @@ export async function exportClosingSheetPDF(params: {
   }
 
   // =========================================================
-  // 4) CONTROLO ECONÓMICO — só após termos custos e vendas
+  // 4) CONTROLO ECONÓMICO - só após termos custos e vendas
   // =========================================================
   h1("4. Controlo Económico");
   autoTable(doc, {
@@ -547,8 +547,8 @@ export async function exportClosingSheetPDF(params: {
       startY: y,
       margin: { left: M, right: M },
       body: [
-        ["Direcção Geral", v.direccao_geral || "—"],
-        ["Validador Técnico-Económico", v.validador_tecnico_economico || "—"],
+        ["Direcção Geral", v.direccao_geral || "-"],
+        ["Validador Técnico-Económico", v.validador_tecnico_economico || "-"],
         ["% Lucro Alvo", fmtPct(v.percentagem_lucro_alvo)],
         ["Valor Médio Fracção", fmtEur(v.valor_medio_fraccao || 0)],
       ],

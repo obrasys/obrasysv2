@@ -139,7 +139,7 @@ export function WorkerCreateModal({
         </DialogHeader>
 
         <div className="px-6 pb-6 space-y-6">
-          {/* SECTION 1 — Identification */}
+          {/* SECTION 1 - Identification */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 pb-1 border-b border-border">
               <User className={SECTION_ICON_CLASS} />
@@ -230,7 +230,7 @@ export function WorkerCreateModal({
             </div>
           </section>
 
-          {/* SECTION 2 — Employment */}
+          {/* SECTION 2 - Employment */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 pb-1 border-b border-border">
               <Briefcase className={SECTION_ICON_CLASS} />
@@ -259,7 +259,7 @@ export function WorkerCreateModal({
             </div>
           </section>
 
-          {/* SECTION 3 — Compensation */}
+          {/* SECTION 3 - Compensation */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 pb-1 border-b border-border">
               <Coins className={SECTION_ICON_CLASS} />
@@ -365,7 +365,7 @@ export function WorkerCreateModal({
             )}
           </section>
 
-          {/* SECTION 4 — Additional */}
+          {/* SECTION 4 - Additional */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 pb-1 border-b border-border">
               <FileText className={SECTION_ICON_CLASS} />

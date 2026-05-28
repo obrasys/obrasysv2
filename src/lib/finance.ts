@@ -1,5 +1,5 @@
 /**
- * Helpers financeiros transversais — Margem Bruta vs RAI.
+ * Helpers financeiros transversais - Margem Bruta vs RAI.
  *
  * Glossário (Obra Sys):
  * - **Margem Bruta da Obra (MB)**: Receitas da obra − Custos da obra.

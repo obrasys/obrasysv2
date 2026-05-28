@@ -195,7 +195,7 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
       material_label: materialLabel,
       material_id: materialDbId,
       volume_demolicao_m3: acao === "demolir" ? parseFloat(volumeDemolicao.toFixed(4)) : null,
-      etiqueta: etiqueta.trim() || `Segmento — ${acao}`,
+      etiqueta: etiqueta.trim() || `Segmento - ${acao}`,
       camada: "paredes",
       observacao: obsParts.join(" · "),
     });
@@ -439,7 +439,7 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Altura a revestir (m) — opcional, deixa vazio para toda a parede</Label>
+                <Label className="text-xs">Altura a revestir (m) - opcional, deixa vazio para toda a parede</Label>
                 <Input type="number" step="0.01" min="0" value={revestirAlturaParcial} onChange={(e) => setRevestirAlturaParcial(e.target.value)} placeholder={`${peDireitoNum.toFixed(2)} (toda a parede)`} className="h-9" />
               </div>
               <div className="rounded-md bg-purple-500/10 p-2.5 text-xs flex items-center justify-between">
@@ -450,7 +450,7 @@ export function PlanSegmentDialog({ open, onClose, comprimentoMetros, onConfirm,
           )}
           <div className="space-y-1.5">
             <Label className="text-xs">Etiqueta (opcional)</Label>
-            <Input value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder={`Segmento — ${acao}`} />
+            <Input value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder={`Segmento - ${acao}`} />
           </div>
         </div>
 

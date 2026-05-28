@@ -284,9 +284,9 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {it.chapter_code ?? "—"}
+                          {it.chapter_code ?? "-"}
                         </TableCell>
-                        <TableCell className="text-xs">{it.unit ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{it.unit ?? "-"}</TableCell>
                         <TableCell className="text-right text-xs">
                           <InlineNumber
                             value={it.target_quantity}

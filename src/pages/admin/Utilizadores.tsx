@@ -223,7 +223,7 @@ export default function AdminUtilizadores() {
                                 {(profile.nome || profile.email || "?").charAt(0)}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{profile.nome || "—"}</p>
+                                <p className="text-sm font-medium truncate">{profile.nome || "-"}</p>
                                 <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
                                 {profile.empresa && (
                                   <p className="text-[11px] text-muted-foreground/70 truncate">{profile.empresa}</p>
@@ -258,12 +258,12 @@ export default function AdminUtilizadores() {
                           <TableCell className="text-xs text-muted-foreground">
                             {profile.trial_end
                               ? format(new Date(profile.trial_end), "dd/MM/yy", { locale: pt })
-                              : "—"}
+                              : "-"}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {profile.created_at
                               ? format(new Date(profile.created_at), "dd/MM/yy", { locale: pt })
-                              : "—"}
+                              : "-"}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-0.5">

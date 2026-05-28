@@ -102,7 +102,7 @@ export function SpecialtyPage({ specialty }: Props) {
             <div>
               <p className="text-xs text-muted-foreground">€/Ponto</p>
               <p className="text-xl font-bold">
-                {totalPoints > 0 ? formatCurrency(totalCost / totalPoints) : '—'}
+                {totalPoints > 0 ? formatCurrency(totalCost / totalPoints) : '-'}
               </p>
             </div>
           </CardContent>

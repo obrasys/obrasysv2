@@ -217,7 +217,7 @@ export default function FornecedorPrecos() {
                         {items.map((item: any) => (
                           <TableRow key={item.id}>
                             <TableCell className="font-medium text-sm">{item.item_name}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{item.item_code || '—'}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{item.item_code || '-'}</TableCell>
                             <TableCell>{item.unit}</TableCell>
                             <TableCell className="text-right">{Number(item.base_price).toFixed(2)}</TableCell>
                             <TableCell className="text-right">{item.vat_rate}%</TableCell>

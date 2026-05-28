@@ -56,7 +56,7 @@ export function AuditPanel({ items, onToggleConfirm, onGeneratePre, onGenerateVa
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium truncate">{it.reference || it.category}</span>
                         <span className="text-muted-foreground">
-                          {it.quantity ?? '—'} {it.unit ?? ''}
+                          {it.quantity ?? '-'} {it.unit ?? ''}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">

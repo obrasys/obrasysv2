@@ -107,7 +107,7 @@ export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: Plan
           </div>
         )}
 
-        {/* Disciplina — escolha destacada */}
+        {/* Disciplina - escolha destacada */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold">Tipo de planta</Label>
           <p className="text-xs text-muted-foreground -mt-1">

@@ -116,7 +116,7 @@ const fmtEur = (v: number) =>
 const fmtQty = (v: number) =>
   new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(v);
 
-/** Format a cell value for a given column. Returns "—" for zero-value decomposition cells. */
+/** Format a cell value for a given column. Returns "-" for zero-value decomposition cells. */
 export function getCellValue(
   artigo: ArtigoLikeForCell,
   key: CapituloColumnKey,
@@ -130,7 +130,7 @@ export function getCellValue(
   const cSrv = artigo.custo_srv ?? 0;
   const cAlu = artigo.custo_alu ?? 0;
   const cDiv = artigo.custo_div ?? 0;
-  const dash = '—';
+  const dash = '-';
 
   switch (key) {
     case 'item':     return artigo.descricao;

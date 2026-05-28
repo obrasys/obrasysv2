@@ -185,7 +185,7 @@ export function AgendaView({ tarefas, onEdit, onToggleComplete }: AgendaViewProp
                     {(tarefa as any).hora_agendada ? (
                       <p className="text-sm font-semibold text-primary">{(tarefa as any).hora_agendada}</p>
                     ) : (
-                      <p className="text-xs text-muted-foreground">—</p>
+                      <p className="text-xs text-muted-foreground">-</p>
                     )}
                   </div>
 

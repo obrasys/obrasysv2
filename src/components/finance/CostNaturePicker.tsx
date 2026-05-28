@@ -26,7 +26,7 @@ export function CostNaturePicker({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {allowClear && <SelectItem value="__none__">— Sem natureza —</SelectItem>}
+        {allowClear && <SelectItem value="__none__">- Sem natureza -</SelectItem>}
         {COST_NATURE_OPTIONS.map((c) => (
           <SelectItem key={c} value={c}>
             <span className="font-mono text-xs mr-2">{c}</span>

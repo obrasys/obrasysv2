@@ -248,7 +248,7 @@ export default function CentrosDeCustoPage() {
                               <Badge>Obra</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{c.location ?? '—'}</TableCell>
+                          <TableCell className="text-muted-foreground">{c.location ?? '-'}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm" onClick={() => toggleActive(c)}>
                               {c.active ? 'Ativo' : 'Inativo'}

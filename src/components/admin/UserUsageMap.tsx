@@ -283,7 +283,7 @@ export function UserUsageMap() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="font-medium text-sm truncate">{user.nome || "—"}</p>
+                            <p className="font-medium text-sm truncate">{user.nome || "-"}</p>
                             <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                             {user.empresa_nome && (
                               <p className="text-[10px] text-muted-foreground/70 truncate">{user.empresa_nome}</p>
@@ -319,7 +319,7 @@ export function UserUsageMap() {
                             </Tooltip>
                           </TooltipProvider>
                         ) : (
-                          <span className="text-xs text-muted-foreground/50">—</span>
+                          <span className="text-xs text-muted-foreground/50">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -337,7 +337,7 @@ export function UserUsageMap() {
                             </Tooltip>
                           </TooltipProvider>
                         ) : (
-                          <span className="text-xs text-muted-foreground/50">—</span>
+                          <span className="text-xs text-muted-foreground/50">-</span>
                         )}
                       </TableCell>
                     </TableRow>

@@ -28,10 +28,10 @@ import {
 import { useState } from 'react';
 
 const IVA_REGIMES = [
-  { value: 23, label: 'IVA Normal', description: '23% — Regime geral' },
-  { value: 6, label: 'IVA Reduzido', description: '6% — Reabilitação/habitação' },
-  { value: 0, label: 'Autoliquidação', description: '0% — Subempreitada (art. 2º)' },
-  { value: 13, label: 'IVA Intermédio', description: '13% — Taxa intermédia' },
+  { value: 23, label: 'IVA Normal', description: '23% - Regime geral' },
+  { value: 6, label: 'IVA Reduzido', description: '6% - Reabilitação/habitação' },
+  { value: 0, label: 'Autoliquidação', description: '0% - Subempreitada (art. 2º)' },
+  { value: 13, label: 'IVA Intermédio', description: '13% - Taxa intermédia' },
 ];
 
 interface Props {
@@ -130,7 +130,7 @@ export function TotalsAdjustments({
               {formatEUR(lucro)}
             </p>
             <p className="text-[10px] text-emerald-600 dark:text-emerald-500">
-              Valor interno — não aparece no orçamento
+              Valor interno - não aparece no orçamento
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export function TotalsAdjustments({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Contexto fiscal (opcional, apenas informativo — não altera IVA automaticamente):
+          Contexto fiscal (opcional, apenas informativo - não altera IVA automaticamente):
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

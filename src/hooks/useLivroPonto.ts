@@ -234,7 +234,7 @@ export function useCreateTimesheet() {
         if (lcErr) throw lcErr;
       }
 
-      // Create unit-work allocations + cost entries (m²/ml — subcontractors)
+      // Create unit-work allocations + cost entries (m²/ml - subcontractors)
       for (const uw of form.unit_works || []) {
         if (!uw.obra_id || !uw.quantity || uw.quantity <= 0) continue;
         const unitRate = uw.unit_rate || 0;

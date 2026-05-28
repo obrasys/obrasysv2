@@ -683,7 +683,7 @@ function isNonItemLine(value: string): boolean {
   const normalized = value.toLowerCase().trim();
   if (!normalized) return true;
   if (normalized === "0.00" || normalized === "0.00 €") return true;
-  return /^[-–—]+$/.test(normalized);
+  return /^[-–-]+$/.test(normalized);
 }
 
 // Parser básico para BC3

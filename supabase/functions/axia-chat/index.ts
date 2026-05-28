@@ -173,7 +173,7 @@ ${scheduleTasks.slice(0, 15).map((t: any) => {
 }).join("\n")}
 `.trim();
 
-    const systemPrompt = `Tu és a **Axia™**, o motor de inteligência operacional do ObraSys — plataforma de gestão de obras e construção civil em Portugal.
+    const systemPrompt = `Tu és a **Axia™**, o motor de inteligência operacional do ObraSys - plataforma de gestão de obras e construção civil em Portugal.
 
 ## IDENTIDADE
 - Nome: Axia (pronuncia-se "Áxia")

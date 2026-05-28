@@ -1,4 +1,4 @@
-// Axia Budget Insights — analisa orçamento (Base vs Target vs Adjudicado vs Comprado)
+// Axia Budget Insights - analisa orçamento (Base vs Target vs Adjudicado vs Comprado)
 // e gera insights proativos via Lovable AI.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

@@ -1,5 +1,5 @@
 /**
- * Testes E2E (lógica pura) — Constantes ICF × Geração de Orçamento × Snapshots
+ * Testes E2E (lógica pura) - Constantes ICF × Geração de Orçamento × Snapshots
  *
  * Estes testes validam o pipeline crítico do módulo ICF:
  *  1. Alterar uma constante no diálogo → próxima geração recalcula corretamente.
@@ -74,7 +74,7 @@ function findArtigo(chapters: ReturnType<typeof buildChapters>, capTitulo: strin
   return art;
 }
 
-describe('ICF E2E — Constantes × Geração × Snapshots', () => {
+describe('ICF E2E - Constantes × Geração × Snapshots', () => {
   describe('Próxima geração reflete as novas constantes', () => {
     it('aço_kg_por_m3_paredes: alterar de 35 → 50 recalcula a quantidade de aço nas paredes', () => {
       const chaptersV1 = buildChapters(baseResumo, baseConfig, [], lajes, ICF_DEFAULT_CONSTANTS);
@@ -136,7 +136,7 @@ describe('ICF E2E — Constantes × Geração × Snapshots', () => {
 
   describe('Imutabilidade de snapshots', () => {
     it('regerar a partir do snapshot original (K antigo) produz exatamente as mesmas quantidades, mesmo se o utilizador mudou as constantes depois', () => {
-      // Geração 1 — utilizador com K padrão → snapshot guardado
+      // Geração 1 - utilizador com K padrão → snapshot guardado
       const Korig = { ...ICF_DEFAULT_CONSTANTS };
       const snapshot = buildChapters(baseResumo, baseConfig, [], lajes, Korig);
 

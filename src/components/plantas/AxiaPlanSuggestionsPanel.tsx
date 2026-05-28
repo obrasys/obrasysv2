@@ -57,7 +57,7 @@ export function AxiaPlanSuggestionsPanel({ suggestions, loading, error, onRefres
             <div className="p-1.5 rounded-md bg-[hsl(187_100%_31%/0.12)]">
               <Lightbulb className="h-4 w-4 text-[#00679d]" />
             </div>
-            <span className="text-sm font-semibold text-[#00679d]">Axia™ — Sugestões</span>
+            <span className="text-sm font-semibold text-[#00679d]">Axia™ - Sugestões</span>
             {visible.length > 0 && (
               <Badge variant="secondary" className="text-[10px] h-5">
                 {visible.length}

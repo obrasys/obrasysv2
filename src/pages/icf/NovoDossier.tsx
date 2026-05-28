@@ -55,7 +55,7 @@ export default function NovoDossierIcf() {
             <Input
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
-              placeholder="Ex: Moradia Costa — Dossiê ICF"
+              placeholder="Ex: Moradia Costa - Dossiê ICF"
             />
           </div>
           <div>

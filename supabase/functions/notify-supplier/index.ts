@@ -78,7 +78,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: "ObraSys <noreply@obrasys.pt>",
           to: [email],
-          subject: `Novo pedido de cotação — ${cats}`,
+          subject: `Novo pedido de cotação - ${cats}`,
           html: `
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
               <h2 style="color:#00679d;">Novo Pedido de Cotação</h2>
@@ -92,7 +92,7 @@ serve(async (req) => {
               <a href="${portalUrl}" style="display:inline-block;background:#00679d;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
                 Ver Pedido no Portal
               </a>
-              <p style="color:#888;margin-top:24px;font-size:12px;">ObraSys — Rede de Fornecedores Certificados</p>
+              <p style="color:#888;margin-top:24px;font-size:12px;">ObraSys - Rede de Fornecedores Certificados</p>
             </div>
           `,
         }),

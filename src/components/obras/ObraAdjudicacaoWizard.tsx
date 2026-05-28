@@ -128,7 +128,7 @@ export function ObraAdjudicacaoWizard({ open, onOpenChange, obraId, obraNome, or
 
     // For manual (no orcamento), we need a different approach
     if (!selectedOrc) {
-      // We'll create a dummy orcamento-like flow — the hook handles obra linking
+      // We'll create a dummy orcamento-like flow - the hook handles obra linking
       // But the hook requires a real budget_id. Let's skip this case for now and only allow selecting existing budgets.
       return;
     }
@@ -151,7 +151,7 @@ export function ObraAdjudicacaoWizard({ open, onOpenChange, obraId, obraNome, or
             <CheckCircle className="h-5 w-5 text-primary" />
             Adjudicar Obra
           </DialogTitle>
-          <DialogDescription>Passo {step} de 3 — {step === 1 ? 'Selecionar orçamento' : step === 2 ? 'Sinal e parcelas' : 'Confirmação'}</DialogDescription>
+          <DialogDescription>Passo {step} de 3 - {step === 1 ? 'Selecionar orçamento' : step === 2 ? 'Sinal e parcelas' : 'Confirmação'}</DialogDescription>
         </DialogHeader>
 
         {/* Step 1: Select budget and value */}
@@ -169,7 +169,7 @@ export function ObraAdjudicacaoWizard({ open, onOpenChange, obraId, obraNome, or
                   <SelectContent>
                     {nonAdjudicados.map(o => (
                       <SelectItem key={o.id} value={o.id}>
-                        {o.titulo} — {formatCurrency(o.valor_total)}
+                        {o.titulo} - {formatCurrency(o.valor_total)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -358,7 +358,7 @@ export function ObraAdjudicacaoWizard({ open, onOpenChange, obraId, obraNome, or
                 {formData.installments.map((inst, idx) => (
                   <div key={idx} className="flex justify-between">
                     <span className="text-sm text-muted-foreground">{inst.label} ({inst.percent.toFixed(1)}%)</span>
-                    <span className="text-sm">{formatCurrency(inst.amount)} — {inst.due_date}</span>
+                    <span className="text-sm">{formatCurrency(inst.amount)} - {inst.due_date}</span>
                   </div>
                 ))}
                 {formData.payment_type === 'single' && remaining > 0 && (

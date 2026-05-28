@@ -184,7 +184,7 @@ export function ObraLaborCostsTab({ obraId, compact = false }: ObraLaborCostsTab
         </Button>
       </div>
 
-      {/* KPI Summary — Redesigned */}
+      {/* KPI Summary - Redesigned */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="border-l-4 border-l-primary">
           <CardContent className="py-4 px-4">

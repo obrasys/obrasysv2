@@ -153,8 +153,8 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
                                 </div>
                               </TableCell>
                               <TableCell className="text-right font-semibold">€{Number(resp.total_amount).toFixed(2)}</TableCell>
-                              <TableCell className="text-right">{resp.estimated_delivery_days ? `${resp.estimated_delivery_days}d` : '—'}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{resp.notes || '—'}</TableCell>
+                              <TableCell className="text-right">{resp.estimated_delivery_days ? `${resp.estimated_delivery_days}d` : '-'}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{resp.notes || '-'}</TableCell>
                               <TableCell>
                                 <Button
                                   variant="ghost"

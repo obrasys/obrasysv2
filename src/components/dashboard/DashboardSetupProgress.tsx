@@ -64,7 +64,7 @@ export function DashboardSetupProgress({
             <Rocket className="w-5 h-5 text-primary" />
             <div>
               <h3 className="text-sm font-semibold text-foreground">Configure a sua conta</h3>
-              <p className="text-xs text-muted-foreground">{percentage}% concluído — falta pouco!</p>
+              <p className="text-xs text-muted-foreground">{percentage}% concluído - falta pouco!</p>
             </div>
           </div>
           <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground transition-colors">

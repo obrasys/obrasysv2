@@ -25,7 +25,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <SEO
-        title="ObraSys — Gestão de Obras, Orçamentos e Financeiro"
+        title="ObraSys - Gestão de Obras, Orçamentos e Financeiro"
         description="Plataforma de gestão de obras: orçamentos, cronogramas, RDOs, controlo financeiro e equipas. Tudo num só lugar."
         path="/"
       />

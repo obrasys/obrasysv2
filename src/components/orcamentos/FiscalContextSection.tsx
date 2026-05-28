@@ -134,7 +134,7 @@ export function FiscalContextSection({ form }: FiscalContextSectionProps) {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Regime determinado:</span>
               <Badge variant="outline" className="font-medium">
-                {resultado.regime_nome} — {resultado.taxa_iva}%
+                {resultado.regime_nome} - {resultado.taxa_iva}%
               </Badge>
             </div>
             {resultado.nota_legal && (

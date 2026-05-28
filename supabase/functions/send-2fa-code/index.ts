@@ -121,7 +121,7 @@ serve(async (req) => {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
         <tr><td style="background:#0F4C5C;padding:32px;text-align:center;">
-          <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:600;">ObraSys — Código de Verificação</h1>
+          <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:600;">ObraSys - Código de Verificação</h1>
         </td></tr>
         <tr><td style="padding:40px 32px;">
           <p style="font-size:16px;color:#1a1a1a;margin:0 0 16px;">Olá ${nome},</p>
@@ -136,11 +136,11 @@ serve(async (req) => {
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
           <p style="font-size:13px;color:#888;margin:0;">
             António Cavalcanti<br>
-            Fundador — ObraSys
+            Fundador - ObraSys
           </p>
         </td></tr>
         <tr><td style="background:#fafafa;padding:16px;text-align:center;font-size:12px;color:#999;">
-          © ${new Date().getFullYear()} ObraSys. Email automático — não responder.
+          © ${new Date().getFullYear()} ObraSys. Email automático - não responder.
         </td></tr>
       </table>
     </td></tr>

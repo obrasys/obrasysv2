@@ -233,7 +233,7 @@ export interface ArtigoFormData {
   // Campo de margem de lucro por artigo (não visível ao cliente)
   preco_base?: number;
   margem_lucro_artigo?: number;
-  // Decomposição de custo (6 componentes — somam ao preco_base)
+  // Decomposição de custo (6 componentes - somam ao preco_base)
   custo_mo?: number;   // Mão de obra
   custo_mat?: number;  // Materiais
   custo_sub?: number;  // Subempreitadas / Instaladores

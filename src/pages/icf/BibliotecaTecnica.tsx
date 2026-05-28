@@ -33,7 +33,7 @@ const IcfBibliotecaTecnica = () => {
   return (
     <AppLayout
       title="Biblioteca Técnica ICF"
-      subtitle="Catálogo de componentes HOMEBLOCK — desenhos técnicos oficiais"
+      subtitle="Catálogo de componentes HOMEBLOCK - desenhos técnicos oficiais"
     >
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">

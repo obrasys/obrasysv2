@@ -74,7 +74,7 @@ export function PlanElementsExportBudget({ elements, obraId, disciplina }: Props
         .insert({
           orcamento_id: selectedOrcamento,
           numero: nextNum,
-          titulo: disciplineLabel ? `${disciplineLabel} — Elementos de Planta` : "Elementos de Planta - Instalações",
+          titulo: disciplineLabel ? `${disciplineLabel} - Elementos de Planta` : "Elementos de Planta - Instalações",
           ordem: nextNum,
         })
         .select()

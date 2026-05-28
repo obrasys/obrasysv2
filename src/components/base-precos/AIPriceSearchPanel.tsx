@@ -34,7 +34,7 @@ export function AIPriceSearchPanel() {
         <div className="relative flex-1">
           <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--primary))]" />
           <Input
-            placeholder="Pesquisar preços com Axia™ — ex: cimento, aço, betão..."
+            placeholder="Pesquisar preços com Axia™ - ex: cimento, aço, betão..."
             className="pl-10 h-11 bg-background border-border"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

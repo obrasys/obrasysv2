@@ -127,7 +127,7 @@ export function MilestonesTimeline({ obraId }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <GitBranch className="h-4 w-4 text-green-600" />
-            <span>Cronograma conectado — previsão financeira integrada</span>
+            <span>Cronograma conectado - previsão financeira integrada</span>
             <Badge variant="outline" className="text-[10px] text-green-700 border-green-300 bg-green-50">Integrado</Badge>
           </div>
           <Button size="sm" variant="outline" onClick={analyzeFinancialForecast} disabled={isAnalyzing} className="gap-1.5">
@@ -138,7 +138,7 @@ export function MilestonesTimeline({ obraId }: Props) {
       ) : (
         <div className="flex items-center gap-2 text-sm text-amber-600">
           <AlertTriangle className="h-4 w-4" />
-          <span>Sem cronograma — a previsão financeira será limitada</span>
+          <span>Sem cronograma - a previsão financeira será limitada</span>
         </div>
       )}
 

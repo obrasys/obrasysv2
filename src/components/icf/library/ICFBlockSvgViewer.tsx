@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * Renderiza um SVG como asset estático (via <img>) — não executa scripts embutidos.
+ * Renderiza um SVG como asset estático (via <img>) - não executa scripts embutidos.
  */
 export const ICFBlockSvgViewer = ({ src, alt, className, showZoom = true }: Props) => {
   const [open, setOpen] = useState(false);

@@ -8,7 +8,7 @@ interface Props {
 
 /**
  * Visualização proporcional do pano de parede: fiadas, divisões verticais,
- * aberturas e sobras destacadas. Render SVG simples — não é editor.
+ * aberturas e sobras destacadas. Render SVG simples - não é editor.
  */
 export const ICFWallPanelVisualizer = ({ panel, block, composition }: Props) => {
   const L = panel.length_m;

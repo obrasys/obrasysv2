@@ -273,7 +273,7 @@ export function OrcamentoForm({
 
         <FiscalContextSection form={form} />
 
-        {/* Ficha Técnica da Obra — Opcional */}
+        {/* Ficha Técnica da Obra - Opcional */}
         <Collapsible className="border rounded-lg">
           <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors group">
             <div className="flex items-center gap-2 text-left">
@@ -281,7 +281,7 @@ export function OrcamentoForm({
               <div>
                 <h4 className="font-medium text-sm">Dados da Obra (Ficha Técnica)</h4>
                 <p className="text-xs text-muted-foreground">
-                  Opcional — preenche automaticamente a Folha de Fecho e o PDF comercial
+                  Opcional - preenche automaticamente a Folha de Fecho e o PDF comercial
                 </p>
               </div>
             </div>

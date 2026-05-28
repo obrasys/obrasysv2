@@ -45,7 +45,7 @@ export function DossierComposicaoTab({ analysisId }: { analysisId: string }) {
         <CardHeader><CardTitle className="text-base">Blocos HOMEBLOCK</CardTitle></CardHeader>
         <CardContent>
           {agg.blocks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem blocos calculados — verifique composição dos panos.</p>
+            <p className="text-sm text-muted-foreground">Sem blocos calculados - verifique composição dos panos.</p>
           ) : (
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground border-b">
@@ -99,7 +99,7 @@ export function DossierComposicaoTab({ analysisId }: { analysisId: string }) {
 
       <p className="text-xs text-muted-foreground italic">
         <Badge variant="outline" className="mr-2">Axia</Badge>
-        Estimativa assistida — deve ser validada por responsável técnico antes do envio para orçamento.
+        Estimativa assistida - deve ser validada por responsável técnico antes do envio para orçamento.
       </p>
     </div>
   );

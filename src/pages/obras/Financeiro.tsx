@@ -189,7 +189,7 @@ export default function ObraFinanceiroPage() {
                   </>
                 ) : (
                   <>
-                    <p className="text-3xl md:text-4xl font-bold tracking-tight text-muted-foreground">—</p>
+                    <p className="text-3xl md:text-4xl font-bold tracking-tight text-muted-foreground">-</p>
                     <p className="text-sm text-muted-foreground mt-1">Sem orçamento adjudicado</p>
                   </>
                 )}

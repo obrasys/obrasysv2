@@ -166,7 +166,7 @@ export function useSendWallPanelsToBudget() {
         totalGross += Number(p.gross_area_m2) || 0;
         totalNet += Number(p.net_area_m2 ?? 0) || 0;
         if (!r) {
-          warningsAll.push(`Pano "${p.label}" sem composição calculada — ignorado.`);
+          warningsAll.push(`Pano "${p.label}" sem composição calculada - ignorado.`);
           continue;
         }
         blockQty[r.block_code] = (blockQty[r.block_code] || 0) + (r.estimated_final_block_qty || 0);
@@ -200,14 +200,14 @@ export function useSendWallPanelsToBudget() {
       });
 
       if (artigos.length === 0) {
-        throw new Error('Sem artigos — verifique se os panos validados têm composição calculada.');
+        throw new Error('Sem artigos - verifique se os panos validados têm composição calculada.');
       }
 
       const chapters = [
         {
           numero: 1,
           titulo: 'Sistema ICF / HOMEBLOCK',
-          descricao: `Composição HOMEBLOCK a partir de ${panels.length} pano(s) validado(s). Área bruta ${totalGross.toFixed(2)} m² · líquida ${totalNet.toFixed(2)} m². Estimativa assistida — sujeita a revisão técnica.`,
+          descricao: `Composição HOMEBLOCK a partir de ${panels.length} pano(s) validado(s). Área bruta ${totalGross.toFixed(2)} m² · líquida ${totalNet.toFixed(2)} m². Estimativa assistida - sujeita a revisão técnica.`,
           artigos,
         },
       ];
@@ -217,7 +217,7 @@ export function useSendWallPanelsToBudget() {
         {
           p_obra_id: obraId,
           p_configuracao_id: configuracaoId,
-          p_titulo: `Sistema ICF / HOMEBLOCK — ${config.nome}`,
+          p_titulo: `Sistema ICF / HOMEBLOCK - ${config.nome}`,
           p_margem_lucro: margem_lucro,
           p_custos_indiretos: {
             estaleiro: 0,

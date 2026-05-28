@@ -204,7 +204,7 @@ export function TimesheetEntryForm({
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Total calculado</Label>
           <div className="flex h-10 items-center rounded-md border border-input bg-muted/50 px-3 text-sm font-medium text-foreground">
-            {totalWorkedMinutes > 0 ? formatMinutes(totalWorkedMinutes) : "—"}
+            {totalWorkedMinutes > 0 ? formatMinutes(totalWorkedMinutes) : "-"}
           </div>
         </div>
       </div>
@@ -238,7 +238,7 @@ export function TimesheetEntryForm({
         )}
       </div>
 
-      {/* Unit work — subcontractors only (m²/ml) */}
+      {/* Unit work - subcontractors only (m²/ml) */}
       {isSubcontractor && (
         <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
           <div className="flex items-center justify-between">
@@ -272,7 +272,7 @@ export function TimesheetEntryForm({
 
           {unitWorks.length === 0 && (
             <p className="text-[11px] text-muted-foreground">
-              Opcional. Pode coexistir com horas — útil quando o subempreiteiro também é pago por unidade executada.
+              Opcional. Pode coexistir com horas - útil quando o subempreiteiro também é pago por unidade executada.
             </p>
           )}
 

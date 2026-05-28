@@ -737,7 +737,7 @@ export default function RedeFornecedoresPage() {
         </div>
 
         <div className="flex gap-8">
-          {/* Filters sidebar — desktop */}
+          {/* Filters sidebar - desktop */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-4 rounded-xl border bg-card p-5">
               <div className="flex items-center justify-between mb-4">

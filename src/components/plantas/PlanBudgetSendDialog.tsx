@@ -44,7 +44,7 @@ interface Props {
   planImportId?: string;
   pageId?: string | null;
   floorId?: string | null;
-  /** Disciplina da planta — usada como prefixo no título dos capítulos. */
+  /** Disciplina da planta - usada como prefixo no título dos capítulos. */
   disciplina?: PlanDisciplina | null;
 }
 
@@ -74,20 +74,20 @@ export function PlanBudgetSendDialog({
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
     ? DISCIPLINE_META[disciplina]?.label
     : null;
-  const prefix = disciplineLabel ? `${disciplineLabel} — ` : "";
+  const prefix = disciplineLabel ? `${disciplineLabel} - ` : "";
 
   // "__new__" is a sentinel meaning "create a new budget on the fly".
   const NEW_BUDGET = "__new__";
   const [orcamentoId, setOrcamentoId] = useState<string>(
     obraOrcamentos.length === 0 ? NEW_BUDGET : "",
   );
-  const defaultNewTitle = planName ? `Orçamento — ${planName}` : "Orçamento da Planta";
+  const defaultNewTitle = planName ? `Orçamento - ${planName}` : "Orçamento da Planta";
   const [newBudgetTitle, setNewBudgetTitle] = useState(defaultNewTitle);
   const [groupBy, setGroupBy] = useState<GroupBy>(disciplineLabel ? "single" : "source");
   const [chapterTitle, setChapterTitle] = useState(
     disciplineLabel
-      ? `${disciplineLabel}${planName ? ` — ${planName}` : ""}`
-      : planName ? `Quantitativos — ${planName}` : "Quantitativos da Planta",
+      ? `${disciplineLabel}${planName ? ` - ${planName}` : ""}`
+      : planName ? `Quantitativos - ${planName}` : "Quantitativos da Planta",
   );
   const [sending, setSending] = useState(false);
   const [confirmedWarnings, setConfirmedWarnings] = useState(false);
@@ -426,7 +426,7 @@ export function PlanBudgetSendDialog({
                 <Input
                   value={newBudgetTitle}
                   onChange={(e) => setNewBudgetTitle(e.target.value)}
-                  placeholder="Ex: Orçamento — Moradia João"
+                  placeholder="Ex: Orçamento - Moradia João"
                 />
                 <p className="text-[11px] text-muted-foreground">
                   Será criado um orçamento novo nesta obra com margem padrão de 20%.
@@ -472,7 +472,7 @@ export function PlanBudgetSendDialog({
             </div>
           )}
 
-          {/* Acabamentos (Fase 4) — opcional */}
+          {/* Acabamentos (Fase 4) - opcional */}
           <div className="space-y-1.5">
             <Label className="text-xs">Acabamentos</Label>
             <FinishingChoicesStep
@@ -493,7 +493,7 @@ export function PlanBudgetSendDialog({
               <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2.5 text-xs text-amber-800 dark:text-amber-200">
                 ⚠️ {rows.filter((r) => !Number(r.valor)).length} item(s) sem quantidade
                 (valor 0). Para vãos, rodapé e paredes, volte a executar a
-                leitura da planta com a Axia — ela passou a calcular as
+                leitura da planta com a Axia - ela passou a calcular as
                 quantidades automaticamente. Em alternativa, edite os valores
                 na Tabela Unificada antes de enviar.
               </div>

@@ -153,7 +153,7 @@ export function PlanMappingTable({
     return { total, mapped, unmapped: total - mapped };
   }, [measurements, mappingByMeasurement]);
 
-  // Phase 3 — bulk + sugestões
+  // Phase 3 - bulk + sugestões
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -383,7 +383,7 @@ export function PlanMappingTable({
                               type="button"
                               onClick={() => applyArticleToMeasurement(m, s.article.id)}
                               className="text-[10px] px-1.5 py-0.5 rounded border border-[#7C3AED]/30 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/15 text-foreground/80 max-w-[180px] truncate"
-                              title={`${s.article.codigo} — ${s.article.descricao} (${s.reason})`}
+                              title={`${s.article.codigo} - ${s.article.descricao} (${s.reason})`}
                             >
                               {s.article.codigo} · {s.article.descricao.slice(0, 22)}
                             </button>
@@ -394,10 +394,10 @@ export function PlanMappingTable({
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs">
-                      {mapping ? `×${mapping.fator_desperdicio.toFixed(2)}` : "—"}
+                      {mapping ? `×${mapping.fator_desperdicio.toFixed(2)}` : "-"}
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs">
-                      {mapping ? `×${mapping.coeficiente.toFixed(2)}` : "—"}
+                      {mapping ? `×${mapping.coeficiente.toFixed(2)}` : "-"}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm font-medium">
                       {qtdFinal.toFixed(2)}

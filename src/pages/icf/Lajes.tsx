@@ -14,7 +14,7 @@ import { IcfAxiaContextual } from '@/components/icf/IcfAxiaContextual';
 import { IcfAxiaAnalysisPanel } from '@/components/icf/IcfAxiaAnalysisPanel';
 import { REBAR_WEIGHT_PER_METER } from '@/utils/icfSteelCalculation';
 
-/** Peso linear dos varões (kg/m) — fonte centralizada */
+/** Peso linear dos varões (kg/m) - fonte centralizada */
 const PESO_VARAO: Record<string, number> = Object.fromEntries(
   Object.entries(REBAR_WEIGHT_PER_METER).map(([k, v]) => [k, v]),
 );
@@ -242,9 +242,9 @@ const IcfLajes = () => {
                   <TableCell className="text-right">{l.area.toFixed(2)}</TableCell>
                   <TableCell className="text-right">{l.espessura_total.toFixed(3)}</TableCell>
                   <TableCell className="text-right font-bold">{l.volume?.toFixed(3)}</TableCell>
-                  <TableCell className="text-right">{l.aco_estimado_kg?.toFixed(1) ?? '—'}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">{l.area > 0 && l.aco_estimado_kg ? (l.aco_estimado_kg / l.area).toFixed(2) : '—'}</TableCell>
-                  <TableCell className="text-right">{l.peso_proprio_kn_m2 ?? '—'}</TableCell>
+                  <TableCell className="text-right">{l.aco_estimado_kg?.toFixed(1) ?? '-'}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{l.area > 0 && l.aco_estimado_kg ? (l.aco_estimado_kg / l.area).toFixed(2) : '-'}</TableCell>
+                  <TableCell className="text-right">{l.peso_proprio_kn_m2 ?? '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(l)}><Pencil className="h-3 w-3" /></Button>

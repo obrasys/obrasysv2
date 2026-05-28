@@ -154,7 +154,7 @@ export function useApplyFoundationSuggestion(sessionId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['icf-assistant-items', sessionId] });
       qc.invalidateQueries({ queryKey: ['icf-assistant-session', sessionId] });
-      toast({ title: 'Sugestão aplicada', description: 'Itens preliminares de fundação criados — requerem revisão técnica.' });
+      toast({ title: 'Sugestão aplicada', description: 'Itens preliminares de fundação criados - requerem revisão técnica.' });
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
   });

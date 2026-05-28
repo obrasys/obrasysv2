@@ -220,7 +220,7 @@ export function TeamManagementSection() {
       <UpgradePromptModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        title="Gestão de Equipa — Plano Professional"
+        title="Gestão de Equipa - Plano Professional"
         description="Para adicionar colaboradores e gerir permissões, faça upgrade para o plano Professional que inclui até 10 utilizadores."
         requiredPlan="Professional"
         currentTier={tier}

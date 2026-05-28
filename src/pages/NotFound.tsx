@@ -13,7 +13,7 @@ const NotFound = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
       <SEO
-        title="Página não encontrada (404) — ObraSys"
+        title="Página não encontrada (404) - ObraSys"
         description="A página que procura não existe ou foi movida. Volte ao início para continuar a navegar no ObraSys."
         path={location.pathname}
         noindex

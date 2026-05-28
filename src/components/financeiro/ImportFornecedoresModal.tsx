@@ -240,7 +240,7 @@ export function ImportFornecedoresModal({
             >
               <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="font-medium mb-1">Clique para selecionar CSV ou Excel</p>
-              <p className="text-sm text-muted-foreground">.csv, .xlsx ou .xls — cabeçalho detetado automaticamente</p>
+              <p className="text-sm text-muted-foreground">.csv, .xlsx ou .xls - cabeçalho detetado automaticamente</p>
               <input
                 ref={fileInputRef}
                 type="file"

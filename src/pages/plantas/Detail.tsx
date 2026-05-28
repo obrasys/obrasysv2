@@ -70,7 +70,7 @@ export default function PlanDetail() {
   const { openings, addOpening, deleteOpening } = usePlanOpenings(planId);
   const { floors } = usePlanFloors(obraId);
 
-  // Axia analysis parameters (ceiling height + door height) — persisted per plan in localStorage
+  // Axia analysis parameters (ceiling height + door height) - persisted per plan in localStorage
   const [analysisParams, setAnalysisParams] = useState<{ ceilingHeightM: number; doorHeightM: number }>(() => {
     if (typeof window === "undefined" || !planId) return { ceilingHeightM: 2.6, doorHeightM: 2.0 };
     try {
@@ -104,7 +104,7 @@ export default function PlanDetail() {
     localStorage.setItem("plan-axia-guided", guidedMode ? "1" : "0");
   }, [guidedMode]);
 
-  // Axia analysis results PER PAGE — fonte de verdade: DB (plan_pages.axia_analysis)
+  // Axia analysis results PER PAGE - fonte de verdade: DB (plan_pages.axia_analysis)
   // Mantemos um espelho local para reagir instantaneamente; persistência é via axiaPersist.saveAnalysis.
   const [axiaResultsByPage, setAxiaResultsByPage] = useState<Record<number, PlanAnalysisResult>>({});
   useEffect(() => {
@@ -268,7 +268,7 @@ export default function PlanDetail() {
     return () => window.removeEventListener("keydown", handler);
   }, [insertTool.mode]);
 
-  // Workflow stepper state — hydrated from plan record so checklist persists across reloads
+  // Workflow stepper state - hydrated from plan record so checklist persists across reloads
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("calibrate");
   const [hasAnalysis, setHasAnalysis] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -373,7 +373,7 @@ export default function PlanDetail() {
   };
 
   const handleInsertChangeType = () => {
-    // Reset but stay ready — the picker popover will open
+    // Reset but stay ready - the picker popover will open
     handleInsertFinish();
   };
 
@@ -576,7 +576,7 @@ export default function PlanDetail() {
         valorBruto: parseFloat(pendingSave.perimetro.toFixed(4)),
         unidade: "m",
         camada: saveCamada || undefined,
-        etiqueta: `${baseEtiqueta} — Rodapé`,
+        etiqueta: `${baseEtiqueta} - Rodapé`,
         cor,
       });
 
@@ -588,7 +588,7 @@ export default function PlanDetail() {
           valorBruto: parseFloat(paredesAreaLiquida.toFixed(4)),
           unidade: "m²",
           camada: saveCamada || undefined,
-          etiqueta: `${baseEtiqueta} — Paredes (h=${peDireitoNum.toFixed(2)} m)`,
+          etiqueta: `${baseEtiqueta} - Paredes (h=${peDireitoNum.toFixed(2)} m)`,
           cor,
           observacao: obs,
         } as any);
@@ -699,7 +699,7 @@ export default function PlanDetail() {
     setOpeningPeitoril("");
   };
 
-  // Save segment (parede isolada com ações construtivas) — registo único com metadados estruturados
+  // Save segment (parede isolada com ações construtivas) - registo único com metadados estruturados
   const handleConfirmSegment = async (payload: SegmentSavePayload) => {
     // Modo edição → atualizar registo existente
     if (editingSegmentId) {
@@ -920,7 +920,7 @@ export default function PlanDetail() {
           </div>
         )}
 
-        {/* Axia analysis tables — per-room breakdown + global totals (prominent, above main content) */}
+        {/* Axia analysis tables - per-room breakdown + global totals (prominent, above main content) */}
         {scope.showArchitectureTables && (() => {
           const t = planRoomAnalysis.totals;
           const hasGlobalData =
@@ -1158,7 +1158,7 @@ export default function PlanDetail() {
                 planImportId={planId}
                 planName={plan?.nome_ficheiro ?? undefined}
                 onHighlightPosition={(x, y) => {
-                  // best-effort: relies on PlanViewer's panning to focus point — noop placeholder
+                  // best-effort: relies on PlanViewer's panning to focus point - noop placeholder
                   console.log("Highlight position requested:", x, y);
                 }}
               />
@@ -1229,7 +1229,7 @@ export default function PlanDetail() {
               </Tabs>
             )}
 
-            {/* Electrical Analysis — apenas para disciplina elétrica (ou modo livre) */}
+            {/* Electrical Analysis - apenas para disciplina elétrica (ou modo livre) */}
             {scope.showElectricalAnalysis && effectiveImageUrl && (
               <PlanElectricalAnalysis
                 imageDataUrl={effectiveImageUrl}
@@ -1594,7 +1594,7 @@ export default function PlanDetail() {
             </div>
             {(openingTipo === "janela" || openingTipo === "claraboia") && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Peitoril (m) — opcional</Label>
+                <Label className="text-xs">Peitoril (m) - opcional</Label>
                 <Input value={openingPeitoril} onChange={(e) => setOpeningPeitoril(e.target.value)} type="number" step="0.01" placeholder="1.10" />
               </div>
             )}

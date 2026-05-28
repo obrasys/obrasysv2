@@ -229,11 +229,11 @@ Parâmetros de referência:
 
 BIBLIOTECA TÉCNICA HOMEBLOCK (fonte primária para composição):
 - Catálogo oficial fechado de códigos (NÃO inventar outros):
-  * HB-BLOCO-220 — bloco principal 1200 × 300 × 220 mm (núcleo 150 mm), unidade "un".
-  * HB-BLOCO-300 — bloco principal 1200 × 300 × 300 mm (núcleo 220 mm), unidade "un".
-  * HB-TOPO-150 / HB-TOPO-220 — peça de remate de topo, unidade "un".
-  * HB-ESPACADOR-150 / HB-ESPACADOR-220 — espaçador interno, unidade "un".
-  * HB-DETALHE-CORTE — peça técnica de corte/remate, unidade "un".
+  * HB-BLOCO-220 - bloco principal 1200 × 300 × 220 mm (núcleo 150 mm), unidade "un".
+  * HB-BLOCO-300 - bloco principal 1200 × 300 × 300 mm (núcleo 220 mm), unidade "un".
+  * HB-TOPO-150 / HB-TOPO-220 - peça de remate de topo, unidade "un".
+  * HB-ESPACADOR-150 / HB-ESPACADOR-220 - espaçador interno, unidade "un".
+  * HB-DETALHE-CORTE - peça técnica de corte/remate, unidade "un".
 - Os SVGs em /icf/homeblock/*.svg são APENAS referência visual para o utilizador. NUNCA extrair medidas, escalas ou contagens a partir dos desenhos SVG. As únicas dimensões válidas são as canónicas acima (1200 mm comprimento × 300 mm altura).
 - Modulação obrigatória: 1200 mm horizontal × 300 mm vertical por fiada. Qualquer composição deve ser feita por número inteiro de blocos por fiada × número inteiro de fiadas.
 - Escolha do bloco principal pela espessura do núcleo declarada: 150 mm → HB-BLOCO-220; 220 mm → HB-BLOCO-300. Nunca misturar blocos principais no mesmo pano.

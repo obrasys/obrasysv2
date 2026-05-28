@@ -111,12 +111,12 @@ Deno.serve(async (req) => {
     }
 
     if (!clienteEmail) {
-      // No client email — skip portal access creation silently
+      // No client email - skip portal access creation silently
       return new Response(
         JSON.stringify({
           success: true,
           skipped: true,
-          message: "Sem email de cliente associado — acesso ao portal não criado",
+          message: "Sem email de cliente associado - acesso ao portal não criado",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -167,11 +167,11 @@ Deno.serve(async (req) => {
 
     if (createError) {
       if (createError.message?.includes("already been registered")) {
-        // User exists — find them by email
+        // User exists - find them by email
         const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
           page: 1,
           perPage: 1,
-          // @ts-ignore — filter by email supported in admin API
+          // @ts-ignore - filter by email supported in admin API
         });
         // listUsers doesn't filter by email reliably; use a profiles lookup instead
         const { data: profile } = await supabaseAdmin

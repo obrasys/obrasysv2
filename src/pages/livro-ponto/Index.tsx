@@ -184,7 +184,7 @@ export default function LivroPontoIndex() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  Apontamentos — {format(new Date(selectedDate), "dd 'de' MMMM 'de' yyyy", { locale: pt })}
+                  Apontamentos - {format(new Date(selectedDate), "dd 'de' MMMM 'de' yyyy", { locale: pt })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -216,11 +216,11 @@ export default function LivroPontoIndex() {
                         return (
                           <TableRow key={ts.id}>
                             <TableCell>
-                              <div className="font-medium">{ts.worker?.full_name || "—"}</div>
+                              <div className="font-medium">{ts.worker?.full_name || "-"}</div>
                               <div className="text-[11px] text-muted-foreground">{format(new Date(ts.work_date), "dd/MM/yyyy", { locale: pt })}</div>
                             </TableCell>
-                            <TableCell>{ts.check_in_time?.slice(0, 5) || "—"}</TableCell>
-                            <TableCell>{ts.check_out_time?.slice(0, 5) || "—"}</TableCell>
+                            <TableCell>{ts.check_in_time?.slice(0, 5) || "-"}</TableCell>
+                            <TableCell>{ts.check_out_time?.slice(0, 5) || "-"}</TableCell>
                             <TableCell>{formatMinutes(ts.total_worked_minutes)}</TableCell>
                             <TableCell>
                               <Badge variant={st.variant}>{st.label}</Badge>
@@ -337,7 +337,7 @@ export default function LivroPontoIndex() {
                           {group.items.map((a: any) => (
                             <TableRow key={a.id}>
                             <TableCell>
-                              <div>{a.worker?.full_name || "—"}</div>
+                              <div>{a.worker?.full_name || "-"}</div>
                               <div className="text-[11px] text-muted-foreground">{a.work_date ? format(new Date(a.work_date), "dd/MM/yyyy", { locale: pt }) : ""}</div>
                             </TableCell>
                               <TableCell>
@@ -382,7 +382,7 @@ export default function LivroPontoIndex() {
                         return (
                           <TableRow key={ts.id}>
                             <TableCell>{format(new Date(ts.work_date), "dd/MM/yyyy")}</TableCell>
-                            <TableCell className="font-medium">{ts.worker?.full_name || "—"}</TableCell>
+                            <TableCell className="font-medium">{ts.worker?.full_name || "-"}</TableCell>
                             <TableCell>{formatMinutes(ts.total_worked_minutes)}</TableCell>
                             <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                             <TableCell className="text-right space-x-2">

@@ -1,4 +1,4 @@
-// Estrutura detalhada da Folha de Fecho — espelha o modelo Excel
+// Estrutura detalhada da Folha de Fecho - espelha o modelo Excel
 // "Folha de Fecho do Orçamento"
 
 export interface ClosingDirectCostLine {
@@ -72,7 +72,7 @@ export interface ClosingSalesLine {
 }
 
 export interface ClosingStatistics {
-  area_construcao: number; // ABP — override manual; se null usa soma do mapa de vendas
+  area_construcao: number; // ABP - override manual; se null usa soma do mapa de vendas
   area_caves: number;
   area_arranjos_ext: number;
   factor_caves: number; // 0.7
@@ -152,54 +152,54 @@ export interface ClosingSheetDetails {
   direct_costs_estimate?: number;
 }
 
-// 38 capítulos canónicos do orçamento — alimentados exclusivamente a partir do
+// 38 capítulos canónicos do orçamento - alimentados exclusivamente a partir do
 // Orçamento (capitulos_orcamento). A `key` corresponde ao número do capítulo
 // (`cap_01`..`cap_38`) para fazer o cruzamento.
 export const DEFAULT_DIRECT_COST_LINES: ClosingDirectCostLine[] = [
-  { key: "cap_01", label: "01 — TRABALHOS PREPARATÓRIOS E IMPLANTAÇÃO DE ESTALEIRO", value: 0 },
-  { key: "cap_02", label: "02 — DEMOLIÇÕES E DESMONTAGENS", value: 0 },
-  { key: "cap_03", label: "03 — MOVIMENTOS DE TERRAS", value: 0 },
-  { key: "cap_04", label: "04 — FUNDAÇÕES ESPECIAIS / CONTENÇÕES", value: 0 },
-  { key: "cap_05", label: "05 — ESTRUTURA DE BETÃO ARMADO", value: 0 },
-  { key: "cap_06", label: "06 — ESTRUTURAS METÁLICAS", value: 0 },
-  { key: "cap_07", label: "07 — ESTRUTURAS DE MADEIRA", value: 0 },
-  { key: "cap_08", label: "08 — PAVIMENTO TÉRREO", value: 0 },
-  { key: "cap_09", label: "09 — DRENAGENS, IMPERMEABILIZAÇÕES E ISOLAMENTOS - FASE TOSCO", value: 0 },
-  { key: "cap_10", label: "10 — ALVENARIAS / PAREDES SECAS", value: 0 },
-  { key: "cap_11", label: "11 — COBERTURA", value: 0 },
-  { key: "cap_12", label: "12 — IMPERMEABILIZAÇÕES E ISOLAMENTOS - FASE ACABAMENTOS", value: 0 },
-  { key: "cap_13", label: "13 — CANTARIAS", value: 0 },
-  { key: "cap_14", label: "14 — REVESTIMENTOS DE PAVIMENTOS", value: 0 },
-  { key: "cap_15", label: "15 — REVESTIMENTOS DE PAREDES", value: 0 },
-  { key: "cap_16", label: "16 — REVESTIMENTOS DE TECTOS", value: 0 },
-  { key: "cap_17", label: "17 — CAIXILHARIAS EXTERIORES", value: 0 },
-  { key: "cap_18", label: "18 — PROTEÇÃO SOLAR", value: 0 },
-  { key: "cap_19", label: "19 — SERRALHARIAS", value: 0 },
-  { key: "cap_20", label: "20 — CARPINTARIAS", value: 0 },
-  { key: "cap_21", label: "21 — PINTURAS", value: 0 },
-  { key: "cap_22", label: "22 — INSTALAÇÕES HIDRÁULICAS", value: 0 },
-  { key: "cap_23", label: "23 — REDE INTERNA DE DISTRIBUIÇÃO DE GÁS", value: 0 },
-  { key: "cap_24", label: "24 — SEGURANÇA CONTRA INCÊNDIOS - SCI", value: 0 },
-  { key: "cap_25", label: "25 — ASPIRAÇÃO CENTRAL", value: 0 },
-  { key: "cap_26", label: "26 — INSTALAÇÕES MECÂNICAS", value: 0 },
-  { key: "cap_27", label: "27 — ELEVADORES", value: 0 },
-  { key: "cap_28", label: "28 — EQUIPAMENTOS SANITÁRIOS", value: 0 },
-  { key: "cap_29", label: "29 — INSTALAÇÕES ELÉCTRICAS", value: 0 },
-  { key: "cap_30", label: "30 — INFRAESTRUTURAS DE TELECOMUNICAÇÕES - ITED", value: 0 },
-  { key: "cap_31", label: "31 — SISTEMA DE ALARME + CCTV", value: 0 },
-  { key: "cap_32", label: "32 — AUTOMAÇÃO / DOMÓTICA", value: 0 },
-  { key: "cap_33", label: "33 — PAINÉIS SOLARES", value: 0 },
-  { key: "cap_34", label: "34 — COZINHAS", value: 0 },
-  { key: "cap_35", label: "35 — ARRANJOS EXTERIORES", value: 0 },
-  { key: "cap_36", label: "36 — PISCINA", value: 0 },
-  { key: "cap_37", label: "37 — LIMPEZAS E TRABALHOS DE ACABAMENTOS FINAIS", value: 0 },
-  { key: "cap_38", label: "38 — DIVERSOS E OUTROS TRABALHOS", value: 0 },
+  { key: "cap_01", label: "01 - TRABALHOS PREPARATÓRIOS E IMPLANTAÇÃO DE ESTALEIRO", value: 0 },
+  { key: "cap_02", label: "02 - DEMOLIÇÕES E DESMONTAGENS", value: 0 },
+  { key: "cap_03", label: "03 - MOVIMENTOS DE TERRAS", value: 0 },
+  { key: "cap_04", label: "04 - FUNDAÇÕES ESPECIAIS / CONTENÇÕES", value: 0 },
+  { key: "cap_05", label: "05 - ESTRUTURA DE BETÃO ARMADO", value: 0 },
+  { key: "cap_06", label: "06 - ESTRUTURAS METÁLICAS", value: 0 },
+  { key: "cap_07", label: "07 - ESTRUTURAS DE MADEIRA", value: 0 },
+  { key: "cap_08", label: "08 - PAVIMENTO TÉRREO", value: 0 },
+  { key: "cap_09", label: "09 - DRENAGENS, IMPERMEABILIZAÇÕES E ISOLAMENTOS - FASE TOSCO", value: 0 },
+  { key: "cap_10", label: "10 - ALVENARIAS / PAREDES SECAS", value: 0 },
+  { key: "cap_11", label: "11 - COBERTURA", value: 0 },
+  { key: "cap_12", label: "12 - IMPERMEABILIZAÇÕES E ISOLAMENTOS - FASE ACABAMENTOS", value: 0 },
+  { key: "cap_13", label: "13 - CANTARIAS", value: 0 },
+  { key: "cap_14", label: "14 - REVESTIMENTOS DE PAVIMENTOS", value: 0 },
+  { key: "cap_15", label: "15 - REVESTIMENTOS DE PAREDES", value: 0 },
+  { key: "cap_16", label: "16 - REVESTIMENTOS DE TECTOS", value: 0 },
+  { key: "cap_17", label: "17 - CAIXILHARIAS EXTERIORES", value: 0 },
+  { key: "cap_18", label: "18 - PROTEÇÃO SOLAR", value: 0 },
+  { key: "cap_19", label: "19 - SERRALHARIAS", value: 0 },
+  { key: "cap_20", label: "20 - CARPINTARIAS", value: 0 },
+  { key: "cap_21", label: "21 - PINTURAS", value: 0 },
+  { key: "cap_22", label: "22 - INSTALAÇÕES HIDRÁULICAS", value: 0 },
+  { key: "cap_23", label: "23 - REDE INTERNA DE DISTRIBUIÇÃO DE GÁS", value: 0 },
+  { key: "cap_24", label: "24 - SEGURANÇA CONTRA INCÊNDIOS - SCI", value: 0 },
+  { key: "cap_25", label: "25 - ASPIRAÇÃO CENTRAL", value: 0 },
+  { key: "cap_26", label: "26 - INSTALAÇÕES MECÂNICAS", value: 0 },
+  { key: "cap_27", label: "27 - ELEVADORES", value: 0 },
+  { key: "cap_28", label: "28 - EQUIPAMENTOS SANITÁRIOS", value: 0 },
+  { key: "cap_29", label: "29 - INSTALAÇÕES ELÉCTRICAS", value: 0 },
+  { key: "cap_30", label: "30 - INFRAESTRUTURAS DE TELECOMUNICAÇÕES - ITED", value: 0 },
+  { key: "cap_31", label: "31 - SISTEMA DE ALARME + CCTV", value: 0 },
+  { key: "cap_32", label: "32 - AUTOMAÇÃO / DOMÓTICA", value: 0 },
+  { key: "cap_33", label: "33 - PAINÉIS SOLARES", value: 0 },
+  { key: "cap_34", label: "34 - COZINHAS", value: 0 },
+  { key: "cap_35", label: "35 - ARRANJOS EXTERIORES", value: 0 },
+  { key: "cap_36", label: "36 - PISCINA", value: 0 },
+  { key: "cap_37", label: "37 - LIMPEZAS E TRABALHOS DE ACABAMENTOS FINAIS", value: 0 },
+  { key: "cap_38", label: "38 - DIVERSOS E OUTROS TRABALHOS", value: 0 },
 ];
 
 /**
  * Migra direct_costs antigos (12 rubricas genéricas) para o novo conjunto de
  * 38 capítulos. Como as chaves antigas não têm correspondência directa com
- * capítulos do orçamento, devolvemos sempre os defaults — os valores serão
+ * capítulos do orçamento, devolvemos sempre os defaults - os valores serão
  * re-alimentados a partir do orçamento via `useBudgetChapterTotals`.
  */
 export function migrateDirectCostLines(
@@ -351,7 +351,7 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
   margem_lucro_pct: 0.30,
 };
 
-// Cálculos derivados (puros — espelham as fórmulas do Excel)
+// Cálculos derivados (puros - espelham as fórmulas do Excel)
 
 export interface ClosingTotals {
   custo_industrial: number; // (1) directos + estaleiro
@@ -424,7 +424,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     (d.admin.fee_inter_grupo || 0) +
     (d.admin.outros_administrativos || 0);
 
-  // (6) IVA — apenas se NÃO estiver em ARU/ORU para terreno; construção sempre
+  // (6) IVA - apenas se NÃO estiver em ARU/ORU para terreno; construção sempre
   const ivaTerreno = (d.iva.zona_aru || d.iva.zona_oru) ? 0 : total_terreno * (d.iva.taxa_terreno_pct || 0);
   const base_iva_construcao = custo_industrial + total_outros;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
@@ -439,7 +439,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   const k_venda = custo_total > 0 ? valor_vendas / custo_total : 0;
 
   // Custo/m² calculado EXCLUSIVAMENTE pela Área de Construção
-  // (override manual ou, por defeito, ABP + Caves — sem factores)
+  // (override manual ou, por defeito, ABP + Caves - sem factores)
   const areaConstrucao =
     d.statistics.area_total_construcao ??
     ((d.statistics.area_construcao || 0) + (d.statistics.area_caves || 0));

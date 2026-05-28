@@ -76,7 +76,7 @@ export function ClosingSheetComparison({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <GitCompare className="h-5 w-5 text-primary" />
-          Comparativo — Inicial vs Final
+          Comparativo - Inicial vs Final
           <Badge variant="outline" className="ml-auto">
             Desvio Custo: {desvioTotal >= 0 ? "+" : ""}
             {fmt(desvioTotal)}

@@ -51,7 +51,7 @@ export function ControloCustosPanel({ obraId }: Props) {
               <TableBody>
                 {data.capitulos.map((c) => (
                   <TableRow key={c.key + c.numero}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{c.numero ?? '—'}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{c.numero ?? '-'}</TableCell>
                     <TableCell className="font-medium">{c.titulo}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(c.base)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(c.adjudicado)}</TableCell>

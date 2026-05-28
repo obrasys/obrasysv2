@@ -38,7 +38,7 @@ export function calculateICFWallComposition(input: ComputeInput): ICFWallComposi
   const cutSuggestions: ICFCutSuggestion[] = [];
 
   if (!blockLen || !blockH) {
-    warnings.push('Bloco selecionado sem dimensões válidas — composição não pôde ser calculada.');
+    warnings.push('Bloco selecionado sem dimensões válidas - composição não pôde ser calculada.');
     return {
       wall_panel_id,
       block_code: block.code,
@@ -68,7 +68,7 @@ export function calculateICFWallComposition(input: ComputeInput): ICFWallComposi
   if (remainingLengthMm > 0.5) {
     cutSuggestions.push({
       type: 'horizontal',
-      description: `Sobra horizontal de ${Math.round(remainingLengthMm)} mm na fiada — sugerir bloco cortado ou redistribuição da modulação.`,
+      description: `Sobra horizontal de ${Math.round(remainingLengthMm)} mm na fiada - sugerir bloco cortado ou redistribuição da modulação.`,
       value_mm: Math.round(remainingLengthMm),
       review_required: true,
     });
@@ -98,7 +98,7 @@ export function calculateICFWallComposition(input: ComputeInput): ICFWallComposi
   if (openingsArea > 0) {
     cutSuggestions.push({
       type: 'opening_adjustment',
-      description: `${openings.length} abertura(s) — desconto estimado por área equivalente (${estimatedRemovedBlocksByOpenings} blocos).`,
+      description: `${openings.length} abertura(s) - desconto estimado por área equivalente (${estimatedRemovedBlocksByOpenings} blocos).`,
       review_required: true,
     });
     warnings.push(

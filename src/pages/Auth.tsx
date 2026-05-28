@@ -22,15 +22,15 @@ import { SEO } from "@/components/SEO";
 
 const SEO_BY_MODE = {
   login: {
-    title: "Entrar — ObraSys",
+    title: "Entrar - ObraSys",
     description: "Aceda à sua conta ObraSys para gerir orçamentos, obras, equipas e financeiro.",
   },
   signup: {
-    title: "Criar conta — ObraSys",
+    title: "Criar conta - ObraSys",
     description: "Crie a sua conta ObraSys e comece a gerir obras, orçamentos e equipas em minutos.",
   },
   "forgot-password": {
-    title: "Recuperar palavra-passe — ObraSys",
+    title: "Recuperar palavra-passe - ObraSys",
     description: "Recupere o acesso à sua conta ObraSys com um link enviado por email.",
   },
 } as const;

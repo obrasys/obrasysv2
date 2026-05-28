@@ -108,8 +108,8 @@ export default function AdminAuditoria() {
                       {failedLogins.map((a) => (
                         <TableRow key={a.id}>
                           <TableCell className="font-medium text-sm">{a.email}</TableCell>
-                          <TableCell><Badge variant="outline" className="text-xs">{a.ip_address || "—"}</Badge></TableCell>
-                          <TableCell className="max-w-[250px] truncate text-xs text-muted-foreground">{a.user_agent || "—"}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{a.ip_address || "-"}</Badge></TableCell>
+                          <TableCell className="max-w-[250px] truncate text-xs text-muted-foreground">{a.user_agent || "-"}</TableCell>
                           <TableCell className="text-xs">{format(new Date(a.attempted_at), "dd/MM/yyyy HH:mm:ss", { locale: pt })}</TableCell>
                         </TableRow>
                       ))}
@@ -151,8 +151,8 @@ export default function AdminAuditoria() {
                               <Badge variant={log.acao === "delete" || log.acao === "eliminar" ? "destructive" : "secondary"} className="text-xs">{log.acao}</Badge>
                             </TableCell>
                             <TableCell className="font-mono text-xs">{log.material_id?.slice(0, 8)}...</TableCell>
-                            <TableCell className="text-xs">{d.old_price ? `€${Number(d.old_price).toFixed(2)}` : "—"}</TableCell>
-                            <TableCell className="text-xs">{d.new_price ? `€${Number(d.new_price).toFixed(2)}` : "—"}</TableCell>
+                            <TableCell className="text-xs">{d.old_price ? `€${Number(d.old_price).toFixed(2)}` : "-"}</TableCell>
+                            <TableCell className="text-xs">{d.new_price ? `€${Number(d.new_price).toFixed(2)}` : "-"}</TableCell>
                             <TableCell className="text-xs text-muted-foreground">{log.executado_por || "Sistema"}</TableCell>
                             <TableCell className="text-xs">{format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}</TableCell>
                           </TableRow>
@@ -189,7 +189,7 @@ export default function AdminAuditoria() {
                     <TableBody>
                       {migratedUsers.map((u) => (
                         <TableRow key={u.id}>
-                          <TableCell className="font-medium text-sm">{u.nome || "—"}</TableCell>
+                          <TableCell className="font-medium text-sm">{u.nome || "-"}</TableCell>
                           <TableCell className="text-sm">{u.email}</TableCell>
                           <TableCell>
                             <Badge variant={u.status === "completed" ? "default" : u.status === "pending" ? "outline" : "secondary"} className="text-xs">
@@ -197,10 +197,10 @@ export default function AdminAuditoria() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {u.email_sent_at ? format(new Date(u.email_sent_at), "dd/MM/yyyy", { locale: pt }) : "—"}
+                            {u.email_sent_at ? format(new Date(u.email_sent_at), "dd/MM/yyyy", { locale: pt }) : "-"}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {u.migrated_at ? format(new Date(u.migrated_at), "dd/MM/yyyy", { locale: pt }) : "—"}
+                            {u.migrated_at ? format(new Date(u.migrated_at), "dd/MM/yyyy", { locale: pt }) : "-"}
                           </TableCell>
                         </TableRow>
                       ))}

@@ -67,7 +67,7 @@ export default function VerRDOPage() {
 
   return (
     <AppLayout
-      title={`RDO — ${rdo.obra?.nome || 'Obra'}`}
+      title={`RDO - ${rdo.obra?.nome || 'Obra'}`}
       subtitle={format(new Date(rdo.data), "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt })}
       actions={
         <div className="flex gap-2">
@@ -128,7 +128,7 @@ export default function VerRDOPage() {
           />
           <KpiCard
             title="Meteorologia"
-            value={getCondLabel(rdo.condicoes_meteorologicas) || '—'}
+            value={getCondLabel(rdo.condicoes_meteorologicas) || '-'}
             icon={Thermometer}
             iconClassName="bg-blue-500/10"
           />

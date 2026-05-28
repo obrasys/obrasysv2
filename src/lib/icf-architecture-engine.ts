@@ -54,7 +54,7 @@ interface PlanPriceRow {
 }
 
 /* ════════════════════════════════════════════════════════════════════
- * Preços fallback (referência mercado PT 2025/2026 — €/un de custo)
+ * Preços fallback (referência mercado PT 2025/2026 - €/un de custo)
  * ══════════════════════════════════════════════════════════════════ */
 const PRICES = {
   // Pinturas
@@ -119,17 +119,17 @@ function art(
 }
 
 /* ════════════════════════════════════════════════════════════════════
- * Quantitativos derivados — híbrido Plantas + ICF
+ * Quantitativos derivados - híbrido Plantas + ICF
  * ══════════════════════════════════════════════════════════════════ */
 
 export interface DerivedArchitectureQuantities {
   /** Área útil de pavimento (m²) */
   area_pavimento_m2: number;
-  /** Área de teto / forro (m²) — geralmente igual a pavimento */
+  /** Área de teto / forro (m²) - geralmente igual a pavimento */
   area_teto_m2: number;
   /** Perímetro total interior para rodapés (ml) */
   perimetro_rodape_ml: number;
-  /** Área total a pintar interior (m²) — paredes interiores 2 faces + tetos */
+  /** Área total a pintar interior (m²) - paredes interiores 2 faces + tetos */
   area_pintura_interior_m2: number;
   /** Área a pintar exterior (m²) */
   area_pintura_exterior_m2: number;
@@ -149,7 +149,7 @@ interface DeriveArgs {
  *  - Perímetro: usa medições "perimetro" da planta, ou deriva do ICF.
  *  - Pintura interior: 2 faces × área_liquida_total (paredes interiores) + tetos.
  *  - Pintura exterior: 1 face × área_liquida_total (assume metade exteriores
- *    se não for explícito) — conservador: usa a área total das paredes
+ *    se não for explícito) - conservador: usa a área total das paredes
  *    multiplicada por 0.5 quando vinda só do ICF.
  */
 export function deriveArchitectureQuantities({
@@ -159,7 +159,7 @@ export function deriveArchitectureQuantities({
 }: DeriveArgs): DerivedArchitectureQuantities {
   const hasPlan = planRows.length > 0;
 
-  // Pavimento — soma compartimentos com unidade m² ou, fallback, lajes do ICF.
+  // Pavimento - soma compartimentos com unidade m² ou, fallback, lajes do ICF.
   const planFloorArea = planRows
     .filter(
       (r) =>
@@ -176,7 +176,7 @@ export function deriveArchitectureQuantities({
 
   const area_teto_m2 = area_pavimento_m2;
 
-  // Perímetro — procura medições do tipo "perimetro" / "rodape" na planta.
+  // Perímetro - procura medições do tipo "perimetro" / "rodape" na planta.
   const planPerimeter = planRows
     .filter((r) => {
       const u = norm(r.unidade);
@@ -275,7 +275,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Pintura interior (2 demãos) — paredes e tetos',
+          'Pintura interior (2 demãos) - paredes e tetos',
           'm²',
           q.area_pintura_interior_m2,
           PRICES.pintura_interior_m2,
@@ -288,7 +288,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Pintura exterior (texturada / lisa) — fachadas',
+          'Pintura exterior (texturada / lisa) - fachadas',
           'm²',
           q.area_pintura_exterior_m2,
           PRICES.pintura_exterior_m2,
@@ -301,7 +301,7 @@ export function buildArchitectureChapters({
       chapters.push({
         numero: n++,
         titulo: 'Pinturas',
-        descricao: `Pinturas interior e exterior — base: ${sourceLabel}`,
+        descricao: `Pinturas interior e exterior - base: ${sourceLabel}`,
         artigos,
       });
     }
@@ -322,13 +322,13 @@ export function buildArchitectureChapters({
           ['betonilha'],
         ),
       );
-      // 60% cerâmico (zonas húmidas/sociais), 40% flutuante (quartos) — proxy editável
+      // 60% cerâmico (zonas húmidas/sociais), 40% flutuante (quartos) - proxy editável
       const areaCeramico = q.area_pavimento_m2 * 0.6;
       const areaFlutuante = q.area_pavimento_m2 * 0.4;
       artigos.push(
         art(
           precos,
-          'Pavimento cerâmico 60×60 — assentamento e rejuntamento',
+          'Pavimento cerâmico 60×60 - assentamento e rejuntamento',
           'm²',
           areaCeramico,
           PRICES.ceramico_m2,
@@ -338,7 +338,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Pavimento flutuante AC4 — colocação',
+          'Pavimento flutuante AC4 - colocação',
           'm²',
           areaFlutuante,
           PRICES.flutuante_m2,
@@ -351,7 +351,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Rodapé MDF lacado — colocação',
+          'Rodapé MDF lacado - colocação',
           'ml',
           q.perimetro_rodape_ml,
           PRICES.rodape_ml,
@@ -364,7 +364,7 @@ export function buildArchitectureChapters({
       chapters.push({
         numero: n++,
         titulo: 'Pavimentos e Revestimentos',
-        descricao: `Pavimentação interior — base: ${sourceLabel}`,
+        descricao: `Pavimentação interior - base: ${sourceLabel}`,
         artigos,
       });
     }
@@ -378,7 +378,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Teto falso em pladur 13mm — estrutura metálica',
+          'Teto falso em pladur 13mm - estrutura metálica',
           'm²',
           q.area_teto_m2,
           PRICES.teto_falso_m2,
@@ -401,7 +401,7 @@ export function buildArchitectureChapters({
       chapters.push({
         numero: n++,
         titulo: 'Tetos Falsos e Isolamentos',
-        descricao: `Tetos suspensos e isolamentos — base: ${sourceLabel}`,
+        descricao: `Tetos suspensos e isolamentos - base: ${sourceLabel}`,
         artigos,
       });
     }
@@ -415,7 +415,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Instalação elétrica — quadro, tubagem, cabos, tomadas e iluminação',
+          'Instalação elétrica - quadro, tubagem, cabos, tomadas e iluminação',
           'm²',
           q.area_pavimento_m2,
           PRICES.inst_eletrica_m2,
@@ -425,7 +425,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'Instalação de águas e esgotos — rede predial',
+          'Instalação de águas e esgotos - rede predial',
           'm²',
           q.area_pavimento_m2,
           PRICES.inst_aguas_m2,
@@ -435,7 +435,7 @@ export function buildArchitectureChapters({
       artigos.push(
         art(
           precos,
-          'AVAC — climatização e ventilação (multi-split)',
+          'AVAC - climatização e ventilação (multi-split)',
           'm²',
           q.area_pavimento_m2,
           PRICES.inst_avac_m2,
@@ -448,7 +448,7 @@ export function buildArchitectureChapters({
       chapters.push({
         numero: n++,
         titulo: 'Instalações Técnicas',
-        descricao: `Instalações elétricas, águas e AVAC — base: ${sourceLabel}. Para detalhe paramétrico, use o módulo Instalações.`,
+        descricao: `Instalações elétricas, águas e AVAC - base: ${sourceLabel}. Para detalhe paramétrico, use o módulo Instalações.`,
         artigos,
       });
     }

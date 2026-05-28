@@ -152,7 +152,7 @@ const IcfManual = () => {
                           <div>
                             <div className="font-medium text-sm">{p.label}</div>
                             <div className="text-xs text-muted-foreground">
-                              {[p.floor, p.room].filter(Boolean).join(' · ')} — {p.length_m}m × {p.height_m}m
+                              {[p.floor, p.room].filter(Boolean).join(' · ')} - {p.length_m}m × {p.height_m}m
                             </div>
                           </div>
                           <Badge variant="outline">{p.selected_block_code}</Badge>

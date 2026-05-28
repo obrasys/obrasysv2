@@ -33,11 +33,11 @@ export function ObrasSummaryTable({ obras }: ObrasSummaryTableProps) {
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '—';
+    if (!dateStr) return '-';
     try {
       return format(parseISO(dateStr), 'dd/MM/yyyy', { locale: pt });
     } catch {
-      return '—';
+      return '-';
     }
   };
 
@@ -79,7 +79,7 @@ export function ObrasSummaryTable({ obras }: ObrasSummaryTableProps) {
                     {obra.nome}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
-                    {obra.cliente || '—'}
+                    {obra.cliente || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-[100px]">
@@ -91,7 +91,7 @@ export function ObrasSummaryTable({ obras }: ObrasSummaryTableProps) {
                     {formatDate(obra.data_inicio)}
                   </TableCell>
                   <TableCell className="text-sm font-medium text-right whitespace-nowrap">
-                    {obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '—'}
+                    {obra.valor_previsto ? formatCurrency(obra.valor_previsto) : '-'}
                   </TableCell>
                   <TableCell>
                     <ObraStatusBadge status={obra.status as ObraStatus} />

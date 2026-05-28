@@ -112,7 +112,7 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
       {scheduleVersionId ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <GitBranch className="h-4 w-4 text-green-600" />
-          <span>Cronograma conectado — {tasks?.length || 0} tarefas disponíveis</span>
+          <span>Cronograma conectado - {tasks?.length || 0} tarefas disponíveis</span>
           <Badge variant="outline" className="text-[10px] text-green-700 border-green-300 bg-green-50">
             Integrado
           </Badge>
@@ -120,7 +120,7 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
       ) : (
         <div className="flex items-center gap-2 text-sm text-amber-600">
           <AlertTriangle className="h-4 w-4" />
-          <span>Sem cronograma ativo — crie um planeamento para ativar a integração completa</span>
+          <span>Sem cronograma ativo - crie um planeamento para ativar a integração completa</span>
         </div>
       )}
 
@@ -290,7 +290,7 @@ export function DailyReportForm({ obraId, scheduleVersionId }: Props) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              Editar RDO — {format(new Date(latestDraft.report_date), 'dd/MM/yyyy')}
+              Editar RDO - {format(new Date(latestDraft.report_date), 'dd/MM/yyyy')}
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -98,7 +98,7 @@ export function IcfPlantAnalyzer({
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Axia™ — Análise de Planta ICF
+          Axia™ - Análise de Planta ICF
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Carregue uma planta de estrutura ou arquitetura e a Axia extrai automaticamente paredes, fundações e lajes.

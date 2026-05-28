@@ -18,7 +18,7 @@ export function BaselineApprovalCard({ version, onApprove, isApproving }: Props)
           <div>
             <p className="text-sm font-medium">Cronograma pendente de validação</p>
             <p className="text-xs text-muted-foreground">
-              Versão {version.version_no} — {version.type === 'estimated' ? 'Estimado' : 'Revisão'} — 
+              Versão {version.version_no} - {version.type === 'estimated' ? 'Estimado' : 'Revisão'} - 
               Revise as tarefas e aprove como baseline oficial.
             </p>
           </div>

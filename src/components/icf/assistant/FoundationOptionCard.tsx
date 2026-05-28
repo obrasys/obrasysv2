@@ -63,7 +63,7 @@ export function FoundationOptionCard({ option, selected, baseIcfWallLength, onAp
 
         <div className="flex items-start gap-2 text-xs bg-destructive/10 text-destructive p-2 rounded-md">
           <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>Sugestão preliminar para orçamento — requer validação técnica/engenheiro.</span>
+          <span>Sugestão preliminar para orçamento - requer validação técnica/engenheiro.</span>
         </div>
 
         <Button

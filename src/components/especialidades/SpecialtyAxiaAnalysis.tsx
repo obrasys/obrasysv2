@@ -53,7 +53,7 @@ async function fileToJpegBase64(plan: SpecialtyPlan): Promise<string> {
     return canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
   }
 
-  // Imagem direta — desenhar num canvas para reduzir/normalizar
+  // Imagem direta - desenhar num canvas para reduzir/normalizar
   const img = await new Promise<HTMLImageElement>((res, rej) => {
     const i = new Image();
     i.crossOrigin = "anonymous";
@@ -80,7 +80,7 @@ export function SpecialtyAxiaAnalysis({ plan }: Props) {
 
   const run = async () => {
     if (!session?.access_token) {
-      toast.error("Sessão expirada — refaça login.");
+      toast.error("Sessão expirada - refaça login.");
       return;
     }
     setLoading(true);

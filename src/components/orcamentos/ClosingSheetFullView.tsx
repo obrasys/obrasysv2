@@ -199,7 +199,7 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
 
   if (!detailsEmpty) return base;
 
-  // Custos directos: já não pré-seedamos rubricas individuais — os 38
+  // Custos directos: já não pré-seedamos rubricas individuais - os 38
   // capítulos são alimentados em runtime via `useBudgetChapterTotals`.
   const dc = base.direct_costs;
 
@@ -236,7 +236,7 @@ function seedFromLegacy(sheet: ClosingSheet): ClosingSheetDetails {
 export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const isInitial = sheet.closing_type === "initial";
   const isLocked = sheet.status === "locked";
-  // Folha de fecho sempre editável — mesmo após bloqueio o utilizador pode ajustar valores.
+  // Folha de fecho sempre editável - mesmo após bloqueio o utilizador pode ajustar valores.
   const readOnly = false;
   const { profile } = useAuth();
 
@@ -333,7 +333,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
     const styles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
       .map((el) => el.outerHTML)
       .join("\n");
-    const title = `Folha de Fecho — ${isInitial ? "Inicial" : "Final"}`;
+    const title = `Folha de Fecho - ${isInitial ? "Inicial" : "Final"}`;
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${styles}
       <style>body{padding:24px;background:#fff;color:#000;} input,textarea{border:0!important;background:transparent!important;padding:0!important;height:auto!important;} button{display:none!important;}</style>
       </head><body>${html}</body></html>`);
@@ -426,7 +426,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               <FileCheck2 className="h-5 w-5 text-blue-600" />
             )}
             <span>
-              FOLHA DE FECHO DO ORÇAMENTO —{" "}
+              FOLHA DE FECHO DO ORÇAMENTO -{" "}
               <span className="text-muted-foreground font-normal">
                 {isInitial ? "Versão Proposta Base | V.00" : "Versão Final"}
               </span>
@@ -495,7 +495,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               </div>
             )}
             <div className="text-xs leading-snug">
-              <p className="text-sm font-bold text-foreground">{profile?.empresa_nome || "—"}</p>
+              <p className="text-sm font-bold text-foreground">{profile?.empresa_nome || "-"}</p>
               {profile?.empresa_nif && <p className="text-muted-foreground">NIF: {profile.empresa_nif}</p>}
               {profile?.empresa_morada && <p className="text-muted-foreground">{profile.empresa_morada}</p>}
               <p className="text-muted-foreground">
@@ -657,7 +657,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <Section id="directos" title="Custos Directos / Preços Secos — Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total C. Directos">
+        <Section id="directos" title="Custos Directos / Preços Secos - Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total C. Directos">
         <Table>
           <TableHeader>
             <TableRow>
@@ -682,7 +682,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
                   {totals.total_directos > 0
                     ? `${((line.value / totals.total_directos) * 100).toFixed(2)}%`
-                    : "—"}
+                    : "-"}
                 </TableCell>
                 <TableCell>
                   <TextCell
@@ -711,7 +711,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             {/* Linha editável: ESTIMATIVA (acresce ao total). Pode ser zerada quando os custos reais estiverem consolidados. */}
             <TableRow className="bg-amber-50 dark:bg-amber-950/20">
               <TableCell className="font-medium text-xs italic">
-                ESTIMATIVA (editável — eliminar quando custos reais estiverem ok)
+                ESTIMATIVA (editável - eliminar quando custos reais estiverem ok)
               </TableCell>
               <TableCell>
                 <NumCell
@@ -723,10 +723,10 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
                 {totals.total_directos > 0
                   ? `${(((Number(details.direct_costs_estimate) || 0) / totals.total_directos) * 100).toFixed(2)}%`
-                  : "—"}
+                  : "-"}
               </TableCell>
               <TableCell colSpan={2} className="text-xs text-muted-foreground italic">
-                Valor provisório — coloque 0 para remover do total.
+                Valor provisório - coloque 0 para remover do total.
               </TableCell>
             </TableRow>
           </TableBody>
@@ -737,7 +737,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ​
               </TableCell>
               <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos > 0 ? "100.00%" : "—"}
+                {totals.total_directos > 0 ? "100.00%" : "-"}
               </TableCell>
               <TableCell />
               <TableCell />
@@ -759,7 +759,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 Custo Directo / m² <span className="text-muted-foreground font-normal">(sobre {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m² de área de construção)</span>
               </span>
               <span className="font-bold tabular-nums">
-                {areaConstrucao > 0 ? `${fmt(perM2)} / m²` : "— (definir área de construção)"}
+                {areaConstrucao > 0 ? `${fmt(perM2)} / m²` : "- (definir área de construção)"}
               </span>
             </div>
           );
@@ -811,7 +811,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* TERRENO (2) */}
-        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores — (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")} total={totals.total_terreno} totalLabel="Total C. Terreno">
+        <Section id="terreno" title="Custos do Terreno / Arranjos Exteriores - (2)" collapsed={isCol("terreno")} onToggle={() => toggleSection("terreno")} total={totals.total_terreno} totalLabel="Total C. Terreno">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Preço Aquisição Terreno (€)</Label>
@@ -888,7 +888,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label>Custo Loteamento / Infraestruturas — por Fração (€)</Label>
+            <Label>Custo Loteamento / Infraestruturas - por Fração (€)</Label>
             <NumCell
               readOnly={readOnly}
               value={
@@ -995,7 +995,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* INDIRECTOS (3) */}
-        <Section id="indirectos" title="Custos Indirectos — (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
+        <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Honorários Técnicos (€)</Label>
@@ -1087,7 +1087,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* OUTROS (4) */}
-        <Section id="outros" title="Outros Custos — (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")} total={totals.total_outros} totalLabel="Total Outros Custos">
+        <Section id="outros" title="Outros Custos - (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")} total={totals.total_outros} totalLabel="Total Outros Custos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Contratos / Registos (€)</Label>
@@ -1148,7 +1148,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* ADMIN (5) */}
-        <Section id="admin" title="Custos Administrativos — (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total C. Admin">
+        <Section id="admin" title="Custos Administrativos - (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total C. Admin">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
             <Label>Estrutura / Fixos (Overhead) (€)</Label>
@@ -1181,7 +1181,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* IVA (6) */}
-        <Section id="iva" title="Custos de IVA — (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total C. IVA">
+        <Section id="iva" title="Custos de IVA - (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total C. IVA">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
@@ -1242,7 +1242,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         </div>
 
         {/* MAPA DE VENDAS */}
-        <Section id="vendas" title="Mapa de Vendas Comercial — Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")} total={totals.valor_vendas} totalLabel="Vendas">
+        <Section id="vendas" title="Mapa de Vendas Comercial - Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")} total={totals.valor_vendas} totalLabel="Vendas">
         <Table>
           <TableHeader>
             <TableRow>
@@ -1395,7 +1395,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label>Área de Construção (m²) — ABP + Caves</Label>
+            <Label>Área de Construção (m²) - ABP + Caves</Label>
             <NumCell
               readOnly={readOnly}
               value={
@@ -1407,7 +1407,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               }
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              Auto: {fmt(abpEffective + (details.statistics.area_caves || 0))} m² — editável
+              Auto: {fmt(abpEffective + (details.statistics.area_caves || 0))} m² - editável
             </p>
           </div>
         </div>
@@ -1436,8 +1436,8 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
         <Separator />
 
-        {/* PROPOSTA FINAL — RAI */}
-        <Section id="rai" title="Proposta Final | Venda — RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")} total={totals.rai_eur} totalLabel="RAI">
+        {/* PROPOSTA FINAL - RAI */}
+        <Section id="rai" title="Proposta Final | Venda - RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")} total={totals.rai_eur} totalLabel="RAI">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor de Vendas (Proposta)</p>
@@ -1549,7 +1549,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="aprovacao" title="Aprovação Inicial / Administração" collapsed={isCol("aprovacao")} onToggle={() => toggleSection("aprovacao")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Aprovação Inicial — Nome</Label>
+            <Label>Aprovação Inicial - Nome</Label>
             <TextCell readOnly={readOnly} value={details.approvals.aprovacao_inicial_nome}
               onChange={(v) => patch("approvals", { ...details.approvals, aprovacao_inicial_nome: v })} />
           </div>
@@ -1560,7 +1560,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               className="h-8" />
           </div>
           <div>
-            <Label>Administração — Nome</Label>
+            <Label>Administração - Nome</Label>
             <TextCell readOnly={readOnly} value={details.approvals.administracao_nome}
               onChange={(v) => patch("approvals", { ...details.approvals, administracao_nome: v })} />
           </div>

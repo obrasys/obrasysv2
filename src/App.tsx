@@ -120,7 +120,7 @@ const GestaoEmpresaPage = lazy(() => import("./pages/empresa/GestaoEmpresa"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
-    {/* Skeleton sidebar — mirrors real Sidebar dimensions */}
+    {/* Skeleton sidebar - mirrors real Sidebar dimensions */}
     <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen">
       <div className="px-5 pt-5 pb-4">
         <div className="h-8 w-24 bg-sidebar-accent/30 rounded animate-pulse" />

@@ -100,18 +100,18 @@ export function OrcamentoAuditPanel({
 
   const copyReport = async () => {
     const lines: string[] = [];
-    lines.push(`AUDITORIA — ${orcamento.titulo} (${orcamento.codigo || 'sem código'})`);
+    lines.push(`AUDITORIA - ${orcamento.titulo} (${orcamento.codigo || 'sem código'})`);
     lines.push(`Margem aplicada: ${(margemDecimal * 100).toFixed(2)}%   |   IVA: ${taxaIVA}%`);
     lines.push('');
     audit.chapters.forEach((c) => {
-      lines.push(`Cap. ${c.numero} — ${c.titulo}`);
+      lines.push(`Cap. ${c.numero} - ${c.titulo}`);
       lines.push(`  capRaw (∑ artigos)        : ${fmt(c.capRaw)}`);
       lines.push(`  capStored (BD)            : ${fmt(c.capStored)}`);
       if (c.hasDrift) lines.push(`  ⚠ DIVERGÊNCIA            : ${fmt(c.drift)}`);
       lines.push(`  capRaw c/ margem aplicada : ${fmt(c.capWithMargin)}`);
       lines.push('');
     });
-    lines.push('— Resumo —');
+    lines.push('- Resumo -');
     lines.push(`Subtotal artigos (live)   : ${fmt(audit.subtotalArtigosLive)}`);
     lines.push(`Subtotal artigos (BD)     : ${fmt(audit.subtotalArtigosStored)}`);
     if (audit.subtotalHasDrift) lines.push(`⚠ DIVERGÊNCIA            : ${fmt(audit.subtotalDrift)}`);
