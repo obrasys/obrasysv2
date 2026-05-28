@@ -86,8 +86,8 @@ export default function CriarOrcamentoPage() {
                   variant="outline"
                   className="mt-auto"
                   onClick={() => {
-                    // Trigger form submit via a custom event picked up by OrcamentoForm
-                    document.dispatchEvent(new CustomEvent('orcamento-form:submit-for-planta'));
+                    const btn = document.querySelector<HTMLButtonElement>('[data-orcamento-import-planta]');
+                    btn?.click();
                   }}
                 >
                   <Map className="w-4 h-4 mr-2" />
