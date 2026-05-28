@@ -4,7 +4,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,7 +196,7 @@ Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundac
       body: JSON.stringify({
         model: resolveChain("icf_analysis").primary,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + "\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK },
+          { role: "system", content: SYSTEM_PROMPT + "\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK + "\n\n" + AXIA_GLOBAL_SAFETY_BLOCK },
           {
             role: "user",
             content: [
