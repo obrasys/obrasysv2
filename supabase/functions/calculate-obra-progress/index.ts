@@ -304,30 +304,43 @@ Considera:
 
     console.log("Calculated progress:", result.progresso);
 
-    // Update obra progress in database (RLS applies)
-    const { error: updateError } = await supabaseClient
-      .from("obras")
-      .update({ 
-        progresso: Math.min(100, Math.max(0, result.progresso)),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", obra_id);
+    const computedProgress = (typeof result.progresso === "number")
+      ? result.progresso
+      : (typeof result.progress_percentage === "number" ? result.progress_percentage : null);
 
-    if (updateError) {
-      console.error("Error updating obra progress:", updateError);
-      // Don't fail the request, just log the error
+    if (computedProgress !== null) {
+      const { error: updateError } = await supabaseClient
+        .from("obras")
+        .update({
+          progresso: Math.min(100, Math.max(0, computedProgress)),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", obra_id);
+
+      if (updateError) {
+        console.error("Error updating obra progress:", updateError);
+      } else {
+        console.log("Obra progress updated successfully");
+      }
     } else {
-      console.log("Obra progress updated successfully");
+      console.log("Progress not updated (insufficient data). Reason:", result.cannot_calculate_reason);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        progresso: result.progresso,
+        progresso: computedProgress,
+        progress_percentage: computedProgress,
+        cannot_calculate_reason: result.cannot_calculate_reason ?? null,
         justificativa: result.justificativa,
+        calculation_basis: result.calculation_basis || [],
         resumo_trabalhos: result.resumo_trabalhos,
         alertas: result.alertas || [],
+        warnings: result.warnings || [],
+        missing_data: result.missing_data || [],
         sugestoes: result.sugestoes || [],
+        confidence: typeof result.confidence === "number" ? result.confidence : 0.3,
+        review_required: result.review_required ?? true,
         dados_analisados: {
           total_rdos: rdos?.length || 0,
           total_trabalhos_quantificados: allTrabalhosQuantificados.length,
