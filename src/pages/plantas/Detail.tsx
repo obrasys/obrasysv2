@@ -1083,8 +1083,11 @@ export default function PlanDetail() {
               />
             </div>
 
-            {/* Show Axia analysis prominently on analyze step, or compact on others */}
-            {(effectiveStep === "analyze" || canMeasure) && (
+            {/* Show Axia analysis prominently on analyze step, or compact on others.
+                Mantém o painel visível mesmo quando o stepper avança automaticamente
+                para "budget" após a primeira análise, para o utilizador continuar a
+                ver a tabela completa, reanalisar ou navegar entre folhas. */}
+            {(effectiveStep === "analyze" || canMeasure || !!axiaResultsByPage[currentPage] || axiaQuantitativesReady) && (
               <PlanAIAnalysis
                 imageDataUrl={effectiveImageUrl}
                 calibration={calibration ? {
