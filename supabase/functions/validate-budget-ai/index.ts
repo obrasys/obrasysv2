@@ -84,7 +84,7 @@ serve(async (req) => {
       0
     );
 
-    const prompt = `Analisa este orçamento de construção civil e verifica a sua consistência:
+    const prompt = `Valida APENAS a consistência interna deste orçamento. Não inventes preços de mercado.
 
 ORÇAMENTO: ${orcamento.titulo}
 VALOR TOTAL: ${orcamento.valor_total}€
@@ -95,19 +95,22 @@ NÚMERO DE ARTIGOS: ${totalArtigos}
 CAPÍTULOS E ARTIGOS:
 ${capitulos.map((cap: any) => `
 CAPÍTULO ${cap.numero}: ${cap.titulo} (Total: ${cap.valor_total}€)
-${(cap.artigos || []).map((art: any) => 
+${(cap.artigos || []).map((art: any) =>
   `  - ${art.codigo || 'S/C'}: ${art.descricao} | ${art.quantidade} ${art.unidade} x ${art.preco_unitario}€ = ${art.valor_total}€`
 ).join('\n')}
 `).join('\n')}
 
-Verifica:
-1. Preços unitários realistas para Portugal
-2. Quantidades coerentes
-3. Descrições técnicas adequadas
-4. Capítulos bem organizados
-5. Margem de lucro adequada ao tipo de trabalho
+Verifica (sem inventar valores externos):
+1. Capítulos vazios ou sem artigos.
+2. Artigos sem preço, sem quantidade ou sem unidade.
+3. Artigos duplicados ou descrições muito semelhantes.
+4. Incoerências de unidade (ex.: "pintar" em kg).
+5. Quantidades manifestamente inconsistentes face à descrição interna.
+6. Coerência entre quantidade × preço_unitário e valor_total.
+7. Coerência entre soma dos artigos e total do capítulo.
+8. Margem global vs sinais internos (ex.: margem 0 ou negativa).
 
-Responde em formato JSON usando a tool 'validate_budget'.`;
+Devolve via tool 'validate_budget' em JSON.`;
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
