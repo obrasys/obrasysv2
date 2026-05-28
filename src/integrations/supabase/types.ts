@@ -8387,6 +8387,7 @@ export type Database = {
       }
       plan_imports: {
         Row: {
+          budget_id: string | null
           created_at: string
           data_planta: string | null
           disciplina: string
@@ -8395,7 +8396,7 @@ export type Database = {
           has_analysis: boolean
           id: string
           nome_ficheiro: string
-          obra_id: string
+          obra_id: string | null
           observacoes: string | null
           revision_number: number
           status: string
@@ -8404,6 +8405,7 @@ export type Database = {
           workflow_step: string
         }
         Insert: {
+          budget_id?: string | null
           created_at?: string
           data_planta?: string | null
           disciplina?: string
@@ -8412,7 +8414,7 @@ export type Database = {
           has_analysis?: boolean
           id?: string
           nome_ficheiro: string
-          obra_id: string
+          obra_id?: string | null
           observacoes?: string | null
           revision_number?: number
           status?: string
@@ -8421,6 +8423,7 @@ export type Database = {
           workflow_step?: string
         }
         Update: {
+          budget_id?: string | null
           created_at?: string
           data_planta?: string | null
           disciplina?: string
@@ -8429,7 +8432,7 @@ export type Database = {
           has_analysis?: boolean
           id?: string
           nome_ficheiro?: string
-          obra_id?: string
+          obra_id?: string | null
           observacoes?: string | null
           revision_number?: number
           status?: string
@@ -8438,6 +8441,13 @@ export type Database = {
           workflow_step?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "plan_imports_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plan_imports_obra_id_fkey"
             columns: ["obra_id"]
