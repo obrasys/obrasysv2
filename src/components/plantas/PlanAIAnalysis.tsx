@@ -227,6 +227,15 @@ function normalizePlanAnalysisResult(input: any): PlanAnalysisResult | null {
   };
 }
 
+function isAnalysisEffectivelyEmpty(result: PlanAnalysisResult) {
+  return (
+    (result.dimensions?.length ?? 0) === 0 &&
+    (result.rooms?.length ?? 0) === 0 &&
+    (result.elements?.length ?? 0) === 0 &&
+    (result.walls?.length ?? 0) === 0
+  );
+}
+
 export function PlanAIAnalysis({
   imageDataUrl,
   calibration,
@@ -300,12 +309,6 @@ export function PlanAIAnalysis({
       img.src = src;
     });
 
-  const isAnalysisEmpty = (a: PlanAnalysisResult) =>
-    (!a.dimensions || a.dimensions.length === 0) &&
-    (!a.rooms || a.rooms.length === 0) &&
-    (!a.elements || a.elements.length === 0) &&
-    (!a.walls || a.walls.length === 0);
-
   const callAxia = async (base64: string, hint?: "high_res_retry") => {
     return await supabase.functions.invoke("axia-plan-vision", {
       body: {
@@ -370,14 +373,14 @@ export function PlanAIAnalysis({
           safe.reading_quality?.dimensions_legibility === "baixa" ||
           safe.reading_quality?.text_legibility === "baixa";
 
-        if (isAnalysisEmpty(safe) && lowLegibility) {
+        if (isAnalysisEffectivelyEmpty(safe) && lowLegibility) {
           toast.info("A Axia vai re-analisar com o modelo de alta precisão…");
           const retryBase64 = await downscaleForAI(imageDataUrl, 2400, 0.9);
           const retry = await callAxia(retryBase64, "high_res_retry");
           const retryData = retry.data as any;
           if (retryData?.analysis) {
             const retrySafe = normalize(retryData.analysis as PlanAnalysisResult);
-            if (!isAnalysisEmpty(retrySafe)) safe = retrySafe;
+            if (!isAnalysisEffectivelyEmpty(retrySafe)) safe = retrySafe;
           }
         }
 
@@ -553,6 +556,17 @@ export function PlanAIAnalysis({
                 const elsR = result.elements.filter((e) => e.review_required).length;
                 const wallsR = (result.walls ?? []).filter((w) => w.review_required).length;
                 const total = dimsR + roomsR + elsR + wallsR;
+                const emptyStructuredResult = isAnalysisEffectivelyEmpty(result);
+                if (emptyStructuredResult) {
+                  return (
+                    <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-2">
+                      <ShieldAlert className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-destructive leading-snug">
+                        A Axia não extraiu itens estruturados desta folha. Não envie para Quantitativos sem nova análise ou correção manual.
+                      </p>
+                    </div>
+                  );
+                }
                 if (total === 0) {
                   return (
                     <div className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-200 dark:border-emerald-900 rounded-lg p-2">
