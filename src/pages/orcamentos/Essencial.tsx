@@ -565,6 +565,26 @@ export default function EssencialPage() {
             />
           )}
 
+          {/* E.1 - Observações do rodapé */}
+          {budgetType && items.length > 0 && (
+            <Card>
+              <CardContent className="pt-6 space-y-2">
+                <Label className="text-sm font-semibold">Observações do rodapé (PDF)</Label>
+                <Textarea
+                  value={observationsText}
+                  onChange={(e) => setObservationsText(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                  placeholder="Uma observação por linha. Deixe em branco para usar o padrão definido em Perfil → Empresa."
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Substitui as observações padrão apenas neste orçamento.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+
           {/* F - Client Identification */}
           {budgetType && items.length > 0 && (
             <ClientIdentification
