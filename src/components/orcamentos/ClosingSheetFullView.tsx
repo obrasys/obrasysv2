@@ -910,7 +910,6 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
         </div>
-        </div>
         <SubtotalRow label="TOTAL CUSTOS DO TERRENO" code="(2)" value={totals.total_terreno} />
         </Section>
 
