@@ -203,7 +203,7 @@ ETAPA 6 - Materiais e cabos
 - Só estima total_wire_length_m / total_conduit_length_m se houver escala/calibração; caso contrário 0.
 - ${calibrationContext}
 
-SIMBOLOGIA DE REFERÊNCIA (PT-PT, norma usada em projetos de eletricidade em Portugal)
+SIMBOLOGIA DE REFERÊNCIA (PT-PT, simbologia de referência interna do Obra Sys para leitura assistida de projetos de eletricidade em Portugal — NÃO é norma oficial)
 Quando reconheceres um destes símbolos, usa EXATAMENTE a "symbol_key" indicada. Se não corresponder a nenhum, usa "outro" e descreve em technical_note.
 
 [Proteção & Quadros]
