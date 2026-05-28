@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 
 const corsHeaders = {
@@ -76,7 +78,9 @@ REGRAS ESTRITAS:
 - Prioriza fórmulas, quantidades e premissas técnicas sobre valor monetário.
 - Classifica a confiança de 0.0 a 1.0 (sem sondagem geotécnica real, confidence <= 0.6).
 - Fórmulas de origem devem referenciar parâmetros do terreno (ex: "area_implantacao * 0.15").
-- Usa a ferramenta fornecida para estruturar a resposta.`;
+- Usa a ferramenta fornecida para estruturar a resposta.
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
     const userPrompt = `Condições do terreno:
 - Tipo de solo: ${sc.tipo_solo}
@@ -96,7 +100,7 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: resolveChain("suggestions").primary,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

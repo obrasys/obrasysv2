@@ -4,6 +4,8 @@
 // e specialty_detected_elements.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,7 +166,9 @@ ETAPAS
 6) overall_confidence (0..1) e review_required (boolean) - true sempre que a planta esteja desfocada, sem escala ou ambígua.
 7) summary curto em PT-PT.
 
-Devolve APENAS via tool function "specialty_analysis".`;
+Devolve APENAS via tool function "specialty_analysis".
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
     const userContent = [
       { type: "text", text: `Analisa esta planta de especialidades (${specialtyLabel}). Devolve a análise estruturada.` },
@@ -284,7 +288,8 @@ Devolve APENAS via tool function "specialty_analysis".`;
       }
     };
 
-    let resp = await callAI("google/gemini-2.5-flash");
+    const specChain = resolveChain("critical_vision_analysis");
+    let resp = await callAI(specChain.primary);
     if (!resp.ok) {
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
@@ -305,8 +310,8 @@ Devolve APENAS via tool function "specialty_analysis".`;
 
     // Fallback para Pro se Flash falhou
     if ((!toolCall || choice?.finish_reason === "error") && remainingMs() > 45_000) {
-      console.warn("[axia-specialty-vision] Flash falhou, tentando Pro");
-      resp = await callAI("google/gemini-2.5-pro");
+      console.warn(`[axia-specialty-vision] ${specChain.primary} falhou, fallback ${specChain.fallback}`);
+      resp = await callAI(specChain.fallback);
       if (resp.ok) {
         aiData = await resp.json();
         choice = aiData.choices?.[0];

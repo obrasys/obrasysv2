@@ -96,7 +96,9 @@ Regras estritas:
 - Deteta incompatibilidades de unidades entre medição e artigo.
 - Valida coerência de valores (ex: WC com mais de 50m² é provável erro).
 - Em cada sugestão indica no message a razão (reason) e a ação sugerida (suggested_action) de forma operacional.
-- Sê conciso e operacional nas mensagens.`;
+- Sê conciso e operacional nas mensagens.
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
     const userPrompt = `Tipo de obra: ${tipo_obra || "não especificado"}
     
@@ -115,7 +117,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: resolveChain("suggestions").primary,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

@@ -3,6 +3,8 @@
 // Nunca inventa fundações; declara explicitamente quando não as encontra.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -192,9 +194,9 @@ Devolva JSON via tool call. Se não houver fundações desenhadas, defina fundac
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: resolveChain("icf_analysis").primary,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + "\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK },
           {
             role: "user",
             content: [
