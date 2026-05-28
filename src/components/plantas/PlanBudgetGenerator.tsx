@@ -180,15 +180,21 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
         let descricao: string;
         let placeholderId: string;
         if (bucket === "Acabamentos - Rodapé") {
-          descricao = "Rodapé - fornecimento e aplicação";
+          descricao = workMode === "remodelacao"
+            ? "Substituição de rodapé"
+            : "Rodapé - fornecimento e aplicação";
           placeholderId = `derived::rodape::${unidade}`;
         } else if (bucket === "Acabamentos - Paredes") {
-          descricao = "Paredes - revestimento/pintura";
+          descricao = workMode === "remodelacao"
+            ? "Pintura de paredes"
+            : "Paredes - revestimento/pintura";
           placeholderId = `derived::paredes::${unidade}`;
         } else if (bucket === "Acabamentos - Pavimentos e Tetos") {
           const isTeto = (measurement.camada ?? "").toLowerCase() === "teto" ||
             (measurement.etiqueta ?? "").toLowerCase().startsWith("teto");
-          descricao = isTeto ? "Teto - pintura/acabamento" : "Pavimento - fornecimento e aplicação";
+          descricao = isTeto
+            ? (workMode === "remodelacao" ? "Pintura de teto" : "Teto - pintura/acabamento")
+            : (workMode === "remodelacao" ? "Substituição de pavimento" : "Pavimento - fornecimento e aplicação");
           placeholderId = `derived::${isTeto ? "teto" : "pavimento"}::${unidade}`;
         } else {
           descricao =
