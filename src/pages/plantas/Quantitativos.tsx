@@ -226,6 +226,7 @@ export default function PlanQuantitativos() {
               planName={plan.nome_ficheiro}
               measurements={measurements}
               mappings={mappings}
+              rooms={rooms}
               articles={articles}
               tipoBase={tipoBase}
               disciplina={(plan as any).disciplina}
