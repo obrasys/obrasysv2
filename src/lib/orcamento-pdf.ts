@@ -19,7 +19,15 @@ interface PdfProfile {
   empresa_email?: string | null;
   email?: string | null;
   empresa_logo_url?: string | null;
+  default_budget_observations?: string | null;
 }
+
+export const DEFAULT_BUDGET_OBSERVATIONS = [
+  'Este orçamento é válido por 30 dias a contar da data de emissão.',
+  'Os preços apresentados incluem todos os materiais e mão de obra necessários.',
+  'Eventuais trabalhos adicionais não contemplados serão orçamentados separadamente.',
+  'Condições de pagamento a acordar.',
+].join('\n');
 
 interface PdfOptions {
   orcamento: Orcamento;
