@@ -73,6 +73,7 @@ const isNumericLike = (value: unknown) => {
 };
 
 const looksLikeCode = (value: unknown) => {
+  if (typeof value === "number") return false;
   const text = String(value ?? "").trim();
   if (!text) return false;
   return /^\d+(?:[.\-]\d+){0,5}$/.test(text) || /^[A-Z]{1,4}\d+(?:[.\-]\d+)*$/i.test(text);
@@ -129,8 +130,8 @@ const almostEqual = (a: number, b: number, tolerance = 0.02) => {
   return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1) <= tolerance;
 };
 
-const extractRowNumbers = (values: unknown[]) => values
-  .map((value, index) => ({ index, raw: value, value: toNumber(value, Number.NaN) }))
+const extractRowNumbers = (values: unknown[], ignoredIndices: number[] = []) => values
+  .map((value, index) => ({ index, raw: value, value: ignoredIndices.includes(index) ? Number.NaN : toNumber(value, Number.NaN) }))
   .filter((entry) => Number.isFinite(entry.value));
 
 const detectFinalBudgetTotal = (rows: Array<Record<string, unknown>>, headers: string[] = []) => {
@@ -192,14 +193,46 @@ const deriveBudgetFromRows = (
   if (!Array.isArray(rows) || rows.length === 0) return null;
 
   const normalizedHeaders = (headers ?? []).map((h) => normalizeText(h));
+  const normalizedRows = rows.map((row, rowIndex) => {
+    const values = Object.values(row);
+    const nextValues = rowIndex < rows.length - 1 ? Object.values(rows[rowIndex + 1]) : [];
+    return Object.fromEntries((headers ?? []).map((header, colIndex) => {
+      const current = sanitizeTextCell(values[colIndex]);
+      const below = sanitizeTextCell(nextValues[colIndex]);
+      if (!current || !below) return [header, values[colIndex] ?? null];
+      if (/(pre[cç]os?|valor)/i.test(current) && /(unit[aá]rio|parcial|total)/i.test(below)) {
+        return [header, `${current} ${below}`];
+      }
+      return [header, values[colIndex] ?? null];
+    }));
+  });
+
+  const firstRowValues = rows.length > 0 ? Object.values(rows[0]) : [];
+  const secondRowValues = rows.length > 1 ? Object.values(rows[1]) : [];
+  const effectiveHeaders = (headers ?? []).map((header, colIndex) => {
+    const base = sanitizeTextCell(header);
+    const firstRowText = sanitizeTextCell(firstRowValues[colIndex]);
+    const secondRowText = sanitizeTextCell(secondRowValues[colIndex]);
+    const candidate = firstRowText || secondRowText;
+    if (!base || !candidate || candidate === base) return base;
+    if (/^col_\d+$/i.test(base) && /^(unit[aá]rio|parcial|total|qt\.?|qtd|quantidade|un|unid\.?|unidade)$/i.test(candidate)) {
+      return candidate;
+    }
+    if (/(pre[cç]os?|valor)/i.test(base) && /(unit[aá]rio|parcial|total)/i.test(candidate)) {
+      return `${base} ${candidate}`;
+    }
+    return base;
+  });
+
+  const normalizedEffectiveHeaders = effectiveHeaders.map((h) => normalizeText(h));
   const headerIndex = {
-    code: normalizedHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref|art\.?º)/.test(h)),
-    description: normalizedHeaders.findIndex((h) => /(descricao|designacao|trabalho|designa|item)/.test(h)),
-    unit: normalizedHeaders.findIndex((h) => /^(un|unidade|uni|unid)$/.test(h) || /unidade|unid/.test(h)),
-    quantity: normalizedHeaders.findIndex((h) => /(quantidade|quant|qtd)/.test(h)),
-    unitPrice: normalizedHeaders.findIndex((h) => /(preco unit|preco\/ unitario|unitario|p unit|valor unit|precos unit)/.test(h)),
-    partial: normalizedHeaders.findIndex((h) => /(parcial|precos parcial|valor parcial|importe)/.test(h)),
-    total: normalizedHeaders.findIndex((h) => /(^|\s)(total|valor total)(\s|$)/.test(h)),
+    code: normalizedEffectiveHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref|art\.?º|cod\.)/.test(h)),
+    description: normalizedEffectiveHeaders.findIndex((h) => /(descricao|designacao|trabalho|designa|item|tarefa)/.test(h)),
+    unit: normalizedEffectiveHeaders.findIndex((h) => /^(un|unidade|uni|unid)$/.test(h) || /unidade|unid/.test(h)),
+    quantity: normalizedEffectiveHeaders.findIndex((h) => /(^qt$|^qt\b|quantidade|quant|qtd)/.test(h)),
+    unitPrice: normalizedEffectiveHeaders.findIndex((h) => /(preco unit|preco\/ unitario|unitario|p unit|valor unit|precos unit|precos unitario)/.test(h)),
+    partial: normalizedEffectiveHeaders.findIndex((h) => /(parcial|precos parcial|valor parcial|importe)/.test(h)),
+    total: normalizedEffectiveHeaders.findIndex((h) => /(^|\s)(total|valor total)(\s|$)/.test(h)),
   };
 
   const chapters: OrganizedBudgetResult["capitulos"] = [];
@@ -220,7 +253,9 @@ const deriveBudgetFromRows = (
     return chapter;
   };
 
-  for (const row of rows) {
+  const numericIgnoreIndices = [headerIndex.code, headerIndex.description, headerIndex.unit].filter((idx) => idx >= 0);
+
+  for (const row of normalizedRows) {
     const values = Object.values(row);
     const textValues = values.map((value) => sanitizeTextCell(value)).filter(Boolean);
 
@@ -243,7 +278,7 @@ const deriveBudgetFromRows = (
       continue;
     }
 
-    const numericEntries = extractRowNumbers(values);
+    const numericEntries = extractRowNumbers(values, numericIgnoreIndices);
     const codeCandidate = [getCell(values, headerIndex.code), ...values].find((value) => looksLikeCode(value));
     const descriptionCandidate = [getCell(values, headerIndex.description), ...values].find((value) => {
       const text = sanitizeTextCell(value);
