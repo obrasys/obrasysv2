@@ -708,6 +708,27 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 </TableCell>
               </TableRow>
             ))}
+            {/* Linha editável: ESTIMATIVA (acresce ao total). Pode ser zerada quando os custos reais estiverem consolidados. */}
+            <TableRow className="bg-amber-50 dark:bg-amber-950/20">
+              <TableCell className="font-medium text-xs italic">
+                ESTIMATIVA (editável — eliminar quando custos reais estiverem ok)
+              </TableCell>
+              <TableCell>
+                <NumCell
+                  readOnly={readOnly}
+                  value={Number(details.direct_costs_estimate) || 0}
+                  onChange={(v) => patch("direct_costs_estimate", v)}
+                />
+              </TableCell>
+              <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                {totals.total_directos > 0
+                  ? `${(((Number(details.direct_costs_estimate) || 0) / totals.total_directos) * 100).toFixed(2)}%`
+                  : "—"}
+              </TableCell>
+              <TableCell colSpan={2} className="text-xs text-muted-foreground italic">
+                Valor provisório — coloque 0 para remover do total.
+              </TableCell>
+            </TableRow>
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
@@ -716,9 +737,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 {totals.total_directos.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ​
               </TableCell>
               <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos > 0
-                  ? `${details.direct_costs.reduce((acc, l) => acc + (l.value / totals.total_directos) * 100, 0).toFixed(2)}%`
-                  : "—"}
+                {totals.total_directos > 0 ? "100.00%" : "—"}
               </TableCell>
               <TableCell />
               <TableCell />
@@ -726,9 +745,25 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </tfoot>
         </Table>
         <p className="text-xs text-muted-foreground italic px-1">
-          Os valores são calculados automaticamente a partir do Orçamento (total por capítulo) e não podem ser editados aqui.
+          Os valores por capítulo são calculados automaticamente a partir do Orçamento. A linha "ESTIMATIVA" é editável para projecções iniciais.
         </p>
         <SubtotalRow label="TOTAL CUSTOS DIRECTOS " value={totals.total_directos} />
+        {(() => {
+          const areaConstrucao =
+            details.statistics.area_total_construcao ??
+            ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0));
+          const perM2 = areaConstrucao > 0 ? totals.total_directos / areaConstrucao : 0;
+          return (
+            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-md px-3 py-2 text-sm">
+              <span className="font-semibold">
+                Custo Directo / m² <span className="text-muted-foreground font-normal">(sobre {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m² de área de construção)</span>
+              </span>
+              <span className="font-bold tabular-nums">
+                {areaConstrucao > 0 ? `${fmt(perM2)} / m²` : "— (definir área de construção)"}
+              </span>
+            </div>
+          );
+        })()}
         </Section>
 
         {/* ESTALEIRO */}
