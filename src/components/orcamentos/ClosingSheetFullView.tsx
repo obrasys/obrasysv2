@@ -1385,7 +1385,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">K (coef. Venda)</p>
-            <p className="text-lg font-bold tabular-nums">{totals.k_venda.toFixed(3)}</p>
+            <p className={`text-lg font-bold tabular-nums ${totals.k_venda >= 1.1 ? "text-green-600" : totals.k_venda < 0.9 ? "text-red-600" : totals.k_venda >= 0.9 && totals.k_venda < 1.1 ? "text-yellow-600" : ""}`}>{totals.k_venda.toFixed(3)}</p>
           </div>
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[11px] uppercase text-muted-foreground">Valor (m²) das Vendas</p>
