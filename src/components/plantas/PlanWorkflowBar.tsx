@@ -196,8 +196,8 @@ export function PlanWorkflowBar({
   const guide = STEP_HINTS[currentStep];
   const message = guide.getMessage(measurementCount, hasAnalysis);
   const showAction = guide.actionLabel && onPrimaryAction && (
-    (currentStep === "calibrate" && !canMeasure) ||
-    (currentStep === "analyze" && !hasAnalysis) ||
+    (currentStep === "calibrate" && !canMeasure && !axiaQuantitativesReady) ||
+    (currentStep === "analyze" && !hasAnalysis && !axiaQuantitativesReady) ||
     currentStep === "budget"
   );
   const activeHint = mode !== "view" ? MODE_HINTS[mode] : null;
