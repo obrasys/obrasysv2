@@ -187,10 +187,12 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
 
     const extracted = JSON.parse(toolCall.function.arguments);
     const items = extracted.items || [];
-    const summary = extracted.summary || `${items.length} itens extraídos`;
+    const unresolved_rows = extracted.unresolved_rows || [];
+    const summary = extracted.summary || `${items.length} itens extraídos, ${unresolved_rows.length} linhas por resolver`;
+    const review_required = extracted.review_required ?? (unresolved_rows.length > 0 || items.some((i: any) => i?.review_required));
 
     return new Response(
-      JSON.stringify({ items, summary, total: items.length }),
+      JSON.stringify({ items, unresolved_rows, summary, total: items.length, review_required }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
