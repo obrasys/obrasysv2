@@ -72,7 +72,7 @@ export interface SubscriptionValidationResult {
 
 /**
  * Validate a Stripe Subscription object and report which expected fields
- * are missing. Never throws — callers can decide to log/skip/fail-soft.
+ * are missing. Never throws - callers can decide to log/skip/fail-soft.
  */
 export function validateStripeSubscription(
   subscription: any,

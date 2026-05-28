@@ -48,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    // Validação de tamanho — base64 inflate ~33% sobre bytes reais.
+    // Validação de tamanho - base64 inflate ~33% sobre bytes reais.
     const approxBytes = Math.floor((image_base64.length * 3) / 4);
     const MAX_BYTES = 12 * 1024 * 1024; // 12 MB de imagem
     if (approxBytes > MAX_BYTES) {
@@ -97,27 +97,27 @@ Devolves SEMPRE um JSON estruturado válido conforme o schema da function tool. 
 
 ETAPAS DE ANÁLISE:
 
-1) CLASSIFICAÇÃO DA FOLHA — preenche sheet_classification: tipo (planta_piso, implantacao, corte, alcado, detalhe, legenda, outro), piso, título da folha, escala (1:50, 1:100…), e flags norte_presente, legenda_presente, carimbo_presente.
+1) CLASSIFICAÇÃO DA FOLHA - preenche sheet_classification: tipo (planta_piso, implantacao, corte, alcado, detalhe, legenda, outro), piso, título da folha, escala (1:50, 1:100…), e flags norte_presente, legenda_presente, carimbo_presente.
 
-2) CALIBRAÇÃO E ESCALA — ${calibrationContext}. Preenche scale_detected.found=true se vires barra de escala ou indicação textual de escala.
+2) CALIBRAÇÃO E ESCALA - ${calibrationContext}. Preenche scale_detected.found=true se vires barra de escala ou indicação textual de escala.
 
-3) COTAS — para cada cota visível, regista: raw_text (texto exatamente como aparece, ex: "3.50", "3,50 m", "350"), value (numérico interpretado), unit (m/cm/mm), label (o que mede), position_x/position_y (centro normalizado 0-1), bbox normalizada {x_min,y_min,x_max,y_max} se possível, confidence 0-1. Se a cota é ilegível, marca valor_nao_legivel=true e review_required=true (não inventes valor — usa 0).
+3) COTAS - para cada cota visível, regista: raw_text (texto exatamente como aparece, ex: "3.50", "3,50 m", "350"), value (numérico interpretado), unit (m/cm/mm), label (o que mede), position_x/position_y (centro normalizado 0-1), bbox normalizada {x_min,y_min,x_max,y_max} se possível, confidence 0-1. Se a cota é ilegível, marca valor_nao_legivel=true e review_required=true (não inventes valor - usa 0).
 
-4) COMPARTIMENTOS — identifica divisões. Cada um: name (texto literal da planta se existir), tipo_normalizado (sala, cozinha, sala_cozinha, quarto, suite, instalacao_sanitaria, circulacao, escada, arrumos, zona_tecnica, garagem, estacionamento, terraco, varanda, jardim, churrasqueira, exterior, indefinido), estimated_area (m² — se a área está rotulada na planta usa-a e marca area_legivel=true e evidencias com prefixo "[lido]"; se houver escala/cotas suficientes podes calcular pelo bbox e marca area_legivel=false, evidencias "[calculado]", confidence <= 0.65 e review_required=true; se NÃO houver evidência nenhuma de escala/cotas, devolve estimated_area=0, area_legivel=false, evidencias "[indisponivel]" e review_required=true — NÃO inventes área a partir de tipologia se não houver pelo menos bbox + escala. Apenas se a tipologia for inequívoca e existir bbox sem escala, podes opcionalmente devolver uma estimativa por tipologia (intervalos típicos: WC 3-6 m², quarto 9-15 m², sala 15-30 m², cozinha 8-15 m², circulação 4-10 m², garagem 12-25 m²) com evidencias "[estimado por tipologia]", confidence <= 0.45 e review_required=true), perimetro_estimado_m (perímetro real do contorno em metros — se cotas visíveis usa-as; caso contrário aproxima pelo retângulo do bbox usando a escala detetada; se não houver escala devolve 0 e marca review_required=true), vaos_porta_associados (array com os labels/identificadores das portas em elements que abrem para este compartimento — usa o mesmo nome que pões em compartimentos_conectados dos vãos), center_x/center_y, bbox, confidence, evidencias (sinais que usaste, sempre prefixadas pela origem do valor), area_legivel.
+4) COMPARTIMENTOS - identifica divisões. Cada um: name (texto literal da planta se existir), tipo_normalizado (sala, cozinha, sala_cozinha, quarto, suite, instalacao_sanitaria, circulacao, escada, arrumos, zona_tecnica, garagem, estacionamento, terraco, varanda, jardim, churrasqueira, exterior, indefinido), estimated_area (m² - se a área está rotulada na planta usa-a e marca area_legivel=true e evidencias com prefixo "[lido]"; se houver escala/cotas suficientes podes calcular pelo bbox e marca area_legivel=false, evidencias "[calculado]", confidence <= 0.65 e review_required=true; se NÃO houver evidência nenhuma de escala/cotas, devolve estimated_area=0, area_legivel=false, evidencias "[indisponivel]" e review_required=true - NÃO inventes área a partir de tipologia se não houver pelo menos bbox + escala. Apenas se a tipologia for inequívoca e existir bbox sem escala, podes opcionalmente devolver uma estimativa por tipologia (intervalos típicos: WC 3-6 m², quarto 9-15 m², sala 15-30 m², cozinha 8-15 m², circulação 4-10 m², garagem 12-25 m²) com evidencias "[estimado por tipologia]", confidence <= 0.45 e review_required=true), perimetro_estimado_m (perímetro real do contorno em metros - se cotas visíveis usa-as; caso contrário aproxima pelo retângulo do bbox usando a escala detetada; se não houver escala devolve 0 e marca review_required=true), vaos_porta_associados (array com os labels/identificadores das portas em elements que abrem para este compartimento - usa o mesmo nome que pões em compartimentos_conectados dos vãos), center_x/center_y, bbox, confidence, evidencias (sinais que usaste, sempre prefixadas pela origem do valor), area_legivel.
 
-5) PAREDES — popula walls com tipo (parede_exterior, parede_interior, muro_lote, muro_contencao, parede_indefinida), orientacao (horizontal/vertical/diagonal/irregular), bbox, compartimento_associado, confidence_score, review_required, evidencias. NUNCA afirmes que uma parede é estrutural com base só em planta arquitetónica — usa parede_indefinida em caso de dúvida.
+5) PAREDES - popula walls com tipo (parede_exterior, parede_interior, muro_lote, muro_contencao, parede_indefinida), orientacao (horizontal/vertical/diagonal/irregular), bbox, compartimento_associado, confidence_score, review_required, evidencias. NUNCA afirmes que uma parede é estrutural com base só em planta arquitetónica - usa parede_indefinida em caso de dúvida.
 
-REGRA ANTI-DUPLICAÇÃO DE PAREDES (CRÍTICO): cada parede física é UMA entrada. Mede pelo eixo médio (centerline) — NUNCA contes as duas faces paralelas da mesma parede como duas paredes diferentes. Se vires duas linhas paralelas próximas (espessura típica de parede 0.10–0.40 m), é UMA parede. Não dupliques paredes vistas em cortes/detalhes/legendas/carimbos.
+REGRA ANTI-DUPLICAÇÃO DE PAREDES (CRÍTICO): cada parede física é UMA entrada. Mede pelo eixo médio (centerline) - NUNCA contes as duas faces paralelas da mesma parede como duas paredes diferentes. Se vires duas linhas paralelas próximas (espessura típica de parede 0.10–0.40 m), é UMA parede. Não dupliques paredes vistas em cortes/detalhes/legendas/carimbos.
 
-IGNORAR ELEMENTOS NÃO-PLANTA: se a folha for classificada como corte, alcado, detalhe, legenda, carimbo ou outro (ou se uma região for claramente um corte/legenda/carimbo dentro da folha), NÃO incluas as suas paredes/vãos/compartimentos em walls/elements/rooms — devolve estes arrays vazios e regista o motivo em limitations. Estes elementos NUNCA devem ir para quantitativos/orçamento.
+IGNORAR ELEMENTOS NÃO-PLANTA: se a folha for classificada como corte, alcado, detalhe, legenda, carimbo ou outro (ou se uma região for claramente um corte/legenda/carimbo dentro da folha), NÃO incluas as suas paredes/vãos/compartimentos em walls/elements/rooms - devolve estes arrays vazios e regista o motivo em limitations. Estes elementos NUNCA devem ir para quantitativos/orçamento.
 
-6) ELEMENTOS CONSTRUTIVOS — portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada. Para CADA porta/janela devolve largura_cm e altura_cm. Se a planta tem cota legível do vão usa-a e marca dimensao_legivel=true (evidencias prefixadas com "[lido]"). Caso contrário, podes INFERIR com padrões PT (Porta WC 70, Porta interior 80, Porta entrada 90, Porta correr 120, Portão garagem 240; Janela pequena 60-80×100, média 100-140×120, grande ≥160×140; altura padrão de portas 210, de janelas 120) MAS marca dimensao_legivel=false, evidencias "[inferida_padrao]", confidence_score <= 0.55 e review_required=true. Se nem o tipo do vão for claro, devolve largura_cm=0 e altura_cm=0, evidencias "[indisponivel]" e review_required=true (não inventes). Inclui parede_associada, compartimentos_conectados, confidence_score.
+6) ELEMENTOS CONSTRUTIVOS - portas, janelas, vãos, pilares, escadas. Tipos preferenciais: porta_interior, porta_exterior, porta_correr, janela, portao_garagem, portao_lote, vao_indefinido, pilar, escada. Para CADA porta/janela devolve largura_cm e altura_cm. Se a planta tem cota legível do vão usa-a e marca dimensao_legivel=true (evidencias prefixadas com "[lido]"). Caso contrário, podes INFERIR com padrões PT (Porta WC 70, Porta interior 80, Porta entrada 90, Porta correr 120, Portão garagem 240; Janela pequena 60-80×100, média 100-140×120, grande ≥160×140; altura padrão de portas 210, de janelas 120) MAS marca dimensao_legivel=false, evidencias "[inferida_padrao]", confidence_score <= 0.55 e review_required=true. Se nem o tipo do vão for claro, devolve largura_cm=0 e altura_cm=0, evidencias "[indisponivel]" e review_required=true (não inventes). Inclui parede_associada, compartimentos_conectados, confidence_score.
 
-7) ELEMENTOS EXTERIORES — para implantações ou folhas com exterior, popula exterior_elements: lote, rua, acesso, estacionamento, jardim, vegetacao, muro, patio, terraco, cota_altimetrica, confrontacao. Inclui bbox e confidence_score.
+7) ELEMENTOS EXTERIORES - para implantações ou folhas com exterior, popula exterior_elements: lote, rua, acesso, estacionamento, jardim, vegetacao, muro, patio, terraco, cota_altimetrica, confrontacao. Inclui bbox e confidence_score.
 
-8) QUALIDADE DE LEITURA — preenche reading_quality com overall_confidence, image_quality (alta/media/baixa), text_legibility, dimensions_legibility, risk_level (baixo/medio/alto) e human_intervention_required (true se a folha tem texto/cotas largamente ilegíveis ou é ambígua).
+8) QUALIDADE DE LEITURA - preenche reading_quality com overall_confidence, image_quality (alta/media/baixa), text_legibility, dimensions_legibility, risk_level (baixo/medio/alto) e human_intervention_required (true se a folha tem texto/cotas largamente ilegíveis ou é ambígua).
 
-9) LIMITAÇÕES E PERGUNTAS — em limitations lista o que não conseguiste extrair (ex: "cotas verticais sobrepostas no canto inferior direito"); em validation_questions sugere até 5 perguntas concretas para um humano confirmar (ex: "Confirma que o compartimento central é Sala+Cozinha?").
+9) LIMITAÇÕES E PERGUNTAS - em limitations lista o que não conseguiste extrair (ex: "cotas verticais sobrepostas no canto inferior direito"); em validation_questions sugere até 5 perguntas concretas para um humano confirmar (ex: "Confirma que o compartimento central é Sala+Cozinha?").
 
 REGRAS CRÍTICAS:
 - Nunca afirmes que um elemento é estrutural apenas pela planta arquitetónica.
@@ -564,7 +564,7 @@ REGRAS CRÍTICAS:
       }
     };
 
-    // Cadeia de fallback resiliente — priorizamos JSON mode (mais rápido que tool
+    // Cadeia de fallback resiliente - priorizamos JSON mode (mais rápido que tool
     // calls com schemas enormes) e modelos Flash/Flash-Lite (latência baixa).
     // Quando o cliente sinaliza `high_res_retry` (1ª passagem devolveu vazio
     // por baixa legibilidade), arrancamos com o modelo Pro: mais lento mas
@@ -610,10 +610,10 @@ REGRAS CRÍTICAS:
           });
         }
         if (resp.status === 599) {
-          // timeout/abort interno — tentar próximo
+          // timeout/abort interno - tentar próximo
           lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
           lastErrDetail = `${att.model}/${att.mode} timeout/abort`;
-          console.warn(`${att.model}/${att.mode} timeout — trying next fallback.`);
+          console.warn(`${att.model}/${att.mode} timeout - trying next fallback.`);
           continue;
         }
         const errText = await resp.text().catch(() => "");

@@ -50,7 +50,7 @@ export default function EspecialidadeDetail() {
                 <CardTitle className="text-sm">Símbolos técnicos</CardTitle>
                 {picked && (
                   <p className="text-[11px] text-primary">
-                    Ativo: <strong>{picked.symbol_name}</strong> — clique na planta para adicionar
+                    Ativo: <strong>{picked.symbol_name}</strong> - clique na planta para adicionar
                   </p>
                 )}
               </CardHeader>

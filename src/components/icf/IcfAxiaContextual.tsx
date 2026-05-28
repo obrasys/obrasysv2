@@ -47,7 +47,7 @@ function analyzePanos(panos: IcfPanoParede[], config?: IcfConfiguracao | null): 
     if (p.area_bruta > 0 && (p.area_vaos ?? 0) / p.area_bruta > 0.4) {
       alerts.push({
         type: 'warning',
-        title: `Vãos elevados — ${p.referencia}`,
+        title: `Vãos elevados - ${p.referencia}`,
         message: `${(((p.area_vaos ?? 0) / p.area_bruta) * 100).toFixed(0)}% de vãos na área bruta.`,
         justification: 'Acima de 40% de vãos pode comprometer a rigidez estrutural do pano ICF. Considere reforço localizado.',
       });
@@ -65,7 +65,7 @@ function analyzePanos(panos: IcfPanoParede[], config?: IcfConfiguracao | null): 
     });
   }
 
-  // Panos without vãos — tip
+  // Panos without vãos - tip
   const noVaos = panos.filter(p => (p.area_vaos ?? 0) === 0 && p.area_bruta > 0);
   if (noVaos.length > 0 && noVaos.length < panos.length) {
     alerts.push({
@@ -137,7 +137,7 @@ function analyzeFundacoes(fundacoes: IcfFundacao[]): Alert[] {
     if (f.tensao_admissivel_terreno && f.tensao_calculo && f.tensao_calculo > f.tensao_admissivel_terreno) {
       alerts.push({
         type: 'warning',
-        title: `Tensão excedida — ${f.referencia}`,
+        title: `Tensão excedida - ${f.referencia}`,
         message: `Tensão de cálculo (${f.tensao_calculo} kPa) supera a admissível (${f.tensao_admissivel_terreno} kPa).`,
         justification: 'Esta situação requer validação por engenheiro estrutural.',
       });
@@ -188,7 +188,7 @@ function analyzeLajes(lajes: IcfLaje[]): Alert[] {
     if (l.espessura_total > 0 && l.espessura_total < 0.12) {
       alerts.push({
         type: 'warning',
-        title: `Espessura reduzida — ${l.referencia}`,
+        title: `Espessura reduzida - ${l.referencia}`,
         message: `Espessura de ${(l.espessura_total * 100).toFixed(0)} cm. O mínimo recomendado para vigotas é 17 cm (9 cm abobadilha + 8 cm compressão).`,
         justification: 'Espessuras inferiores ao padrão podem não cumprir requisitos regulamentares.',
       });
@@ -295,7 +295,7 @@ export function IcfAxiaContextual({ context, config, panos, fundacoes, lajes, re
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
-          Axia™ — Análise Contextual
+          Axia™ - Análise Contextual
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">

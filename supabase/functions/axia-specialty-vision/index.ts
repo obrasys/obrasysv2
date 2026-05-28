@@ -128,20 +128,20 @@ serve(async (req) => {
 
     const specialtyLabel = SPECIALTY_LABELS[specialty_type] ?? specialty_type;
     const symbolList = symbols
-      .map((s: any) => `- ${s.symbol_key} (${s.symbol_name}, unidade ${s.unit})${s.description ? ` — ${s.description}` : ""}`)
+      .map((s: any) => `- ${s.symbol_key} (${s.symbol_name}, unidade ${s.unit})${s.description ? ` - ${s.description}` : ""}`)
       .join("\n");
 
     const calibrationContext = calibration_info
       ? `Planta calibrada: ${calibration_info.real_distance} ${calibration_info.unidade ?? "m"} = ${calibration_info.pixels_per_meter?.toFixed?.(1) ?? "?"} px/m.`
-      : "Planta NÃO calibrada — devolve apenas contagens de símbolos. Marca medições lineares como [estimado] e review_required=true.";
+      : "Planta NÃO calibrada - devolve apenas contagens de símbolos. Marca medições lineares como [estimado] e review_required=true.";
 
     const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys, em português de Portugal.
 Estás a analisar uma planta de ESPECIALIDADES da categoria: ${specialtyLabel}.
 
 REGRAS GLOBAIS
 - Nunca inventes valores. Sem evidência → confidence baixa, review_required=true.
-- Não contes símbolos da legenda, carimbo, cortes, alçados ou detalhes — só símbolos colocados na planta.
-- Não calcules cargas térmicas, potência, caudais ou perdas — apenas LEITURA de símbolos e percursos.
+- Não contes símbolos da legenda, carimbo, cortes, alçados ou detalhes - só símbolos colocados na planta.
+- Não calcules cargas térmicas, potência, caudais ou perdas - apenas LEITURA de símbolos e percursos.
 - Não sugiras marcas comerciais.
 - ${calibrationContext}
 
@@ -161,7 +161,7 @@ ETAPAS
 3) estimated_quantities: agregados por symbol_key com quantidade total estimada e unidade (un, m).
 4) warnings: avisos relevantes (planta cortada, baixa qualidade, símbolos sobrepostos, etc.).
 5) missing_information: o que falta para análise completa (ex: "falta planta da cave", "escala não calibrada").
-6) overall_confidence (0..1) e review_required (boolean) — true sempre que a planta esteja desfocada, sem escala ou ambígua.
+6) overall_confidence (0..1) e review_required (boolean) - true sempre que a planta esteja desfocada, sem escala ou ambígua.
 7) summary curto em PT-PT.
 
 Devolve APENAS via tool function "specialty_analysis".`;

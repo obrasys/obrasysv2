@@ -198,12 +198,12 @@ export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId
         toast.success(
           `${subtypeLabel}: ${a.circuits.length} circuito(s) extraído(s)` +
           (circs ? ` · ${circs} guardados` : "") +
-          " — não foram contados símbolos como elementos de obra."
+          " - não foram contados símbolos como elementos de obra."
         );
       }
 
       if (a.discrepancies?.length) {
-        toast.warning(`${a.discrepancies.length} divergência(s) entre contagem visual e tabela declarada — reveja em baixo.`);
+        toast.warning(`${a.discrepancies.length} divergência(s) entre contagem visual e tabela declarada - reveja em baixo.`);
       }
 
       // Refresh tabela de Quantitativos
@@ -248,7 +248,7 @@ export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId
             {!planImportId && (
               <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 p-2 text-[10px] text-amber-700 dark:text-amber-400 flex gap-1.5">
                 <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
-                Sem planta importada associada — os resultados não serão guardados nos quantitativos.
+                Sem planta importada associada - os resultados não serão guardados nos quantitativos.
               </div>
             )}
             <Button className="w-full" onClick={handleAnalyze} disabled={isAnalyzing || !imageDataUrl}>
@@ -284,7 +284,7 @@ export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId
               </div>
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2 text-center">
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-400">
-                  {result.declared_quantities.reduce((s, d) => s + d.quantity, 0) || "—"}
+                  {result.declared_quantities.reduce((s, d) => s + d.quantity, 0) || "-"}
                 </p>
                 <p className="text-[9px] text-muted-foreground">Tabela declarada</p>
               </div>
@@ -415,14 +415,14 @@ export function PlanElectricalAnalysis({ imageDataUrl, calibration, planImportId
                       <TableBody>
                         {result.circuits.map((c, i) => (
                           <TableRow key={i}>
-                            <TableCell className="py-1 px-2 text-[11px] font-mono">{c.circuit_number || "—"}</TableCell>
+                            <TableCell className="py-1 px-2 text-[11px] font-mono">{c.circuit_number || "-"}</TableCell>
                             <TableCell className="py-1 px-2 text-[11px]">
                               {c.description}
                               {c.distribution_board && <span className="text-[9px] text-muted-foreground"> · {c.distribution_board}</span>}
                             </TableCell>
-                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.power_w ? `${c.power_w}W` : "—"}</TableCell>
-                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.cable_section_mm2 ? `${c.cable_section_mm2}mm²` : "—"}</TableCell>
-                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.breaker_rating_a ? `${c.breaker_rating_a}A` : "—"}</TableCell>
+                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.power_w ? `${c.power_w}W` : "-"}</TableCell>
+                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.cable_section_mm2 ? `${c.cable_section_mm2}mm²` : "-"}</TableCell>
+                            <TableCell className="py-1 px-2 text-[11px] text-right">{c.breaker_rating_a ? `${c.breaker_rating_a}A` : "-"}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

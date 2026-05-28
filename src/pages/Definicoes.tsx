@@ -420,7 +420,7 @@ export default function DefinicoesPage() {
                     {pushPermission === 'granted' ? (
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-700 text-xs">
                         <CheckCircle className="w-4 h-4 shrink-0" />
-                        <span className="font-medium">Permissão concedida — as notificações push estão ativas.</span>
+                        <span className="font-medium">Permissão concedida - as notificações push estão ativas.</span>
                       </div>
                     ) : pushPermission === 'denied' ? (
                       <div className="flex flex-col gap-3 p-4 rounded-xl bg-destructive/5 border border-destructive/20">

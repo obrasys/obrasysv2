@@ -66,7 +66,7 @@ export default function AssistenteArquitetura() {
   };
 
 
-  // STEP 1 — upload + tipo
+  // STEP 1 - upload + tipo
   const handleUpload = async (file: File) => {
     if (!user || !organization) return;
     setUploading(true);
@@ -87,7 +87,7 @@ export default function AssistenteArquitetura() {
     }
   };
 
-  // STEP 2 — guardar calibração
+  // STEP 2 - guardar calibração
   const handleSaveCalibration = (p: CalibrationPayload) => {
     if (!activeSessionId) return;
     updateSession.mutate(
@@ -119,7 +119,7 @@ export default function AssistenteArquitetura() {
     );
   };
 
-  // STEP 3 — chamar Axia para extrair paredes
+  // STEP 3 - chamar Axia para extrair paredes
   const runAxiaExtraction = async () => {
     if (!activeSessionId || !session.data?.file_path) return;
     const s: any = session.data;
@@ -208,7 +208,7 @@ export default function AssistenteArquitetura() {
           openings: [],
           status: 'rascunho',
           source: 'axia',
-          notes: `Assistente ICF — item ${w.id}`,
+          notes: `Assistente ICF - item ${w.id}`,
         } as any);
       }
       toast({
@@ -330,7 +330,7 @@ export default function AssistenteArquitetura() {
                 return (
                   <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs flex items-center gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                    A continuar sem calibração precisa — quantitativos terão baixa confiança.
+                    A continuar sem calibração precisa - quantitativos terão baixa confiança.
                   </div>
                 );
               }

@@ -480,7 +480,7 @@ export default function EssencialPage() {
 
       localStorage.removeItem(DRAFT_KEY);
       toast({ title: 'Orçamento criado com sucesso!' });
-      // Navigate to the budget view page — format can be used later for PDF generation
+      // Navigate to the budget view page - format can be used later for PDF generation
       navigate(`/orcamentos/${orc.id}`);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });

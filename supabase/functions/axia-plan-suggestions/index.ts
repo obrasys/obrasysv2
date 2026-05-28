@@ -89,9 +89,9 @@ Analisa as medições feitas sobre planta e os mapeamentos existentes para suger
 
 Regras estritas:
 - Nunca sugiras valores absolutos de preço.
-- Nunca alteres dados automaticamente — toda sugestão tem auto_apply_allowed=false implícito.
+- Nunca alteres dados automaticamente - toda sugestão tem auto_apply_allowed=false implícito.
 - Foca-te em artigos complementares que tipicamente acompanham os medidos.
-- Não sugiras complementares como definitivos se a medição base estiver com estado=pendente ou confidence baixa — nesses casos marca severity="info" e indica no message que depende de validação prévia.
+- Não sugiras complementares como definitivos se a medição base estiver com estado=pendente ou confidence baixa - nesses casos marca severity="info" e indica no message que depende de validação prévia.
 - Deteta duplicações na mesma zona/camada.
 - Deteta incompatibilidades de unidades entre medição e artigo.
 - Valida coerência de valores (ex: WC com mais de 50m² é provável erro).

@@ -174,8 +174,8 @@ export default function VerOrcamentoPage() {
   // ── Mock Axia alerts ──
   const axiaAlerts = [
     { icon: PackageMinus, color: 'text-primary', bg: 'bg-primary/10', label: 'Possível item em falta', desc: 'Impermeabilização não encontrada nos capítulos', severity: 'Médio' },
-    { icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-500/10', label: 'Desvio de preço detectado', desc: 'Betão C25/30 — 23% acima da mediana', severity: 'Alto' },
-    { icon: Layers, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Capítulo incompleto', desc: 'Cap. 3 — apenas 1 artigo (média: 5)', severity: 'Alto' },
+    { icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-500/10', label: 'Desvio de preço detectado', desc: 'Betão C25/30 - 23% acima da mediana', severity: 'Alto' },
+    { icon: Layers, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Capítulo incompleto', desc: 'Cap. 3 - apenas 1 artigo (média: 5)', severity: 'Alto' },
     { icon: Lightbulb, color: 'text-emerald-600', bg: 'bg-emerald-500/10', label: 'Serviço relacionado sugerido', desc: 'Considerar "Pintura exterior" no Cap. 6', severity: 'Baixo' },
     { icon: AlertTriangle, color: 'text-rose-500', bg: 'bg-rose-500/10', label: 'Incoerência técnica', desc: 'Unidade "ml" usada onde deveria ser "m²"', severity: 'Crítico' },
   ];
@@ -469,7 +469,7 @@ export default function VerOrcamentoPage() {
                                       const totalComMargem = artigo.quantidade * precoComMargem;
                                       return (
                                         <TableRow key={artigo.id}>
-                                          <TableCell className="font-mono text-xs text-muted-foreground">{artigo.codigo || '—'}</TableCell>
+                                          <TableCell className="font-mono text-xs text-muted-foreground">{artigo.codigo || '-'}</TableCell>
                                           <TableCell className="text-sm">{artigo.descricao}</TableCell>
                                           <TableCell className="text-center text-xs">{artigo.unidade}</TableCell>
                                           <TableCell className="text-right text-sm">{artigo.quantidade.toFixed(2)}</TableCell>

@@ -58,7 +58,7 @@ serve(async (req) => {
               </a>
             </div>
             <p style="color:#888;font-size:12px;">Este convite expira em ${new Date(invite.expires_at).toLocaleDateString("pt-PT")}.</p>
-            <p style="color:#888;margin-top:24px;font-size:12px;">ObraSys — Rede de Fornecedores Certificados</p>
+            <p style="color:#888;margin-top:24px;font-size:12px;">ObraSys - Rede de Fornecedores Certificados</p>
           </div>
         `,
       }),

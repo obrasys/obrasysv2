@@ -331,7 +331,7 @@ export function ArtigosPanel() {
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>Eliminar artigo?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          {a.codigo} — {a.artigo}
+                                          {a.codigo} - {a.artigo}
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>

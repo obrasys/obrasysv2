@@ -83,7 +83,7 @@ export function DossierIsometricoTab({ analysisId }: { analysisId: string }) {
           </svg>
         </div>
         <p className="text-xs text-muted-foreground italic mt-3">
-          Modelo isométrico esquemático — representação visual sem precisão construtiva.
+          Modelo isométrico esquemático - representação visual sem precisão construtiva.
         </p>
       </CardContent>
     </Card>

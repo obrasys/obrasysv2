@@ -95,15 +95,15 @@ export function PlanExportableMap({
       const qtdFinal = base * fator * coef;
 
       return {
-        roomName: room?.nome ?? "—",
+        roomName: room?.nome ?? "-",
         measurementLabel: m.etiqueta || m.tipo,
         tipo: m.tipo,
-        camada: m.camada || "—",
+        camada: m.camada || "-",
         valorBruto: m.valor_bruto,
         valorAjustado: m.valor_ajustado ?? m.valor_bruto,
         unidadeMedicao: m.unidade,
-        artigoCodigo: article?.codigo ?? "—",
-        artigoDescricao: article?.descricao ?? "—",
+        artigoCodigo: article?.codigo ?? "-",
+        artigoDescricao: article?.descricao ?? "-",
         artigoUnidade: article?.unidade ?? m.unidade,
         fatorDesperdicio: fator,
         coeficiente: coef,
@@ -186,16 +186,16 @@ export function PlanExportableMap({
                 <TableCell className="text-right font-mono text-[11px]">{r.valorBruto.toFixed(2)}</TableCell>
                 <TableCell className="text-right font-mono text-[11px]">{r.valorAjustado.toFixed(2)}</TableCell>
                 <TableCell className="text-[10px] max-w-32 truncate">
-                  {r.artigoCodigo !== "—" ? `${r.artigoCodigo} — ${r.artigoDescricao}` : "—"}
+                  {r.artigoCodigo !== "-" ? `${r.artigoCodigo} - ${r.artigoDescricao}` : "-"}
                 </TableCell>
                 <TableCell className="text-right font-mono text-[10px]">×{r.fatorDesperdicio.toFixed(2)}</TableCell>
                 <TableCell className="text-right font-mono text-[10px]">×{r.coeficiente.toFixed(2)}</TableCell>
                 <TableCell className="text-right font-mono text-xs font-medium">{r.qtdFinal.toFixed(2)}</TableCell>
                 <TableCell className="text-right font-mono text-[11px]">
-                  {r.precoUnitario > 0 ? `${r.precoUnitario.toFixed(2)} €` : "—"}
+                  {r.precoUnitario > 0 ? `${r.precoUnitario.toFixed(2)} €` : "-"}
                 </TableCell>
                 <TableCell className="text-right font-mono text-xs font-medium">
-                  {r.valorTotal > 0 ? `${r.valorTotal.toFixed(2)} €` : "—"}
+                  {r.valorTotal > 0 ? `${r.valorTotal.toFixed(2)} €` : "-"}
                 </TableCell>
               </TableRow>
             ))}

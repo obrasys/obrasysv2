@@ -138,12 +138,12 @@ serve(async (req) => {
       ? `Planta calibrada: ${calibration_info.real_distance} ${calibration_info.unidade ?? "m"} = ${calibration_info.pixels_per_meter?.toFixed?.(1) ?? "?"} px/m.`
       : scale_text
         ? `Escala indicada: ${scale_text}.`
-        : "Planta NÃO calibrada — deixa total_wire_length_m=0 e total_conduit_length_m=0.";
+        : "Planta NÃO calibrada - deixa total_wire_length_m=0 e total_conduit_length_m=0.";
 
     const systemPrompt = `Tu és a Axia, motor de inteligência operacional do Obra Sys, em PT-PT.
 Analisas plantas e desenhos elétricos. NUNCA inventas dados. Sem evidência → confidence baixa e review_required=true.
 
-ETAPA 1 — sheet_classification (OBRIGATÓRIA)
+ETAPA 1 - sheet_classification (OBRIGATÓRIA)
 Classifica o tipo de folha em "sheet_subtype" usando UMA destas chaves:
 - planta_instalacoes_eletricas: planta de implantação geral de instalações elétricas
 - planta_iluminacao: planta dedicada apenas a iluminação
@@ -156,7 +156,7 @@ Classifica o tipo de folha em "sheet_subtype" usando UMA destas chaves:
 - legenda_simbolos: folha apenas com legenda/mapa de símbolos
 - outro
 
-ETAPA 2 — REGRAS DE EXTRAÇÃO POR TIPO DE FOLHA (CRÍTICO)
+ETAPA 2 - REGRAS DE EXTRAÇÃO POR TIPO DE FOLHA (CRÍTICO)
 - Em planta_instalacoes_eletricas, planta_iluminacao, planta_tomadas_alimentacoes, pontos_eletricos_cotados:
   podes contar símbolos POSICIONADOS na planta como elementos reais da obra (placed_symbols).
 - Em diagrama_unifilar, tabela_cargas, quadro_distribuicao:
@@ -168,16 +168,16 @@ ETAPA 2 — REGRAS DE EXTRAÇÃO POR TIPO DE FOLHA (CRÍTICO)
 
 REGRA DURA: Não contar símbolos presentes em legendas, tabelas de cargas, diagramas unifilares ou vistas técnicas como pontos executáveis da planta, salvo confirmação explícita do utilizador.
 
-ETAPA 3 — quantity_table_extraction
-Se a folha contiver uma TABELA QUANTITATIVA declarada (ex: "Tomadas Simples — 12 un", "Luminárias — 8 un", "Eletroduto aparente — 45 m"), extrai cada linha para declared_quantities[] com:
+ETAPA 3 - quantity_table_extraction
+Se a folha contiver uma TABELA QUANTITATIVA declarada (ex: "Tomadas Simples - 12 un", "Luminárias - 8 un", "Eletroduto aparente - 45 m"), extrai cada linha para declared_quantities[] com:
 { symbol_key, label, quantity, unit, source_table_name?, data_source: "extracted_quantity_table" }
 
-ETAPA 4 — Cross-validation (visual_counts vs declared_quantities)
+ETAPA 4 - Cross-validation (visual_counts vs declared_quantities)
 - Para cada símbolo presente em ambos, calcula divergência relativa.
 - Se divergência > 10%, adiciona um item em "discrepancies": { symbol_key, visual_count, declared_count, message: "Há diferença entre a contagem visual e a tabela quantitativa da prancha. Confirme qual valor deseja usar." }
 - Marca review_required=true nesses casos.
 
-ETAPA 5 — Atributos elétricos por símbolo (quando aplicável)
+ETAPA 5 - Atributos elétricos por símbolo (quando aplicável)
 Para cada symbol em placed_symbols, devolve, quando legível:
 - installation_height: ex "h=0.35m", "h=1.10m", "h=1.40m"
 - circuit_number, distribution_board (ex "QD-01"), voltage, power_w, cable_section_mm2, breaker_rating_a
@@ -186,7 +186,7 @@ Para cada symbol em placed_symbols, devolve, quando legível:
 - technical_note
 - data_source: "visual_symbol_detection" | "extracted_quantity_table" | "electrical_diagram" | "load_schedule"
 
-ETAPA 6 — Materiais e cabos
+ETAPA 6 - Materiais e cabos
 - Só estima total_wire_length_m / total_conduit_length_m se houver escala/calibração; caso contrário 0.
 - ${calibrationContext}
 
@@ -533,7 +533,7 @@ DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
         analysis.recommendations ||= [];
         analysis.recommendations.push({
           type: "warning",
-          message: `Esta folha foi classificada como "${subtype}" — símbolos visuais foram descartados. Não devem ser contados como elementos da obra.`,
+          message: `Esta folha foi classificada como "${subtype}" - símbolos visuais foram descartados. Não devem ser contados como elementos da obra.`,
         });
         analysis.placed_symbols = [];
       }

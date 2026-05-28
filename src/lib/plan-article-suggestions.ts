@@ -1,4 +1,4 @@
-// Phase 3 — sugestão de artigos para uma medição de planta.
+// Phase 3 - sugestão de artigos para uma medição de planta.
 // Funciona sobre a lista de artigos já carregada em memória pelo
 // componente de mapeamento (não acede ao DB). Devolve top-N candidatos
 // com score, usado para mostrar "Sugestões Axia" inline.

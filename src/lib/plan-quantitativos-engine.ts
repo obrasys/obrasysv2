@@ -219,7 +219,7 @@ function sumDoorOpeningsForRoom(roomName: string, elements: AxiaElementLike[]): 
 
 /**
  * Soma área de TODOS os vãos (portas + janelas) que pertencem ao
- * compartimento (m²) — para descontar das paredes.
+ * compartimento (m²) - para descontar das paredes.
  */
 function sumOpeningsAreaForRoom(roomName: string, elements: AxiaElementLike[]): number {
   const target = normalizeName(roomName);

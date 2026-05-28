@@ -330,7 +330,7 @@ export default function FornecedorDashboard() {
               </div>
               <div className="flex justify-between items-center py-2 border-b border-dashed">
                 <span className="text-sm text-muted-foreground">Certificado</span>
-                <span className="text-sm font-medium">{profile?.is_certified ? '✅ Sim' : '—'}</span>
+                <span className="text-sm font-medium">{profile?.is_certified ? '✅ Sim' : '-'}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-dashed">
                 <span className="text-sm text-muted-foreground">SLA Resposta</span>

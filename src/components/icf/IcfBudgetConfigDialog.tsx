@@ -131,11 +131,11 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
                   <SelectValue placeholder="Sem template (usar cálculo paramétrico)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sem template — usar cálculo paramétrico</SelectItem>
+                  <SelectItem value="none">Sem template - usar cálculo paramétrico</SelectItem>
                   {templates.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.is_global ? '🌐 ' : ''}{t.nome}
-                      {t.total_referencia ? ` — ref. ${t.total_referencia.toLocaleString('pt-PT')} €` : ''}
+                      {t.total_referencia ? ` - ref. ${t.total_referencia.toLocaleString('pt-PT')} €` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -162,7 +162,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
                   <SelectContent>
                     {presets.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.nome} {p.is_default && '★'} — {p.margem_lucro}% / {p.iva_percent}% / {p.custos_indiretos_percent}%
+                        {p.nome} {p.is_default && '★'} - {p.margem_lucro}% / {p.iva_percent}% / {p.custos_indiretos_percent}%
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -184,7 +184,7 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
           <div className="space-y-2">
             <Label htmlFor="estaleiro">Estaleiros e Escavações (€)</Label>
             <Input id="estaleiro" type="number" min={0} step="0.01" value={estaleiro} onChange={(e) => setEstaleiro(parseFloat(e.target.value))} />
-            <p className="text-xs text-muted-foreground">Valor fixo (€) — capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
+            <p className="text-xs text-muted-foreground">Valor fixo (€) - capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
           </div>
 
           <div className="space-y-2">

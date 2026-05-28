@@ -91,7 +91,7 @@ export function useDailyReports(obraId?: string) {
       }).eq('id', id);
       if (error) throw error;
 
-      // Trigger async processing — recalculate progress, propagate dependencies, generate snapshots
+      // Trigger async processing - recalculate progress, propagate dependencies, generate snapshots
       try {
         await supabase.functions.invoke('process-daily-report', {
           body: { daily_report_id: id },

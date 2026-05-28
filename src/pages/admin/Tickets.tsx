@@ -78,8 +78,8 @@ export default function AdminTicketsPage() {
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Informações</CardTitle></CardHeader>
               <CardContent className="space-y-2.5 text-sm">
-                <div><span className="text-muted-foreground text-xs">Utilizador:</span> <span className="font-medium text-xs">{selectedTicket.user_nome || "—"}</span></div>
-                <div><span className="text-muted-foreground text-xs">Email:</span> <span className="font-medium text-xs">{selectedTicket.user_email || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs">Utilizador:</span> <span className="font-medium text-xs">{selectedTicket.user_nome || "-"}</span></div>
+                <div><span className="text-muted-foreground text-xs">Email:</span> <span className="font-medium text-xs">{selectedTicket.user_email || "-"}</span></div>
                 <div className="flex items-center gap-2"><span className="text-muted-foreground text-xs">Prioridade:</span> {getPriorityBadge(selectedTicket.prioridade)}</div>
                 <div><span className="text-muted-foreground text-xs">Criado:</span> <span className="text-xs">{format(new Date(selectedTicket.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}</span></div>
                 <div className="flex items-center gap-2">

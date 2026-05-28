@@ -354,7 +354,7 @@ export function PlanQuantityTable({
                     </TableCell>
                     <TableCell className="text-xs">
                       {r.floor_id ? (
-                        floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">—</span>
+                        floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">-</span>
                       ) : (
                         <span className="text-muted-foreground italic">Sem pavimento</span>
                       )}

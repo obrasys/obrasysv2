@@ -89,7 +89,7 @@ export function useOrcamentos() {
 
       if (error) throw error;
 
-      // Aplicar matriz fixa de 37 capítulos (00 → 036) — modo Avançado
+      // Aplicar matriz fixa de 37 capítulos (00 → 036) - modo Avançado
       try {
         await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>)(
           'aplicar_matriz_capitulos',

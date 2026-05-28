@@ -107,7 +107,7 @@ export function DashboardPriorities({ obras, tarefasPendentes, rdosPendentes, me
               <Lightbulb className="w-5 h-5 text-warning shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm text-foreground font-medium">{getDailyInsight()}</p>
-                <p className="text-xs text-muted-foreground">Sem alertas no momento — tudo a correr bem!</p>
+                <p className="text-xs text-muted-foreground">Sem alertas no momento - tudo a correr bem!</p>
               </div>
             </div>
           )}

@@ -42,7 +42,7 @@ export function CostCenterPicker({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {allowClear && <SelectItem value="__none__">— Sem centro de custo —</SelectItem>}
+        {allowClear && <SelectItem value="__none__">- Sem centro de custo -</SelectItem>}
         {grouped.estrutura.length > 0 && (
           <div className="px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground">Estrutura</div>
         )}

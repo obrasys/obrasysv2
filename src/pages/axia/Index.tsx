@@ -498,7 +498,7 @@ export default function AxiaPage() {
                         <p className="text-sm font-medium truncate">{ap.obra}</p>
                         <p className="text-xs text-muted-foreground">
                           {ap.tipo === 'atraso' ? `${ap.dias} dias de atraso` : `${Math.abs(ap.dias)} dias adiantado`}
-                          {ap.detail ? ` — ${ap.detail}` : ''}
+                          {ap.detail ? ` - ${ap.detail}` : ''}
                         </p>
                       </div>
                       <Badge variant={ap.tipo === 'atraso' ? 'destructive' : 'secondary'} className="text-xs shrink-0">

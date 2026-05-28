@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           alert_type: 'milestone_approaching',
           severity: daysUntil <= 3 ? 'critical' : 'warning',
           title: `Marco financeiro em ${daysUntil} dia(s)`,
-          message: `${m.description} — ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(m.planned_amount)} previsto para ${effectiveDate.toLocaleDateString('pt-PT')}`,
+          message: `${m.description} - ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(m.planned_amount)} previsto para ${effectiveDate.toLocaleDateString('pt-PT')}`,
           explanation_json: {
             milestone_type: m.milestone_type,
             days_until: daysUntil,

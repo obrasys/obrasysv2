@@ -95,7 +95,7 @@ const IcfResumo = () => {
                 <CardContent>
                   <div className="space-y-3">
                     {[
-                      { label: 'Paredes', vol: r.volume_total_paredes, aco: '—' },
+                      { label: 'Paredes', vol: r.volume_total_paredes, aco: '-' },
                       { label: 'Fundações', vol: r.volume_total_fundacoes, aco: r.aco_total_fundacoes?.toFixed(1) },
                       { label: 'Lajes', vol: r.volume_total_lajes, aco: r.aco_total_lajes?.toFixed(1) },
                     ].map(item => (

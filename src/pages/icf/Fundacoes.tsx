@@ -57,7 +57,7 @@ const LayerRow = ({ label, layer }: { label: string; layer: LayerBreakdown }) =>
   if (layer.num_bars === 0) return null;
   return (
     <>
-      <span className="text-muted-foreground">{label}: Ø{layer.diameter}/{layer.spacing} — {layer.num_bars} barras × {layer.bar_length}m</span>
+      <span className="text-muted-foreground">{label}: Ø{layer.diameter}/{layer.spacing} - {layer.num_bars} barras × {layer.bar_length}m</span>
       <span className="text-right font-medium">{layer.weight_kg} kg</span>
     </>
   );
@@ -279,18 +279,18 @@ const IcfFundacoes = () => {
                 <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
                   <div className="flex items-center gap-2">
                     <Calculator className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold">Cálculo de Aço — Axia™</span>
+                    <span className="text-sm font-semibold">Cálculo de Aço - Axia™</span>
                   </div>
 
                   {/* Longitudinal Inferior */}
-                  <p className="text-xs font-semibold text-primary">Armadura Longitudinal — Inferior</p>
+                  <p className="text-xs font-semibold text-primary">Armadura Longitudinal - Inferior</p>
                   <div className="grid grid-cols-2 gap-3">
                     <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_inf} onChange={v => upd({ diam_long_inf: v as RebarDiameter })} />
                     <SpacingSelect label="Espaçamento (cm)" value={form.espac_long_inf} onChange={v => upd({ espac_long_inf: v as RebarSpacing })} />
                   </div>
 
                   {/* Longitudinal Superior */}
-                  <SectionToggle label="Armadura Longitudinal — Superior" checked={form.usar_arm_sup} onChange={v => upd({ usar_arm_sup: v })} />
+                  <SectionToggle label="Armadura Longitudinal - Superior" checked={form.usar_arm_sup} onChange={v => upd({ usar_arm_sup: v })} />
                   {form.usar_arm_sup && (
                     <div className="grid grid-cols-2 gap-3">
                       <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_long_sup} onChange={v => upd({ diam_long_sup: v as RebarDiameter })} />
@@ -299,7 +299,7 @@ const IcfFundacoes = () => {
                   )}
 
                   {/* Transversal Inferior */}
-                  <SectionToggle label="Armadura Transversal — Inferior" checked={form.usar_trans_inf} onChange={v => upd({ usar_trans_inf: v })} />
+                  <SectionToggle label="Armadura Transversal - Inferior" checked={form.usar_trans_inf} onChange={v => upd({ usar_trans_inf: v })} />
                   {form.usar_trans_inf && (
                     <div className="grid grid-cols-2 gap-3">
                       <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_inf} onChange={v => upd({ diam_trans_inf: v as RebarDiameter })} />
@@ -308,7 +308,7 @@ const IcfFundacoes = () => {
                   )}
 
                   {/* Transversal Superior */}
-                  <SectionToggle label="Armadura Transversal — Superior" checked={form.usar_trans_sup} onChange={v => upd({ usar_trans_sup: v })} />
+                  <SectionToggle label="Armadura Transversal - Superior" checked={form.usar_trans_sup} onChange={v => upd({ usar_trans_sup: v })} />
                   {form.usar_trans_sup && (
                     <div className="grid grid-cols-2 gap-3">
                       <RebarSelect label="Diâmetro (Ø mm)" value={form.diam_trans_sup} onChange={v => upd({ diam_trans_sup: v as RebarDiameter })} />
@@ -397,7 +397,7 @@ const IcfFundacoes = () => {
                   <TableCell className="text-right">{f.altura.toFixed(2)}</TableCell>
                   <TableCell className="text-right">{f.quantidade}</TableCell>
                   <TableCell className="text-right font-bold">{f.volume_betao?.toFixed(3)}</TableCell>
-                  <TableCell className="text-right">{f.aco_estimado_kg ?? '—'}</TableCell>
+                  <TableCell className="text-right">{f.aco_estimado_kg ?? '-'}</TableCell>
                   <TableCell className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(f)}><Pencil className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteFundacao.mutate(f.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>

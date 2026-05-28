@@ -67,7 +67,7 @@ export default function OrcamentosPage() {
   const totalItens = all.reduce((s, o) => s + (o.capitulos?.reduce((cs, c) => cs + (c.artigos?.length || 0), 0) || 0), 0);
   const ultimaAtualizacao = all.length > 0
     ? format(new Date(Math.max(...all.map(o => new Date(o.updated_at).getTime()))), "dd/MM/yyyy", { locale: pt })
-    : '—';
+    : '-';
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);

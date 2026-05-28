@@ -29,7 +29,7 @@ interface IcfBudgetChapter {
 
 const FORNECEDOR_ICF = 'Ferreira & Alcântara';
 
-/** Preços fallback (ref. mercado PT 2025/2026) — usados quando não há match na base de preços */
+/** Preços fallback (ref. mercado PT 2025/2026) - usados quando não há match na base de preços */
 const FALLBACK = {
   betao_m3: 95,
   aco_kg: 1.35,
@@ -45,7 +45,7 @@ const FALLBACK = {
   mao_obra_m2: 25, // valor de referência do anexo
 };
 
-/** Painel ICF — área configurável por utilizador */
+/** Painel ICF - área configurável por utilizador */
 function estimarPaineis(areaLiquida: number, painelArea: number): number {
   return Math.ceil(areaLiquida / Math.max(painelArea, 0.01));
 }
@@ -98,7 +98,7 @@ export function buildChapters(
   };
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 1 — SAPATAS (Fundações)
+  // CAPÍTULO 1 - SAPATAS (Fundações)
   // ═══════════════════════════════════════════════════════════
   if (resumo.volume_total_fundacoes > 0 || resumo.aco_total_fundacoes > 0) {
     const artigos: IcfBudgetArticle[] = [];
@@ -111,19 +111,19 @@ export function buildChapters(
       artigos.push(art(`Betão ${config.classe_betao} para sapatas`, 'm³', resumo.volume_total_fundacoes, FALLBACK.betao_m3, ['betao']));
     }
     if (areaSapatas > 0) {
-      artigos.push(art('Mão de obra — execução de sapatas', 'm²', areaSapatas, FALLBACK.mao_obra_m2, ['mao de obra', 'sapata']));
+      artigos.push(art('Mão de obra - execução de sapatas', 'm²', areaSapatas, FALLBACK.mao_obra_m2, ['mao de obra', 'sapata']));
     }
 
     chapters.push({
       numero: 1,
       titulo: 'Sapatas',
-      descricao: `Fundações da estrutura ICF — Configuração "${config.nome}" v${config.versao}`,
+      descricao: `Fundações da estrutura ICF - Configuração "${config.nome}" v${config.versao}`,
       artigos,
     });
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULO 2 — PANO DE PAREDES (ICF)
+  // CAPÍTULO 2 - PANO DE PAREDES (ICF)
   // ═══════════════════════════════════════════════════════════
   if (resumo.area_liquida_total > 0) {
     const artigos: IcfBudgetArticle[] = [];
@@ -136,7 +136,7 @@ export function buildChapters(
       ? Math.ceil(resumo.area_total_vaos / Math.max(K.vaos_por_padieira, 0.01))
       : 0;
 
-    artigos.push(art(`Painel grafitado H27 D${espNucleoCm} — ICF`, 'un', qtdPaineis, FALLBACK.painel_grafitado_un, ['painel', 'grafitado']));
+    artigos.push(art(`Painel grafitado H27 D${espNucleoCm} - ICF`, 'un', qtdPaineis, FALLBACK.painel_grafitado_un, ['painel', 'grafitado']));
     if (qtdPadieiras > 0) {
       artigos.push(art('Padieiras para vãos (vergas)', 'un', qtdPadieiras, FALLBACK.padieira_un, ['padieira']));
     }
@@ -145,7 +145,7 @@ export function buildChapters(
     artigos.push(art('Cantos C4', 'un', qtdCantosC4, FALLBACK.canto_c4_un, ['canto', 'c4']));
     artigos.push(art(`Espaçadores ${is22 ? '22' : '15'}cm`, 'un', qtdEspacadores, FALLBACK.espacador_un, ['espacador']));
 
-    // Aço para paredes (kg por m³ de betão de enchimento — configurável)
+    // Aço para paredes (kg por m³ de betão de enchimento - configurável)
     const acoParedes = resumo.volume_total_paredes * K.aco_kg_por_m3_paredes;
     if (acoParedes > 0) {
       artigos.push(art(`Aço ${config.classe_aco} para paredes ICF`, 'kg', acoParedes, FALLBACK.aco_kg, ['aco', 'armadura']));
@@ -155,18 +155,18 @@ export function buildChapters(
       artigos.push(art(`Betão ${config.classe_betao} para enchimento ICF (bombeado)`, 'm³', resumo.volume_total_paredes, FALLBACK.betao_m3, ['betao']));
     }
 
-    artigos.push(art('Mão de obra — montagem de painéis ICF', 'm²', resumo.area_liquida_total, FALLBACK.mao_obra_m2, ['mao de obra', 'icf']));
+    artigos.push(art('Mão de obra - montagem de painéis ICF', 'm²', resumo.area_liquida_total, FALLBACK.mao_obra_m2, ['mao de obra', 'icf']));
 
     chapters.push({
       numero: 2,
       titulo: 'Pano de Paredes',
-      descricao: `Sistema ICF — núcleo ${espNucleoCm}cm — Fornecedor de referência: ${FORNECEDOR_ICF}`,
+      descricao: `Sistema ICF - núcleo ${espNucleoCm}cm - Fornecedor de referência: ${FORNECEDOR_ICF}`,
       artigos,
     });
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CAPÍTULOS 3+ — LAJES (agrupadas por piso real)
+  // CAPÍTULOS 3+ - LAJES (agrupadas por piso real)
   // ═══════════════════════════════════════════════════════════
   type LajeGroup = { piso: string; area: number; volume: number; aco: number };
   const groups: LajeGroup[] = [];
@@ -198,16 +198,16 @@ export function buildChapters(
     const qtdMalha = g.area;
     const mlTrelicas = g.area * K.trelicas_ml_por_m2;
 
-    if (qtdAbobadilhas > 0) artigos.push(art(`Abobadilha 2000x1000x170 — ${g.piso}`, 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
-    if (qtdMalha > 0) artigos.push(art(`Malha electrosoldada — ${g.piso}`, 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
-    if (mlTrelicas > 0) artigos.push(art(`Treliças (vigotas) — ${g.piso}`, 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
-    if (g.volume > 0) artigos.push(art(`Betão ${config.classe_betao} — ${g.piso}`, 'm³', g.volume, FALLBACK.betao_m3, ['betao']));
-    if (g.aco > 0) artigos.push(art(`Aço ${config.classe_aco} — ${g.piso}`, 'kg', g.aco, FALLBACK.aco_kg, ['aco', 'armadura']));
-    if (g.area > 0) artigos.push(art(`Mão de obra — execução de laje (${g.piso})`, 'm²', g.area, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
+    if (qtdAbobadilhas > 0) artigos.push(art(`Abobadilha 2000x1000x170 - ${g.piso}`, 'un', qtdAbobadilhas, FALLBACK.abobadilha_un, ['abobadilha']));
+    if (qtdMalha > 0) artigos.push(art(`Malha electrosoldada - ${g.piso}`, 'm²', qtdMalha, FALLBACK.malha_m2, ['malha']));
+    if (mlTrelicas > 0) artigos.push(art(`Treliças (vigotas) - ${g.piso}`, 'ml', mlTrelicas, FALLBACK.trelica_ml, ['trelica']));
+    if (g.volume > 0) artigos.push(art(`Betão ${config.classe_betao} - ${g.piso}`, 'm³', g.volume, FALLBACK.betao_m3, ['betao']));
+    if (g.aco > 0) artigos.push(art(`Aço ${config.classe_aco} - ${g.piso}`, 'kg', g.aco, FALLBACK.aco_kg, ['aco', 'armadura']));
+    if (g.area > 0) artigos.push(art(`Mão de obra - execução de laje (${g.piso})`, 'm²', g.area, FALLBACK.mao_obra_m2, ['mao de obra', 'laje']));
 
     chapters.push({
       numero: lajeChapterNumber++,
-      titulo: `Laje — ${g.piso}`,
+      titulo: `Laje - ${g.piso}`,
       descricao: 'Laje aligeirada com abobadilha, treliças e malha',
       artigos,
     });
@@ -307,10 +307,10 @@ export function useGenerateIcfBudget() {
         const estaleiroChapter: IcfBudgetChapter = {
           numero: 1,
           titulo: 'Estaleiros e Escavações',
-          descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF — caso o cliente não tenha projeto em ICF.',
+          descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF - caso o cliente não tenha projeto em ICF.',
           artigos: [
             {
-              descricao: 'Estaleiros e escavações — preparação de estaleiro, marcação de obra e escavação às cotas',
+              descricao: 'Estaleiros e escavações - preparação de estaleiro, marcação de obra e escavação às cotas',
               unidade: 'vg',
               quantidade: 1,
               preco_unitario: estaleiroVal,
@@ -321,14 +321,14 @@ export function useGenerateIcfBudget() {
         chapters = [estaleiroChapter, ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 }))];
       }
 
-      // 4. Geração transacional via RPC (atómica + auditada) — só estrutura.
+      // 4. Geração transacional via RPC (atómica + auditada) - só estrutura.
       const titulo = template_chapters && template_chapters.length > 0
-        ? `${template_nome ?? 'Chave-na-mão'} — ${config.nome}`
+        ? `${template_nome ?? 'Chave-na-mão'} - ${config.nome}`
         : scope?.arquitetura
           ? scope.especialidades.length === 4
-            ? `Obra Completa — ${config.nome}`
-            : `Estrutura + Arquitetura — ${config.nome}`
-          : `Estrutura ICF — ${config.nome}`;
+            ? `Obra Completa - ${config.nome}`
+            : `Estrutura + Arquitetura - ${config.nome}`
+          : `Estrutura ICF - ${config.nome}`;
 
       const { data: result, error: rpcErr } = await supabase.rpc(
         'generate_icf_budget_transactional',
@@ -375,7 +375,7 @@ export function useGenerateIcfBudget() {
             .eq('obra_id', obraId);
           planRows = (planRowsData ?? []) as unknown as PlanQuantitativoRow[];
         } catch {
-          // tabela/view pode não estar acessível para o user — ignora.
+          // tabela/view pode não estar acessível para o user - ignora.
           planRows = [];
         }
 

@@ -50,7 +50,7 @@ export function PlanMeasurementToolbar({
   ];
 
   const drawTools: Array<{ id: MeasureMode; icon: typeof MousePointer2; label: string; tip: string }> = [
-    { id: "draw_room", icon: SquareDashed, label: "Compart.", tip: "Marcar compartimento (polígono — duplo-clique para fechar)" },
+    { id: "draw_room", icon: SquareDashed, label: "Compart.", tip: "Marcar compartimento (polígono - duplo-clique para fechar)" },
     { id: "draw_wall", icon: Wallpaper, label: "Parede", tip: "Marcar parede (linha)" },
     { id: "draw_opening", icon: DoorOpen, label: "Vão", tip: "Marcar porta/janela sobre parede" },
   ];

@@ -31,7 +31,7 @@ export function usePdfRenderer({ url, page = 1, scale = 2.5 }: UsePdfRendererOpt
       const pdfPage = await pdfDocRef.current.getPage(pageNum);
       const viewport = pdfPage.getViewport({ scale: effectiveScale });
 
-      // Use an offscreen canvas — no DOM element needed
+      // Use an offscreen canvas - no DOM element needed
       const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;

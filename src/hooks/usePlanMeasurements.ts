@@ -180,7 +180,7 @@ export function usePlanMeasurements(planImportId?: string) {
     },
   });
 
-  // Bulk validation update — single PATCH for many ids at once.
+  // Bulk validation update - single PATCH for many ids at once.
   const bulkUpdateValidation = useMutation({
     mutationFn: async ({
       ids,
@@ -248,7 +248,7 @@ export function calculatePolygonArea(
   return Math.abs(area) / 2 / (pixelsPerMeter * pixelsPerMeter);
 }
 
-/** Calculate closed polygon perimeter (a.k.a. Rodapé) in meters — sums all edges including closing edge */
+/** Calculate closed polygon perimeter (a.k.a. Rodapé) in meters - sums all edges including closing edge */
 export function calculatePolygonPerimeter(
   coordinates: Array<{ x: number; y: number }>,
   pixelsPerMeter: number

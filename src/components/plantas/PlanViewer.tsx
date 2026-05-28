@@ -315,7 +315,7 @@ export function PlanViewer({
       if (e.key === "Shift") setShiftHeld(true);
       if ((e.code === "Space" || e.key === " ") && !isTypingTarget(e.target)) {
         // Evita scroll da página E impede que um botão com foco (ex: toolbar
-        // de modo) seja activado pelo Space — o que estava a impedir o pan.
+        // de modo) seja activado pelo Space - o que estava a impedir o pan.
         e.preventDefault();
         e.stopPropagation();
         const active = document.activeElement as HTMLElement | null;
@@ -417,16 +417,16 @@ export function PlanViewer({
 
   const getModeLabel = () => {
     switch (mode) {
-      case "calibrate": return `Calibração — Clique no ponto ${calibrationPoints.length + 1} de 2`;
-      case "measure_line": return "Medição de linha — Clique para marcar pontos, duplo-clique para terminar";
-      case "measure_area": return "Medição de área — Clique vértices, duplo-clique para fechar";
-      case "measure_count": return "Contagem — Clique para marcar elementos";
-      case "draw_room": return "Compartimento — Clique vértices do polígono, duplo-clique para fechar";
-      case "draw_wall": return "Parede — Clique início e fim · alinhamento automático (Shift = livre)";
-      case "draw_opening": return "Vão — Clique na posição sobre uma parede";
+      case "calibrate": return `Calibração - Clique no ponto ${calibrationPoints.length + 1} de 2`;
+      case "measure_line": return "Medição de linha - Clique para marcar pontos, duplo-clique para terminar";
+      case "measure_area": return "Medição de área - Clique vértices, duplo-clique para fechar";
+      case "measure_count": return "Contagem - Clique para marcar elementos";
+      case "draw_room": return "Compartimento - Clique vértices do polígono, duplo-clique para fechar";
+      case "draw_wall": return "Parede - Clique início e fim · alinhamento automático (Shift = livre)";
+      case "draw_opening": return "Vão - Clique na posição sobre uma parede";
       case "insert_element": {
         const sym = activeInsertSymbolId ? getSymbolById(activeInsertSymbolId) : null;
-        return sym ? `Inserir: ${sym.name} — Clique na planta` : "Selecione um tipo de elemento";
+        return sym ? `Inserir: ${sym.name} - Clique na planta` : "Selecione um tipo de elemento";
       }
       default: return "";
     }
@@ -728,7 +728,7 @@ export function PlanViewer({
               </Group>
             ))}
 
-            {/* Wall intersection grips — destacam cantos (L), junções (T) e cruzamentos (X) */}
+            {/* Wall intersection grips - destacam cantos (L), junções (T) e cruzamentos (X) */}
             {showGrips && wallGrips.map((g, i) => {
               // 1 parede = endpoint solto (mais discreto), 2 = canto, 3 = T, 4+ = cruzamento
               const fill =

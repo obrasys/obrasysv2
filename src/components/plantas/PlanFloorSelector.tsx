@@ -82,7 +82,7 @@ export function PlanFloorSelector({
             <SelectValue placeholder="Pavimento" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">— Sem pavimento —</SelectItem>
+            <SelectItem value="__none__">- Sem pavimento -</SelectItem>
             {floors.map((f) => (
               <SelectItem key={f.id} value={f.id}>
                 {f.name}

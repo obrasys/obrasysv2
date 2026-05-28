@@ -137,7 +137,7 @@ export function IcfScopeDialog({
               onClick={() => handleSelectMode('estrutura')}
               icon={Building2}
               title="Só Estrutura"
-              subtitle="ICF — sapatas, paredes, lajes"
+              subtitle="ICF - sapatas, paredes, lajes"
               tag="Rápido"
             />
             <ScopeCard

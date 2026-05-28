@@ -148,7 +148,7 @@ const IcfMapaVisualPanos = () => {
               <DialogContent>
                 <DialogHeader><DialogTitle>Novo pano de parede</DialogTitle></DialogHeader>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Etiqueta" full><Input value={newPanel.label} onChange={e => setNewPanel({ ...newPanel, label: e.target.value })} placeholder="Ex: Parede exterior sala — fachada Sul" /></Field>
+                  <Field label="Etiqueta" full><Input value={newPanel.label} onChange={e => setNewPanel({ ...newPanel, label: e.target.value })} placeholder="Ex: Parede exterior sala - fachada Sul" /></Field>
                   <Field label="Piso"><Input value={newPanel.floor} onChange={e => setNewPanel({ ...newPanel, floor: e.target.value })} /></Field>
                   <Field label="Compartimento"><Input value={newPanel.room} onChange={e => setNewPanel({ ...newPanel, room: e.target.value })} /></Field>
                   <Field label="Comprimento (m)"><Input type="number" step="0.01" value={newPanel.length_m} onChange={e => setNewPanel({ ...newPanel, length_m: Number(e.target.value) })} /></Field>

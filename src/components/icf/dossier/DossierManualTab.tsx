@@ -84,7 +84,7 @@ export function DossierManualTab({ analysis }: { analysis: IcfProjectAnalysis })
             <h2 className="text-lg font-bold mb-2">5. Pendências em aberto</h2>
             <ul className="text-sm space-y-1">
               {issues.filter(i => i.status === 'open').map(i => (
-                <li key={i.id}>• <strong>{i.title}</strong>{i.message && <> — {i.message}</>}</li>
+                <li key={i.id}>• <strong>{i.title}</strong>{i.message && <> - {i.message}</>}</li>
               ))}
             </ul>
           </section>

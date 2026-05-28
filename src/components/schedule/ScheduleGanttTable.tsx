@@ -57,7 +57,7 @@ export function ScheduleGanttTable({ obraId, obraNome, orcamentoId }: Props) {
       {baseline && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <span>Baseline aprovada — Versão {baseline.version_no}</span>
+          <span>Baseline aprovada - Versão {baseline.version_no}</span>
           <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">Aprovada</Badge>
         </div>
       )}
@@ -86,7 +86,7 @@ export function ScheduleGanttTable({ obraId, obraNome, orcamentoId }: Props) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
-                Cronograma — Versão {latestVersion?.version_no}
+                Cronograma - Versão {latestVersion?.version_no}
               </CardTitle>
               <Button
                 size="sm"

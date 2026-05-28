@@ -83,7 +83,7 @@ const getFallbackHtmlContent = (nome: string) => `
   </div>
 
   <div class="footer">
-    <p>—<br>
+    <p>-<br>
     Se não foste tu a criar esta conta, podes ignorar este email.</p>
   </div>
 </body>

@@ -108,7 +108,7 @@ const IcfPanos = () => {
       ? formatArmadura(editPano.diam_transversal, editPano.esp_transversal)
       : null;
 
-    // UPDATE in-place — preserva vãos associados (cascade-safe)
+    // UPDATE in-place - preserva vãos associados (cascade-safe)
     updatePano.mutate({
       id: editPano.id,
       referencia: editPano.referencia,
@@ -181,9 +181,9 @@ const IcfPanos = () => {
         <div>
           <Label className="text-xs">Espaçamento (cm)</Label>
           <Select value={data.esp_transversal || '__none__'} onValueChange={v => onChange({ ...data, esp_transversal: v === '__none__' ? '' : v })} disabled={!data.diam_transversal}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="-" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">—</SelectItem>
+              <SelectItem value="__none__">-</SelectItem>
               {ESPACAMENTOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -259,7 +259,7 @@ const IcfPanos = () => {
                       <TableCell className="text-right font-medium">{p.area_liquida?.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-bold">{p.volume_betao?.toFixed(3)}</TableCell>
                       <TableCell className="text-xs">{p.armadura_vertical} / {p.armadura_horizontal}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{p.reforco_transversal || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{p.reforco_transversal || '-'}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(p)}>
@@ -304,7 +304,7 @@ const IcfPanos = () => {
         {/* Edit dialog */}
         <Dialog open={!!editPano} onOpenChange={open => { if (!open) setEditPano(null); }}>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Editar Pano — {editPano?.referencia}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Editar Pano - {editPano?.referencia}</DialogTitle></DialogHeader>
             {editPano && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">

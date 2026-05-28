@@ -165,7 +165,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
               <p className="text-xs text-muted-foreground mt-0.5">
                 {baseItems.length > 0
                   ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
-                  : `Sem artigos na Base para esta área — a usar catálogo embutido.`}
+                  : `Sem artigos na Base para esta área - a usar catálogo embutido.`}
               </p>
             </div>
             <div className="relative w-56 shrink-0">

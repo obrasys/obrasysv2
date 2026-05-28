@@ -136,7 +136,7 @@ interface PlanAIAnalysisProps {
   onHighlightPosition?: (x: number, y: number) => void;
   onConvertDimensions?: (dimensions: PlanAnalysisResult["dimensions"]) => void;
   onAnalysisComplete?: () => void;
-  // Multi-page support — controlled from parent so analyses persist per page
+  // Multi-page support - controlled from parent so analyses persist per page
   result?: PlanAnalysisResult | null;
   onResultChange?: (result: PlanAnalysisResult | null) => void;
   currentPage?: number;
@@ -328,7 +328,7 @@ export function PlanAIAnalysis({
     console.info("[plan/axia] analyze start", { planImportId, page: currentPage, hasPrev: !!result });
     setLastError(null);
     setIsAnalyzing(true);
-    // Importante: NÃO limpamos `result` durante a reanálise — se a Axia
+    // Importante: NÃO limpamos `result` durante a reanálise - se a Axia
     // falhar mantemos os dados anteriores e mostramos um banner de erro
     // com possibilidade de tentar de novo.
     try {
@@ -498,7 +498,7 @@ export function PlanAIAnalysis({
                 </Button>
               </div>
 
-              {/* Error banner — keeps previous result visible */}
+              {/* Error banner - keeps previous result visible */}
               {lastError && (
                 <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg p-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
@@ -671,7 +671,7 @@ export function PlanAIAnalysis({
                     ))}
                     {result.dimensions.length > 5 && (
                       <p className="text-[10px] text-muted-foreground text-center py-1">
-                        + {result.dimensions.length - 5} cotas — abrir tabela completa para ver todas
+                        + {result.dimensions.length - 5} cotas - abrir tabela completa para ver todas
                       </p>
                     )}
                     {onConvertDimensions && result.dimensions.length > 0 && (
@@ -726,7 +726,7 @@ export function PlanAIAnalysis({
                     ))}
                     {result.rooms.length > 5 && (
                       <p className="text-[10px] text-muted-foreground text-center py-1">
-                        + {result.rooms.length - 5} compartimentos — abrir tabela completa para ver todos
+                        + {result.rooms.length - 5} compartimentos - abrir tabela completa para ver todos
                       </p>
                     )}
                   </CollapsibleContent>
@@ -762,7 +762,7 @@ export function PlanAIAnalysis({
                     ))}
                     {result.elements.length > 5 && (
                       <p className="text-[10px] text-muted-foreground text-center py-1">
-                        + {result.elements.length - 5} elementos — abrir tabela completa para ver todos
+                        + {result.elements.length - 5} elementos - abrir tabela completa para ver todos
                       </p>
                     )}
                   </CollapsibleContent>

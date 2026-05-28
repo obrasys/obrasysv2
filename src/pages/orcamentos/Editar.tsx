@@ -554,10 +554,10 @@ export default function EditarOrcamentoPage() {
                      <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida de regime</Label>
                      <div className="grid grid-cols-2 gap-2">
                        {[
-                         { value: 23, label: 'IVA Normal', desc: '23% — Regime geral' },
-                         { value: 6, label: 'IVA Reduzido', desc: '6% — Reabilitação/habitação' },
-                         { value: 0, label: 'Autoliquidação', desc: '0% — Subempreitada (art. 2º)' },
-                         { value: 13, label: 'IVA Intermédio', desc: '13% — Taxa intermédia' },
+                         { value: 23, label: 'IVA Normal', desc: '23% - Regime geral' },
+                         { value: 6, label: 'IVA Reduzido', desc: '6% - Reabilitação/habitação' },
+                         { value: 0, label: 'Autoliquidação', desc: '0% - Subempreitada (art. 2º)' },
+                         { value: 13, label: 'IVA Intermédio', desc: '13% - Taxa intermédia' },
                        ].map((regime) => {
                           const currentTaxa = manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
                           const isActive = currentTaxa === regime.value;

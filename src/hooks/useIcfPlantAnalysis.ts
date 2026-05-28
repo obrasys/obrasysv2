@@ -120,7 +120,7 @@ export function useIcfPlantAnalysis() {
         const p = result.paredes[i];
         const vaosArea = (p.vaos || []).reduce((sum, v) => sum + v.largura * v.altura * v.quantidade, 0);
 
-        // Build insert payload explicitly — area_bruta is GENERATED ALWAYS, must not be included
+        // Build insert payload explicitly - area_bruta is GENERATED ALWAYS, must not be included
         const panoPayload: Record<string, unknown> = {
           empresa_id: empresaId,
           obra_id: obraId,
@@ -134,7 +134,7 @@ export function useIcfPlantAnalysis() {
           area_vaos: vaosArea,
           fator_cumprimento: 1,
           ordem: i + 1,
-          observacoes: 'Gerado por Axia™ — análise de planta',
+          observacoes: 'Gerado por Axia™ - análise de planta',
         };
 
         const { data: pano, error: panoErr } = await supabase
@@ -178,7 +178,7 @@ export function useIcfPlantAnalysis() {
           })),
           status: 'rascunho',
           source: 'axia',
-          notes: 'Gerado por Axia™ — análise de planta',
+          notes: 'Gerado por Axia™ - análise de planta',
         });
       }
 
@@ -202,7 +202,7 @@ export function useIcfPlantAnalysis() {
           altura: f.altura,
           quantidade: f.quantidade,
           volume_betao: f.comprimento * f.largura * f.altura * f.quantidade,
-          observacoes: 'Gerado por Axia™ — análise de planta',
+          observacoes: 'Gerado por Axia™ - análise de planta',
         }));
         const { error: fundErr } = await supabase.from('icf_fundacoes').insert(fundInsert as any);
         if (fundErr) throw fundErr;
@@ -220,7 +220,7 @@ export function useIcfPlantAnalysis() {
           area: l.area,
           espessura_total: l.espessura_total,
           volume: l.area * l.espessura_total,
-          observacoes: 'Gerado por Axia™ — análise de planta',
+          observacoes: 'Gerado por Axia™ - análise de planta',
         }));
         const { error: lajeErr } = await supabase.from('icf_lajes').insert(lajesInsert as any);
         if (lajeErr) throw lajeErr;

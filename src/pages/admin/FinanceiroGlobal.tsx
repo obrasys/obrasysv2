@@ -69,7 +69,7 @@ export default function AdminFinanceiroGlobal() {
     email: s.email,
     plano: s.subscription_tier || "trial",
     valor: PLAN_PRICES[s.subscription_tier || "trial"] || 0,
-    desde: s.created_at ? format(new Date(s.created_at), "MMM yyyy", { locale: pt }) : "—",
+    desde: s.created_at ? format(new Date(s.created_at), "MMM yyyy", { locale: pt }) : "-",
     tipo: s.subscription_tier === "founder" ? "Vitalício" : "Mensal",
   }));
 

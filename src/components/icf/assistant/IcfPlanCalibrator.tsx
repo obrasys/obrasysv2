@@ -291,7 +291,7 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
               size="icon"
               variant={panActive ? 'default' : 'ghost'}
               onClick={() => setTool((t) => (t === 'pan' ? 'measure' : 'pan'))}
-              title="Mover planta (Pan) — segure Espaço para ativar temporariamente"
+              title="Mover planta (Pan) - segure Espaço para ativar temporariamente"
             >
               <Hand className="h-4 w-4" />
             </Button>

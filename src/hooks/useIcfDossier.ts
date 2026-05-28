@@ -476,7 +476,7 @@ export function useSendDossierToBudget() {
           preco_unitario: HOMEBLOCK_FALLBACK_PRICES[a.code] ?? 0,
         });
       });
-      if (artigos.length === 0) throw new Error('Sem artigos — recalcule a composição dos panos.');
+      if (artigos.length === 0) throw new Error('Sem artigos - recalcule a composição dos panos.');
 
       const chapters = [{
         numero: 1,
@@ -490,7 +490,7 @@ export function useSendDossierToBudget() {
         {
           p_obra_id: obraId,
           p_configuracao_id: configuracaoId,
-          p_titulo: `Dossiê ICF — ${config.nome}`,
+          p_titulo: `Dossiê ICF - ${config.nome}`,
           p_margem_lucro: margem_lucro,
           p_custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0, iva_percent, indiretos_percent: 0 },
           p_chapters: chapters as any,

@@ -71,7 +71,7 @@ const Dashboard = () => {
     const obrasEmRisco = obrasPausadas + obrasSemProgresso;
     const rdosPendentes = rdos?.filter((r: any) => r.status === 'rascunho' || r.status === 'pendente').length || 0;
     const tarefasPendentes = tarefas?.filter((t: any) => t.status === 'pendente' || t.status === 'em_progresso').length || 0;
-    // Placeholder for financial — real hook can be added later
+    // Placeholder for financial - real hook can be added later
     const receberSemana = 0;
     const medicoesPendentes = 0;
 
@@ -189,7 +189,7 @@ const Dashboard = () => {
               <DashboardAlertsWidget />
             </div>
 
-            {/* 4. Active Works — hero section */}
+            {/* 4. Active Works - hero section */}
             <DashboardObrasActive obras={obras || []} />
 
             {/* 5. Flow Navigation */}

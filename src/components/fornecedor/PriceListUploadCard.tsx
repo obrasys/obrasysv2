@@ -230,7 +230,7 @@ export function PriceListUploadCard() {
             </Badge>
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Envie a sua tabela de preços — a Axia™ organiza automaticamente os itens na sua base.
+            Envie a sua tabela de preços - a Axia™ organiza automaticamente os itens na sua base.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -363,7 +363,7 @@ export function PriceListUploadCard() {
                   {extractedItems.map((item, idx) => (
                     <TableRow key={idx}>
                       <TableCell className="text-xs font-mono text-muted-foreground">
-                        {item.item_code || '—'}
+                        {item.item_code || '-'}
                       </TableCell>
                       <TableCell className="text-sm">
                         <div>{item.item_name}</div>

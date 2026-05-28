@@ -47,12 +47,12 @@ export function PurchasesPanel({ orcamentoId, obraId }: Props) {
   const [notes, setNotes] = useState("");
 
   const itemLabel = (id: string | null) => {
-    if (!id) return "—";
+    if (!id) return "-";
     const it = items.find((i) => i.id === id);
-    return it ? `${it.chapter_code ?? ""} · ${it.description}`.trim() : "—";
+    return it ? `${it.chapter_code ?? ""} · ${it.description}`.trim() : "-";
   };
   const supplierLabel = (id: string | null) =>
-    suppliers.find((s) => s.id === id)?.nome ?? "—";
+    suppliers.find((s) => s.id === id)?.nome ?? "-";
 
   const reset = () => {
     setDescription("");
@@ -132,7 +132,7 @@ export function PurchasesPanel({ orcamentoId, obraId }: Props) {
                   <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                     {itemLabel(p.budget_version_item_id)}
                   </TableCell>
-                  <TableCell className="text-xs">{p.invoice_number ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{p.invoice_number ?? "-"}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(p.total_amount)}</TableCell>
                   <TableCell>
                     <Badge variant={p.status === "cancelled" ? "destructive" : "secondary"}>
@@ -180,7 +180,7 @@ export function PurchasesPanel({ orcamentoId, obraId }: Props) {
                 <Select value={supplierId} onValueChange={setSupplierId}>
                   <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
+                    <SelectItem value="none">-</SelectItem>
                     {suppliers.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
@@ -197,7 +197,7 @@ export function PurchasesPanel({ orcamentoId, obraId }: Props) {
               <Select value={itemId} onValueChange={setItemId}>
                 <SelectTrigger><SelectValue placeholder="Ligar a um item específico" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— Sem ligação</SelectItem>
+                  <SelectItem value="none">- Sem ligação</SelectItem>
                   {items.map((it) => (
                     <SelectItem key={it.id} value={it.id}>
                       {it.chapter_code} · {it.description.slice(0, 60)}

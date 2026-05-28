@@ -168,7 +168,7 @@ export function PlanBulkValidation({ measurements, onBulkValidate }: Props) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {m.camada || "—"}
+                    {m.camada || "-"}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
                     {m.valor_bruto.toFixed(2)} {m.unidade}

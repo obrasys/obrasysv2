@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* ObraSys Premium — Construction Management Portugal */
+    /* ObraSys Premium - Construction Management Portugal */
     --background: 60 24% 96%;
     --foreground: 215 28% 17%;
 
@@ -16,11 +16,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 17%;
 
-    /* Primary — Deep Teal #0F4C5C */
+    /* Primary - Deep Teal #0F4C5C */
     --primary: 192 73% 21%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary — Lighter Teal #1B5E75 */
+    /* Secondary - Lighter Teal #1B5E75 */
     --secondary: 205 17% 95%;
     --secondary-foreground: 195 62% 28%;
 
@@ -28,11 +28,11 @@
     --muted: 60 10% 95%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent — Active / Hover #1B5E75 */
+    /* Accent - Active / Hover #1B5E75 */
     --accent: 195 62% 28%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive — Burnt Orange #C2410C */
+    /* Destructive - Burnt Orange #C2410C */
     --destructive: 20 88% 40%;
     --destructive-foreground: 0 0% 100%;
 
@@ -58,7 +58,7 @@
     --shadow-card-hover: 0 10px 15px -3px hsl(215 28% 17% / 0.06), 0 4px 6px -4px hsl(215 28% 17% / 0.04);
     --shadow-hero: 0 25px 50px -12px hsl(192 73% 21% / 0.15);
 
-    /* Sidebar — Deep Teal */
+    /* Sidebar - Deep Teal */
     --sidebar-background: 192 73% 21%;
     --sidebar-foreground: 60 10% 90%;
     --sidebar-primary: 0 0% 100%;

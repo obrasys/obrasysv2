@@ -12,7 +12,7 @@
  *  - derived quantitatives (floor / ceiling / baseboard / walls) when those
  *    measurements are missing for a room that has area + perimeter.
  *
- * Pure functions — no React, no Supabase. Safe to unit-test.
+ * Pure functions - no React, no Supabase. Safe to unit-test.
  */
 import type { PlanMeasurement, PlanRoom } from "@/types/plan-measurements";
 
@@ -283,7 +283,7 @@ export function buildDerivedQuantitiesForRoom(
       id: `derived:${room.id}:pavimento`,
       room_id: room.id,
       kind: "pavimento",
-      label: `Pavimento — ${room.display_name}`,
+      label: `Pavimento - ${room.display_name}`,
       unit: "m²",
       value: round2(area),
       estimated: false,
@@ -295,7 +295,7 @@ export function buildDerivedQuantitiesForRoom(
       id: `derived:${room.id}:teto`,
       room_id: room.id,
       kind: "teto",
-      label: `Teto — ${room.display_name}`,
+      label: `Teto - ${room.display_name}`,
       unit: "m²",
       value: round2(area),
       estimated: false,
@@ -309,7 +309,7 @@ export function buildDerivedQuantitiesForRoom(
       id: `derived:${room.id}:rodape`,
       room_id: room.id,
       kind: "rodape",
-      label: `Rodapé — ${room.display_name}`,
+      label: `Rodapé - ${room.display_name}`,
       unit: "ml",
       value: round2(baseboard),
       estimated: true,
@@ -322,7 +322,7 @@ export function buildDerivedQuantitiesForRoom(
       id: `derived:${room.id}:paredes`,
       room_id: room.id,
       kind: "paredes",
-      label: `Paredes — ${room.display_name}`,
+      label: `Paredes - ${room.display_name}`,
       unit: "m²",
       value: round2(walls),
       estimated: !room.pe_direito_m,

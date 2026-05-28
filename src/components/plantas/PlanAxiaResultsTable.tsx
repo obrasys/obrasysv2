@@ -61,7 +61,7 @@ function scoreToLevel(score: number | undefined) {
 }
 
 function ReviewBadge({ required }: { required?: boolean }) {
-  if (!required) return <span className="text-muted-foreground text-xs">—</span>;
+  if (!required) return <span className="text-muted-foreground text-xs">-</span>;
   return (
     <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-700 border-amber-200 text-[10px]">
       <AlertTriangle className="w-3 h-3" /> Validar
@@ -252,7 +252,7 @@ export function PlanAxiaResultsTable({
                       <TableCell className="font-medium">{d.value}</TableCell>
                       <TableCell>{d.unit}</TableCell>
                       <TableCell className="text-xs">
-                        {d.raw_text ?? <span className="text-muted-foreground">—</span>}
+                        {d.raw_text ?? <span className="text-muted-foreground">-</span>}
                         {d.valor_nao_legivel && (
                           <Badge variant="outline" className="ml-1 bg-red-500/10 text-red-700 border-red-200 text-[9px]">
                             ilegível
@@ -283,7 +283,7 @@ export function PlanAxiaResultsTable({
                   <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <div>
                     <strong>{pendingCount}</strong> compartimento(s) com valores estimados pela Axia (área/perímetro inferidos por tipo).
-                    Reveja e ajuste antes de enviar para orçamento — as linhas a amarelo precisam de validação.
+                    Reveja e ajuste antes de enviar para orçamento - as linhas a amarelo precisam de validação.
                   </div>
                 </div>
               ) : null;
@@ -336,9 +336,9 @@ export function PlanAxiaResultsTable({
                           {r.name}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs capitalize">{r.tipo_normalizado?.replace(/_/g, " ") ?? "—"}</TableCell>
+                      <TableCell className="text-xs capitalize">{r.tipo_normalizado?.replace(/_/g, " ") ?? "-"}</TableCell>
                       <TableCell>
-                        {r.estimated_area ? `${r.estimated_area.toFixed(2)} m²` : "—"}
+                        {r.estimated_area ? `${r.estimated_area.toFixed(2)} m²` : "-"}
                         {r.area_legivel === false && (
                           <Badge variant="outline" className="ml-1 text-[9px] border-amber-400 text-amber-700 dark:text-amber-300">
                             estimada
@@ -403,12 +403,12 @@ export function PlanAxiaResultsTable({
                     <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sem elementos.</TableCell></TableRow>
                   ) : filteredElements.map((e: any, i) => {
                     const dim = e.largura_cm
-                      ? `${e.largura_cm}×${e.altura_cm ?? "—"}`
-                      : "—";
+                      ? `${e.largura_cm}×${e.altura_cm ?? "-"}`
+                      : "-";
                     const dimSrc = e.dimensao_legivel ? "lida" : (e.largura_cm ? "inferida" : "");
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{(e.type ?? "—").replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(e.type ?? "-").replace(/_/g, " ")}</TableCell>
                         <TableCell className="font-medium">{e.label}</TableCell>
                         <TableCell className="text-xs tabular-nums">
                           {dim}
@@ -473,9 +473,9 @@ export function PlanAxiaResultsTable({
                     const c = bboxCenter(w.bbox);
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{(w.tipo ?? "—").replace(/_/g, " ")}</TableCell>
+                        <TableCell className="capitalize text-xs">{(w.tipo ?? "-").replace(/_/g, " ")}</TableCell>
                         <TableCell className="capitalize text-xs">{w.orientacao}</TableCell>
-                        <TableCell className="text-xs">{w.compartimento_associado ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{w.compartimento_associado ?? "-"}</TableCell>
                         <TableCell><ConfidenceBadge level={scoreToLevel(w.confidence_score)} /></TableCell>
                         <TableCell><ReviewBadge required={w.review_required} /></TableCell>
                         <TableCell className="text-right">
@@ -483,7 +483,7 @@ export function PlanAxiaResultsTable({
                             <Button size="sm" variant="ghost" onClick={() => handleGoTo(c.x, c.y)}>
                               <MapPin className="w-3.5 h-3.5 mr-1" /> Ir para
                             </Button>
-                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                          ) : <span className="text-xs text-muted-foreground">-</span>}
                         </TableCell>
                       </TableRow>
                     );
@@ -527,15 +527,15 @@ export function PlanAxiaResultsTable({
                     const c = bboxCenter(e.bbox);
                     return (
                       <TableRow key={i}>
-                        <TableCell className="capitalize text-xs">{(e.tipo ?? "—").replace(/_/g, " ")}</TableCell>
-                        <TableCell className="text-xs">{e.notes ?? "—"}</TableCell>
+                        <TableCell className="capitalize text-xs">{(e.tipo ?? "-").replace(/_/g, " ")}</TableCell>
+                        <TableCell className="text-xs">{e.notes ?? "-"}</TableCell>
                         <TableCell><ConfidenceBadge level={scoreToLevel(e.confidence_score)} /></TableCell>
                         <TableCell className="text-right">
                           {c ? (
                             <Button size="sm" variant="ghost" onClick={() => handleGoTo(c.x, c.y)}>
                               <MapPin className="w-3.5 h-3.5 mr-1" /> Ir para
                             </Button>
-                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                          ) : <span className="text-xs text-muted-foreground">-</span>}
                         </TableCell>
                       </TableRow>
                     );

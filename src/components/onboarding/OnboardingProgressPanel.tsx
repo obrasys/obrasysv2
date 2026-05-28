@@ -64,7 +64,7 @@ export function OnboardingProgressPanel({ steps, percentage, isMinActivation, on
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              Operação ativa — está pronto para gerir a obra
+              Operação ativa - está pronto para gerir a obra
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Continue a explorar orçamentos, equipa e controlo financeiro.
@@ -149,7 +149,7 @@ export function OnboardingProgressPanel({ steps, percentage, isMinActivation, on
           </div>
         </div>
 
-        {/* Checklist — max 3 items */}
+        {/* Checklist - max 3 items */}
         <AnimatePresence>
           {!collapsed && (
             <motion.div

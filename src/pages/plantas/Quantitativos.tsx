@@ -42,11 +42,11 @@ export default function PlanQuantitativos() {
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
   const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
-  // Tipo de base ativo (Geral / Remodelação) — partilhado com Essencial e Avançado
+  // Tipo de base ativo (Geral / Remodelação) - partilhado com Essencial e Avançado
   const [tipoBase, setTipoBase] = useState<TipoBase>("geral");
 
   // Load articles: priorizar base_artigos_user (nova Base de Preços) com fallback para
-  // base_precos_personalizada + default_articles (legados) — tudo unificado num único array
+  // base_precos_personalizada + default_articles (legados) - tudo unificado num único array
   // para preservar a interface dos componentes filhos.
   const articlesQuery = useQuery({
     queryKey: ["plan-articles-for-mapping", tipoBase],
@@ -186,7 +186,7 @@ export default function PlanQuantitativos() {
 
 
   return (
-    <AppLayout title={`Quantitativos — ${plan.nome_ficheiro}`} subtitle={`Rev. ${plan.revision_number}`}>
+    <AppLayout title={`Quantitativos - ${plan.nome_ficheiro}`} subtitle={`Rev. ${plan.revision_number}`}>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">

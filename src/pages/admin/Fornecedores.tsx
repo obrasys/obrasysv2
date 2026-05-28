@@ -76,8 +76,8 @@ export default function AdminFornecedores() {
                               {s.trade_name && <p className="text-[11px] text-muted-foreground">{s.legal_name}</p>}
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs">{s.nif || '—'}</TableCell>
-                          <TableCell className="text-xs">{s.location_district || '—'}</TableCell>
+                          <TableCell className="text-xs">{s.nif || '-'}</TableCell>
+                          <TableCell className="text-xs">{s.location_district || '-'}</TableCell>
                           <TableCell>
                             <Badge variant={s.status === 'active' ? 'default' : 'secondary'} className="text-xs">
                               {s.status === 'active' ? 'Ativo' : s.status === 'pending' ? 'Pendente' : 'Suspenso'}

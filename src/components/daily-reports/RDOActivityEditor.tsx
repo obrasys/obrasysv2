@@ -204,7 +204,7 @@ export function RDOActivityEditor({ reportId, obraId, scheduleVersionId, readOnl
           </Button>
           {!scheduleVersionId && (
             <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-300 bg-amber-50">
-              Sem cronograma — crie um planeamento primeiro
+              Sem cronograma - crie um planeamento primeiro
             </Badge>
           )}
         </div>

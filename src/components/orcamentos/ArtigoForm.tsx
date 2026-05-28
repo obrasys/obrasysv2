@@ -457,7 +457,7 @@ export function ArtigoForm({
               <span className="text-xs text-muted-foreground">
                 {decompAtiva
                   ? `Soma: ${formatCurrency(somaDecomp)} → alimenta Preço Base`
-                  : 'Opcional — preencher para permitir compras parciais por categoria'}
+                  : 'Opcional - preencher para permitir compras parciais por categoria'}
               </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">

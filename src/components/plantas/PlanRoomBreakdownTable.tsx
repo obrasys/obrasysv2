@@ -127,7 +127,7 @@ export function PlanRoomBreakdownTable({ rows, onRename }: Props) {
                 <TableCell className="text-right tabular-nums">{r.walls_m2.toFixed(2)}</TableCell>
                 <TableCell>
                   {r.elements.length === 0 ? (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className="text-xs text-muted-foreground">-</span>
                   ) : (
                     <div className="flex flex-wrap gap-1">
                       {r.elements.map((el, idx) => (

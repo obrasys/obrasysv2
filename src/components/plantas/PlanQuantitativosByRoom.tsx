@@ -103,7 +103,7 @@ export function PlanQuantitativosByRoom({
     [measurements, rooms, roomMeasurements],
   );
 
-  // Log diagnóstico — útil para perceber por que algo cai em "sem compartimento".
+  // Log diagnóstico - útil para perceber por que algo cai em "sem compartimento".
   if (typeof window !== "undefined") {
     // eslint-disable-next-line no-console
     console.debug("[plan/by-room] association stats", stats);
@@ -309,8 +309,8 @@ export function PlanQuantitativosByRoom({
                                 {d.value.toFixed(2)}
                               </TableCell>
                               <TableCell className="text-xs">{d.unit}</TableCell>
-                              <TableCell className="text-right font-mono text-xs">—</TableCell>
-                              <TableCell className="text-right font-mono text-xs">—</TableCell>
+                              <TableCell className="text-right font-mono text-xs">-</TableCell>
+                              <TableCell className="text-right font-mono text-xs">-</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-[10px]">
                                   {d.estimated ? "Estimado" : "Calculado"}
@@ -350,10 +350,10 @@ export function PlanQuantitativosByRoom({
                             </TableCell>
                             <TableCell className="text-xs">{item.unit}</TableCell>
                             <TableCell className="text-right font-mono text-xs">
-                              {item.article ? `${item.article.preco_unitario.toFixed(2)} €` : "—"}
+                              {item.article ? `${item.article.preco_unitario.toFixed(2)} €` : "-"}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm font-medium">
-                              {item.valorTotal > 0 ? `${item.valorTotal.toFixed(2)} €` : "—"}
+                              {item.valorTotal > 0 ? `${item.valorTotal.toFixed(2)} €` : "-"}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">

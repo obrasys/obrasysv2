@@ -180,7 +180,7 @@ function CategoryBlock({
       </div>
 
       {lines.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic px-3">Sem linhas — usa &quot;Adicionar&quot; para começar.</p>
+        <p className="text-xs text-muted-foreground italic px-3">Sem linhas - usa &quot;Adicionar&quot; para começar.</p>
       ) : (
         <Table>
           <TableHeader>

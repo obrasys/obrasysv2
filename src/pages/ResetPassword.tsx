@@ -132,7 +132,7 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-8">
       <SEO
-        title="Redefinir palavra-passe — ObraSys"
+        title="Redefinir palavra-passe - ObraSys"
         description="Defina uma nova palavra-passe segura para a sua conta ObraSys."
         path="/auth/reset-password"
         noindex

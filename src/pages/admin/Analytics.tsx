@@ -220,8 +220,8 @@ export default function AdminAnalytics() {
                         <TableRow key={eu.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium text-sm">{p?.nome || "—"}</p>
-                              <p className="text-xs text-muted-foreground">{p?.email || "—"}</p>
+                              <p className="font-medium text-sm">{p?.nome || "-"}</p>
+                              <p className="text-xs text-muted-foreground">{p?.email || "-"}</p>
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
@@ -236,7 +236,7 @@ export default function AdminAnalytics() {
                           </TableCell>
                           <TableCell className="text-center font-mono font-medium text-sm">{eu.total_records_created}</TableCell>
                           <TableCell className="text-center text-xs text-muted-foreground">
-                            {eu.last_action_date ? format(new Date(eu.last_action_date), "dd/MM/yyyy", { locale: pt }) : "—"}
+                            {eu.last_action_date ? format(new Date(eu.last_action_date), "dd/MM/yyyy", { locale: pt }) : "-"}
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={`text-xs ${s.cls}`}>{s.label}</Badge>

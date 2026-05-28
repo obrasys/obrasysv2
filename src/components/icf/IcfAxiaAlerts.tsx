@@ -37,7 +37,7 @@ export function IcfAxiaAlerts({ configId }: Props) {
       if (p.area_bruta > 0 && p.area_vaos / p.area_bruta > 0.4) {
         alerts.push({
           type: 'warning',
-          title: `Área de vãos elevada — ${p.referencia}`,
+          title: `Área de vãos elevada - ${p.referencia}`,
           message: `O pano ${p.referencia} tem ${((p.area_vaos / p.area_bruta) * 100).toFixed(0)}% de vãos. Valores acima de 40% podem comprometer a integridade estrutural.`,
         });
       }
@@ -107,7 +107,7 @@ export function IcfAxiaAlerts({ configId }: Props) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-primary" />
-          Axia™ — Alertas Técnicos ({alerts.length})
+          Axia™ - Alertas Técnicos ({alerts.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">

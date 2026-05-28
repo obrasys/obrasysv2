@@ -59,7 +59,7 @@ export function ContractingPackagesPanel({ orcamentoId }: Props) {
   const [awardNotes, setAwardNotes] = useState("");
 
   const supplierName = (id: string | null) =>
-    suppliers.find((s) => s.id === id)?.nome ?? "—";
+    suppliers.find((s) => s.id === id)?.nome ?? "-";
 
   const openItems = items.filter((it) => it.contracting_status === "open");
   const selectedTotal = items
@@ -178,14 +178,14 @@ export function ContractingPackagesPanel({ orcamentoId }: Props) {
                           <span className="inline-flex items-center gap-1">
                             <Building2 className="h-3 w-3" /> {supplierName(p.awarded_supplier_id)}
                           </span>
-                        ) : "—"}
+                        ) : "-"}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(p.estimated_total)}</TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {p.status === "awarded" ? fmt(p.awarded_total) : "—"}
+                        {p.status === "awarded" ? fmt(p.awarded_total) : "-"}
                       </TableCell>
                       <TableCell className={`text-right tabular-nums ${delta > 0 ? "text-destructive" : delta < 0 ? "text-emerald-600" : ""}`}>
-                        {p.status === "awarded" ? fmt(delta) : "—"}
+                        {p.status === "awarded" ? fmt(delta) : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         {p.status !== "awarded" && p.status !== "cancelled" && (
@@ -222,7 +222,7 @@ export function ContractingPackagesPanel({ orcamentoId }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Nome do pacote *</Label>
-                <Input value={pkgName} onChange={(e) => setPkgName(e.target.value)} placeholder="Ex: Eletricidade — geral" />
+                <Input value={pkgName} onChange={(e) => setPkgName(e.target.value)} placeholder="Ex: Eletricidade - geral" />
               </div>
               <div>
                 <Label>Descrição</Label>

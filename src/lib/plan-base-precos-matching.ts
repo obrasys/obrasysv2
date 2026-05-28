@@ -18,22 +18,22 @@ export interface BaseArticleMatch {
 export interface PlaceholderToMatch {
   /** Identificador único do placeholder (id usado no consolidated) */
   key: string;
-  /** Descrição/etiqueta para tentar match (ex: "Rodapé — fornecimento e aplicação") */
+  /** Descrição/etiqueta para tentar match (ex: "Rodapé - fornecimento e aplicação") */
   descricao: string;
   /** Unidade esperada (m, m2, un...) */
   unidade: string;
-  /** Capítulo sugerido (ex: "Acabamentos — Rodapé", "Vãos — Portas e Janelas") */
+  /** Capítulo sugerido (ex: "Acabamentos - Rodapé", "Vãos - Portas e Janelas") */
   capituloHint?: string;
   /** Palavras-chave adicionais para refinar o match (ex: porta, janela, rodapé) */
   keywords?: string[];
 }
 
-// Mapa de palavras-chave por bucket — usado quando não há keywords explícitas
+// Mapa de palavras-chave por bucket - usado quando não há keywords explícitas
 const BUCKET_KEYWORDS: Record<string, string[]> = {
-  "Acabamentos — Rodapé": ["rodap"],
-  "Acabamentos — Paredes": ["pared", "pintur", "revestiment"],
-  "Acabamentos — Pavimentos e Tetos": ["paviment", "soalho", "ceramic", "teto", "tecto"],
-  "Vãos — Portas e Janelas": ["porta", "janela", "vão", "vao", "portao"],
+  "Acabamentos - Rodapé": ["rodap"],
+  "Acabamentos - Paredes": ["pared", "pintur", "revestiment"],
+  "Acabamentos - Pavimentos e Tetos": ["paviment", "soalho", "ceramic", "teto", "tecto"],
+  "Vãos - Portas e Janelas": ["porta", "janela", "vão", "vao", "portao"],
 };
 
 function normalize(s: string): string {
@@ -99,7 +99,7 @@ export async function autoMatchPlaceholdersAgainstBase(
     .eq("user_id", userId)
     .eq("tipo_base", tipoBase);
 
-  // 2. Carregar base global (mesmo tipo) — usado como fallback
+  // 2. Carregar base global (mesmo tipo) - usado como fallback
   const { data: globalBase } = await supabase
     .from("base_artigos_global" as any)
     .select("codigo, artigo, unidade, preco_indicativo_eur, capitulo")

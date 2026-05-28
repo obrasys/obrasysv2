@@ -82,7 +82,7 @@ export default function FornecedorPedidoDetalhe() {
         && assignment?.status !== 'responded' && assignment?.status !== 'declined') {
       
       if (budgetItems.length > 0) {
-        // We have budget items — use them and try to match prices from supplier's pricebook
+        // We have budget items - use them and try to match prices from supplier's pricebook
         const prefilled: ResponseItem[] = budgetItems.map((bi: any) => {
           // Try to find a matching pricebook item by name similarity
           const normalise = (s: string) => s.toLowerCase().replace(/[^a-záàâãéèêíïóôõúç\w\s]/g, '').trim();
@@ -271,8 +271,8 @@ export default function FornecedorPedidoDetalhe() {
                     <tbody>
                       {budgetItems.map((bi: any) => (
                         <tr key={bi.id} className="border-t">
-                          {budgetItems.some((b: any) => b.capitulo) && <td className="p-2 text-muted-foreground">{bi.capitulo || '—'}</td>}
-                          {budgetItems.some((b: any) => b.codigo) && <td className="p-2 text-muted-foreground">{bi.codigo || '—'}</td>}
+                          {budgetItems.some((b: any) => b.capitulo) && <td className="p-2 text-muted-foreground">{bi.capitulo || '-'}</td>}
+                          {budgetItems.some((b: any) => b.codigo) && <td className="p-2 text-muted-foreground">{bi.codigo || '-'}</td>}
                           <td className="p-2">{bi.descricao}</td>
                           <td className="p-2 text-center">{bi.unidade}</td>
                           <td className="p-2 text-right">{Number(bi.quantidade).toFixed(2)}</td>

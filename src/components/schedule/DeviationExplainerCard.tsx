@@ -98,8 +98,8 @@ export function DeviationExplainerCard({ tasks, dependencies, obraNome }: Props)
 
 Responde com:
 1. **Causa provável** (1-2 frases)
-2. **Impacto em cadeia** — como afeta tarefas sucessoras
-3. **Ação recomendada** — 1 ação concreta para mitigar`;
+2. **Impacto em cadeia** - como afeta tarefas sucessoras
+3. **Ação recomendada** - 1 ação concreta para mitigar`;
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

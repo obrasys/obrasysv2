@@ -213,9 +213,9 @@ export default function MigracaoPage() {
                         const s = cfg[user.status] || cfg.pendente;
                         return (
                           <TableRow key={user.id}>
-                            <TableCell className="font-medium text-sm">{user.nome || "—"}</TableCell>
+                            <TableCell className="font-medium text-sm">{user.nome || "-"}</TableCell>
                             <TableCell className="text-xs">{user.email}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{user.empresa || "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{user.empresa || "-"}</TableCell>
                             <TableCell><Badge variant={s.variant} className="text-xs">{s.label}</Badge></TableCell>
                             <TableCell className="text-xs text-muted-foreground">{format(new Date(user.created_at), "dd/MM/yy", { locale: pt })}</TableCell>
                             <TableCell>

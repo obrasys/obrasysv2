@@ -23,19 +23,19 @@ import { DISCIPLINE_META } from "@/lib/plan-discipline";
 // especialidade em vez de cair tudo em "A definir (revisão manual)".
 // ─────────────────────────────────────────────────────────────────────────────
 type DerivedBucket =
-  | "Vãos — Portas e Janelas"
-  | "Acabamentos — Rodapé"
-  | "Acabamentos — Paredes"
-  | "Acabamentos — Pavimentos e Tetos"
+  | "Vãos - Portas e Janelas"
+  | "Acabamentos - Rodapé"
+  | "Acabamentos - Paredes"
+  | "Acabamentos - Pavimentos e Tetos"
   | "A definir (revisão manual)";
 
 function categorizeMeasurement(m: PlanMeasurement): DerivedBucket {
   const camada = (m.camada ?? "").toLowerCase();
   const etiqueta = (m.etiqueta ?? "").toLowerCase();
-  if (camada === "rodape" || etiqueta.startsWith("rodapé")) return "Acabamentos — Rodapé";
-  if (camada === "paredes" || etiqueta.startsWith("paredes")) return "Acabamentos — Paredes";
+  if (camada === "rodape" || etiqueta.startsWith("rodapé")) return "Acabamentos - Rodapé";
+  if (camada === "paredes" || etiqueta.startsWith("paredes")) return "Acabamentos - Paredes";
   if (camada === "pavimento" || camada === "teto" || etiqueta.startsWith("pavimento") || etiqueta.startsWith("teto"))
-    return "Acabamentos — Pavimentos e Tetos";
+    return "Acabamentos - Pavimentos e Tetos";
   return "A definir (revisão manual)";
 }
 
@@ -84,8 +84,8 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
   const disciplineLabel = disciplina && disciplina !== "arquitetura" && disciplina !== "estruturas"
     ? DISCIPLINE_META[disciplina]?.label
     : null;
-  const chapterPrefix = disciplineLabel ? `${disciplineLabel} — ` : "";
-  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} — ${planName}` : `Pré-Orçamento — ${planName}`);
+  const chapterPrefix = disciplineLabel ? `${disciplineLabel} - ` : "";
+  const [titulo, setTitulo] = useState(disciplineLabel ? `${disciplineLabel} - ${planName}` : `Pré-Orçamento - ${planName}`);
   const [margemLucro, setMargemLucro] = useState("15");
   const [isGenerating, setIsGenerating] = useState(false);
   const [openings, setOpenings] = useState<PlacedOpening[]>([]);
@@ -159,7 +159,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         // Categorização inteligente para derivados da Axia (rodapé, paredes,
         // pavimento/teto). Cada categoria vira um capítulo dedicado e os
         // items derivados são consolidados num único artigo "A DEFINIR" com a
-        // soma da quantidade — o utilizador atribui o preço unitário no editor.
+        // soma da quantidade - o utilizador atribui o preço unitário no editor.
         const bucket = categorizeMeasurement(measurement);
         // Normalizar unidade: m² para áreas, ml para lineares
         const rawUnit = (measurement.unidade || "").toLowerCase();
@@ -172,16 +172,16 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
 
         let descricao: string;
         let placeholderId: string;
-        if (bucket === "Acabamentos — Rodapé") {
-          descricao = "Rodapé — fornecimento e aplicação";
+        if (bucket === "Acabamentos - Rodapé") {
+          descricao = "Rodapé - fornecimento e aplicação";
           placeholderId = `derived::rodape::${unidade}`;
-        } else if (bucket === "Acabamentos — Paredes") {
-          descricao = "Paredes — revestimento/pintura";
+        } else if (bucket === "Acabamentos - Paredes") {
+          descricao = "Paredes - revestimento/pintura";
           placeholderId = `derived::paredes::${unidade}`;
-        } else if (bucket === "Acabamentos — Pavimentos e Tetos") {
+        } else if (bucket === "Acabamentos - Pavimentos e Tetos") {
           const isTeto = (measurement.camada ?? "").toLowerCase() === "teto" ||
             (measurement.etiqueta ?? "").toLowerCase().startsWith("teto");
-          descricao = isTeto ? "Teto — pintura/acabamento" : "Pavimento — fornecimento e aplicação";
+          descricao = isTeto ? "Teto - pintura/acabamento" : "Pavimento - fornecimento e aplicação";
           placeholderId = `derived::${isTeto ? "teto" : "pavimento"}::${unidade}`;
         } else {
           descricao =
@@ -222,7 +222,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
     // Adicionar vãos (portas/janelas) agrupados por dimensão como capítulo dedicado
     const openingsBucket = new Map<string, { descricao: string; qtd: number }>();
     openings.forEach((o) => {
-      // symbol_type_id formato: "porta_interior_80x210" — usamos como chave
+      // symbol_type_id formato: "porta_interior_80x210" - usamos como chave
       const key = o.symbol_type_id;
       const descricao = o.subcategory?.trim() || o.symbol_type_id;
       const existing = openingsBucket.get(key);
@@ -238,9 +238,9 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
           descricao: v.descricao,
           unidade: "un",
           preco_unitario: 0,
-          categoria: "Vãos — Portas e Janelas",
+          categoria: "Vãos - Portas e Janelas",
         },
-        categoria: "Vãos — Portas e Janelas",
+        categoria: "Vãos - Portas e Janelas",
         quantidade: v.qtd,
         valorTotal: 0,
         measurementIds: [],
@@ -305,7 +305,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         descricao: c.article.descricao,
         unidade: c.article.unidade,
         capituloHint: c.categoria,
-        keywords: c.article.descricao.split(/[\s—\-]+/).filter((w) => w.length > 3).slice(0, 4),
+        keywords: c.article.descricao.split(/[\s-\-]+/).filter((w) => w.length > 3).slice(0, 4),
       }));
     if (targets.length === 0) {
       setAutoMatches(new Map());
@@ -370,7 +370,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         chapterIdByCategory.set(cat, ch.id);
       });
 
-      // 4. Create artigos_orcamento — manter referência ao item consolidado
+      // 4. Create artigos_orcamento - manter referência ao item consolidado
       //    para podermos criar plan_budget_links com o artigo_orcamento_id real.
       type ArtigoInsert = {
         capitulo_id: string;
@@ -418,7 +418,7 @@ export function PlanBudgetGenerator({ obraId, planId, planName, measurements, ma
         createdArtigos = arts ?? [];
       }
 
-      // 5. Create plan_budget_links — agora com artigo_orcamento_id REAL e dedupe_key
+      // 5. Create plan_budget_links - agora com artigo_orcamento_id REAL e dedupe_key
       const linkInserts: Array<{
         measurement_id: string;
         user_id: string;

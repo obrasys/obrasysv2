@@ -99,7 +99,7 @@ export function BaseDryBudgetPanel({ orcamentoId, isLocked, lockedAt, status, va
                   <p className="font-semibold">
                     {baseVersion.locked_at
                       ? format(new Date(baseVersion.locked_at), "dd/MM/yyyy", { locale: pt })
-                      : "—"}
+                      : "-"}
                   </p>
                 </div>
               </>

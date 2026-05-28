@@ -167,7 +167,7 @@ export function AdjudicacaoWizard({ open, onOpenChange, orcamento, valorFinal }:
             Adjudicar Orçamento
           </DialogTitle>
           <DialogDescription>
-            {orcamento.titulo} — {orcamento.codigo}
+            {orcamento.titulo} - {orcamento.codigo}
           </DialogDescription>
         </DialogHeader>
 
@@ -455,7 +455,7 @@ export function AdjudicacaoWizard({ open, onOpenChange, orcamento, valorFinal }:
                   </h4>
                   {formData.installments.map((inst, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{inst.label} — {inst.due_date}</span>
+                      <span className="text-muted-foreground">{inst.label} - {inst.due_date}</span>
                       <span className="font-medium">{formatCurrency(inst.amount)}</span>
                     </div>
                   ))}

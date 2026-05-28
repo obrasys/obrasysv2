@@ -75,7 +75,7 @@ export function usePlanCalibration(
         );
       }
 
-      // Apaga calibração existente APENAS deste escopo (página/pavimento) — não toca outras páginas
+      // Apaga calibração existente APENAS deste escopo (página/pavimento) - não toca outras páginas
       let del = supabase
         .from("plan_calibrations")
         .delete()

@@ -57,7 +57,7 @@ export function EstimativasCard({ pkg }: Props) {
     { icon: CircleDot, label: 'Pontos', value: pointsFinal, color: 'text-amber-600 bg-amber-500/10' },
     { icon: Ruler, label: 'Metros lineares', value: `${linearFinal} m`, color: 'text-blue-600 bg-blue-500/10' },
     { icon: Euro, label: 'Custo estimado', value: formatCurrency(costFinal), color: 'text-emerald-600 bg-emerald-500/10' },
-    { icon: Calculator, label: 'Custo/ponto', value: pointsFinal > 0 ? formatCurrency(costFinal / pointsFinal) : '—', color: 'text-violet-600 bg-violet-500/10' },
+    { icon: Calculator, label: 'Custo/ponto', value: pointsFinal > 0 ? formatCurrency(costFinal / pointsFinal) : '-', color: 'text-violet-600 bg-violet-500/10' },
   ];
 
   if (editing) {
