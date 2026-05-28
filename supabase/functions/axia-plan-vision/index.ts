@@ -307,13 +307,37 @@ REGRAS CRÍTICAS:
       review_required: true,
     });
 
-    const controlledFailure = (
+    const persistCallLog = async (
+      status: "ok" | "error" | "timeout",
+      errorMessage: string | null,
+    ) => {
+      logStatus = status;
+      logErrorMessage = errorMessage;
+
+      await supabase.from("axia_call_logs").insert({
+        user_id: userId,
+        call_type: callType,
+        model: callModel,
+        plan_import_id: plan_import_id ?? null,
+        page_number: page_number ?? null,
+        input_size_bytes: inputSizeBytes,
+        latency_ms: Date.now() - startedAt,
+        status,
+        error_message: errorMessage,
+      } as any).then(() => {}, (e) => console.warn("axia_call_logs insert failed:", e?.message));
+    };
+
+    const controlledFailure = async (
       code: string,
       message: string,
       details: string,
       retryable = true,
     ) => {
       console.warn(`[axia-plan-vision] controlled failure ${code}: ${details}`);
+      await persistCallLog(
+        /timeout|abort|deadline/i.test(details) ? "timeout" : "error",
+        `${code}: ${details}`,
+      );
       return new Response(
         JSON.stringify({
           success: false,
@@ -349,6 +373,14 @@ REGRAS CRÍTICAS:
         : { max_tokens: limit };
     };
 
+    const modelSpecificParams = (modelName: string) => {
+      if (modelName.startsWith("openai/gpt-5")) {
+        return {};
+      }
+
+      return { temperature: 0.1 };
+    };
+
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
@@ -368,7 +400,7 @@ REGRAS CRÍTICAS:
           body: JSON.stringify({
             model: modelName,
             ...tokenLimit(modelName, mode),
-            temperature: 0.1,
+            ...modelSpecificParams(modelName),
             messages: [
               { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
               { role: "user", content: userContent },
