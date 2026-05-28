@@ -232,6 +232,89 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
       }
     });
 
+    // Derivar artigos a partir dos compartimentos (plan_rooms) quando a Axia
+    // analisou a planta mas o utilizador não criou medições manuais. Cada
+    // compartimento contribui com: área de pavimento, perímetro de rodapé e
+    // área aproximada de paredes (perímetro × pé-direito).
+    const measurementIdsAlreadyConsumed = new Set<string>();
+    byArticle.forEach((row) => row.measurementIds.forEach((id) => measurementIdsAlreadyConsumed.add(id)));
+    const hasAnyMappedArea = Array.from(byArticle.values()).some((r) =>
+      ["m²", "ml"].includes(r.article.unidade) && r.measurementIds.length > 0,
+    );
+
+    if (rooms.length > 0 && !hasAnyMappedArea) {
+      const pushDerivedFromRooms = (
+        key: string,
+        descricao: string,
+        unidade: "m²" | "ml",
+        qtd: number,
+        categoria: string,
+      ) => {
+        if (qtd <= 0) return;
+        const existing = byArticle.get(key);
+        if (existing) {
+          existing.quantidade += qtd;
+          return;
+        }
+        byArticle.set(key, {
+          artigoId: key,
+          article: {
+            id: key,
+            codigo: "A DEFINIR",
+            descricao,
+            unidade,
+            preco_unitario: 0,
+            categoria,
+          },
+          categoria,
+          quantidade: qtd,
+          valorTotal: 0,
+          measurementIds: [],
+        });
+      };
+
+      let totalArea = 0;
+      let totalPerimetro = 0;
+      let totalParedes = 0;
+      rooms.forEach((r) => {
+        const area = r.area_m2 ?? 0;
+        const perim = r.perimetro_m ?? 0;
+        const pd = r.pe_direito_m ?? 2.6;
+        totalArea += area;
+        totalPerimetro += perim;
+        totalParedes += perim * pd;
+      });
+
+      pushDerivedFromRooms(
+        "room-derived::pavimento",
+        workMode === "remodelacao" ? "Substituição de pavimento" : "Pavimento - fornecimento e aplicação",
+        "m²",
+        totalArea,
+        "Acabamentos - Pavimentos e Tetos",
+      );
+      pushDerivedFromRooms(
+        "room-derived::rodape",
+        workMode === "remodelacao" ? "Substituição de rodapé" : "Rodapé - fornecimento e aplicação",
+        "ml",
+        totalPerimetro,
+        "Acabamentos - Rodapé",
+      );
+      pushDerivedFromRooms(
+        "room-derived::paredes",
+        workMode === "remodelacao" ? "Pintura de paredes" : "Paredes - revestimento/pintura",
+        "m²",
+        totalParedes,
+        "Acabamentos - Paredes",
+      );
+      pushDerivedFromRooms(
+        "room-derived::teto",
+        workMode === "remodelacao" ? "Pintura de teto" : "Teto - pintura/acabamento",
+        "m²",
+        totalArea,
+        "Acabamentos - Pavimentos e Tetos",
+      );
+    }
+
     // Adicionar vãos (portas/janelas) agrupados por dimensão como capítulo dedicado
     const openingsBucket = new Map<string, { descricao: string; qtd: number }>();
     openings.forEach((o) => {
@@ -261,7 +344,7 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
     });
 
     return Array.from(byArticle.values()).sort((a, b) => a.categoria.localeCompare(b.categoria));
-  }, [mappings, measurements, measurementById, articleById, openings]);
+  }, [mappings, measurements, measurementById, articleById, openings, rooms, workMode]);
 
   // Apply auto-matches: substitui código/descrição/preço dos placeholders/vãos
   // que tiveram match contra a Base (user ou global). Recalcula valorTotal.
