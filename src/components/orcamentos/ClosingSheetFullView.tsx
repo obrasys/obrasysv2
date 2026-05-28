@@ -945,7 +945,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(v) => patch("terrain", { ...details.terrain, demolicoes_diversas: v })}
             />
           </div>
-          <div className="md:col-span-2">
+          <div>
             <Label>Arranjos Exteriores (€)</Label>
             <NumCell
               readOnly={readOnly}
