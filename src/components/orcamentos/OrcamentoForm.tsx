@@ -416,7 +416,7 @@ export function OrcamentoForm({
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           {onSaveDraft && (
             <Button
               type="button"
@@ -434,6 +434,26 @@ export function OrcamentoForm({
             >
               {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Guardar Rascunho
+            </Button>
+          )}
+          {onImportPlanta && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1"
+              disabled={isLoading || isSavingDraft}
+              data-orcamento-import-planta
+              onClick={() => {
+                const values = form.getValues();
+                if (values.titulo) {
+                  onImportPlanta(values);
+                } else {
+                  form.setError('titulo', { message: 'Título é obrigatório' });
+                }
+              }}
+            >
+              <Map className="mr-2 h-4 w-4" />
+              Criar e Importar Planta
             </Button>
           )}
           <Button type="submit" className="flex-1" disabled={isLoading || isSavingDraft}>
