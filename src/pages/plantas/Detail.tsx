@@ -312,20 +312,25 @@ export default function PlanDetail() {
     return () => clearTimeout(t);
   }, [workflowStep, hasAnalysis, hydrated, planId, plan]);
 
+  const axiaQuantitativesReady = useMemo(
+    () => (planRoomAnalysis?.perRoom?.some((r: any) => (r?.area_m2 ?? 0) > 0) ?? false),
+    [planRoomAnalysis]
+  );
+
   const completedSteps = useMemo(() => {
     const completed: WorkflowStep[] = [];
-    if (canMeasure) completed.push("calibrate");
-    if (measurements.length > 0 || rooms.length > 0 || walls.length > 0) completed.push("measure");
-    if (hasAnalysis) completed.push("analyze");
+    if (canMeasure || axiaQuantitativesReady) completed.push("calibrate");
+    if (measurements.length > 0 || rooms.length > 0 || walls.length > 0 || axiaQuantitativesReady) completed.push("measure");
+    if (hasAnalysis || axiaQuantitativesReady) completed.push("analyze");
     return completed;
-  }, [canMeasure, measurements.length, rooms.length, walls.length, hasAnalysis]);
+  }, [canMeasure, axiaQuantitativesReady, measurements.length, rooms.length, walls.length, hasAnalysis]);
 
   // Auto-advance workflow step
   const effectiveStep = useMemo(() => {
-    if (!canMeasure) return "calibrate";
-    if (workflowStep === "calibrate" && canMeasure) return "measure";
+    if (!canMeasure && !axiaQuantitativesReady) return "calibrate";
+    if (workflowStep === "calibrate" && (canMeasure || axiaQuantitativesReady)) return axiaQuantitativesReady ? "budget" : "measure";
     return workflowStep;
-  }, [workflowStep, canMeasure]);
+  }, [workflowStep, canMeasure, axiaQuantitativesReady]);
 
   const handleStepClick = (step: WorkflowStep) => {
     setWorkflowStep(step);
