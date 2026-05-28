@@ -219,29 +219,35 @@ Considera:
                 type: "object",
                 properties: {
                   progresso: {
-                    type: "number",
-                    description: "Percentagem de progresso da obra (0-100)",
+                    type: ["number", "null"],
+                    description: "Percentagem de progresso da obra (0-100). null se não houver dados suficientes para calcular.",
+                  },
+                  progress_percentage: {
+                    type: ["number", "null"],
+                    description: "Cópia normalizada de progresso (0-100) ou null.",
+                  },
+                  cannot_calculate_reason: {
+                    type: "string",
+                    description: "Quando progresso=null, explica o que falta (ex.: 'sem quantidades previstas', 'sem RDOs aprovados').",
                   },
                   justificativa: {
                     type: "string",
-                    description: "Explicação detalhada do cálculo",
+                    description: "Explicação detalhada e conservadora do cálculo, distinguindo [lido]/[calculado]/[inferido]/[estimado].",
                   },
-                  resumo_trabalhos: {
-                    type: "string",
-                    description: "Resumo dos principais trabalhos executados",
-                  },
-                  alertas: {
+                  calculation_basis: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Lista de alertas ou preocupações identificadas",
+                    description: "Lista de fórmulas/itens que sustentam o cálculo.",
                   },
-                  sugestoes: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Sugestões para melhorar o acompanhamento",
-                  },
+                  resumo_trabalhos: { type: "string", description: "Resumo dos principais trabalhos executados (a partir dos RDOs)." },
+                  alertas: { type: "array", items: { type: "string" }, description: "Alertas relevantes." },
+                  warnings: { type: "array", items: { type: "string" }, description: "Limitações, divergências ou riscos de cálculo." },
+                  missing_data: { type: "array", items: { type: "string" }, description: "Dados em falta para um cálculo robusto." },
+                  sugestoes: { type: "array", items: { type: "string" }, description: "Sugestões operacionais conservadoras." },
+                  confidence: { type: "number", description: "Confiança 0-1." },
+                  review_required: { type: "boolean", description: "True quando confiança < 0.6 ou faltam dados." },
                 },
-                required: ["progresso", "justificativa"],
+                required: ["justificativa", "confidence", "review_required"],
                 additionalProperties: false,
               },
             },
