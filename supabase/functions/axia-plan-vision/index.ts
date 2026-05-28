@@ -342,6 +342,13 @@ REGRAS CRÍTICAS:
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
+    const tokenLimit = (modelName: string, mode: "tool" | "json") => {
+      const limit = mode === "json" ? 12000 : 8000;
+      return modelName.startsWith("openai/")
+        ? { max_completion_tokens: limit }
+        : { max_tokens: limit };
+    };
+
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
@@ -360,7 +367,7 @@ REGRAS CRÍTICAS:
         },
         body: JSON.stringify({
           model: modelName,
-          max_tokens: mode === "json" ? 12000 : 8000,
+          ...tokenLimit(modelName, mode),
           messages: [
             { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
             { role: "user", content: userContent },
@@ -687,6 +694,8 @@ REGRAS CRÍTICAS:
       );
     }
 
+    analysis = normalizeAnalysis(analysis);
+
     if (!hasMinimumFields(analysis)) {
       return controlledFailure(
         "AI_STRUCTURED_OUTPUT_INVALID",
@@ -694,8 +703,6 @@ REGRAS CRÍTICAS:
         "Resposta sem campos mínimos (rooms/elements/walls/dimensions/reading_quality).",
       );
     }
-
-    analysis = normalizeAnalysis(analysis);
 
     // Pós-processamento: dedup paredes por eixo médio + orientação + compartimento
     if (analysis && Array.isArray(analysis.walls)) {
@@ -706,8 +713,10 @@ REGRAS CRÍTICAS:
         const b = w.bbox;
         const cx = b ? (b.x_min + b.x_max) / 2 : -1;
         const cy = b ? (b.y_min + b.y_max) / 2 : -1;
-        const ori = w.orientacao ?? "indef";
-        const comp = (w.compartimento_associado ?? "").toLowerCase().trim();
+        const ori = typeof w.orientacao === "string" ? w.orientacao : "indef";
+        const comp = typeof w.compartimento_associado === "string"
+          ? w.compartimento_associado.toLowerCase().trim()
+          : "";
         const key = `${comp}|${ori}|${Math.round(cx / PROX)}|${Math.round(cy / PROX)}`;
         if (seen.has(key)) {
           removed++;
