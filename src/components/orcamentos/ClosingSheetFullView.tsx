@@ -778,7 +778,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0));
           const perM2 = areaConstrucao > 0 ? totals.total_directos / areaConstrucao : 0;
           return (
-            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-md px-3 py-2 text-sm">
+            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-md px-3 py-2 text-xs">
               <span className="font-semibold">
                 Custo de Construção / m² <span className="text-muted-foreground font-normal text-[10px]">(sobre {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m² de área de construção)</span>
               </span>
