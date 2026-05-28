@@ -11,10 +11,12 @@ import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
 import { cn } from "@/lib/utils";
 
 interface PlanUploadFormProps {
-  obraId: string;
+  obraId?: string;
+  budgetId?: string;
   onUpload: (data: {
     file: File;
-    obraId: string;
+    obraId?: string;
+    budgetId?: string;
     disciplina: PlanDisciplina;
     dataPlanta?: string;
     observacoes?: string;
@@ -23,7 +25,7 @@ interface PlanUploadFormProps {
   onCancel: () => void;
 }
 
-export function PlanUploadForm({ obraId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
+export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCancel }: PlanUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [disciplina, setDisciplina] = useState<PlanDisciplina | null>(null);
   const [dataPlanta, setDataPlanta] = useState("");
