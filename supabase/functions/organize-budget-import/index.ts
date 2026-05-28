@@ -215,6 +215,9 @@ const deriveBudgetFromRows = (
     const secondRowText = sanitizeTextCell(secondRowValues[colIndex]);
     const candidate = firstRowText || secondRowText;
     if (!base || !candidate || candidate === base) return base;
+    if (/^col_\d+$/i.test(base) && /^(unit[aá]rio|parcial|total|qt\.?|qtd|quantidade|un|unid\.?|unidade)$/i.test(candidate)) {
+      return candidate;
+    }
     if (/(pre[cç]os?|valor)/i.test(base) && /(unit[aá]rio|parcial|total)/i.test(candidate)) {
       return `${base} ${candidate}`;
     }
@@ -226,7 +229,7 @@ const deriveBudgetFromRows = (
     code: normalizedEffectiveHeaders.findIndex((h) => /(codigo|cod|item|artigo|ref|art\.?º|cod\.)/.test(h)),
     description: normalizedEffectiveHeaders.findIndex((h) => /(descricao|designacao|trabalho|designa|item|tarefa)/.test(h)),
     unit: normalizedEffectiveHeaders.findIndex((h) => /^(un|unidade|uni|unid)$/.test(h) || /unidade|unid/.test(h)),
-    quantity: normalizedEffectiveHeaders.findIndex((h) => /(quantidade|quant|qtd|n o mce)/.test(h)),
+    quantity: normalizedEffectiveHeaders.findIndex((h) => /(^qt$|^qt\b|quantidade|quant|qtd)/.test(h)),
     unitPrice: normalizedEffectiveHeaders.findIndex((h) => /(preco unit|preco\/ unitario|unitario|p unit|valor unit|precos unit|precos unitario)/.test(h)),
     partial: normalizedEffectiveHeaders.findIndex((h) => /(parcial|precos parcial|valor parcial|importe)/.test(h)),
     total: normalizedEffectiveHeaders.findIndex((h) => /(^|\s)(total|valor total)(\s|$)/.test(h)),
