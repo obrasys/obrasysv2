@@ -275,7 +275,7 @@ export function PlanAIAnalysis({
   // Legibilidade de cotas e nomes de compartimentos exige alta resolução:
   // 2400 px no lado maior + JPEG q=0.92 mantém o payload <6 MB (limite 12 MB
   // na edge function) e dá ao modelo detalhe suficiente para ler texto fino.
-  const downscaleForAI = (src: string, maxSide = 2400, quality = 0.92): Promise<string> =>
+  const downscaleForAI = (src: string, maxSide = 1800, quality = 0.84): Promise<string> =>
     new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -372,7 +372,8 @@ export function PlanAIAnalysis({
 
         if (isAnalysisEmpty(safe) && lowLegibility) {
           toast.info("A Axia vai re-analisar com o modelo de alta precisão…");
-          const retry = await callAxia(base64, "high_res_retry");
+          const retryBase64 = await downscaleForAI(imageDataUrl, 2400, 0.9);
+          const retry = await callAxia(retryBase64, "high_res_retry");
           const retryData = retry.data as any;
           if (retryData?.analysis) {
             const retrySafe = normalize(retryData.analysis as PlanAnalysisResult);
