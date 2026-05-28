@@ -1638,9 +1638,10 @@ export default function PlanDetail() {
       {/* Upload new plan dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
-          {obraId && (
+          {(obraId || budgetId) && (
             <PlanUploadForm
               obraId={obraId}
+              budgetId={budgetId}
               isUploading={uploadPlan.isPending}
               onCancel={() => setShowUploadDialog(false)}
               onUpload={async (data) => {
