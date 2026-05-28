@@ -69,6 +69,7 @@ interface OrcamentoFormProps {
   defaultValues?: Partial<OrcamentoFormData>;
   onSubmit: (data: OrcamentoFormData) => void;
   onSaveDraft?: (data: OrcamentoFormData) => void;
+  onImportPlanta?: (data: OrcamentoFormData) => void;
   isLoading?: boolean;
   isSavingDraft?: boolean;
   submitLabel?: string;
@@ -78,6 +79,7 @@ export function OrcamentoForm({
   defaultValues,
   onSubmit,
   onSaveDraft,
+  onImportPlanta,
   isLoading,
   isSavingDraft,
   submitLabel = 'Criar Orçamento',
