@@ -338,12 +338,12 @@ REGRAS CRÍTICAS:
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 135_000; // deixa folga para 150s da edge runtime
+    const HARD_DEADLINE_MS = 105_000; // margem ampla para evitar idle timeout da edge runtime
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
     const tokenLimit = (modelName: string, mode: "tool" | "json") => {
-      const limit = mode === "json" ? 12000 : 8000;
+      const limit = mode === "json" ? 6000 : 4000;
       return modelName.startsWith("openai/")
         ? { max_completion_tokens: limit }
         : { max_tokens: limit };
@@ -352,10 +352,10 @@ REGRAS CRÍTICAS:
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
-      const budget = Math.min(timeoutMs, Math.max(5_000, remainingMs() - 2_000));
+      const budget = Math.min(timeoutMs, Math.max(4_000, remainingMs() - 4_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
-        if (remainingMs() < 5_000) {
+        if (remainingMs() < 4_000) {
           return new Response(JSON.stringify({ error: "deadline" }), { status: 599 });
         }
         return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -368,6 +368,7 @@ REGRAS CRÍTICAS:
         body: JSON.stringify({
           model: modelName,
           ...tokenLimit(modelName, mode),
+          temperature: 0.1,
           messages: [
             { role: "system", content: mode === "json" ? fallbackSystemPrompt : systemPrompt },
             { role: "user", content: userContent },
@@ -582,18 +583,27 @@ REGRAS CRÍTICAS:
     // ModelRouter: cadeia para vision crítica. Pode-se sobrepor via
     // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
     const visionChain = resolveChain("critical_vision_analysis");
+    const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "json", timeoutMs: 110_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 60_000 },
-          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 45_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 45_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 28_000 },
+          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 16_000 },
         ]
       : [
-          { model: visionChain.primary, mode: "json", timeoutMs: 90_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 50_000 },
-          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 40_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 30_000 },
-          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 30_000 },
+          ...(isDenseImage
+            ? [
+                { model: visionChain.fallback, mode: "json", timeoutMs: 22_000 },
+                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 14_000 },
+                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
+              ]
+            : [
+                { model: visionChain.fallback, mode: "json", timeoutMs: 24_000 },
+                { model: visionChain.primary, mode: "json", timeoutMs: 22_000 },
+                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 14_000 },
+                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
+              ]),
+          { model: "google/gemini-2.5-flash", mode: "tool", timeoutMs: 10_000 },
         ];
 
 
