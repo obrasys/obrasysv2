@@ -53,11 +53,18 @@ import { disciplineScope, DISCIPLINE_META } from "@/lib/plan-discipline";
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
 export default function PlanDetail() {
-  const { id: obraId, planId } = useParams<{ id: string; planId: string }>();
+  const params = useParams<{ id?: string; budgetId?: string; planId: string }>();
+  const obraId = params.id;
+  const budgetId = params.budgetId;
+  const isBudgetScope = !!budgetId;
+  const planId = params.planId;
+  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
   const navigate = useNavigate();
 
   // Data
-  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading, uploadPlan } = usePlanImports(
+    isBudgetScope ? { budgetId } : { obraId },
+  );
   const plan = plans.find((p) => p.id === planId);
   const scope = disciplineScope((plan as any)?.disciplina);
   const disciplineMeta = (plan as any)?.disciplina ? DISCIPLINE_META[(plan as any).disciplina as keyof typeof DISCIPLINE_META] : null;
