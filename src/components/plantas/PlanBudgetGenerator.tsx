@@ -64,7 +64,9 @@ interface ConsolidatedItem {
 }
 
 interface Props {
-  obraId: string;
+  obraId?: string;
+  /** When provided, appends to this existing budget instead of creating a new one. */
+  targetBudgetId?: string;
   planId: string;
   planName: string;
   measurements: PlanMeasurement[];
@@ -76,7 +78,7 @@ interface Props {
   autoOpen?: boolean;
 }
 
-export function PlanBudgetGenerator({ obraId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
+export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, measurements, mappings, articles, tipoBase = "geral", disciplina, autoOpen = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
