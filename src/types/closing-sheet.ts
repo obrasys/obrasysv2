@@ -372,7 +372,9 @@ export interface ClosingTotals {
 }
 
 export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
-  const total_directos = d.direct_costs.reduce((s, l) => s + (l.value || 0), 0);
+  const total_directos =
+    d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
+    (Number(d.direct_costs_estimate) || 0);
   const total_estaleiro = d.site_costs.reduce((s, l) => s + (l.value || 0), 0);
   const custo_industrial = total_directos + total_estaleiro;
 
