@@ -780,7 +780,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           return (
             <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-md px-3 py-2 text-sm">
               <span className="font-semibold">
-                Custo Directo / m² <span className="text-muted-foreground font-normal">(sobre {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m² de área de construção)</span>
+                Custo de Construção / m² <span className="text-muted-foreground font-normal">(sobre {areaConstrucao.toLocaleString("pt-PT", { maximumFractionDigits: 2 })} m² de área de construção)</span>
               </span>
               <span className="font-bold tabular-nums">
                 {areaConstrucao > 0 ? `${fmt(perM2)} / m²` : "- (definir área de construção)"}
