@@ -197,7 +197,7 @@ export default function PlanQuantitativos() {
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}/plantas/${planId}`)}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${baseRoute}/${planId}`)}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Planta
             </Button>
             <span className="text-sm text-muted-foreground">{plan.nome_ficheiro}</span>
