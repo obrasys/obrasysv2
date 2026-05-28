@@ -448,9 +448,6 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
 
   // Custo/m² calculado EXCLUSIVAMENTE pela Área de Construção
   // (override manual ou, por defeito, ABP + Caves - sem factores)
-  const areaConstrucao =
-    d.statistics.area_total_construcao ??
-    ((d.statistics.area_construcao || 0) + (d.statistics.area_caves || 0));
   const custo_m2_equivalente = areaConstrucao > 0 ? custo_total / areaConstrucao : 0;
 
   return {
