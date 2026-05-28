@@ -399,9 +399,25 @@ export default function EditarOrcamentoPage() {
            <TabsContent value="artigos" className="space-y-0">
              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                {/* Main Content */}
-               <div className="lg:col-span-3 space-y-4">
-                 {/* Capítulos */}
-                 {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
+                <div className="lg:col-span-3 space-y-4">
+                  {/* Plantas e Quantitativos */}
+                  {!isReadOnly && (
+                    <Card className="border-primary/30 bg-primary/5">
+                      <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
+                        <div>
+                          <p className="font-semibold text-sm">Plantas e Quantitativos</p>
+                          <p className="text-xs text-muted-foreground">
+                            Carregue uma planta (PDF ou imagem) e gere artigos automaticamente para este orçamento.
+                          </p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/orcamentos/${orcamento.id}/plantas`)}>
+                          Abrir Plantas
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {/* Capítulos */}
+                  {orcamento.capitulos && orcamento.capitulos.length > 0 ? (
                    orcamento.capitulos.map((capitulo) => (
                      <CapituloAccordion
                        key={capitulo.id}
