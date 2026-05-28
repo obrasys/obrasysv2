@@ -585,7 +585,11 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
       queryClient.invalidateQueries({ queryKey: ["plan-imports"] });
 
-      toast.success(`Pré-orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`);
+      toast.success(
+        targetBudgetId
+          ? `${artigoInserts.length} artigos em ${chapters.length} capítulos adicionados ao orçamento`
+          : `Orçamento "${titulo}" criado com ${artigoInserts.length} artigos em ${chapters.length} capítulos`,
+      );
       setShowDialog(false);
       navigate(`/orcamentos/${orcamento.id}/editar`);
     } catch (err: any) {
