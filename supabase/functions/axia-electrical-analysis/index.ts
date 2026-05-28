@@ -281,7 +281,16 @@ REGRAS DE USO DA SIMBOLOGIA
 - Se identificares um disjuntor mas não distinguires polos, usa "disjuntor" (legado).
 - Aliases antigos (luz_teto, tomada_baixa, etc.) só devem ser usados se o desenho não permitir distinção PT-PT.
 
-DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".`;
+DEVOLVE APENAS via tool function "electrical_plan_analysis_v2".
+
+REFORÇOS GPT-5.5 (CRÍTICO):
+- CLASSIFICAÇÃO OBRIGATÓRIA ANTES DE CONTAR: A contagem de placed_symbols só é permitida se sheet_subtype ∈ {planta_instalacoes_eletricas, planta_iluminacao, planta_tomadas_alimentacoes, pontos_eletricos_cotados}. Para diagrama_unifilar, tabela_cargas, quadro_distribuicao, detalhe_vista_eletrica, legenda_simbolos, outro → placed_symbols=[], salvo confirmação explícita do utilizador.
+- LEGENDA: Símbolos presentes APENAS em legenda NUNCA são pontos executáveis. Vão apenas para legend_map[].
+- TABELAS DECLARADAS: Quantidades declaradas em tabela vão para declared_quantities[] com data_source='extracted_quantity_table'. NÃO misturar automaticamente com contagem visual; fazer cross-validation.
+- DIVERGÊNCIAS: Se visual_count vs declared_count divergirem mais de 10% → review_required=true, adicionar item em discrepancies[], NÃO escolher automaticamente qual o correto.
+- CAMPOS POR SÍMBOLO (regista em technical_note quando o schema não tiver campo): source_page, source_zone, data_source, confidence, review_required, validation_status=draft_ai.
+- CABOS/ELETRODUTOS: Só estimar comprimento se houver percurso DESENHADO E escala/calibração confiável. Caso contrário total_wire_length_m=0 e total_conduit_length_m=0, com missing_information explicando falta de percurso ou escala.
+- ATRIBUTOS ELÉTRICOS: NÃO inventar circuito, quadro, tensão, potência, secção de cabo, disjuntor ou altura. Só preencher quando legível no desenho/tabela/diagrama/legenda. Caso contrário deixar null/0 conforme schema e explicar em technical_note ou missing_information.`;
 
     const imageMimeType = typeof image_mime_type === "string" && image_mime_type.startsWith("image/")
       ? image_mime_type
