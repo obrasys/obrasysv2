@@ -46,7 +46,30 @@ export default function PerfilPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [empresaModalOpen, setEmpresaModalOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [observations, setObservations] = useState<string>(
+    (profile as any)?.default_budget_observations ?? DEFAULT_BUDGET_OBSERVATIONS
+  );
+  const [savingObservations, setSavingObservations] = useState(false);
   const { tier } = useFeatureGate();
+
+  const handleSaveObservations = async () => {
+    if (!user) return;
+    setSavingObservations(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ default_budget_observations: observations || null } as any)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await refreshProfile();
+      toast.success('Observações padrão atualizadas');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao guardar observações');
+    } finally {
+      setSavingObservations(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     nome: profile?.nome || '',
