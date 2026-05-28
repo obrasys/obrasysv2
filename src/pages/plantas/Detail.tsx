@@ -884,6 +884,7 @@ export default function PlanDetail() {
           openingCount={openings.length}
           placedElementsCount={placedElements.length}
           hasAnalysis={hasAnalysis}
+          axiaQuantitativesReady={axiaQuantitativesReady}
           onPrimaryAction={() => {
             if (effectiveStep === "calibrate") handleStartCalibration();
             if (effectiveStep === "budget") navigate(`${baseRoute}/${planId}/quantitativos`);
