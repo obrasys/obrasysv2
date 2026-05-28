@@ -150,6 +150,9 @@ export interface ClosingSheetDetails {
    *  Permite trabalhar com um valor previsto antes de ter os custos por capítulo
    *  consolidados; pode ser zerada/eliminada quando os reais estiverem ok. */
   direct_costs_estimate?: number;
+  /** Preço por m² (editável) usado para calcular a estimativa de Custos Directos
+   *  quando ainda não há valores consolidados. Estimativa = área construção × preço/m². */
+  direct_costs_estimate_price_m2?: number;
 }
 
 // 38 capítulos canónicos do orçamento - alimentados exclusivamente a partir do
