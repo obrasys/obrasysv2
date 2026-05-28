@@ -58,7 +58,7 @@ export default function PlanDetail() {
   const budgetId = params.budgetId;
   const isBudgetScope = !!budgetId;
   const planId = params.planId;
-  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `${baseRoute}`;
+  const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
   const navigate = useNavigate();
 
   // Data
