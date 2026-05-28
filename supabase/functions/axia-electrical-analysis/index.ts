@@ -5,7 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 
 const corsHeaders = {
@@ -147,6 +147,13 @@ serve(async (req) => {
 Analisas plantas e desenhos elétricos. NUNCA inventas dados. Sem evidência → confidence baixa e review_required=true.
 
 ${AXIA_ANTI_HALLUCINATION_BLOCK}
+
+${AXIA_GLOBAL_SAFETY_BLOCK}
+
+REGRAS ESPECÍFICAS DE ELÉCTRICA:
+- A simbologia usada é REFERÊNCIA INTERNA do Obra Sys para leitura assistida de projectos em Portugal — NÃO é uma norma oficial e NÃO podes declarar conformidade normativa.
+- A Axia apenas LÊ símbolos, circuitos e tabelas quando visíveis no documento. Não dimensiona instalações eléctricas nem substitui o projectista.
+- Quando um símbolo for ambíguo ou ilegível, marca confidence baixa e review_required=true.
 
 
 ETAPA 1 - sheet_classification (OBRIGATÓRIA)

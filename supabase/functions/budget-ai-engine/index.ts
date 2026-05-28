@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -431,7 +431,7 @@ async function aiBudgetAssist(
     artigos: (c.artigos || []).length,
   }));
 
-  const prompt = `Analisa este orçamento de construção civil e sugere melhorias adicionais.
+  const prompt = `Analisa este orçamento e sugere melhorias ADICIONAIS, sem duplicar findings já detectados, sem inventar preços, marcas ou normas.
 
 ORÇAMENTO: ${orcamento.titulo}
 VALOR TOTAL: ${orcamento.valor_total}€
@@ -439,12 +439,13 @@ MARGEM: ${orcamento.margem_lucro}%
 PAÍS: ${settings.country}
 CAPÍTULOS: ${JSON.stringify(capitulos)}
 
-PROBLEMAS JÁ DETETADOS (${findings.length}):
+PROBLEMAS JÁ DETECTADOS (${findings.length}):
 ${findings.slice(0, 10).map((f: any) => `- [${f.severity}] ${f.title}`).join("\n")}
 
-Devolve APENAS sugestões ADICIONAIS que não dupliquem as já detetadas.
-Não inventes preços. Baseia-te nos ranges fornecidos.
-Usa a tool 'suggest_insights' para devolver JSON estruturado.`;
+Regras:
+- Sugestões devem basear-se APENAS no orçamento e nos findings fornecidos.
+- NÃO criar novos artigos com preços inventados. Se sugerires artigos em falta, fá-lo como sugestão QUALITATIVA (sem preço), com review_required=true e auto_apply_allowed=false.
+- Usa a tool 'suggest_insights' para devolver JSON estruturado.`;
 
   try {
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -459,7 +460,7 @@ Usa a tool 'suggest_insights' para devolver JSON estruturado.`;
           {
             role: "system",
             content:
-              "És um especialista em orçamentação de construção civil. Devolves sugestões práticas e baseadas em dados. Nunca inventas preços.\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK,
+              "És a Axia™, assistente de orçamentação de construção civil. Responde em Português de Portugal. Devolves sugestões práticas baseadas APENAS nos dados fornecidos. Nunca inventas preços, marcas, normas ou fornecedores.\n\n" + AXIA_ANTI_HALLUCINATION_BLOCK + "\n\n" + AXIA_GLOBAL_SAFETY_BLOCK,
           },
           { role: "user", content: prompt },
         ],

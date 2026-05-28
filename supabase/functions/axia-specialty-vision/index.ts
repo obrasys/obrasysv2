@@ -5,7 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -168,7 +168,13 @@ ETAPAS
 
 Devolve APENAS via tool function "specialty_analysis".
 
-${AXIA_ANTI_HALLUCINATION_BLOCK}`;
+${AXIA_ANTI_HALLUCINATION_BLOCK}
+
+${AXIA_GLOBAL_SAFETY_BLOCK}
+
+REGRA DE CORRESPONDÊNCIA DE ESPECIALIDADE:
+- Se a especialidade DETECTADA na planta for diferente da especialidade ESPERADA (fornecida pelo utilizador), devolve um aviso explícito em warnings, REDUZ confidence (≤ 0.4) e marca review_required=true.
+- Nesse caso NÃO gerar quantitativos finais sem confirmação humana — devolve apenas detecção qualitativa.`;
 
     const userContent = [
       { type: "text", text: `Analisa esta planta de especialidades (${specialtyLabel}). Devolve a análise estruturada.` },

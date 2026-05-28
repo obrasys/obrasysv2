@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 
 
 const corsHeaders = {
@@ -361,7 +361,14 @@ ALINHAMENTO COM O MODELO DE ORÇAMENTO (saída a jusante):
 
 Responde exclusivamente por tool call no schema definido.
 
-${AXIA_ANTI_HALLUCINATION_BLOCK}`;
+${AXIA_ANTI_HALLUCINATION_BLOCK}
+
+${AXIA_GLOBAL_SAFETY_BLOCK}
+
+REGRAS ICF ADICIONAIS (responsabilidades):
+- A IA IDENTIFICA panos, vãos, alturas e incertezas dimensionais. NÃO calcula composição final.
+- O cálculo final de blocos, fiadas, cortes, perdas e agregação por código HOMEBLOCK é da responsabilidade da função determinística no backend.
+- Cada pano detectado deve incluir, quando aplicável: segment_id, floor_id, source_page, measurement_source ([lido]/[calculado]/[inferido]/[estimado]), confidence_dimensional, deduplication_key e validation_status="draft_ai".`;
 
 
 
