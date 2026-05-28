@@ -329,11 +329,16 @@ export function PlanAIAnalysis({
 
     const startedAt = Date.now();
     console.info("[plan/axia] analyze start", { planImportId, page: currentPage, hasPrev: !!result });
+    // Reconfiguração completa do estado antes de renderizar o painel:
+    // limpa o resultado da página atual (axiaResultsByPage[currentPage] no
+    // parent, via onResultChange(null)), reset de timestamp e erro anterior.
+    // Quantitativos derivados (planRoomAnalysis) recomputam automaticamente
+    // quando axiaResultsByPage muda; a calibração persistida em DB mantém-se,
+    // mas a overlay derivada é recalculada na próxima render.
+    setResult(null);
+    setAnalyzedAt(null);
     setLastError(null);
     setIsAnalyzing(true);
-    // Importante: NÃO limpamos `result` durante a reanálise - se a Axia
-    // falhar mantemos os dados anteriores e mostramos um banner de erro
-    // com possibilidade de tentar de novo.
     try {
       const base64 = await downscaleForAI(imageDataUrl);
       let { data, error } = await callAxia(base64);
