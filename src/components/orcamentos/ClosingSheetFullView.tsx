@@ -1326,6 +1326,22 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               }
             />
           </div>
+          <div>
+            <Label>Área de Construção (m²) — ABP + Caves</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={
+                details.statistics.area_total_construcao ??
+                ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0))
+              }
+              onChange={(v) =>
+                patch("statistics", { ...details.statistics, area_total_construcao: v })
+              }
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Auto: {fmt((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0))} m² — editável
+            </p>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div className="bg-muted/40 rounded-md p-3">
