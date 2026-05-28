@@ -251,7 +251,11 @@ ALINHAMENTO COM O MODELO DE ORÇAMENTO (saída a jusante):
 - Unidades aceites no orçamento: "un" para blocos/topos/espaçadores/detalhes, "m²" apenas para indicadores agregados auxiliares (nunca substituem o "un" dos blocos).
 - Preços unitários são geridos pelo sistema (HOMEBLOCK_FALLBACK_PRICES); a Axia NÃO inventa preços, apenas devolve quantidades e códigos.
 
-Responde exclusivamente por tool call no schema definido.`;
+Responde exclusivamente por tool call no schema definido.
+
+${AXIA_ANTI_HALLUCINATION_BLOCK}`;
+
+
 
     const userPrompt = `Analise a planta e extraia os elementos ICF.
 
