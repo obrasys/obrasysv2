@@ -430,7 +430,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
 
   const rai_eur = valor_vendas - custo_total;
   const rai_pct = valor_vendas > 0 ? rai_eur / valor_vendas : 0;
-  const k_venda = custo_industrial > 0 ? valor_vendas / custo_industrial : 0;
+  const k_venda = custo_total > 0 ? valor_vendas / custo_total : 0;
 
   // Custo/m² calculado EXCLUSIVAMENTE pela Área de Construção
   // (override manual ou, por defeito, ABP + Caves — sem factores)
