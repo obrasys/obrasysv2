@@ -446,9 +446,10 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
       }
     };
 
+    // Total budget must stay under 150s (edge function idle limit).
     const attempts: Array<{ model: string; timeoutMs: number }> = [
-      { model: chain.primary, timeoutMs: 110_000 },
-      { model: chain.fallback, timeoutMs: 90_000 },
+      { model: chain.primary, timeoutMs: 80_000 },
+      { model: chain.fallback, timeoutMs: 55_000 },
     ];
 
     let aiResponse: Response | null = null;
