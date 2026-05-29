@@ -111,7 +111,12 @@ export default function MCEFolha() {
     updItem.mutate({ id, mce_id: map.id, patch });
 
   return (
+    <AppLayout
+      title={`MCE ${map.mce_number ? `Nº ${map.mce_number}` : ''} · ${map.title}`}
+      subtitle="Mapa Comparativo Económico — Mod. 03-1"
+    >
     <div className="p-3 md:p-6 space-y-4 max-w-[1700px] mx-auto">
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
