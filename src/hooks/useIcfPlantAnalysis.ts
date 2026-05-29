@@ -65,7 +65,7 @@ export function useIcfPlantAnalysis() {
       const { data, error } = await supabase.functions.invoke('icf-plant-analysis', {
         body: {
           file_path: params.filePath,
-          obra_id: params.obraId,
+          obra_id: params.obraId || null,
           configuracao_id: params.configuracaoId,
           espessura_nucleo: params.espessuraNucleo,
           classe_betao: params.classeBetao,
