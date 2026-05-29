@@ -379,7 +379,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 90_000; // margem confortável para terminar antes do idle timeout da runtime
+    const HARD_DEADLINE_MS = 140_000; // edge runtime permite ~150s; deixamos margem
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
