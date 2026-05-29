@@ -14,11 +14,17 @@ export interface IcfBudgetFinancials {
   iva_percent: number;
   /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
   estaleiro_valor: number;
+  /** Custos Indiretos (% sobre construção) */
+  honorarios_tecnicos_percent: number;
+  custos_financeiros_percent: number;
+  honorarios_gestao_percent: number;
+  garantias_pos_venda_percent: number;
   /** Capítulos provenientes de um template "chave-na-mão" (substitui geração paramétrica) */
   template_chapters?: IcfTemplateChapter[];
   /** Nome do template aplicado (auditoria) */
   template_nome?: string;
 }
+
 
 interface Props {
   open: boolean;
