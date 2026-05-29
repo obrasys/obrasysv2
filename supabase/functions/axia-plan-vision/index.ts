@@ -636,24 +636,21 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
     const visionChain = resolveChain("critical_vision_analysis");
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
+    // Estratégia: tool mode com Gemini Flash primeiro (mais rápido e fiável em vision+schema),
+    // Pro como fallback de precisão, Flash-Lite como último recurso.
+    // JSON mode reservado para retries quando o tool call falhar a devolver argumentos.
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "json", timeoutMs: 45_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 20_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 12_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 75_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 45_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 20_000 },
         ]
       : [
-          ...(isDenseImage
-            ? [
-                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-                { model: visionChain.primary, mode: "json", timeoutMs: 25_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
-              ]
-            : [
-                { model: visionChain.primary, mode: "json", timeoutMs: 35_000 },
-                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
-              ]),
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 50_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 60_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 18_000 },
         ];
 
 
