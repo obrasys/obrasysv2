@@ -242,7 +242,7 @@ export interface ArtigoFormData {
   custo_alu?: number;  // Alugueres
   custo_div?: number;  // Diversos
   // Campos paramétricos opcionais
-  quantity_source?: 'manual' | 'parametric';
+  quantity_source?: 'manual' | 'parametric' | 'icf_parametric';
   linked_element_id?: string | null;
   linked_rule_id?: string | null;
 }
