@@ -203,6 +203,33 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
             <p className="text-xs text-muted-foreground">Valor fixo (€) - capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
           </div>
 
+          {/* Custos Indiretos (3) - % sobre construção */}
+          <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Custos Indiretos (3)
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="honorarios-tecnicos" className="text-xs">Honorários Técnicos (€ s/ constr.)</Label>
+                <Input id="honorarios-tecnicos" type="number" min={0} step="0.01" value={honorariosTecnicos} onChange={(e) => setHonorariosTecnicos(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="custos-financeiros" className="text-xs">Custos Financeiros (€ s/ constr.)</Label>
+                <Input id="custos-financeiros" type="number" min={0} step="0.01" value={custosFinanceiros} onChange={(e) => setCustosFinanceiros(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="honorarios-gestao" className="text-xs">Honorários Gestão (€ s/ constr.)</Label>
+                <Input id="honorarios-gestao" type="number" min={0} step="0.01" value={honorariosGestao} onChange={(e) => setHonorariosGestao(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="garantias-pos-venda" className="text-xs">Garantias / Pós-Venda (€ s/ constr.)</Label>
+                <Input id="garantias-pos-venda" type="number" min={0} step="0.01" value={garantiasPosVenda} onChange={(e) => setGarantiasPosVenda(parseFloat(e.target.value))} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Valores em € aplicados sobre o custo de construção.</p>
+          </div>
+
+
           <div className="space-y-2">
             <Label htmlFor="margem">Margem de Lucro (%)</Label>
             <Input id="margem" type="number" min={0} max={99.99} step="0.1" value={margem} onChange={(e) => setMargem(parseFloat(e.target.value))} />
