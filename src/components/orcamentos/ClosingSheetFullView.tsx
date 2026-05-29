@@ -1022,7 +1022,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Honorários Técnicos (% s/ constr.)</Label>
+            <Label>Honorários Técnicos (% s/ C. Directos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1030,7 +1030,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(v) => patch("indirect", { ...details.indirect, honorarios_tecnicos_pct: v / 100, honorarios_tecnicos: 0 })}
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.indirect.honorarios_tecnicos_pct ?? 0))}
+              = {fmt((totals.total_directos || 0) * (details.indirect.honorarios_tecnicos_pct ?? 0))}
             </p>
           </div>
 
