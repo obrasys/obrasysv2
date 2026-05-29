@@ -24,6 +24,8 @@ import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
 import { IcfPlanCalibrator, type CalibrationPayload } from '@/components/icf/assistant/IcfPlanCalibrator';
+import { IcfFoundationsModal } from '@/components/icf/assistant/IcfFoundationsModal';
+import { renderPdfFirstPageToPngBlob } from '@/lib/pdf-to-image';
 
 
 const STEPS = [
@@ -55,6 +57,7 @@ export default function AssistenteArquitetura() {
   const [materializing, setMaterializing] = useState(false);
   const [scale, setScale] = useState<string>('');
   const [linkObraId, setLinkObraId] = useState<string>('');
+  const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const step = session.data?.current_step ?? 1;
@@ -66,14 +69,32 @@ export default function AssistenteArquitetura() {
   };
 
 
-  // STEP 1 - upload + tipo
+  // STEP 1 - upload + tipo. Se for PDF, converte 1ª página em PNG (Axia vision só aceita imagem).
   const handleUpload = async (file: File) => {
     if (!user || !organization) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'pdf';
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      let uploadBlob: Blob = file;
+      let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+
+      if (isPdf) {
+        toast({ title: 'A converter PDF para imagem...', description: 'Para análise pela Axia.' });
+        try {
+          uploadBlob = await renderPdfFirstPageToPngBlob(file, 2);
+          ext = 'png';
+        } catch (convErr: any) {
+          throw new Error(
+            `Não foi possível converter o PDF para imagem (${convErr?.message || 'erro desconhecido'}). ` +
+            'Exporte a página da planta como PNG/JPG e volte a carregar.',
+          );
+        }
+      }
+
       const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('plan-files').upload(path, file);
+      const { error: upErr } = await supabase.storage
+        .from('plan-files')
+        .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
       if (upErr) throw upErr;
       const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
       setActiveSessionId(created.id);
@@ -83,7 +104,6 @@ export default function AssistenteArquitetura() {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
-
     }
   };
 
@@ -150,12 +170,16 @@ export default function AssistenteArquitetura() {
       });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
+      const foundationsFound = !!(data as any)?.summary?.foundations_found;
       toast({
         title: 'Análise concluída',
-        description: `Paredes encontradas: ${(data as any)?.summary?.paredes ?? 0}. Fundações: ${(data as any)?.summary?.foundations_found ? 'sim' : 'não'}.`,
+        description: `Paredes encontradas: ${(data as any)?.summary?.paredes ?? 0}. Fundações: ${foundationsFound ? 'sim' : 'não'}.`,
       });
       items.refetch();
       session.refetch();
+      if (!foundationsFound) {
+        setFoundationsModalOpen(true);
+      }
     } catch (e: any) {
       toast({ title: 'Erro na análise', description: e.message, variant: 'destructive' });
     } finally {
@@ -546,6 +570,24 @@ export default function AssistenteArquitetura() {
         </div>
       )}
 
+      <IcfFoundationsModal
+        open={foundationsModalOpen}
+        onOpenChange={setFoundationsModalOpen}
+        baseIcfWallLength={icfWallLength}
+        selectedOption={(session.data as any)?.foundation_option ?? null}
+        isPending={applyFoundation.isPending}
+        onApply={(key, params) => {
+          applyFoundation.mutate(
+            { option: key, params, baseIcfWallLength: icfWallLength },
+            {
+              onSuccess: () => {
+                toast({ title: 'Fundações definidas', description: 'Sugestão aplicada à sessão.' });
+                goStep(5);
+              },
+            },
+          );
+        }}
+      />
     </div>
   );
 }

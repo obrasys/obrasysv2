@@ -1,114 +1,63 @@
-# MCE — Mapa Comparativo Económico
+## Contexto
 
-Submódulo de **Obra > Compras e Contratações**, fiel à estrutura do Excel "Mod.03-1 — Comparativo Tipo TORRES" (já analisado), com ligação a Orçamento, Budget Objetivo, Fornecedores, Contratos e Financeiro.
+Dois problemas no Assistente ICF (Arquitetura) acedido a partir do "Orçamento ICF (sem obra)":
 
-Dado o âmbito (8 tabelas novas, ~6 ecrãs, integrações com 5 módulos, Axia, exportação PDF/Excel, workflow de aprovação multi-nível), proponho **implementação em 4 fases**. Cada fase entrega valor utilizável antes da seguinte.
+1. **Upload da planta falha** — o utilizador carrega tipicamente um PDF. Na fase anterior protegemos a edge function `icf-architecture-assistant` para devolver 400 quando o ficheiro não é imagem, porque o gateway da Axia (Gemini vision) só aceita PNG/JPG/WEBP/GIF. Resultado: o upload do PDF "sobe", mas a análise rebenta com a mensagem de formato não suportado — o utilizador vê isto como "não consigo carregar planta".
+2. **Fundações em falta** — quando a planta arquitetónica não tem fundações desenhadas (caso comum), a Axia devolve `fundacoes_encontradas: false`. Hoje o aviso só aparece no passo 5 quando o utilizador lá chega; o pedido é que isso force imediatamente um modal para preencher os dados de fundações.
 
----
+O projeto já tem `pdfjs-dist@4.9.155` instalado (`src/hooks/usePdfRenderer.ts`) — vamos reutilizar.
 
-## Fase 1 — Fundação + Folha MCE editável (MVP)
+## O que vai mudar
 
-**Objetivo:** criar, editar e visualizar um MCE completo numa folha tipo Excel, com cálculos corretos.
+### 1. Carregar planta com PDF a funcionar (`src/pages/icf/AssistenteArquitetura.tsx`)
 
-### Base de dados (uma migração)
-- Tabelas: `mce_maps`, `mce_suppliers`, `mce_items`, `mce_supplier_item_prices`, `mce_attachments`
-- Multi-tenant `organization_id` + RLS via `has_obra_access()` (SECURITY DEFINER, evita recursão)
-- Triggers de `updated_at` e auditoria em `axia_audit_log`
-- GRANTs explícitos para `authenticated` + `service_role`
-- Bucket privado `mce-attachments` com policy por organização
+No `handleUpload`, antes de fazer upload para o bucket `plan-files`:
 
-### UI — Folha MCE (layout único fiel ao Excel)
-Rota `/obras/:obraId/compras/mce` (lista) e `/obras/:obraId/compras/mce/:mceId` (folha).
+- Se `file.type === 'application/pdf'` ou extensão `.pdf`:
+  - Usar `pdfjs-dist` para renderizar a **primeira página** num `<canvas>` offscreen a escala 2x.
+  - Converter o canvas em `Blob` PNG (`canvas.toBlob`).
+  - Fazer upload desse PNG para `plan-files` com extensão `.png`.
+  - Guardar também o PDF original (caminho separado) para a calibração visual continuar a ter o ficheiro vetorial.
+  - Adicionar campo `source_pdf_path` opcional na sessão? Não — para evitar migração agora, guardar apenas o PNG como `file_path` (o calibrador já aceita PNG via `usePdfRenderer`/`createImageBitmap` pelo browser).
+- Se já for imagem (PNG/JPG/WEBP), comportamento atual.
+- Mostrar toast com progresso ("A converter PDF para imagem...") e tratar erros de renderização (PDF protegido, página corrompida) com mensagem clara.
 
-Estrutura visual replicada do Excel:
-- **Topo:** MCE | Nº Obra | Lote | Gestor Projeto | Nº MCE | Datas (Fornecimento / Contrato / Comparativo)
-- **Subtítulo:** Nome da Obra | Local | Referência Contratual (ex.: `MAT - BETÃO`)
-- **Legenda categorias:** SUB / SRV / MAT / M.O. / INS / ALU (chip selecionável)
-- **Bloco fornecedores** (3 colunas Empresa X / Y / Z, extensível): Empresa, Pessoa Contacto, Telemóvel, Email
-- **Tabela comparativa** (editável inline tipo grelha):
-  `QUANT. | UN | ESPECIFICAÇÃO | PU X | Total X | PU Y | Total Y | PU Z | Total Z | Quant Seco | PU Seco | Total Seco s/IVA`
-- **Linha de totais:** `ORÇAMENTO ENTREGUE` (menor válido) | Total X | Total Y | Total Z | Total Seco
-- **% por fornecedor:** `1 - (Orç. Entregue / Total Fornecedor)` (tratamento DIV/0)
-- **VERBA (Ganho/Perda):** `Total Seco - Total Fornecedor Selecionado` (verde/vermelho)
-- **Blocos Condições** por fornecedor: C. Pagamento, Retenção, NIF, Alvará nº
-- **Observações** (texto livre + alertas Axia futuros)
-- **Requisitos Técnicos** (texto padrão pré-preenchido editável)
-- **Rodapé:** "Comparativo elaborado por:" + Ass.&Data + `Mod. 03-1` + paginação
+Não mexer na edge function — a validação introduzida na fase anterior continua válida como rede de segurança.
 
-Ações nesta fase: criar/editar/duplicar/eliminar linhas, adicionar fornecedor (>3), excluir linha, upload de anexos por fornecedor, destaques visuais (menor preço a verde, fornecedor selecionado realçado, alerta acima do seco).
+### 2. Modal automático "Definir fundações manualmente"
 
-### Entradas (entry points)
-- Listagem: `Obra > Compras e Contratações > MCE`
-- Botão **"Criar MCE a partir desta rubrica"** em cada linha do Budget Objetivo / Reorçamento — pré-preenche Obra, rubrica, qtd, un, PU seco, centro de custo, capítulo, versão
+Novo componente `src/components/icf/assistant/IcfFoundationsModal.tsx`:
 
-### Cálculos
-- `item.total = quantity * unit_price`
-- `supplier_total = Σ totais por fornecedor`
-- `dry_budget_total`, `lowest_supplier_total`, `gain_loss`, `gain_loss_pct`
-- Tratamento de nulos, DIV/0, itens excluídos
+- `Dialog` do shadcn, abre com `open` controlado pelo `AssistenteArquitetura`.
+- Conteúdo = mesma grelha das 6 `FoundationOptionCard` já existentes em `FOUNDATION_OPTIONS` (reaproveitar o componente, sem duplicar UI).
+- Cabeçalho explica que a Axia não detetou fundações na planta e que o utilizador precisa de as definir para o orçamento.
+- Ao confirmar uma opção, chama o mesmo `applyFoundation.mutate(...)` e marca `session.foundations_user_provided = true` (campo já não existe → marcar via `current_step = 5` + `foundation_option`, sem precisar de migração).
 
----
+Em `AssistenteArquitetura.tsx`, no `runAxiaExtraction`:
 
-## Fase 2 — Workflow de aprovação + Requisitos técnicos
+- Quando a resposta tiver `summary.foundations_found === false` **e** for uma sessão sem obra (orçamento puro) ou simplesmente sempre que faltarem fundações, abrir o novo modal automaticamente (`setFoundationsModalOpen(true)`).
+- O modal **só** abre quando `foundations_found === false`. Se houver fundações desenhadas, nada muda.
+- Manter o passo 5 atual (continua a ser editável depois).
 
-- Tabela `mce_approvals` com 4 roles: `project_manager_comparison`, `general_direction_validation`, `financial_direction_information`, `administration_approval`
-- Estados: Rascunho → Em consulta → Propostas recebidas → Em análise → Validação técnica → Validação financeira → Em aprovação → Aprovado → Adjudicado → Em execução → Fechado / Cancelado
-- Ações: Solicitar validação, Aprovar, Recusar (comentário obrigatório), Histórico
-- Permissões por perfil (Admin, Gestor Obra, Direção Geral, Direção Financeira, Administração, Comercial, Leitura)
-- Bloco "Requisitos Técnicos e/ou de Qualidade Exigidos" com texto padrão (igual ao Excel) + checkboxes: certificados, declaração CE, fichas técnicas, plano qualidade, seguro, alvará obrigatório
-- Validações pré-aprovação: ≥1 proposta válida, NIF, alvará (se obrigatório), justificação se selecionado ≠ menor preço, valor adjudicado > Budget Objetivo
+### 3. Pequenos ajustes
 
----
+- Garantir que o `Select` da obra opcional no Index ICF não bloqueia o assistente quando se vai para `/icf/assistente` sem `?obra=` (já suportado pela leitura de `initialObra` que pode ser `null`).
 
-## Fase 3 — Integrações: Contratos, Budget Objetivo, Financeiro, Axia
+## Detalhes técnicos
 
-### Contratos
-- Tabela `mce_contract_links` — gerar contrato simplificado / adjudicação herdando dados do fornecedor; anexar contrato externo
+- pdfjs-dist worker: usar o pattern já existente em `usePdfRenderer.ts` (`pdfjsLib.GlobalWorkerOptions.workerSrc`). Reutilizar uma função utilitária pequena `renderPdfFirstPageToBlob(file: File): Promise<Blob>` colocada em `src/lib/pdf-to-image.ts` para isolar a lógica.
+- Upload do PNG: caminho `${user.id}/icf-assistant/${uuid}.png` (igual ao padrão atual, só muda extensão).
+- O modal usa exatamente o mesmo `applyFoundation` hook que o passo 5 — zero alterações ao schema da BD nem à edge function.
+- Nenhuma alteração ao backend / RLS / migrações.
 
-### Budget Objetivo / Reorçamento
-- Após adjudicação: opção "Atualizar Budget Objetivo" com confirmação
-- Histórico com origem `MCE nº X`, alerta de desvio + justificação obrigatória
-- Não altera Orçamento Base Seco (referência apenas)
+## Ficheiros tocados
 
-### Financeiro da Obra
-- Tabela `mce_financial_control` (data, executado, faturado, liquidado, % faturada, % liquidada, por pagar)
-- Compromisso financeiro automático ao adjudicar
-- Regras: bloquear liquidado > faturado (salvo admin), alertar faturado > executado/adjudicado
-- Ligação a faturas existentes
+- novo: `src/lib/pdf-to-image.ts`
+- novo: `src/components/icf/assistant/IcfFoundationsModal.tsx`
+- editado: `src/pages/icf/AssistenteArquitetura.tsx` (handleUpload + abrir modal quando `foundations_found=false`)
 
-### Axia (edge function `mce-axia-analyze`)
-- Lê propostas PDF/Excel/imagem → extrai PU/Total/Qtd/Un/Descrição (Gemini 2.5 Pro)
-- Preenche `mce_supplier_item_prices` em rascunho com `confidence` + `review_required`
-- Alertas: sem alvará, acima do seco, sem retenção, fornecedor selecionado não é o menor, divergência de quantidades, etc.
-- Sugestão de justificação de adjudicação
+## Fora do âmbito
 
----
-
-## Fase 4 — Exportação, fornecedores, polimento
-
-- **Export PDF** (jsPDF) com layout fiel ao Excel: cabeçalho, tabela, totais, condições, aprovações, requisitos, contrato, `Mod. 03-1` no rodapé
-- **Export Excel** (.xlsx) preservando fórmulas
-- Seletor de fornecedor existente da base com auto-preenchimento (contacto, NIF, alvará, condições habituais)
-- Criação rápida de fornecedor inline
-- Histórico de participação por fornecedor
-- Refinamentos mobile + testes
-
----
-
-## Stack técnica
-- React + Vite + Tailwind + shadcn (consistente com o resto)
-- Hooks: `useMCEs`, `useMCEDetail`, `useMCEApprovals`, `useMCEFinancialControl`
-- Tipos: `src/types/mce.ts` (single source of truth)
-- Sem alterações destrutivas a Orçamento / Obras / Financeiro
-
----
-
-## Confirmação necessária antes de começar
-
-1. **Faseamento OK** (Fase 1 primeiro = MVP utilizável, restantes em sequência)? Ou queres outra ordem?
-2. **Localização na app:**
-   - (a) Nova entrada na sidebar "Compras e Contratações" agrupando MCE (e futuros: contratos, ordens de compra)
-   - (b) Apenas como aba dentro do detalhe da Obra
-   - (c) Ambos
-3. **Categorias do MCE:** manter os 6 códigos exatos do Excel (SUB / SRV / MAT / M.O. / INS / ALU)?
-4. **Posso começar já a Fase 1** após a tua resposta?
+- Não tocar em `IcfPlantAnalyzer` antigo (em standby).
+- Não alterar o `icf-architecture-assistant` edge function.
+- Não converter mais do que a primeira página do PDF nesta iteração (raramente as fundações estão em página separada do mesmo ficheiro arquitetónico — se for preciso, fica para outra fase).
