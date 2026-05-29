@@ -295,6 +295,7 @@ export async function exportClosingSheetPDF(params: {
           ? [`Honorários Técnicos (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários Técnicos", "-", fmtEur(val)];
       })(),
+      [`Custos de Seguros (${fmtPct(ind.seguros_pct || 0)} s/ constr.)`, fmtEur(cd), fmtEur(cd * (ind.seguros_pct || 0))],
       (() => {
         const pct = ind.financeiros_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.financeiros || 0);
@@ -302,23 +303,10 @@ export async function exportClosingSheetPDF(params: {
           ? [`Custos Financeiros (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
           : ["Custos Financeiros", "-", fmtEur(val)];
       })(),
-      (() => {
-        const pct = ind.honorarios_gestao_pct;
-        const val = pct != null ? cd * (pct || 0) : (ind.honorarios_gestao || 0);
-        return pct != null
-          ? [`Honorários Gestão (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
-          : ["Honorários Gestão", "-", fmtEur(val)];
-      })(),
-      (() => {
-        const pct = ind.garantias_pos_venda_pct;
-        const val = pct != null ? cd * (pct || 0) : (ind.garantias_pos_venda || 0);
-        return pct != null
-          ? [`Garantias / Pós-Venda (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
-          : ["Garantias / Pós-Venda", "-", fmtEur(val)];
-      })(),
+      [`Taxas - Impostos - Encargos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct || 0)} s/ constr.)`, fmtEur(cd), fmtEur(cd * (ind.taxas_impostos_prediais_pct || 0))],
       [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.publicidade_marketing_vendas_pct || 0))],
-      [`Honorários Gestão (${fmtPct(ind.honorarios_gestao_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.honorarios_gestao_vendas_pct || 0))],
-      [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_vendas_pct || 0))],
+      [`Honorários de Gestão e Custos Anexos (${fmtPct(ind.honorarios_gestao_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.honorarios_gestao_vendas_pct || 0))],
+      [`Honorários de Comercialização (${fmtPct(ind.honorarios_comercializacao_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_vendas_pct || 0))],
       [`Garantias / Pós-Venda (${fmtPct(ind.garantias_pos_venda_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.garantias_pos_venda_vendas_pct || 0))],
     ],
 
