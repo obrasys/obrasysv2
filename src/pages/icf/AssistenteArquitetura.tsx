@@ -170,12 +170,16 @@ export default function AssistenteArquitetura() {
       });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
+      const foundationsFound = !!(data as any)?.summary?.foundations_found;
       toast({
         title: 'Análise concluída',
-        description: `Paredes encontradas: ${(data as any)?.summary?.paredes ?? 0}. Fundações: ${(data as any)?.summary?.foundations_found ? 'sim' : 'não'}.`,
+        description: `Paredes encontradas: ${(data as any)?.summary?.paredes ?? 0}. Fundações: ${foundationsFound ? 'sim' : 'não'}.`,
       });
       items.refetch();
       session.refetch();
+      if (!foundationsFound) {
+        setFoundationsModalOpen(true);
+      }
     } catch (e: any) {
       toast({ title: 'Erro na análise', description: e.message, variant: 'destructive' });
     } finally {
