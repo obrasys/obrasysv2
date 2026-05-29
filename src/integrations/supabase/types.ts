@@ -5680,7 +5680,7 @@ export type Database = {
           id: string
           nome: string
           notas_tecnicas: string | null
-          obra_id: string
+          obra_id: string | null
           recobrimento_mm: number | null
           regras_desconto_vaos: Json | null
           status: string
@@ -5703,7 +5703,7 @@ export type Database = {
           id?: string
           nome: string
           notas_tecnicas?: string | null
-          obra_id: string
+          obra_id?: string | null
           recobrimento_mm?: number | null
           regras_desconto_vaos?: Json | null
           status?: string
@@ -5726,7 +5726,7 @@ export type Database = {
           id?: string
           nome?: string
           notas_tecnicas?: string | null
-          obra_id?: string
+          obra_id?: string | null
           recobrimento_mm?: number | null
           regras_desconto_vaos?: Json | null
           status?: string
@@ -5755,7 +5755,7 @@ export type Database = {
           empresa_id: string
           id: string
           largura: number
-          obra_id: string
+          obra_id: string | null
           observacoes: string | null
           quantidade: number
           referencia: string | null
@@ -5774,7 +5774,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           largura?: number
-          obra_id: string
+          obra_id?: string | null
           observacoes?: string | null
           quantidade?: number
           referencia?: string | null
@@ -5793,7 +5793,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           largura?: number
-          obra_id?: string
+          obra_id?: string | null
           observacoes?: string | null
           quantidade?: number
           referencia?: string | null
@@ -5836,7 +5836,7 @@ export type Database = {
           empresa_id: string
           espessura_total: number | null
           id: string
-          obra_id: string
+          obra_id: string | null
           observacoes: string | null
           peso_proprio_kn_m2: number | null
           piso: string | null
@@ -5853,7 +5853,7 @@ export type Database = {
           empresa_id?: string
           espessura_total?: number | null
           id?: string
-          obra_id: string
+          obra_id?: string | null
           observacoes?: string | null
           peso_proprio_kn_m2?: number | null
           piso?: string | null
@@ -5870,7 +5870,7 @@ export type Database = {
           empresa_id?: string
           espessura_total?: number | null
           id?: string
-          obra_id?: string
+          obra_id?: string | null
           observacoes?: string | null
           peso_proprio_kn_m2?: number | null
           piso?: string | null
@@ -5918,7 +5918,7 @@ export type Database = {
           espessura_nucleo: number
           fator_cumprimento: number
           id: string
-          obra_id: string
+          obra_id: string | null
           observacoes: string | null
           ordem: number | null
           piso_final: string | null
@@ -5943,7 +5943,7 @@ export type Database = {
           espessura_nucleo?: number
           fator_cumprimento?: number
           id?: string
-          obra_id: string
+          obra_id?: string | null
           observacoes?: string | null
           ordem?: number | null
           piso_final?: string | null
@@ -5968,7 +5968,7 @@ export type Database = {
           espessura_nucleo?: number
           fator_cumprimento?: number
           id?: string
-          obra_id?: string
+          obra_id?: string | null
           observacoes?: string | null
           ordem?: number | null
           piso_final?: string | null
