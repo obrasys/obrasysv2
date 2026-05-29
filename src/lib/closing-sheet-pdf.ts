@@ -327,12 +327,21 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      ["Contratos e Registos", "-", fmtEur(o.contratos_registos || 0)],
-      [`Projectos (${fmtPct(o.projectos_pct)})`, fmtEur(ci), fmtEur(ci * (o.projectos_pct || 0))],
-      [`Imprevistos / Áleas (${fmtPct(o.imprevistos_aleas_pct)})`, fmtEur(totals.total_indirectos), fmtEur(totals.total_indirectos * (o.imprevistos_aleas_pct || 0))],
-      ["Outras taxas / Ramais", "-", fmtEur(o.outros_taxas_ramais || 0)],
-      ["Segurança e Higiene", "-", fmtEur(o.seguranca_higiene || 0)],
-      ["Controlo de Qualidade", "-", fmtEur(o.controlo_qualidade || 0)],
+      [
+        `Contratos / Registos (${fmtPct(o.contratos_registos_pct ?? 0)})`,
+        fmtEur(totals.valor_vendas),
+        fmtEur((totals.valor_vendas || 0) * (o.contratos_registos_pct || 0)),
+      ],
+      [
+        `Imprevistos / Áleas (${fmtPct(o.imprevistos_aleas_pct)})`,
+        fmtEur(totals.total_indirectos),
+        fmtEur(totals.total_indirectos * (o.imprevistos_aleas_pct || 0)),
+      ],
+      [
+        `Outros (Taxas, Ramais, Baixadas, Vistorias) (${fmtPct(o.outros_taxas_ramais_pct ?? 0)})`,
+        fmtEur(ci),
+        fmtEur(ci * (o.outros_taxas_ramais_pct || 0)),
+      ],
     ],
     foot: [["Subtotal (4) Outros", "", fmtEur(totals.total_outros)]],
     theme: "striped",
