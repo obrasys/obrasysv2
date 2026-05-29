@@ -4,17 +4,20 @@ import { useToast } from '@/hooks/use-toast';
 import type { IcfConfiguracao, IcfPanoParede, IcfVao, IcfFundacao, IcfLaje, IcfResumo } from '@/types/icf';
 
 // ─── Configurações ───
-export function useIcfConfiguracoes(obraId?: string) {
+// obraId: undefined → carrega TODAS as configs do utilizador
+//         string    → filtra por obra específica
+//         null      → apenas configs sem obra (modo orçamento puro)
+export function useIcfConfiguracoes(obraId?: string | null) {
   return useQuery({
-    queryKey: ['icf-configuracoes', obraId],
+    queryKey: ['icf-configuracoes', obraId ?? '__all__'],
     queryFn: async () => {
       let q = supabase.from('icf_configuracoes').select('*').order('versao', { ascending: false });
       if (obraId) q = q.eq('obra_id', obraId);
+      else if (obraId === null) q = q.is('obra_id', null);
       const { data, error } = await q;
       if (error) throw error;
       return data as unknown as IcfConfiguracao[];
     },
-    enabled: !!obraId,
   });
 }
 
