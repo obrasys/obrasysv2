@@ -57,6 +57,7 @@ export default function AssistenteArquitetura() {
   const [materializing, setMaterializing] = useState(false);
   const [scale, setScale] = useState<string>('');
   const [linkObraId, setLinkObraId] = useState<string>('');
+  const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const step = session.data?.current_step ?? 1;
