@@ -295,7 +295,7 @@ export async function exportClosingSheetPDF(params: {
           ? [`Honorários técnicos (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários técnicos", "-", fmtEur(val)];
       })(),
-      [`Seguros (${fmtPct(ind.seguros_pct)})`, fmtEur(ci), fmtEur(ci * (ind.seguros_pct || 0))],
+      [`Seguros (${fmtPct(ind.seguros_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.seguros_pct || 0))],
       (() => {
         const pct = ind.financeiros_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.financeiros || 0);
@@ -303,8 +303,8 @@ export async function exportClosingSheetPDF(params: {
           ? [`Financeiros (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Financeiros", "-", fmtEur(val)];
       })(),
-      [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)})`, fmtEur(ci), fmtEur(ci * (ind.taxas_impostos_prediais_pct || 0))],
-      [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)})`, fmtEur(vv), fmtEur(vv * (ind.publicidade_marketing_pct || 0))],
+      [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.taxas_impostos_prediais_pct || 0))],
+      [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.publicidade_marketing_pct || 0))],
       (() => {
         const pct = ind.honorarios_gestao_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.honorarios_gestao || 0);
@@ -312,7 +312,7 @@ export async function exportClosingSheetPDF(params: {
           ? [`Honorários de Gestão (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários de Gestão", "-", fmtEur(val)];
       })(),
-      [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)})`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_pct || 0))],
+      [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.honorarios_comercializacao_pct || 0))],
       (() => {
         const pct = ind.garantias_pos_venda_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.garantias_pos_venda || 0);
