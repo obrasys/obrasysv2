@@ -1133,19 +1133,27 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="outros" title="Outros Custos - (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")} total={totals.total_outros} totalLabel="Total Outros Custos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Contratos / Registos (% s/ Vendas)</Label>
+            <Label>Contratos / Registos (€)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.other.contratos_registos}
+              onChange={(v) => patch("other", { ...details.other, contratos_registos: v })}
+            />
+          </div>
+          <div>
+            <Label>Projectos (Arq. + Especialidades) (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
-              value={(details.other.contratos_registos_pct ?? 0) * 100}
-              onChange={(v) => patch("other", { ...details.other, contratos_registos_pct: v / 100 })}
+              value={details.other.projectos_pct * 100}
+              onChange={(v) => patch("other", { ...details.other, projectos_pct: v / 100 })}
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.valor_vendas || 0) * (details.other.contratos_registos_pct || 0))}
+              = {fmt((totals.custo_industrial || 0) * (details.other.projectos_pct || 0))}
             </p>
           </div>
           <div>
-            <Label>Imprevistos / Áleas (% s/ Ind)</Label>
+            <Label>Imprevistos / Áleas (% s/ indirectos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1159,16 +1167,28 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (% s/ constr.)</Label>
+            <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (€)</Label>
             <NumCell
               readOnly={readOnly}
-              step="0.001"
-              value={(details.other.outros_taxas_ramais_pct ?? 0) * 100}
-              onChange={(v) => patch("other", { ...details.other, outros_taxas_ramais_pct: v / 100 })}
+              value={details.other.outros_taxas_ramais}
+              onChange={(v) => patch("other", { ...details.other, outros_taxas_ramais: v })}
             />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.other.outros_taxas_ramais_pct || 0))}
-            </p>
+          </div>
+          <div>
+            <Label>Segurança & Higiene (€)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.other.seguranca_higiene}
+              onChange={(v) => patch("other", { ...details.other, seguranca_higiene: v })}
+            />
+          </div>
+          <div>
+            <Label>Controlo Qualidade / Certificações (€)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.other.controlo_qualidade}
+              onChange={(v) => patch("other", { ...details.other, controlo_qualidade: v })}
+            />
           </div>
         </div>
         <SubtotalRow label="TOTAL OUTROS CUSTOS" code="(4)" value={totals.total_outros} />
