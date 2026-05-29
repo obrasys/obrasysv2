@@ -248,10 +248,23 @@ export default function AssistenteArquitetura() {
     }
   };
 
+  const handlePickFile = () => fileRef.current?.click();
+
   if (!activeSessionId || !session.data) {
     return (
       <div className="container max-w-5xl py-6 space-y-6">
         <BackBar onBack={() => navigate('/icf')} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.png,.jpg,.jpeg"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.currentTarget.value = '';
+            if (file) handleUpload(file);
+          }}
+        />
         <Card className="rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -277,14 +290,7 @@ export default function AssistenteArquitetura() {
               </Select>
             </div>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-            />
-            <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
+            <Button onClick={handlePickFile} disabled={uploading}>
               {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
               Carregar planta
             </Button>
@@ -298,10 +304,27 @@ export default function AssistenteArquitetura() {
     <div className="container max-w-6xl py-6 space-y-6">
       <BackBar onBack={() => navigate('/icf')} />
 
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.currentTarget.value = '';
+          if (file) handleUpload(file);
+        }}
+      />
+
       <Stepper step={step} onJump={goStep} />
 
       {step === 1 && (
-        <StepReUpload session={session.data} onContinue={() => goStep(2)} />
+        <StepReUpload
+          session={session.data}
+          isUploading={uploading}
+          onReplaceFile={handlePickFile}
+          onContinue={() => goStep(2)}
+        />
       )}
 
       {step === 2 && session.data.file_path && (
@@ -625,7 +648,17 @@ function Stepper({ step, onJump }: { step: number; onJump: (n: number) => void }
   );
 }
 
-function StepReUpload({ session, onContinue }: { session: any; onContinue: () => void }) {
+function StepReUpload({
+  session,
+  isUploading,
+  onReplaceFile,
+  onContinue,
+}: {
+  session: any;
+  isUploading: boolean;
+  onReplaceFile: () => void;
+  onContinue: () => void;
+}) {
   return (
     <Card className="rounded-xl">
       <CardHeader>
@@ -636,9 +669,15 @@ function StepReUpload({ session, onContinue }: { session: any; onContinue: () =>
           Tipo: <Badge variant="outline">{session.plan_kind}</Badge>
         </p>
         <p className="text-xs text-muted-foreground truncate">{session.file_path}</p>
-        <Button onClick={onContinue}>
-          Continuar <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onReplaceFile} disabled={isUploading}>
+            {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+            Trocar planta
+          </Button>
+          <Button onClick={onContinue}>
+            Continuar <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
