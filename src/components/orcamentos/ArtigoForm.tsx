@@ -291,7 +291,7 @@ export function ArtigoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit, handleInvalid)} className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-start">
           <FormField
             control={form.control}
