@@ -202,8 +202,13 @@ export function IcfPlantAnalyzer({
               </p>
             )}
 
+            {!hasObra && (
+              <p className="text-xs text-muted-foreground border border-dashed rounded-md p-2">
+                Para guardar estes registos numa obra, associe primeiro esta configuração a uma obra. Em modo orçamento (sem obra), pode ainda usar este resumo como referência.
+              </p>
+            )}
             <div className="flex gap-2">
-              <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
+              <Button onClick={handleCreateAll} disabled={isCreating || !hasObra} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
                 Criar todos os registos ICF
               </Button>
