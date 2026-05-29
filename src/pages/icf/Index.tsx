@@ -286,13 +286,28 @@ const IcfIndex = () => {
 
                 <IcfQuickNav configId={activeConfig.id} />
 
-                <IcfPlantAnalyzer
-                  obraId={obraFilter ?? activeConfig.obra_id ?? ''}
-                  configuracaoId={activeConfig.id}
-                  espessuraNucleo={(activeConfig as any).espessura_nucleo ?? 0.15}
-                  classeBetao={(activeConfig as any).classe_betao ?? 'C25/30'}
-                  classeAco={(activeConfig as any).classe_aco ?? 'A500'}
-                />
+                {(obraFilter ?? activeConfig.obra_id) ? (
+                  <IcfPlantAnalyzer
+                    obraId={(obraFilter ?? activeConfig.obra_id) as string}
+                    configuracaoId={activeConfig.id}
+                    espessuraNucleo={(activeConfig as any).espessura_nucleo ?? 0.15}
+                    classeBetao={(activeConfig as any).classe_betao ?? 'C25/30'}
+                    classeAco={(activeConfig as any).classe_aco ?? 'A500'}
+                  />
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="p-6 text-center space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Para carregar uma planta no modo standalone (sem obra), utilize o Assistente ICF dedicado.
+                      </p>
+                      <Button onClick={handleOpenAssistant} variant="outline">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Abrir Assistente ICF
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
 
               </>
             )}
