@@ -7099,6 +7099,74 @@ export type Database = {
         }
         Relationships: []
       }
+      mce_approvals: {
+        Row: {
+          assigned_role: string | null
+          assigned_user_id: string | null
+          comment: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decided_by_name: string | null
+          decision: Database["public"]["Enums"]["mce_approval_decision"]
+          id: string
+          level: Database["public"]["Enums"]["mce_approval_level"]
+          level_order: number
+          mce_id: string
+          organization_id: string
+          required: boolean
+          signature: string | null
+          updated_at: string
+          validated_amount: number | null
+        }
+        Insert: {
+          assigned_role?: string | null
+          assigned_user_id?: string | null
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision?: Database["public"]["Enums"]["mce_approval_decision"]
+          id?: string
+          level: Database["public"]["Enums"]["mce_approval_level"]
+          level_order: number
+          mce_id: string
+          organization_id: string
+          required?: boolean
+          signature?: string | null
+          updated_at?: string
+          validated_amount?: number | null
+        }
+        Update: {
+          assigned_role?: string | null
+          assigned_user_id?: string | null
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision?: Database["public"]["Enums"]["mce_approval_decision"]
+          id?: string
+          level?: Database["public"]["Enums"]["mce_approval_level"]
+          level_order?: number
+          mce_id?: string
+          organization_id?: string
+          required?: boolean
+          signature?: string | null
+          updated_at?: string
+          validated_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_approvals_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mce_attachments: {
         Row: {
           attachment_type: string | null
@@ -14320,6 +14388,16 @@ export type Database = {
         Args: { p_reason?: string; p_source_budget_id: string }
         Returns: string
       }
+      decide_mce_approval: {
+        Args: {
+          _approval_id: string
+          _comment?: string
+          _decision: Database["public"]["Enums"]["mce_approval_decision"]
+          _signature?: string
+          _validated_amount?: number
+        }
+        Returns: Json
+      }
       determinar_regime_fiscal: {
         Args: {
           p_data_referencia?: string
@@ -14559,6 +14637,7 @@ export type Database = {
         }
         Returns: string
       }
+      request_mce_approval: { Args: { _mce_id: string }; Returns: Json }
       seed_default_estrutura_cost_centers: {
         Args: { _org_id: string }
         Returns: undefined
@@ -14597,6 +14676,12 @@ export type Database = {
         | "calculado_sistema"
         | "sugerido_axia"
         | "confirmado_utilizador"
+      mce_approval_decision: "pendente" | "aprovado" | "rejeitado" | "devolvido"
+      mce_approval_level:
+        | "gestor_obra"
+        | "direcao_geral"
+        | "financeiro"
+        | "administracao"
       mce_category: "SUB" | "SRV" | "MAT" | "MO" | "INS" | "ALU"
       mce_proposal_status:
         | "pendente"
@@ -14790,6 +14875,13 @@ export const Constants = {
         "calculado_sistema",
         "sugerido_axia",
         "confirmado_utilizador",
+      ],
+      mce_approval_decision: ["pendente", "aprovado", "rejeitado", "devolvido"],
+      mce_approval_level: [
+        "gestor_obra",
+        "direcao_geral",
+        "financeiro",
+        "administracao",
       ],
       mce_category: ["SUB", "SRV", "MAT", "MO", "INS", "ALU"],
       mce_proposal_status: [

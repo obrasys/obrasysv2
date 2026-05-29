@@ -146,3 +146,40 @@ export interface MceAttachment {
   attachment_type: string | null;
   created_at: string;
 }
+
+export type MceApprovalLevel = 'gestor_obra' | 'direcao_geral' | 'financeiro' | 'administracao';
+export type MceApprovalDecision = 'pendente' | 'aprovado' | 'rejeitado' | 'devolvido';
+
+export const MCE_APPROVAL_LEVEL_LABELS: Record<MceApprovalLevel, string> = {
+  gestor_obra: 'Gestor de Obra',
+  direcao_geral: 'Direção Geral',
+  financeiro: 'Financeiro',
+  administracao: 'Administração',
+};
+
+export const MCE_APPROVAL_DECISION_LABELS: Record<MceApprovalDecision, string> = {
+  pendente: 'Pendente',
+  aprovado: 'Aprovado',
+  rejeitado: 'Rejeitado',
+  devolvido: 'Devolvido',
+};
+
+export interface MceApproval {
+  id: string;
+  mce_id: string;
+  organization_id: string;
+  level: MceApprovalLevel;
+  level_order: number;
+  required: boolean;
+  assigned_user_id: string | null;
+  assigned_role: string | null;
+  decision: MceApprovalDecision;
+  decided_by: string | null;
+  decided_by_name: string | null;
+  decided_at: string | null;
+  validated_amount: number | null;
+  comment: string | null;
+  signature: string | null;
+  created_at: string;
+  updated_at: string;
+}

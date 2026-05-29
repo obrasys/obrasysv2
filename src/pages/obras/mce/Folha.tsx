@@ -21,6 +21,7 @@ import {
   type MceCategory, type MceMap, type MceSupplier, type MceItem,
 } from '@/types/mce';
 import { cn } from '@/lib/utils';
+import { MCEApprovalsPanel } from '@/components/mce/MCEApprovalsPanel';
 
 const fmtEUR = (n: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -446,6 +447,9 @@ export default function MCEFolha() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Workflow de aprovações */}
+      <MCEApprovalsPanel mceId={map.id} mceStatus={map.status} />
 
       <div className="text-[10px] text-muted-foreground text-center pt-4">Mod. 03-1 · 1/1</div>
     </div>
