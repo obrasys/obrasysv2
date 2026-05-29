@@ -320,7 +320,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
           name: ps.phase.name,
           task_type: "phase",
           wbs_code: ps.phase.wbs_code,
-          budget_chapter_id: ps.phase.budget_chapter_id,
+          budget_chapter_id: safeChapterId,
           planned_start: ps.planned_start,
           planned_end: ps.planned_end,
           planned_duration_days: phaseDuration,
