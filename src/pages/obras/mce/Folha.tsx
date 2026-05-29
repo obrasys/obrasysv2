@@ -90,11 +90,14 @@ export default function MCEFolha() {
 
   if (isLoading || !data) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <AppLayout title="MCE" subtitle="Mapa Comparativo Económico">
+        <div className="p-8 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
     );
   }
+
 
   const { map, suppliers, items } = data;
 
