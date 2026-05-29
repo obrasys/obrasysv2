@@ -86,7 +86,7 @@ export function IcfPlantAnalyzer({
   };
 
   const handleCreateAll = () => {
-    if (!analysisResult) return;
+    if (!analysisResult || !obraId) return;
     createRecords({
       result: analysisResult,
       obraId,
