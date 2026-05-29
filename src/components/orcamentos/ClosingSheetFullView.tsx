@@ -1037,6 +1037,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.indirect.seguros_pct * 100}
               onChange={(v) => patch("indirect", { ...details.indirect, seguros_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.indirect.seguros_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Custos Financeiros (€)</Label>
@@ -1059,6 +1062,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.indirect.taxas_impostos_prediais_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Publicidade / Marketing (% s/ vendas)</Label>
@@ -1073,6 +1079,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.publicidade_marketing_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Honorários Gestão (€)</Label>
@@ -1095,6 +1104,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.honorarios_comercializacao_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Garantias / Pós-Venda (€)</Label>
@@ -1129,6 +1141,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.other.projectos_pct * 100}
               onChange={(v) => patch("other", { ...details.other, projectos_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.other.projectos_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Imprevistos / Áleas (% s/ indirectos)</Label>
@@ -1140,6 +1155,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 patch("other", { ...details.other, imprevistos_aleas_pct: v / 100 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.total_indirectos || 0) * (details.other.imprevistos_aleas_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (€)</Label>
@@ -1233,6 +1251,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.iva.taxa_terreno_pct * 100}
               onChange={(v) => patch("iva", { ...details.iva, taxa_terreno_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt(
+                (details.iva.zona_aru || details.iva.zona_oru)
+                  ? 0
+                  : (totals.total_terreno || 0) * (details.iva.taxa_terreno_pct || 0)
+              )}
+            </p>
           </div>
           <div>
             <Label>Taxa IVA Construção Civil (%)</Label>
@@ -1241,6 +1266,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.iva.taxa_construcao_pct * 100}
               onChange={(v) => patch("iva", { ...details.iva, taxa_construcao_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.base_iva_construcao || 0) * (details.iva.taxa_construcao_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Taxa IVA Honorários & Outros (%)</Label>
@@ -1249,6 +1277,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.iva.taxa_honorarios_pct * 100}
               onChange={(v) => patch("iva", { ...details.iva, taxa_honorarios_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt(((totals.total_indirectos || 0) + (totals.total_admin || 0)) * (details.iva.taxa_honorarios_pct || 0))}
+            </p>
           </div>
         </div>
         <SubtotalRow label="TOTAL IVA" code="(6)" value={totals.total_iva} />
