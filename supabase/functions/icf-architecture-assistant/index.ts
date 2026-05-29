@@ -156,12 +156,18 @@ Deno.serve(async (req) => {
     const lowerPath = body.file_path.toLowerCase();
     let mimeType = fileBlob.type || "";
     if (!mimeType || mimeType === "application/octet-stream") {
-      if (lowerPath.endsWith(".pdf")) mimeType = "application/pdf";
-      else if (lowerPath.endsWith(".png")) mimeType = "image/png";
+      if (lowerPath.endsWith(".png")) mimeType = "image/png";
       else if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) mimeType = "image/jpeg";
       else if (lowerPath.endsWith(".webp")) mimeType = "image/webp";
       else if (lowerPath.endsWith(".gif")) mimeType = "image/gif";
-      else mimeType = "application/pdf";
+      else if (lowerPath.endsWith(".pdf")) mimeType = "application/pdf";
+    }
+
+    if (!mimeType.startsWith("image/")) {
+      return json({
+        error:
+          "Formato não suportado pela Axia neste passo. Exporte a página da planta como imagem (PNG ou JPG) e volte a carregar. PDFs ainda não são aceites diretamente pelo motor de visão.",
+      }, 400);
     }
 
     const arrBuf = await fileBlob.arrayBuffer();
