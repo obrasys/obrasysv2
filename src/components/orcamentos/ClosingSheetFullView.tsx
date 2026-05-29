@@ -1173,18 +1173,14 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (% s/ constr.)</Label>
+            <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (€)</Label>
             <NumCell
               readOnly={readOnly}
-              step="0.001"
-              value={(details.other.outros_taxas_ramais_pct ?? 0) * 100}
+              value={details.other.outros_taxas_ramais}
               onChange={(v) =>
-                patch("other", { ...details.other, outros_taxas_ramais_pct: v / 100 })
+                patch("other", { ...details.other, outros_taxas_ramais: v, outros_taxas_ramais_pct: undefined })
               }
             />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.total_directos || 0) * (details.other.outros_taxas_ramais_pct || 0))}
-            </p>
           </div>
           <div>
             <Label>Controlo Qualidade / Certificações (€)</Label>
