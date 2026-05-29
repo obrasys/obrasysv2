@@ -299,10 +299,17 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
 
     // 5. Create tasks (phases + sub-tasks)
     const wbsToTaskId: Record<string, string> = {};
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const validChapterIds = new Set(capitulos.map((c: any) => c.id));
 
     for (let i = 0; i < phaseSchedules.length; i++) {
       const ps = phaseSchedules[i];
       const phaseDuration = Math.round(Math.max(1, ps.phase.duration_days));
+      const rawChapterId = ps.phase.budget_chapter_id;
+      const safeChapterId =
+        typeof rawChapterId === "string" && UUID_RE.test(rawChapterId) && validChapterIds.has(rawChapterId)
+          ? rawChapterId
+          : (capitulos[i]?.id ?? null);
 
       const { data: phaseTask, error: ptError } = await client
         .from("project_schedule_tasks")
@@ -313,7 +320,7 @@ Responda APENAS com o JSON usando esta estrutura exata, sem markdown:`;
           name: ps.phase.name,
           task_type: "phase",
           wbs_code: ps.phase.wbs_code,
-          budget_chapter_id: ps.phase.budget_chapter_id,
+          budget_chapter_id: safeChapterId,
           planned_start: ps.planned_start,
           planned_end: ps.planned_end,
           planned_duration_days: phaseDuration,
