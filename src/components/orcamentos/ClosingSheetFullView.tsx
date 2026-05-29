@@ -1060,7 +1060,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
 
           <div>
-            <Label>Taxas/Impostos/Encargos Prediais (% s/ constr.)</Label>
+            <Label>Taxas/Impostos/Encargos Prediais (% s/ C. Directos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1073,11 +1073,11 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               }
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.indirect.taxas_impostos_prediais_pct || 0))}
+              = {fmt((totals.total_directos || 0) * (details.indirect.taxas_impostos_prediais_pct || 0))}
             </p>
           </div>
           <div>
-            <Label>Publicidade / Marketing (% s/ vendas)</Label>
+            <Label>Publicidade / Marketing (% s/ C. Directos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1090,7 +1090,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               }
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.valor_vendas || 0) * (details.indirect.publicidade_marketing_pct || 0))}
+              = {fmt((totals.total_directos || 0) * (details.indirect.publicidade_marketing_pct || 0))}
             </p>
           </div>
           <div>
