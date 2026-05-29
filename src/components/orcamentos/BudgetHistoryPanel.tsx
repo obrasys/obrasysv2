@@ -112,11 +112,12 @@ export function BudgetHistoryPanel({ orcamentoId }: Props) {
                       {e.description}
                     </p>
                   )}
-                  {e.new_value && Object.keys(e.new_value).length > 0 && (
-                    <pre className="text-[10px] text-muted-foreground bg-muted/50 rounded p-2 mt-1 overflow-x-auto">
-                      {JSON.stringify(e.new_value, null, 2)}
-                    </pre>
-                  )}
+                  {(() => {
+                    const summary = summarizeEvent(e.event_type, e.new_value);
+                    return summary ? (
+                      <p className="text-xs text-foreground/80 mt-1 leading-relaxed">{summary}</p>
+                    ) : null;
+                  })()}
                 </li>
               );
             })}
