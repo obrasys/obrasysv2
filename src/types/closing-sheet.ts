@@ -46,7 +46,13 @@ export interface ClosingIndirectCosts {
   /** @deprecated usar garantias_pos_venda_pct (% s/ construção) */
   garantias_pos_venda: number;
   garantias_pos_venda_pct?: number; // sobre construção
+  // Novas rubricas (% sobre Valor de Vendas)
+  publicidade_marketing_vendas_pct?: number;
+  honorarios_gestao_vendas_pct?: number;
+  honorarios_comercializacao_vendas_pct?: number;
+  garantias_pos_venda_vendas_pct?: number;
 }
+
 
 
 export interface ClosingOtherCosts {
