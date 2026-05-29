@@ -43,12 +43,17 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
   const [margem, setMargem] = useState<number>(defaults?.margem_lucro ?? 15);
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
   const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
+  const [honorariosTecnicos, setHonorariosTecnicos] = useState<number>(defaults?.honorarios_tecnicos_percent ?? 0);
+  const [custosFinanceiros, setCustosFinanceiros] = useState<number>(defaults?.custos_financeiros_percent ?? 0);
+  const [honorariosGestao, setHonorariosGestao] = useState<number>(defaults?.honorarios_gestao_percent ?? 0);
+  const [garantiasPosVenda, setGarantiasPosVenda] = useState<number>(defaults?.garantias_pos_venda_percent ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none');
 
   const [showSave, setShowSave] = useState(false);
   const [presetNome, setPresetNome] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
+
 
   useEffect(() => {
     if (!open || !presets?.length || selectedPresetId) return;
