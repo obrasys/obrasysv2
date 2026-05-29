@@ -638,21 +638,21 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "json", timeoutMs: 28_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-          { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 10_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 45_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 20_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 12_000 },
         ]
       : [
           ...(isDenseImage
             ? [
                 { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 12_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 8_000 },
+                { model: visionChain.primary, mode: "json", timeoutMs: 25_000 },
+                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
               ]
             : [
-                { model: visionChain.fallback, mode: "json", timeoutMs: 20_000 },
-                { model: visionChain.primary, mode: "json", timeoutMs: 16_000 },
-                { model: "google/gemini-2.5-flash", mode: "json", timeoutMs: 10_000 },
+                { model: visionChain.primary, mode: "json", timeoutMs: 35_000 },
+                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
+                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
               ]),
         ];
 
