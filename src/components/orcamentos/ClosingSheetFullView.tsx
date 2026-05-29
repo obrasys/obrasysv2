@@ -1022,7 +1022,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Honorários Técnicos (€)</Label>
+            <Label>Honorários Técnicos (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.honorarios_tecnicos}
@@ -1042,7 +1042,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Custos Financeiros (€)</Label>
+            <Label>Custos Financeiros (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.financeiros}
@@ -1084,7 +1084,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Honorários Gestão (€)</Label>
+            <Label>Honorários Gestão (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.honorarios_gestao}
@@ -1109,7 +1109,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Garantias / Pós-Venda (€)</Label>
+            <Label>Garantias / Pós-Venda (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.garantias_pos_venda}
