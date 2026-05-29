@@ -33,6 +33,8 @@ const CriarObraPage = lazy(() => import("./pages/obras/Criar"));
 const EditarObraPage = lazy(() => import("./pages/obras/Editar"));
 const VerObraPage = lazy(() => import("./pages/obras/Ver"));
 const ObraFinanceiroPage = lazy(() => import("./pages/obras/Financeiro"));
+const MCEIndexPage = lazy(() => import("./pages/obras/mce/Index"));
+const MCEFolhaPage = lazy(() => import("./pages/obras/mce/Folha"));
 const ClientesPage = lazy(() => import("./pages/clientes/Index"));
 const CriarClientePage = lazy(() => import("./pages/clientes/Criar"));
 const EditarClientePage = lazy(() => import("./pages/clientes/Editar"));
