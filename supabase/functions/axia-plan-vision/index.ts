@@ -379,7 +379,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 90_000; // margem confortável para terminar antes do idle timeout da runtime
+    const HARD_DEADLINE_MS = 140_000; // edge runtime permite ~150s; deixamos margem
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
@@ -401,7 +401,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
-      const budget = Math.min(timeoutMs, Math.max(6_000, remainingMs() - 6_000));
+      const budget = Math.min(timeoutMs, Math.max(8_000, remainingMs() - 3_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
         if (remainingMs() < 6_000) {
@@ -636,24 +636,21 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
     const visionChain = resolveChain("critical_vision_analysis");
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
+    // Estratégia: tool mode com Gemini Flash primeiro (mais rápido e fiável em vision+schema),
+    // Pro como fallback de precisão, Flash-Lite como último recurso.
+    // JSON mode reservado para retries quando o tool call falhar a devolver argumentos.
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "json", timeoutMs: 45_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 20_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 12_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 75_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 45_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 20_000 },
         ]
       : [
-          ...(isDenseImage
-            ? [
-                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-                { model: visionChain.primary, mode: "json", timeoutMs: 25_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
-              ]
-            : [
-                { model: visionChain.primary, mode: "json", timeoutMs: 35_000 },
-                { model: visionChain.fallback, mode: "json", timeoutMs: 18_000 },
-                { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 10_000 },
-              ]),
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 50_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 60_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
+          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 18_000 },
         ];
 
 
