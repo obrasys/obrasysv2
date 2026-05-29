@@ -83,6 +83,8 @@ export interface MceMap {
   approved_at: string | null;
   awarded_at: string | null;
   closed_at: string | null;
+  axia_summary: string | null;
+  axia_alerts: Array<{ level: 'info' | 'warning' | 'critical'; message: string; code?: string }> | null;
   created_at: string;
   updated_at: string;
 }

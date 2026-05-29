@@ -22,6 +22,7 @@ import {
 } from '@/types/mce';
 import { cn } from '@/lib/utils';
 import { MCEApprovalsPanel } from '@/components/mce/MCEApprovalsPanel';
+import { MCEIntegrationsPanel } from '@/components/mce/MCEIntegrationsPanel';
 
 const fmtEUR = (n: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -450,6 +451,9 @@ export default function MCEFolha() {
 
       {/* Workflow de aprovações */}
       <MCEApprovalsPanel mceId={map.id} mceStatus={map.status} />
+
+      {/* Integrações: Contrato, Financeiro, Budget Objetivo, Axia */}
+      <MCEIntegrationsPanel map={map} suppliers={suppliers} />
 
       <div className="text-[10px] text-muted-foreground text-center pt-4">Mod. 03-1 · 1/1</div>
     </div>
