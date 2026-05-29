@@ -1124,7 +1124,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Garantias / Pós-Venda (% s/ constr.)</Label>
+            <Label>Garantias / Pós-Venda (% s/ C. Directos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1132,7 +1132,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(v) => patch("indirect", { ...details.indirect, garantias_pos_venda_pct: v / 100, garantias_pos_venda: 0 })}
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.indirect.garantias_pos_venda_pct ?? 0))}
+              = {fmt((totals.total_directos || 0) * (details.indirect.garantias_pos_venda_pct ?? 0))}
             </p>
           </div>
 
