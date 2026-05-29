@@ -63,7 +63,7 @@ export function useOrcamentos() {
 
   // Criar orçamento
   const createOrcamento = useMutation({
-    mutationFn: async (formData: OrcamentoFormData) => {
+    mutationFn: async (formData: OrcamentoFormData & { seed_canonical_chapters?: boolean }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
 
       // Gerar código do orçamento
@@ -72,36 +72,42 @@ export function useOrcamentos() {
 
       if (codigoError) throw codigoError;
 
+      const { seed_canonical_chapters, ...rest } = formData;
+
       const { data, error } = await supabase
         .from('orcamentos')
         .insert({
           user_id: user.id,
-          titulo: formData.titulo,
+          titulo: rest.titulo,
           codigo: codigoResult,
-          obra_id: formData.obra_id || null,
-          cliente_id: formData.cliente_id || null,
-          margem_lucro: formData.margem_lucro,
-          custos_indiretos: formData.custos_indiretos as unknown as Json,
-          project_metadata: (formData.project_metadata ?? {}) as unknown as Json,
+          obra_id: rest.obra_id || null,
+          cliente_id: rest.cliente_id || null,
+          margem_lucro: rest.margem_lucro,
+          custos_indiretos: rest.custos_indiretos as unknown as Json,
+          project_metadata: (rest.project_metadata ?? {}) as unknown as Json,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Aplicar matriz fixa de 37 capítulos (00 → 036) - modo Avançado
-      try {
-        await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>)(
-          'aplicar_matriz_capitulos',
-          { p_orcamento_id: data.id }
-        );
-      } catch (e) {
-        console.warn('[matriz] falha ao aplicar matriz de capítulos:', e);
+      // Aplicar matriz fixa de capítulos APENAS para Construção Nova.
+      // Remodelação fica em branco para o utilizador escolher os capítulos.
+      if (seed_canonical_chapters) {
+        try {
+          await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>)(
+            'aplicar_matriz_capitulos',
+            { p_orcamento_id: data.id }
+          );
+        } catch (e) {
+          console.warn('[matriz] falha ao aplicar matriz de capítulos:', e);
+        }
       }
 
       return data;
 
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
       toast({
