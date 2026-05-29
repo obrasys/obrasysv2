@@ -116,8 +116,22 @@ export default function MCEFolha() {
           </Button>
           <Badge variant="outline">{MCE_STATUS_LABELS[map.status]}</Badge>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          Mod. 03-1 — Mapa Comparativo Económico
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline" size="sm"
+            onClick={() => exportMCEtoPDF({ map, suppliers, items, prices: data.prices })}
+          >
+            <FileDown className="h-4 w-4 mr-1" /> PDF
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            onClick={() => exportMCEtoXLSX({ map, suppliers, items, prices: data.prices })}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> XLSX
+          </Button>
+          <span className="text-xs text-muted-foreground hidden md:inline">
+            Mod. 03-1 — Mapa Comparativo Económico
+          </span>
         </div>
       </div>
 
