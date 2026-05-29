@@ -570,6 +570,24 @@ export default function AssistenteArquitetura() {
         </div>
       )}
 
+      <IcfFoundationsModal
+        open={foundationsModalOpen}
+        onOpenChange={setFoundationsModalOpen}
+        baseIcfWallLength={icfWallLength}
+        selectedOption={(session.data as any)?.foundation_option ?? null}
+        isPending={applyFoundation.isPending}
+        onApply={(key, params) => {
+          applyFoundation.mutate(
+            { option: key, params, baseIcfWallLength: icfWallLength },
+            {
+              onSuccess: () => {
+                toast({ title: 'Fundações definidas', description: 'Sugestão aplicada à sessão.' });
+                goStep(5);
+              },
+            },
+          );
+        }}
+      />
     </div>
   );
 }
