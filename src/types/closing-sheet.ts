@@ -441,7 +441,12 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     total_directos * (d.indirect.publicidade_marketing_pct || 0) +
     pctOrAbs(d.indirect.honorarios_gestao_pct, d.indirect.honorarios_gestao) +
     total_directos * (d.indirect.honorarios_comercializacao_pct || 0) +
-    pctOrAbs(d.indirect.garantias_pos_venda_pct, d.indirect.garantias_pos_venda);
+    pctOrAbs(d.indirect.garantias_pos_venda_pct, d.indirect.garantias_pos_venda) +
+    // Rubricas sobre Valor de Vendas
+    valor_vendas * (d.indirect.publicidade_marketing_vendas_pct || 0) +
+    valor_vendas * (d.indirect.honorarios_gestao_vendas_pct || 0) +
+    valor_vendas * (d.indirect.honorarios_comercializacao_vendas_pct || 0) +
+    valor_vendas * (d.indirect.garantias_pos_venda_vendas_pct || 0);
 
 
   // (4) Outros
