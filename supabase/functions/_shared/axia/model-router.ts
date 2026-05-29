@@ -31,14 +31,16 @@ interface RouteEntry {
 // NOTE: Lovable AI Gateway model identifiers. Keep in sync with platform catalog.
 const DEFAULTS: Record<AxiaTaskType, RouteEntry> = {
   critical_vision_analysis: {
-    primary: "openai/gpt-5.5",
+    // Gemini 2.5 Pro é o que historicamente respondeu de forma fiável em vision+JSON.
+    // GPT-5.5 fica como validador/fallback (estava a dar timeout sistemático como primary).
+    primary: "google/gemini-2.5-pro",
     validator: "openai/gpt-5.5",
-    fallback: "google/gemini-2.5-pro",
+    fallback: "google/gemini-2.5-flash",
   },
   plan_measurements: {
-    primary: "openai/gpt-5.5",
+    primary: "google/gemini-2.5-pro",
     validator: "openai/gpt-5.5",
-    fallback: "google/gemini-2.5-pro",
+    fallback: "google/gemini-2.5-flash",
   },
   budget_import: {
     primary: "openai/gpt-5.5",
