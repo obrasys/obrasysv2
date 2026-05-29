@@ -435,9 +435,9 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     pct !== undefined && pct !== null ? total_directos * (pct || 0) : (abs || 0);
   const total_indirectos =
     pctOrAbs(d.indirect.honorarios_tecnicos_pct, d.indirect.honorarios_tecnicos) +
+    total_directos * (d.indirect.seguros_pct || 0) +
     pctOrAbs(d.indirect.financeiros_pct, d.indirect.financeiros) +
-    pctOrAbs(d.indirect.honorarios_gestao_pct, d.indirect.honorarios_gestao) +
-    pctOrAbs(d.indirect.garantias_pos_venda_pct, d.indirect.garantias_pos_venda) +
+    total_directos * (d.indirect.taxas_impostos_prediais_pct || 0) +
     // Rubricas sobre Valor de Vendas
     valor_vendas * (d.indirect.publicidade_marketing_vendas_pct || 0) +
     valor_vendas * (d.indirect.honorarios_gestao_vendas_pct || 0) +
