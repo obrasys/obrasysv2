@@ -69,14 +69,32 @@ export default function AssistenteArquitetura() {
   };
 
 
-  // STEP 1 - upload + tipo
+  // STEP 1 - upload + tipo. Se for PDF, converte 1ª página em PNG (Axia vision só aceita imagem).
   const handleUpload = async (file: File) => {
     if (!user || !organization) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'pdf';
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      let uploadBlob: Blob = file;
+      let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+
+      if (isPdf) {
+        toast({ title: 'A converter PDF para imagem...', description: 'Para análise pela Axia.' });
+        try {
+          uploadBlob = await renderPdfFirstPageToPngBlob(file, 2);
+          ext = 'png';
+        } catch (convErr: any) {
+          throw new Error(
+            `Não foi possível converter o PDF para imagem (${convErr?.message || 'erro desconhecido'}). ` +
+            'Exporte a página da planta como PNG/JPG e volte a carregar.',
+          );
+        }
+      }
+
       const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('plan-files').upload(path, file);
+      const { error: upErr } = await supabase.storage
+        .from('plan-files')
+        .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
       if (upErr) throw upErr;
       const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
       setActiveSessionId(created.id);
@@ -86,7 +104,6 @@ export default function AssistenteArquitetura() {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
-
     }
   };
 
