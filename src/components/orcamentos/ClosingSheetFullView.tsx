@@ -1183,7 +1183,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               }
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.other.outros_taxas_ramais_pct || 0))}
+              = {fmt((totals.total_directos || 0) * (details.other.outros_taxas_ramais_pct || 0))}
             </p>
           </div>
           <div>
