@@ -287,15 +287,40 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      ["Honorários técnicos", "-", fmtEur(ind.honorarios_tecnicos || 0)],
+      (() => {
+        const pct = ind.honorarios_tecnicos_pct;
+        const val = pct != null ? ci * (pct || 0) : (ind.honorarios_tecnicos || 0);
+        return pct != null
+          ? [`Honorários técnicos (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          : ["Honorários técnicos", "-", fmtEur(val)];
+      })(),
       [`Seguros (${fmtPct(ind.seguros_pct)})`, fmtEur(ci), fmtEur(ci * (ind.seguros_pct || 0))],
-      ["Financeiros", "-", fmtEur(ind.financeiros || 0)],
+      (() => {
+        const pct = ind.financeiros_pct;
+        const val = pct != null ? ci * (pct || 0) : (ind.financeiros || 0);
+        return pct != null
+          ? [`Financeiros (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          : ["Financeiros", "-", fmtEur(val)];
+      })(),
       [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)})`, fmtEur(ci), fmtEur(ci * (ind.taxas_impostos_prediais_pct || 0))],
       [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)})`, fmtEur(vv), fmtEur(vv * (ind.publicidade_marketing_pct || 0))],
-      ["Honorários de Gestão", "-", fmtEur(ind.honorarios_gestao || 0)],
+      (() => {
+        const pct = ind.honorarios_gestao_pct;
+        const val = pct != null ? ci * (pct || 0) : (ind.honorarios_gestao || 0);
+        return pct != null
+          ? [`Honorários de Gestão (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          : ["Honorários de Gestão", "-", fmtEur(val)];
+      })(),
       [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)})`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_pct || 0))],
-      ["Garantias Pós-Venda", "-", fmtEur(ind.garantias_pos_venda || 0)],
+      (() => {
+        const pct = ind.garantias_pos_venda_pct;
+        const val = pct != null ? ci * (pct || 0) : (ind.garantias_pos_venda || 0);
+        return pct != null
+          ? [`Garantias Pós-Venda (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          : ["Garantias Pós-Venda", "-", fmtEur(val)];
+      })(),
     ],
+
     foot: [["Subtotal (3) Indirectos", "", fmtEur(totals.total_indirectos)]],
     theme: "striped",
     headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
