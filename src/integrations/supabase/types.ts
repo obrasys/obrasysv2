@@ -7218,6 +7218,183 @@ export type Database = {
           },
         ]
       }
+      mce_budget_objetivo_updates: {
+        Row: {
+          applied_at: string
+          applied_by: string | null
+          applied_by_name: string | null
+          budget_version_id: string | null
+          deviation_pct: number
+          deviation_value: number
+          id: string
+          justification: string
+          mce_id: string
+          new_value: number
+          organization_id: string
+          previous_value: number
+        }
+        Insert: {
+          applied_at?: string
+          applied_by?: string | null
+          applied_by_name?: string | null
+          budget_version_id?: string | null
+          deviation_pct?: number
+          deviation_value?: number
+          id?: string
+          justification: string
+          mce_id: string
+          new_value?: number
+          organization_id: string
+          previous_value?: number
+        }
+        Update: {
+          applied_at?: string
+          applied_by?: string | null
+          applied_by_name?: string | null
+          budget_version_id?: string | null
+          deviation_pct?: number
+          deviation_value?: number
+          id?: string
+          justification?: string
+          mce_id?: string
+          new_value?: number
+          organization_id?: string
+          previous_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_budget_objetivo_updates_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_contract_links: {
+        Row: {
+          contract_number: string | null
+          contract_type: string
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          mce_id: string
+          nif: string | null
+          notes: string | null
+          organization_id: string
+          signed_at: string | null
+          signed_by_name: string | null
+          supplier_id: string | null
+          supplier_name_snapshot: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          contract_number?: string | null
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          mce_id: string
+          nif?: string | null
+          notes?: string | null
+          organization_id: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          supplier_id?: string | null
+          supplier_name_snapshot?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          contract_number?: string | null
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          mce_id?: string
+          nif?: string | null
+          notes?: string | null
+          organization_id?: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          supplier_id?: string | null
+          supplier_name_snapshot?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_contract_links_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_financial_control: {
+        Row: {
+          awarded_value: number
+          created_at: string
+          executed_value: number
+          id: string
+          invoiced_pct: number
+          invoiced_value: number
+          last_update_notes: string | null
+          mce_id: string
+          organization_id: string
+          paid_pct: number
+          paid_value: number
+          pending_value: number
+          updated_at: string
+        }
+        Insert: {
+          awarded_value?: number
+          created_at?: string
+          executed_value?: number
+          id?: string
+          invoiced_pct?: number
+          invoiced_value?: number
+          last_update_notes?: string | null
+          mce_id: string
+          organization_id: string
+          paid_pct?: number
+          paid_value?: number
+          pending_value?: number
+          updated_at?: string
+        }
+        Update: {
+          awarded_value?: number
+          created_at?: string
+          executed_value?: number
+          id?: string
+          invoiced_pct?: number
+          invoiced_value?: number
+          last_update_notes?: string | null
+          mce_id?: string
+          organization_id?: string
+          paid_pct?: number
+          paid_value?: number
+          pending_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_financial_control_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: true
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mce_items: {
         Row: {
           budget_line_id: string | null
@@ -14302,8 +14479,22 @@ export type Database = {
         Args: { p_orcamento_id: string }
         Returns: number
       }
+      apply_mce_to_budget_objetivo: {
+        Args: { _justification: string; _mce_id: string; _new_value: number }
+        Returns: Json
+      }
       approve_base_dry_budget: {
         Args: { p_orcamento_id: string }
+        Returns: Json
+      }
+      award_mce: {
+        Args: {
+          _awarded_value: number
+          _contract_number?: string
+          _mce_id: string
+          _notes?: string
+          _signed_at?: string
+        }
         Returns: Json
       }
       buscar_historico_match: {
