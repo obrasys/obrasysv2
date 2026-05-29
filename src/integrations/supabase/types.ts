@@ -5680,7 +5680,7 @@ export type Database = {
           id: string
           nome: string
           notas_tecnicas: string | null
-          obra_id: string
+          obra_id: string | null
           recobrimento_mm: number | null
           regras_desconto_vaos: Json | null
           status: string
@@ -5703,7 +5703,7 @@ export type Database = {
           id?: string
           nome: string
           notas_tecnicas?: string | null
-          obra_id: string
+          obra_id?: string | null
           recobrimento_mm?: number | null
           regras_desconto_vaos?: Json | null
           status?: string
@@ -5726,7 +5726,7 @@ export type Database = {
           id?: string
           nome?: string
           notas_tecnicas?: string | null
-          obra_id?: string
+          obra_id?: string | null
           recobrimento_mm?: number | null
           regras_desconto_vaos?: Json | null
           status?: string
