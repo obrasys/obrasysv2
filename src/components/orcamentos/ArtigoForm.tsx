@@ -44,7 +44,7 @@ const formSchema = z.object({
   custo_srv: z.number().min(0).optional(),
   custo_alu: z.number().min(0).optional(),
   custo_div: z.number().min(0).optional(),
-  quantity_source: z.enum(['manual', 'parametric']).optional(),
+  quantity_source: z.enum(['manual', 'parametric', 'icf_parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
   linked_rule_id: z.string().nullable().optional(),
 });
