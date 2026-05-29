@@ -286,7 +286,9 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
     aprovacao_inicial_data: null,
     assinatura_url: "",
     notas: "",
+    percentagem_lucro_admin: 0.20,
   },
+
   quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
   site_costs: DEFAULT_SITE_COST_LINES,
