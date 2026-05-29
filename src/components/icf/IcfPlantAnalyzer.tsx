@@ -27,7 +27,7 @@ export function IcfPlantAnalyzer({
 }: IcfPlantAnalyzerProps) {
   const { user, organization } = useAuth();
   const { toast } = useToast();
-  const { plans, isLoading: plansLoading } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading } = usePlanImports(obraId || '');
   const {
     analyze,
     isAnalyzing,
@@ -42,13 +42,14 @@ export function IcfPlantAnalyzer({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const empresaId = organization?.id || '';
+  const hasObra = !!obraId;
 
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
     if (!plan) return;
     analyze({
       filePath: plan.file_path,
-      obraId,
+      obraId: obraId || null,
       configuracaoId,
       espessuraNucleo,
       classeBetao,
@@ -63,13 +64,14 @@ export function IcfPlantAnalyzer({
     setIsUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'pdf';
-      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${ext}`;
+      const folder = obraId || 'standalone';
+      const filePath = `${user.id}/${folder}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
       analyze({
         filePath,
-        obraId,
+        obraId: obraId || null,
         configuracaoId,
         espessuraNucleo,
         classeBetao,
