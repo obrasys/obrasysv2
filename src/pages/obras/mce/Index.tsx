@@ -114,6 +114,8 @@ export default function MCEIndex() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }
+
