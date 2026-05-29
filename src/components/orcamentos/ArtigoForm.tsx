@@ -110,8 +110,25 @@ export function ArtigoForm({
       linked_element_id: null,
       linked_rule_id: null,
       ...defaultValues,
+      // Garantir unidade válida — evita falha silenciosa de validação no Guardar
+      unidade: defaultValues?.unidade && String(defaultValues.unidade).trim() !== ''
+        ? defaultValues.unidade
+        : 'un',
     },
   });
+
+  // Surface validation errors so o botão Guardar nunca pareça inerte
+  const handleInvalid = (errors: any) => {
+    const first = Object.values(errors)[0] as any;
+    const msg = first?.message || 'Verifique os campos do formulário.';
+    console.warn('[ArtigoForm] validation errors', errors);
+    if (typeof window !== 'undefined') {
+      // dynamic import to avoid circular deps
+      import('@/hooks/use-toast').then(({ toast }) =>
+        toast({ title: 'Não foi possível gravar', description: String(msg), variant: 'destructive' }),
+      );
+    }
+  };
 
   // Auto-soma da decomposição → preco_base (quando o utilizador preenche os 6 componentes)
   const cMo  = form.watch('custo_mo')  ?? 0;
