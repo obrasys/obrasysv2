@@ -47,7 +47,7 @@ export interface IcfPlantAnalysisResult {
 
 interface AnalyzeParams {
   filePath: string;
-  obraId: string;
+  obraId?: string | null;
   configuracaoId: string;
   espessuraNucleo: number;
   classeBetao: string;
