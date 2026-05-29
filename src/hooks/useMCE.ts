@@ -76,6 +76,20 @@ export function useCreateMCE() {
       const { data: obra } = await supabase
         .from('obras').select('id, nome, endereco').eq('id', input.obra_id).maybeSingle();
 
+      // Find latest awarded budget for this obra (to seed reference + items)
+      const { data: awardedBudget } = await supabase
+        .from('orcamentos')
+        .select('id, titulo, codigo, valor_adjudicado, valor_total')
+        .eq('obra_id', input.obra_id)
+        .eq('status', 'adjudicado')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const contractualRef = awardedBudget
+        ? `${awardedBudget.codigo ?? ''}${awardedBudget.codigo && awardedBudget.titulo ? ' · ' : ''}${awardedBudget.titulo ?? ''}`.trim() || null
+        : null;
+
       const { data, error } = await supabase
         .from('mce_maps')
         .insert({
@@ -86,6 +100,8 @@ export function useCreateMCE() {
           category: input.category ?? null,
           work_name: obra?.nome ?? null,
           work_location: obra?.endereco ?? null,
+          source_budget_id: awardedBudget?.id ?? null,
+          contractual_reference: contractualRef,
           created_by: user.id,
         })
         .select('id')
@@ -100,6 +116,54 @@ export function useCreateMCE() {
       }));
       await supabase.from('mce_suppliers').insert(seedSup);
 
+      // Seed items from awarded budget articles
+      if (awardedBudget?.id) {
+        const { data: capitulos } = await supabase
+          .from('capitulos_orcamento')
+          .select('id, ordem')
+          .eq('orcamento_id', awardedBudget.id)
+          .order('ordem');
+
+        const capIds = (capitulos ?? []).map((c: any) => c.id);
+        if (capIds.length > 0) {
+          const { data: artigos } = await supabase
+            .from('artigos_orcamento')
+            .select('id, capitulo_id, codigo, descricao, unidade, quantidade, preco_unitario, valor_total, ordem')
+            .in('capitulo_id', capIds);
+
+          const capOrder = new Map<string, number>(
+            (capitulos ?? []).map((c: any, i: number) => [c.id, c.ordem ?? i])
+          );
+          const sorted = (artigos ?? []).slice().sort((a: any, b: any) => {
+            const ca = capOrder.get(a.capitulo_id) ?? 0;
+            const cb = capOrder.get(b.capitulo_id) ?? 0;
+            if (ca !== cb) return ca - cb;
+            return (a.ordem ?? 0) - (b.ordem ?? 0);
+          });
+
+          if (sorted.length > 0) {
+            const itemsPayload = sorted.map((a: any, i: number) => {
+              const qty = Number(a.quantidade) || 0;
+              const pu = Number(a.preco_unitario) || 0;
+              const total = a.valor_total != null ? Number(a.valor_total) : qty * pu;
+              return {
+                mce_id: data.id,
+                budget_line_id: a.id,
+                quantity: qty,
+                unit: a.unidade ?? null,
+                specification: [a.codigo, a.descricao].filter(Boolean).join(' — ') || null,
+                dry_budget_quantity: qty,
+                dry_budget_unit_price: pu,
+                dry_budget_total: total,
+                sort_order: i,
+              };
+            });
+            const { error: itErr } = await supabase.from('mce_items').insert(itemsPayload);
+            if (itErr) console.error('Erro a semear itens MCE:', itErr);
+          }
+        }
+      }
+
       return data.id as string;
     },
     onSuccess: (_id, vars) => {
@@ -109,6 +173,7 @@ export function useCreateMCE() {
     onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
   });
 }
+
 
 export function useUpdateMCEMap() {
   const qc = useQueryClient();
