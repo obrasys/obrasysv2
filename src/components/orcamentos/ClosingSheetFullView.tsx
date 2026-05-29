@@ -1037,6 +1037,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.indirect.seguros_pct * 100}
               onChange={(v) => patch("indirect", { ...details.indirect, seguros_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.indirect.seguros_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Custos Financeiros (€)</Label>
