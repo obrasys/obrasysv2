@@ -21,6 +21,7 @@ import {
   type MceCategory, type MceMap, type MceSupplier, type MceItem,
 } from '@/types/mce';
 import { cn } from '@/lib/utils';
+import { MCEApprovalsPanel } from '@/components/mce/MCEApprovalsPanel';
 
 const fmtEUR = (n: number) =>
   new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
