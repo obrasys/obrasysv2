@@ -1296,8 +1296,167 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(totals.custo_total)}</p>
         </div>
 
+        {/* PROPOSTA VENDAS sobre o CUSTO TOTAL DA OBRA */}
+        {(() => {
+          const lucroPct = Number(details.validation.percentagem_lucro_alvo) || 0;
+          const custoTotal = Number(totals.custo_total) || 0;
+          const propostaVendas = lucroPct < 1 ? custoTotal / (1 - lucroPct) : 0;
+          const abpFromSales = details.sales.reduce(
+            (s, l) => s + (Number(l.quantidade) || 0) * (Number(l.area_priv) || 0),
+            0,
+          );
+          const abpEffective = details.statistics.area_construcao_override
+            ? (details.statistics.area_construcao || 0)
+            : abpFromSales;
+          const numFraccoes = Number(details.header.num_fraccoes) ||
+            details.sales.reduce((s, l) => s + (Number(l.quantidade) || 0), 0);
+          const valorM2 = abpEffective > 0 ? propostaVendas / abpEffective : 0;
+          const valorUn = numFraccoes > 0 ? propostaVendas / numFraccoes : 0;
+          const lucroPctInput = lucroPct * 100;
+          const setLucro = (v: number) =>
+            patch("validation", { ...details.validation, percentagem_lucro_alvo: (v || 0) / 100 });
+
+          const Row = ({
+            roleLabel,
+            captionLeft,
+            captionRight,
+            nameValue,
+            onNameChange,
+            dateValue,
+            onDateChange,
+          }: {
+            roleLabel: string;
+            captionLeft: string;
+            captionRight: string;
+            nameValue: string;
+            onNameChange: (v: string) => void;
+            dateValue: string | null;
+            onDateChange: (v: string | null) => void;
+          }) => (
+            <div className="grid grid-cols-12 gap-2 items-stretch">
+              <div className="col-span-12 md:col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-semibold">{roleLabel}</span>
+                <div className="rounded-md bg-amber-50 border border-amber-200 px-2 py-2 text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-amber-900/70 font-semibold">% Lucro</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <input
+                      type="number"
+                      step="0.01"
+                      readOnly={readOnly}
+                      value={Number.isFinite(lucroPctInput) ? lucroPctInput : 0}
+                      onChange={(e) => setLucro(Number(e.target.value))}
+                      className="w-16 bg-transparent text-center text-lg font-bold text-amber-900 outline-none tabular-nums"
+                    />
+                    <span className="text-lg font-bold text-amber-900">%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="col-span-12 md:col-span-7 flex flex-col">
+                <p className="text-[11px] italic text-muted-foreground text-center mb-1">{captionLeft}</p>
+                <div className="flex-1 rounded-md bg-muted/60 border border-border flex items-center justify-center px-3 py-3">
+                  <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(propostaVendas)}</p>
+                </div>
+                <div className="mt-2 grid grid-cols-[60px_1fr_90px_140px] gap-2 items-center text-xs">
+                  <Label className="text-xs">Ass.:</Label>
+                  <TextCell readOnly={readOnly} value={nameValue} onChange={onNameChange} />
+                  <Label className="text-xs text-right">DATA:</Label>
+                  <Input
+                    type="date"
+                    readOnly={readOnly}
+                    value={dateValue ?? ""}
+                    onChange={(e) => onDateChange(e.target.value || null)}
+                    className="h-8"
+                  />
+                </div>
+              </div>
+              <div className="col-span-12 md:col-span-3 flex flex-col">
+                <p className="text-[11px] italic text-muted-foreground text-right mb-1">{captionRight}</p>
+                <div className="flex-1 rounded-md bg-muted/60 border border-border px-3 py-3 text-right">
+                  <p className="text-base md:text-lg font-bold tabular-nums">{fmt(valorM2)} €/m²</p>
+                  <p className="text-base md:text-lg font-bold tabular-nums">{fmt(valorUn)} €/un</p>
+                </div>
+              </div>
+            </div>
+          );
+
+          return (
+            <Section
+              id="proposta-vendas"
+              title="Proposta Vendas sobre o Custo Total da Obra (projeto base)"
+              collapsed={isCol("proposta-vendas")}
+              onToggle={() => toggleSection("proposta-vendas")}
+            >
+              <div className="space-y-4">
+                <Row
+                  roleLabel="Direção Geral"
+                  captionLeft="Validação Técnico-Económica"
+                  captionRight="Valor Médio / fração"
+                  nameValue={details.validation.direccao_geral}
+                  onNameChange={(v) => patch("validation", { ...details.validation, direccao_geral: v })}
+                  dateValue={details.approvals.aprovacao_inicial_data}
+                  onDateChange={(v) => patch("approvals", { ...details.approvals, aprovacao_inicial_data: v })}
+                />
+                <Row
+                  roleLabel="Administração"
+                  captionLeft="Aprovação Inicial"
+                  captionRight="Valor Médio / fração"
+                  nameValue={details.approvals.administracao_nome}
+                  onNameChange={(v) => patch("approvals", { ...details.approvals, administracao_nome: v })}
+                  dateValue={details.approvals.administracao_data}
+                  onDateChange={(v) => patch("approvals", { ...details.approvals, administracao_data: v })}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2 border-t">
+                  <div>
+                    <Label>Validador Técnico-Económico</Label>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={details.validation.validador_tecnico_economico}
+                      onChange={(v) =>
+                        patch("validation", { ...details.validation, validador_tecnico_economico: v })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Aprovação Inicial - Nome</Label>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={details.approvals.aprovacao_inicial_nome}
+                      onChange={(v) =>
+                        patch("approvals", { ...details.approvals, aprovacao_inicial_nome: v })
+                      }
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Observações</Label>
+                    <Textarea
+                      readOnly={readOnly}
+                      rows={2}
+                      value={details.validation.observacoes}
+                      onChange={(e) =>
+                        patch("validation", { ...details.validation, observacoes: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Notas de Aprovação</Label>
+                    <Textarea
+                      readOnly={readOnly}
+                      rows={2}
+                      value={details.approvals.notas}
+                      onChange={(e) =>
+                        patch("approvals", { ...details.approvals, notas: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </Section>
+          );
+        })()}
+
         {/* MAPA DE VENDAS */}
         <Section id="vendas" title="Mapa de Vendas Comercial - Decomposição das Frações" collapsed={isCol("vendas")} onToggle={() => toggleSection("vendas")} total={totals.valor_vendas} totalLabel="Vendas">
+
         <Table>
           <TableHeader>
             <TableRow>
