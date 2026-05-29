@@ -1035,18 +1035,6 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
 
           <div>
-            <Label>Seguros (% s/ C. Directos)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.seguros_pct * 100}
-              onChange={(v) => patch("indirect", { ...details.indirect, seguros_pct: v / 100 })}
-            />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.total_directos || 0) * (details.indirect.seguros_pct || 0))}
-            </p>
-          </div>
-          <div>
             <Label>Custos Financeiros (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
@@ -1056,41 +1044,6 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
               = {fmt((totals.total_directos || 0) * (details.indirect.financeiros_pct ?? 0))}
-            </p>
-          </div>
-
-          <div>
-            <Label>Taxas/Impostos/Encargos Prediais (% s/ C. Directos)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.taxas_impostos_prediais_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  taxas_impostos_prediais_pct: v / 100,
-                })
-              }
-            />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.total_directos || 0) * (details.indirect.taxas_impostos_prediais_pct || 0))}
-            </p>
-          </div>
-          <div>
-            <Label>Publicidade / Marketing (% s/ C. Directos)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.publicidade_marketing_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  publicidade_marketing_pct: v / 100,
-                })
-              }
-            />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.total_directos || 0) * (details.indirect.publicidade_marketing_pct || 0))}
             </p>
           </div>
           <div>
@@ -1106,23 +1059,6 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
 
-          <div>
-            <Label>Honorários Comercialização (% s/ C. Directos)</Label>
-            <NumCell
-              readOnly={readOnly}
-              step="0.001"
-              value={details.indirect.honorarios_comercializacao_pct * 100}
-              onChange={(v) =>
-                patch("indirect", {
-                  ...details.indirect,
-                  honorarios_comercializacao_pct: v / 100,
-                })
-              }
-            />
-            <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.total_directos || 0) * (details.indirect.honorarios_comercializacao_pct || 0))}
-            </p>
-          </div>
           <div>
             <Label>Garantias / Pós-Venda (% s/ constr.)</Label>
             <NumCell
