@@ -55,6 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { icon: Users, label: "Clientes", href: "/clientes" },
       { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
+      { icon: Blocks, label: "ICF", href: "/icf" },
       { icon: Database, label: "Base de Preços", href: "/base-precos" },
     ],
   },
@@ -68,7 +69,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { icon: ClipboardCheck, label: "Autos de Medição", href: "/autos-medicao" },
       { icon: Clock, label: "Livro de Ponto", href: "/livro-ponto" },
       { icon: Shield, label: "Conformidade", href: "/conformidade" },
-      { icon: Blocks, label: "ICF", href: "/icf" },
     ],
   },
   {
