@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, History, CheckCircle2, Lock, GitBranch, FileCheck2, Target, Package, ShoppingCart, Gavel } from "lucide-react";
+import { Loader2, History, CheckCircle2, Lock, GitBranch, FileCheck2, Target, Package, ShoppingCart, Gavel, FilePlus2, Send } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useBudgetEvents } from "@/hooks/useBudgetEvents";
@@ -10,6 +10,8 @@ interface Props {
 }
 
 const EVENT_META: Record<string, { label: string; icon: any; cls: string }> = {
+  budget_created: { label: "Orçamento criado", icon: FilePlus2, cls: "text-blue-600 bg-blue-50" },
+  budget_submitted_for_review: { label: "Submetido para revisão", icon: Send, cls: "text-blue-600 bg-blue-50" },
   budget_approved: { label: "Orçamento aprovado", icon: CheckCircle2, cls: "text-emerald-600 bg-emerald-50" },
   budget_locked: { label: "Versão bloqueada", icon: Lock, cls: "text-amber-700 bg-amber-50" },
   initial_closing_sheet_created: { label: "Folha de Fecho Inicial criada", icon: FileCheck2, cls: "text-blue-600 bg-blue-50" },
@@ -18,11 +20,51 @@ const EVENT_META: Record<string, { label: string; icon: any; cls: string }> = {
   target_budget_superseded: { label: "Versão substituída", icon: GitBranch, cls: "text-muted-foreground bg-muted" },
   target_budget_activated: { label: "Versão ativada", icon: CheckCircle2, cls: "text-emerald-600 bg-emerald-50" },
   package_created: { label: "Pacote de contratação criado", icon: Package, cls: "text-purple-600 bg-purple-50" },
+  quote_received: { label: "Cotação recebida", icon: FileCheck2, cls: "text-blue-600 bg-blue-50" },
+  package_awarded: { label: "Pacote adjudicado", icon: Gavel, cls: "text-emerald-700 bg-emerald-50" },
   award_confirmed: { label: "Adjudicação confirmada", icon: Gavel, cls: "text-emerald-700 bg-emerald-50" },
   purchase_registered: { label: "Compra registada", icon: ShoppingCart, cls: "text-blue-700 bg-blue-50" },
+  variance_recalculated: { label: "Variação recalculada", icon: GitBranch, cls: "text-muted-foreground bg-muted" },
   final_closing_sheet_created: { label: "Folha de Fecho Final criada", icon: FileCheck2, cls: "text-amber-700 bg-amber-50" },
   final_closing_sheet_locked: { label: "Folha de Fecho Final bloqueada", icon: Lock, cls: "text-amber-800 bg-amber-50" },
 };
+
+const fmtEUR = (v: number) =>
+  new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
+
+function summarizeEvent(eventType: string, payload: any): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const parts: string[] = [];
+  const push = (label: string, value: any) => {
+    if (value === null || value === undefined || value === "") return;
+    parts.push(`${label}: ${value}`);
+  };
+  switch (eventType) {
+    case "purchase_registered":
+      push("Fatura", payload.invoice_number);
+      if (typeof payload.total_amount === "number") push("Total", fmtEUR(payload.total_amount));
+      break;
+    case "package_awarded":
+    case "award_confirmed":
+      if (typeof payload.awarded_total === "number") push("Adjudicado", fmtEUR(payload.awarded_total));
+      if (typeof payload.estimated_total === "number") push("Estimado", fmtEUR(payload.estimated_total));
+      break;
+    case "package_created":
+      push("Nome", payload.name);
+      if (typeof payload.items === "number") push("Itens", payload.items);
+      if (typeof payload.estimated_total === "number") push("Estimado", fmtEUR(payload.estimated_total));
+      break;
+    case "quote_received":
+      push("Fornecedor", payload.supplier_name);
+      if (typeof payload.total === "number") push("Total", fmtEUR(payload.total));
+      break;
+    default:
+      if (payload.name) push("Nome", payload.name);
+      if (payload.title) push("Título", payload.title);
+      if (typeof payload.total === "number") push("Total", fmtEUR(payload.total));
+  }
+  return parts.length ? parts.join(" · ") : null;
+}
 
 export function BudgetHistoryPanel({ orcamentoId }: Props) {
   const { data: events = [], isLoading } = useBudgetEvents(orcamentoId);
