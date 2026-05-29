@@ -281,6 +281,7 @@ export async function exportClosingSheetPDF(params: {
   h2("(3) Custos Indirectos");
   const ind = details.indirect;
   const ci = totals.custo_industrial;
+  const cd = totals.total_directos;
   const vv = totals.valor_vendas;
   autoTable(doc, {
     startY: y,
@@ -289,34 +290,34 @@ export async function exportClosingSheetPDF(params: {
     body: [
       (() => {
         const pct = ind.honorarios_tecnicos_pct;
-        const val = pct != null ? ci * (pct || 0) : (ind.honorarios_tecnicos || 0);
+        const val = pct != null ? cd * (pct || 0) : (ind.honorarios_tecnicos || 0);
         return pct != null
-          ? [`Honorários técnicos (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          ? [`Honorários técnicos (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários técnicos", "-", fmtEur(val)];
       })(),
       [`Seguros (${fmtPct(ind.seguros_pct)})`, fmtEur(ci), fmtEur(ci * (ind.seguros_pct || 0))],
       (() => {
         const pct = ind.financeiros_pct;
-        const val = pct != null ? ci * (pct || 0) : (ind.financeiros || 0);
+        const val = pct != null ? cd * (pct || 0) : (ind.financeiros || 0);
         return pct != null
-          ? [`Financeiros (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          ? [`Financeiros (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Financeiros", "-", fmtEur(val)];
       })(),
       [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)})`, fmtEur(ci), fmtEur(ci * (ind.taxas_impostos_prediais_pct || 0))],
       [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)})`, fmtEur(vv), fmtEur(vv * (ind.publicidade_marketing_pct || 0))],
       (() => {
         const pct = ind.honorarios_gestao_pct;
-        const val = pct != null ? ci * (pct || 0) : (ind.honorarios_gestao || 0);
+        const val = pct != null ? cd * (pct || 0) : (ind.honorarios_gestao || 0);
         return pct != null
-          ? [`Honorários de Gestão (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          ? [`Honorários de Gestão (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários de Gestão", "-", fmtEur(val)];
       })(),
       [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)})`, fmtEur(vv), fmtEur(vv * (ind.honorarios_comercializacao_pct || 0))],
       (() => {
         const pct = ind.garantias_pos_venda_pct;
-        const val = pct != null ? ci * (pct || 0) : (ind.garantias_pos_venda || 0);
+        const val = pct != null ? cd * (pct || 0) : (ind.garantias_pos_venda || 0);
         return pct != null
-          ? [`Garantias Pós-Venda (${fmtPct(pct)})`, fmtEur(ci), fmtEur(val)]
+          ? [`Garantias Pós-Venda (${fmtPct(pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(val)]
           : ["Garantias Pós-Venda", "-", fmtEur(val)];
       })(),
     ],
