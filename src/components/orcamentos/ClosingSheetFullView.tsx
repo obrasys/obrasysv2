@@ -1022,7 +1022,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Honorários Técnicos (€)</Label>
+            <Label>Honorários Técnicos (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.honorarios_tecnicos}
