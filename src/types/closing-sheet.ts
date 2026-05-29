@@ -30,15 +30,24 @@ export interface ClosingTerrainCosts {
 }
 
 export interface ClosingIndirectCosts {
+  /** @deprecated usar honorarios_tecnicos_pct (% s/ construção) */
   honorarios_tecnicos: number;
+  honorarios_tecnicos_pct?: number; // sobre construção (custo industrial)
   seguros_pct: number;
+  /** @deprecated usar financeiros_pct (% s/ construção) */
   financeiros: number;
+  financeiros_pct?: number; // sobre construção
   taxas_impostos_prediais_pct: number;
   publicidade_marketing_pct: number; // sobre vendas
+  /** @deprecated usar honorarios_gestao_pct (% s/ construção) */
   honorarios_gestao: number;
+  honorarios_gestao_pct?: number; // sobre construção
   honorarios_comercializacao_pct: number; // sobre vendas
+  /** @deprecated usar garantias_pos_venda_pct (% s/ construção) */
   garantias_pos_venda: number;
+  garantias_pos_venda_pct?: number; // sobre construção
 }
+
 
 export interface ClosingOtherCosts {
   contratos_registos: number;
