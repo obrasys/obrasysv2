@@ -233,3 +233,9 @@
   from { opacity: 0; transform: translateX(-30px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Fix Radix UI bug: pointer-events: none lingers on body after closing
+   Select/Dialog/Popover, causing all buttons on the page to become unclickable */
+body[style*="pointer-events: none"] {
+  pointer-events: auto !important;
+}
