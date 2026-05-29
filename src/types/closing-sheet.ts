@@ -56,10 +56,14 @@ export interface ClosingIndirectCosts {
 
 
 export interface ClosingOtherCosts {
+  /** @deprecated usar contratos_registos_vendas_pct (% s/ Vendas) */
   contratos_registos: number;
-  projectos_pct: number; // sobre constr.
+  contratos_registos_vendas_pct?: number; // % sobre Valor de Vendas
+  projectos_pct: number; // sobre constr. (custo_industrial)
   imprevistos_aleas_pct: number; // sobre custos indirectos
+  /** @deprecated usar outros_taxas_ramais_pct (% s/ constr.) */
   outros_taxas_ramais: number;
+  outros_taxas_ramais_pct?: number; // % sobre constr. (custo_industrial)
   seguranca_higiene: number;
   controlo_qualidade: number;
 }
