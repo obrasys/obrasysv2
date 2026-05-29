@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface IcfPlantAnalyzerProps {
-  obraId: string;
+  obraId?: string | null;
   configuracaoId: string;
   espessuraNucleo: number;
   classeBetao: string;
