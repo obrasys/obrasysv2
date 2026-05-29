@@ -401,7 +401,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     const callAI = async (modelName: string, mode: "tool" | "json" = "tool", timeoutMs = 60_000) => {
       const fallbackSystemPrompt = `${systemPrompt}\n\nFALLBACK CRÍTICO: se não conseguires devolver via function tool, responde APENAS com um objeto JSON válido, sem markdown nem texto antes/depois.`;
       const ctrl = new AbortController();
-      const budget = Math.min(timeoutMs, Math.max(6_000, remainingMs() - 6_000));
+      const budget = Math.min(timeoutMs, Math.max(8_000, remainingMs() - 3_000));
       const timer = setTimeout(() => ctrl.abort(), budget);
       try {
         if (remainingMs() < 6_000) {
