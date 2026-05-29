@@ -86,10 +86,10 @@ export function IcfPlantAnalyzer({
   };
 
   const handleCreateAll = () => {
-    if (!analysisResult || !obraId) return;
+    if (!analysisResult) return;
     createRecords({
       result: analysisResult,
-      obraId,
+      obraId: obraId ?? null,
       configuracaoId,
       espessuraNucleo,
     });
@@ -204,13 +204,13 @@ export function IcfPlantAnalyzer({
 
             {!hasObra && (
               <p className="text-xs text-muted-foreground border border-dashed rounded-md p-2">
-                Para guardar estes registos numa obra, associe primeiro esta configuração a uma obra. Em modo orçamento (sem obra), pode ainda usar este resumo como referência.
+                Modo orçamento (sem obra): os quantitativos serão carregados na configuração ICF para gerar o orçamento. O mapa visual de panos só é criado quando existe obra associada.
               </p>
             )}
             <div className="flex gap-2">
-              <Button onClick={handleCreateAll} disabled={isCreating || !hasObra} className="flex-1">
+              <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
-                Criar todos os registos ICF
+                Carregar para o orçamento ICF
               </Button>
               <Button variant="outline" onClick={() => setAnalysisResult(null)}>
                 Cancelar
