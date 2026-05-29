@@ -4,6 +4,7 @@ import {
   ArrowLeft, Plus, Trash2, Check, Loader2, Star, FileDown, FileSpreadsheet,
 } from 'lucide-react';
 import { exportMCEtoPDF, exportMCEtoXLSX } from '@/lib/mce/exportMCE';
+import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
