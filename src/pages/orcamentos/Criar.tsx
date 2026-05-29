@@ -89,7 +89,25 @@ export default function CriarOrcamentoPage() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
+            <Card className="border-primary/40 bg-primary/5">
+              <CardContent className="flex flex-col gap-3 p-4 h-full">
+                <div>
+                  <p className="font-semibold flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    Sistema construtivo ICF?
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Use o motor paramétrico ICF para orçamentar paredes, fundações e lajes — sem precisar de uma obra associada.
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/icf')} variant="default" className="mt-auto">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Abrir Módulo ICF
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="flex flex-col gap-3 p-4 h-full">
                 <div>
