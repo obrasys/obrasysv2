@@ -1047,13 +1047,18 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Custos Financeiros (€ s/ constr.)</Label>
+            <Label>Custos Financeiros (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.indirect.financeiros}
-              onChange={(v) => patch("indirect", { ...details.indirect, financeiros: v })}
+              step="0.001"
+              value={(details.indirect.financeiros_pct ?? 0) * 100}
+              onChange={(v) => patch("indirect", { ...details.indirect, financeiros_pct: v / 100, financeiros: 0 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.indirect.financeiros_pct ?? 0))}
+            </p>
           </div>
+
           <div>
             <Label>Taxas/Impostos/Encargos Prediais (% s/ constr.)</Label>
             <NumCell
