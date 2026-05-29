@@ -14,11 +14,17 @@ export interface IcfBudgetFinancials {
   iva_percent: number;
   /** Valor absoluto (€) para o capítulo "Estaleiros e Escavações" */
   estaleiro_valor: number;
+  /** Custos Indiretos (% sobre construção) */
+  honorarios_tecnicos_percent: number;
+  custos_financeiros_percent: number;
+  honorarios_gestao_percent: number;
+  garantias_pos_venda_percent: number;
   /** Capítulos provenientes de um template "chave-na-mão" (substitui geração paramétrica) */
   template_chapters?: IcfTemplateChapter[];
   /** Nome do template aplicado (auditoria) */
   template_nome?: string;
 }
+
 
 interface Props {
   open: boolean;
@@ -37,12 +43,17 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
   const [margem, setMargem] = useState<number>(defaults?.margem_lucro ?? 15);
   const [iva, setIva] = useState<number>(defaults?.iva_percent ?? 23);
   const [estaleiro, setEstaleiro] = useState<number>(defaults?.estaleiro_valor ?? 0);
+  const [honorariosTecnicos, setHonorariosTecnicos] = useState<number>(defaults?.honorarios_tecnicos_percent ?? 0);
+  const [custosFinanceiros, setCustosFinanceiros] = useState<number>(defaults?.custos_financeiros_percent ?? 0);
+  const [honorariosGestao, setHonorariosGestao] = useState<number>(defaults?.honorarios_gestao_percent ?? 0);
+  const [garantiasPosVenda, setGarantiasPosVenda] = useState<number>(defaults?.garantias_pos_venda_percent ?? 0);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('none');
 
   const [showSave, setShowSave] = useState(false);
   const [presetNome, setPresetNome] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
+
 
   useEffect(() => {
     if (!open || !presets?.length || selectedPresetId) return;
@@ -101,10 +112,15 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
       estaleiro_valor: Number(estaleiro) || 0,
+      honorarios_tecnicos_percent: Number(honorariosTecnicos) || 0,
+      custos_financeiros_percent: Number(custosFinanceiros) || 0,
+      honorarios_gestao_percent: Number(honorariosGestao) || 0,
+      garantias_pos_venda_percent: Number(garantiasPosVenda) || 0,
       template_chapters: selectedTemplate?.capitulos,
       template_nome: selectedTemplate?.nome,
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,6 +202,33 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
             <Input id="estaleiro" type="number" min={0} step="0.01" value={estaleiro} onChange={(e) => setEstaleiro(parseFloat(e.target.value))} />
             <p className="text-xs text-muted-foreground">Valor fixo (€) - capítulo separado e editável: preparação de estaleiro, marcação e escavação às cotas.</p>
           </div>
+
+          {/* Custos Indiretos (3) - % sobre construção */}
+          <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Custos Indiretos (3)
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="honorarios-tecnicos" className="text-xs">Honorários Técnicos (€ s/ constr.)</Label>
+                <Input id="honorarios-tecnicos" type="number" min={0} step="0.01" value={honorariosTecnicos} onChange={(e) => setHonorariosTecnicos(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="custos-financeiros" className="text-xs">Custos Financeiros (€ s/ constr.)</Label>
+                <Input id="custos-financeiros" type="number" min={0} step="0.01" value={custosFinanceiros} onChange={(e) => setCustosFinanceiros(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="honorarios-gestao" className="text-xs">Honorários Gestão (€ s/ constr.)</Label>
+                <Input id="honorarios-gestao" type="number" min={0} step="0.01" value={honorariosGestao} onChange={(e) => setHonorariosGestao(parseFloat(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="garantias-pos-venda" className="text-xs">Garantias / Pós-Venda (€ s/ constr.)</Label>
+                <Input id="garantias-pos-venda" type="number" min={0} step="0.01" value={garantiasPosVenda} onChange={(e) => setGarantiasPosVenda(parseFloat(e.target.value))} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Valores em € aplicados sobre o custo de construção.</p>
+          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="margem">Margem de Lucro (%)</Label>

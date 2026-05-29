@@ -229,6 +229,10 @@ export function useGenerateIcfBudget() {
       margem_lucro = 15,
       iva_percent = 23,
       estaleiro_valor = 0,
+      honorarios_tecnicos_percent = 0,
+      custos_financeiros_percent = 0,
+      honorarios_gestao_percent = 0,
+      garantias_pos_venda_percent = 0,
       scope,
       template_chapters,
       template_nome,
@@ -239,11 +243,16 @@ export function useGenerateIcfBudget() {
       margem_lucro?: number;
       iva_percent?: number;
       estaleiro_valor?: number;
+      honorarios_tecnicos_percent?: number;
+      custos_financeiros_percent?: number;
+      honorarios_gestao_percent?: number;
+      garantias_pos_venda_percent?: number;
       scope?: IcfArchitectureScope;
       template_chapters?: Array<{ titulo: string; descricao?: string; valor: number; prazo?: string }>;
       template_nome?: string;
     }) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
+
 
       // 1. Carregar base de preços do utilizador
       const { data: precosData } = await supabase
@@ -343,7 +352,12 @@ export function useGenerateIcfBudget() {
             licenciamento: 0,
             iva_percent,
             indiretos_percent: 0,
+            honorarios_tecnicos: honorarios_tecnicos_percent,
+            custos_financeiros: custos_financeiros_percent,
+            honorarios_gestao: honorarios_gestao_percent,
+            garantias_pos_venda: garantias_pos_venda_percent,
           },
+
           p_chapters: chapters as any,
           p_config_snapshot: {
             id: config.id,
