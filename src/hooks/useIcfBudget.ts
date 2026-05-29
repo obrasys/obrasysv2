@@ -333,7 +333,7 @@ export function useGenerateIcfBudget() {
       const { data: result, error: rpcErr } = await supabase.rpc(
         'generate_icf_budget_transactional',
         {
-          p_obra_id: obraId,
+          p_obra_id: obraId ?? null,
           p_configuracao_id: config.id,
           p_titulo: titulo,
           p_margem_lucro: margem_lucro,
