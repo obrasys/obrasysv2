@@ -331,7 +331,7 @@ export async function exportClosingSheetPDF(params: {
       o.contratos_registos_vendas_pct !== undefined && o.contratos_registos_vendas_pct !== null
         ? [`Contratos / Registos (${fmtPct(o.contratos_registos_vendas_pct)} s/ Vendas)`, fmtEur(totals.valor_vendas), fmtEur((totals.valor_vendas || 0) * (o.contratos_registos_vendas_pct || 0))]
         : ["Contratos e Registos", "-", fmtEur(o.contratos_registos || 0)],
-      [`Imprevistos / Áleas (${fmtPct(o.imprevistos_aleas_pct)} s/ Ind)`, fmtEur(totals.total_indirectos), fmtEur(totals.total_indirectos * (o.imprevistos_aleas_pct || 0))],
+      [`Imprevistos / Áleas (${fmtPct(o.imprevistos_aleas_pct)} s/ C.Industrial)`, fmtEur(ci), fmtEur(ci * (o.imprevistos_aleas_pct || 0))],
       o.outros_taxas_ramais_pct !== undefined && o.outros_taxas_ramais_pct !== null
         ? [`Outros (Taxas, Ramais...) (${fmtPct(o.outros_taxas_ramais_pct)} s/ constr.)`, fmtEur(ci), fmtEur(ci * (o.outros_taxas_ramais_pct || 0))]
         : ["Outras taxas / Ramais", "-", fmtEur(o.outros_taxas_ramais || 0)],
