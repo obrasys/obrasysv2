@@ -504,6 +504,7 @@ export default function VerObraPage() {
               <TabsTrigger value="controlo" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Target className="h-3.5 w-3.5" /><span className="hidden sm:inline">Controlo</span></TabsTrigger>
               <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><DollarSign className="h-3.5 w-3.5" /><span className="hidden sm:inline">Financeiro</span></TabsTrigger>
               <TabsTrigger value="dossier" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><BookOpen className="h-3.5 w-3.5" /><span className="hidden sm:inline">Dossier</span></TabsTrigger>
+              <TabsTrigger value="mce" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">MCE</span></TabsTrigger>
             </TabsList>
 
           </div>
@@ -841,6 +842,14 @@ export default function VerObraPage() {
           {/* Tab: Dossier do Promotor */}
           <TabsContent value="dossier" className="mt-4">
             <ObraDossierTab obraId={id!} />
+          </TabsContent>
+
+          <TabsContent value="mce" className="mt-4">
+            <div className="flex justify-center">
+              <Button onClick={() => navigate(`/obras/${id}/mce`)}>
+                <FileText className="h-4 w-4 mr-2" /> Abrir Mapas Comparativos Económicos (MCE)
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
 

@@ -7099,6 +7099,395 @@ export type Database = {
         }
         Relationships: []
       }
+      mce_attachments: {
+        Row: {
+          attachment_type: string | null
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          mce_id: string
+          mce_supplier_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          attachment_type?: string | null
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          mce_id: string
+          mce_supplier_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          attachment_type?: string | null
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          mce_id?: string
+          mce_supplier_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_attachments_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mce_attachments_mce_supplier_id_fkey"
+            columns: ["mce_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "mce_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_items: {
+        Row: {
+          budget_line_id: string | null
+          created_at: string
+          dry_budget_quantity: number
+          dry_budget_total: number
+          dry_budget_unit_price: number
+          excluded: boolean
+          id: string
+          mce_id: string
+          notes: string | null
+          quantity: number
+          sort_order: number
+          specification: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_line_id?: string | null
+          created_at?: string
+          dry_budget_quantity?: number
+          dry_budget_total?: number
+          dry_budget_unit_price?: number
+          excluded?: boolean
+          id?: string
+          mce_id: string
+          notes?: string | null
+          quantity?: number
+          sort_order?: number
+          specification?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_line_id?: string | null
+          created_at?: string
+          dry_budget_quantity?: number
+          dry_budget_total?: number
+          dry_budget_unit_price?: number
+          excluded?: boolean
+          id?: string
+          mce_id?: string
+          notes?: string | null
+          quantity?: number
+          sort_order?: number
+          specification?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_items_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_maps: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          awarded_at: string | null
+          awarded_value: number
+          axia_alerts: Json | null
+          axia_summary: string | null
+          budget_line_id: string | null
+          budget_version_id: string | null
+          category: Database["public"]["Enums"]["mce_category"] | null
+          category_label: string | null
+          closed_at: string | null
+          contractual_reference: string | null
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          date_comparativo: string | null
+          date_contrato: string | null
+          date_fornecimento: string | null
+          description: string | null
+          dry_budget_total: number
+          gain_loss_percentage: number
+          gain_loss_value: number
+          id: string
+          mce_number: string | null
+          obra_id: string
+          observations: string | null
+          organization_id: string
+          project_manager_id: string | null
+          project_manager_name: string | null
+          selected_supplier_id: string | null
+          selected_supplier_total: number
+          source_budget_id: string | null
+          status: Database["public"]["Enums"]["mce_status"]
+          technical_requirements: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          work_location: string | null
+          work_lot: string | null
+          work_name: string | null
+          work_number: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          awarded_value?: number
+          axia_alerts?: Json | null
+          axia_summary?: string | null
+          budget_line_id?: string | null
+          budget_version_id?: string | null
+          category?: Database["public"]["Enums"]["mce_category"] | null
+          category_label?: string | null
+          closed_at?: string | null
+          contractual_reference?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_comparativo?: string | null
+          date_contrato?: string | null
+          date_fornecimento?: string | null
+          description?: string | null
+          dry_budget_total?: number
+          gain_loss_percentage?: number
+          gain_loss_value?: number
+          id?: string
+          mce_number?: string | null
+          obra_id: string
+          observations?: string | null
+          organization_id: string
+          project_manager_id?: string | null
+          project_manager_name?: string | null
+          selected_supplier_id?: string | null
+          selected_supplier_total?: number
+          source_budget_id?: string | null
+          status?: Database["public"]["Enums"]["mce_status"]
+          technical_requirements?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          work_location?: string | null
+          work_lot?: string | null
+          work_name?: string | null
+          work_number?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          awarded_value?: number
+          axia_alerts?: Json | null
+          axia_summary?: string | null
+          budget_line_id?: string | null
+          budget_version_id?: string | null
+          category?: Database["public"]["Enums"]["mce_category"] | null
+          category_label?: string | null
+          closed_at?: string | null
+          contractual_reference?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_comparativo?: string | null
+          date_contrato?: string | null
+          date_fornecimento?: string | null
+          description?: string | null
+          dry_budget_total?: number
+          gain_loss_percentage?: number
+          gain_loss_value?: number
+          id?: string
+          mce_number?: string | null
+          obra_id?: string
+          observations?: string | null
+          organization_id?: string
+          project_manager_id?: string | null
+          project_manager_name?: string | null
+          selected_supplier_id?: string | null
+          selected_supplier_total?: number
+          source_budget_id?: string | null
+          status?: Database["public"]["Enums"]["mce_status"]
+          technical_requirements?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          work_location?: string | null
+          work_lot?: string | null
+          work_name?: string | null
+          work_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_maps_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mce_maps_source_budget_id_fkey"
+            columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_supplier_item_prices: {
+        Row: {
+          created_at: string
+          id: string
+          mce_id: string
+          mce_item_id: string
+          mce_supplier_id: string
+          notes: string | null
+          total_price: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mce_id: string
+          mce_item_id: string
+          mce_supplier_id: string
+          notes?: string | null
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mce_id?: string
+          mce_item_id?: string
+          mce_supplier_id?: string
+          notes?: string | null
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_supplier_item_prices_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mce_supplier_item_prices_mce_item_id_fkey"
+            columns: ["mce_item_id"]
+            isOneToOne: false
+            referencedRelation: "mce_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mce_supplier_item_prices_mce_supplier_id_fkey"
+            columns: ["mce_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "mce_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mce_suppliers: {
+        Row: {
+          commercial_observations: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_selected: boolean
+          license_number: string | null
+          mce_id: string
+          nif: string | null
+          payment_terms: string | null
+          phone: string | null
+          position: number
+          proposal_status: Database["public"]["Enums"]["mce_proposal_status"]
+          proposal_total: number
+          retention: string | null
+          selection_reason: string | null
+          supplier_id: string | null
+          supplier_name_snapshot: string | null
+          updated_at: string
+        }
+        Insert: {
+          commercial_observations?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_selected?: boolean
+          license_number?: string | null
+          mce_id: string
+          nif?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          position?: number
+          proposal_status?: Database["public"]["Enums"]["mce_proposal_status"]
+          proposal_total?: number
+          retention?: string | null
+          selection_reason?: string | null
+          supplier_id?: string | null
+          supplier_name_snapshot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commercial_observations?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_selected?: boolean
+          license_number?: string | null
+          mce_id?: string
+          nif?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          position?: number
+          proposal_status?: Database["public"]["Enums"]["mce_proposal_status"]
+          proposal_total?: number
+          retention?: string | null
+          selection_reason?: string | null
+          supplier_id?: string | null
+          supplier_name_snapshot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mce_suppliers_mce_id_fkey"
+            columns: ["mce_id"]
+            isOneToOne: false
+            referencedRelation: "mce_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_module_permissions: {
         Row: {
           can_create: boolean
@@ -14208,6 +14597,27 @@ export type Database = {
         | "calculado_sistema"
         | "sugerido_axia"
         | "confirmado_utilizador"
+      mce_category: "SUB" | "SRV" | "MAT" | "MO" | "INS" | "ALU"
+      mce_proposal_status:
+        | "pendente"
+        | "recebida"
+        | "incompleta"
+        | "validada"
+        | "excluida"
+        | "selecionada"
+      mce_status:
+        | "rascunho"
+        | "em_consulta"
+        | "propostas_recebidas"
+        | "em_analise"
+        | "validacao_tecnica"
+        | "validacao_financeira"
+        | "em_aprovacao"
+        | "aprovado"
+        | "adjudicado"
+        | "em_execucao"
+        | "fechado"
+        | "cancelado"
       pricebook_status_enum: "draft" | "published" | "archived"
       quote_request_status_enum:
         | "open"
@@ -14380,6 +14790,29 @@ export const Constants = {
         "calculado_sistema",
         "sugerido_axia",
         "confirmado_utilizador",
+      ],
+      mce_category: ["SUB", "SRV", "MAT", "MO", "INS", "ALU"],
+      mce_proposal_status: [
+        "pendente",
+        "recebida",
+        "incompleta",
+        "validada",
+        "excluida",
+        "selecionada",
+      ],
+      mce_status: [
+        "rascunho",
+        "em_consulta",
+        "propostas_recebidas",
+        "em_analise",
+        "validacao_tecnica",
+        "validacao_financeira",
+        "em_aprovacao",
+        "aprovado",
+        "adjudicado",
+        "em_execucao",
+        "fechado",
+        "cancelado",
       ],
       pricebook_status_enum: ["draft", "published", "archived"],
       quote_request_status_enum: [
