@@ -1084,7 +1084,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Honorários Gestão (€)</Label>
+            <Label>Honorários Gestão (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.honorarios_gestao}
