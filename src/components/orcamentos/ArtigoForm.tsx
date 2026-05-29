@@ -95,7 +95,7 @@ export function ArtigoForm({
     defaultValues: {
       codigo: '',
       descricao: '',
-      unidade: 'un',
+      // unidade definida abaixo após o spread de defaultValues
       quantidade: 1,
       preco_base: defaultValues?.preco_base || defaultValues?.preco_unitario || 0,
       margem_lucro_artigo: defaultValues?.margem_lucro_artigo || 0,
@@ -110,8 +110,25 @@ export function ArtigoForm({
       linked_element_id: null,
       linked_rule_id: null,
       ...defaultValues,
+      // Garantir unidade válida — evita falha silenciosa de validação no Guardar
+      unidade: defaultValues?.unidade && String(defaultValues.unidade).trim() !== ''
+        ? defaultValues.unidade
+        : 'un',
     },
   });
+
+  // Surface validation errors so o botão Guardar nunca pareça inerte
+  const handleInvalid = (errors: any) => {
+    const first = Object.values(errors)[0] as any;
+    const msg = first?.message || 'Verifique os campos do formulário.';
+    console.warn('[ArtigoForm] validation errors', errors);
+    if (typeof window !== 'undefined') {
+      // dynamic import to avoid circular deps
+      import('@/hooks/use-toast').then(({ toast }) =>
+        toast({ title: 'Não foi possível gravar', description: String(msg), variant: 'destructive' }),
+      );
+    }
+  };
 
   // Auto-soma da decomposição → preco_base (quando o utilizador preenche os 6 componentes)
   const cMo  = form.watch('custo_mo')  ?? 0;
@@ -274,7 +291,7 @@ export function ArtigoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit, handleInvalid)} className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-start">
           <FormField
             control={form.control}
