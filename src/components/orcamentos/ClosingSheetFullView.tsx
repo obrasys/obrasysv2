@@ -1141,6 +1141,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               value={details.other.projectos_pct * 100}
               onChange={(v) => patch("other", { ...details.other, projectos_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.custo_industrial || 0) * (details.other.projectos_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Imprevistos / Áleas (% s/ indirectos)</Label>
@@ -1152,6 +1155,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 patch("other", { ...details.other, imprevistos_aleas_pct: v / 100 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.total_indirectos || 0) * (details.other.imprevistos_aleas_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Outros (Taxas, Ramais, Baixadas, Vistorias) (€)</Label>
