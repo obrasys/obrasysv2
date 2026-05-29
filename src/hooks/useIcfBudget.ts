@@ -352,7 +352,12 @@ export function useGenerateIcfBudget() {
             licenciamento: 0,
             iva_percent,
             indiretos_percent: 0,
+            honorarios_tecnicos: honorarios_tecnicos_percent,
+            custos_financeiros: custos_financeiros_percent,
+            honorarios_gestao: honorarios_gestao_percent,
+            garantias_pos_venda: garantias_pos_venda_percent,
           },
+
           p_chapters: chapters as any,
           p_config_snapshot: {
             id: config.id,
