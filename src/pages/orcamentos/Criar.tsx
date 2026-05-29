@@ -9,7 +9,7 @@ import { FileSpreadsheet, Map, Hammer, Building2, Check } from 'lucide-react';
 import { ImportOrcamentoModal } from '@/components/importar/ImportOrcamentoModal';
 import { toast } from 'sonner';
 import type { OrcamentoFormData } from '@/types/orcamentos';
-import { seedCanonicalChapters, type BudgetMode } from '@/lib/orcamento-seed-chapters';
+import { type BudgetMode } from '@/lib/orcamento-seed-chapters';
 import { cn } from '@/lib/utils';
 
 export default function CriarOrcamentoPage() {
@@ -19,27 +19,20 @@ export default function CriarOrcamentoPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [budgetMode, setBudgetMode] = useState<BudgetMode>('remodelacao');
 
-  const seedIfNeeded = async (orcamentoId: string) => {
-    if (budgetMode !== 'construcao_nova') return;
-    try {
-      const count = await seedCanonicalChapters(orcamentoId);
-      toast.success(`${count} capítulos canónicos adicionados`);
-    } catch (e: any) {
-      toast.error('Não foi possível semear os capítulos: ' + e.message);
-    }
-  };
+  const buildPayload = (data: OrcamentoFormData) => ({
+    ...data,
+    seed_canonical_chapters: budgetMode === 'construcao_nova',
+  });
 
   const handleSubmit = async (data: OrcamentoFormData) => {
-    const result = await createOrcamento.mutateAsync(data);
-    await seedIfNeeded(result.id);
+    const result = await createOrcamento.mutateAsync(buildPayload(data));
     navigate(`/orcamentos/${result.id}/editar`);
   };
 
   const handleSaveDraft = async (data: OrcamentoFormData) => {
     setIsSavingDraft(true);
     try {
-      const result = await createOrcamento.mutateAsync(data);
-      await seedIfNeeded(result.id);
+      await createOrcamento.mutateAsync(buildPayload(data));
       toast.success('Rascunho guardado com sucesso!');
       navigate('/orcamentos');
     } catch {
@@ -55,14 +48,14 @@ export default function CriarOrcamentoPage() {
       return;
     }
     try {
-      const result = await createOrcamento.mutateAsync(data);
-      await seedIfNeeded(result.id);
+      const result = await createOrcamento.mutateAsync(buildPayload(data));
       toast.success('Orçamento criado. Importe a planta para gerar os quantitativos.');
       navigate(`/orcamentos/${result.id}/plantas`);
     } catch {
       toast.error('Não foi possível iniciar a importação da planta.');
     }
   };
+
 
   return (
     <AppLayout title="Criar Orçamento" subtitle="Preencha as informações do novo orçamento">
