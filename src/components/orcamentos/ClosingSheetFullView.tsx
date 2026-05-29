@@ -1094,7 +1094,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Honorários Gestão (% s/ constr.)</Label>
+            <Label>Honorários Gestão (% s/ C. Directos)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1102,7 +1102,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(v) => patch("indirect", { ...details.indirect, honorarios_gestao_pct: v / 100, honorarios_gestao: 0 })}
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt((totals.custo_industrial || 0) * (details.indirect.honorarios_gestao_pct ?? 0))}
+              = {fmt((totals.total_directos || 0) * (details.indirect.honorarios_gestao_pct ?? 0))}
             </p>
           </div>
 
