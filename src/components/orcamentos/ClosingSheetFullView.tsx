@@ -1079,6 +1079,9 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 })
               }
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.publicidade_marketing_pct || 0))}
+            </p>
           </div>
           <div>
             <Label>Honorários Gestão (€)</Label>
