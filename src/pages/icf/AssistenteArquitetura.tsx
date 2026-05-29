@@ -24,6 +24,8 @@ import { FOUNDATION_OPTIONS } from '@/lib/icf-foundation-suggestions';
 import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptionCard';
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
 import { IcfPlanCalibrator, type CalibrationPayload } from '@/components/icf/assistant/IcfPlanCalibrator';
+import { IcfFoundationsModal } from '@/components/icf/assistant/IcfFoundationsModal';
+import { renderPdfFirstPageToPngBlob } from '@/lib/pdf-to-image';
 
 
 const STEPS = [
