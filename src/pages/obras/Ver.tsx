@@ -843,6 +843,14 @@ export default function VerObraPage() {
           <TabsContent value="dossier" className="mt-4">
             <ObraDossierTab obraId={id!} />
           </TabsContent>
+
+          <TabsContent value="mce" className="mt-4">
+            <div className="flex justify-center">
+              <Button onClick={() => navigate(`/obras/${id}/mce`)}>
+                <FileText className="h-4 w-4 mr-2" /> Abrir Mapas Comparativos Económicos (MCE)
+              </Button>
+            </div>
+          </TabsContent>
         </Tabs>
 
       </div>
