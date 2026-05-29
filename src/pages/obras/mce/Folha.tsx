@@ -4,6 +4,7 @@ import {
   ArrowLeft, Plus, Trash2, Check, Loader2, Star, FileDown, FileSpreadsheet,
 } from 'lucide-react';
 import { exportMCEtoPDF, exportMCEtoXLSX } from '@/lib/mce/exportMCE';
+import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -89,11 +90,14 @@ export default function MCEFolha() {
 
   if (isLoading || !data) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <AppLayout title="MCE" subtitle="Mapa Comparativo Económico">
+        <div className="p-8 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
     );
   }
+
 
   const { map, suppliers, items } = data;
 
@@ -107,7 +111,12 @@ export default function MCEFolha() {
     updItem.mutate({ id, mce_id: map.id, patch });
 
   return (
+    <AppLayout
+      title={`MCE ${map.mce_number ? `Nº ${map.mce_number}` : ''} · ${map.title}`}
+      subtitle="Mapa Comparativo Económico — Mod. 03-1"
+    >
     <div className="p-3 md:p-6 space-y-4 max-w-[1700px] mx-auto">
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -472,8 +481,10 @@ export default function MCEFolha() {
 
       <div className="text-[10px] text-muted-foreground text-center pt-4">Mod. 03-1 · 1/1</div>
     </div>
+    </AppLayout>
   );
 }
+
 
 function HeaderField({
   label, defaultValue, onSave, colSpan = 1,

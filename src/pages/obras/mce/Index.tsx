@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,18 +24,17 @@ export default function MCEIndex() {
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Mapas Comparativos Económicos (MCE)</h2>
-          <p className="text-sm text-muted-foreground">
-            Comparação de fornecedores por rubrica — modelo Mod. 03-1
-          </p>
-        </div>
+    <AppLayout
+      title="Mapas Comparativos Económicos (MCE)"
+      subtitle="Comparação de fornecedores por rubrica — modelo Mod. 03-1"
+      actions={
         <Button onClick={handleCreate} disabled={createMce.isPending}>
           <Plus className="h-4 w-4 mr-2" /> Novo MCE
         </Button>
-      </div>
+      }
+    >
+      <div className="p-4 md:p-6 space-y-4">
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">A carregar…</p>
@@ -114,6 +114,8 @@ export default function MCEIndex() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }
+
