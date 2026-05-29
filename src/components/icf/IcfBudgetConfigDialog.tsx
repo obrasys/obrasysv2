@@ -112,10 +112,15 @@ export function IcfBudgetConfigDialog({ open, onOpenChange, onConfirm, isPending
       margem_lucro: Number(margem) || 0,
       iva_percent: Number(iva) || 0,
       estaleiro_valor: Number(estaleiro) || 0,
+      honorarios_tecnicos_percent: Number(honorariosTecnicos) || 0,
+      custos_financeiros_percent: Number(custosFinanceiros) || 0,
+      honorarios_gestao_percent: Number(honorariosGestao) || 0,
+      garantias_pos_venda_percent: Number(garantiasPosVenda) || 0,
       template_chapters: selectedTemplate?.capitulos,
       template_nome: selectedTemplate?.nome,
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
