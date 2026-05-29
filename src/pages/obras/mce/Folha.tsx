@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
-  ArrowLeft, Plus, Trash2, Check, Loader2, Star,
+  ArrowLeft, Plus, Trash2, Check, Loader2, Star, FileDown, FileSpreadsheet,
 } from 'lucide-react';
+import { exportMCEtoPDF, exportMCEtoXLSX } from '@/lib/mce/exportMCE';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
