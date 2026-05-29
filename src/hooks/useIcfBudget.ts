@@ -235,7 +235,7 @@ export function useGenerateIcfBudget() {
     }: {
       resumo: IcfResumo;
       config: IcfConfiguracao;
-      obraId: string;
+      obraId?: string | null;
       margem_lucro?: number;
       iva_percent?: number;
       estaleiro_valor?: number;
