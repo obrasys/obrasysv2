@@ -461,7 +461,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   const total_outros =
     contratosVal +
     custo_industrial * (d.other.projectos_pct || 0) +
-    total_indirectos * (d.other.imprevistos_aleas_pct || 0) +
+    custo_industrial * (d.other.imprevistos_aleas_pct || 0) +
     outrosTaxasVal +
     (d.other.seguranca_higiene || 0) +
     (d.other.controlo_qualidade || 0);
