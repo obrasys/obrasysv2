@@ -95,7 +95,7 @@ export function ArtigoForm({
     defaultValues: {
       codigo: '',
       descricao: '',
-      unidade: 'un',
+      // unidade definida abaixo após o spread de defaultValues
       quantidade: 1,
       preco_base: defaultValues?.preco_base || defaultValues?.preco_unitario || 0,
       margem_lucro_artigo: defaultValues?.margem_lucro_artigo || 0,
