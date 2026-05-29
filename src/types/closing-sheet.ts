@@ -420,15 +420,21 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   );
 
   // (3) Indirectos
+  // Os 4 campos honorários técnicos / financeiros / gestão / garantias passaram
+  // a ser % sobre construção (custo_industrial). Mantém-se fallback p/ valores
+  // absolutos legados (apenas quando pct não definido).
+  const pctOrAbs = (pct: number | undefined, abs: number) =>
+    pct !== undefined && pct !== null ? custo_industrial * (pct || 0) : (abs || 0);
   const total_indirectos =
-    (d.indirect.honorarios_tecnicos || 0) +
+    pctOrAbs(d.indirect.honorarios_tecnicos_pct, d.indirect.honorarios_tecnicos) +
     custo_industrial * (d.indirect.seguros_pct || 0) +
-    (d.indirect.financeiros || 0) +
+    pctOrAbs(d.indirect.financeiros_pct, d.indirect.financeiros) +
     custo_industrial * (d.indirect.taxas_impostos_prediais_pct || 0) +
     valor_vendas * (d.indirect.publicidade_marketing_pct || 0) +
-    (d.indirect.honorarios_gestao || 0) +
+    pctOrAbs(d.indirect.honorarios_gestao_pct, d.indirect.honorarios_gestao) +
     valor_vendas * (d.indirect.honorarios_comercializacao_pct || 0) +
-    (d.indirect.garantias_pos_venda || 0);
+    pctOrAbs(d.indirect.garantias_pos_venda_pct, d.indirect.garantias_pos_venda);
+
 
   // (4) Outros
   const total_outros =
