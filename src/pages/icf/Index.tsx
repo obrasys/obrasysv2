@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles, FileText } from 'lucide-react';
+import { Plus, Loader2, Inbox, AlertTriangle, RefreshCw, Lock, Sparkles, FileText, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useObras } from '@/hooks/useObras';
 import {
@@ -108,6 +108,11 @@ const IcfIndex = () => {
     );
   };
 
+  const handleOpenAssistant = () => {
+    const qs = obraFilter ? `?obra=${obraFilter}` : '';
+    navigate(`/icf/assistente${qs}`);
+  };
+
   const handleDeleteConfig = (id: string) => {
     deleteConfig.mutate(id, {
       onError: (e: any) => toast.error('Não foi possível eliminar', { description: e?.message }),
@@ -181,6 +186,11 @@ const IcfIndex = () => {
                   Nova Configuração ICF
                 </Button>
               )}
+
+              <Button variant="outline" onClick={handleOpenAssistant}>
+                <Upload className="h-4 w-4 mr-2" />
+                Carregar planta
+              </Button>
 
               <div className="sm:ml-auto flex items-center gap-2">
                 <IcfConstantsDialog />
