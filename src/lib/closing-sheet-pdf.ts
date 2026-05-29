@@ -295,7 +295,6 @@ export async function exportClosingSheetPDF(params: {
           ? [`Honorários Técnicos (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários Técnicos", "-", fmtEur(val)];
       })(),
-      [`Seguros (${fmtPct(ind.seguros_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.seguros_pct || 0))],
       (() => {
         const pct = ind.financeiros_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.financeiros || 0);
@@ -303,8 +302,6 @@ export async function exportClosingSheetPDF(params: {
           ? [`Custos Financeiros (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
           : ["Custos Financeiros", "-", fmtEur(val)];
       })(),
-      [`Taxas / Impostos Prediais (${fmtPct(ind.taxas_impostos_prediais_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.taxas_impostos_prediais_pct || 0))],
-      [`Publicidade / Marketing (${fmtPct(ind.publicidade_marketing_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.publicidade_marketing_pct || 0))],
       (() => {
         const pct = ind.honorarios_gestao_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.honorarios_gestao || 0);
@@ -312,7 +309,6 @@ export async function exportClosingSheetPDF(params: {
           ? [`Honorários Gestão (${fmtPct(pct)} s/ constr.)`, fmtEur(cd), fmtEur(val)]
           : ["Honorários Gestão", "-", fmtEur(val)];
       })(),
-      [`Honorários Comercialização (${fmtPct(ind.honorarios_comercializacao_pct)} s/ C.Directos)`, fmtEur(cd), fmtEur(cd * (ind.honorarios_comercializacao_pct || 0))],
       (() => {
         const pct = ind.garantias_pos_venda_pct;
         const val = pct != null ? cd * (pct || 0) : (ind.garantias_pos_venda || 0);
