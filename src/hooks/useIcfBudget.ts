@@ -366,17 +366,18 @@ export function useGenerateIcfBudget() {
       let extraChaptersCount = 0;
       let extraArtigosCount = 0;
       if (scope?.arquitetura && scope.especialidades.length > 0) {
-        // 5a. Procurar planta calibrada da obra (opcional)
+        // 5a. Procurar planta calibrada da obra (opcional - só se houver obra associada)
         let planRows: PlanQuantitativoRow[] = [];
-        try {
-          const { data: planRowsData } = await supabase
-            .from('plan_quantitativos_v' as any)
-            .select('*')
-            .eq('obra_id', obraId);
-          planRows = (planRowsData ?? []) as unknown as PlanQuantitativoRow[];
-        } catch {
-          // tabela/view pode não estar acessível para o user - ignora.
-          planRows = [];
+        if (obraId) {
+          try {
+            const { data: planRowsData } = await supabase
+              .from('plan_quantitativos_v' as any)
+              .select('*')
+              .eq('obra_id', obraId);
+            planRows = (planRowsData ?? []) as unknown as PlanQuantitativoRow[];
+          } catch {
+            planRows = [];
+          }
         }
 
         const startNumero = chapters.length + 1;
