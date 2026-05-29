@@ -538,67 +538,101 @@ export async function exportClosingSheetPDF(params: {
   }
 
   // =========================================================
-  // 8) VALIDAÇÃO TÉCNICO-ECONÓMICA
+  // 8) PROPOSTA VENDAS sobre o CUSTO TOTAL DA OBRA
   // =========================================================
   const v = details.validation;
-  if (v.direccao_geral || v.validador_tecnico_economico || v.percentagem_lucro_alvo || v.valor_medio_fraccao || v.observacoes) {
-    h1("8. Validação Técnico-Económica");
+  const a = details.approvals;
+  const custoTotal = Number(totals.custo_total) || 0;
+  const abpFromSales = details.sales.reduce(
+    (s, l) => s + (Number(l.quantidade) || 0) * (Number(l.area_priv) || 0),
+    0,
+  );
+  const abpEffective = details.statistics.area_construcao_override
+    ? (details.statistics.area_construcao || 0)
+    : abpFromSales;
+  const numFraccoes =
+    Number(details.header.num_fraccoes) ||
+    details.sales.reduce((s, l) => s + (Number(l.quantidade) || 0), 0);
+
+  const lucroDgPct = Number(v.percentagem_lucro_alvo) || 0;
+  const lucroAdmPct = Number(a.percentagem_lucro_admin ?? lucroDgPct) || 0;
+  const calcPV = (pct: number) => (pct < 1 ? custoTotal / (1 - pct) : 0);
+  const pvDg = calcPV(lucroDgPct);
+  const pvAdm = calcPV(lucroAdmPct);
+
+  h1("8. Proposta Vendas sobre o Custo Total da Obra");
+
+  const drawPropostaRow = (
+    label: string,
+    subLabel: string,
+    pct: number,
+    pv: number,
+    nome?: string | null,
+    data?: string | null,
+  ) => {
+    const rowH = 26;
+    ensureSpace(rowH + 2);
+    const wPct = 32;
+    const wMid = pageW - M * 2 - wPct - 56 - 4;
+    const wRight = 56;
+    const xPct = M;
+    const xMid = M + wPct + 2;
+    const xRight = xMid + wMid + 2;
+
+    // % Lucro
+    doc.setFillColor(255, 247, 224);
+    doc.setDrawColor(245, 196, 90);
+    doc.roundedRect(xPct, y, wPct, rowH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(FS.micro); doc.setTextColor(...MUTED);
+    doc.text(label.toUpperCase(), xPct + wPct / 2, y + 4, { align: "center" });
+    doc.setFontSize(FS.micro); doc.setTextColor(160, 110, 30);
+    doc.text("% LUCRO", xPct + wPct / 2, y + 10, { align: "center" });
+    doc.setFontSize(FS.h1 + 1); doc.setTextColor(120, 80, 20);
+    doc.text(`${(pct * 100).toFixed(2).replace(".", ",")}%`, xPct + wPct / 2, y + 19, { align: "center" });
+
+    // Valor proposta
+    doc.setFillColor(...LIGHT);
+    doc.setDrawColor(220);
+    doc.roundedRect(xMid, y, wMid, rowH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "italic"); doc.setFontSize(FS.micro); doc.setTextColor(...MUTED);
+    doc.text(subLabel, xMid + wMid / 2, y + 4, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(FS.h1 + 3); doc.setTextColor(...TEAL);
+    doc.text(fmtEur(pv), xMid + wMid / 2, y + 14, { align: "center" });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(FS.micro); doc.setTextColor(...INK);
+    doc.text(`Ass.: ${nome || "_______________"}`, xMid + 3, y + 22);
+    doc.text(`Data: ${data || "____ / ____ / ______"}`, xMid + wMid - 3, y + 22, { align: "right" });
+
+    // €/m² e €/un
+    doc.setFillColor(...LIGHT);
+    doc.setDrawColor(220);
+    doc.roundedRect(xRight, y, wRight, rowH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "italic"); doc.setFontSize(FS.micro); doc.setTextColor(...MUTED);
+    doc.text("Valor Médio / fração", xRight + wRight - 3, y + 4, { align: "right" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(FS.body + 1); doc.setTextColor(...INK);
+    doc.text(`${fmtEur(abpEffective > 0 ? pv / abpEffective : 0)} /m²`, xRight + wRight - 3, y + 13, { align: "right" });
+    doc.text(`${fmtEur(numFraccoes > 0 ? pv / numFraccoes : 0)} /un`, xRight + wRight - 3, y + 21, { align: "right" });
+
+    y += rowH + 3;
+  };
+
+  drawPropostaRow("Direção Geral", "Validação Técnico-Económica", lucroDgPct, pvDg, v.direccao_geral, a.aprovacao_inicial_data);
+  drawPropostaRow("Administração", "Aprovação Inicial", lucroAdmPct, pvAdm, a.administracao_nome, a.administracao_data);
+
+  // Validador + Observações
+  if (v.validador_tecnico_economico || v.observacoes || a.notas) {
     autoTable(doc, {
-      startY: y,
+      startY: y + 1,
       margin: { left: M, right: M },
       body: [
-        ["Direcção Geral", v.direccao_geral || "-"],
         ["Validador Técnico-Económico", v.validador_tecnico_economico || "-"],
-        ["% Lucro Alvo", fmtPct(v.percentagem_lucro_alvo)],
-        ["Valor Médio Fracção", fmtEur(v.valor_medio_fraccao || 0)],
+        ...(v.observacoes ? [["Observações", v.observacoes]] : []),
+        ...(a.notas ? [["Notas Administração", a.notas]] : []),
       ],
       theme: "plain",
       styles: { fontSize: FS.body, textColor: INK, cellPadding: 1.6 },
       columnStyles: { 0: { fontStyle: "bold", textColor: MUTED, cellWidth: 55 }, 1: {} },
     });
-    y = (doc as any).lastAutoTable.finalY + 2;
-    if (v.observacoes) {
-      const wrapped = doc.splitTextToSize(`Obs.: ${v.observacoes}`, pageW - M * 2);
-      ensureSpace(wrapped.length * 4 + 2);
-      doc.setFont("helvetica", "italic"); doc.setFontSize(FS.body); doc.setTextColor(...MUTED);
-      doc.text(wrapped, M, y);
-      y += wrapped.length * 4 + 4;
-    }
-  }
-
-  // =========================================================
-  // 9) APROVAÇÕES
-  // =========================================================
-  h1("9. Aprovação da Administração");
-  const a = details.approvals;
-  ensureSpace(40);
-  const colW = (pageW - M * 2 - 6) / 2;
-  // duas caixas lado a lado
-  doc.setDrawColor(...TEAL); doc.setLineWidth(0.3);
-  doc.roundedRect(M, y, colW, 32, 1.5, 1.5);
-  doc.roundedRect(M + colW + 6, y, colW, 32, 1.5, 1.5);
-
-  doc.setFont("helvetica", "bold"); doc.setFontSize(FS.h2); doc.setTextColor(...TEAL);
-  doc.text("Aprovação Inicial", M + 3, y + 5);
-  doc.text("Administração", M + colW + 9, y + 5);
-
-  doc.setFont("helvetica", "normal"); doc.setFontSize(FS.body); doc.setTextColor(...INK);
-  doc.text(`Nome: ${a.aprovacao_inicial_nome || "_______________________"}`, M + 3, y + 13);
-  doc.text(`Data: ${a.aprovacao_inicial_data || "____ / ____ / ______"}`, M + 3, y + 20);
-  doc.text("Assinatura:", M + 3, y + 27);
-
-  doc.text(`Nome: ${a.administracao_nome || "_______________________"}`, M + colW + 9, y + 13);
-  doc.text(`Data: ${a.administracao_data || "____ / ____ / ______"}`, M + colW + 9, y + 20);
-  doc.text("Assinatura:", M + colW + 9, y + 27);
-  y += 36;
-
-  if (a.notas) {
-    h2("Notas");
-    doc.setFont("helvetica", "normal"); doc.setFontSize(FS.body); doc.setTextColor(...INK);
-    const wrapped = doc.splitTextToSize(a.notas, pageW - M * 2);
-    ensureSpace(wrapped.length * 4 + 2);
-    doc.text(wrapped, M, y);
-    y += wrapped.length * 4 + 3;
+    y = (doc as any).lastAutoTable.finalY + 4;
   }
 
 
