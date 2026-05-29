@@ -128,7 +128,9 @@ export interface ClosingApprovals {
   aprovacao_inicial_data: string | null;
   assinatura_url: string;
   notas: string;
+  percentagem_lucro_admin?: number; // % Lucro aprovado pela Administração (ex 0.20)
 }
+
 
 export interface ClosingSheetDetails {
   header: ClosingHeader;
@@ -284,7 +286,9 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
     aprovacao_inicial_data: null,
     assinatura_url: "",
     notas: "",
+    percentagem_lucro_admin: 0.20,
   },
+
   quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
   site_costs: DEFAULT_SITE_COST_LINES,
