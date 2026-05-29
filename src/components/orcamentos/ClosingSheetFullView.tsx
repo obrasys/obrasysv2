@@ -1109,7 +1109,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Garantias / Pós-Venda (€)</Label>
+            <Label>Garantias / Pós-Venda (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.garantias_pos_venda}
