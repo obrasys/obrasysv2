@@ -23,7 +23,7 @@ export function useMCEList(obraId: string | undefined) {
         .eq('obra_id', obraId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as MceMap[];
+      return (data ?? []) as unknown as MceMap[];
     },
   });
 }
@@ -51,7 +51,7 @@ export function useMCEDetail(id: string | undefined) {
       if (itemsR.error) throw itemsR.error;
       if (pricesR.error) throw pricesR.error;
       return {
-        map: mapR.data as MceMap,
+        map: mapR.data as unknown as MceMap,
         suppliers: (supR.data ?? []) as MceSupplier[],
         items: (itemsR.data ?? []) as MceItem[],
         prices: (pricesR.data ?? []) as MceSupplierItemPrice[],
