@@ -456,11 +456,11 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
       : (d.other.contratos_registos || 0);
   const outrosTaxasVal =
     d.other.outros_taxas_ramais_pct !== undefined && d.other.outros_taxas_ramais_pct !== null
-      ? custo_industrial * (d.other.outros_taxas_ramais_pct || 0)
+      ? total_directos * (d.other.outros_taxas_ramais_pct || 0)
       : (d.other.outros_taxas_ramais || 0);
   const total_outros =
     contratosVal +
-    custo_industrial * (d.other.projectos_pct || 0) +
+    total_directos * (d.other.projectos_pct || 0) +
     custo_industrial * (d.other.imprevistos_aleas_pct || 0) +
     outrosTaxasVal +
     (d.other.seguranca_higiene || 0) +
