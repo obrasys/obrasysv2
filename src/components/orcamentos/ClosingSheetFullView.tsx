@@ -1042,7 +1042,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Custos Financeiros (€)</Label>
+            <Label>Custos Financeiros (€ s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.indirect.financeiros}
