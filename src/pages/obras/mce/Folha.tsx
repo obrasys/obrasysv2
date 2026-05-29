@@ -448,6 +448,9 @@ export default function MCEFolha() {
         </Card>
       </div>
 
+      {/* Workflow de aprovações */}
+      <MCEApprovalsPanel mceId={map.id} mceStatus={map.status} />
+
       <div className="text-[10px] text-muted-foreground text-center pt-4">Mod. 03-1 · 1/1</div>
     </div>
   );
