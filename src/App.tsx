@@ -194,7 +194,7 @@ const App = () => (
                   <Route path="/obras/:id/editar" element={<ManagerRoute><EditarObraPage /></ManagerRoute>} />
                   <Route path="/obras/:id/financeiro" element={<ManagerRoute><ObraFinanceiroPage /></ManagerRoute>} />
                   <Route path="/obras/:id/mce" element={<ManagerRoute><MCEIndexPage /></ManagerRoute>} />
-                  <Route path="/obras/:id/mce/:mceId" element={<ManagerRoute><MCEFolhaPage /></ManagerRoute>} />)
+                  <Route path="/obras/:id/mce/:mceId" element={<ManagerRoute><MCEFolhaPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos" element={<ManagerRoute><CadernosPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos/:cadernoId/importar" element={<ManagerRoute><ImportarCadernoPage /></ManagerRoute>} />
