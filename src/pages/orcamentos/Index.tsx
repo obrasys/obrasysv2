@@ -97,9 +97,12 @@ export default function OrcamentosPage() {
       title="Orçamentos"
       subtitle="Gestão comercial e técnica de propostas"
       actions={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate('/orcamentos/essencial/novo')}>
             <Sparkles className="mr-2 h-4 w-4" /> Essencial
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/icf')} className="border-primary/40 text-primary hover:bg-primary/5">
+            <Building2 className="mr-2 h-4 w-4" /> Orçamento ICF
           </Button>
           <Button onClick={() => navigate('/orcamentos/criar')}>
             <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
