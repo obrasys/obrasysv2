@@ -128,7 +128,9 @@ export interface ClosingApprovals {
   aprovacao_inicial_data: string | null;
   assinatura_url: string;
   notas: string;
+  percentagem_lucro_admin?: number; // % Lucro aprovado pela Administração (ex 0.20)
 }
+
 
 export interface ClosingSheetDetails {
   header: ClosingHeader;
