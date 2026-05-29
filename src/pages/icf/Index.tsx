@@ -20,6 +20,7 @@ import { IcfConfigHeader } from '@/components/icf/IcfConfigHeader';
 import { IcfKpiGrid } from '@/components/icf/IcfKpiGrid';
 import { IcfQuickNav } from '@/components/icf/IcfQuickNav';
 import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
+import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
