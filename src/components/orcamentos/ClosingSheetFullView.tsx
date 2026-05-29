@@ -1022,7 +1022,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Honorários Técnicos (% s/ C. Directos)</Label>
+            <Label>Honorários Técnicos (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1047,7 +1047,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Custos Financeiros (% s/ C. Directos)</Label>
+            <Label>Custos Financeiros (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1094,7 +1094,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Honorários Gestão (% s/ C. Directos)</Label>
+            <Label>Honorários Gestão (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1124,7 +1124,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </p>
           </div>
           <div>
-            <Label>Garantias / Pós-Venda (% s/ C. Directos)</Label>
+            <Label>Garantias / Pós-Venda (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"
@@ -1135,6 +1135,57 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               = {fmt((totals.total_directos || 0) * (details.indirect.garantias_pos_venda_pct ?? 0))}
             </p>
           </div>
+
+          {/* Rubricas sobre Valor de Vendas */}
+          <div>
+            <Label>Publicidade / Marketing (% s/ Vendas)</Label>
+            <NumCell
+              readOnly={readOnly}
+              step="0.001"
+              value={(details.indirect.publicidade_marketing_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("indirect", { ...details.indirect, publicidade_marketing_vendas_pct: v / 100 })}
+            />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.publicidade_marketing_vendas_pct ?? 0))}
+            </p>
+          </div>
+          <div>
+            <Label>Honorários Gestão (% s/ Vendas)</Label>
+            <NumCell
+              readOnly={readOnly}
+              step="0.001"
+              value={(details.indirect.honorarios_gestao_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("indirect", { ...details.indirect, honorarios_gestao_vendas_pct: v / 100 })}
+            />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.honorarios_gestao_vendas_pct ?? 0))}
+            </p>
+          </div>
+          <div>
+            <Label>Honorários Comercialização (% s/ Vendas)</Label>
+            <NumCell
+              readOnly={readOnly}
+              step="0.001"
+              value={(details.indirect.honorarios_comercializacao_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("indirect", { ...details.indirect, honorarios_comercializacao_vendas_pct: v / 100 })}
+            />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.honorarios_comercializacao_vendas_pct ?? 0))}
+            </p>
+          </div>
+          <div>
+            <Label>Garantias / Pós-Venda (% s/ Vendas)</Label>
+            <NumCell
+              readOnly={readOnly}
+              step="0.001"
+              value={(details.indirect.garantias_pos_venda_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("indirect", { ...details.indirect, garantias_pos_venda_vendas_pct: v / 100 })}
+            />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.indirect.garantias_pos_venda_vendas_pct ?? 0))}
+            </p>
+          </div>
+
 
         </div>
         <SubtotalRow label="TOTAL CUSTOS INDIRECTOS" code="(3)" value={totals.total_indirectos} />
