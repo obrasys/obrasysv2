@@ -285,6 +285,15 @@ const IcfIndex = () => {
                 )}
 
                 <IcfQuickNav configId={activeConfig.id} />
+
+                <IcfPlantAnalyzer
+                  obraId={obraFilter ?? activeConfig.obra_id ?? ''}
+                  configuracaoId={activeConfig.id}
+                  espessuraNucleo={(activeConfig as any).espessura_nucleo ?? 0.15}
+                  classeBetao={(activeConfig as any).classe_betao ?? 'C25/30'}
+                  classeAco={(activeConfig as any).classe_aco ?? 'A500'}
+                />
+
               </>
             )}
 
