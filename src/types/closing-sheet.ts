@@ -56,10 +56,14 @@ export interface ClosingIndirectCosts {
 
 
 export interface ClosingOtherCosts {
+  /** @deprecated usar contratos_registos_pct (% s/ Vendas) */
   contratos_registos: number;
-  projectos_pct: number; // sobre constr.
+  contratos_registos_pct?: number; // sobre Valor de Vendas
+  projectos_pct: number; // sobre constr. (legado)
   imprevistos_aleas_pct: number; // sobre custos indirectos
+  /** @deprecated usar outros_taxas_ramais_pct (% s/ construção) */
   outros_taxas_ramais: number;
+  outros_taxas_ramais_pct?: number; // sobre construção (custo_industrial)
   seguranca_higiene: number;
   controlo_qualidade: number;
 }
@@ -447,12 +451,13 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
 
   // (4) Outros
   const total_outros =
-    (d.other.contratos_registos || 0) +
-    custo_industrial * (d.other.projectos_pct || 0) +
+    (d.other.contratos_registos_pct !== undefined && d.other.contratos_registos_pct !== null
+      ? valor_vendas * (d.other.contratos_registos_pct || 0)
+      : (d.other.contratos_registos || 0)) +
     total_indirectos * (d.other.imprevistos_aleas_pct || 0) +
-    (d.other.outros_taxas_ramais || 0) +
-    (d.other.seguranca_higiene || 0) +
-    (d.other.controlo_qualidade || 0);
+    (d.other.outros_taxas_ramais_pct !== undefined && d.other.outros_taxas_ramais_pct !== null
+      ? custo_industrial * (d.other.outros_taxas_ramais_pct || 0)
+      : (d.other.outros_taxas_ramais || 0));
 
   // (5) Admin
   const total_admin =
