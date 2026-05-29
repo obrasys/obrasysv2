@@ -222,11 +222,11 @@ serve(async (req) => {
     }
     const { file_path, obra_id, configuracao_id, espessura_nucleo, classe_betao, classe_aco } = body;
 
-    if (!file_path || !obra_id || !configuracao_id) {
-      return jsonResponse({ error: "Campos obrigatórios em falta: file_path, obra_id, configuracao_id" }, 400);
+    if (!file_path || !configuracao_id) {
+      return jsonResponse({ error: "Campos obrigatórios em falta: file_path, configuracao_id" }, 400);
     }
 
-    // Authorization: user must belong to an organization that owns the obra
+    // Authorization: user must belong to an organization
     const { data: userMembership, error: memberErr } = await supabase
       .from("organization_members")
       .select("organization_id")
@@ -235,28 +235,30 @@ serve(async (req) => {
       .maybeSingle();
 
     if (memberErr || !userMembership?.organization_id) {
-      return jsonResponse({ error: "Sem acesso à obra" }, 403);
+      return jsonResponse({ error: "Sem acesso" }, 403);
     }
 
-    const { data: obra, error: obraError } = await supabase
-      .from("obras")
-      .select("id, user_id, gestor_id")
-      .eq("id", obra_id)
-      .maybeSingle();
+    // If obra_id is provided, validate ownership; otherwise allow standalone mode
+    if (obra_id) {
+      const { data: obra, error: obraError } = await supabase
+        .from("obras")
+        .select("id, user_id, gestor_id")
+        .eq("id", obra_id)
+        .maybeSingle();
 
-    if (obraError || !obra) {
-      return jsonResponse({ error: "Sem acesso à obra" }, 403);
-    }
+      if (obraError || !obra) {
+        return jsonResponse({ error: "Sem acesso à obra" }, 403);
+      }
 
-    // Verify obra belongs to same organization (via owner user_id)
-    const { data: ownerMembership } = await supabase
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", obra.user_id)
-      .maybeSingle();
+      const { data: ownerMembership } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", obra.user_id)
+        .maybeSingle();
 
-    if (!ownerMembership || ownerMembership.organization_id !== userMembership.organization_id) {
-      return jsonResponse({ error: "Sem acesso à obra" }, 403);
+      if (!ownerMembership || ownerMembership.organization_id !== userMembership.organization_id) {
+        return jsonResponse({ error: "Sem acesso à obra" }, 403);
+      }
     }
 
     // Download the file from storage

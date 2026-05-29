@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface IcfPlantAnalyzerProps {
-  obraId: string;
+  obraId?: string | null;
   configuracaoId: string;
   espessuraNucleo: number;
   classeBetao: string;
@@ -27,7 +27,7 @@ export function IcfPlantAnalyzer({
 }: IcfPlantAnalyzerProps) {
   const { user, organization } = useAuth();
   const { toast } = useToast();
-  const { plans, isLoading: plansLoading } = usePlanImports(obraId);
+  const { plans, isLoading: plansLoading } = usePlanImports(obraId || '');
   const {
     analyze,
     isAnalyzing,
@@ -42,13 +42,14 @@ export function IcfPlantAnalyzer({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const empresaId = organization?.id || '';
+  const hasObra = !!obraId;
 
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
     if (!plan) return;
     analyze({
       filePath: plan.file_path,
-      obraId,
+      obraId: obraId || null,
       configuracaoId,
       espessuraNucleo,
       classeBetao,
@@ -63,13 +64,14 @@ export function IcfPlantAnalyzer({
     setIsUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'pdf';
-      const filePath = `${user.id}/${obraId}/${crypto.randomUUID()}.${ext}`;
+      const folder = obraId || 'standalone';
+      const filePath = `${user.id}/${folder}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
       analyze({
         filePath,
-        obraId,
+        obraId: obraId || null,
         configuracaoId,
         espessuraNucleo,
         classeBetao,
@@ -84,7 +86,7 @@ export function IcfPlantAnalyzer({
   };
 
   const handleCreateAll = () => {
-    if (!analysisResult) return;
+    if (!analysisResult || !obraId) return;
     createRecords({
       result: analysisResult,
       obraId,
@@ -200,8 +202,13 @@ export function IcfPlantAnalyzer({
               </p>
             )}
 
+            {!hasObra && (
+              <p className="text-xs text-muted-foreground border border-dashed rounded-md p-2">
+                Para guardar estes registos numa obra, associe primeiro esta configuração a uma obra. Em modo orçamento (sem obra), pode ainda usar este resumo como referência.
+              </p>
+            )}
             <div className="flex gap-2">
-              <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
+              <Button onClick={handleCreateAll} disabled={isCreating || !hasObra} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
                 Criar todos os registos ICF
               </Button>
