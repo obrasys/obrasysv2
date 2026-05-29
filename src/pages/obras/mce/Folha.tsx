@@ -481,8 +481,10 @@ export default function MCEFolha() {
 
       <div className="text-[10px] text-muted-foreground text-center pt-4">Mod. 03-1 · 1/1</div>
     </div>
+    </AppLayout>
   );
 }
+
 
 function HeaderField({
   label, defaultValue, onSave, colSpan = 1,
