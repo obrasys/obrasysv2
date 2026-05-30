@@ -259,12 +259,45 @@ export default function OrcamentoRaiObra() {
               <Sparkles className="w-4 h-4 text-primary" /> Axia
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground space-y-2">
-            <p>A Axia analisa a fase <strong className="text-foreground">{currentPhaseData?.label}</strong> e identifica desvios e oportunidades.</p>
-            <p className="text-xs">Análise contextual sem alterar valores automaticamente.</p>
-            <Button variant="outline" size="sm" disabled className="w-full mt-2">
-              <Loader2 className="w-3 h-3 mr-1" /> Análise em breve
+          <CardContent className="text-sm space-y-2">
+            <p className="text-muted-foreground text-xs">
+              Análise contextual da fase <strong className="text-foreground">{currentPhaseData?.label}</strong>. Não altera valores.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={axiaMutation.isPending || !data}
+              onClick={async () => {
+                if (!data) return;
+                const r = await axiaMutation.mutateAsync(data);
+                setInsights(r.insights ?? []);
+              }}
+            >
+              {axiaMutation.isPending ? (
+                <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> A analisar…</>
+              ) : (
+                <><Sparkles className="w-3 h-3 mr-1" /> Analisar agora</>
+              )}
             </Button>
+            {insights && insights.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {insights.map((ins, i) => (
+                  <div key={i} className="rounded-lg border bg-card p-2 text-xs">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={cn(
+                        'w-1.5 h-1.5 rounded-full',
+                        ins.level === 'critical' && 'bg-rose-500',
+                        ins.level === 'warning' && 'bg-amber-500',
+                        ins.level === 'info' && 'bg-blue-500',
+                      )} />
+                      <span className="font-semibold text-foreground">{ins.title}</span>
+                    </div>
+                    <div className="text-muted-foreground">{ins.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>
@@ -303,7 +336,85 @@ export default function OrcamentoRaiObra() {
         </div>
       </section>
 
-      {/* Área da fase ativa - placeholder */}
+      {/* Retenções de garantia */}
+      <section className="mt-6 grid md:grid-cols-2 gap-4">
+        <Card className="rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Retenções de garantia
+            </CardTitle>
+            {organization?.id && id && (
+              <RetentionDialog
+                onSubmit={(p) => createRetention.mutate({ obra_id: id, organization_id: organization.id, ...p })}
+                pending={createRetention.isPending}
+              />
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(retentions ?? []).length === 0 && (
+              <div className="text-xs text-muted-foreground text-center py-3">Sem retenções registadas.</div>
+            )}
+            {(retentions ?? []).map((r) => {
+              const pendente = r.retained_amount - r.released_amount;
+              return (
+                <div key={r.id} className="flex items-center justify-between p-2 rounded-lg border bg-card text-xs">
+                  <div>
+                    <div className="font-medium">{r.description || 'Retenção'}</div>
+                    <div className="text-muted-foreground">
+                      Retido {fmtEUR(r.retained_amount)} · Pendente {fmtEUR(pendente)}
+                      {r.due_date && ` · Até ${new Date(r.due_date).toLocaleDateString('pt-PT')}`}
+                    </div>
+                  </div>
+                  {r.status !== 'liberada_total' && pendente > 0 && (
+                    <Button size="sm" variant="outline"
+                      onClick={() => id && releaseRetention.mutate({ id: r.id, released_amount: r.retained_amount, obra_id: id })}>
+                      Libertar
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Pós-venda / SPV */}
+        <Card className="rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="w-4 h-4" /> Pós-venda / SPV
+            </CardTitle>
+            {organization?.id && id && (
+              <AftercareDialog
+                onSubmit={(p) => createAftercare.mutate({ obra_id: id, organization_id: organization.id, ...p })}
+                pending={createAftercare.isPending}
+              />
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(aftercare ?? []).length === 0 && (
+              <div className="text-xs text-muted-foreground text-center py-3">Sem registos de pós-venda.</div>
+            )}
+            {(aftercare ?? []).map((a) => (
+              <div key={a.id} className="flex items-center justify-between p-2 rounded-lg border bg-card text-xs">
+                <div>
+                  <div className="font-medium">{a.description}</div>
+                  <div className="text-muted-foreground">
+                    {fmtEUR(a.cost_value)} · {a.category || 'Sem categoria'} · {a.status}
+                  </div>
+                </div>
+                {a.status !== 'resolvido' && id && (
+                  <Button size="sm" variant="outline"
+                    onClick={() => resolveAftercare.mutate({ id: a.id, obra_id: id })}>
+                    Resolver
+                  </Button>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Área da fase ativa */}
       <section className="mt-6">
         <Card className="rounded-xl">
           <CardHeader>
@@ -312,14 +423,11 @@ export default function OrcamentoRaiObra() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            <p className="mb-3">{PHASE_DESCRIPTIONS[activePhase]}</p>
-            <p className="text-xs">
-              Nesta fase inicial, a área consolida dados existentes em modo leitura. As próximas entregas adicionarão:
-              motor de consolidação real com anti-duplicação, mapa MCE completo, gestão de retenções, fluxo Outturn e SPV.
-            </p>
+            <p>{PHASE_DESCRIPTIONS[activePhase]}</p>
           </CardContent>
         </Card>
       </section>
+
     </AppLayout>
   );
 }
