@@ -2425,6 +2425,7 @@ export type Database = {
           client_summary_title: string | null
           created_at: string
           default_cost_nature: Database["public"]["Enums"]["cost_nature"] | null
+          desconto_pct: number
           descricao: string | null
           id: string
           include_in_client_summary: boolean | null
@@ -2444,6 +2445,7 @@ export type Database = {
           default_cost_nature?:
             | Database["public"]["Enums"]["cost_nature"]
             | null
+          desconto_pct?: number
           descricao?: string | null
           id?: string
           include_in_client_summary?: boolean | null
@@ -2463,6 +2465,7 @@ export type Database = {
           default_cost_nature?:
             | Database["public"]["Enums"]["cost_nature"]
             | null
+          desconto_pct?: number
           descricao?: string | null
           id?: string
           include_in_client_summary?: boolean | null

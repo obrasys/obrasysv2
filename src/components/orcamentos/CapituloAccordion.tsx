@@ -51,6 +51,7 @@ interface CapituloAccordionProps {
     client_exclusions_text?: string;
     include_in_client_summary?: boolean;
   }) => void;
+  onUpdateDiscount?: (capituloId: string, descontoPct: number) => void;
   isReadOnly?: boolean;
 }
 
@@ -63,6 +64,7 @@ export function CapituloAccordion({
   onDeleteArtigo,
   onOpenCatalog,
   onUpdateCommercial,
+  onUpdateDiscount,
   isReadOnly = false,
 }: CapituloAccordionProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,8 +72,15 @@ export function CapituloAccordion({
   const [summaryText, setSummaryText] = useState(capitulo.client_summary_text || '');
   const [exclusionsText, setExclusionsText] = useState(capitulo.client_exclusions_text || '');
   const [includeInSummary, setIncludeInSummary] = useState(capitulo.include_in_client_summary !== false);
+  const [descontoInput, setDescontoInput] = useState<string>(
+    capitulo.desconto_pct != null ? String(capitulo.desconto_pct) : '0'
+  );
   const [visibleCols, setVisibleCols] = useState<CapituloColumnKey[]>(() => loadVisibleColumns());
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+
+  useEffect(() => {
+    setDescontoInput(capitulo.desconto_pct != null ? String(capitulo.desconto_pct) : '0');
+  }, [capitulo.desconto_pct]);
 
   useEffect(() => {
     saveVisibleColumns(visibleCols);
@@ -132,11 +141,54 @@ export function CapituloAccordion({
           </AccordionTrigger>
 
           <div className="flex items-center gap-2 ml-4">
-            <span className="text-sm font-medium flex items-center gap-1">
-              <Euro className="h-3.5 w-3.5" />
-              {formatCurrency(capitulo.valor_total)}
-            </span>
-            
+            {(() => {
+              const desc = Math.max(0, Math.min(100, Number(capitulo.desconto_pct) || 0));
+              const efetivo = capitulo.valor_total * (1 - desc / 100);
+              return (
+                <div className="flex items-center gap-2">
+                  {!isReadOnly && onUpdateDiscount && (
+                    <div
+                      className="flex items-center gap-1 bg-background border rounded-md px-2 py-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Label className="text-[10px] uppercase text-muted-foreground">Desc.</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        value={descontoInput}
+                        onChange={(e) => setDescontoInput(e.target.value)}
+                        onBlur={() => {
+                          const v = Math.max(0, Math.min(100, Number(descontoInput) || 0));
+                          setDescontoInput(String(v));
+                          if (v !== (Number(capitulo.desconto_pct) || 0)) {
+                            onUpdateDiscount(capitulo.id, v);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                        }}
+                        className="h-7 w-16 text-xs text-right"
+                      />
+                      <span className="text-xs text-muted-foreground">%</span>
+                    </div>
+                  )}
+                  <div className="text-right">
+                    {desc > 0 && (
+                      <div className="text-[10px] text-muted-foreground line-through tabular-nums">
+                        {formatCurrency(capitulo.valor_total)}
+                      </div>
+                    )}
+                    <span className={`text-sm font-medium flex items-center gap-1 justify-end ${desc > 0 ? 'text-primary' : ''}`}>
+                      <Euro className="h-3.5 w-3.5" />
+                      {formatCurrency(efetivo)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {!isReadOnly && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

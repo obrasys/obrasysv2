@@ -105,6 +105,8 @@ export interface Capitulo {
   titulo: string;
   descricao: string | null;
   valor_total: number;
+  /** Desconto aplicado ao capítulo, em percentagem (0-100). Descontado do valor_total. */
+  desconto_pct?: number;
   ordem: number;
   created_at: string;
   updated_at: string;
@@ -223,6 +225,7 @@ export interface CapituloFormData {
   numero: number;
   titulo: string;
   descricao?: string;
+  desconto_pct?: number;
 }
 
 export interface ArtigoFormData {
