@@ -1871,8 +1871,13 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
               <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
                 {totalArea > 0 ? `Médio: ${fmt(totals.valor_vendas / totalArea)}/m²` : ""}
               </TableCell>
-              <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
-                {totalQt > 0 ? `Médio: ${fmt(totals.valor_vendas / totalQt)}` : ""}
+              <TableCell className="text-right tabular-nums">
+                <div className="font-bold">{fmt(totals.valor_vendas)}</div>
+                {totalQt > 0 && (
+                  <div className="text-xs text-muted-foreground font-normal">
+                    Médio: {fmt(totals.valor_vendas / totalQt)}
+                  </div>
+                )}
               </TableCell>
               <TableCell className="text-right tabular-nums text-xs text-muted-foreground">
                 {totalQt > 0 ? `Médio: ${fmt(totals.valor_vendas / totalQt)}` : ""}
