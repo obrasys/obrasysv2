@@ -87,12 +87,14 @@ export default function VerOrcamentoPage() {
     (orcamento.custos_indiretos?.licenciamento || 0);
 
   const subtotalArtigos = (orcamento.capitulos || []).reduce(
-    (sum, cap) =>
-      sum +
-      (cap.artigos || []).reduce(
+    (sum, cap) => {
+      const bruto = (cap.artigos || []).reduce(
         (s, a) => s + (a.valor_total ?? a.quantidade * a.preco_unitario),
         0
-      ),
+      );
+      const desc = Math.max(0, Math.min(100, Number((cap as any).desconto_pct) || 0));
+      return sum + bruto * (1 - desc / 100);
+    },
     0
   );
   const subtotalComIndiretos = subtotalArtigos + custosIndiretosTotal;
