@@ -49,7 +49,7 @@ const SITE_DETAIL_TO_RUBRICA: Record<SiteDetailCategory, string> = {
 };
 
 const fmt = (v: number | null | undefined) =>
-  new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
+  new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.ceil(v ?? 0));
 const pct = (v: number | null | undefined) =>
   `${((v ?? 0) * 100).toFixed(2).replace(".", ",")}%`;
 
