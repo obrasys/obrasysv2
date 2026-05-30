@@ -62,8 +62,8 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const obra = obraR.data;
       if (!obra) throw new Error('Obra não encontrada');
 
-      const ffBase = (ffR.data || []).find((s: any) => s.closing_type === 'initial');
-      const ffFinal = (ffR.data || []).find((s: any) => s.closing_type === 'final');
+      const ffBase = ffData.find((s: any) => s.closing_type === 'initial');
+      const ffFinal = ffData.find((s: any) => s.closing_type === 'final');
       const ffBaseApproved = !!ffBase?.approved_at || ffBase?.status === 'approved' || ffBase?.status === 'locked';
       const ffFinalApproved = !!ffFinal?.approved_at || ffFinal?.status === 'approved' || ffFinal?.status === 'locked';
 
@@ -77,9 +77,9 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const budgetRai = safeNum(ffBase?.expected_result ?? budgetMargem);
 
       // Forecast: orçamentos adjudicados + autos como proxy simples
-      const adjudicados = (orcsR.data || []).filter((o: any) => ['adjudicado', 'aprovado'].includes(o.status));
+      const adjudicados = orcsData.filter((o: any) => ['adjudicado', 'aprovado'].includes(o.status));
       const forecastVendas = adjudicados.reduce((s: number, o: any) => s + safeNum(o.valor_total), 0) || budgetVendas;
-      const comprasTotal = (comprasR.data || []).reduce((s: number, c: any) => s + safeNum(c.total_amount), 0);
+      const comprasTotal = comprasData.reduce((s: number, c: any) => s + safeNum(c.total_amount), 0);
       const forecastCustos = comprasTotal || budgetCustos;
       const forecastMargem = forecastVendas - forecastCustos;
       const forecastMargemPct = forecastVendas > 0 ? (forecastMargem / forecastVendas) * 100 : 0;
@@ -156,7 +156,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           source: 'Folha de Fecho',
         });
       }
-      const comprasSemMce = (comprasR.data || []).filter((c: any) => !c.mce_id).length;
+      const comprasSemMce = comprasData.filter((c: any) => !c.mce_id).length;
       if (comprasSemMce > 0) {
         attention.push({
           id: 'compras-sem-mce',
@@ -166,7 +166,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           source: 'Compras',
         });
       }
-      const autosPendentes = (autosR.data || []).filter((a: any) => a.status === 'submetido' || a.status === 'em_revisao').length;
+      const autosPendentes = autosData.filter((a: any) => a.status === 'submetido' || a.status === 'em_revisao').length;
       if (autosPendentes > 0) {
         attention.push({
           id: 'autos-pendentes',
@@ -182,11 +182,11 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'orcamento-base',
           label: 'Orçamento Base',
           module: 'Orçamentos',
-          state: (orcsR.data || []).length > 0 ? 'consolidated' : 'no_data',
-          lastUpdate: (orcsR.data || [])[0]?.updated_at || null,
-          totalDocs: (orcsR.data || []).length,
+          state: orcsData.length > 0 ? 'consolidated' : 'no_data',
+          lastUpdate: orcsData[0]?.updated_at || null,
+          totalDocs: orcsData.length,
           acceptedDocs: adjudicados.length,
-          pendingDocs: (orcsR.data || []).length - adjudicados.length,
+          pendingDocs: orcsData.length - adjudicados.length,
           conflicts: 0,
           amount: budgetVendas,
         },
@@ -194,11 +194,11 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'mce',
           label: 'MCEs / Adjudicações',
           module: 'MCE',
-          state: (mceR.data || []).length > 0 ? 'found' : 'no_data',
-          lastUpdate: (mceR.data || [])[0]?.updated_at || null,
-          totalDocs: (mceR.data || []).length,
-          acceptedDocs: (mceR.data || []).filter((m: any) => m.status === 'adjudicado').length,
-          pendingDocs: (mceR.data || []).filter((m: any) => m.status !== 'adjudicado').length,
+          state: mceData.length > 0 ? 'found' : 'no_data',
+          lastUpdate: mceData[0]?.updated_at || null,
+          totalDocs: mceData.length,
+          acceptedDocs: mceData.filter((m: any) => m.status === 'adjudicado').length,
+          pendingDocs: mceData.filter((m: any) => m.status !== 'adjudicado').length,
           conflicts: 0,
           amount: 0,
         },
@@ -206,9 +206,9 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'compras',
           label: 'Compras / Contratos',
           module: 'Compras',
-          state: (comprasR.data || []).length > 0 ? 'found' : 'no_data',
-          lastUpdate: (comprasR.data || [])[0]?.updated_at || null,
-          totalDocs: (comprasR.data || []).length,
+          state: comprasData.length > 0 ? 'found' : 'no_data',
+          lastUpdate: comprasData[0]?.updated_at || null,
+          totalDocs: comprasData.length,
           acceptedDocs: 0,
           pendingDocs: 0,
           conflicts: comprasSemMce,
@@ -218,25 +218,25 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'autos',
           label: 'Autos & Medições',
           module: 'Autos',
-          state: (autosR.data || []).length > 0 ? 'found' : 'no_data',
-          lastUpdate: (autosR.data || [])[0]?.updated_at || null,
-          totalDocs: (autosR.data || []).length,
-          acceptedDocs: (autosR.data || []).filter((a: any) => a.status === 'aprovado').length,
+          state: autosData.length > 0 ? 'found' : 'no_data',
+          lastUpdate: autosData[0]?.updated_at || null,
+          totalDocs: autosData.length,
+          acceptedDocs: autosData.filter((a: any) => a.status === 'aprovado').length,
           pendingDocs: autosPendentes,
           conflicts: 0,
-          amount: (autosR.data || []).reduce((s: number, a: any) => s + safeNum(a.valor_total), 0),
+          amount: autosData.reduce((s: number, a: any) => s + safeNum(a.valor_total), 0),
         },
         {
           key: 'faturacao',
           label: 'Faturação',
           module: 'Financeiro',
-          state: (contasR.data || []).length > 0 ? 'found' : 'no_data',
-          lastUpdate: (contasR.data || [])[0]?.updated_at || null,
-          totalDocs: (contasR.data || []).length,
+          state: contasData.length > 0 ? 'found' : 'no_data',
+          lastUpdate: contasData[0]?.updated_at || null,
+          totalDocs: contasData.length,
           acceptedDocs: 0,
           pendingDocs: 0,
           conflicts: 0,
-          amount: (contasR.data || []).reduce((s: number, c: any) => s + safeNum(c.valor), 0),
+          amount: contasData.reduce((s: number, c: any) => s + safeNum(c.valor), 0),
         },
         {
           key: 'contabilidade',
