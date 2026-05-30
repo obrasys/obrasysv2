@@ -1647,7 +1647,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
           return (
             <Section
               id="proposta-vendas"
-              title="Proposta Vendas sobre o Custo Total da Obra (projeto base)"
+              title="Proposta Vendas sobre o Custo Total da Obra"
               collapsed={isCol("proposta-vendas")}
               onToggle={() => toggleSection("proposta-vendas")}
             >
