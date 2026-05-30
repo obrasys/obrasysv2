@@ -869,53 +869,82 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%] text-left">Rubrica</TableHead>
-              <TableHead className="w-[15%] text-center">Valor (€)</TableHead>
-              <TableHead className="w-[10%] text-center">% s/ Total</TableHead>
-              <TableHead className="w-[20%] text-center">Empresa</TableHead>
+              <TableHead className="w-[34%] text-left">Rubrica</TableHead>
+              <TableHead className="w-[12%] text-center">Valor (€)</TableHead>
+              <TableHead className="w-[8%] text-center">Desc. %</TableHead>
+              <TableHead className="w-[12%] text-center">Líquido (€)</TableHead>
+              <TableHead className="w-[8%] text-center">% s/ Total</TableHead>
+              <TableHead className="w-[16%] text-center">Empresa</TableHead>
               <TableHead>Notas</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {details.direct_costs.map((line, idx) => (
-              <TableRow key={line.key}>
-                <TableCell className="font-medium text-xs">{line.label}</TableCell>
-                <TableCell>
-                  <NumCell
-                    readOnly
-                    value={line.value}
-                    onChange={() => {}}
-                  />
-                </TableCell>
-                <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                  {totals.total_directos > 0
-                    ? `${((line.value / totals.total_directos) * 100).toFixed(2)}%`
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  <TextCell
-                    readOnly={readOnly}
-                    value={line.empresa || ""}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, empresa: v };
-                      patch("direct_costs", next);
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <TextCell
-                    readOnly={readOnly}
-                    value={line.notas || ""}
-                    onChange={(v) => {
-                      const next = [...details.direct_costs];
-                      next[idx] = { ...line, notas: v };
-                      patch("direct_costs", next);
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+            {details.direct_costs.map((line, idx) => {
+              const desc = Math.max(0, Math.min(100, Number(line.desconto_pct) || 0));
+              const liquido = (Number(line.value) || 0) * (1 - desc / 100);
+              return (
+                <TableRow key={line.key}>
+                  <TableCell className="font-medium text-xs">{line.label}</TableCell>
+                  <TableCell>
+                    <NumCell
+                      readOnly
+                      value={line.value}
+                      onChange={() => {}}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <NumCell
+                      readOnly={readOnly}
+                      value={line.desconto_pct || 0}
+                      onChange={(v) => {
+                        const num = Math.max(0, Math.min(100, Number(v) || 0));
+                        const next = [...details.direct_costs];
+                        next[idx] = { ...line, desconto_pct: num };
+                        patch("direct_costs", next);
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">
+                    {desc > 0 ? (
+                      <span className="text-primary font-medium">
+                        {liquido.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {liquido.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                    {totals.total_directos > 0
+                      ? `${((liquido / totals.total_directos) * 100).toFixed(2)}%`
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={line.empresa || ""}
+                      onChange={(v) => {
+                        const next = [...details.direct_costs];
+                        next[idx] = { ...line, empresa: v };
+                        patch("direct_costs", next);
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={line.notas || ""}
+                      onChange={(v) => {
+                        const next = [...details.direct_costs];
+                        next[idx] = { ...line, notas: v };
+                        patch("direct_costs", next);
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {(details.direct_costs_extra || []).map((line, idx) => {
               const totalDir = totals.total_directos;
               return (
