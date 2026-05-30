@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Lock, CheckCircle2, Clock, Circle, AlertTriangle, Sparkles, TrendingUp, TrendingDown, Wallet, Database, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2, Clock, Circle, AlertTriangle, Sparkles, TrendingUp, TrendingDown, Wallet, Database, Loader2, ExternalLink, ShieldCheck } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { fmtEUR } from '@/lib/finance';
 import { useOrcamentoRaiObra } from '@/hooks/useOrcamentoRaiObra';
+import { useFinancialCycles } from '@/hooks/useFinancialCycles';
+import { useSnapshotAndLockBudget } from '@/hooks/useBudgetSnapshot';
+import { useAuth } from '@/contexts/AuthContext';
 import type { FinancialPhase, PhaseStatus } from '@/types/orcamento-rai';
 import { PHASE_DESCRIPTIONS } from '@/types/orcamento-rai';
 
