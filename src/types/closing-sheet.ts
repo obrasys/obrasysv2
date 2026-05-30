@@ -486,7 +486,18 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     (d.terrain.demolicoes_diversas || 0) +
     (d.terrain.arranjos_exteriores || 0);
   const ivaTerreno = base_iva_terreno_honorarios * (d.iva.taxa_terreno_pct || 0);
-  const base_iva_construcao = custo_industrial + total_outros;
+  // Base IVA Construção exclui mão-de-obra de estaleiro (não tem IVA dedutível)
+  const LABOR_SITE_KEYS = new Set([
+    "pessoal_tecnico",
+    "encarregados",
+    "chefes_equipa",
+    "guarda",
+    "pessoal_obra",
+  ]);
+  const mao_obra_estaleiro = d.site_costs
+    .filter((l) => LABOR_SITE_KEYS.has(l.key))
+    .reduce((s, l) => s + (l.value || 0), 0);
+  const base_iva_construcao = custo_industrial - mao_obra_estaleiro + total_outros;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
   const ivaHonorarios = (total_indirectos + total_admin) * (d.iva.taxa_honorarios_pct || 0);
   const total_iva = ivaTerreno + ivaConstrucao + ivaHonorarios;
