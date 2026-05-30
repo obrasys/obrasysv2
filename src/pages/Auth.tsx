@@ -73,7 +73,7 @@ const Auth = () => {
   // Signup form
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { nome: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { nome: "", email: "", telefone: "", empresa: "", nif: "", password: "", confirmPassword: "" },
   });
 
   // Reset password form
@@ -104,7 +104,11 @@ const Auth = () => {
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
-    const { error } = await signUp(data.email, data.password, data.nome);
+    const { error } = await signUp(data.email, data.password, data.nome, {
+      telefone: data.telefone,
+      empresa: data.empresa || undefined,
+      nif: data.nif || undefined,
+    });
     setIsLoading(false);
 
     if (error) {
@@ -359,6 +363,21 @@ const Auth = () => {
                   {signUpForm.formState.errors.email && (
                     <p className="text-sm text-destructive">
                       {signUpForm.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-telefone">Telefone</Label>
+                  <Input
+                    id="signup-telefone"
+                    type="tel"
+                    placeholder="+351 912 345 678"
+                    {...signUpForm.register("telefone")}
+                  />
+                  {signUpForm.formState.errors.telefone && (
+                    <p className="text-sm text-destructive">
+                      {signUpForm.formState.errors.telefone.message}
                     </p>
                   )}
                 </div>
