@@ -217,6 +217,9 @@ export default function VerObraPage() {
           <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${id}/financeiro`)}>
             <Wallet className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Financeiro</span>
           </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${id}/orcamento-rai`)}>
+            <TrendingUp className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Orçamento & RAI</span>
+          </Button>
           {obra.status !== 'concluida' && obra.status !== 'cancelada' && (
             <Button variant="outline" size="sm" onClick={() => setShowFinalizarModal(true)}>
               <Flag className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Finalizar</span>
