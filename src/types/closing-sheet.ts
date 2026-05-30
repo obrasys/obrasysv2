@@ -497,7 +497,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   const mao_obra_estaleiro = d.site_costs
     .filter((l) => LABOR_SITE_KEYS.has(l.key))
     .reduce((s, l) => s + (l.value || 0), 0);
-  const base_iva_construcao = custo_industrial - mao_obra_estaleiro + total_outros;
+  const base_iva_construcao = custo_industrial - mao_obra_estaleiro;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
   const ivaHonorarios = (total_indirectos + total_admin) * (d.iva.taxa_honorarios_pct || 0);
   const total_iva = ivaTerreno + ivaConstrucao + ivaHonorarios;
