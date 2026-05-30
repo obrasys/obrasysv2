@@ -85,6 +85,62 @@ export default function OrcamentoRaiObra() {
         </CardContent>
       </Card>
 
+      {/* Fase 3 — Snapshot & Lock do Budget */}
+      <Card className={cn('rounded-xl mt-4 border', lockedBudget ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40')}>
+        <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className={cn('w-5 h-5 mt-0.5', lockedBudget ? 'text-emerald-600' : 'text-amber-600')} />
+            <div>
+              <div className="font-semibold text-sm">
+                {lockedBudget ? `Budget bloqueado — v${lockedBudget.version}` : 'Snapshot do Budget pendente'}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {lockedBudget
+                  ? `Bloqueado em ${new Date(lockedBudget.locked_at!).toLocaleString('pt-PT')} · RAI ${fmtEUR(lockedBudget.rai)} · Margem ${lockedBudget.margem_pct.toFixed(1)}%`
+                  : canLockBudget
+                  ? 'Folha de Fecho Base aprovada. Capture um snapshot para tornar o Budget a referência oficial desta obra.'
+                  : 'O snapshot fica disponível assim que a Folha de Fecho Base for aprovada.'}
+              </div>
+            </div>
+          </div>
+          {canLockBudget && organization?.id && id && data && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" disabled={snapshotMutation.isPending}>
+                  {snapshotMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Lock className="w-3 h-3 mr-1" />}
+                  Bloquear Budget
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Bloquear o Budget desta obra?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Será criado um snapshot oficial (v{((cycles?.filter(c => c.phase === 'budget').length ?? 0) + 1)}) com os valores atuais da FF Base e fontes consolidadas.
+                    A partir deste momento, qualquer alteração passa a contar como desvio face ao Budget.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() =>
+                      snapshotMutation.mutate({
+                        obra_id: id,
+                        organization_id: organization.id,
+                        consolidation: data,
+                      })
+                    }
+                  >
+                    Confirmar e bloquear
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       {/* Timeline financeira */}
       <section className="mt-6">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Linha do tempo financeira</h2>
