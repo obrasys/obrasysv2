@@ -49,10 +49,21 @@ const CriarConta = () => {
         "Password should be at least 6 characters": "A password deve ter pelo menos 6 caracteres.",
         "Signup requires a valid password": "Introduza uma password válida.",
       };
+      const lower = (error.message || "").toLowerCase();
+      let description = errorMap[error.message] || error.message;
+      if (lower.includes("password is known to be weak") || lower.includes("pwned") || lower.includes("weak_password")) {
+        description = "Esta password apareceu em fugas de dados conhecidas e não é segura. Por favor escolha uma password diferente.";
+      } else if (lower.includes("rate limit") || lower.includes("over_email_send_rate_limit")) {
+        description = "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.";
+      } else if (lower.includes("unable to validate email") || lower.includes("invalid email")) {
+        description = "Email inválido. Verifique e tente novamente.";
+      } else if (lower.includes("database error") || lower.includes("unexpected_failure")) {
+        description = "Ocorreu um erro ao criar a conta. Tente novamente em instantes ou contacte o suporte.";
+      }
       toast({
         variant: "destructive",
         title: "Erro ao registar",
-        description: errorMap[error.message] || error.message,
+        description,
       });
       return;
     }
