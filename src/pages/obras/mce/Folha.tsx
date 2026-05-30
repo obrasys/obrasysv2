@@ -296,8 +296,8 @@ export default function MCEFolha() {
                       </div>
                       <Textarea
                         defaultValue={it.specification ?? ''}
-                        className="text-xs min-h-[2.2rem] mt-1"
-                        rows={1}
+                        className="text-xs min-h-[3.5rem] mt-1 w-full whitespace-pre-wrap break-words"
+                        rows={3}
                         onBlur={(e) => { if (e.target.value !== it.specification) patchItem(it.id, { specification: e.target.value }); }}
                       />
                     </td>
