@@ -105,12 +105,19 @@ export interface Capitulo {
   titulo: string;
   descricao: string | null;
   valor_total: number;
+  /** Desconto aplicado ao capítulo, em percentagem (0-100). Descontado do valor_total. */
+  desconto_pct?: number;
   ordem: number;
   created_at: string;
   updated_at: string;
   // Commercial summary fields
   client_summary_title?: string | null;
   client_summary_text?: string | null;
+  client_exclusions_text?: string | null;
+  include_in_client_summary?: boolean;
+  client_summary_order?: number | null;
+  artigos?: ArtigoOrcamento[];
+}
   client_exclusions_text?: string | null;
   include_in_client_summary?: boolean;
   client_summary_order?: number | null;
