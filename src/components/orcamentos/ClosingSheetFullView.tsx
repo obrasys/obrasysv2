@@ -1800,7 +1800,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
             <TableRow>
               <TableHead>Tipologia</TableHead>
               <TableHead className="w-[80px] text-right">Quant.</TableHead>
-              <TableHead className="w-[110px] text-right">Área B.Priv (m²)</TableHead>
+              <TableHead className="w-[110px] text-center">Área B.Priv (m²)</TableHead>
               <TableHead className="w-[120px] text-right">Preço m² (€)</TableHead>
               <TableHead className="w-[140px] text-right">Preço UN (€)</TableHead>
               <TableHead className="w-[160px] text-right">Total (€)</TableHead>
@@ -1828,7 +1828,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                       onChange={(v) => updateSalesLine(line.key, { quantidade: v })}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <NumCell
                       readOnly={readOnly}
                       value={line.area_priv}
