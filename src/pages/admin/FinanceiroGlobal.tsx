@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
 const PLAN_PRICES: Record<string, number> = {
-  founder: 490,
+  founder: 990,
   professional: 99,
   starter: 49,
   trial: 0,
