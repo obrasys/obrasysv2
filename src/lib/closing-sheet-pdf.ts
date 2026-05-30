@@ -304,7 +304,7 @@ export async function exportClosingSheetPDF(params: {
   // =========================================================
   // 2) ESTRUTURA DE CUSTOS  (sequencial: A → B → … → Total)
   // =========================================================
-  h1("2. Estrutura de Custos");
+  h1("5. Estrutura de Custos");
 
   // 2.A Custos Diretos
   h2("A · Custos Diretos (s/ IVA)");
