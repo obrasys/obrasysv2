@@ -58,7 +58,7 @@ export function ClosingSheetComparison({
     { label: "Estaleiro", initial: ti.total_estaleiro, final: tf.total_estaleiro },
     { label: "Custo Industrial", initial: ti.custo_industrial, final: tf.custo_industrial },
     { label: "Terreno", initial: ti.total_terreno, final: tf.total_terreno },
-    { label: "Indirectos", initial: ti.total_indirectos, final: tf.total_indirectos },
+    { label: "Indiretos", initial: ti.total_indiretos, final: tf.total_indiretos },
     { label: "Outros", initial: ti.total_outros, final: tf.total_outros },
     { label: "Administrativos", initial: ti.total_admin, final: tf.total_admin },
     { label: "IVA", initial: ti.total_iva, final: tf.total_iva },
