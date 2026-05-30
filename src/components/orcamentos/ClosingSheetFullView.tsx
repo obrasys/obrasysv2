@@ -1568,52 +1568,6 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                     </div>
                   </div>
                 </div>
-
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2 border-t">
-                  <div>
-                    <Label>Validador Técnico-Económico</Label>
-                    <TextCell
-                      readOnly={readOnly}
-                      value={details.validation.validador_tecnico_economico}
-                      onChange={(v) =>
-                        patch("validation", { ...details.validation, validador_tecnico_economico: v })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Aprovação Inicial - Nome</Label>
-                    <TextCell
-                      readOnly={readOnly}
-                      value={details.approvals.aprovacao_inicial_nome}
-                      onChange={(v) =>
-                        patch("approvals", { ...details.approvals, aprovacao_inicial_nome: v })
-                      }
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label>Observações</Label>
-                    <Textarea
-                      readOnly={readOnly}
-                      rows={2}
-                      value={details.validation.observacoes}
-                      onChange={(e) =>
-                        patch("validation", { ...details.validation, observacoes: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label>Notas de Aprovação</Label>
-                    <Textarea
-                      readOnly={readOnly}
-                      rows={2}
-                      value={details.approvals.notas}
-                      onChange={(e) =>
-                        patch("approvals", { ...details.approvals, notas: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
               </div>
             </Section>
           );
