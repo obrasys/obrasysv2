@@ -678,6 +678,192 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
         <Separator />
 
+        {/* DADOS ESTATÍSTICOS */}
+        <Section id="estatistica" title="Dados Estatísticos (Valor m² Área Construída Equivalente)" collapsed={isCol("estatistica")} onToggle={() => toggleSection("estatistica")}>
+        {(() => {
+          const abpFromSales = details.sales.reduce(
+            (s, l) => s + (Number(l.quantidade) || 0) * (Number(l.area_priv) || 0),
+            0,
+          );
+          const abpEffective = details.statistics.area_construcao_override
+            ? (details.statistics.area_construcao || 0)
+            : abpFromSales;
+          return (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+          <div>
+            <Label>Área Bruta Privativa (m²)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={abpEffective}
+              onChange={(v) =>
+                patch("statistics", {
+                  ...details.statistics,
+                  area_construcao: v,
+                  area_construcao_override: true,
+                })
+              }
+            />
+            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
+              <span>Auto (mapa vendas): {fmt(abpFromSales)} m²</span>
+              {details.statistics.area_construcao_override && !readOnly && (
+                <button
+                  type="button"
+                  className="underline text-primary"
+                  onClick={() =>
+                    patch("statistics", {
+                      ...details.statistics,
+                      area_construcao: abpFromSales,
+                      area_construcao_override: false,
+                    })
+                  }
+                >
+                  repor auto
+                </button>
+              )}
+            </p>
+          </div>
+          <div>
+            <Label>Área Caves (m²)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.statistics.area_caves}
+              onChange={(v) => patch("statistics", { ...details.statistics, area_caves: v })}
+            />
+          </div>
+          <div>
+            <Label>Área Arranjos Exteriores (m²)</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={details.statistics.area_arranjos_ext}
+              onChange={(v) =>
+                patch("statistics", { ...details.statistics, area_arranjos_ext: v })
+              }
+            />
+          </div>
+          <div>
+            <Label>Área de Construção (m²) - ABP + Caves</Label>
+            <NumCell
+              readOnly={readOnly}
+              value={
+                details.statistics.area_total_construcao ??
+                (abpEffective + (details.statistics.area_caves || 0))
+              }
+              onChange={(v) =>
+                patch("statistics", { ...details.statistics, area_total_construcao: v })
+              }
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Auto: {fmt(abpEffective + (details.statistics.area_caves || 0))} m² - editável
+            </p>
+          </div>
+        </div>
+          );
+        })()}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="bg-muted/40 rounded-md p-3">
+            <p className="text-[11px] uppercase text-muted-foreground">Custo / m² equivalente</p>
+            <p className="text-lg font-bold tabular-nums">{fmt(totals.custo_m2_equivalente)}</p>
+          </div>
+          <div className={`rounded-md p-3 ${totals.k_venda >= 1.1 ? "bg-green-100 dark:bg-green-900/30" : totals.k_venda < 0.9 ? "bg-red-100 dark:bg-red-900/30" : "bg-yellow-100 dark:bg-yellow-900/30"}`}>
+            <p className={`text-[11px] uppercase ${totals.k_venda >= 1.1 ? "text-green-700 dark:text-green-300" : totals.k_venda < 0.9 ? "text-red-700 dark:text-red-300" : "text-yellow-700 dark:text-yellow-300"}`}>K (coef. Venda)</p>
+            <p className={`text-lg font-bold tabular-nums ${totals.k_venda >= 1.1 ? "text-green-700 dark:text-green-200" : totals.k_venda < 0.9 ? "text-red-700 dark:text-red-200" : "text-yellow-700 dark:text-yellow-200"}`}>{totals.k_venda.toFixed(3)}</p>
+          </div>
+          <div className="bg-muted/40 rounded-md p-3">
+            <p className="text-[11px] uppercase text-muted-foreground">Valor (m²) das Vendas</p>
+            <p className="text-lg font-bold tabular-nums">
+              {fmt(
+                totals.valor_vendas /
+                  Math.max(1, details.statistics.area_construcao || 1),
+              )}
+            </p>
+          </div>
+        </div>
+        </Section>
+
+        <Separator />
+
+        {/* CONDICIONANTES */}
+        <Section id="condicionantes" title="Dados Terreno / Condicionantes de Obra" collapsed={isCol("condicionantes")} onToggle={() => toggleSection("condicionantes")}>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          {(
+            [
+              ["estudo_geotecnico", "Estudo Geotécnico"],
+              ["zona_urbana", "Loc. Zona Urbana"],
+              ["acessos", "Existem Acessos"],
+              ["energia_electrica", "Energia Eléctrica"],
+              ["canalizacao_agua", "Canalização de Água"],
+              ["fundacoes_indirectas", "Fundações Indirectas"],
+              ["rebaixamento_freatico", "Rebaixamento Nível Freático"],
+              ["condicoes_estaleiro", "Condições p/ Estaleiro"],
+              ["ocupacao_via_publica", "Ocupação Via Pública"],
+            ] as const
+          ).map(([key, label]) => (
+            <div key={key} className="flex items-center gap-2 border rounded-md px-3 py-2">
+              <Checkbox
+                id={key}
+                disabled={readOnly}
+                checked={(details.conditions as any)[key]}
+                onCheckedChange={(c) =>
+                  patch("conditions", { ...details.conditions, [key]: !!c })
+                }
+              />
+              <Label htmlFor={key} className="text-xs cursor-pointer">{label}</Label>
+            </div>
+          ))}
+        </div>
+        <div>
+          <Label className="text-[11px] uppercase">Observações</Label>
+          <Textarea
+            readOnly={readOnly}
+            rows={3}
+            value={details.conditions.observacoes}
+            onChange={(e) =>
+              patch("conditions", { ...details.conditions, observacoes: e.target.value })
+            }
+          />
+        </div>
+        </Section>
+
+        <Separator />
+
+        {/* QUALIDADES DA OBRA / CADERNO DE ENCARGOS */}
+        <Section
+          id="qualidades"
+          title="Qualidades da Obra / Caderno de Encargos"
+          collapsed={isCol("qualidades")}
+          onToggle={() => toggleSection("qualidades")}
+          extra={
+            <Button size="sm" variant="ghost" asChild className="text-xs gap-1.5">
+              <a href="/definicoes/folha-fecho-qualidades" target="_blank" rel="noreferrer">
+                <ListChecks className="h-3.5 w-3.5" /> Gerir catálogo
+              </a>
+            </Button>
+          }
+        >
+
+        {qualitySpecs.list.isLoading ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : (qualitySpecs.list.data ?? []).length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">Catálogo vazio. Será populado automaticamente na próxima recarga.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            {(qualitySpecs.list.data ?? []).filter((s) => s.ativo).map((spec) => (
+              <div key={spec.id}>
+                <Label className="text-[11px]">{spec.label}</Label>
+                <TextCell
+                  readOnly={readOnly}
+                  value={details.quality_specs_values[spec.spec_key] || ""}
+                  onChange={(v) => patch("quality_specs_values", { ...details.quality_specs_values, [spec.spec_key]: v })}
+                  placeholder="Descrição técnica…"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        </Section>
+
+        <Separator />
+
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
         <Section id="directos" title="Custos Diretos / Preços Secos - Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total C. Diretos">
         <Table>
