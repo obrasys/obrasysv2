@@ -51,6 +51,7 @@ interface CapituloAccordionProps {
     client_exclusions_text?: string;
     include_in_client_summary?: boolean;
   }) => void;
+  onUpdateDiscount?: (capituloId: string, descontoPct: number) => void;
   isReadOnly?: boolean;
 }
 
