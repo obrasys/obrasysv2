@@ -64,6 +64,7 @@ export function CapituloAccordion({
   onDeleteArtigo,
   onOpenCatalog,
   onUpdateCommercial,
+  onUpdateDiscount,
   isReadOnly = false,
 }: CapituloAccordionProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,8 +72,15 @@ export function CapituloAccordion({
   const [summaryText, setSummaryText] = useState(capitulo.client_summary_text || '');
   const [exclusionsText, setExclusionsText] = useState(capitulo.client_exclusions_text || '');
   const [includeInSummary, setIncludeInSummary] = useState(capitulo.include_in_client_summary !== false);
+  const [descontoInput, setDescontoInput] = useState<string>(
+    capitulo.desconto_pct != null ? String(capitulo.desconto_pct) : '0'
+  );
   const [visibleCols, setVisibleCols] = useState<CapituloColumnKey[]>(() => loadVisibleColumns());
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+
+  useEffect(() => {
+    setDescontoInput(capitulo.desconto_pct != null ? String(capitulo.desconto_pct) : '0');
+  }, [capitulo.desconto_pct]);
 
   useEffect(() => {
     saveVisibleColumns(visibleCols);
