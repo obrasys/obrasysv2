@@ -1298,11 +1298,16 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
               id="oru"
               checked={details.iva.zona_oru}
               disabled={readOnly}
-              onCheckedChange={(c) => patch("iva", {
-                ...details.iva,
-                zona_oru: !!c,
-                taxa_construcao_pct: (!!c || details.iva.zona_aru) ? 0.06 : 0.23,
-              })}
+              onCheckedChange={(c) =>
+                setDetails((d) => ({
+                  ...d,
+                  iva: {
+                    ...d.iva,
+                    zona_oru: !!c,
+                    taxa_construcao_pct: (!!c || d.iva.zona_aru) ? 0.06 : 0.23,
+                  },
+                }))
+              }
             />
             <Label htmlFor="oru" className="text-xs">Terreno em zona ORU</Label>
           </div>
