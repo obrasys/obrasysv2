@@ -43,16 +43,16 @@ export default function OrcamentoRaiObra() {
 
   if (isLoading || !data) {
     return (
-      <Page title="Orçamento & RAI da Obra" subtitle="Carregando consolidação financeira…">
+      <AppLayout title="Orçamento & RAI da Obra" subtitle="Carregando consolidação financeira…">
         <div className="grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
-      </Page>
+      </AppLayout>
     );
   }
 
   return (
-    <Page
+    <AppLayout
       title="Orçamento & RAI da Obra"
       subtitle={`Visão financeira consolidada — fase atual: ${currentPhaseData?.label}`}
       actions={
@@ -229,7 +229,7 @@ export default function OrcamentoRaiObra() {
           </CardContent>
         </Card>
       </section>
-    </Page>
+    </AppLayout>
   );
 }
 
