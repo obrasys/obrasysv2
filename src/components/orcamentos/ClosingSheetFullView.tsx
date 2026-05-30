@@ -1259,14 +1259,19 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               checked={details.iva.zona_aru}
               disabled={readOnly}
               onCheckedChange={(c) =>
-                setDetails((d) => ({
-                  ...d,
-                  iva: {
-                    ...d.iva,
-                    zona_aru: !!c,
-                    taxa_construcao_pct: (!!c || d.iva.zona_oru) ? 0.06 : 0.23,
-                  },
-                }))
+                setDetails((d) => {
+                  const reduced = !!c || d.iva.zona_oru;
+                  return {
+                    ...d,
+                    iva: {
+                      ...d.iva,
+                      zona_aru: !!c,
+                      taxa_terreno_pct: reduced ? 0.06 : 0.23,
+                      taxa_construcao_pct: reduced ? 0.06 : 0.23,
+                      taxa_honorarios_pct: reduced ? 0.06 : 0.23,
+                    },
+                  };
+                })
               }
             />
             <Label htmlFor="aru" className="text-xs">Terreno em zona ARU</Label>
