@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download, ListChecks, ShieldCheck, ChevronDown, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Lock, FileText, FileCheck2, Plus, Trash2, Save, Loader2, Printer, Download, ListChecks, ShieldCheck, ChevronDown, ChevronsDownUp, ChevronsUpDown, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -1257,16 +1258,46 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               id="aru"
               checked={details.iva.zona_aru}
               disabled={readOnly}
-              onCheckedChange={(c) => patch("iva", { ...details.iva, zona_aru: !!c })}
+              onCheckedChange={(c) => patch("iva", {
+                ...details.iva,
+                zona_aru: !!c,
+                taxa_construcao_pct: (!!c || details.iva.zona_oru) ? 0.06 : 0.23,
+              })}
             />
             <Label htmlFor="aru" className="text-xs">Terreno em zona ARU</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Mais informação ARU/ORU">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-md text-xs whitespace-pre-line leading-relaxed">
+                  {`Benefícios para proprietários, investidores e comunidades
+
+As ARU/ORU trazem várias vantagens:
+
+Assentam no Estatuto dos Benefícios Fiscais (arts. 45.º, 45.º-A e 71.º) e no Regime Financeiro das Autarquias Locais (Lei 73/2013, art. 16.º), que permite aos municípios aprovar isenções de IMI e IMT em ARU.
+
+IVA reduzido: Taxa de 6% para empreitadas de reabilitação em imóveis localizados em ARU ou integradas em projetos de reconhecido interesse público (art. 18.º e verba 2.23 da Lista I do CIVA).
+
+IMI: Isenção por três anos, renovável até cinco, para imóveis reabilitados situados em ARU (art. 45.º EBF).
+
+IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obras começarem no prazo máximo de três anos. Isenção na primeira transmissão após a reabilitação, quando destinada a arrendamento permanente ou, se em ARU, a habitação própria e permanente. (art. 45.º-A EBF).`}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
               id="oru"
               checked={details.iva.zona_oru}
               disabled={readOnly}
-              onCheckedChange={(c) => patch("iva", { ...details.iva, zona_oru: !!c })}
+              onCheckedChange={(c) => patch("iva", {
+                ...details.iva,
+                zona_oru: !!c,
+                taxa_construcao_pct: (!!c || details.iva.zona_aru) ? 0.06 : 0.23,
+              })}
             />
             <Label htmlFor="oru" className="text-xs">Terreno em zona ORU</Label>
           </div>
