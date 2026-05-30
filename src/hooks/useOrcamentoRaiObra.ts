@@ -32,21 +32,30 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
     queryFn: async (): Promise<OrcamentoRaiConsolidation> => {
       if (!obraId) throw new Error('obraId obrigatório');
 
-      // Lê em paralelo todas as fontes (todas tolerantes a ausência de dados).
-      const [obraR, ffR, orcsR, mceR, comprasR, autosR, contasR] = await Promise.all([
-        supabase.from('obras').select('id,nome,status,cost_center_id,updated_at').eq('id', obraId).maybeSingle(),
-        supabase
-          .from('closing_sheets')
-          .select('id,closing_type,status,sale_price,total_direct_cost,total_indirect_cost,site_costs,structure_costs,margin_amount,expected_result,final_result,approved_at,locked_at,updated_at')
-          .eq('obra_id', obraId),
-        supabase
-          .from('orcamentos')
-          .select('id,titulo,status,valor_total,updated_at')
-          .eq('obra_id', obraId),
-        supabase.from('mce_records').select('id,status,updated_at').eq('obra_id', obraId).then(r => r, () => ({ data: [], error: null } as any)),
-        supabase.from('contracting_packages').select('id,status,total_amount,updated_at').eq('obra_id', obraId).then(r => r, () => ({ data: [], error: null } as any)),
-        supabase.from('autos_medicao').select('id,status,valor_total,updated_at').eq('obra_id', obraId).then(r => r, () => ({ data: [], error: null } as any)),
-        supabase.from('contas_financeiras').select('id,tipo,valor,status,updated_at').eq('obra_id', obraId).then(r => r, () => ({ data: [], error: null } as any)),
+      // Lê em paralelo todas as fontes (tolerante a ausência de dados/tabela).
+      const sb = supabase as any;
+      const safeList = async (q: any): Promise<any[]> => {
+        try {
+          const r = await q;
+          return Array.isArray(r?.data) ? r.data : [];
+        } catch {
+          return [];
+        }
+      };
+
+      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData] = await Promise.all([
+        sb.from('obras').select('id,nome,status,cost_center_id,updated_at').eq('id', obraId).maybeSingle(),
+        safeList(
+          sb
+            .from('closing_sheets')
+            .select('id,closing_type,status,sale_price,total_direct_cost,total_indirect_cost,site_costs,structure_costs,margin_amount,expected_result,final_result,approved_at,locked_at,updated_at')
+            .eq('obra_id', obraId),
+        ),
+        safeList(sb.from('orcamentos').select('id,titulo,status,valor_total,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('mce_records').select('id,status,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('contracting_packages').select('id,status,total_amount,mce_id,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('autos_medicao').select('id,status,valor_total,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('contas_financeiras').select('id,tipo,valor,status,updated_at').eq('obra_id', obraId)),
       ]);
 
       if (obraR.error) throw obraR.error;
