@@ -478,7 +478,14 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     adminVal(d.admin.outros_administrativos_vendas_pct, d.admin.outros_administrativos);
 
   // (6) IVA - apenas se NÃO estiver em ARU/ORU para terreno; construção sempre
-  const ivaTerreno = (d.iva.zona_aru || d.iva.zona_oru) ? 0 : total_terreno * (d.iva.taxa_terreno_pct || 0);
+  const base_iva_terreno_honorarios =
+    (d.terrain.custo_loteamento || 0) +
+    (d.terrain.ensaios_geotecnicos || 0) +
+    (d.terrain.comissoes_intermediarios || 0) +
+    (d.terrain.levantamento_topografico || 0) +
+    (d.terrain.demolicoes_diversas || 0) +
+    (d.terrain.arranjos_exteriores || 0);
+  const ivaTerreno = (d.iva.zona_aru || d.iva.zona_oru) ? 0 : base_iva_terreno_honorarios * (d.iva.taxa_terreno_pct || 0);
   const base_iva_construcao = custo_industrial + total_outros;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
   const ivaHonorarios = (total_indirectos + total_admin) * (d.iva.taxa_honorarios_pct || 0);
