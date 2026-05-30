@@ -1451,7 +1451,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                     <span className="text-xs font-semibold">Direção Geral</span>
                     <div className="rounded-md bg-amber-50 border border-amber-200 px-2 py-2 text-center">
                       <p className="text-[10px] uppercase tracking-wider text-amber-900/70 font-semibold">% Lucro</p>
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-0">
                         <input
                           type="number"
                           step="0.01"
@@ -1461,9 +1461,9 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                           defaultValue={fmtPctInput(lucroDgPct)}
                           key={`dg-${fmtPctInput(lucroDgPct)}`}
                           onBlur={(e) => setLucroDg(Number(e.target.value))}
-                          className="w-20 bg-transparent text-center text-lg font-bold text-amber-900 outline-none tabular-nums"
+                          className="w-14 bg-transparent text-right text-[1.35rem] font-bold text-amber-900 outline-none tabular-nums"
                         />
-                        <span className="text-lg font-bold text-amber-900">%</span>
+                        <span className="text-[1.35rem] font-bold text-amber-900">%</span>
                       </div>
                     </div>
                   </div>
