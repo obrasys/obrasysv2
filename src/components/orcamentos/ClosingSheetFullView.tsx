@@ -1604,7 +1604,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
         {/* CUSTO TOTAL */}
         <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
           <div>
-            <p className="text-xs uppercase tracking-wider font-semibold opacity-90">Custo Total da Obra</p>
+            <p className="uppercase tracking-wider opacity-90 text-base font-bold">Custo Total da Obra</p>
             <p className="text-[10px] opacity-70 mt-0.5">(1) + (2) + (3) + (4) + (5) + (6)</p>
           </div>
           <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(totals.custo_total)}</p>
