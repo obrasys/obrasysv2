@@ -1122,7 +1122,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             ((details.statistics.area_construcao || 0) + (details.statistics.area_caves || 0));
           const precoM2 = Number(details.direct_costs_estimate_price_m2) || 0;
           const estimativa = precoM2 * areaConstrucao;
-          const totalCapitulos = details.direct_costs.reduce((s, l) => s + (l.value || 0), 0);
+          const totalCapitulos = details.direct_costs.reduce((s, l) => {
+            const d = Math.max(0, Math.min(100, Number(l.desconto_pct) || 0));
+            return s + (Number(l.value) || 0) * (1 - d / 100);
+          }, 0) + (details.direct_costs_extra || []).reduce((s, l) => {
+            const d = Math.max(0, Math.min(100, Number((l as any).desconto_pct) || 0));
+            return s + (Number(l.value) || 0) * (1 - d / 100);
+          }, 0);
           return (
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 rounded-md p-3 space-y-2">
               <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
