@@ -421,7 +421,10 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     ((d.statistics?.area_construcao || 0) + (d.statistics?.area_caves || 0));
   const estimativaCalc = (Number(d.direct_costs_estimate_price_m2) || 0) * (areaConstrucao || 0);
   const total_extra =
-    (d.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0);
+    (d.direct_costs_extra || []).reduce((s, l) => {
+      const desc = Math.max(0, Math.min(100, Number((l as any).desconto_pct) || 0));
+      return s + (Number(l.value) || 0) * (1 - desc / 100);
+    }, 0);
   const total_directos =
     d.direct_costs.reduce((s, l) => {
       const desc = Math.max(0, Math.min(100, Number(l.desconto_pct) || 0));
