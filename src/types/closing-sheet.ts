@@ -177,6 +177,17 @@ export interface ClosingSheetDetails {
   /** Preço por m² (editável) usado para calcular a estimativa de Custos Diretos
    *  quando ainda não há valores consolidados. Estimativa = área construção × preço/m². */
   direct_costs_estimate_price_m2?: number;
+  /** Linhas avulsas adicionadas manualmente à tabela de Custos Diretos
+   *  (capítulos extra fora do orçamento base). Somam ao total. */
+  direct_costs_extra?: ClosingExtraDirectCostLine[];
+}
+
+export interface ClosingExtraDirectCostLine {
+  id: string;
+  label: string;
+  value: number;
+  empresa?: string;
+  notas?: string;
 }
 
 // 38 capítulos canónicos do orçamento - alimentados exclusivamente a partir do
