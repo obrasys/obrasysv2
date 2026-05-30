@@ -42,6 +42,7 @@ export interface AttentionItem {
 
 export interface OrcamentoRaiConsolidation {
   obraId: string;
+  obraNome: string;
   currentPhase: FinancialPhase;
   phases: PhaseSummary[];
   kpis: {

@@ -319,6 +319,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
 
       return {
         obraId,
+        obraNome: obra.nome as string,
         currentPhase,
         phases,
         kpis: {

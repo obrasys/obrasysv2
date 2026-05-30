@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Lock, CheckCircle2, Clock, Circle, AlertTriangle, Sparkles, TrendingUp, TrendingDown, Wallet, Database, Loader2, ExternalLink, ShieldCheck, Plus } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -92,8 +93,29 @@ export default function OrcamentoRaiObra() {
         </Button>
       }
     >
+      {/* Breadcrumbs */}
+      <div className="px-1 pt-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={() => navigate('/obras')} className="cursor-pointer">Obras</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={() => navigate(`/obras/${id}`)} className="cursor-pointer max-w-[240px] truncate">
+                {data.obraNome}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Orçamento &amp; RAI</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       {/* Cabeçalho inteligente */}
-      <Card className="rounded-xl border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+      <Card className="rounded-xl border-primary/20 bg-gradient-to-br from-primary/5 to-transparent mt-3">
         <CardContent className="p-5 grid md:grid-cols-4 gap-4">
           <KPI label="RAI da fase atual" value={fmtEUR(data.kpis.rai)} hint={currentPhaseData?.label} />
           <KPI label="Margem" value={`${data.kpis.margemPct.toFixed(1)}%`} hint={fmtEUR(data.kpis.margemValor)} />
