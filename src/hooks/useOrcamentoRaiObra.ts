@@ -68,6 +68,14 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const obra = obraR.data;
       if (!obra) throw new Error('Obra não encontrada');
 
+      // Dedupe FF by id, merging hits from obra_id and source_budget_id queries
+      const ffMap = new Map<string, any>();
+      for (const s of [...ffByObraData, ...ffByBudgetData]) {
+        if (s?.id && !ffMap.has(s.id)) ffMap.set(s.id, s);
+      }
+      const ffData = Array.from(ffMap.values());
+      const orcsData = orcsPreload;
+
       const ffBase = ffData.find((s: any) => s.closing_type === 'initial');
       const ffFinal = ffData.find((s: any) => s.closing_type === 'final');
       const ffBaseApproved = !!ffBase?.approved_at || ffBase?.status === 'approved' || ffBase?.status === 'locked';
