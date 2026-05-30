@@ -354,9 +354,9 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Valor"]],
     body: [
-      ["Estrutura / Overhead", fmtEur(details.admin.estrutura_overhead || 0)],
-      ["Fee Inter-grupo", fmtEur(details.admin.fee_inter_grupo || 0)],
-      ["Outros Administrativos", fmtEur(details.admin.outros_administrativos || 0)],
+      ["Custos Estrutura / Fixos (Overhead) (% s/ Vendas)", fmtEur((totals.valor_vendas || 0) * (details.admin.estrutura_overhead_vendas_pct ?? 0))],
+      ["Fee Gestão Inter-Grupo (% s/ Vendas)", fmtEur((totals.valor_vendas || 0) * (details.admin.fee_inter_grupo_vendas_pct ?? 0))],
+      ["Outros Custos Administrativos (% s/ Vendas)", fmtEur((totals.valor_vendas || 0) * (details.admin.outros_administrativos_vendas_pct ?? 0))],
     ],
     foot: [["Subtotal (5) Administrativos", fmtEur(totals.total_admin)]],
     theme: "striped",

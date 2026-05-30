@@ -70,8 +70,11 @@ export interface ClosingOtherCosts {
 
 export interface ClosingAdminCosts {
   estrutura_overhead: number;
+  estrutura_overhead_vendas_pct?: number;
   fee_inter_grupo: number;
+  fee_inter_grupo_vendas_pct?: number;
   outros_administrativos: number;
+  outros_administrativos_vendas_pct?: number;
 }
 
 export interface ClosingIvaCosts {
@@ -467,10 +470,12 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     (d.other.controlo_qualidade || 0);
 
   // (5) Admin
+  const adminVal = (pct: number | undefined, abs: number) =>
+    pct !== undefined && pct !== null ? valor_vendas * (pct || 0) : (abs || 0);
   const total_admin =
-    (d.admin.estrutura_overhead || 0) +
-    (d.admin.fee_inter_grupo || 0) +
-    (d.admin.outros_administrativos || 0);
+    adminVal(d.admin.estrutura_overhead_vendas_pct, d.admin.estrutura_overhead) +
+    adminVal(d.admin.fee_inter_grupo_vendas_pct, d.admin.fee_inter_grupo) +
+    adminVal(d.admin.outros_administrativos_vendas_pct, d.admin.outros_administrativos);
 
   // (6) IVA - apenas se NÃO estiver em ARU/ORU para terreno; construção sempre
   const ivaTerreno = (d.iva.zona_aru || d.iva.zona_oru) ? 0 : total_terreno * (d.iva.taxa_terreno_pct || 0);

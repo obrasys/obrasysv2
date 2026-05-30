@@ -1208,28 +1208,40 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="admin" title="Custos Administrativos - (5)" collapsed={isCol("admin")} onToggle={() => toggleSection("admin")} total={totals.total_admin} totalLabel="Total C. Admin">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div>
-            <Label>Estrutura / Fixos (Overhead) (€)</Label>
+            <Label>Custos Estrutura / Fixos (Overhead) (% s/ Vendas)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.admin.estrutura_overhead}
-              onChange={(v) => patch("admin", { ...details.admin, estrutura_overhead: v })}
+              step="0.001"
+              value={(details.admin.estrutura_overhead_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("admin", { ...details.admin, estrutura_overhead_vendas_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.admin.estrutura_overhead_vendas_pct || 0))}
+            </p>
           </div>
           <div>
-            <Label>Fee Gestão Inter-Grupo (€)</Label>
+            <Label>Fee Gestão Inter-Grupo (% s/ Vendas)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.admin.fee_inter_grupo}
-              onChange={(v) => patch("admin", { ...details.admin, fee_inter_grupo: v })}
+              step="0.001"
+              value={(details.admin.fee_inter_grupo_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("admin", { ...details.admin, fee_inter_grupo_vendas_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.admin.fee_inter_grupo_vendas_pct || 0))}
+            </p>
           </div>
           <div>
-            <Label>Outros Administrativos (€)</Label>
+            <Label>Outros Custos Administrativos (% s/ Vendas)</Label>
             <NumCell
               readOnly={readOnly}
-              value={details.admin.outros_administrativos}
-              onChange={(v) => patch("admin", { ...details.admin, outros_administrativos: v })}
+              step="0.001"
+              value={(details.admin.outros_administrativos_vendas_pct ?? 0) * 100}
+              onChange={(v) => patch("admin", { ...details.admin, outros_administrativos_vendas_pct: v / 100 })}
             />
+            <p className="text-[11px] text-muted-foreground text-right mt-1">
+              = {fmt((totals.valor_vendas || 0) * (details.admin.outros_administrativos_vendas_pct || 0))}
+            </p>
           </div>
         </div>
         <SubtotalRow label="TOTAL CUSTOS ADMINISTRATIVOS" code="(5)" value={totals.total_admin} />
