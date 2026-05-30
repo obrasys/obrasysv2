@@ -544,7 +544,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 {k.label}
               </p>
               <p
-                className={`font-bold tabular-nums mt-0.5 truncate text-sm sm:text-[15px] ${k.tone === "good" ? "text-emerald-700" : k.tone === "bad" ? "text-rose-700" : ""}`}
+                className={`font-extrabold tabular-nums mt-0.5 truncate text-sm sm:text-[15px] ${k.tone === "good" ? "text-emerald-700" : k.tone === "bad" ? "text-rose-700" : ""}`}
                 title={k.value}
               >
                 {k.value}
