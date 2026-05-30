@@ -1461,7 +1461,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                           defaultValue={fmtPctInput(lucroDgPct)}
                           key={`dg-${fmtPctInput(lucroDgPct)}`}
                           onBlur={(e) => setLucroDg(Number(e.target.value))}
-                          className="w-10 bg-transparent text-right text-[1.35rem] font-bold text-amber-900 outline-none tabular-nums -mr-1"
+                          className="w-10 bg-transparent text-right text-[1.35rem] font-bold text-amber-900 outline-none tabular-nums -mr-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0"
                         />
                         <span className="text-[1.35rem] font-bold text-amber-900">%</span>
                       </div>
@@ -1523,7 +1523,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                           defaultValue={fmtPctInput(lucroAdmPct)}
                           key={`adm-${fmtPctInput(lucroAdmPct)}`}
                           onBlur={(e) => setLucroAdm(Number(e.target.value))}
-                          className="w-10 bg-transparent text-right text-[1.35rem] font-bold text-amber-900 outline-none tabular-nums -mr-1"
+                          className="w-10 bg-transparent text-right text-[1.35rem] font-bold text-amber-900 outline-none tabular-nums -mr-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0"
                         />
                         <span className="text-[1.35rem] font-bold text-amber-900">%</span>
                       </div>
