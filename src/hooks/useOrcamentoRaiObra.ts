@@ -90,11 +90,14 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const budgetMargemPct = budgetVendas > 0 ? (budgetMargem / budgetVendas) * 100 : 0;
       const budgetRai = safeNum(ffBase?.expected_result ?? budgetMargem);
 
-      // Forecast: orçamentos adjudicados + autos como proxy simples
+      // Forecast: parte do Budget aprovado e ajusta com desvios reais (adjudicações e compras)
+      // Vendas: usa o maior entre o vendido no Budget e o total adjudicado (revisões de escopo)
       const adjudicados = orcsData.filter((o: any) => ['adjudicado', 'aprovado'].includes(o.status));
-      const forecastVendas = adjudicados.reduce((s: number, o: any) => s + safeNum(o.valor_total), 0) || budgetVendas;
+      const adjudicadosTotal = adjudicados.reduce((s: number, o: any) => s + safeNum(o.valor_total), 0);
+      const forecastVendas = Math.max(budgetVendas, adjudicadosTotal);
+      // Custos: parte do orçado e só estoura quando as compras reais ultrapassam o budget
       const comprasTotal = comprasData.reduce((s: number, c: any) => s + safeNum(c.total_amount), 0);
-      const forecastCustos = comprasTotal || budgetCustos;
+      const forecastCustos = Math.max(budgetCustos, comprasTotal);
       const forecastMargem = forecastVendas - forecastCustos;
       const forecastMargemPct = forecastVendas > 0 ? (forecastMargem / forecastVendas) * 100 : 0;
 
