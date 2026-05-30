@@ -328,7 +328,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           margemPct: current.marginPct,
           rai: current.rai,
           desvioBudget: current.rai - budgetRai,
-          impactoMce: 0, // Fase 4
+          impactoMce,
           custosSpv,
           raiComSpv: outturnRai - custosSpv,
         },
