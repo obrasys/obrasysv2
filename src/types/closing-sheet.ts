@@ -324,6 +324,7 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
 
   quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
+  direct_costs_extra: [],
   site_costs: DEFAULT_SITE_COST_LINES,
   terrain: {
     preco_aquisicao: 0,
