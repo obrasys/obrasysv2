@@ -582,5 +582,6 @@ export function mergeDetails(stored: Partial<ClosingSheetDetails> | null | undef
     sales: stored.sales ?? [],
     statistics: { ...DEFAULT_CLOSING_DETAILS.statistics, ...(stored.statistics || {}) },
     conditions: { ...DEFAULT_CLOSING_DETAILS.conditions, ...(stored.conditions || {}) },
+    direct_costs_extra: Array.isArray(stored.direct_costs_extra) ? stored.direct_costs_extra : [],
   };
 }
