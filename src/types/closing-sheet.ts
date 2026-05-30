@@ -485,7 +485,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     (d.terrain.levantamento_topografico || 0) +
     (d.terrain.demolicoes_diversas || 0) +
     (d.terrain.arranjos_exteriores || 0);
-  const ivaTerreno = (d.iva.zona_aru || d.iva.zona_oru) ? 0 : base_iva_terreno_honorarios * (d.iva.taxa_terreno_pct || 0);
+  const ivaTerreno = base_iva_terreno_honorarios * (d.iva.taxa_terreno_pct || 0);
   const base_iva_construcao = custo_industrial + total_outros;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
   const ivaHonorarios = (total_indirectos + total_admin) * (d.iva.taxa_honorarios_pct || 0);
