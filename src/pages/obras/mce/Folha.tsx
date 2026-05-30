@@ -252,8 +252,8 @@ export default function MCEFolha() {
             {/* Tabela comparativa */}
             <thead className="bg-primary/15 text-primary">
               <tr>
-                <th className="p-2 w-16 text-left">QUANT.</th>
-                <th className="p-2 w-12 text-left">UN</th>
+                <th className="p-2 w-20 text-left">QUANT.</th>
+                <th className="p-2 w-48 text-left">UN / ESPECIFICAÇÃO</th>
                 {suppliers.map((s) => (
                   <th key={`h-${s.id}`} className="p-2 border-l w-40" colSpan={2}>
                     <div className="flex justify-around text-[10px]">
@@ -296,8 +296,8 @@ export default function MCEFolha() {
                       </div>
                       <Textarea
                         defaultValue={it.specification ?? ''}
-                        className="text-xs min-h-[2.2rem] mt-1"
-                        rows={1}
+                        className="text-xs min-h-[3.5rem] mt-1 w-full whitespace-pre-wrap break-words"
+                        rows={3}
                         onBlur={(e) => { if (e.target.value !== it.specification) patchItem(it.id, { specification: e.target.value }); }}
                       />
                     </td>
