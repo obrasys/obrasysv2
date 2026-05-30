@@ -391,6 +391,7 @@ export interface ClosingTotals {
   total_outros: number; // (4)
   total_admin: number; // (5)
   base_iva_construcao: number;
+  base_iva_honorarios: number;
   total_iva: number; // (6)
   custo_total: number; // (1)+(2)+(3)+(4)+(5)+(6)
   valor_vendas: number;
