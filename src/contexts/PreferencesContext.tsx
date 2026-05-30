@@ -359,7 +359,7 @@ const translations: Record<string, Record<string, string>> = {
     'rdos': 'Partes Diarios',
     'financeiro': 'Finanzas',
     'settings': 'Configuración',
-    'active': 'Activo',
+    'active': 'Ativo',
     'inactive': 'Inactivo',
     'pending': 'Pendiente',
     'approved': 'Aprobado',

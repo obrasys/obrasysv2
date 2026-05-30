@@ -54,7 +54,7 @@ export function ClosingSheetComparison({
   const tf = computeClosingTotals(mergeDetails(final.details));
 
   const rows: Row[] = [
-    { label: "Custos Directos", initial: ti.total_directos, final: tf.total_directos },
+    { label: "Custos Diretos", initial: ti.total_directos, final: tf.total_directos },
     { label: "Estaleiro", initial: ti.total_estaleiro, final: tf.total_estaleiro },
     { label: "Custo Industrial", initial: ti.custo_industrial, final: tf.custo_industrial },
     { label: "Terreno", initial: ti.total_terreno, final: tf.total_terreno },

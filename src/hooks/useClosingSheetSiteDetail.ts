@@ -33,7 +33,7 @@ export const SITE_CATEGORY_LABELS: Record<SiteDetailCategory, string> = {
   technical_staff: "A - Pessoal Técnico",
   site_supervisors: "B - Encarregados",
   team_leaders: "C - Chefes de Equipa / Seguidor",
-  utilities: "D - Outros Gastos (Água / Electricidade / Telef. / Net)",
+  utilities: "D - Outros Gastos (Água / Eletricidade / Telef. / Net)",
   site_equipment: "E - Equipamentos de Estaleiro",
   site_guard: "F - Guarda",
   site_labor: "G - Pessoal de Obra",
@@ -42,11 +42,11 @@ export const SITE_CATEGORY_LABELS: Record<SiteDetailCategory, string> = {
 
 export const SITE_CATEGORY_DEFAULTS: Record<SiteDetailCategory, string[]> = {
   technical_staff: [
-    "Director Projecto",
-    "Gestor Projecto",
+    "Director Projeto",
+    "Gestor Projeto",
     "Técnico de Instalações Especiais",
     "Coordenador Segurança",
-    "Decorador(a) Interiores / 3D Arquitecto(a)",
+    "Decorador(a) Interiores / 3D Arquiteto(a)",
   ],
   site_supervisors: [
     "Encarregado Geral",
@@ -57,7 +57,7 @@ export const SITE_CATEGORY_DEFAULTS: Record<SiteDetailCategory, string[]> = {
   ],
   utilities: [
     "Água",
-    "Electricidade",
+    "Eletricidade",
     "Telefone + Internet",
     "Aluguer",
   ],

@@ -19,7 +19,7 @@ interface SecaoNode extends CadernoSecao {
 }
 
 function buildTree(secoes: CadernoSecao[], itens: CadernoItem[]): SecaoNode[] {
-  // Contar itens por secção
+  // Contar itens por seção
   const itemCounts: Record<string, { total: number; validated: number }> = {};
   for (const item of itens) {
     if (!itemCounts[item.secao_id]) {
@@ -192,7 +192,7 @@ export function CadernoSecaoTree({
     return (
       <div className="text-center py-8 text-muted-foreground">
         <Folder className="w-12 h-12 mx-auto mb-2 opacity-50" />
-        <p>Nenhuma secção encontrada</p>
+        <p>Nenhuma seção encontrada</p>
       </div>
     );
   }

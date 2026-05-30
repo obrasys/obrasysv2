@@ -253,7 +253,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
   const approve = useApproveClosingSheet(sheet.source_budget_id || undefined);
   const qualitySpecs = useQualitySpecsCatalog();
 
-  // Estado de recolher/expandir secções
+  // Estado de recolher/expandir seções
   const SECTION_IDS = [
     "directos","estaleiro","terreno","indirectos","outros","admin","iva",
     "vendas","estatistica","rai","condicionantes","validacao","aprovacao","qualidades",
@@ -442,10 +442,10 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             <Badge variant="outline" className="capitalize">
               {sheet.status}
             </Badge>
-            <Button size="sm" variant="outline" onClick={collapseAll} className="gap-2" title="Recolher todas as secções">
+            <Button size="sm" variant="outline" onClick={collapseAll} className="gap-2" title="Recolher todas as seções">
               <ChevronsDownUp className="h-4 w-4" /> Recolher
             </Button>
-            <Button size="sm" variant="outline" onClick={expandAll} className="gap-2" title="Expandir todas as secções">
+            <Button size="sm" variant="outline" onClick={expandAll} className="gap-2" title="Expandir todas as seções">
               <ChevronsUpDown className="h-4 w-4" /> Expandir
             </Button>
             <Button size="sm" variant="outline" onClick={handlePrint} className="gap-2">
@@ -630,7 +630,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label className="text-[11px] uppercase">Projecto Arquitectura</Label>
+            <Label className="text-[11px] uppercase">Projeto Arquitetura</Label>
             <TextCell
               readOnly={readOnly}
               value={details.header.proj_arquitectura}
@@ -638,7 +638,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             />
           </div>
           <div>
-            <Label className="text-[11px] uppercase">Projecto Engenharia</Label>
+            <Label className="text-[11px] uppercase">Projeto Engenharia</Label>
             <TextCell
               readOnly={readOnly}
               value={details.header.proj_engenharia}
@@ -658,7 +658,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* CUSTOS DIRECTOS / PREÇOS SECOS */}
-        <Section id="directos" title="Custos Directos / Preços Secos - Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total C. Directos">
+        <Section id="directos" title="Custos Diretos / Preços Secos - Valores s/ IVA" collapsed={isCol("directos")} onToggle={() => toggleSection("directos")} total={totals.total_directos} totalLabel="Total C. Diretos">
         <Table>
           <TableHeader>
             <TableRow>
@@ -828,7 +828,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <div className="my-2 rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground px-5 py-4 flex items-center justify-between shadow-lg ring-1 ring-primary/30">
           <div>
             <p className="text-sm uppercase tracking-wider font-bold opacity-90">Custo Industrial</p>
-            <p className="text-xs opacity-70 mt-0.5">(1) = Directos + Estaleiro</p>
+            <p className="text-xs opacity-70 mt-0.5">(1) = Diretos + Estaleiro</p>
           </div>
           <p className="text-2xl md:text-3xl font-bold tabular-nums">{fmt(totals.custo_industrial)}</p>
         </div>
@@ -1134,7 +1134,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Section id="outros" title="Outros Custos - (4)" collapsed={isCol("outros")} onToggle={() => toggleSection("outros")} total={totals.total_outros} totalLabel="Total Outros Custos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
-            <Label>Projectos (Arq. + Especialidades) (% s/ constr.)</Label>
+            <Label>Projetos (Arq. + Especialidades) (% s/ constr.)</Label>
             <NumCell
               readOnly={readOnly}
               step="0.001"

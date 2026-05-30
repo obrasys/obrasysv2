@@ -94,7 +94,7 @@ export default function ResumoCadernoPage() {
         }
       };
 
-      // 2. Criar capítulos a partir das secções de nível 1
+      // 2. Criar capítulos a partir das seções de nível 1
       let capituloOrdem = 0;
 
       for (const secao of secoes.filter((s) => s.nivel === 1)) {
@@ -129,7 +129,7 @@ export default function ResumoCadernoPage() {
         capituloOrdem++;
       }
 
-      // 3. Fallback: se não existirem secções de nível 1, criar capítulos por secção
+      // 3. Fallback: se não existirem seções de nível 1, criar capítulos por seção
       if (capituloOrdem === 0) {
         for (const secao of secoes) {
           const itensSecao = itens.filter(
