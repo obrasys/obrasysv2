@@ -1081,8 +1081,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               return (
                 <>
                   {totalDesconto > 0 && (
-                    <TableRow className="text-xs text-destructive">
-                      <TableCell className="italic">Descontos aplicados</TableCell>
+                    <TableRow className="text-[0.9rem] font-extrabold text-destructive">
+                      <TableCell className="italic">
+                        <div>Descontos aplicados</div>
+                        <div className="text-[0.8rem] font-extrabold opacity-90">
+                          {totalBruto > 0 ? `${((totalDesconto / totalBruto) * 100).toFixed(2)}% sobre o total bruto` : "-"}
+                        </div>
+                      </TableCell>
                       <TableCell />
                       <TableCell />
                       <TableCell className="text-right tabular-nums">
@@ -1091,16 +1096,16 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                       <TableCell colSpan={3} />
                     </TableRow>
                   )}
-                  <TableRow className="bg-muted/40 font-semibold">
-                    <TableCell className="text-xs">Total (Capítulos do Orçamento)</TableCell>
-                    <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                  <TableRow className="bg-muted/40 font-extrabold">
+                    <TableCell className="text-[0.9rem]">Total (Capítulos do Orçamento)</TableCell>
+                    <TableCell className="text-right text-[0.9rem] tabular-nums text-muted-foreground">
                       {totalBruto.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell />
-                    <TableCell className="text-right text-xs tabular-nums">
+                    <TableCell className="text-right text-[0.9rem] tabular-nums">
                       {totalLiquido.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-right text-xs tabular-nums">
+                    <TableCell className="text-right text-[0.9rem] tabular-nums">
                       {totals.total_directos > 0 ? "100.00%" : "-"}
                     </TableCell>
                     <TableCell />
