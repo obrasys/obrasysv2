@@ -36,7 +36,7 @@ export default function ValidarCadernoPage() {
     updateStatus,
   } = useCaderno(cadernoId);
 
-  // Filtrar itens da secção selecionada
+  // Filtrar itens da seção selecionada
   const itensFiltrados = useMemo(() => {
     if (!itens) return [];
     if (!selectedSecaoId) return itens;
@@ -142,7 +142,7 @@ export default function ValidarCadernoPage() {
 
         {/* Layout de 3 colunas */}
         <div className="grid grid-cols-12 gap-6 h-[calc(100vh-280px)]">
-          {/* Coluna 1: Árvore de secções */}
+          {/* Coluna 1: Árvore de seções */}
           <Card className="col-span-3 flex flex-col">
             <CardHeader className="pb-3 shrink-0">
               <CardTitle className="text-sm">Secções</CardTitle>

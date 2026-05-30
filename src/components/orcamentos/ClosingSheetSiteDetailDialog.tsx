@@ -218,7 +218,7 @@ function LineRow({
   onUpdate: (payload: Partial<SiteDetailLine> & { id: string }) => void;
   onRemove: (id: string) => void;
 }) {
-  // useful_percent é armazenado como fracção (0–1). A UI mostra como percentagem (0–100).
+  // useful_percent é armazenado como fração (0–1). A UI mostra como percentagem (0–100).
   const [local, setLocal] = useState({
     description: line.description,
     useful_percent_pct: Number(line.useful_percent ?? 1) * 100,

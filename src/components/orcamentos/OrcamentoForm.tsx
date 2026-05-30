@@ -335,10 +335,10 @@ export function OrcamentoForm({
                 <FormItem><FormLabel className="text-xs uppercase tracking-wide">Nº Frações</FormLabel><FormControl><Input type="number" min={0} {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} /></FormControl></FormItem>
               )} />
               <FormField control={form.control} name="project_metadata.projeto_arquitectura" render={({ field }) => (
-                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projecto Arquitectura</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projeto Arquitetura</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
               )} />
               <FormField control={form.control} name="project_metadata.projeto_engenharia" render={({ field }) => (
-                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projecto Engenharia</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
+                <FormItem><FormLabel className="text-xs uppercase tracking-wide">Projeto Engenharia</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>
               )} />
               <FormField control={form.control} name="project_metadata.responsavel_orcamento" render={({ field }) => (
                 <FormItem><FormLabel className="text-xs uppercase tracking-wide">Responsável Orçamento</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>

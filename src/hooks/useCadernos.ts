@@ -64,7 +64,7 @@ export function useCaderno(cadernoId?: string) {
     enabled: !!user && !!cadernoId,
   });
 
-  // Buscar secções do caderno
+  // Buscar seções do caderno
   const { data: secoes } = useQuery({
     queryKey: ["caderno_secoes", cadernoId],
     queryFn: async () => {
@@ -334,12 +334,12 @@ export function useCaderno(cadernoId?: string) {
     },
   });
 
-  // Mutation para validar todos os itens de uma secção
+  // Mutation para validar todos os itens de uma seção
   const validarSecao = useMutation({
     mutationFn: async (secaoId: string) => {
       if (!user) throw new Error("Utilizador não autenticado");
 
-      // Buscar itens pendentes da secção
+      // Buscar itens pendentes da seção
       const { data: itensPendentes } = await supabase
         .from("caderno_itens")
         .select("id")
@@ -371,8 +371,8 @@ export function useCaderno(cadernoId?: string) {
       toast.success("Secção validada!");
     },
     onError: (error) => {
-      console.error("Erro ao validar secção:", error);
-      toast.error("Erro ao validar secção");
+      console.error("Erro ao validar seção:", error);
+      toast.error("Erro ao validar seção");
     },
   });
 

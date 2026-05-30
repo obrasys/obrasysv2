@@ -10,7 +10,7 @@ export interface BudgetChapterTotal {
 /**
  * Devolve o total de cada capítulo do orçamento (somatório dos artigos:
  * quantidade × preco_unitario). Usado para alimentar, em modo só-leitura,
- * a tabela "Custos Directos / Preços Secos" da Folha de Fecho.
+ * a tabela "Custos Diretos / Preços Secos" da Folha de Fecho.
  */
 export function useBudgetChapterTotals(orcamentoId: string | null | undefined) {
   return useQuery({

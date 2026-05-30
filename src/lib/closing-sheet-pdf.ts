@@ -13,7 +13,7 @@ const LIGHT: [number, number, number] = [245, 247, 248];
 const INK: [number, number, number] = [25, 25, 25];
 
 // Hierarquia tipográfica
-// H1 título de secção: bold 12  | H2 subtítulo: bold 9  | Body: normal 8
+// H1 título de seção: bold 12  | H2 subtítulo: bold 9  | Body: normal 8
 const FS = { h1: 12, h2: 9, body: 8, micro: 7 } as const;
 
 const fmtEur = (v: number) =>
@@ -127,7 +127,7 @@ export async function exportClosingSheetPDF(params: {
     }
   };
 
-  // H1 - título de secção
+  // H1 - título de seção
   const h1 = (label: string) => {
     ensureSpace(12);
     doc.setFillColor(...TEAL);
@@ -165,7 +165,7 @@ export async function exportClosingSheetPDF(params: {
     ["Localização", details.header.localizacao || "-"],
     ["Prazo (meses)", String(details.header.prazo_meses ?? "-")],
     ["Nº Frações", String(details.header.num_fraccoes ?? "-")],
-    ["Proj. Arquitectura", details.header.proj_arquitectura || "-"],
+    ["Proj. Arquitetura", details.header.proj_arquitectura || "-"],
     ["Proj. Engenharia", details.header.proj_engenharia || "-"],
     ["Responsável Orçamento", details.header.responsavel_orcamento || "-"],
   ];
@@ -196,8 +196,8 @@ export async function exportClosingSheetPDF(params: {
   // =========================================================
   h1("2. Estrutura de Custos");
 
-  // 2.A Custos Directos
-  h2("A · Custos Directos (s/ IVA)");
+  // 2.A Custos Diretos
+  h2("A · Custos Diretos (s/ IVA)");
   autoTable(doc, {
     startY: y,
     margin: { left: M, right: M },
@@ -210,7 +210,7 @@ export async function exportClosingSheetPDF(params: {
         totals.total_directos > 0 ? `${((l.value / totals.total_directos) * 100).toFixed(1)}%` : "-",
         fmtEur(l.value),
       ]),
-    foot: [["Subtotal A · Custos Directos", "", "", fmtEur(totals.total_directos)]],
+    foot: [["Subtotal A · Custos Diretos", "", "", fmtEur(totals.total_directos)]],
     theme: "striped",
     headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
     footStyles: { fillColor: TEAL_SOFT, textColor: INK, fontStyle: "bold", fontSize: FS.body },
@@ -327,7 +327,7 @@ export async function exportClosingSheetPDF(params: {
     margin: { left: M, right: M },
     head: [["Rubrica", "Base / Taxa", "Valor"]],
     body: [
-      [`Projectos Arq.+Esp. (${fmtPct(o.projectos_pct)})`, fmtEur(totals.total_directos), fmtEur(totals.total_directos * (o.projectos_pct || 0))],
+      [`Projetos Arq.+Esp. (${fmtPct(o.projectos_pct)})`, fmtEur(totals.total_directos), fmtEur(totals.total_directos * (o.projectos_pct || 0))],
       o.contratos_registos_vendas_pct !== undefined && o.contratos_registos_vendas_pct !== null
         ? [`Contratos / Registos (${fmtPct(o.contratos_registos_vendas_pct)} s/ Vendas)`, fmtEur(totals.valor_vendas), fmtEur((totals.valor_vendas || 0) * (o.contratos_registos_vendas_pct || 0))]
         : ["Contratos e Registos", "-", fmtEur(o.contratos_registos || 0)],

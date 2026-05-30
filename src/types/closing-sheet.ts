@@ -170,11 +170,11 @@ export interface ClosingSheetDetails {
   statistics: ClosingStatistics;
   conditions: ClosingConditions;
   margem_lucro_pct: number; // 0.30
-  /** Linha editável (estimativa) que acresce ao total de Custos Directos.
+  /** Linha editável (estimativa) que acresce ao total de Custos Diretos.
    *  Permite trabalhar com um valor previsto antes de ter os custos por capítulo
    *  consolidados; pode ser zerada/eliminada quando os reais estiverem ok. */
   direct_costs_estimate?: number;
-  /** Preço por m² (editável) usado para calcular a estimativa de Custos Directos
+  /** Preço por m² (editável) usado para calcular a estimativa de Custos Diretos
    *  quando ainda não há valores consolidados. Estimativa = área construção × preço/m². */
   direct_costs_estimate_price_m2?: number;
 }
@@ -438,7 +438,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   // a ser % sobre construção (custo_industrial). Mantém-se fallback p/ valores
   // absolutos legados (apenas quando pct não definido).
   // Os 4 campos (honorários técnicos, financeiros, gestão, garantias) usam
-  // como base APENAS o Total de Custos Directos (sem estaleiro).
+  // como base APENAS o Total de Custos Diretos (sem estaleiro).
   const pctOrAbs = (pct: number | undefined, abs: number) =>
     pct !== undefined && pct !== null ? total_directos * (pct || 0) : (abs || 0);
   const total_indirectos =
