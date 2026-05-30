@@ -2928,6 +2928,7 @@ export type Database = {
           final_result: number | null
           id: string
           locked_at: string | null
+          locked_by: string | null
           margin_amount: number
           margin_percent: number
           notes: string | null
@@ -2956,6 +2957,7 @@ export type Database = {
           final_result?: number | null
           id?: string
           locked_at?: string | null
+          locked_by?: string | null
           margin_amount?: number
           margin_percent?: number
           notes?: string | null
@@ -2984,6 +2986,7 @@ export type Database = {
           final_result?: number | null
           id?: string
           locked_at?: string | null
+          locked_by?: string | null
           margin_amount?: number
           margin_percent?: number
           notes?: string | null

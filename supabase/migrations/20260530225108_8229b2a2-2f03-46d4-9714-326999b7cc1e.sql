@@ -1,0 +1,1 @@
+ALTER TABLE public.closing_sheets ADD COLUMN IF NOT EXISTS locked_by UUID;
