@@ -102,38 +102,40 @@ export default function OrcamentoRaiObra() {
         </CardContent>
       </Card>
 
-      {/* Fase 3 — Snapshot & Lock do Budget */}
-      <Card className={cn('rounded-xl mt-4 border', lockedBudget ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40')}>
+      {/* Snapshot & Lock por fase ativa */}
+      <Card className={cn('rounded-xl mt-4 border', lockedActive ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40')}>
         <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
           <div className="flex items-start gap-3">
-            <ShieldCheck className={cn('w-5 h-5 mt-0.5', lockedBudget ? 'text-emerald-600' : 'text-amber-600')} />
+            <ShieldCheck className={cn('w-5 h-5 mt-0.5', lockedActive ? 'text-emerald-600' : 'text-amber-600')} />
             <div>
               <div className="font-semibold text-sm">
-                {lockedBudget ? `Budget bloqueado — v${lockedBudget.version}` : 'Snapshot do Budget pendente'}
+                {lockedActive
+                  ? `${PHASE_LABELS[activePhase]} bloqueado — v${lockedActive.version}`
+                  : `Snapshot do ${PHASE_LABELS[activePhase]} pendente`}
               </div>
               <div className="text-xs text-muted-foreground">
-                {lockedBudget
-                  ? `Bloqueado em ${new Date(lockedBudget.locked_at!).toLocaleString('pt-PT')} · RAI ${fmtEUR(lockedBudget.rai)} · Margem ${lockedBudget.margem_pct.toFixed(1)}%`
-                  : canLockBudget
-                  ? 'Folha de Fecho Base aprovada. Capture um snapshot para tornar o Budget a referência oficial desta obra.'
-                  : 'O snapshot fica disponível assim que a Folha de Fecho Base for aprovada.'}
+                {lockedActive
+                  ? `Bloqueado em ${new Date(lockedActive.locked_at!).toLocaleString('pt-PT')} · RAI ${fmtEUR(lockedActive.rai)} · Margem ${lockedActive.margem_pct.toFixed(1)}%`
+                  : canLockActive
+                  ? 'Capture um snapshot para tornar esta fase a referência oficial desta obra.'
+                  : 'Snapshot disponível quando a fase estiver consolidada.'}
               </div>
             </div>
           </div>
-          {canLockBudget && organization?.id && id && data && (
+          {canLockActive && organization?.id && id && data && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" disabled={snapshotMutation.isPending}>
                   {snapshotMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Lock className="w-3 h-3 mr-1" />}
-                  Bloquear Budget
+                  Bloquear {PHASE_LABELS[activePhase]}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Bloquear o Budget desta obra?</AlertDialogTitle>
+                  <AlertDialogTitle>Bloquear {PHASE_LABELS[activePhase]} desta obra?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Será criado um snapshot oficial (v{((cycles?.filter(c => c.phase === 'budget').length ?? 0) + 1)}) com os valores atuais da FF Base e fontes consolidadas.
-                    A partir deste momento, qualquer alteração passa a contar como desvio face ao Budget.
+                    Será criado um snapshot oficial (v{((cycles?.filter(c => c.phase === activePhase).length ?? 0) + 1)}) com os valores e fontes consolidadas atuais.
+                    Alterações posteriores passam a ser desvios face a este snapshot.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -143,6 +145,7 @@ export default function OrcamentoRaiObra() {
                       snapshotMutation.mutate({
                         obra_id: id,
                         organization_id: organization.id,
+                        phase: activePhase,
                         consolidation: data,
                       })
                     }
@@ -155,6 +158,7 @@ export default function OrcamentoRaiObra() {
           )}
         </CardContent>
       </Card>
+
 
 
 
