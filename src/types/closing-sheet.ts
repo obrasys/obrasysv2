@@ -417,10 +417,13 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     d.statistics?.area_total_construcao ??
     ((d.statistics?.area_construcao || 0) + (d.statistics?.area_caves || 0));
   const estimativaCalc = (Number(d.direct_costs_estimate_price_m2) || 0) * (areaConstrucao || 0);
+  const total_extra =
+    (d.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0);
   const total_directos =
     d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
     (Number(d.direct_costs_estimate) || 0) +
-    estimativaCalc;
+    estimativaCalc +
+    total_extra;
   const total_estaleiro = d.site_costs.reduce((s, l) => s + (l.value || 0), 0);
   const custo_industrial = total_directos + total_estaleiro;
 
