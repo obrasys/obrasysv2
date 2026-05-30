@@ -1255,8 +1255,8 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" className="text-muted-foreground hover:text-foreground p-1" aria-label="Manual de Ajuda IVA">
-                  <Info className="h-4 w-4" />
+                <button type="button" className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-600 hover:bg-blue-700 text-white" aria-label="Manual de Ajuda IVA">
+                  <Info className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-md text-xs whitespace-pre-line leading-relaxed">
@@ -1303,8 +1303,8 @@ Não tem a certeza de qual a taxa de IVA aplicar em cada rubrica? Utilize as reg
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Mais informação ARU/ORU">
-                    <Info className="h-3.5 w-3.5" />
+                  <button type="button" className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white" aria-label="Mais informação ARU/ORU">
+                    <Info className="h-3 w-3" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-md text-xs whitespace-pre-line leading-relaxed">
