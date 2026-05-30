@@ -225,6 +225,7 @@ export interface CapituloFormData {
   numero: number;
   titulo: string;
   descricao?: string;
+  desconto_pct?: number;
 }
 
 export interface ArtigoFormData {
