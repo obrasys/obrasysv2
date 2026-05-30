@@ -376,7 +376,7 @@ export async function exportClosingSheetPDF(params: {
     (details.terrain.levantamento_topografico || 0) +
     (details.terrain.demolicoes_diversas || 0) +
     (details.terrain.arranjos_exteriores || 0);
-  const ivaTerr = (details.iva.zona_aru || details.iva.zona_oru) ? 0 : baseIvaTerrenoHon * (details.iva.taxa_terreno_pct || 0);
+  const ivaTerr = baseIvaTerrenoHon * (details.iva.taxa_terreno_pct || 0);
   const ivaCon = totals.base_iva_construcao * (details.iva.taxa_construcao_pct || 0);
   const ivaHon = (totals.total_indirectos + totals.total_admin) * (details.iva.taxa_honorarios_pct || 0);
   autoTable(doc, {
@@ -385,7 +385,7 @@ export async function exportClosingSheetPDF(params: {
     head: [["Componente", "Base", "Taxa", "Valor"]],
     body: [
       [
-        `Honorários Terreno / Arranjos Exteriores${(details.iva.zona_aru || details.iva.zona_oru) ? " (isento - ARU/ORU)" : ""}`,
+        `Honorários Terreno / Arranjos Exteriores`,
         fmtEur(baseIvaTerrenoHon),
         fmtPct(details.iva.taxa_terreno_pct),
         fmtEur(ivaTerr),

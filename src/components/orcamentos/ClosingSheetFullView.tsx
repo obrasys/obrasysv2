@@ -1331,15 +1331,13 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
               = {fmt(
-                (details.iva.zona_aru || details.iva.zona_oru)
-                  ? 0
-                  : ((details.terrain.custo_loteamento || 0) +
-                      (details.terrain.ensaios_geotecnicos || 0) +
-                      (details.terrain.comissoes_intermediarios || 0) +
-                      (details.terrain.levantamento_topografico || 0) +
-                      (details.terrain.demolicoes_diversas || 0) +
-                      (details.terrain.arranjos_exteriores || 0)) *
-                    (details.iva.taxa_terreno_pct || 0)
+                ((details.terrain.custo_loteamento || 0) +
+                  (details.terrain.ensaios_geotecnicos || 0) +
+                  (details.terrain.comissoes_intermediarios || 0) +
+                  (details.terrain.levantamento_topografico || 0) +
+                  (details.terrain.demolicoes_diversas || 0) +
+                  (details.terrain.arranjos_exteriores || 0)) *
+                  (details.iva.taxa_terreno_pct || 0)
               )}
             </p>
           </div>
