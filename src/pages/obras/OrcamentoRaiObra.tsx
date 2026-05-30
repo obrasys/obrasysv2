@@ -453,3 +453,73 @@ function KpiCard({ icon, label, value, hint, tone }: { icon: React.ReactNode; la
     </Card>
   );
 }
+
+function RetentionDialog({ onSubmit, pending }: { onSubmit: (p: { description?: string; retained_amount: number; due_date?: string; notes?: string }) => void; pending: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [desc, setDesc] = useState('');
+  const [amount, setAmount] = useState('');
+  const [due, setDue] = useState('');
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><Plus className="w-3 h-3 mr-1" /> Nova</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Nova retenção de garantia</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Descrição</Label><Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ex.: Retenção 5% — Empreiteiro X" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Valor retido (€)</Label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+            <div><Label>Data de libertação</Label><Input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button
+            disabled={pending || !amount}
+            onClick={() => {
+              onSubmit({ description: desc || undefined, retained_amount: parseFloat(amount) || 0, due_date: due || undefined });
+              setOpen(false); setDesc(''); setAmount(''); setDue('');
+            }}
+          >Registar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AftercareDialog({ onSubmit, pending }: { onSubmit: (p: { description: string; cost_value: number; category?: string; notes?: string }) => void; pending: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [desc, setDesc] = useState('');
+  const [cost, setCost] = useState('');
+  const [cat, setCat] = useState('');
+  const [notes, setNotes] = useState('');
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><Plus className="w-3 h-3 mr-1" /> Novo</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Novo registo de pós-venda</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Descrição</Label><Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Ex.: Infiltração na cozinha — Lote 12" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Custo (€)</Label><Input type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+            <div><Label>Categoria</Label><Input value={cat} onChange={(e) => setCat(e.target.value)} placeholder="Ex.: Canalização" /></div>
+          </div>
+          <div><Label>Notas</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button
+            disabled={pending || !desc || !cost}
+            onClick={() => {
+              onSubmit({ description: desc, cost_value: parseFloat(cost) || 0, category: cat || undefined, notes: notes || undefined });
+              setOpen(false); setDesc(''); setCost(''); setCat(''); setNotes('');
+            }}
+          >Registar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
