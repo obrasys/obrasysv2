@@ -43,7 +43,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         }
       };
 
-      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData] = await Promise.all([
+      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData, aftercareData, retentionsData] = await Promise.all([
         sb.from('obras').select('id,nome,status,cost_center_id,updated_at').eq('id', obraId).maybeSingle(),
         safeList(
           sb
@@ -56,6 +56,8 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         safeList(sb.from('contracting_packages').select('id,status,total_amount,mce_id,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('autos_medicao').select('id,status,valor_total,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('contas_financeiras').select('id,tipo,valor,status,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('aftercare_records').select('id,status,cost_value,reported_at,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('guarantee_retentions').select('id,status,retained_amount,released_amount,due_date,updated_at').eq('obra_id', obraId)),
       ]);
 
       if (obraR.error) throw obraR.error;
@@ -89,8 +91,11 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const outturnVendas = safeNum(ffFinal?.sale_price);
       const outturnCustos = safeNum(ffFinal?.total_direct_cost) + safeNum(ffFinal?.total_indirect_cost);
 
-      // SPV / Aftercare — placeholder (sem tabela específica nesta fase)
-      const custosSpv = 0;
+      // SPV / Aftercare — soma de custos abertos + resolvidos
+      const custosSpv = aftercareData.reduce((s: number, a: any) => s + safeNum(a.cost_value), 0);
+      const aftercareAbertos = aftercareData.filter((a: any) => a.status === 'aberto' || a.status === 'em_analise').length;
+      const retencoesAtivas = retentionsData.filter((r: any) => r.status === 'retida' || r.status === 'liberada_parcial');
+      const retencoesValor = retencoesAtivas.reduce((s: number, r: any) => s + (safeNum(r.retained_amount) - safeNum(r.released_amount)), 0);
 
       const phases = [
         {
@@ -177,6 +182,27 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         });
       }
 
+      if (aftercareAbertos > 0) {
+        attention.push({
+          id: 'aftercare-abertos',
+          severity: 'warning',
+          title: `${aftercareAbertos} reclamação(ões) de pós-venda em aberto`,
+          description: 'Acompanhe a resolução para fechar o RAI com SPV.',
+          source: 'Pós-venda',
+        });
+      }
+      const hoje = new Date();
+      const retencoesVencidas = retencoesAtivas.filter((r: any) => r.due_date && new Date(r.due_date) < hoje).length;
+      if (retencoesVencidas > 0) {
+        attention.push({
+          id: 'retencoes-vencidas',
+          severity: 'high',
+          title: `${retencoesVencidas} retenção(ões) vencida(s)`,
+          description: 'Existem retenções com data de libertação ultrapassada.',
+          source: 'Retenções',
+        });
+      }
+
       const sources: IntegrationSourceCard[] = [
         {
           key: 'orcamento-base',
@@ -254,13 +280,25 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'spv',
           label: 'SPV / Aftercare',
           module: 'Pós-venda',
-          state: 'no_data',
-          lastUpdate: null,
-          totalDocs: 0,
-          acceptedDocs: 0,
-          pendingDocs: 0,
+          state: aftercareData.length > 0 ? 'consolidated' : 'no_data',
+          lastUpdate: aftercareData[0]?.updated_at || null,
+          totalDocs: aftercareData.length,
+          acceptedDocs: aftercareData.filter((a: any) => a.status === 'resolvido').length,
+          pendingDocs: aftercareAbertos,
           conflicts: 0,
           amount: custosSpv,
+        },
+        {
+          key: 'retencoes',
+          label: 'Retenções de garantia',
+          module: 'Retenções',
+          state: retencoesAtivas.length > 0 ? 'found' : 'no_data',
+          lastUpdate: retentionsData[0]?.updated_at || null,
+          totalDocs: retentionsData.length,
+          acceptedDocs: retentionsData.filter((r: any) => r.status === 'liberada_total').length,
+          pendingDocs: retencoesAtivas.length,
+          conflicts: retencoesVencidas,
+          amount: retencoesValor,
         },
         {
           key: 'axia',
@@ -276,6 +314,9 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         },
       ];
 
+      // Impacto MCE = compras totais - vendas adjudicadas (proxy)
+      const impactoMce = comprasTotal > 0 && forecastVendas > 0 ? forecastVendas - comprasTotal : 0;
+
       return {
         obraId,
         currentPhase,
@@ -287,7 +328,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           margemPct: current.marginPct,
           rai: current.rai,
           desvioBudget: current.rai - budgetRai,
-          impactoMce: 0, // Fase 4
+          impactoMce,
           custosSpv,
           raiComSpv: outturnRai - custosSpv,
         },
