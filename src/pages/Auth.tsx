@@ -153,7 +153,22 @@ const Auth = () => {
       "Signup requires a valid password": "Introduza uma password válida.",
     };
 
-    return errorMap[message] || message;
+    if (errorMap[message]) return errorMap[message];
+
+    const lower = (message || "").toLowerCase();
+    if (lower.includes("password is known to be weak") || lower.includes("pwned") || lower.includes("weak_password")) {
+      return "Esta password apareceu em fugas de dados conhecidas e não é segura. Por favor escolha uma password diferente.";
+    }
+    if (lower.includes("rate limit") || lower.includes("over_email_send_rate_limit")) {
+      return "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.";
+    }
+    if (lower.includes("unable to validate email") || lower.includes("invalid email")) {
+      return "Email inválido. Verifique e tente novamente.";
+    }
+    if (lower.includes("database error") || lower.includes("unexpected_failure")) {
+      return "Ocorreu um erro ao criar a conta. Tente novamente em instantes ou contacte o suporte.";
+    }
+    return message;
   };
 
   if (loading) {
