@@ -1272,7 +1272,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
           </div>
           <div />
           <div>
-            <Label>Taxa IVA Terreno (%)</Label>
+            <Label>Taxa de IVA Honorários Terreno/Arranjos Exteriores (%)</Label>
             <NumCell
               readOnly={readOnly}
               value={details.iva.taxa_terreno_pct * 100}
@@ -1282,7 +1282,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               = {fmt(
                 (details.iva.zona_aru || details.iva.zona_oru)
                   ? 0
-                  : (totals.total_terreno || 0) * (details.iva.taxa_terreno_pct || 0)
+                  : ((details.terrain.custo_loteamento || 0) +
+                      (details.terrain.ensaios_geotecnicos || 0) +
+                      (details.terrain.comissoes_intermediarios || 0) +
+                      (details.terrain.levantamento_topografico || 0) +
+                      (details.terrain.demolicoes_diversas || 0) +
+                      (details.terrain.arranjos_exteriores || 0)) *
+                    (details.iva.taxa_terreno_pct || 0)
               )}
             </p>
           </div>
