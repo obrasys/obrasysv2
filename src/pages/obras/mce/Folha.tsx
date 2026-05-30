@@ -282,7 +282,7 @@ export default function MCEFolha() {
                         <Input
                           type="number" step="0.01"
                           defaultValue={it.quantity || ''}
-                          className="h-8 w-20 text-xs"
+                          className="h-8 w-16 text-xs"
                           onBlur={(e) => {
                             const v = parseFloat(e.target.value) || 0;
                             if (v !== it.quantity) patchItem(it.id, { quantity: v });
@@ -290,7 +290,7 @@ export default function MCEFolha() {
                         />
                         <Input
                           defaultValue={it.unit ?? ''}
-                          className="h-8 w-16 text-xs"
+                          className="h-8 w-12 text-xs"
                           onBlur={(e) => { if (e.target.value !== it.unit) patchItem(it.id, { unit: e.target.value }); }}
                         />
                       </div>
