@@ -531,45 +531,63 @@ export async function exportClosingSheetPDF(params: {
   y += 20;
 
   // =========================================================
-  // 3) MAPA DE VENDAS
+  // 6) MAPA DE VENDAS COMERCIAL - Decomposição das Frações
   // =========================================================
   if (details.sales.length > 0) {
-    h1("3. Mapa de Vendas Comercial");
+    const totalQt = details.sales.reduce((s, l) => s + (l.quantidade || 0), 0);
+    const totalArea = details.sales.reduce(
+      (s, l) => s + (l.quantidade || 0) * (l.area_priv || 0),
+      0,
+    );
+    const racioMedioArea = totalQt > 0 ? totalArea / totalQt : 0;
+
+    h1("6. Mapa de Vendas Comercial - Decomposição das Frações");
     autoTable(doc, {
       startY: y,
       margin: { left: M, right: M },
-      head: [["Tipologia", "Quant.", "Área (m²)", "Preço m²", "Total"]],
+      head: [["Tipologia", "Quant.", "Área B.Priv (m²)", "Área Total (m²)", "Preço m²", "Total"]],
       body: details.sales.map((l) => [
         l.tipologia || "-",
         String(l.quantidade),
         String(l.area_priv),
+        ((l.quantidade || 0) * (l.area_priv || 0)).toFixed(2),
         fmtEur(l.preco_m2),
         fmtEur((l.quantidade || 0) * (l.area_priv || 0) * (l.preco_m2 || 0)),
       ]),
-      foot: [["Valor Estimado de Vendas", "", "", "", fmtEur(totals.valor_vendas)]],
+      foot: [[
+        "TOTAL",
+        String(totalQt),
+        `Rácio médio: ${racioMedioArea.toFixed(1)} m²`,
+        totalArea > 0 ? `Rácio médio: ${fmtEur(totals.valor_vendas / totalArea)}/m²` : "",
+        totalQt > 0 ? `Rácio médio: ${fmtEur(totals.valor_vendas / totalQt)}` : "",
+        fmtEur(totals.valor_vendas),
+      ]],
       theme: "striped",
       headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
-      footStyles: { fillColor: TEAL_SOFT, textColor: INK, fontStyle: "bold", fontSize: FS.body },
+      footStyles: { fillColor: TEAL_SOFT, textColor: INK, fontStyle: "bold", fontSize: FS.body + 1 },
       styles: { fontSize: FS.body, textColor: INK },
       columnStyles: {
-        1: { halign: "right" }, 2: { halign: "right" },
-        3: { halign: "right" }, 4: { halign: "right" },
+        1: { halign: "center" },
+        2: { halign: "center" },
+        3: { halign: "right" },
+        4: { halign: "right" },
+        5: { halign: "right" },
       },
     });
     y = (doc as any).lastAutoTable.finalY + 5;
   }
 
   // =========================================================
-  // 4) CONTROLO ECONÓMICO - só após termos custos e vendas
+  // 7) PROPOSTA FINAL | VENDA - RAI (Controlo Económico)
   // =========================================================
-  h1("4. Controlo Económico");
+  h1("7. Proposta Final | Venda - RAI");
   autoTable(doc, {
     startY: y,
     margin: { left: M, right: M },
     head: [["Indicador", "Valor"]],
     body: [
       ["Custo Total da Obra", fmtEur(totals.custo_total)],
-      ["Valor de Vendas", fmtEur(totals.valor_vendas)],
+      ["Valor de Vendas (Proposta)", fmtEur(totals.valor_vendas)],
       ["Resultado Antes de Impostos (RAI €)", fmtEur(totals.rai_eur)],
       ["RAI %", fmtPct(totals.rai_pct)],
       ["K de Venda  (Vendas / Custo Industrial)", totals.k_venda.toFixed(3).replace(".", ",")],
@@ -581,96 +599,6 @@ export async function exportClosingSheetPDF(params: {
     columnStyles: { 1: { halign: "right", fontStyle: "bold", cellWidth: 55 } },
   });
   y = (doc as any).lastAutoTable.finalY + 5;
-
-  // =========================================================
-  // 5) ÁREAS ESTATÍSTICAS
-  // =========================================================
-  h1("5. Áreas Estatísticas");
-  const st = details.statistics;
-  autoTable(doc, {
-    startY: y,
-    margin: { left: M, right: M },
-    head: [["Área", "Valor (m²)", "Factor", "Área equivalente"]],
-    body: [
-      ["Construção (ABP)", String(st.area_construcao || 0), "1,00", (st.area_construcao || 0).toFixed(2)],
-      ["Caves", String(st.area_caves || 0), st.factor_caves.toFixed(2).replace(".", ","),
-        ((st.area_caves || 0) * (st.factor_caves || 0)).toFixed(2)],
-      ["Arranjos Exteriores", String(st.area_arranjos_ext || 0), st.factor_arranjos.toFixed(2).replace(".", ","),
-        ((st.area_arranjos_ext || 0) * (st.factor_arranjos || 0)).toFixed(2)],
-    ],
-    theme: "striped",
-    headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
-    styles: { fontSize: FS.body, textColor: INK },
-    columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
-  });
-  y = (doc as any).lastAutoTable.finalY + 5;
-
-  // =========================================================
-  // 6) CONDICIONANTES
-  // =========================================================
-  const c = details.conditions;
-  const condRows: [string, string][] = [
-    ["Estudo geotécnico", c.estudo_geotecnico ? "Sim" : "Não"],
-    ["Zona urbana", c.zona_urbana ? "Sim" : "Não"],
-    ["Acessos", c.acessos ? "Sim" : "Não"],
-    ["Energia eléctrica", c.energia_electrica ? "Sim" : "Não"],
-    ["Canalização de água", c.canalizacao_agua ? "Sim" : "Não"],
-    ["Fundações indirectas", c.fundacoes_indirectas ? "Sim" : "Não"],
-    ["Rebaixamento freático", c.rebaixamento_freatico ? "Sim" : "Não"],
-    ["Condições de estaleiro", c.condicoes_estaleiro ? "Sim" : "Não"],
-    ["Ocupação via pública", c.ocupacao_via_publica ? "Sim" : "Não"],
-  ];
-  h1("6. Condicionantes");
-  const condPaired: string[][] = [];
-  for (let i = 0; i < condRows.length; i += 3) {
-    condPaired.push([
-      condRows[i][0], condRows[i][1],
-      condRows[i + 1]?.[0] || "", condRows[i + 1]?.[1] || "",
-      condRows[i + 2]?.[0] || "", condRows[i + 2]?.[1] || "",
-    ]);
-  }
-  autoTable(doc, {
-    startY: y,
-    margin: { left: M, right: M },
-    body: condPaired,
-    theme: "plain",
-    styles: { fontSize: FS.body, textColor: INK, cellPadding: 1.4 },
-    columnStyles: {
-      0: { fontStyle: "bold", textColor: MUTED }, 1: {},
-      2: { fontStyle: "bold", textColor: MUTED }, 3: {},
-      4: { fontStyle: "bold", textColor: MUTED }, 5: {},
-    },
-  });
-  y = (doc as any).lastAutoTable.finalY + 3;
-  if (c.observacoes) {
-    h2("Observações");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(FS.body);
-    doc.setTextColor(...INK);
-    const wrapped = doc.splitTextToSize(c.observacoes, pageW - M * 2);
-    ensureSpace(wrapped.length * 4 + 2);
-    doc.text(wrapped, M, y);
-    y += wrapped.length * 4 + 3;
-  }
-
-  // =========================================================
-  // 7) ESPECIFICAÇÕES TÉCNICAS / QUALIDADES
-  // =========================================================
-  const qsEntries = Object.entries(details.quality_specs_values || {}).filter(([, v]) => v && v.trim());
-  if (qsEntries.length > 0) {
-    h1("7. Especificações Técnicas / Qualidades");
-    autoTable(doc, {
-      startY: y,
-      margin: { left: M, right: M },
-      head: [["Rúbrica", "Especificação"]],
-      body: qsEntries.map(([k, v]) => [k, v]),
-      theme: "striped",
-      headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
-      styles: { fontSize: FS.body, textColor: INK },
-      columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
-    });
-    y = (doc as any).lastAutoTable.finalY + 5;
-  }
 
   // =========================================================
   // 8) PROPOSTA VENDAS sobre o CUSTO TOTAL DA OBRA
