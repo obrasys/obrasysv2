@@ -391,6 +391,7 @@ export interface ClosingTotals {
   total_outros: number; // (4)
   total_admin: number; // (5)
   base_iva_construcao: number;
+  base_iva_honorarios: number;
   total_iva: number; // (6)
   custo_total: number; // (1)+(2)+(3)+(4)+(5)+(6)
   valor_vendas: number;
@@ -537,6 +538,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     total_outros,
     total_admin,
     base_iva_construcao,
+    base_iva_honorarios,
     total_iva,
     custo_total,
     valor_vendas,

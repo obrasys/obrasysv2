@@ -1385,7 +1385,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
               onChange={(v) => patch("iva", { ...details.iva, taxa_honorarios_pct: v / 100 })}
             />
             <p className="text-[11px] text-muted-foreground text-right mt-1">
-              = {fmt(((totals.total_indirectos || 0) + (totals.total_admin || 0)) * (details.iva.taxa_honorarios_pct || 0))}
+              = {fmt((totals.base_iva_honorarios || 0) * (details.iva.taxa_honorarios_pct || 0))}
             </p>
           </div>
         </div>
