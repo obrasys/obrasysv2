@@ -537,6 +537,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     total_outros,
     total_admin,
     base_iva_construcao,
+    base_iva_honorarios,
     total_iva,
     custo_total,
     valor_vendas,
