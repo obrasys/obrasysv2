@@ -177,6 +177,17 @@ export interface ClosingSheetDetails {
   /** Preço por m² (editável) usado para calcular a estimativa de Custos Diretos
    *  quando ainda não há valores consolidados. Estimativa = área construção × preço/m². */
   direct_costs_estimate_price_m2?: number;
+  /** Linhas avulsas adicionadas manualmente à tabela de Custos Diretos
+   *  (capítulos extra fora do orçamento base). Somam ao total. */
+  direct_costs_extra?: ClosingExtraDirectCostLine[];
+}
+
+export interface ClosingExtraDirectCostLine {
+  id: string;
+  label: string;
+  value: number;
+  empresa?: string;
+  notas?: string;
 }
 
 // 38 capítulos canónicos do orçamento - alimentados exclusivamente a partir do
@@ -313,6 +324,7 @@ export const DEFAULT_CLOSING_DETAILS: ClosingSheetDetails = {
 
   quality_specs_values: {},
   direct_costs: DEFAULT_DIRECT_COST_LINES,
+  direct_costs_extra: [],
   site_costs: DEFAULT_SITE_COST_LINES,
   terrain: {
     preco_aquisicao: 0,
@@ -406,10 +418,13 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     d.statistics?.area_total_construcao ??
     ((d.statistics?.area_construcao || 0) + (d.statistics?.area_caves || 0));
   const estimativaCalc = (Number(d.direct_costs_estimate_price_m2) || 0) * (areaConstrucao || 0);
+  const total_extra =
+    (d.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0);
   const total_directos =
     d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
     (Number(d.direct_costs_estimate) || 0) +
-    estimativaCalc;
+    estimativaCalc +
+    total_extra;
   const total_estaleiro = d.site_costs.reduce((s, l) => s + (l.value || 0), 0);
   const custo_industrial = total_directos + total_estaleiro;
 
@@ -568,5 +583,6 @@ export function mergeDetails(stored: Partial<ClosingSheetDetails> | null | undef
     sales: stored.sales ?? [],
     statistics: { ...DEFAULT_CLOSING_DETAILS.statistics, ...(stored.statistics || {}) },
     conditions: { ...DEFAULT_CLOSING_DETAILS.conditions, ...(stored.conditions || {}) },
+    direct_costs_extra: Array.isArray(stored.direct_costs_extra) ? stored.direct_costs_extra : [],
   };
 }

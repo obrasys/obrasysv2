@@ -916,12 +916,117 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                 </TableCell>
               </TableRow>
             ))}
+            {(details.direct_costs_extra || []).map((line, idx) => {
+              const totalDir = totals.total_directos;
+              return (
+                <TableRow key={line.id} className="bg-primary/5">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <TextCell
+                        readOnly={readOnly}
+                        value={line.label}
+                        onChange={(v) => {
+                          const next = [...(details.direct_costs_extra || [])];
+                          next[idx] = { ...line, label: v };
+                          patch("direct_costs_extra", next);
+                        }}
+                        placeholder="Designação do capítulo avulso…"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <NumCell
+                      readOnly={readOnly}
+                      value={line.value}
+                      onChange={(v) => {
+                        const next = [...(details.direct_costs_extra || [])];
+                        next[idx] = { ...line, value: Number(v) || 0 };
+                        patch("direct_costs_extra", next);
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                    {totalDir > 0 ? `${((line.value / totalDir) * 100).toFixed(2)}%` : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={line.empresa || ""}
+                      onChange={(v) => {
+                        const next = [...(details.direct_costs_extra || [])];
+                        next[idx] = { ...line, empresa: v };
+                        patch("direct_costs_extra", next);
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <TextCell
+                        readOnly={readOnly}
+                        value={line.notas || ""}
+                        onChange={(v) => {
+                          const next = [...(details.direct_costs_extra || [])];
+                          next[idx] = { ...line, notas: v };
+                          patch("direct_costs_extra", next);
+                        }}
+                      />
+                      {!readOnly && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            const next = (details.direct_costs_extra || []).filter((_, i) => i !== idx);
+                            patch("direct_costs_extra", next);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {!readOnly && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const next = [
+                        ...(details.direct_costs_extra || []),
+                        {
+                          id: (typeof crypto !== "undefined" && "randomUUID" in crypto)
+                            ? crypto.randomUUID()
+                            : `extra_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                          label: "",
+                          value: 0,
+                          empresa: "",
+                          notas: "",
+                        },
+                      ];
+                      patch("direct_costs_extra", next);
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar capítulo avulso
+                  </Button>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
           <tfoot>
             <TableRow className="bg-muted/40 font-semibold">
               <TableCell className="text-xs">Total (Capítulos do Orçamento)</TableCell>
               <TableCell className="text-right text-xs tabular-nums">
-                {details.direct_costs.reduce((s, l) => s + (l.value || 0), 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {(
+                  details.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
+                  (details.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0)
+                ).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </TableCell>
               <TableCell className="text-right text-xs tabular-nums">
                 {totals.total_directos > 0 ? "100.00%" : "-"}
