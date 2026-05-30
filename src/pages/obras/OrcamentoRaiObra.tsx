@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Lock, CheckCircle2, Clock, Circle, AlertTriangle, Sparkles, TrendingUp, TrendingDown, Wallet, Database, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2, Clock, Circle, AlertTriangle, Sparkles, TrendingUp, TrendingDown, Wallet, Database, Loader2, ExternalLink, ShieldCheck } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { fmtEUR } from '@/lib/finance';
 import { useOrcamentoRaiObra } from '@/hooks/useOrcamentoRaiObra';
+import { useFinancialCycles } from '@/hooks/useFinancialCycles';
+import { useSnapshotAndLockBudget } from '@/hooks/useBudgetSnapshot';
+import { useAuth } from '@/contexts/AuthContext';
 import type { FinancialPhase, PhaseStatus } from '@/types/orcamento-rai';
 import { PHASE_DESCRIPTIONS } from '@/types/orcamento-rai';
 
@@ -32,7 +36,10 @@ const sourceStateLabel: Record<string, { label: string; tone: string }> = {
 export default function OrcamentoRaiObra() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { organization } = useAuth();
   const { data, isLoading } = useOrcamentoRaiObra(id);
+  const { data: cycles } = useFinancialCycles(id);
+  const snapshotMutation = useSnapshotAndLockBudget();
   const [selected, setSelected] = useState<FinancialPhase | null>(null);
 
   const activePhase: FinancialPhase = selected || data?.currentPhase || 'budget';
@@ -40,6 +47,13 @@ export default function OrcamentoRaiObra() {
     () => data?.phases.find(p => p.phase === activePhase),
     [data, activePhase],
   );
+
+  const lockedBudget = useMemo(
+    () => cycles?.find(c => c.phase === 'budget' && c.status === 'locked'),
+    [cycles],
+  );
+  const budgetPhase = data?.phases.find(p => p.phase === 'budget');
+  const canLockBudget = !!budgetPhase && budgetPhase.status === 'locked' && !lockedBudget; // FF Base aprovada mas sem snapshot
 
   if (isLoading || !data) {
     return (
@@ -70,6 +84,62 @@ export default function OrcamentoRaiObra() {
           <KPI label="Custos" value={fmtEUR(data.kpis.custos)} />
         </CardContent>
       </Card>
+
+      {/* Fase 3 — Snapshot & Lock do Budget */}
+      <Card className={cn('rounded-xl mt-4 border', lockedBudget ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40')}>
+        <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className={cn('w-5 h-5 mt-0.5', lockedBudget ? 'text-emerald-600' : 'text-amber-600')} />
+            <div>
+              <div className="font-semibold text-sm">
+                {lockedBudget ? `Budget bloqueado — v${lockedBudget.version}` : 'Snapshot do Budget pendente'}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {lockedBudget
+                  ? `Bloqueado em ${new Date(lockedBudget.locked_at!).toLocaleString('pt-PT')} · RAI ${fmtEUR(lockedBudget.rai)} · Margem ${lockedBudget.margem_pct.toFixed(1)}%`
+                  : canLockBudget
+                  ? 'Folha de Fecho Base aprovada. Capture um snapshot para tornar o Budget a referência oficial desta obra.'
+                  : 'O snapshot fica disponível assim que a Folha de Fecho Base for aprovada.'}
+              </div>
+            </div>
+          </div>
+          {canLockBudget && organization?.id && id && data && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" disabled={snapshotMutation.isPending}>
+                  {snapshotMutation.isPending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Lock className="w-3 h-3 mr-1" />}
+                  Bloquear Budget
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Bloquear o Budget desta obra?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Será criado um snapshot oficial (v{((cycles?.filter(c => c.phase === 'budget').length ?? 0) + 1)}) com os valores atuais da FF Base e fontes consolidadas.
+                    A partir deste momento, qualquer alteração passa a contar como desvio face ao Budget.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() =>
+                      snapshotMutation.mutate({
+                        obra_id: id,
+                        organization_id: organization.id,
+                        consolidation: data,
+                      })
+                    }
+                  >
+                    Confirmar e bloquear
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       {/* Timeline financeira */}
       <section className="mt-6">
