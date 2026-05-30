@@ -156,9 +156,9 @@ export default function AdminFinanceiroGlobal() {
           />
           <KpiCard
             title="Ticket Médio"
-            value={`€${payingUsers.length > 0 ? (totalMRR / Math.max(proCount + starterCount, 1)).toFixed(0) : 0}`}
+            value={`€${payingUsers.length > 0 ? (totalAccumulated / payingUsers.length).toFixed(0) : 0}`}
             icon={Wallet}
-            description="Por utilizador mensal"
+            description="Por utilizador (inclui Founder)"
           />
         </div>
 
