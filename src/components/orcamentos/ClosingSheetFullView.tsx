@@ -1705,10 +1705,10 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                     <p className="text-[11px] italic text-muted-foreground text-right mb-1">Valor Médio / fração</p>
                     <div className="flex-1 rounded-md bg-muted/60 border border-border px-3 py-3 text-right space-y-2">
                       <p className="text-base md:text-lg font-bold tabular-nums">
-                        {fmt(abpEffective > 0 ? pvDg / abpEffective : 0)} €/m²
+                        {fmtNumber(abpEffective > 0 ? pvDg / abpEffective : 0)} €/m²
                       </p>
                       <p className="text-base md:text-lg font-bold tabular-nums">
-                        {fmt(numFraccoes > 0 ? pvDg / numFraccoes : 0)} €/un
+                        {fmtNumber(numFraccoes > 0 ? pvDg / numFraccoes : 0)} €/un
                       </p>
                     </div>
                   </div>
@@ -1767,10 +1767,10 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                     <p className="text-[11px] italic text-muted-foreground text-right mb-1">Valor Médio / fração</p>
                     <div className="flex-1 rounded-md bg-muted/60 border border-border px-3 py-3 text-right space-y-2">
                       <p className="text-base md:text-lg font-bold tabular-nums">
-                        {fmt(abpEffective > 0 ? pvAdm / abpEffective : 0)} €/m²
+                        {fmtNumber(abpEffective > 0 ? pvAdm / abpEffective : 0)} €/m²
                       </p>
                       <p className="text-base md:text-lg font-bold tabular-nums">
-                        {fmt(numFraccoes > 0 ? pvAdm / numFraccoes : 0)} €/un
+                        {fmtNumber(numFraccoes > 0 ? pvAdm / numFraccoes : 0)} €/un
                       </p>
                     </div>
                   </div>
