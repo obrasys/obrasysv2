@@ -252,18 +252,18 @@ export default function MCEFolha() {
             {/* Tabela comparativa */}
             <thead className="bg-primary/15 text-primary">
               <tr>
-                <th className="p-2 w-20 text-left">QUANT.</th>
-                <th className="p-2 w-16 text-left">UN</th>
+                <th className="p-2 w-16 text-left">QUANT.</th>
+                <th className="p-2 w-12 text-left">UN</th>
                 {suppliers.map((s) => (
-                  <th key={`h-${s.id}`} className="p-2 border-l" colSpan={2}>
+                  <th key={`h-${s.id}`} className="p-2 border-l w-40" colSpan={2}>
                     <div className="flex justify-around text-[10px]">
                       <span>P. UNIT.</span><span>TOTAL</span>
                     </div>
                   </th>
                 ))}
-                <th className="p-2 border-l bg-muted/40 text-center">QUANT.</th>
-                <th className="p-2 bg-muted/40 text-center">P. UNIT.</th>
-                <th className="p-2 bg-muted/40 text-center">TOTAL s/IVA</th>
+                <th className="p-2 border-l bg-muted/40 text-center w-16">QUANT.</th>
+                <th className="p-2 bg-muted/40 text-center w-16">P. UNIT.</th>
+                <th className="p-2 bg-muted/40 text-center w-20">TOTAL s/IVA</th>
               </tr>
               <tr>
                 <th colSpan={2} className="p-2 text-left bg-primary/5">ESPECIFICAÇÃO</th>
