@@ -947,21 +947,21 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             })}
             {(details.direct_costs_extra || []).map((line, idx) => {
               const totalDir = totals.total_directos;
+              const desc = Math.max(0, Math.min(100, Number((line as any).desconto_pct) || 0));
+              const liquido = (Number(line.value) || 0) * (1 - desc / 100);
               return (
                 <TableRow key={line.id} className="bg-primary/5">
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <TextCell
-                        readOnly={readOnly}
-                        value={line.label}
-                        onChange={(v) => {
-                          const next = [...(details.direct_costs_extra || [])];
-                          next[idx] = { ...line, label: v };
-                          patch("direct_costs_extra", next);
-                        }}
-                        placeholder="Designação do capítulo avulso…"
-                      />
-                    </div>
+                    <TextCell
+                      readOnly={readOnly}
+                      value={line.label}
+                      onChange={(v) => {
+                        const next = [...(details.direct_costs_extra || [])];
+                        next[idx] = { ...line, label: v };
+                        patch("direct_costs_extra", next);
+                      }}
+                      placeholder="Designação do capítulo avulso…"
+                    />
                   </TableCell>
                   <TableCell>
                     <NumCell
@@ -974,8 +974,23 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                       }}
                     />
                   </TableCell>
+                  <TableCell>
+                    <NumCell
+                      readOnly={readOnly}
+                      value={(line as any).desconto_pct || 0}
+                      onChange={(v) => {
+                        const num = Math.max(0, Math.min(100, Number(v) || 0));
+                        const next = [...(details.direct_costs_extra || [])];
+                        next[idx] = { ...line, desconto_pct: num } as any;
+                        patch("direct_costs_extra", next);
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right text-xs tabular-nums">
+                    {liquido.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
                   <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
-                    {totalDir > 0 ? `${((line.value / totalDir) * 100).toFixed(2)}%` : "-"}
+                    {totalDir > 0 ? `${((liquido / totalDir) * 100).toFixed(2)}%` : "-"}
                   </TableCell>
                   <TableCell>
                     <TextCell
@@ -1020,7 +1035,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             })}
             {!readOnly && (
               <TableRow>
-                <TableCell colSpan={5} className="py-2">
+                <TableCell colSpan={7} className="py-2">
                   <Button
                     type="button"
                     size="sm"
@@ -1049,20 +1064,51 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             )}
           </TableBody>
           <tfoot>
-            <TableRow className="bg-muted/40 font-semibold">
-              <TableCell className="text-xs">Total (Capítulos do Orçamento)</TableCell>
-              <TableCell className="text-right text-xs tabular-nums">
-                {(
-                  details.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
-                  (details.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0)
-                ).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell className="text-right text-xs tabular-nums">
-                {totals.total_directos > 0 ? "100.00%" : "-"}
-              </TableCell>
-              <TableCell />
-              <TableCell />
-            </TableRow>
+            {(() => {
+              const brutoBase = details.direct_costs.reduce((s, l) => s + (Number(l.value) || 0), 0);
+              const brutoExtra = (details.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0);
+              const liquidoBase = details.direct_costs.reduce((s, l) => {
+                const d = Math.max(0, Math.min(100, Number(l.desconto_pct) || 0));
+                return s + (Number(l.value) || 0) * (1 - d / 100);
+              }, 0);
+              const liquidoExtra = (details.direct_costs_extra || []).reduce((s, l) => {
+                const d = Math.max(0, Math.min(100, Number((l as any).desconto_pct) || 0));
+                return s + (Number(l.value) || 0) * (1 - d / 100);
+              }, 0);
+              const totalBruto = brutoBase + brutoExtra;
+              const totalLiquido = liquidoBase + liquidoExtra;
+              const totalDesconto = totalBruto - totalLiquido;
+              return (
+                <>
+                  {totalDesconto > 0 && (
+                    <TableRow className="text-xs text-destructive">
+                      <TableCell className="italic">Descontos aplicados</TableCell>
+                      <TableCell />
+                      <TableCell />
+                      <TableCell className="text-right tabular-nums">
+                        - {totalDesconto.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell colSpan={3} />
+                    </TableRow>
+                  )}
+                  <TableRow className="bg-muted/40 font-semibold">
+                    <TableCell className="text-xs">Total (Capítulos do Orçamento)</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                      {totalBruto.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell />
+                    <TableCell className="text-right text-xs tabular-nums">
+                      {totalLiquido.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">
+                      {totals.total_directos > 0 ? "100.00%" : "-"}
+                    </TableCell>
+                    <TableCell />
+                    <TableCell />
+                  </TableRow>
+                </>
+              );
+            })()}
           </tfoot>
         </Table>
         <p className="text-xs text-muted-foreground italic px-1">
