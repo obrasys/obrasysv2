@@ -93,8 +93,10 @@ export default function OrcamentoRaiObra() {
         </Button>
       }
     >
+      <div className="p-4 md:p-6 space-y-5">
       {/* Breadcrumbs */}
-      <div className="px-1 pt-4">
+      <div>
+
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -449,7 +451,7 @@ export default function OrcamentoRaiObra() {
           </CardContent>
         </Card>
       </section>
-
+      </div>
     </AppLayout>
   );
 }
