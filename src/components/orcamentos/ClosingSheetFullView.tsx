@@ -183,7 +183,7 @@ function Section({
 function SubtotalRow({ label, value, code }: { label: string; value: number; code?: string }) {
   return (
     <div className="flex items-center justify-between bg-muted/60 border rounded-md px-3 py-2 text-sm">
-      <span className="font-semibold">
+      <span className="font-bold">
         {label} {code && <span className="text-muted-foreground font-normal">{code}</span>}
       </span>
       <span className="font-bold tabular-nums">{fmt(value)}</span>
