@@ -76,8 +76,15 @@ export function ResumoTotal({ orcamento }: ResumoTotalProps) {
             <Euro className="h-4 w-4" />
             Valor Base
           </span>
-          <span className="font-medium">{formatCurrency(orcamento.valor_total)}</span>
+          <span className="font-medium">{formatCurrency(baseCapitulosBruta || orcamento.valor_total)}</span>
         </div>
+
+        {descontoCapitulos > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Descontos por capítulo</span>
+            <span className="font-medium text-destructive">- {formatCurrency(descontoCapitulos)}</span>
+          </div>
+        )}
 
         {custosIndiretosTotal > 0 && (
           <div className="space-y-2 pt-2 border-t">
