@@ -182,6 +182,27 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         });
       }
 
+      if (aftercareAbertos > 0) {
+        attention.push({
+          id: 'aftercare-abertos',
+          severity: 'warning',
+          title: `${aftercareAbertos} reclamação(ões) de pós-venda em aberto`,
+          description: 'Acompanhe a resolução para fechar o RAI com SPV.',
+          source: 'Pós-venda',
+        });
+      }
+      const hoje = new Date();
+      const retencoesVencidas = retencoesAtivas.filter((r: any) => r.due_date && new Date(r.due_date) < hoje).length;
+      if (retencoesVencidas > 0) {
+        attention.push({
+          id: 'retencoes-vencidas',
+          severity: 'high',
+          title: `${retencoesVencidas} retenção(ões) vencida(s)`,
+          description: 'Existem retenções com data de libertação ultrapassada.',
+          source: 'Retenções',
+        });
+      }
+
       const sources: IntegrationSourceCard[] = [
         {
           key: 'orcamento-base',
