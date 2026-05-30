@@ -118,11 +118,6 @@ export interface Capitulo {
   client_summary_order?: number | null;
   artigos?: ArtigoOrcamento[];
 }
-  client_exclusions_text?: string | null;
-  include_in_client_summary?: boolean;
-  client_summary_order?: number | null;
-  artigos?: ArtigoOrcamento[];
-}
 
 export interface BudgetDocument {
   id: string;
