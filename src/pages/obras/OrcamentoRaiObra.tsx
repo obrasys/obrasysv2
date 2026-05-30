@@ -36,7 +36,10 @@ const sourceStateLabel: Record<string, { label: string; tone: string }> = {
 export default function OrcamentoRaiObra() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { organization } = useAuth();
   const { data, isLoading } = useOrcamentoRaiObra(id);
+  const { data: cycles } = useFinancialCycles(id);
+  const snapshotMutation = useSnapshotAndLockBudget();
   const [selected, setSelected] = useState<FinancialPhase | null>(null);
 
   const activePhase: FinancialPhase = selected || data?.currentPhase || 'budget';
@@ -44,6 +47,13 @@ export default function OrcamentoRaiObra() {
     () => data?.phases.find(p => p.phase === activePhase),
     [data, activePhase],
   );
+
+  const lockedBudget = useMemo(
+    () => cycles?.find(c => c.phase === 'budget' && c.status === 'locked'),
+    [cycles],
+  );
+  const budgetPhase = data?.phases.find(p => p.phase === 'budget');
+  const canLockBudget = !!budgetPhase && budgetPhase.status === 'locked' && !lockedBudget; // FF Base aprovada mas sem snapshot
 
   if (isLoading || !data) {
     return (
