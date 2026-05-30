@@ -280,13 +280,25 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           key: 'spv',
           label: 'SPV / Aftercare',
           module: 'Pós-venda',
-          state: 'no_data',
-          lastUpdate: null,
-          totalDocs: 0,
-          acceptedDocs: 0,
-          pendingDocs: 0,
+          state: aftercareData.length > 0 ? 'consolidated' : 'no_data',
+          lastUpdate: aftercareData[0]?.updated_at || null,
+          totalDocs: aftercareData.length,
+          acceptedDocs: aftercareData.filter((a: any) => a.status === 'resolvido').length,
+          pendingDocs: aftercareAbertos,
           conflicts: 0,
           amount: custosSpv,
+        },
+        {
+          key: 'retencoes',
+          label: 'Retenções de garantia',
+          module: 'Retenções',
+          state: retencoesAtivas.length > 0 ? 'found' : 'no_data',
+          lastUpdate: retentionsData[0]?.updated_at || null,
+          totalDocs: retentionsData.length,
+          acceptedDocs: retentionsData.filter((r: any) => r.status === 'liberada_total').length,
+          pendingDocs: retencoesAtivas.length,
+          conflicts: retencoesVencidas,
+          amount: retencoesValor,
         },
         {
           key: 'axia',
@@ -301,6 +313,9 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
           amount: 0,
         },
       ];
+
+      // Impacto MCE = compras totais - vendas adjudicadas (proxy)
+      const impactoMce = comprasTotal > 0 && forecastVendas > 0 ? forecastVendas - comprasTotal : 0;
 
       return {
         obraId,
