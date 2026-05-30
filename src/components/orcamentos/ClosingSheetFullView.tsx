@@ -1251,7 +1251,32 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* IVA (6) */}
-        <Section id="iva" title="Custos de IVA - (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total C. IVA">
+        <Section id="iva" title="Custos de IVA - (6)" collapsed={isCol("iva")} onToggle={() => toggleSection("iva")} total={totals.total_iva} totalLabel="Total C. IVA" extra={
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="text-muted-foreground hover:text-foreground p-1" aria-label="Manual de Ajuda IVA">
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-md text-xs whitespace-pre-line leading-relaxed">
+                {`Manual de Ajuda IVA
+
+Não tem a certeza de qual a taxa de IVA aplicar em cada rubrica? Utilize as regras de ouro portuguesas:
+
+- Construção Nova: Regra geral a taxa é 23% (Taxa Normal) na globalidade.
+
+- Reabilitação Urbana (ARU): Se o imóvel estiver em zona ARU e tiver certificado camarário, aplica-se 6% a toda a empreitada.
+
+- Reparação e Conservação de Habitação (Não ARU): A mão-de-obra tem taxa reduzida 6%. Os materiais apenas têm 6% se representarem menos de 20% do valor total do serviço. Caso os materiais ultrapassem 20%, pagam 23%.
+
+- Autoliquidação de IVA (Inversão do sujeito passivo): Se factura a outra empresa de construção civil (B2B), a factura vai "Sem IVA" (Isento), aplicam a regra de inversão. Selecionar Isento !
+
+- Trabalhador Independente com Isenção: Se factura menos de 14.500€/ano (Artigo 53º), fatura Isento.`}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        }>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
           <div className="flex items-center gap-2 pt-5">
             <Checkbox
