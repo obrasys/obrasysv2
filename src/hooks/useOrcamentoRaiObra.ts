@@ -43,7 +43,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         }
       };
 
-      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData] = await Promise.all([
+      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData, aftercareData, retentionsData] = await Promise.all([
         sb.from('obras').select('id,nome,status,cost_center_id,updated_at').eq('id', obraId).maybeSingle(),
         safeList(
           sb
@@ -56,6 +56,8 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         safeList(sb.from('contracting_packages').select('id,status,total_amount,mce_id,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('autos_medicao').select('id,status,valor_total,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('contas_financeiras').select('id,tipo,valor,status,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('aftercare_records').select('id,status,cost_value,reported_at,updated_at').eq('obra_id', obraId)),
+        safeList(sb.from('guarantee_retentions').select('id,status,retained_amount,released_amount,due_date,updated_at').eq('obra_id', obraId)),
       ]);
 
       if (obraR.error) throw obraR.error;
