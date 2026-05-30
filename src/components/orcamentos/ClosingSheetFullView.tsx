@@ -1689,15 +1689,15 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                 </TableRow>
               );
             })}
-            <TableRow className="bg-muted/40 font-semibold">
-              <TableCell>TOTAL</TableCell>
-              <TableCell className="text-right tabular-nums">{totalQt}</TableCell>
+            <TableRow className="bg-muted/40 font-bold">
+              <TableCell className="font-bold">TOTAL</TableCell>
+              <TableCell className="text-right tabular-nums font-bold">{totalQt}</TableCell>
               <TableCell className="text-right text-xs text-muted-foreground">
                 Rácio médio: {rácioMedio.toFixed(1)} m²
               </TableCell>
               <TableCell />
               <TableCell />
-              <TableCell className="text-right tabular-nums">{fmt(totals.valor_vendas)}</TableCell>
+              <TableCell className="text-right tabular-nums font-bold">{fmt(totals.valor_vendas)}</TableCell>
               {!readOnly && <TableCell />}
             </TableRow>
           </TableBody>
