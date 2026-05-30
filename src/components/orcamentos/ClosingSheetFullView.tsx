@@ -653,6 +653,27 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               onChange={(v) => patch("header", { ...details.header, responsavel_orcamento: v })}
             />
           </div>
+          <div>
+            <Label className="text-[11px] uppercase">Início da Obra</Label>
+            <input
+              type="date"
+              readOnly={readOnly}
+              value={details.header.inicio_obra ?? ""}
+              onChange={(e) => patch("header", { ...details.header, inicio_obra: e.target.value || null })}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <Label className="text-[11px] uppercase">Fim da Obra</Label>
+            <input
+              type="date"
+              readOnly={readOnly}
+              value={details.header.conclusao_obra ?? ""}
+              onChange={(e) => patch("header", { ...details.header, conclusao_obra: e.target.value || null })}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
         </div>
 
         <Separator />
