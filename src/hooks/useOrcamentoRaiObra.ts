@@ -91,8 +91,11 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const outturnVendas = safeNum(ffFinal?.sale_price);
       const outturnCustos = safeNum(ffFinal?.total_direct_cost) + safeNum(ffFinal?.total_indirect_cost);
 
-      // SPV / Aftercare — placeholder (sem tabela específica nesta fase)
-      const custosSpv = 0;
+      // SPV / Aftercare — soma de custos abertos + resolvidos
+      const custosSpv = aftercareData.reduce((s: number, a: any) => s + safeNum(a.cost_value), 0);
+      const aftercareAbertos = aftercareData.filter((a: any) => a.status === 'aberto' || a.status === 'em_analise').length;
+      const retencoesAtivas = retentionsData.filter((r: any) => r.status === 'retida' || r.status === 'liberada_parcial');
+      const retencoesValor = retencoesAtivas.reduce((s: number, r: any) => s + (safeNum(r.retained_amount) - safeNum(r.released_amount)), 0);
 
       const phases = [
         {
