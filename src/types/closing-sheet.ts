@@ -499,7 +499,22 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     .reduce((s, l) => s + (l.value || 0), 0);
   const base_iva_construcao = custo_industrial - mao_obra_estaleiro;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
-  const ivaHonorarios = (total_indirectos + total_admin) * (d.iva.taxa_honorarios_pct || 0);
+  // Base IVA Honorários & Outros: subconjunto específico de Indirectos (3) + Outros (4) + Admin (5)
+  const base_indirectos_honorarios =
+    pctOrAbs(d.indirect.honorarios_tecnicos_pct, d.indirect.honorarios_tecnicos) +
+    valor_vendas * (d.indirect.publicidade_marketing_vendas_pct || 0) +
+    valor_vendas * (d.indirect.honorarios_gestao_vendas_pct || 0) +
+    valor_vendas * (d.indirect.honorarios_comercializacao_vendas_pct || 0);
+  const base_outros_honorarios =
+    total_directos * (d.other.projectos_pct || 0) +
+    custo_industrial * (d.other.imprevistos_aleas_pct || 0) +
+    outrosTaxasVal +
+    (d.other.seguranca_higiene || 0) +
+    (d.other.controlo_qualidade || 0);
+  const base_admin_honorarios = adminVal(d.admin.fee_inter_grupo_vendas_pct, d.admin.fee_inter_grupo);
+  const base_iva_honorarios =
+    base_indirectos_honorarios + base_outros_honorarios + base_admin_honorarios;
+  const ivaHonorarios = base_iva_honorarios * (d.iva.taxa_honorarios_pct || 0);
   const total_iva = ivaTerreno + ivaConstrucao + ivaHonorarios;
 
   const custo_total =
