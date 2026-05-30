@@ -1894,14 +1894,14 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
             <p className="text-[13px] uppercase text-muted-foreground font-bold">Valor de Vendas (Proposta)</p>
-            <p className="text-2xl font-bold tabular-nums">{fmt(totals.valor_vendas)}</p>
+            <p className="text-2xl font-extrabold tabular-nums">{fmt(totals.valor_vendas)}</p>
           </div>
           <div
             className={`rounded-md p-3 ${totals.rai_eur >= 0 ? "bg-emerald-50 border border-emerald-200" : "bg-rose-50 border border-rose-200"}`}
           >
             <p className="text-[13px] uppercase text-muted-foreground font-bold">RAI €</p>
             <p
-              className={`text-2xl font-bold tabular-nums ${totals.rai_eur >= 0 ? "text-emerald-700" : "text-rose-700"}`}
+              className={`text-2xl font-extrabold tabular-nums ${totals.rai_eur >= 0 ? "text-emerald-700" : "text-rose-700"}`}
             >
               {fmt(totals.rai_eur)}
             </p>
@@ -1911,7 +1911,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
           >
             <p className="text-[13px] uppercase text-muted-foreground font-bold">RAI %</p>
             <p
-              className={`text-2xl font-bold tabular-nums ${totals.rai_pct >= 0 ? "text-emerald-700" : "text-rose-700"}`}
+              className={`text-2xl font-extrabold tabular-nums ${totals.rai_pct >= 0 ? "text-emerald-700" : "text-rose-700"}`}
             >
               {pct(totals.rai_pct)}
             </p>
