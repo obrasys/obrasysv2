@@ -45,8 +45,16 @@ export default function OrcamentoRaiObra() {
   const { organization } = useAuth();
   const { data, isLoading } = useOrcamentoRaiObra(id);
   const { data: cycles } = useFinancialCycles(id);
-  const snapshotMutation = useSnapshotAndLockBudget();
+  const { data: retentions } = useGuaranteeRetentions(id);
+  const { data: aftercare } = useAftercareRecords(id);
+  const snapshotMutation = useSnapshotAndLockPhase();
+  const axiaMutation = useAxiaOrcamentoRai();
+  const createAftercare = useCreateAftercareRecord();
+  const createRetention = useCreateGuaranteeRetention();
+  const resolveAftercare = useResolveAftercareRecord();
+  const releaseRetention = useReleaseGuaranteeRetention();
   const [selected, setSelected] = useState<FinancialPhase | null>(null);
+  const [insights, setInsights] = useState<AxiaRaiInsight[] | null>(null);
 
   const activePhase: FinancialPhase = selected || data?.currentPhase || 'budget';
   const currentPhaseData = useMemo(
@@ -54,12 +62,15 @@ export default function OrcamentoRaiObra() {
     [data, activePhase],
   );
 
-  const lockedBudget = useMemo(
-    () => cycles?.find(c => c.phase === 'budget' && c.status === 'locked'),
-    [cycles],
-  );
-  const budgetPhase = data?.phases.find(p => p.phase === 'budget');
-  const canLockBudget = !!budgetPhase && budgetPhase.status === 'locked' && !lockedBudget; // FF Base aprovada mas sem snapshot
+  const lockedByPhase = useMemo(() => {
+    const map: Partial<Record<FinancialPhase, typeof cycles extends Array<infer T> ? T : never>> = {};
+    (cycles ?? []).forEach((c) => {
+      if (c.status === 'locked' && !map[c.phase]) map[c.phase] = c;
+    });
+    return map;
+  }, [cycles]);
+  const lockedActive = lockedByPhase[activePhase];
+  const canLockActive = !!currentPhaseData && (currentPhaseData.status === 'locked' || currentPhaseData.status === 'active') && !lockedActive;
 
   if (isLoading || !data) {
     return (
