@@ -17,7 +17,7 @@ export function useUpdateClosingSheetDetails(orcamentoId: string | undefined) {
         .update({
           details: params.details as any,
           total_direct_cost: params.totals.total_directos,
-          total_indirect_cost: params.totals.total_indirectos,
+          total_indirect_cost: params.totals.total_indiretos,
           site_costs: params.totals.total_estaleiro,
           structure_costs: params.totals.total_admin,
           contingency_amount: params.totals.total_outros,

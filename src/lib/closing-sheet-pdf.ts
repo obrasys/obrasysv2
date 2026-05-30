@@ -277,8 +277,8 @@ export async function exportClosingSheetPDF(params: {
   });
   y = (doc as any).lastAutoTable.finalY + 4;
 
-  // (3) Indirectos - detalhado
-  h2("(3) Custos Indirectos");
+  // (3) Indiretos - detalhado
+  h2("(3) Custos Indiretos");
   const ind = details.indirect;
   const ci = totals.custo_industrial;
   const cd = totals.total_directos;
@@ -310,7 +310,7 @@ export async function exportClosingSheetPDF(params: {
       [`Garantias / Pós-Venda (${fmtPct(ind.garantias_pos_venda_vendas_pct || 0)} s/ Vendas)`, fmtEur(vv), fmtEur(vv * (ind.garantias_pos_venda_vendas_pct || 0))],
     ],
 
-    foot: [["Subtotal (3) Indirectos", "", fmtEur(totals.total_indirectos)]],
+    foot: [["Subtotal (3) Indiretos", "", fmtEur(totals.total_indiretos)]],
     theme: "striped",
     headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: FS.body, fontStyle: "bold" },
     footStyles: { fillColor: TEAL_SOFT, textColor: INK, fontStyle: "bold", fontSize: FS.body },
@@ -378,7 +378,7 @@ export async function exportClosingSheetPDF(params: {
     (details.terrain.arranjos_exteriores || 0);
   const ivaTerr = baseIvaTerrenoHon * (details.iva.taxa_terreno_pct || 0);
   const ivaCon = totals.base_iva_construcao * (details.iva.taxa_construcao_pct || 0);
-  const ivaHon = (totals.total_indirectos + totals.total_admin) * (details.iva.taxa_honorarios_pct || 0);
+  const ivaHon = (totals.total_indiretos + totals.total_admin) * (details.iva.taxa_honorarios_pct || 0);
   autoTable(doc, {
     startY: y,
     margin: { left: M, right: M },
@@ -391,7 +391,7 @@ export async function exportClosingSheetPDF(params: {
         fmtEur(ivaTerr),
       ],
       ["Construção", fmtEur(totals.base_iva_construcao), fmtPct(details.iva.taxa_construcao_pct), fmtEur(ivaCon)],
-      ["Honorários / Indirectos", fmtEur(totals.total_indirectos + totals.total_admin), fmtPct(details.iva.taxa_honorarios_pct), fmtEur(ivaHon)],
+      ["Honorários / Indiretos", fmtEur(totals.total_indiretos + totals.total_admin), fmtPct(details.iva.taxa_honorarios_pct), fmtEur(ivaHon)],
     ],
     foot: [["Subtotal (6) IVA", "", "", fmtEur(totals.total_iva)]],
     theme: "striped",

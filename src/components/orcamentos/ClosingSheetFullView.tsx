@@ -255,7 +255,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
   // Estado de recolher/expandir seções
   const SECTION_IDS = [
-    "directos","estaleiro","terreno","indirectos","outros","admin","iva",
+    "directos","estaleiro","terreno","indiretos","outros","admin","iva",
     "vendas","estatistica","rai","condicionantes","validacao","aprovacao","qualidades",
   ] as const;
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -1020,7 +1020,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
         <Separator />
 
         {/* INDIRECTOS (3) */}
-        <Section id="indirectos" title="Custos Indirectos - (3)" collapsed={isCol("indirectos")} onToggle={() => toggleSection("indirectos")} total={totals.total_indirectos} totalLabel="Total C. Indirectos">
+        <Section id="indiretos" title="Custos Indiretos - (3)" collapsed={isCol("indiretos")} onToggle={() => toggleSection("indiretos")} total={totals.total_indiretos} totalLabel="Total C. Indiretos">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div>
             <Label>Honorários Técnicos (% s/ constr.)</Label>
@@ -1125,7 +1125,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
 
 
         </div>
-        <SubtotalRow label="TOTAL CUSTOS INDIRECTOS" code="(3)" value={totals.total_indirectos} />
+        <SubtotalRow label="TOTAL CUSTOS INDIRECTOS" code="(3)" value={totals.total_indiretos} />
         </Section>
 
         <Separator />

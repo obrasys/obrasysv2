@@ -60,7 +60,7 @@ export interface ClosingOtherCosts {
   contratos_registos: number;
   contratos_registos_vendas_pct?: number; // % sobre Valor de Vendas
   projectos_pct: number; // sobre constr. (custo_industrial)
-  imprevistos_aleas_pct: number; // sobre custos indirectos
+  imprevistos_aleas_pct: number; // sobre custos indiretos
   /** @deprecated usar outros_taxas_ramais_pct (% s/ constr.) */
   outros_taxas_ramais: number;
   outros_taxas_ramais_pct?: number; // % sobre constr. (custo_industrial)
@@ -387,7 +387,7 @@ export interface ClosingTotals {
   total_directos: number;
   total_estaleiro: number;
   total_terreno: number; // (2)
-  total_indirectos: number; // (3)
+  total_indiretos: number; // (3)
   total_outros: number; // (4)
   total_admin: number; // (5)
   base_iva_construcao: number;
@@ -433,7 +433,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     0,
   );
 
-  // (3) Indirectos
+  // (3) Indiretos
   // Os 4 campos honorários técnicos / financeiros / gestão / garantias passaram
   // a ser % sobre construção (custo_industrial). Mantém-se fallback p/ valores
   // absolutos legados (apenas quando pct não definido).
@@ -441,7 +441,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   // como base APENAS o Total de Custos Diretos (sem estaleiro).
   const pctOrAbs = (pct: number | undefined, abs: number) =>
     pct !== undefined && pct !== null ? total_directos * (pct || 0) : (abs || 0);
-  const total_indirectos =
+  const total_indiretos =
     pctOrAbs(d.indirect.honorarios_tecnicos_pct, d.indirect.honorarios_tecnicos) +
     total_directos * (d.indirect.seguros_pct || 0) +
     pctOrAbs(d.indirect.financeiros_pct, d.indirect.financeiros) +
@@ -500,8 +500,8 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     .reduce((s, l) => s + (l.value || 0), 0);
   const base_iva_construcao = custo_industrial - mao_obra_estaleiro;
   const ivaConstrucao = base_iva_construcao * (d.iva.taxa_construcao_pct || 0);
-  // Base IVA Honorários & Outros: subconjunto específico de Indirectos (3) + Outros (4) + Admin (5)
-  const base_indirectos_honorarios =
+  // Base IVA Honorários & Outros: subconjunto específico de Indiretos (3) + Outros (4) + Admin (5)
+  const base_indiretos_honorarios =
     pctOrAbs(d.indirect.honorarios_tecnicos_pct, d.indirect.honorarios_tecnicos) +
     valor_vendas * (d.indirect.publicidade_marketing_vendas_pct || 0) +
     valor_vendas * (d.indirect.honorarios_gestao_vendas_pct || 0) +
@@ -514,12 +514,12 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     (d.other.controlo_qualidade || 0);
   const base_admin_honorarios = adminVal(d.admin.fee_inter_grupo_vendas_pct, d.admin.fee_inter_grupo);
   const base_iva_honorarios =
-    base_indirectos_honorarios + base_outros_honorarios + base_admin_honorarios;
+    base_indiretos_honorarios + base_outros_honorarios + base_admin_honorarios;
   const ivaHonorarios = base_iva_honorarios * (d.iva.taxa_honorarios_pct || 0);
   const total_iva = ivaTerreno + ivaConstrucao + ivaHonorarios;
 
   const custo_total =
-    custo_industrial + total_terreno + total_indirectos + total_outros + total_admin + total_iva;
+    custo_industrial + total_terreno + total_indiretos + total_outros + total_admin + total_iva;
 
   const rai_eur = valor_vendas - custo_total;
   const rai_pct = valor_vendas > 0 ? rai_eur / valor_vendas : 0;
@@ -534,7 +534,7 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
     total_directos,
     total_estaleiro,
     total_terreno,
-    total_indirectos,
+    total_indiretos,
     total_outros,
     total_admin,
     base_iva_construcao,
