@@ -1884,6 +1884,65 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
             <Plus className="h-4 w-4" /> Adicionar tipologia
           </Button>
         )}
+
+        {/* ALERTA: Mapa de Vendas vs Proposta Inicial */}
+        {(() => {
+          const custoTotal = Number(totals.custo_total) || 0;
+          const abpFromSales = details.sales.reduce(
+            (s, l) => s + (Number(l.quantidade) || 0) * (Number(l.area_priv) || 0),
+            0,
+          );
+          const abpEffective = details.statistics.area_construcao_override
+            ? (details.statistics.area_construcao || 0)
+            : abpFromSales;
+          const lucroDgPct = Number(details.validation.percentagem_lucro_alvo) || 0;
+          const lucroAdmPct = Number(details.approvals.percentagem_lucro_admin ?? lucroDgPct) || 0;
+          const calcPV = (pct: number) => (pct < 1 ? custoTotal / (1 - pct) : 0);
+          const proposta = calcPV(lucroAdmPct) || calcPV(lucroDgPct);
+          const vendas = Number(totals.valor_vendas) || 0;
+          const diferencialEur = vendas - proposta;
+          const diferencialPct = proposta > 0 ? (diferencialEur / proposta) * 100 : 0;
+          const superior = diferencialEur >= 0;
+          const valorM2Vendas = abpEffective > 0 ? proposta / abpEffective : 0;
+
+          const bgSoft = superior ? "bg-emerald-50 border-emerald-300" : "bg-rose-50 border-rose-300";
+          const bgStrong = superior ? "bg-emerald-500" : "bg-rose-500";
+          const txtAccent = superior ? "text-emerald-700" : "text-rose-700";
+          const boxAccent = superior
+            ? "bg-white border-2 border-emerald-500 text-emerald-700"
+            : "bg-rose-500 border-2 border-rose-700 text-white";
+
+          return (
+            <div className="mt-4 space-y-0 rounded-md overflow-hidden border-2 border-border">
+              <div className={`${bgSoft} border-b-2 px-5 py-4 space-y-2`}>
+                <div className="flex items-center justify-between gap-4 text-sm md:text-base">
+                  <span className="font-bold uppercase tracking-wide">Valor de Vendas (Proposta):</span>
+                  <span className="font-bold tabular-nums">{fmt(proposta)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-sm md:text-base">
+                  <span className="font-bold uppercase tracking-wide">Valor (m²) das Vendas:</span>
+                  <span className="font-bold italic tabular-nums">{fmtNumber(valorM2Vendas)} €/m²</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-sm md:text-base pt-1">
+                  <span className="font-bold uppercase tracking-wide">Diferencial Proposta / Decomposição Vendas:</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`font-extrabold tabular-nums ${txtAccent}`}>
+                      {diferencialPct >= 0 ? "+" : ""}{diferencialPct.toFixed(1).replace(".", ",")}%
+                    </span>
+                    <span className={`px-4 py-1.5 rounded-sm font-extrabold tabular-nums min-w-[160px] text-right ${boxAccent}`}>
+                      {diferencialEur >= 0 ? "+" : ""}{fmt(diferencialEur)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className={`${bgStrong} px-5 py-3 text-center`}>
+                <p className="text-white font-extrabold italic uppercase tracking-wider text-base md:text-lg">
+                  ***** {superior ? "Mapa Vendas Superior à Proposta Inicial" : "Mapa Vendas Inferior à Proposta Inicial"} *****
+                </p>
+              </div>
+            </div>
+          );
+        })()}
         </Section>
 
 
