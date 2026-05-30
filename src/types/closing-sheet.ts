@@ -423,7 +423,10 @@ export function computeClosingTotals(d: ClosingSheetDetails): ClosingTotals {
   const total_extra =
     (d.direct_costs_extra || []).reduce((s, l) => s + (Number(l.value) || 0), 0);
   const total_directos =
-    d.direct_costs.reduce((s, l) => s + (l.value || 0), 0) +
+    d.direct_costs.reduce((s, l) => {
+      const desc = Math.max(0, Math.min(100, Number(l.desconto_pct) || 0));
+      return s + (Number(l.value) || 0) * (1 - desc / 100);
+    }, 0) +
     (Number(d.direct_costs_estimate) || 0) +
     estimativaCalc +
     total_extra;
