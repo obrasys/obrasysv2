@@ -587,7 +587,7 @@ export async function exportClosingSheetPDF(params: {
     head: [["Indicador", "Valor"]],
     body: [
       ["Custo Total da Obra", fmtEur(totals.custo_total)],
-      ["Valor de Vendas (Proposta)", fmtEur(totals.valor_vendas)],
+      ["Valor de Vendas Final", fmtEur(totals.valor_vendas)],
       ["Resultado Antes de Impostos (RAI €)", fmtEur(totals.rai_eur)],
       ["RAI %", fmtPct(totals.rai_pct)],
       ["K de Venda  (Vendas / Custo Industrial)", totals.k_venda.toFixed(3).replace(".", ",")],

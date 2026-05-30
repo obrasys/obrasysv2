@@ -1893,7 +1893,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
         <Section id="rai" title="Proposta Final | Venda - RAI" collapsed={isCol("rai")} onToggle={() => toggleSection("rai")} total={totals.rai_eur} totalLabel="RAI">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-muted/40 rounded-md p-3">
-            <p className="text-[13px] uppercase text-muted-foreground font-bold">Valor de Vendas (Proposta)</p>
+            <p className="text-[13px] uppercase text-muted-foreground font-bold">Valor de Vendas Final</p>
             <p className="text-2xl font-extrabold tabular-nums">{fmt(totals.valor_vendas)}</p>
           </div>
           <div
