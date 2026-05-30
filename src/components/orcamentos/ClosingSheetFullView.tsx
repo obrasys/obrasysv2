@@ -1085,7 +1085,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                       <TableCell className="italic">
                         <div>Descontos aplicados</div>
                         <div className="text-[0.8rem] font-extrabold opacity-90">
-                          {totalBruto > 0 ? `${((totalDesconto / totalBruto) * 100).toFixed(2)}%` : "-"}
+                          {totalBruto > 0 ? `${((totalDesconto / totalBruto) * 100).toFixed(2)}% sobre o total bruto` : "-"}
                         </div>
                       </TableCell>
                       <TableCell />
