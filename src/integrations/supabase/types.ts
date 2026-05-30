@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      aftercare_records: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          cost_center_id: string | null
+          cost_value: number
+          created_at: string
+          cycle_id: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          obra_id: string
+          organization_id: string
+          reference: string | null
+          reported_at: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["aftercare_status"]
+          supplier_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          cost_center_id?: string | null
+          cost_value?: number
+          created_at?: string
+          cycle_id?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          obra_id: string
+          organization_id: string
+          reference?: string | null
+          reported_at?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["aftercare_status"]
+          supplier_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          cost_center_id?: string | null
+          cost_value?: number
+          created_at?: string
+          cycle_id?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          obra_id?: string
+          organization_id?: string
+          reference?: string | null
+          reported_at?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["aftercare_status"]
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aftercare_records_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_budget_actions_log: {
         Row: {
           action: string
@@ -5109,6 +5180,299 @@ export type Database = {
           },
         ]
       }
+      financial_source_links: {
+        Row: {
+          amount: number
+          consolidated_at: string
+          created_at: string
+          cycle_id: string
+          id: string
+          ignored: boolean
+          ignored_reason: string | null
+          obra_id: string
+          organization_id: string
+          phase: Database["public"]["Enums"]["financial_phase"]
+          source_id: string
+          source_label: string | null
+          source_module: Database["public"]["Enums"]["financial_source_module"]
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          amount?: number
+          consolidated_at?: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+          ignored?: boolean
+          ignored_reason?: string | null
+          obra_id: string
+          organization_id: string
+          phase: Database["public"]["Enums"]["financial_phase"]
+          source_id: string
+          source_label?: string | null
+          source_module: Database["public"]["Enums"]["financial_source_module"]
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          amount?: number
+          consolidated_at?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          ignored?: boolean
+          ignored_reason?: string | null
+          obra_id?: string
+          organization_id?: string
+          phase?: Database["public"]["Enums"]["financial_phase"]
+          source_id?: string
+          source_label?: string | null
+          source_module?: Database["public"]["Enums"]["financial_source_module"]
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_source_links_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_work_cycles: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          custos_spv: number
+          desvio_budget: number
+          id: string
+          impacto_mce: number
+          locked_at: string | null
+          locked_by: string | null
+          margem_pct: number
+          margem_valor: number
+          notes: string | null
+          obra_id: string
+          organization_id: string
+          phase: Database["public"]["Enums"]["financial_phase"]
+          rai: number
+          snapshot: Json | null
+          status: Database["public"]["Enums"]["financial_cycle_status"]
+          total_custos: number
+          total_vendas: number
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          custos_spv?: number
+          desvio_budget?: number
+          id?: string
+          impacto_mce?: number
+          locked_at?: string | null
+          locked_by?: string | null
+          margem_pct?: number
+          margem_valor?: number
+          notes?: string | null
+          obra_id: string
+          organization_id: string
+          phase: Database["public"]["Enums"]["financial_phase"]
+          rai?: number
+          snapshot?: Json | null
+          status?: Database["public"]["Enums"]["financial_cycle_status"]
+          total_custos?: number
+          total_vendas?: number
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          custos_spv?: number
+          desvio_budget?: number
+          id?: string
+          impacto_mce?: number
+          locked_at?: string | null
+          locked_by?: string | null
+          margem_pct?: number
+          margem_valor?: number
+          notes?: string | null
+          obra_id?: string
+          organization_id?: string
+          phase?: Database["public"]["Enums"]["financial_phase"]
+          rai?: number
+          snapshot?: Json | null
+          status?: Database["public"]["Enums"]["financial_cycle_status"]
+          total_custos?: number
+          total_vendas?: number
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      financial_work_documents: {
+        Row: {
+          cost_center_id: string | null
+          created_at: string
+          cycle_id: string
+          doc_code: string | null
+          doc_date: string | null
+          doc_title: string | null
+          id: string
+          is_reference: boolean
+          meta: Json | null
+          obra_id: string
+          organization_id: string
+          source_id: string | null
+          source_link_id: string | null
+          source_module: Database["public"]["Enums"]["financial_source_module"]
+          total_value: number
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          cost_center_id?: string | null
+          created_at?: string
+          cycle_id: string
+          doc_code?: string | null
+          doc_date?: string | null
+          doc_title?: string | null
+          id?: string
+          is_reference?: boolean
+          meta?: Json | null
+          obra_id: string
+          organization_id: string
+          source_id?: string | null
+          source_link_id?: string | null
+          source_module: Database["public"]["Enums"]["financial_source_module"]
+          total_value?: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          cost_center_id?: string | null
+          created_at?: string
+          cycle_id?: string
+          doc_code?: string | null
+          doc_date?: string | null
+          doc_title?: string | null
+          id?: string
+          is_reference?: boolean
+          meta?: Json | null
+          obra_id?: string
+          organization_id?: string
+          source_id?: string | null
+          source_link_id?: string | null
+          source_module?: Database["public"]["Enums"]["financial_source_module"]
+          total_value?: number
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_work_documents_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_work_documents_source_link_id_fkey"
+            columns: ["source_link_id"]
+            isOneToOne: false
+            referencedRelation: "financial_source_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_work_lines: {
+        Row: {
+          chapter_code: string | null
+          created_at: string
+          cycle_id: string
+          description: string | null
+          document_id: string | null
+          family_code: string | null
+          id: string
+          margin_pct: number
+          meta: Json | null
+          nature: Database["public"]["Enums"]["financial_line_nature"]
+          obra_id: string
+          organization_id: string
+          quantity: number
+          total_cost: number
+          total_sale: number
+          unit: string | null
+          unit_cost: number
+          unit_sale: number
+          updated_at: string
+        }
+        Insert: {
+          chapter_code?: string | null
+          created_at?: string
+          cycle_id: string
+          description?: string | null
+          document_id?: string | null
+          family_code?: string | null
+          id?: string
+          margin_pct?: number
+          meta?: Json | null
+          nature: Database["public"]["Enums"]["financial_line_nature"]
+          obra_id: string
+          organization_id: string
+          quantity?: number
+          total_cost?: number
+          total_sale?: number
+          unit?: string | null
+          unit_cost?: number
+          unit_sale?: number
+          updated_at?: string
+        }
+        Update: {
+          chapter_code?: string | null
+          created_at?: string
+          cycle_id?: string
+          description?: string | null
+          document_id?: string | null
+          family_code?: string | null
+          id?: string
+          margin_pct?: number
+          meta?: Json | null
+          nature?: Database["public"]["Enums"]["financial_line_nature"]
+          obra_id?: string
+          organization_id?: string
+          quantity?: number
+          total_cost?: number
+          total_sale?: number
+          unit?: string | null
+          unit_cost?: number
+          unit_sale?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_work_lines_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_work_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           area_atuacao: string | null
@@ -5150,6 +5514,80 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      guarantee_retentions: {
+        Row: {
+          created_at: string
+          cycle_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          obra_id: string
+          organization_id: string
+          released_amount: number
+          released_at: string | null
+          retained_amount: number
+          source_id: string | null
+          source_module:
+            | Database["public"]["Enums"]["financial_source_module"]
+            | null
+          status: Database["public"]["Enums"]["retention_status"]
+          supplier_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          obra_id: string
+          organization_id: string
+          released_amount?: number
+          released_at?: string | null
+          retained_amount?: number
+          source_id?: string | null
+          source_module?:
+            | Database["public"]["Enums"]["financial_source_module"]
+            | null
+          status?: Database["public"]["Enums"]["retention_status"]
+          supplier_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cycle_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          obra_id?: string
+          organization_id?: string
+          released_amount?: number
+          released_at?: string | null
+          retained_amount?: number
+          source_id?: string | null
+          source_module?:
+            | Database["public"]["Enums"]["financial_source_module"]
+            | null
+          status?: Database["public"]["Enums"]["retention_status"]
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guarantee_retentions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "financial_work_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       icf_analysis_snapshots: {
         Row: {
@@ -14859,7 +15297,30 @@ export type Database = {
       validate_formula: { Args: { p_formula: string }; Returns: boolean }
     }
     Enums: {
+      aftercare_status: "aberto" | "em_analise" | "resolvido" | "rejeitado"
       cost_nature: "MO" | "MAT" | "SRV" | "INS" | "ALU" | "DIV"
+      financial_cycle_status: "draft" | "active" | "locked" | "closed"
+      financial_line_nature:
+        | "venda"
+        | "custo_direto"
+        | "custo_indireto"
+        | "estaleiro"
+        | "estrutura"
+        | "contingencia"
+        | "spv"
+        | "retencao"
+        | "outro"
+      financial_phase: "budget" | "forecast" | "outturn" | "aftercare"
+      financial_source_module:
+        | "orcamento"
+        | "closing_sheet"
+        | "mce"
+        | "contracting_package"
+        | "auto_medicao"
+        | "conta_financeira"
+        | "purchase"
+        | "aftercare"
+        | "manual"
       icf_assistant_plan_kind:
         | "arquitetura"
         | "estrutural"
@@ -14912,6 +15373,11 @@ export type Database = {
         | "declined"
         | "expired"
       regime_fiscal_tipo: "normal" | "reduzido" | "autoliquidacao" | "isento"
+      retention_status:
+        | "retida"
+        | "liberada_parcial"
+        | "liberada_total"
+        | "executada"
       supplier_status_enum: "pending" | "active" | "suspended"
       tipo_cliente_fiscal:
         | "particular"
@@ -15057,7 +15523,32 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      aftercare_status: ["aberto", "em_analise", "resolvido", "rejeitado"],
       cost_nature: ["MO", "MAT", "SRV", "INS", "ALU", "DIV"],
+      financial_cycle_status: ["draft", "active", "locked", "closed"],
+      financial_line_nature: [
+        "venda",
+        "custo_direto",
+        "custo_indireto",
+        "estaleiro",
+        "estrutura",
+        "contingencia",
+        "spv",
+        "retencao",
+        "outro",
+      ],
+      financial_phase: ["budget", "forecast", "outturn", "aftercare"],
+      financial_source_module: [
+        "orcamento",
+        "closing_sheet",
+        "mce",
+        "contracting_package",
+        "auto_medicao",
+        "conta_financeira",
+        "purchase",
+        "aftercare",
+        "manual",
+      ],
       icf_assistant_plan_kind: [
         "arquitetura",
         "estrutural",
@@ -15117,6 +15608,12 @@ export const Constants = {
         "expired",
       ],
       regime_fiscal_tipo: ["normal", "reduzido", "autoliquidacao", "isento"],
+      retention_status: [
+        "retida",
+        "liberada_parcial",
+        "liberada_total",
+        "executada",
+      ],
       supplier_status_enum: ["pending", "active", "suspended"],
       tipo_cliente_fiscal: [
         "particular",
