@@ -5,6 +5,8 @@ export interface ClosingDirectCostLine {
   key: string;
   label: string;
   value: number;
+  /** Desconto editável aplicado ao capítulo (0-100). Retirado do valor antes do total. */
+  desconto_pct?: number;
   empresa?: string;
   notas?: string;
 }
