@@ -23,7 +23,20 @@ export function ResumoTotal({ orcamento }: ResumoTotalProps) {
     (orcamento.custos_indiretos?.seguros || 0) +
     (orcamento.custos_indiretos?.licenciamento || 0);
 
-  const subtotal = orcamento.valor_total + custosIndiretosTotal;
+  // Recalcula a base a partir dos capítulos aplicando o desconto por capítulo
+  const baseCapitulosBruta = (orcamento.capitulos || []).reduce(
+    (s, c) => s + ((c.artigos || []).reduce((a, art) => a + (art.valor_total ?? art.quantidade * art.preco_unitario), 0)),
+    0
+  );
+  const baseCapitulosComDesconto = (orcamento.capitulos || []).reduce((s, c) => {
+    const bruto = (c.artigos || []).reduce((a, art) => a + (art.valor_total ?? art.quantidade * art.preco_unitario), 0);
+    const desc = Math.max(0, Math.min(100, Number((c as any).desconto_pct) || 0));
+    return s + bruto * (1 - desc / 100);
+  }, 0);
+  const descontoCapitulos = baseCapitulosBruta - baseCapitulosComDesconto;
+  const baseCapitulos = baseCapitulosComDesconto > 0 ? baseCapitulosComDesconto : (orcamento.valor_total || 0);
+
+  const subtotal = baseCapitulos + custosIndiretosTotal;
   const margemPct = orcamento.margem_lucro;
   const valorFinal = margemPct > 0 && margemPct < 100
     ? subtotal / (1 - margemPct / 100)
