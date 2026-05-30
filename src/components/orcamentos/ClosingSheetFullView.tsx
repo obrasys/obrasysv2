@@ -1828,7 +1828,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                       onChange={(v) => updateSalesLine(line.key, { quantidade: v })}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <NumCell
                       readOnly={readOnly}
                       value={line.area_priv}
