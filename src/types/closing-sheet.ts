@@ -70,8 +70,11 @@ export interface ClosingOtherCosts {
 
 export interface ClosingAdminCosts {
   estrutura_overhead: number;
+  estrutura_overhead_vendas_pct?: number;
   fee_inter_grupo: number;
+  fee_inter_grupo_vendas_pct?: number;
   outros_administrativos: number;
+  outros_administrativos_vendas_pct?: number;
 }
 
 export interface ClosingIvaCosts {
