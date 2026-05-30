@@ -43,15 +43,19 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         }
       };
 
-      const [obraR, ffData, orcsData, mceData, comprasData, autosData, contasData, aftercareData, retentionsData] = await Promise.all([
+      const orcsPreload = await safeList(sb.from('orcamentos').select('id,titulo,status,valor_total,updated_at').eq('obra_id', obraId));
+      const budgetIds = orcsPreload.map((o: any) => o.id).filter(Boolean);
+
+      const ffSelect = 'id,closing_type,status,obra_id,source_budget_id,sale_price,total_direct_cost,total_indirect_cost,site_costs,structure_costs,margin_amount,expected_result,final_result,approved_at,locked_at,updated_at';
+      const ffByObra = safeList(sb.from('closing_sheets').select(ffSelect).eq('obra_id', obraId));
+      const ffByBudget = budgetIds.length > 0
+        ? safeList(sb.from('closing_sheets').select(ffSelect).in('source_budget_id', budgetIds))
+        : Promise.resolve([] as any[]);
+
+      const [obraR, ffByObraData, ffByBudgetData, mceData, comprasData, autosData, contasData, aftercareData, retentionsData] = await Promise.all([
         sb.from('obras').select('id,nome,status,cost_center_id,updated_at').eq('id', obraId).maybeSingle(),
-        safeList(
-          sb
-            .from('closing_sheets')
-            .select('id,closing_type,status,sale_price,total_direct_cost,total_indirect_cost,site_costs,structure_costs,margin_amount,expected_result,final_result,approved_at,locked_at,updated_at')
-            .eq('obra_id', obraId),
-        ),
-        safeList(sb.from('orcamentos').select('id,titulo,status,valor_total,updated_at').eq('obra_id', obraId)),
+        ffByObra,
+        ffByBudget,
         safeList(sb.from('mce_records').select('id,status,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('contracting_packages').select('id,status,total_amount,mce_id,updated_at').eq('obra_id', obraId)),
         safeList(sb.from('autos_medicao').select('id,status,valor_total,updated_at').eq('obra_id', obraId)),
