@@ -1558,7 +1558,7 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                   </div>
                   <div className="col-span-12 md:col-span-3 flex flex-col">
                     <p className="text-[11px] italic text-muted-foreground text-right mb-1">Valor Médio / fração</p>
-                    <div className="flex-1 rounded-md bg-muted/60 border border-border px-3 py-3 text-right">
+                    <div className="flex-1 rounded-md bg-muted/60 border border-border px-3 py-3 text-right space-y-2">
                       <p className="text-base md:text-lg font-bold tabular-nums">
                         {fmt(abpEffective > 0 ? pvAdm / abpEffective : 0)} €/m²
                       </p>
