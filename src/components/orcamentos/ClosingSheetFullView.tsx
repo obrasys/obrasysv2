@@ -183,7 +183,7 @@ function Section({
 function SubtotalRow({ label, value, code }: { label: string; value: number; code?: string }) {
   return (
     <div className="flex items-center justify-between bg-muted/60 border rounded-md px-3 py-2 text-sm">
-      <span className="font-semibold">
+      <span className="font-bold">
         {label} {code && <span className="text-muted-foreground font-normal">{code}</span>}
       </span>
       <span className="font-bold tabular-nums">{fmt(value)}</span>
@@ -1689,15 +1689,15 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                 </TableRow>
               );
             })}
-            <TableRow className="bg-muted/40 font-semibold">
-              <TableCell>TOTAL</TableCell>
-              <TableCell className="text-right tabular-nums">{totalQt}</TableCell>
+            <TableRow className="bg-muted/40 font-bold">
+              <TableCell className="font-bold">TOTAL</TableCell>
+              <TableCell className="text-right tabular-nums font-bold">{totalQt}</TableCell>
               <TableCell className="text-right text-xs text-muted-foreground">
                 Rácio médio: {rácioMedio.toFixed(1)} m²
               </TableCell>
               <TableCell />
               <TableCell />
-              <TableCell className="text-right tabular-nums">{fmt(totals.valor_vendas)}</TableCell>
+              <TableCell className="text-right tabular-nums font-bold">{fmt(totals.valor_vendas)}</TableCell>
               {!readOnly && <TableCell />}
             </TableRow>
           </TableBody>
