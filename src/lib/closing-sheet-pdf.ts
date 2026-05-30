@@ -385,7 +385,7 @@ export async function exportClosingSheetPDF(params: {
     head: [["Componente", "Base", "Taxa", "Valor"]],
     body: [
       [
-        `Honorários Terreno / Arranjos Exteriores${(details.iva.zona_aru || details.iva.zona_oru) ? " (isento - ARU/ORU)" : ""}`,
+        `Honorários Terreno / Arranjos Exteriores`,
         fmtEur(baseIvaTerrenoHon),
         fmtPct(details.iva.taxa_terreno_pct),
         fmtEur(ivaTerr),
