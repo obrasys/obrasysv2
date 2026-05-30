@@ -872,7 +872,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
               <TableHead className="w-[34%] text-left">Rubrica</TableHead>
               <TableHead className="w-[12%] text-center">Valor (€)</TableHead>
               <TableHead className="w-[8%] text-center">Desc. %</TableHead>
-              <TableHead className="w-[12%] text-center">Líquido (€)</TableHead>
+              <TableHead className="w-[12%] text-center">Valor após Desc. (€)</TableHead>
               <TableHead className="w-[8%] text-center">% s/ Total</TableHead>
               <TableHead className="w-[16%] text-center">Empresa</TableHead>
               <TableHead>Notas</TableHead>
