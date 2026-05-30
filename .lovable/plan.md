@@ -1,63 +1,119 @@
-## Contexto
+# Plano — Área "Orçamento & RAI da Obra" (dentro de Orçamentos)
 
-Dois problemas no Assistente ICF (Arquitetura) acedido a partir do "Orçamento ICF (sem obra)":
+## Visão geral
+Adicionar **dentro** do módulo Orçamentos uma nova área de consolidação financeira por obra, sem criar módulo isolado e sem alterar o nome do módulo principal. Reutilizar dados já existentes (orçamentos, folhas de fecho, MCE, compras, autos, faturas, contabilidade, SPV) e expor um painel unificado com timeline das 4 fases: **Budget → Forecast → Outturn → Aftercare**.
 
-1. **Upload da planta falha** — o utilizador carrega tipicamente um PDF. Na fase anterior protegemos a edge function `icf-architecture-assistant` para devolver 400 quando o ficheiro não é imagem, porque o gateway da Axia (Gemini vision) só aceita PNG/JPG/WEBP/GIF. Resultado: o upload do PDF "sobe", mas a análise rebenta com a mensagem de formato não suportado — o utilizador vê isto como "não consigo carregar planta".
-2. **Fundações em falta** — quando a planta arquitetónica não tem fundações desenhadas (caso comum), a Axia devolve `fundacoes_encontradas: false`. Hoje o aviso só aparece no passo 5 quando o utilizador lá chega; o pedido é que isso force imediatamente um modal para preencher os dados de fundações.
+Dada a dimensão do pedido (≈25 secções, ~9 tabelas novas, regras de consolidação, RLS, Axia, permissões, UI), proponho executar por **fases incrementais**, cada uma entregando valor de forma autónoma e sem partir o que já existe.
 
-O projeto já tem `pdfjs-dist@4.9.155` instalado (`src/hooks/usePdfRenderer.ts`) — vamos reutilizar.
+---
 
-## O que vai mudar
+## Fase 0 — Decisões e fundações (1 entrega)
 
-### 1. Carregar planta com PDF a funcionar (`src/pages/icf/AssistenteArquitetura.tsx`)
+- Confirmar localização: nova rota `obras/:obraId/orcamento-rai` ligada a partir do dossier da obra e a partir de `/orcamentos/:id/ver` (botão "Abrir Orçamento & RAI da Obra").
+- Criar tipo `FinancialPhase = 'budget' | 'forecast' | 'outturn' | 'aftercare'`.
+- Criar serviço `consolidateOrcamentoRaiObra(obraId, phase)` (stub inicial — retorna dados já existentes em memória; será preenchido por fase).
+- Não tocar em `Orcamentos.Index`, rotas, permissões existentes.
 
-No `handleUpload`, antes de fazer upload para o bucket `plan-files`:
+## Fase 1 — UI base + Timeline + leitura do que já existe (entrega visível)
 
-- Se `file.type === 'application/pdf'` ou extensão `.pdf`:
-  - Usar `pdfjs-dist` para renderizar a **primeira página** num `<canvas>` offscreen a escala 2x.
-  - Converter o canvas em `Blob` PNG (`canvas.toBlob`).
-  - Fazer upload desse PNG para `plan-files` com extensão `.png`.
-  - Guardar também o PDF original (caminho separado) para a calibração visual continuar a ter o ficheiro vetorial.
-  - Adicionar campo `source_pdf_path` opcional na sessão? Não — para evitar migração agora, guardar apenas o PNG como `file_path` (o calibrador já aceita PNG via `usePdfRenderer`/`createImageBitmap` pelo browser).
-- Se já for imagem (PNG/JPG/WEBP), comportamento atual.
-- Mostrar toast com progresso ("A converter PDF para imagem...") e tratar erros de renderização (PDF protegido, página corrompida) com mensagem clara.
+Página `OrcamentoRaiObra.tsx` com:
+- **Cabeçalho inteligente**: nome obra, centro de custo, fase atual auto-detetada, RAI principal, margem, última atualização, botão discreto Axia.
+- **Timeline financeira** (cards clicáveis em vez de tabs/botões secos): Budget · Forecast · Outturn · Aftercare, com estado (ativa/concluída/pendente/bloqueada), data, RAI e margem por fase.
+- **Cards KPI**: Vendas, Custos, Margem €, Margem %, RAI, Desvio vs Budget, Impacto MCE, Custos SPV, RAI c/ SPV.
+- **"O que precisa da sua atenção"**: lista derivada de regras simples (MCE c/ perda, compras sem MCE, adjudicações sem contrato, autos pendentes, faturas sem CC, forecast desatualizado).
+- **Área de trabalho da fase ativa** (placeholder por fase).
+- **Fontes e Integrações** (cards de leitura): Orçamento Base, MCE/Adjudicações, Compras, Contratos, Autos, Certificados, Faturação, Contabilidade, SPV, Axia — cada card mostra estado, última atualização, totais, valor associado, impacto no RAI.
+- **Painel Axia** contextual (chama edge function existente `axia-budget-insights` adaptada).
 
-Não mexer na edge function — a validação introduzida na fase anterior continua válida como rede de segurança.
+Auto-deteção da fase atual:
+- FF Base não aprovada → `budget`
+- FF Base aprovada + obra em curso → `forecast`
+- Obra em encerramento → `outturn`
+- Obra em pós-venda → `aftercare`
 
-### 2. Modal automático "Definir fundações manualmente"
+Nesta fase **ainda não há tabelas novas**; lemos do que existe (`closing_sheets`, `mce_*`, `purchases`, `autos_medicao`, `invoices`, etc.).
 
-Novo componente `src/components/icf/assistant/IcfFoundationsModal.tsx`:
+## Fase 2 — Modelo de dados financeiro consolidado (migração)
 
-- `Dialog` do shadcn, abre com `open` controlado pelo `AssistenteArquitetura`.
-- Conteúdo = mesma grelha das 6 `FoundationOptionCard` já existentes em `FOUNDATION_OPTIONS` (reaproveitar o componente, sem duplicar UI).
-- Cabeçalho explica que a Axia não detetou fundações na planta e que o utilizador precisa de as definir para o orçamento.
-- Ao confirmar uma opção, chama o mesmo `applyFoundation.mutate(...)` e marca `session.foundations_user_provided = true` (campo já não existe → marcar via `current_step = 5` + `foundation_option`, sem precisar de migração).
+Criar tabelas (todas multi-tenant via `organization_id`, RLS por org + role, GRANT a `authenticated`/`service_role`):
 
-Em `AssistenteArquitetura.tsx`, no `runAxiaExtraction`:
+- `financial_work_cycles` (1 por obra)
+- `financial_work_documents` (snapshot por fase/versão)
+- `financial_work_lines` (linhas detalhadas com `source_module`, `source_id`)
+- `financial_source_links` (vínculos entre módulos — anti-duplicação)
+- `financial_integration_sync_logs`
+- `guarantee_retentions`
+- `aftercare_records`
+- Extensões a `mce_records`/`mce_proposals` (apenas os campos em falta; já existem hoje)
 
-- Quando a resposta tiver `summary.foundations_found === false` **e** for uma sessão sem obra (orçamento puro) ou simplesmente sempre que faltarem fundações, abrir o novo modal automaticamente (`setFoundationsModalOpen(true)`).
-- O modal **só** abre quando `foundations_found === false`. Se houver fundações desenhadas, nada muda.
-- Manter o passo 5 atual (continua a ser editável depois).
+Triggers: `updated_at`, validação de fases, proteção contra edição de Budget bloqueado.
 
-### 3. Pequenos ajustes
+## Fase 3 — Budget oficial + bloqueio pós-aprovação FF Base
 
-- Garantir que o `Select` da obra opcional no Index ICF não bloqueia o assistente quando se vai para `/icf/assistente` sem `?obra=` (já suportado pela leitura de `initialObra` que pode ser `null`).
+- Ao aprovar a Folha de Fecho Base, gerar `financial_work_document` (phase=`budget`, status=`approved`, `locked_at`) e congelar valores (snapshot das linhas).
+- Validar codificação de artigos `AAA.000` (3 letras + 3 dígitos) e família (`MAT|MO|SUB|SRV|ALU|DIV`) — aviso se em falta, não bloqueia.
+- Desbloqueio só com permissão admin + justificação (log em auditoria).
 
-## Detalhes técnicos
+## Fase 4 — Forecast vivo + motor de consolidação real
 
-- pdfjs-dist worker: usar o pattern já existente em `usePdfRenderer.ts` (`pdfjsLib.GlobalWorkerOptions.workerSrc`). Reutilizar uma função utilitária pequena `renderPdfFirstPageToBlob(file: File): Promise<Blob>` colocada em `src/lib/pdf-to-image.ts` para isolar a lógica.
-- Upload do PNG: caminho `${user.id}/icf-assistant/${uuid}.png` (igual ao padrão atual, só muda extensão).
-- O modal usa exatamente o mesmo `applyFoundation` hook que o passo 5 — zero alterações ao schema da BD nem à edge function.
-- Nenhuma alteração ao backend / RLS / migrações.
+- Versões de forecast (`Forecast 01..N`), apenas 1 ativo.
+- Motor `consolidateOrcamentoRaiObra` passa a calcular:
+  - Vendas/custos/margem/RAI a partir das fontes prioritárias por fase (regra 18.2 do pedido).
+  - Ganho/perda MCE: `Valor Seco Forecast − Valor Adjudicado` (€ e %), agregado no RAI.
+- Mapa resumo geral de MCEs (tabela com colunas exigidas em 8.3) embutido na fase Forecast.
+- Anti-duplicação por `financial_source_links` (MCE↔compra↔contrato↔auto↔certificado↔fatura↔lançamento).
 
-## Ficheiros tocados
+## Fase 5 — Autos, certificados e retenções
 
-- novo: `src/lib/pdf-to-image.ts`
-- novo: `src/components/icf/assistant/IcfFoundationsModal.tsx`
-- editado: `src/pages/icf/AssistenteArquitetura.tsx` (handleUpload + abrir modal quando `foundations_found=false`)
+- Sincronização autos→certificados→faturas, cálculo de % executada, valor líquido, retenção de garantia.
+- Estados conforme 10.3; alertas para trabalhos a mais/menos.
 
-## Fora do âmbito
+## Fase 6 — Faturação e contabilidade (Outturn)
 
-- Não tocar em `IcfPlantAnalyzer` antigo (em standby).
-- Não alterar o `icf-architecture-assistant` edge function.
-- Não converter mais do que a primeira página do PDF nesta iteração (raramente as fundações estão em página separada do mesmo ficheiro arquitetónico — se for preciso, fica para outra fase).
+- Reconciliação faturas↔MCE/contrato/auto/CC.
+- Geração de Outturn com base em contabilidade + faturação fechada.
+- Bloqueio da Folha de Fecho Final.
+
+## Fase 7 — Aftercare / SPV
+
+- Centro de custo `OB.xxx.SPV` automático ao iniciar pós-venda.
+- KPIs SPV e fórmula `RAI c/ SPV = RAI Outturn − Custos SPV`.
+- Filtro global "com/sem SPV".
+
+## Fase 8 — Axia, permissões e auditoria
+
+- Extensão `axia-budget-insights` (ou nova edge `axia-rai-obra`) para análise contextual da fase: duplicações, sugestões de ligação, resumo executivo, riscos. **Sem aceitar/alterar dados.**
+- Novas permissões (lista em §23.1 do pedido) acopladas a `has_role`.
+- Log de auditoria em `audit_log` para todas as ações críticas listadas em §22.
+
+---
+
+## UI/UX — princípios
+- Timeline horizontal premium (rounded-xl, deep teal), não 4 botões secos.
+- Cards clicáveis com estado visual claro (ativa, concluída, pendente, bloqueada).
+- Sem quebrar padrões existentes (`kpi-card`, `status-badge`, listing layout).
+- Mobile: timeline scrollable horizontal.
+
+## Segurança
+- Multi-tenant estrito por `organization_id` em todas as novas tabelas.
+- RLS + GRANT em todas as migrações.
+- Edge functions com JWT + validação de pertença à org da obra.
+- Axia jamais executa ações de escrita financeira.
+
+## O que **não** se faz
+- Não renomeia módulo Orçamentos.
+- Não cria módulo "Ciclo Financeiro" isolado na navegação.
+- Não duplica dados — apenas referencia via `financial_source_links`.
+- Não quebra rotas/permissões/menus atuais.
+
+---
+
+## Perguntas antes de avançar
+Antes de começar a Fase 1, preciso confirmar algumas decisões para alinhar com o que já existe na plataforma:
+
+1. **Escopo desta primeira entrega**: avanço só com **Fase 0 + Fase 1** (UI + timeline + leitura, sem migrações ainda) para validar o conceito visualmente, ou queres já incluir a **Fase 2** (criação do modelo de dados)?
+2. **Ponto de entrada**: a nova área aparece como **separador no dossier da obra**, como **botão dentro de `/orcamentos/:id/ver`**, ou **ambos**?
+3. **MCE, Compras, Autos, Faturas**: alguns desses módulos já existem no projeto (vi `useMCE`, `usePurchases`, `useAutosMedicao`, `useFinanceiro`). Posso assumir que as tabelas e fluxos atuais são a fonte de verdade e apenas **leio/consolido**, certo? Ou queres que eu refatore algum deles?
+4. **Codificação `AAA.000` e famílias obrigatórias nos artigos**: aplico apenas **validação suave (aviso)** nesta fase, ou queres **bloqueio rígido** já agora (impacta orçamentos existentes)?
+
+Responde a estas e arranco pela Fase 0 + Fase 1.

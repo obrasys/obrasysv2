@@ -33,6 +33,7 @@ const CriarObraPage = lazy(() => import("./pages/obras/Criar"));
 const EditarObraPage = lazy(() => import("./pages/obras/Editar"));
 const VerObraPage = lazy(() => import("./pages/obras/Ver"));
 const ObraFinanceiroPage = lazy(() => import("./pages/obras/Financeiro"));
+const OrcamentoRaiObraPage = lazy(() => import("./pages/obras/OrcamentoRaiObra"));
 const MCEIndexPage = lazy(() => import("./pages/obras/mce/Index"));
 const MCEFolhaPage = lazy(() => import("./pages/obras/mce/Folha"));
 const ClientesPage = lazy(() => import("./pages/clientes/Index"));
@@ -193,6 +194,7 @@ const App = () => (
                   <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />
                   <Route path="/obras/:id/editar" element={<ManagerRoute><EditarObraPage /></ManagerRoute>} />
                   <Route path="/obras/:id/financeiro" element={<ManagerRoute><ObraFinanceiroPage /></ManagerRoute>} />
+                  <Route path="/obras/:id/orcamento-rai" element={<ManagerRoute><OrcamentoRaiObraPage /></ManagerRoute>} />
                   <Route path="/obras/:id/mce" element={<ManagerRoute><MCEIndexPage /></ManagerRoute>} />
                   <Route path="/obras/:id/mce/:mceId" element={<ManagerRoute><MCEFolhaPage /></ManagerRoute>} />
                   <Route path="/obras/:id/cadernos" element={<ManagerRoute><CadernosPage /></ManagerRoute>} />
