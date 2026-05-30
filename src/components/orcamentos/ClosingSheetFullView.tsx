@@ -1568,6 +1568,18 @@ IMT: Isenção na aquisição de imóveis destinados a reabilitação, se as obr
                     </div>
                   </div>
                 </div>
+
+                <div className="pt-2 border-t text-xs">
+                  <Label>Notas de Aprovação</Label>
+                  <Textarea
+                    readOnly={readOnly}
+                    rows={2}
+                    value={details.approvals.notas}
+                    onChange={(e) =>
+                      patch("approvals", { ...details.approvals, notas: e.target.value })
+                    }
+                  />
+                </div>
               </div>
             </Section>
           );
