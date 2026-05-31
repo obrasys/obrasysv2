@@ -358,6 +358,27 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       // Impacto MCE = compras totais - vendas adjudicadas (proxy)
       const impactoMce = comprasTotal > 0 && forecastVendas > 0 ? forecastVendas - comprasTotal : 0;
 
+      // Versões do Budget (orçamento base + versões de trabalho) ordenadas: ativa primeiro, depois por versão desc
+      const budgetVersions = orcsData
+        .map((o: any) => ({
+          id: o.id,
+          titulo: o.titulo,
+          versionNumber: o.budget_version_number ?? null,
+          versionStatus: o.budget_version_status ?? null,
+          status: o.status,
+          valorTotal: safeNum(o.valor_total),
+          updatedAt: o.updated_at ?? null,
+          isActive:
+            o.budget_version_status === 'ativa' ||
+            o.budget_version_status === 'active' ||
+            (!o.revisao_de && !activeBudgetVersion && ['aprovado', 'adjudicado'].includes(o.status)),
+          isBase: !o.revisao_de,
+        }))
+        .sort((a, b) => {
+          if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+          return (b.versionNumber ?? 0) - (a.versionNumber ?? 0);
+        });
+
       return {
         obraId,
         obraNome: obra.nome as string,
@@ -376,6 +397,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         },
         attention,
         sources,
+        budgetVersions,
         lastUpdate: new Date().toISOString(),
       };
     },
