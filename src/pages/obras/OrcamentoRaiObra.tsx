@@ -262,11 +262,8 @@ export default function OrcamentoRaiObra() {
         <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Versões do Budget
+              Última versão do Budget
             </h2>
-            <span className="text-xs text-muted-foreground">
-              {data.budgetVersions.length} versão(ões)
-            </span>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
             {data.budgetVersions.slice(0, 1).map((v) => {
