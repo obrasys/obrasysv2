@@ -136,9 +136,9 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4">
         {/* ===== Coluna principal ===== */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Cabeçalho da versão */}
           <Card>
             <CardHeader className="pb-3">
