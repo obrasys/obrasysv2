@@ -127,8 +127,8 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="gap-2" disabled={approveBase.isPending}>
-                {approveBase.isPending
+              <Button className="gap-2" disabled={approveBase.isPending || creatingObra}>
+                {approveBase.isPending || creatingObra
                   ? <Loader2 className="h-4 w-4 animate-spin" />
                   : <Lock className="h-4 w-4" />}
                 Criar Folha de Fecho Base
@@ -138,8 +138,10 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Criar Folha de Fecho Base?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Esta ação <strong>bloqueia o orçamento</strong> e cria a Folha de Fecho Base
-                  como referência oficial, juntamente com a v1 do Budget Objetivo. Não pode
+                  Esta ação <strong>bloqueia o orçamento</strong>, cria a Folha de Fecho Base
+                  como referência oficial e a v1 do Budget Objetivo. Se ainda não existir,
+                  é também criada automaticamente a <strong>Obra</strong> ligada a este
+                  orçamento, libertando o fluxo MCE para compras e adjudicações. Não pode
                   ser revertida.
                 </AlertDialogDescription>
               </AlertDialogHeader>
