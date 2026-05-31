@@ -166,7 +166,7 @@ export function useCreateNewTargetVersion() {
   });
 }
 
-/** Atualiza um item da versão ativa (preço/quantidade alvo). */
+/** Atualiza um item da versão ativa (qualquer campo editável). */
 export function useUpdateBudgetVersionItem() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -175,11 +175,20 @@ export function useUpdateBudgetVersionItem() {
       itemId: string;
       versionId: string;
       orcamentoId: string;
-      patch: Partial<Pick<BudgetVersionItem, "target_quantity" | "target_unit_price" | "notes">>;
+      patch: Partial<
+        Pick<
+          BudgetVersionItem,
+          | "target_quantity"
+          | "target_unit_price"
+          | "description"
+          | "unit"
+          | "codigo"
+          | "notes"
+        >
+      >;
     }) => {
       const patch: any = { ...params.patch };
       if (patch.target_quantity != null || patch.target_unit_price != null) {
-        // Buscar valores actuais para calcular target_total e remaining
         const { data: cur, error: e1 } = await supabase
           .from("budget_version_items")
           .select("target_quantity, target_unit_price, base_total, awarded_amount, purchased_amount")
