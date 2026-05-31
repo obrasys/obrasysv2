@@ -71,11 +71,16 @@ import {
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 
-export default function EditarOrcamentoPage() {
-  const { id } = useParams<{ id: string }>();
+interface EditarOrcamentoPageProps {
+  embeddedId?: string;
+}
+
+export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageProps = {}) {
+  const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isEmbed = searchParams.get('embed') === '1';
+  const isEmbed = Boolean(embeddedId) || searchParams.get('embed') === '1';
+  const id = embeddedId ?? params.id;
   const { toast } = useToast();
   const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
