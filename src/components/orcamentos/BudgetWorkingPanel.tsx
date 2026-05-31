@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Archive,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Eye,
   FileLock2,
@@ -31,9 +29,10 @@ import {
   type BudgetWorkingVersion,
 } from "@/hooks/useBudgetWorkingVersions";
 import { useOrcamento } from "@/hooks/useOrcamentos";
+import { useBudgetComparison } from "@/hooks/useBudgetComparison";
 import { NewBudgetVersionDialog } from "./NewBudgetVersionDialog";
 import { BudgetCompareDialog } from "./BudgetCompareDialog";
-import EditarOrcamentoPage from "@/pages/orcamentos/Editar";
+import { BudgetVersionEditor } from "./budget/BudgetVersionEditor";
 
 interface Props {
   /** Id do orçamento base (locked) */
@@ -43,9 +42,13 @@ interface Props {
 const fmtEUR = (v: number) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v ?? 0);
 
+const isVersionEditable = (v: BudgetWorkingVersion) =>
+  v.budget_version_status === "rascunho" ||
+  v.budget_version_status === "ativa" ||
+  v.budget_version_status === "active";
+
 export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
   const navigate = useNavigate();
-  const [editorOpen, setEditorOpen] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [compareForId, setCompareForId] = useState<string | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
@@ -63,6 +66,9 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
 
   const baseTotal = Number(base?.valor_total ?? 0);
   const isBaseLocked = Boolean((base as any)?.is_base_locked);
+
+  const { orcamento: versionDetail } = useOrcamento(currentVersion?.id);
+  const comparison = useBudgetComparison(baseOrcamentoId, versionDetail ?? undefined);
 
   // Auto-cria V1 quando ainda não existe nenhuma versão
   const autoCreatedRef = useRef(false);
@@ -86,7 +92,14 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
     currentVersion.version_name ? ` · ${currentVersion.version_name}` : ""
   }`;
   const statusInfo = versionStatusLabel(currentVersion.budget_version_status);
-  const isReadOnly = !isVersionActive(currentVersion);
+  const editable = isVersionEditable(currentVersion);
+  const sourceVersion = currentVersion.revisao_de
+    ? versions.find((v) => v.id === currentVersion.revisao_de)
+    : null;
+
+  const { currCusto, currVenda, baseVenda, novos, alterados } = comparison.totals;
+  const margemPct = currVenda > 0 ? ((currVenda - currCusto) / currVenda) * 100 : 0;
+  const deltaBase = currVenda - baseVenda;
 
   return (
     <div className="space-y-4">
@@ -106,7 +119,7 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
               </p>
               <p className="text-xs text-muted-foreground">
                 {isBaseLocked
-                  ? "Bloqueado pela Folha de Fecho Base · só para consulta"
+                  ? "Bloqueado pela Folha de Fecho Base · histórico imutável"
                   : "Será bloqueado quando a Folha de Fecho Base for gravada"}
               </p>
             </div>
@@ -123,18 +136,32 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
         {/* ===== Coluna principal ===== */}
         <div className="space-y-4">
-          {/* Header da versão selecionada + ações */}
+          {/* Cabeçalho da versão */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex flex-wrap items-center justify-between gap-3">
-                <span className="flex items-center gap-2 min-w-0">
-                  <TargetIcon className="h-4 w-4 text-primary shrink-0" />
-                  <span className="truncate">Budget {versionLabel}</span>
-                  <Badge className={`text-[10px] ${statusInfo.tone}`}>{statusInfo.label}</Badge>
-                </span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+                    <TargetIcon className="h-4 w-4 text-primary shrink-0" />
+                    <span className="truncate">Budget da Obra · {versionLabel}</span>
+                    <Badge className={`text-[10px] ${statusInfo.tone}`}>{statusInfo.label}</Badge>
+                  </CardTitle>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Origem:{" "}
+                    {sourceVersion
+                      ? `V${sourceVersion.budget_version_number}${sourceVersion.version_name ? " · " + sourceVersion.version_name : ""}`
+                      : "Orçamento Base"}{" "}
+                    · Criada em {format(new Date(currentVersion.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}
+                  </p>
+                  {currentVersion.version_reason && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className="font-medium">Motivo:</span> {currentVersion.version_reason}
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => setCompareForId(currentVersion.id)}>
                     <GitCompare className="h-3.5 w-3.5 mr-1.5" /> Comparar c/ Base
@@ -142,44 +169,37 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                   <Button variant="outline" size="sm" onClick={() => setShowNewDialog(true)}>
                     <Plus className="h-3.5 w-3.5 mr-1.5" /> Nova versão
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditorOpen((v) => !v)}>
-                    {editorOpen ? <ChevronUp className="h-3.5 w-3.5 mr-1.5" /> : <ChevronDown className="h-3.5 w-3.5 mr-1.5" />}
-                    {editorOpen ? "Recolher editor" : "Editar artigos"}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      createVersion.mutate({ baseId: baseOrcamentoId, cloneFrom: currentVersion.id })
+                    }
+                    disabled={createVersion.isPending}
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Duplicar versão
                   </Button>
                 </div>
-              </CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <KPI label="Total Base" value={fmtEUR(baseTotal)} />
+              {/* Cards de resumo simples */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <KPI label="Total Custo" value={fmtEUR(currCusto)} />
+                <KPI label="Total Venda" value={fmtEUR(currVenda)} highlight />
+                <KPI label="Margem" value={`${margemPct.toFixed(1)}%`} tone={margemPct < 0 ? "negative" : "positive"} />
                 <KPI
-                  label={`Total ${versionLabel.split(" ")[0]}`}
-                  value={fmtEUR(currentVersion.valor_total)}
-                  highlight
+                  label="Δ vs Base"
+                  value={fmtEUR(deltaBase)}
+                  tone={deltaBase > 0 ? "negative" : deltaBase < 0 ? "positive" : undefined}
                 />
-                <KPI
-                  label="Desvio vs Base"
-                  value={fmtEUR(currentVersion.valor_total - baseTotal)}
-                  tone={
-                    currentVersion.valor_total > baseTotal
-                      ? "negative"
-                      : currentVersion.valor_total < baseTotal
-                      ? "positive"
-                      : undefined
-                  }
-                />
-                <KPI
-                  label="Atualizado"
-                  value={format(new Date(currentVersion.updated_at), "dd/MM/yyyy HH:mm", { locale: pt })}
-                />
+                <KPI label="Artigos novos" value={String(novos)} />
+                <KPI label="Artigos alterados" value={String(alterados)} />
               </div>
-              {currentVersion.version_reason && (
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Motivo:</span> {currentVersion.version_reason}
-                </p>
-              )}
+
+              {/* Ações de ciclo de vida */}
               <div className="flex flex-wrap gap-2 pt-1">
-                {currentVersion.budget_version_status !== "aprovado" && !isReadOnly && (
+                {currentVersion.budget_version_status !== "aprovado" && editable && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -211,34 +231,28 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                       <Archive className="h-3.5 w-3.5 mr-1.5" /> Arquivar
                     </Button>
                   )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    createVersion.mutate({ baseId: baseOrcamentoId, cloneFrom: currentVersion.id })
-                  }
-                  disabled={createVersion.isPending}
-                >
-                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Duplicar esta versão
-                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Editor inline nativo (mesma árvore React, sem iframe) */}
-          {editorOpen && (
-            <Card className="overflow-hidden">
-              {isReadOnly && (
-                <div className="bg-muted/50 border-b px-4 py-2 text-xs text-muted-foreground">
-                  Esta versão está em modo só-leitura ({statusInfo.label.toLowerCase()}). Para editar,
-                  define-a como ativa ou duplica-a numa nova versão.
-                </div>
+          {/* Capítulos e Artigos do Budget — UI nativa */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Capítulos e Artigos do Budget</CardTitle>
+              {!editable && (
+                <p className="text-xs text-muted-foreground bg-muted/50 border rounded-md px-3 py-2 mt-2">
+                  Esta versão do Budget está em modo só-leitura. Para editar, duplique esta versão e crie um novo reorçamento.
+                </p>
               )}
-              <div key={currentVersion.id} className="bg-background">
-                <EditarOrcamentoPage embeddedId={currentVersion.id} />
-              </div>
-            </Card>
-          )}
+            </CardHeader>
+            <CardContent className="pt-0">
+              <BudgetVersionEditor
+                versionId={currentVersion.id}
+                baseId={baseOrcamentoId}
+                readOnly={!editable}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* ===== Sidebar: histórico ===== */}
@@ -339,9 +353,9 @@ function KPI({
 }) {
   const toneClass = tone === "negative" ? "text-rose-600" : tone === "positive" ? "text-emerald-600" : "";
   return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`font-semibold ${highlight ? "text-primary" : ""} ${toneClass}`}>{value}</p>
+    <div className="rounded-lg border bg-card px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`font-semibold text-sm ${highlight ? "text-primary" : ""} ${toneClass}`}>{value}</p>
     </div>
   );
 }
