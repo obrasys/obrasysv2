@@ -44,7 +44,7 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
       // 1) Fetch orcamento to check if it already has an obra linked
       const { data: orc, error: orcErr } = await supabase
         .from("orcamentos")
-        .select("id, titulo, obra_id, cliente, cliente_id, valor_total, status")
+        .select("id, titulo, obra_id, cliente_id, valor_total, status")
         .eq("id", orcamentoId)
         .single();
       if (orcErr) throw orcErr;
