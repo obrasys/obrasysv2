@@ -2,12 +2,19 @@ import { useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useOrcamento } from "@/hooks/useOrcamentos";
-import { useBudgetComparison } from "@/hooks/useBudgetComparison";
-import { BudgetChapterAccordion } from "./BudgetChapterAccordion";
-import { BudgetItemFormDialog } from "./BudgetItemFormDialog";
+import { CapituloAccordion } from "@/components/orcamentos/CapituloAccordion";
+import { ArtigoForm } from "@/components/orcamentos/ArtigoForm";
+import { CatalogoModal } from "@/components/orcamentos/CatalogoModal";
 import { BudgetChapterFormDialog } from "./BudgetChapterFormDialog";
-import type { ArtigoOrcamento } from "@/types/orcamentos";
+import type { ArtigoFormData } from "@/types/orcamentos";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +29,13 @@ import {
 interface Props {
   /** id da versão do Budget (linha em orcamentos com budget_version_number) */
   versionId: string;
-  /** id do orçamento base bloqueado */
+  /** id do orçamento base bloqueado (mantido para retro-compat / contexto) */
   baseId: string;
   /** controla edição (rascunho ou ativa => editável) */
   readOnly: boolean;
 }
 
-export function BudgetVersionEditor({ versionId, baseId, readOnly }: Props) {
+export function BudgetVersionEditor({ versionId, readOnly }: Props) {
   const {
     orcamento,
     isLoading,
@@ -38,18 +45,23 @@ export function BudgetVersionEditor({ versionId, baseId, readOnly }: Props) {
     createArtigo,
     updateArtigo,
     deleteArtigo,
+    addArtigosFromCatalog,
   } = useOrcamento(versionId);
 
-  const comparison = useBudgetComparison(baseId, orcamento ?? undefined);
-
-  // Item dialog
-  const [itemDialog, setItemDialog] = useState<{
+  // Artigo dialog (mesmo form do Orçamento Base, com Decomposição de Custo)
+  const [artigoModal, setArtigoModal] = useState<{
     open: boolean;
     capituloId: string | null;
-    artigo: ArtigoOrcamento | null;
-  }>({ open: false, capituloId: null, artigo: null });
+    artigoId: string | null;
+  }>({ open: false, capituloId: null, artigoId: null });
 
-  // Chapter dialog
+  // Catálogo modal
+  const [catalogoModal, setCatalogoModal] = useState<{ open: boolean; capituloId: string | null }>({
+    open: false,
+    capituloId: null,
+  });
+
+  // Capítulo dialog
   const [chapterDialog, setChapterDialog] = useState<{ open: boolean; editId: string | null }>({
     open: false,
     editId: null,
@@ -72,13 +84,42 @@ export function BudgetVersionEditor({ versionId, baseId, readOnly }: Props) {
     );
   }
 
-  const handleSubmitArtigo = async (data: any) => {
-    if (itemDialog.artigo) {
-      await updateArtigo.mutateAsync({ artigoId: itemDialog.artigo.id, ...data });
-    } else if (itemDialog.capituloId) {
-      await createArtigo.mutateAsync({ capituloId: itemDialog.capituloId, ...data });
+  const editingArtigo = artigoModal.artigoId
+    ? orcamento.capitulos
+        ?.flatMap((c) => c.artigos ?? [])
+        .find((a) => a.id === artigoModal.artigoId)
+    : null;
+
+  const getArtigoDefaults = (): Partial<ArtigoFormData> | undefined => {
+    if (!editingArtigo) return undefined;
+    const a: any = editingArtigo;
+    return {
+      codigo: a.codigo || "",
+      descricao: a.descricao,
+      unidade: a.unidade,
+      quantidade: a.quantidade,
+      preco_base: a.preco_base ?? a.preco_unitario,
+      margem_lucro_artigo: a.margem_lucro_artigo ?? 0,
+      preco_unitario: a.preco_unitario,
+      custo_mo: a.custo_mo ?? 0,
+      custo_mat: a.custo_mat ?? 0,
+      custo_sub: a.custo_sub ?? 0,
+      custo_srv: a.custo_srv ?? 0,
+      custo_alu: a.custo_alu ?? 0,
+      custo_div: a.custo_div ?? 0,
+      quantity_source: a.quantity_source ?? "manual",
+      linked_element_id: a.linked_element_id ?? null,
+      linked_rule_id: a.linked_rule_id ?? null,
+    };
+  };
+
+  const handleSaveArtigo = async (data: ArtigoFormData) => {
+    if (artigoModal.artigoId) {
+      await updateArtigo.mutateAsync({ artigoId: artigoModal.artigoId, ...data });
+    } else if (artigoModal.capituloId) {
+      await createArtigo.mutateAsync({ capituloId: artigoModal.capituloId, ...data });
     }
-    setItemDialog({ open: false, capituloId: null, artigo: null });
+    setArtigoModal({ open: false, capituloId: null, artigoId: null });
   };
 
   const handleSubmitCapitulo = async (data: any) => {
@@ -88,6 +129,15 @@ export function BudgetVersionEditor({ versionId, baseId, readOnly }: Props) {
       await createCapitulo.mutateAsync(data);
     }
     setChapterDialog({ open: false, editId: null });
+  };
+
+  const handleAddFromCatalog = async (artigos: ArtigoFormData[]) => {
+    if (catalogoModal.capituloId) {
+      await addArtigosFromCatalog.mutateAsync({
+        capituloId: catalogoModal.capituloId,
+        artigos,
+      });
+    }
   };
 
   const editingChapter = chapterDialog.editId
@@ -121,34 +171,62 @@ export function BudgetVersionEditor({ versionId, baseId, readOnly }: Props) {
         </Card>
       ) : (
         <div className="space-y-2">
-          {orcamento.capitulos!.map((cap) => (
-            <BudgetChapterAccordion
-              key={cap.id}
-              capitulo={cap}
-              comparison={comparison}
-              readOnly={readOnly}
-              onAddArtigo={(capituloId) => setItemDialog({ open: true, capituloId, artigo: null })}
-              onEditArtigo={(artigo) =>
-                setItemDialog({ open: true, capituloId: artigo.capitulo_id, artigo })
+          {orcamento.capitulos!.map((capitulo) => (
+            <CapituloAccordion
+              key={capitulo.id}
+              capitulo={capitulo}
+              onEdit={() => setChapterDialog({ open: true, editId: capitulo.id })}
+              onDelete={() => setDelCapitulo(capitulo.id)}
+              onAddArtigo={() =>
+                setArtigoModal({ open: true, capituloId: capitulo.id, artigoId: null })
               }
-              onDeleteArtigo={(id) => setDelArtigo(id)}
-              onEditCapitulo={(capituloId) => setChapterDialog({ open: true, editId: capituloId })}
-              onDeleteCapitulo={(capituloId) => setDelCapitulo(capituloId)}
-              onUpdateQuantidade={(artigoId, quantidade) =>
-                updateArtigo.mutate({ artigoId, quantidade })
+              onEditArtigo={(artigoId) =>
+                setArtigoModal({ open: true, capituloId: capitulo.id, artigoId })
               }
-              onUpdateCustoVenda={(artigoId, payload) => updateArtigo.mutate({ artigoId, ...payload })}
+              onDeleteArtigo={(artigoId) => setDelArtigo(artigoId)}
+              onOpenCatalog={(capituloId) =>
+                setCatalogoModal({ open: true, capituloId })
+              }
+              onUpdateCommercial={(capId, data) =>
+                updateCapitulo.mutateAsync({ capituloId: capId, ...data })
+              }
+              onUpdateDiscount={(capId, descontoPct) =>
+                updateCapitulo.mutateAsync({ capituloId: capId, desconto_pct: descontoPct })
+              }
+              isReadOnly={readOnly}
             />
           ))}
         </div>
       )}
 
-      <BudgetItemFormDialog
-        open={itemDialog.open}
-        onOpenChange={(o) => setItemDialog((s) => ({ ...s, open: o }))}
-        initial={itemDialog.artigo}
-        onSubmit={handleSubmitArtigo}
-        saving={createArtigo.isPending || updateArtigo.isPending}
+      {/* Editar / Novo Artigo (mesmo form do Orçamento Base — inclui Decomposição de Custo) */}
+      <Dialog
+        open={artigoModal.open}
+        onOpenChange={(o) => setArtigoModal((s) => ({ ...s, open: o }))}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{artigoModal.artigoId ? "Editar Artigo" : "Novo Artigo"}</DialogTitle>
+            <DialogDescription>
+              Preencha as informações do artigo de trabalho
+            </DialogDescription>
+          </DialogHeader>
+          <ArtigoForm
+            defaultValues={getArtigoDefaults()}
+            onSubmit={handleSaveArtigo}
+            onCancel={() => setArtigoModal({ open: false, capituloId: null, artigoId: null })}
+            isLoading={createArtigo.isPending || updateArtigo.isPending}
+            submitLabel={artigoModal.artigoId ? "Guardar" : "Adicionar"}
+            orcamentoId={orcamento.id}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Catálogo */}
+      <CatalogoModal
+        open={catalogoModal.open}
+        onClose={() => setCatalogoModal({ open: false, capituloId: null })}
+        onAddArtigos={handleAddFromCatalog}
       />
 
       <BudgetChapterFormDialog
