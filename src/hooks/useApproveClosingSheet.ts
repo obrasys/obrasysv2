@@ -33,6 +33,7 @@ export function useApproveClosingSheet(orcamentoId: string | undefined) {
         totals: params.totals,
       };
 
+      // 1) Aprovar/bloquear a folha
       const { error } = await supabase
         .from("closing_sheets")
         .update({
@@ -46,12 +47,57 @@ export function useApproveClosingSheet(orcamentoId: string | undefined) {
         })
         .eq("id", params.sheetId);
       if (error) throw error;
+
+      // 2) Criar Obra automaticamente (se ainda não existir associada)
+      const { data: sheet } = await supabase
+        .from("closing_sheets")
+        .select("id, obra_id, source_budget_id, sale_price, organization_id, user_id")
+        .eq("id", params.sheetId)
+        .maybeSingle();
+
+      if (sheet && !sheet.obra_id && sheet.source_budget_id) {
+        const { data: orc } = await supabase
+          .from("orcamentos")
+          .select("titulo, cliente_id, valor_total, obra_id")
+          .eq("id", sheet.source_budget_id)
+          .maybeSingle();
+
+        // Se o orçamento já tem obra associada, reutiliza
+        let obraId = orc?.obra_id ?? null;
+
+        if (!obraId) {
+          const valor =
+            Number(sheet.sale_price ?? 0) ||
+            Number(params.totals?.valor_vendas ?? 0) ||
+            Number(orc?.valor_total ?? 0);
+
+          const { data: novaObra, error: obraErr } = await supabase
+            .from("obras")
+            .insert({
+              nome: orc?.titulo ?? "Nova Obra",
+              cliente_id: orc?.cliente_id ?? null,
+              valor_previsto: valor,
+              status: "planeamento",
+              user_id: sheet.user_id ?? userId!,
+            })
+            .select("id")
+            .single();
+          if (obraErr) throw obraErr;
+          obraId = novaObra.id;
+        }
+
+        // Atualiza closing sheet + orçamento base
+        await supabase.from("closing_sheets").update({ obra_id: obraId }).eq("id", params.sheetId);
+        await supabase.from("orcamentos").update({ obra_id: obraId }).eq("id", sheet.source_budget_id);
+      }
     },
     onSuccess: () => {
       if (orcamentoId) qc.invalidateQueries({ queryKey: ["closing-sheets", orcamentoId] });
-      toast({ title: "Folha de Fecho aprovada e bloqueada" });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      toast({ title: "Folha de Fecho aprovada", description: "Obra criada automaticamente." });
     },
     onError: (e: any) =>
       toast({ title: "Erro ao aprovar", description: e.message, variant: "destructive" }),
   });
 }
+
