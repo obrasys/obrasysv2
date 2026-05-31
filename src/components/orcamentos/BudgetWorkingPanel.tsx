@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +34,6 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
   );
   const baseTotal = Number(base?.valor_total ?? 0);
 
-  const handleCreateFirst = () =>
-    createVersion.mutate({ baseId: baseOrcamentoId });
-
   const handleSaveAndOpenNew = async () => {
     if (!activeVersion) return;
     // Fecha a ativa e cria nova a partir dela (último estado vira ponto de partida)
@@ -47,42 +44,29 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // Auto-criar V1 assim que a folha de fecho base existir e ainda não houver Budget
+  const autoCreatedRef = useRef(false);
+  useEffect(() => {
+    if (
+      !isLoading &&
+      base?.id &&
+      versions.length === 0 &&
+      !createVersion.isPending &&
+      !autoCreatedRef.current
+    ) {
+      autoCreatedRef.current = true;
+      createVersion.mutate({ baseId: baseOrcamentoId });
+    }
+  }, [isLoading, base?.id, versions.length, baseOrcamentoId, createVersion]);
 
-  // Caso inicial: sem versões
-  if (versions.length === 0) {
+  if (isLoading || versions.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-10 text-center space-y-4">
-          <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground" />
-          <div>
-            <p className="font-semibold mb-1">Budget ainda não iniciado</p>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              O Budget é uma <strong>cópia editável</strong> do Orçamento Base.
-              Cria a primeira versão para começar a reorçamentar — o Orçamento
-              Base permanece bloqueado e intacto.
-            </p>
-          </div>
-          <Button
-            onClick={handleCreateFirst}
-            disabled={createVersion.isPending}
-            size="lg"
-          >
-            {createVersion.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4 mr-2" />
-            )}
-            Criar primeira versão (V1)
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          A preparar Budget a partir do Orçamento Base…
+        </p>
+      </div>
     );
   }
 
