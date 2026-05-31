@@ -89,7 +89,7 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         if (s?.id && !ffMap.has(s.id)) ffMap.set(s.id, s);
       }
       const ffData = Array.from(ffMap.values());
-      const orcsData = orcsPreload;
+      const orcsData = allOrcs;
 
       const ffBase = ffData.find((s: any) => s.closing_type === 'initial');
       const ffFinal = ffData.find((s: any) => s.closing_type === 'final');
@@ -98,8 +98,17 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
 
       const currentPhase = detectPhase(obra.status, ffBaseApproved, ffFinalApproved);
 
-      // KPIs base (a partir da FF Base como referência de Budget)
-      const budgetVendas = safeNum(ffBase?.sale_price);
+      // Identifica o Budget de referência: versão de trabalho ATIVA > orçamento base aprovado/adjudicado > qualquer um
+      const activeBudgetVersion = orcsData.find(
+        (o: any) => o.budget_version_status === 'ativa' || o.budget_version_status === 'active',
+      );
+      const baseOrcamento = orcsData.find(
+        (o: any) => !o.revisao_de && ['aprovado', 'adjudicado'].includes(o.status),
+      ) ?? orcsData.find((o: any) => !o.revisao_de);
+      const activeBudget = activeBudgetVersion ?? baseOrcamento ?? orcsData[0];
+
+      // KPIs base — Vendas vem da Budget ativa (versão de trabalho ou orçamento base); FF Base é fallback
+      const budgetVendas = safeNum(activeBudget?.valor_total) || safeNum(ffBase?.sale_price);
       const budgetCustos = safeNum(ffBase?.total_direct_cost) + safeNum(ffBase?.total_indirect_cost) + safeNum(ffBase?.site_costs) + safeNum(ffBase?.structure_costs);
       const budgetMargem = budgetVendas - budgetCustos;
       const budgetMargemPct = budgetVendas > 0 ? (budgetMargem / budgetVendas) * 100 : 0;
