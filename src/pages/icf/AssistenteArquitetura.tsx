@@ -510,6 +510,7 @@ export default function AssistenteArquitetura() {
                   option={opt}
                   selected={session.data?.foundation_option === opt.key}
                   baseIcfWallLength={icfWallLength}
+                  defaultsOverride={planDefaults}
                   isPending={applyFoundation.isPending}
                   onApply={(p) =>
                     applyFoundation.mutate({ option: opt.key as FoundationOptionKey, params: p, baseIcfWallLength: icfWallLength })
