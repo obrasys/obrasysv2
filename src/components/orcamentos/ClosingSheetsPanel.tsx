@@ -147,7 +147,7 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => approveBase.mutate(orcamentoId)}>
+                <AlertDialogAction onClick={handleApproveBase}>
                   Confirmar e bloquear
                 </AlertDialogAction>
               </AlertDialogFooter>
