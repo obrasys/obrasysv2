@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,28 @@ export function FoundationOptionCard({ option, selected, baseIcfWallLength, defa
     });
     return defaults;
   });
+
+  // Sincroniza valores derivados da planta quando estes chegam depois do mount inicial
+  // (items da planta carregam assincronamente). Só sobrepõe se o utilizador ainda não editou
+  // — i.e., o valor atual é igual ao default estático (0 ou o defaultValue).
+  useEffect(() => {
+    if (!defaultsOverride) return;
+    setParams((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      option.fields.forEach((f) => {
+        if (f.type !== 'number') return;
+        const staticDefault = (f.defaultValue ?? 0) as number;
+        const override = defaultsOverride[f.name];
+        if (typeof override !== 'number' || override <= 0) return;
+        if (prev[f.name] === staticDefault || prev[f.name] === 0) {
+          next[f.name] = override;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [defaultsOverride, option.fields]);
 
   return (
     <Card className={`rounded-xl ${selected ? 'border-primary' : ''}`}>
