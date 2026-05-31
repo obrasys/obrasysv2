@@ -166,9 +166,6 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                   <Button variant="outline" size="sm" onClick={() => setCompareForId(currentVersion.id)}>
                     <GitCompare className="h-3.5 w-3.5 mr-1.5" /> Comparar c/ Base
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowNewDialog(true)}>
-                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Nova versão
-                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
