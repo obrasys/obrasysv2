@@ -419,3 +419,51 @@ function InlineNumber({ value, editable, prefix, onCommit }: InlineNumberProps) 
     </button>
   );
 }
+
+interface InlineTextProps {
+  value: string;
+  editable?: boolean;
+  className?: string;
+  onCommit: (v: string) => void;
+}
+
+function InlineText({ value, editable, className, onCommit }: InlineTextProps) {
+  const [editing, setEditing] = useState(false);
+  const [raw, setRaw] = useState(value ?? "");
+  if (!editable) {
+    return <div className={className}>{value || "-"}</div>;
+  }
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={() => {
+          setEditing(false);
+          if (raw !== value) onCommit(raw);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "Escape") {
+            setRaw(value ?? "");
+            setEditing(false);
+          }
+        }}
+        className={`h-7 text-xs ${className ?? ""}`}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setRaw(value ?? "");
+        setEditing(true);
+      }}
+      className={`text-left hover:bg-muted/60 rounded px-1.5 py-0.5 transition-colors w-full ${className ?? ""}`}
+    >
+      {value || <span className="text-muted-foreground italic">—</span>}
+    </button>
+  );
+}
