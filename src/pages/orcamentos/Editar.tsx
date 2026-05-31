@@ -181,7 +181,8 @@ export default function EditarOrcamentoPage() {
   }
 
   const isLocked = Boolean((orcamento as any)?.is_locked);
-  const isReadOnly = orcamento.status === 'adjudicado' || isLocked;
+  const isBaseLocked = Boolean((orcamento as any)?.is_base_locked);
+  const isReadOnly = orcamento.status === 'adjudicado' || isLocked || isBaseLocked;
 
   const handleAddCapitulo = () => {
     const nextNumero = (orcamento.capitulos?.length || 0) + 1;
@@ -378,19 +379,22 @@ export default function EditarOrcamentoPage() {
           />
         </div>
 
-        {isLocked && (
+        {(isLocked || isBaseLocked) && (
           <div className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
             <div className="text-sm">
               <p className="font-semibold text-amber-900 dark:text-amber-200">
-                Orçamento bloqueado (Base Seco)
+                {isBaseLocked ? 'Orçamento Base bloqueado pela Folha de Fecho Base' : 'Orçamento bloqueado (Base Seco)'}
               </p>
               <p className="text-amber-800 dark:text-amber-300 mt-1">
-                {(orcamento as any).locked_reason || 'Este orçamento foi aprovado e congelado. Para adicionar ou alterar capítulos e artigos, utilize o Budget Objetivo.'}
+                {isBaseLocked
+                  ? 'Esta é a fotografia inicial da obra e não pode ser alterada. Para reorçamentar, cria uma nova versão dentro do Budget.'
+                  : (orcamento as any).locked_reason || 'Este orçamento foi aprovado e congelado. Para adicionar ou alterar capítulos e artigos, utilize o Budget Objetivo.'}
               </p>
             </div>
           </div>
         )}
+
 
         {/* Tabs */}
          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

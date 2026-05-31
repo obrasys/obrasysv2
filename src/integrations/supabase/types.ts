@@ -8791,6 +8791,9 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          base_locked_at: string | null
           budget_version_number: number | null
           budget_version_status: string | null
           client_document_mode_default: string | null
@@ -8806,6 +8809,7 @@ export type Database = {
           data_criacao: string
           data_envio: string | null
           id: string
+          is_base_locked: boolean
           is_locked: boolean
           locked_at: string | null
           locked_reason: string | null
@@ -8822,8 +8826,14 @@ export type Database = {
           user_id: string
           valor_adjudicado: number | null
           valor_total: number | null
+          version_name: string | null
+          version_notes: string | null
+          version_reason: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_locked_at?: string | null
           budget_version_number?: number | null
           budget_version_status?: string | null
           client_document_mode_default?: string | null
@@ -8839,6 +8849,7 @@ export type Database = {
           data_criacao?: string
           data_envio?: string | null
           id?: string
+          is_base_locked?: boolean
           is_locked?: boolean
           locked_at?: string | null
           locked_reason?: string | null
@@ -8855,8 +8866,14 @@ export type Database = {
           user_id: string
           valor_adjudicado?: number | null
           valor_total?: number | null
+          version_name?: string | null
+          version_notes?: string | null
+          version_reason?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_locked_at?: string | null
           budget_version_number?: number | null
           budget_version_status?: string | null
           client_document_mode_default?: string | null
@@ -8872,6 +8889,7 @@ export type Database = {
           data_criacao?: string
           data_envio?: string | null
           id?: string
+          is_base_locked?: boolean
           is_locked?: boolean
           locked_at?: string | null
           locked_reason?: string | null
@@ -8888,6 +8906,9 @@ export type Database = {
           user_id?: string
           valor_adjudicado?: number | null
           valor_total?: number | null
+          version_name?: string | null
+          version_notes?: string | null
+          version_reason?: string | null
         }
         Relationships: [
           {
@@ -14940,6 +14961,14 @@ export type Database = {
         Args: { p_orcamento_id: string }
         Returns: Json
       }
+      approve_budget_version: {
+        Args: { p_version_id: string }
+        Returns: undefined
+      }
+      archive_budget_version: {
+        Args: { p_version_id: string }
+        Returns: undefined
+      }
       award_mce: {
         Args: {
           _awarded_value: number
@@ -14980,6 +15009,9 @@ export type Database = {
       create_budget_revision: {
         Args: { p_orcamento_id: string }
         Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          base_locked_at: string | null
           budget_version_number: number | null
           budget_version_status: string | null
           client_document_mode_default: string | null
@@ -14995,6 +15027,7 @@ export type Database = {
           data_criacao: string
           data_envio: string | null
           id: string
+          is_base_locked: boolean
           is_locked: boolean
           locked_at: string | null
           locked_reason: string | null
@@ -15011,6 +15044,9 @@ export type Database = {
           user_id: string
           valor_adjudicado: number | null
           valor_total: number | null
+          version_name: string | null
+          version_notes: string | null
+          version_reason: string | null
         }
         SetofOptions: {
           from: "*"
@@ -15018,6 +15054,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      create_budget_version_named: {
+        Args: {
+          p_base_id: string
+          p_clone_from: string
+          p_name: string
+          p_notes: string
+          p_reason: string
+        }
+        Returns: string
       }
       create_budget_working_version: {
         Args: { p_base_id: string; p_clone_from?: string }
@@ -15298,6 +15344,10 @@ export type Database = {
       }
       seed_quality_specs_catalog: {
         Args: { p_org_id: string }
+        Returns: undefined
+      }
+      set_active_budget_version: {
+        Args: { p_version_id: string }
         Returns: undefined
       }
       sync_onboarding_progress: {
