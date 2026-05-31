@@ -507,7 +507,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </div>
           </div>
           <div className="text-right text-xs">
-            <p className="font-bold uppercase text-primary">{isInitial ? "Folha de Fecho Inicial" : "Folha de Fecho Final"}</p>
+            <p className="font-bold uppercase text-primary">{isInitial ? "Folha de Fecho Base" : "Folha de Fecho Final"}</p>
             <p className="font-mono text-sm font-semibold mt-1">{sheetCode}</p>
             <p className="text-muted-foreground mt-1">
               Emitido: {format(new Date(), "dd/MM/yyyy HH:mm", { locale: pt })}
