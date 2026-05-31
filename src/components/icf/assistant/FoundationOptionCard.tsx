@@ -11,15 +11,24 @@ interface Props {
   option: FoundationOptionDef;
   selected: boolean;
   baseIcfWallLength: number;
+  /** Defaults derivados dos dados da planta (área, perímetro, comprimento). Sobrepõe-se aos defaults estáticos quando estes são 0. */
+  defaultsOverride?: Record<string, number>;
   onApply: (params: Record<string, number | boolean>) => void;
   isPending?: boolean;
 }
 
-export function FoundationOptionCard({ option, selected, baseIcfWallLength, onApply, isPending }: Props) {
+export function FoundationOptionCard({ option, selected, baseIcfWallLength, defaultsOverride, onApply, isPending }: Props) {
   const [params, setParams] = useState<Record<string, number | boolean>>(() => {
     const defaults: Record<string, number | boolean> = {};
     option.fields.forEach((f) => {
-      defaults[f.name] = (f.defaultValue ?? (f.type === 'boolean' ? false : 0)) as number | boolean;
+      const base = (f.defaultValue ?? (f.type === 'boolean' ? false : 0)) as number | boolean;
+      // Se o default estático é 0 (campos como area/perimetro/comprimento) e temos um valor
+      // derivado da planta, usar esse valor em vez de 0.
+      if (f.type === 'number' && (base === 0 || base === undefined) && defaultsOverride && typeof defaultsOverride[f.name] === 'number' && defaultsOverride[f.name] > 0) {
+        defaults[f.name] = defaultsOverride[f.name];
+      } else {
+        defaults[f.name] = base;
+      }
     });
     return defaults;
   });
