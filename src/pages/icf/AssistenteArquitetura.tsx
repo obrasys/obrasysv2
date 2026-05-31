@@ -348,7 +348,7 @@ export default function AssistenteArquitetura() {
         title: statusToSet === 'validado' ? 'Orçamento validado importado' : 'Pré-orçamento importado',
         description: `${panosPayload.length} pano(s) e dados de fundação enviados para o módulo ICF.`,
       });
-      navigate(`/icf?obra=${obra}`);
+      navigate(obra ? `/icf?obra=${obra}` : '/icf');
     } catch (e: any) {
       toast({ title: 'Erro ao importar para ICF', description: e.message, variant: 'destructive' });
     }
