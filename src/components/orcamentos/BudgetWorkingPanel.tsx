@@ -162,14 +162,26 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-3">
-                Clica em <strong>Editar artigos</strong> para abrir o editor completo
-                (capítulos, adicionar artigos da Base de Preços, IA, paramétrico,
-                descontos por capítulo). Quando gravares a versão, ficará bloqueada
-                no histórico e abre automaticamente uma nova versão a partir dela.
+                Edita capítulos e artigos diretamente abaixo. Quando gravares a
+                versão, ficará bloqueada no histórico e abre automaticamente uma
+                nova versão a partir dela.
               </p>
             </CardContent>
           )}
         </Card>
+
+        {/* Editor embutido inline (mesma tela) */}
+        {activeVersion && editorOpen && (
+          <Card className="overflow-hidden">
+            <iframe
+              key={activeVersion.id}
+              src={`/orcamentos/${activeVersion.id}/editar?embed=1`}
+              title={`Editor Budget V${activeVersion.budget_version_number}`}
+              className="w-full border-0 bg-background"
+              style={{ height: "calc(100vh - 280px)", minHeight: 600 }}
+            />
+          </Card>
+        )}
       </div>
 
       {/* Sidebar: histórico */}
