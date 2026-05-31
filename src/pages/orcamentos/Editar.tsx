@@ -351,12 +351,21 @@ export default function EditarOrcamentoPage() {
     </>
   );
 
+  const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+    isEmbed ? (
+      <div className="bg-background">{children}</div>
+    ) : (
+      <AppLayout
+        title={orcamento.titulo}
+        subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
+        actions={headerActions}
+      >
+        {children}
+      </AppLayout>
+    );
+
   return (
-    <AppLayout
-      title={orcamento.titulo}
-      subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
-      actions={headerActions}
-    >
+    <Wrapper>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Status badge + Axia */}
         <div className="mb-3 md:mb-4 flex items-center gap-3 flex-wrap">
@@ -1048,6 +1057,6 @@ export default function EditarOrcamentoPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </Wrapper>
   );
 }
