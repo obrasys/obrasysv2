@@ -21,9 +21,9 @@ import {
 import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
-  Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
+  Layers, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
   Zap, HardHat, MoreHorizontal, FileStack, ShoppingCart, Sparkles,
-  LockIcon, TargetIcon, FileCheck2, History,
+  TargetIcon, FileCheck2, History, LineChart,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
