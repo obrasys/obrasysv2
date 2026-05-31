@@ -40,6 +40,18 @@ export interface AttentionItem {
   source: string;
 }
 
+export interface BudgetVersionSummary {
+  id: string;
+  titulo: string;
+  versionNumber: number | null;
+  versionStatus: string | null;
+  status: string;
+  valorTotal: number;
+  updatedAt: string | null;
+  isActive: boolean;
+  isBase: boolean;
+}
+
 export interface OrcamentoRaiConsolidation {
   obraId: string;
   obraNome: string;
@@ -58,6 +70,7 @@ export interface OrcamentoRaiConsolidation {
   };
   attention: AttentionItem[];
   sources: IntegrationSourceCard[];
+  budgetVersions: BudgetVersionSummary[];
   lastUpdate: string;
 }
 
