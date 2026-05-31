@@ -151,17 +151,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // THEN check for existing session and await profile before releasing loading
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        profileUserId = session.user.id;
-        fetchProfile(session.user.id);
+
+      try {
+        if (session?.user) {
+          profileUserId = session.user.id;
+          await fetchProfile(session.user.id);
+        }
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
