@@ -194,6 +194,21 @@ export default function AssistenteArquitetura() {
     [icfSelectedWalls],
   );
 
+  // Defaults derivados da planta para pré-encher área/perímetro/comprimento nos cards de fundação.
+  const planDefaults = useMemo(() => {
+    const lajeItems = (items.data ?? []).filter((i) => i.category === 'laje');
+    const lajeAreaTotal = lajeItems.reduce((s, l) => s + (Number(l.quantity) || 0), 0);
+    // Se não temos lajes detectadas, estimamos área a partir de um polígono "quadrado equivalente"
+    // do perímetro das paredes ICF (área = (perímetro/4)²). Aproximação preliminar.
+    const areaFromPerimeter = icfWallLength > 0 ? Math.round(Math.pow(icfWallLength / 4, 2) * 100) / 100 : 0;
+    const area = lajeAreaTotal > 0 ? Math.round(lajeAreaTotal * 100) / 100 : areaFromPerimeter;
+    return {
+      area,
+      perimetro: Math.round(icfWallLength * 100) / 100,
+      comprimento: Math.round(icfWallLength * 100) / 100,
+    };
+  }, [items.data, icfWallLength]);
+
   const handleLinkObra = () => {
     if (!activeSessionId || !linkObraId) return;
     updateSession.mutate(
