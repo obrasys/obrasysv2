@@ -44,7 +44,7 @@ export default function OrcamentoRaiObra() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { organization } = useAuth();
-  const { data, isLoading } = useOrcamentoRaiObra(id);
+  const { data, isLoading, error } = useOrcamentoRaiObra(id);
   const { data: cycles } = useFinancialCycles(id);
   const { data: retentions } = useGuaranteeRetentions(id);
   const { data: aftercare } = useAftercareRecords(id);
@@ -73,15 +73,41 @@ export default function OrcamentoRaiObra() {
   const lockedActive = lockedByPhase[activePhase];
   const canLockActive = !!currentPhaseData && (currentPhaseData.status === 'locked' || currentPhaseData.status === 'active') && !lockedActive;
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <AppLayout title="Orçamento & RAI da Obra" subtitle="Carregando consolidação financeira…">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="p-4 md:p-6 grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
       </AppLayout>
     );
   }
+
+  if (error || !data) {
+    return (
+      <AppLayout title="Orçamento & RAI da Obra" subtitle="Não foi possível carregar os dados">
+        <div className="p-4 md:p-6">
+          <Card className="rounded-xl border-rose-200 bg-rose-50/40">
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-2 text-rose-700 font-semibold">
+                <AlertTriangle className="w-5 h-5" /> Erro ao carregar a consolidação financeira
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : 'Verifique se a obra existe e tente novamente.'}
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => navigate(`/obras/${id}`)}>
+                  <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à obra
+                </Button>
+                <Button size="sm" onClick={() => window.location.reload()}>Tentar novamente</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
 
   return (
     <AppLayout
