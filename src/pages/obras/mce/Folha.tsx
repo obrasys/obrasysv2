@@ -144,6 +144,65 @@ export default function MCEFolha() {
         </div>
       </div>
 
+      {/* Empresa Vencedora */}
+      {(() => {
+        const winner = suppliers.find((s) => s.is_selected);
+        const diff = winner && lowestTotal > 0 ? winner.proposal_total - lowestTotal : 0;
+        const drySeco = Number(map.dry_budget_total ?? 0);
+        const gainLoss = winner ? drySeco - winner.proposal_total : 0;
+        return (
+          <Card className={cn(
+            'rounded-xl border-2',
+            winner ? 'border-amber-400 bg-amber-50/50' : 'border-dashed border-muted-foreground/30 bg-muted/20'
+          )}>
+            <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Star className={cn('h-6 w-6', winner ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground')} />
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Empresa Vencedora do Comparativo
+                  </div>
+                  <div className="text-lg font-bold">
+                    {winner?.supplier_name_snapshot || 'Nenhum fornecedor selecionado'}
+                  </div>
+                  {winner && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {winner.nif ? `NIF ${winner.nif} · ` : ''}
+                      {winner.contact_person || '—'}
+                      {winner.phone ? ` · ${winner.phone}` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {winner && (
+                <div className="flex items-center gap-6 text-right">
+                  <div>
+                    <div className="text-[10px] uppercase text-muted-foreground">Proposta</div>
+                    <div className="text-base font-semibold">{fmtEUR(winner.proposal_total)}</div>
+                  </div>
+                  {drySeco > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground">Verba vs Seco</div>
+                      <div className={cn('text-base font-semibold', gainLoss >= 0 ? 'text-emerald-600' : 'text-destructive')}>
+                        {fmtEUR(gainLoss)}
+                      </div>
+                    </div>
+                  )}
+                  {lowestTotal > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground">vs Menor Proposta</div>
+                      <div className={cn('text-base font-semibold', diff <= 0 ? 'text-emerald-600' : 'text-amber-600')}>
+                        {diff === 0 ? 'Menor preço' : (diff > 0 ? `+${fmtEUR(diff)}` : fmtEUR(diff))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Cabeçalho tipo Excel */}
       <Card className="rounded-xl overflow-hidden border-primary/20">
         <CardContent className="p-0">
