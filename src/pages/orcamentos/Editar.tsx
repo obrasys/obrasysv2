@@ -164,6 +164,13 @@ export default function EditarOrcamentoPage() {
     };
  
   if (isLoading || !orcamento) {
+    if (isEmbed) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
     return (
       <AppLayout title="Carregar Orçamento...">
         <div className="flex items-center justify-center h-64">
