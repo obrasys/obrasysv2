@@ -613,6 +613,7 @@ export default function AssistenteArquitetura() {
         open={foundationsModalOpen}
         onOpenChange={setFoundationsModalOpen}
         baseIcfWallLength={icfWallLength}
+        defaultsOverride={planDefaults}
         selectedOption={(session.data as any)?.foundation_option ?? null}
         isPending={applyFoundation.isPending}
         onApply={(key, params) => {
