@@ -8791,6 +8791,8 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          budget_version_number: number | null
+          budget_version_status: string | null
           client_document_mode_default: string | null
           cliente_id: string | null
           codigo: string | null
@@ -8822,6 +8824,8 @@ export type Database = {
           valor_total: number | null
         }
         Insert: {
+          budget_version_number?: number | null
+          budget_version_status?: string | null
           client_document_mode_default?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -8853,6 +8857,8 @@ export type Database = {
           valor_total?: number | null
         }
         Update: {
+          budget_version_number?: number | null
+          budget_version_status?: string | null
           client_document_mode_default?: string | null
           cliente_id?: string | null
           codigo?: string | null
@@ -14974,6 +14980,8 @@ export type Database = {
       create_budget_revision: {
         Args: { p_orcamento_id: string }
         Returns: {
+          budget_version_number: number | null
+          budget_version_status: string | null
           client_document_mode_default: string | null
           cliente_id: string | null
           codigo: string | null
@@ -15010,6 +15018,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      create_budget_working_version: {
+        Args: { p_base_id: string; p_clone_from?: string }
+        Returns: string
       }
       create_contracting_package: {
         Args: {
@@ -15223,6 +15235,10 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: { _user_id?: string }; Returns: boolean }
       is_trusted_device: { Args: { p_token_hash: string }; Returns: boolean }
+      lock_budget_working_version: {
+        Args: { p_budget_id: string }
+        Returns: undefined
+      }
       log_budget_event:
         | {
             Args: {
