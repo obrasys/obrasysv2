@@ -257,6 +257,86 @@ export default function OrcamentoRaiObra() {
         </div>
       </section>
 
+      {/* Versões do Budget */}
+      {data.budgetVersions && data.budgetVersions.length > 0 && (
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Versões do Budget
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {data.budgetVersions.length} versão(ões)
+            </span>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {data.budgetVersions.map((v) => {
+              const label = v.isBase
+                ? 'Orçamento Base'
+                : v.versionNumber != null
+                ? `Budget v${v.versionNumber}`
+                : v.titulo;
+              const statusLabel = v.isActive
+                ? 'Ativa'
+                : v.versionStatus === 'em_revisao'
+                ? 'Em Revisão'
+                : v.versionStatus === 'aprovado'
+                ? 'Aprovado'
+                : v.versionStatus === 'arquivada' || v.versionStatus === 'locked'
+                ? 'Arquivada'
+                : v.versionStatus === 'rascunho'
+                ? 'Rascunho'
+                : v.status;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => navigate(`/orcamentos/${v.id}`)}
+                  className={cn(
+                    'text-left rounded-xl border p-4 transition-all hover:shadow-md',
+                    v.isActive
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                      : 'border-border bg-card hover:border-primary/40',
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm">{label}</span>
+                      {v.isBase && (
+                        <Badge variant="outline" className="text-[10px]">Base</Badge>
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                        v.isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate mb-2">{v.titulo}</div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Valor total
+                      </div>
+                      <div className="text-lg font-bold">{fmtEUR(v.valorTotal)}</div>
+                    </div>
+                    {v.updatedAt && (
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(v.updatedAt).toLocaleDateString('pt-PT')}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+
       {/* KPI extras */}
       <section className="mt-6 grid md:grid-cols-4 gap-3">
         <KpiCard icon={<TrendingUp className="w-4 h-4" />} label="Margem €" value={fmtEUR(data.kpis.margemValor)} />
