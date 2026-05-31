@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
@@ -74,6 +74,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get('embed') === '1';
   const { toast } = useToast();
   const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
