@@ -105,7 +105,9 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
     );
   }
 
-  const initial = sheets.find((s) => s.closing_type === "initial");
+  // A Folha de Fecho Base é a folha 'initial' sem version_label.
+  // As versões "Budget Objetivo Vx" são geridas no separador Budget.
+  const initial = sheets.find((s) => s.closing_type === "initial" && !s.version_label);
   const final = sheets.find((s) => s.closing_type === "final");
 
   const handleGenerate = async () => {
