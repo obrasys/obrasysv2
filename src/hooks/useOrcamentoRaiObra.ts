@@ -91,13 +91,6 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const ffData = Array.from(ffMap.values());
       const orcsData = allOrcs;
 
-      const ffBase = ffData.find((s: any) => s.closing_type === 'initial');
-      const ffFinal = ffData.find((s: any) => s.closing_type === 'final');
-      const ffBaseApproved = !!ffBase?.approved_at || ffBase?.status === 'approved' || ffBase?.status === 'locked';
-      const ffFinalApproved = !!ffFinal?.approved_at || ffFinal?.status === 'approved' || ffFinal?.status === 'locked';
-
-      const currentPhase = detectPhase(obra.status, ffBaseApproved, ffFinalApproved);
-
       // Identifica o Budget de referência: versão de trabalho ATIVA > orçamento base aprovado/adjudicado > qualquer um
       const activeBudgetVersion = orcsData.find(
         (o: any) => o.budget_version_status === 'ativa' || o.budget_version_status === 'active',
@@ -107,12 +100,27 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       ) ?? orcsData.find((o: any) => !o.revisao_de);
       const activeBudget = activeBudgetVersion ?? baseOrcamento ?? orcsData[0];
 
-      // KPIs base — Vendas vem da Budget ativa (versão de trabalho ou orçamento base); FF Base é fallback
-      const budgetVendas = safeNum(activeBudget?.valor_total) || safeNum(ffBase?.sale_price);
+      // FF Base SEMPRE associada à versão ativa do Budget (fallback: FF da base do orçamento)
+      const ffInitials = ffData.filter((s: any) => s.closing_type === 'initial');
+      const ffBase =
+        ffInitials.find((s: any) => s.source_budget_id === activeBudget?.id) ??
+        ffInitials.find((s: any) => s.source_budget_id === baseOrcamento?.id) ??
+        ffInitials[0];
+      const ffFinal = ffData.find((s: any) => s.closing_type === 'final');
+      const ffBaseApproved = !!ffBase?.approved_at || ffBase?.status === 'approved' || ffBase?.status === 'locked';
+      const ffFinalApproved = !!ffFinal?.approved_at || ffFinal?.status === 'approved' || ffFinal?.status === 'locked';
+
+      const currentPhase = detectPhase(obra.status, ffBaseApproved, ffFinalApproved);
+
+      // KPIs Budget — SEMPRE pela Folha de Fecho Base da versão ativa (custos, vendas, RAI €/%)
+      const budgetVendas = safeNum(ffBase?.sale_price) || safeNum(activeBudget?.valor_total);
       const budgetCustos = safeNum(ffBase?.total_direct_cost) + safeNum(ffBase?.total_indirect_cost) + safeNum(ffBase?.site_costs) + safeNum(ffBase?.structure_costs);
-      const budgetMargem = budgetVendas - budgetCustos;
-      const budgetMargemPct = budgetVendas > 0 ? (budgetMargem / budgetVendas) * 100 : 0;
-      const budgetRai = safeNum(ffBase?.expected_result ?? budgetMargem);
+      const budgetMargem = safeNum(ffBase?.margin_amount) || (budgetVendas - budgetCustos);
+      const budgetMargemPct = ffBase?.margin_percent != null
+        ? safeNum(ffBase.margin_percent)
+        : (budgetVendas > 0 ? (budgetMargem / budgetVendas) * 100 : 0);
+      const budgetRai = safeNum(ffBase?.expected_result) || budgetMargem;
+
 
       // Forecast: parte do Budget aprovado e ajusta com desvios reais (adjudicações e compras)
       // Vendas: usa o maior entre o vendido no Budget e o total adjudicado (revisões de escopo)
