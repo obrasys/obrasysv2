@@ -194,12 +194,164 @@ export default function AssistenteArquitetura() {
     [icfSelectedWalls],
   );
 
+  // Defaults derivados da planta para pré-encher área/perímetro/comprimento nos cards de fundação.
+  const planDefaults = useMemo(() => {
+    const lajeItems = (items.data ?? []).filter((i) => i.category === 'laje');
+    const lajeAreaTotal = lajeItems.reduce((s, l) => s + (Number(l.quantity) || 0), 0);
+    // Se não temos lajes detectadas, estimamos área a partir de um polígono "quadrado equivalente"
+    // do perímetro das paredes ICF (área = (perímetro/4)²). Aproximação preliminar.
+    const areaFromPerimeter = icfWallLength > 0 ? Math.round(Math.pow(icfWallLength / 4, 2) * 100) / 100 : 0;
+    const area = lajeAreaTotal > 0 ? Math.round(lajeAreaTotal * 100) / 100 : areaFromPerimeter;
+    return {
+      area,
+      perimetro: Math.round(icfWallLength * 100) / 100,
+      comprimento: Math.round(icfWallLength * 100) / 100,
+    };
+  }, [items.data, icfWallLength]);
+
   const handleLinkObra = () => {
     if (!activeSessionId || !linkObraId) return;
     updateSession.mutate(
       { id: activeSessionId, patch: { obra_id: linkObraId } as any },
       { onSuccess: () => toast({ title: 'Obra associada à sessão' }) },
     );
+  };
+
+  // Importa os itens do assistente para as tabelas ICF (panos / fundações / lajes) numa configuração
+  // ICF (existente ou nova) associada à obra, e navega para /icf onde o resumo é calculado.
+  const importToIcfAndNavigate = async (statusToSet: 'pre_orcamento' | 'validado') => {
+    if (!activeSessionId || !session.data || !organization) return;
+    const obra = sessionObraId || linkObraId;
+    if (!obra) {
+      toast({ title: 'Associe uma obra antes de gerar', variant: 'destructive' });
+      return;
+    }
+    const allItems = items.data ?? [];
+    const wallsToImport = statusToSet === 'validado'
+      ? allItems.filter((i) => (i.category === 'parede_ext' || i.category === 'parede_int') && i.user_confirmed)
+      : allItems.filter((i) => (i.category === 'parede_ext' || i.category === 'parede_int') && (i.is_icf_candidate || i.user_confirmed));
+    if (wallsToImport.length === 0) {
+      toast({ title: 'Sem paredes ICF para importar', variant: 'destructive' });
+      return;
+    }
+    try {
+      // 1) Garantir configuração ICF para a obra
+      const { data: existing } = await supabase
+        .from('icf_configuracoes').select('*').eq('obra_id', obra).order('versao', { ascending: false }).limit(1);
+      let configId = existing?.[0]?.id as string | undefined;
+      if (!configId) {
+        const { data: created, error: cErr } = await supabase
+          .from('icf_configuracoes')
+          .insert({
+            obra_id: obra,
+            nome: 'Importado do Assistente ICF',
+            espessura_nucleo: session.data.espessura_nucleo,
+            classe_betao: session.data.classe_betao,
+            classe_aco: session.data.classe_aco,
+            ativo: true,
+          } as any)
+          .select().single();
+        if (cErr) throw cErr;
+        configId = created.id as string;
+      }
+
+      // 2) Inserir panos
+      const panosPayload = wallsToImport.map((w, idx) => ({
+        empresa_id: organization.id,
+        obra_id: obra,
+        configuracao_id: configId,
+        referencia: w.reference || `Pano ${idx + 1}`,
+        piso_inicial: (w.attributes?.piso as string) || null,
+        piso_final: (w.attributes?.piso as string) || null,
+        altura_util: Number(w.attributes?.altura) || 2.7,
+        comprimento: Number(w.attributes?.comprimento) || Number(w.quantity) || 0,
+        espessura_nucleo: session.data.espessura_nucleo,
+        area_vaos: 0,
+        fator_cumprimento: 1,
+        ordem: idx + 1,
+        observacoes: `Importado do Assistente ICF (sessão ${activeSessionId.slice(0, 8)})`,
+      }));
+      const { error: pErr } = await supabase.from('icf_panos_parede').insert(panosPayload as any);
+      if (pErr) throw pErr;
+
+      // 3) Fundação: usa session.foundation_option + params
+      const opt = session.data.foundation_option;
+      const fp = (session.data.foundation_params || {}) as Record<string, number | boolean>;
+      const num = (k: string, fb = 0) => (typeof fp[k] === 'number' ? (fp[k] as number) : fb);
+      if (opt && opt !== 'nenhuma') {
+        if (opt === 'sapata_continua' || opt === 'stem_wall') {
+          const comp = num('comprimento', icfWallLength) || icfWallLength;
+          const largura = num('largura', 0.6);
+          const altura = num('altura', opt === 'stem_wall' ? 1.2 : 0.4);
+          await supabase.from('icf_fundacoes').insert({
+            empresa_id: organization.id,
+            obra_id: obra,
+            configuracao_id: configId,
+            tipo_fundacao: 'sapata_continua',
+            referencia: opt === 'stem_wall' ? 'Stem wall' : 'Sapata contínua',
+            comprimento: comp, largura, altura, quantidade: 1,
+            volume_betao: comp * largura * altura,
+            observacoes: 'Importado do Assistente ICF',
+          } as any);
+        } else if (opt === 'radier' || opt === 'laje_terrea_bordo') {
+          const area = num('area', planDefaults.area);
+          const esp = num('espessura', opt === 'radier' ? 0.25 : 0.15);
+          await supabase.from('icf_lajes').insert({
+            empresa_id: organization.id,
+            obra_id: obra,
+            configuracao_id: configId,
+            referencia: opt === 'radier' ? 'Radier' : 'Laje térrea',
+            piso: 'Piso 0',
+            tipologia_laje: opt,
+            area, espessura_total: esp, volume: area * esp,
+            observacoes: 'Importado do Assistente ICF',
+          } as any);
+        } else if (opt === 'cave_basement') {
+          const perim = num('perimetro', icfWallLength);
+          const altura = num('altura', 2.5);
+          const nucleo = num('nucleo', 0.25);
+          await supabase.from('icf_fundacoes').insert({
+            empresa_id: organization.id,
+            obra_id: obra,
+            configuracao_id: configId,
+            tipo_fundacao: 'sapata_continua',
+            referencia: 'Cave - paredes enterradas',
+            comprimento: perim, largura: nucleo, altura, quantidade: 1,
+            volume_betao: perim * nucleo * altura,
+            observacoes: 'Importado do Assistente ICF (cave/basement)',
+          } as any);
+        }
+      }
+
+      // 4) Lajes detetadas (categoria='laje' em items)
+      const lajeItems = allItems.filter((i) => i.category === 'laje' && (i.quantity || 0) > 0);
+      if (lajeItems.length > 0) {
+        const lajesPayload = lajeItems.map((l) => ({
+          empresa_id: organization.id,
+          obra_id: obra,
+          configuracao_id: configId,
+          referencia: l.reference || 'Laje',
+          piso: (l.attributes?.piso as string) || null,
+          tipologia_laje: (l.attributes?.tipologia as string) || null,
+          area: Number(l.quantity) || 0,
+          espessura_total: Number(l.attributes?.espessura) || 0.2,
+          volume: (Number(l.quantity) || 0) * (Number(l.attributes?.espessura) || 0.2),
+          observacoes: 'Importado do Assistente ICF',
+        }));
+        await supabase.from('icf_lajes').insert(lajesPayload as any);
+      }
+
+      // 5) Marcar estado da sessão
+      await supabase.from('icf_assistant_sessions' as any).update({ status: statusToSet }).eq('id', activeSessionId);
+
+      toast({
+        title: statusToSet === 'validado' ? 'Orçamento validado importado' : 'Pré-orçamento importado',
+        description: `${panosPayload.length} pano(s) e dados de fundação enviados para o módulo ICF.`,
+      });
+      navigate(`/icf?obra=${obra}`);
+    } catch (e: any) {
+      toast({ title: 'Erro ao importar para ICF', description: e.message, variant: 'destructive' });
+    }
   };
 
   const handleMaterializePanels = async (target: 'mapa' | 'manual') => {
@@ -495,6 +647,7 @@ export default function AssistenteArquitetura() {
                   option={opt}
                   selected={session.data?.foundation_option === opt.key}
                   baseIcfWallLength={icfWallLength}
+                  defaultsOverride={planDefaults}
                   isPending={applyFoundation.isPending}
                   onApply={(p) =>
                     applyFoundation.mutate({ option: opt.key as FoundationOptionKey, params: p, baseIcfWallLength: icfWallLength })
@@ -548,14 +701,8 @@ export default function AssistenteArquitetura() {
                     patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
                   })
                 }
-                onGeneratePre={() => {
-                  updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
-                  toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
-                }}
-                onGenerateValidated={() => {
-                  updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
-                  toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
-                }}
+                onGeneratePre={() => importToIcfAndNavigate('pre_orcamento')}
+                onGenerateValidated={() => importToIcfAndNavigate('validado')}
               />
             </CardContent>
           </Card>
@@ -597,6 +744,7 @@ export default function AssistenteArquitetura() {
         open={foundationsModalOpen}
         onOpenChange={setFoundationsModalOpen}
         baseIcfWallLength={icfWallLength}
+        defaultsOverride={planDefaults}
         selectedOption={(session.data as any)?.foundation_option ?? null}
         isPending={applyFoundation.isPending}
         onApply={(key, params) => {

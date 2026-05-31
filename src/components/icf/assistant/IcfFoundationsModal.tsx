@@ -8,6 +8,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   baseIcfWallLength: number;
+  defaultsOverride?: Record<string, number>;
   selectedOption?: string | null;
   isPending?: boolean;
   onApply: (key: FoundationOptionKey, params: Record<string, number | boolean>) => void;
@@ -17,6 +18,7 @@ export function IcfFoundationsModal({
   open,
   onOpenChange,
   baseIcfWallLength,
+  defaultsOverride,
   selectedOption,
   isPending,
   onApply,
@@ -43,6 +45,7 @@ export function IcfFoundationsModal({
               option={opt}
               selected={selectedOption === opt.key}
               baseIcfWallLength={baseIcfWallLength}
+              defaultsOverride={defaultsOverride}
               isPending={isPending}
               onApply={(p) => {
                 onApply(opt.key as FoundationOptionKey, p);
