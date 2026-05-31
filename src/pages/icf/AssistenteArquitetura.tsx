@@ -701,14 +701,8 @@ export default function AssistenteArquitetura() {
                     patch: { user_confirmed: v, source_type: v ? 'confirmado_utilizador' : it.source_type },
                   })
                 }
-                onGeneratePre={() => {
-                  updateSession.mutate({ id: activeSessionId, patch: { status: 'pre_orcamento' } });
-                  toast({ title: 'Pré-orçamento marcado', description: 'Use o módulo ICF para gerar o orçamento incluindo as sugestões.' });
-                }}
-                onGenerateValidated={() => {
-                  updateSession.mutate({ id: activeSessionId, patch: { status: 'validado' } });
-                  toast({ title: 'Itens validados', description: 'Apenas itens confirmados serão enviados ao orçamento.' });
-                }}
+                onGeneratePre={() => importToIcfAndNavigate('pre_orcamento')}
+                onGenerateValidated={() => importToIcfAndNavigate('validado')}
               />
             </CardContent>
           </Card>
