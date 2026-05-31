@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, FileCheck2, FileText, AlertTriangle } from "lucide-react";
+import { Loader2, FileCheck2, FileText, AlertTriangle, Lock } from "lucide-react";
 import { useClosingSheets } from "@/hooks/useClosingSheets";
 import { useGenerateFinalClosing } from "@/hooks/useObraPurchases";
+import { useApproveBaseDryBudget } from "@/hooks/useBudgetVersions";
 import { ClosingSheetFullView } from "./ClosingSheetFullView";
 import { ClosingSheetComparison } from "./ClosingSheetComparison";
 
@@ -17,6 +22,7 @@ import { ClosingSheetComparison } from "./ClosingSheetComparison";
 export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
   const { data: sheets = [], isLoading } = useClosingSheets(orcamentoId);
   const generateFinal = useGenerateFinalClosing();
+  const approveBase = useApproveBaseDryBudget();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
@@ -43,11 +49,37 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
         <CardContent className="py-10 text-center">
           <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
           <p className="font-semibold mb-1">Sem Folha de Fecho ainda</p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            A <strong>Folha de Fecho Base</strong> bloqueia o orçamento e passa a ser a referência
-            oficial. A <strong>Folha de Fecho Final</strong> é consolidada a partir do Budget
-            Objetivo final.
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+            Crie a <strong>Folha de Fecho Base</strong> para bloquear este orçamento e
+            torná-lo a referência oficial. A partir daí, todos os pacotes seguem pelo fluxo
+            MCE e a <strong>Folha de Fecho Final</strong> é consolidada no fecho da obra.
           </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button className="gap-2" disabled={approveBase.isPending}>
+                {approveBase.isPending
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Lock className="h-4 w-4" />}
+                Criar Folha de Fecho Base
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Criar Folha de Fecho Base?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação <strong>bloqueia o orçamento</strong> e cria a Folha de Fecho Base
+                  como referência oficial, juntamente com a v1 do Budget Objetivo. Não pode
+                  ser revertida.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => approveBase.mutate(orcamentoId)}>
+                  Confirmar e bloquear
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     );
