@@ -161,42 +161,59 @@ export function useTeamManagement() {
         .single();
       if (invError) throw invError;
 
-      // 2. Insert module permissions
-      if (formData.module_permissions.length > 0) {
-        const permRows = formData.module_permissions.map(p => ({
-          invitation_id: invite.id,
-          module_code: p.module_code,
-          can_view: p.can_view,
-          can_create: p.can_create,
-          can_update: p.can_update,
-          can_delete: p.can_delete,
-        }));
-        await supabase.from('team_invitation_module_permissions').insert(permRows);
+      try {
+        // 2. Insert module permissions
+        if (formData.module_permissions.length > 0) {
+          const permRows = formData.module_permissions.map(p => ({
+            invitation_id: invite.id,
+            module_code: p.module_code,
+            can_view: p.can_view,
+            can_create: p.can_create,
+            can_update: p.can_update,
+            can_delete: p.can_delete,
+          }));
+          const { error: permErr } = await supabase
+            .from('team_invitation_module_permissions')
+            .insert(permRows);
+          if (permErr) throw permErr;
+        }
+
+        // 3. Call edge function to create user and send email
+        // Map role_code to profile role
+        const roleMap: Record<string, string> = {
+          admin: 'admin', manager: 'gestor', technician: 'fiscal',
+          finance: 'financeiro', viewer: 'gestor',
+        };
+        const profileRole = roleMap[formData.role_code] || 'gestor';
+
+        const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-user-actions', {
+          body: {
+            action: 'create_user',
+            email: formData.email,
+            nome: formData.full_name,
+            role: profileRole,
+            modulePermissions: formData.module_permissions,
+            obraScope: formData.obra_scope,
+            selectedObras: formData.selected_obras,
+            invitationId: invite.id,
+          },
+        });
+
+        if (fnError) throw fnError;
+        return invite;
+      } catch (err) {
+        // ROLLBACK: remove orphaned invite + permissions so email is not blocked
+        // by the unique index for future re-invite attempts.
+        await supabase
+          .from('team_invitation_module_permissions')
+          .delete()
+          .eq('invitation_id', invite.id);
+        await supabase
+          .from('team_invitations')
+          .delete()
+          .eq('id', invite.id);
+        throw err;
       }
-
-      // 3. Call edge function to create user and send email
-      // Map role_code to profile role
-      const roleMap: Record<string, string> = {
-        admin: 'admin', manager: 'gestor', technician: 'fiscal',
-        finance: 'financeiro', viewer: 'gestor',
-      };
-      const profileRole = roleMap[formData.role_code] || 'gestor';
-
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-user-actions', {
-        body: {
-          action: 'create_user',
-          email: formData.email,
-          nome: formData.full_name,
-          role: profileRole,
-          modulePermissions: formData.module_permissions,
-          obraScope: formData.obra_scope,
-          selectedObras: formData.selected_obras,
-          invitationId: invite.id,
-        },
-      });
-
-      if (fnError) throw fnError;
-      return invite;
     },
     onSuccess: () => {
       toast.success('Convite enviado com sucesso!');
