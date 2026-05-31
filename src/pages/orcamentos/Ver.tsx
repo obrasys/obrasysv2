@@ -285,15 +285,12 @@ export default function VerOrcamentoPage() {
       <div className="p-4 md:p-6">
         <Tabs defaultValue="orcamento">
           <TabsList className="mb-4 no-print flex flex-wrap h-auto">
-            <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-            <TabsTrigger value="target">
-              <TargetIcon className="h-3 w-3 mr-1.5" /> {opLayerShort}
-            </TabsTrigger>
+            <TabsTrigger value="orcamento">Orçamento Base</TabsTrigger>
             <TabsTrigger value="fecho">
               <FileCheck2 className="h-3 w-3 mr-1.5" /> Folha de Fecho Base
             </TabsTrigger>
-            <TabsTrigger value="compras">
-              <ShoppingCart className="h-3 w-3 mr-1.5" /> Compras
+            <TabsTrigger value="target">
+              <TargetIcon className="h-3 w-3 mr-1.5" /> Budget
             </TabsTrigger>
             <TabsTrigger value="axia">
               <Sparkles className="h-3 w-3 mr-1.5" /> Axia
