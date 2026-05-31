@@ -289,45 +289,69 @@ export function useGenerateIcfBudget() {
           }
         : ICF_DEFAULT_CONSTANTS;
 
-      let chapters: IcfBudgetChapter[];
+      // ── MODO PARAMÉTRICO (sempre detalhado em m², m³, un, kg, ml) ─────
+      // Mesmo quando um template "chave-na-mão" é selecionado, os artigos
+      // ICF (sapatas, paredes, lajes) são SEMPRE gerados em detalhe.
+      // Os capítulos do template que não tenham equivalente paramétrico
+      // (ex.: Licenciamento, Honorários) são anexados no fim como VG.
+      const chaptersBase = buildChapters(resumo, config, precos, lajes, K);
+      if (chaptersBase.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
 
+      const estaleiroVal = Math.round((estaleiro_valor || 0) * 100) / 100;
+      const estaleiroChapter: IcfBudgetChapter = {
+        numero: 1,
+        titulo: 'Estaleiros e Escavações',
+        descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF - caso o cliente não tenha projeto em ICF.',
+        artigos: [
+          {
+            descricao: 'Estaleiros e escavações - preparação de estaleiro, marcação de obra e escavação às cotas',
+            unidade: 'vg',
+            quantidade: 1,
+            preco_unitario: estaleiroVal,
+          },
+        ],
+      };
+
+      let chapters: IcfBudgetChapter[] = [
+        estaleiroChapter,
+        ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 })),
+      ];
+
+      // Se um template foi selecionado, anexa apenas os capítulos do template
+      // que não têm correspondência com os capítulos paramétricos já gerados
+      // (matching por palavras-chave do título). Estes ficam como VG por serem
+      // itens administrativos/comerciais (ex.: licenciamento, honorários, garantias).
       if (template_chapters && template_chapters.length > 0) {
-        // ── MODO TEMPLATE ─────────────────────────────────────────
-        // Cada capítulo do template = 1 capítulo com 1 artigo "vg" a valor fixo.
-        chapters = template_chapters.map((c, idx) => ({
-          numero: idx + 1,
-          titulo: c.titulo,
-          descricao: c.prazo ? `${c.descricao ?? ''}${c.descricao ? ' · ' : ''}Prazo: ${c.prazo}` : (c.descricao ?? undefined),
-          artigos: [
-            {
-              descricao: c.descricao || c.titulo,
-              unidade: 'vg',
-              quantidade: 1,
-              preco_unitario: Math.round((Number(c.valor) || 0) * 100) / 100,
-            },
-          ],
-        }));
-      } else {
-        // ── MODO PARAMÉTRICO (default) ────────────────────────────
-        const chaptersBase = buildChapters(resumo, config, precos, lajes, K);
-        if (chaptersBase.length === 0) throw new Error('Sem quantitativos ICF para gerar orçamento');
-
-        const estaleiroVal = Math.round((estaleiro_valor || 0) * 100) / 100;
-        const estaleiroChapter: IcfBudgetChapter = {
-          numero: 1,
-          titulo: 'Estaleiros e Escavações',
-          descricao: 'Preparação de estaleiro de obra, marcação de obra e preparação e escavação dos terrenos às cotas necessárias para construção de estrutura em ICF, conforme projeto de estabilidade de ICF - caso o cliente não tenha projeto em ICF.',
-          artigos: [
-            {
-              descricao: 'Estaleiros e escavações - preparação de estaleiro, marcação de obra e escavação às cotas',
-              unidade: 'vg',
-              quantidade: 1,
-              preco_unitario: estaleiroVal,
-            },
-          ],
+        const norm = (s: string) =>
+          s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const parametricKeys = chapters.map((c) => norm(c.titulo));
+        const isCovered = (titulo: string) => {
+          const t = norm(titulo);
+          // Considera coberto se já existe um capítulo paramétrico com palavras-chave equivalentes
+          const keywords = ['estaleir', 'sapata', 'fund', 'parede', 'icf', 'laje', 'pavim', 'reboco', 'pintur', 'cobertur', 'instala', 'eletr', 'canaliz', 'aqs', 'avac'];
+          if (keywords.some((k) => t.includes(k) && parametricKeys.some((p) => p.includes(k)))) return true;
+          return false;
         };
 
-        chapters = [estaleiroChapter, ...chaptersBase.map((c) => ({ ...c, numero: c.numero + 1 }))];
+        const extras = template_chapters.filter((c) => !isCovered(c.titulo));
+        let nextNum = chapters.length + 1;
+        for (const c of extras) {
+          chapters.push({
+            numero: nextNum++,
+            titulo: c.titulo,
+            descricao: c.prazo
+              ? `${c.descricao ?? ''}${c.descricao ? ' · ' : ''}Prazo: ${c.prazo}`
+              : (c.descricao ?? undefined),
+            artigos: [
+              {
+                descricao: c.descricao || c.titulo,
+                unidade: 'vg',
+                quantidade: 1,
+                preco_unitario: Math.round((Number(c.valor) || 0) * 100) / 100,
+              },
+            ],
+          });
+        }
       }
 
       // 4. Geração transacional via RPC (atómica + auditada) - só estrutura.
