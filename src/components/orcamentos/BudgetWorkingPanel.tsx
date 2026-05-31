@@ -33,6 +33,7 @@ import {
 import { useOrcamento } from "@/hooks/useOrcamentos";
 import { NewBudgetVersionDialog } from "./NewBudgetVersionDialog";
 import { BudgetCompareDialog } from "./BudgetCompareDialog";
+import EditarOrcamentoPage from "@/pages/orcamentos/Editar";
 
 interface Props {
   /** Id do orçamento base (locked) */
@@ -224,7 +225,7 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
             </CardContent>
           </Card>
 
-          {/* Editor inline (mesma tela) */}
+          {/* Editor inline nativo (mesma árvore React, sem iframe) */}
           {editorOpen && (
             <Card className="overflow-hidden">
               {isReadOnly && (
@@ -233,13 +234,9 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                   define-a como ativa ou duplica-a numa nova versão.
                 </div>
               )}
-              <iframe
-                key={currentVersion.id}
-                src={`/orcamentos/${currentVersion.id}/editar?embed=1`}
-                title={`Editor Budget ${versionLabel}`}
-                className="w-full border-0 bg-background"
-                style={{ height: "calc(100vh - 340px)", minHeight: 560 }}
-              />
+              <div key={currentVersion.id} className="bg-background">
+                <EditarOrcamentoPage embeddedId={currentVersion.id} />
+              </div>
             </Card>
           )}
         </div>
