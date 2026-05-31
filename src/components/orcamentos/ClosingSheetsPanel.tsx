@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +18,9 @@ import { useGenerateFinalClosing } from "@/hooks/useObraPurchases";
 import { useApproveBaseDryBudget } from "@/hooks/useBudgetVersions";
 import { ClosingSheetFullView } from "./ClosingSheetFullView";
 import { ClosingSheetComparison } from "./ClosingSheetComparison";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 
 
@@ -23,8 +28,74 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
   const { data: sheets = [], isLoading } = useClosingSheets(orcamentoId);
   const generateFinal = useGenerateFinalClosing();
   const approveBase = useApproveBaseDryBudget();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const [creatingObra, setCreatingObra] = useState(false);
+
+  const handleApproveBase = async () => {
+    if (!user?.id) return;
+    try {
+      setCreatingObra(true);
+
+      // 1) Fetch orcamento to check if it already has an obra linked
+      const { data: orc, error: orcErr } = await supabase
+        .from("orcamentos")
+        .select("id, titulo, obra_id, cliente, cliente_id, valor_total, status")
+        .eq("id", orcamentoId)
+        .single();
+      if (orcErr) throw orcErr;
+
+      // 2) Approve base (locks budget + creates initial closing sheet + Budget Objetivo v1)
+      await approveBase.mutateAsync(orcamentoId);
+
+      // 3) If no obra is linked yet, create one automatically (promotor flow)
+      let obraId = orc.obra_id as string | null;
+      if (!obraId) {
+        const { data: novaObra, error: obraErr } = await supabase
+          .from("obras")
+          .insert({
+            user_id: user.id,
+            nome: orc.titulo,
+            cliente: (orc as any).cliente ?? null,
+            cliente_id: (orc as any).cliente_id ?? null,
+            status: "planeamento",
+            valor_previsto: orc.valor_total ?? 0,
+          })
+          .select()
+          .single();
+        if (obraErr) throw obraErr;
+        obraId = novaObra.id;
+        await supabase.from("orcamentos").update({ obra_id: obraId }).eq("id", orcamentoId);
+      }
+
+      // 4) Mark budget as adjudicated so MCE (compras/adjudicações) is unlocked
+      if (orc.status !== "adjudicado") {
+        await supabase.from("orcamentos").update({ status: "adjudicado" }).eq("id", orcamentoId);
+      }
+
+      qc.invalidateQueries({ queryKey: ["orcamento", orcamentoId] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+
+      toast({
+        title: "Folha de Fecho Base criada",
+        description: "Obra criada e orçamento pronto para compras e adjudicações no MCE.",
+      });
+
+      if (obraId) navigate(`/obras/${obraId}/orcamento-rai`);
+    } catch (e: any) {
+      toast({
+        title: "Erro ao criar Folha de Fecho Base",
+        description: e?.message ?? "Não foi possível concluir o fecho base.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingObra(false);
+    }
+  };
 
   if (isLoading) {
     return (
