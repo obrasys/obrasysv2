@@ -334,7 +334,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
     const styles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
       .map((el) => el.outerHTML)
       .join("\n");
-    const title = `Folha de Fecho - ${isInitial ? "Inicial" : "Final"}`;
+    const title = `Folha de Fecho - ${isInitial ? "Base" : "Final"}`;
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${styles}
       <style>body{padding:24px;background:#fff;color:#000;} input,textarea{border:0!important;background:transparent!important;padding:0!important;height:auto!important;} button{display:none!important;}</style>
       </head><body>${html}</body></html>`);
