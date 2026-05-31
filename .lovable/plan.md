@@ -1,84 +1,139 @@
-# Correção: Race Condition + Rollback de Convites
 
-Apenas 2 patches focados, baixo risco.
+# Hardening de Segurança — Versão Enxuta
 
-## Patch 1 — AuthContext: aguardar perfil antes de libertar loading
-
-**Ficheiro:** `src/contexts/AuthContext.tsx` (linhas 155–165)
-
-Tornar o callback de `getSession()` async e aguardar `fetchProfile()` antes de `setLoading(false)`, com try/finally para garantir que o loading liberta mesmo em erro.
-
-```ts
-supabase.auth.getSession().then(async ({ data: { session } }) => {
-  setSession(session);
-  setUser(session?.user ?? null);
-  
-  try {
-    if (session?.user) {
-      profileUserId = session.user.id;
-      await fetchProfile(session.user.id);
-    }
-  } finally {
-    setLoading(false);
-  }
-});
-```
-
-**Efeito:** Cliente/Fornecedor deixam de ver flash do `/dashboard` antes de serem redirecionados para `/portal` ou `/fornecedor/dashboard`.
+Sem refatorar hooks nem inventar rotas de servidor. Foco em fechar buracos reais de RLS e ganhar rasto auditável das operações sensíveis.
 
 ---
 
-## Patch 2 — useTeamManagement: rollback de convites órfãos
+## Fase 1 — Auditoria RLS (read-only, gera relatório)
 
-**Ficheiro:** `src/hooks/useTeamManagement.ts` (linhas 142–199)
+Correr no Supabase e compilar um relatório markdown com:
 
-Envolver os passos 2 (permissões) e 3 (edge function) num try/catch que faz `DELETE` do convite + permissões se algo falhar — liberta o índice único do email para re-convites futuros.
+1. **Tabelas `public.*` sem RLS ativo** (`rowsecurity = false`).
+2. **Tabelas com RLS mas sem qualquer policy** (efetivamente fechadas — verificar se intencional).
+3. **Policies permissivas demais**: `USING (true)`, `WITH CHECK (true)`, ou que ignoram `auth.uid()` / `get_org_member_ids()`.
+4. **Grants a `anon`** em tabelas que deviam ser só `authenticated`.
+5. **Colunas sensíveis expostas**: `nif`, `salario_base`, `telefone`, `email`, `iban`, `password_*`, tokens — listar onde aparecem e se há view restritiva.
+6. **Views sem `security_invoker=on`** (bypassam RLS do utilizador).
+7. **Funções `SECURITY DEFINER` sem `set search_path`** (vetor conhecido).
 
-```ts
-mutationFn: async (formData) => {
-  // 1. INSERT convite (mantém-se igual)
-  const { data: invite, error: invError } = await supabase
-    .from('team_invitations')
-    .insert({ ... })
-    .select()
-    .single();
-  if (invError) throw invError;
+Correr também `supabase--linter` para apanhar avisos automáticos.
 
-  try {
-    // 2. Permissões
-    if (formData.module_permissions.length > 0) {
-      const { error: permErr } = await supabase
-        .from('team_invitation_module_permissions')
-        .insert(permRows);
-      if (permErr) throw permErr;
-    }
+**Output:** relatório em `.lovable/security-audit.md` com cada achado classificado como `BLOQUEANTE` / `MÉDIO` / `INFORMATIVO` + SQL de correção sugerido para cada um.
 
-    // 3. Edge function
-    const { data: fnData, error: fnError } = await supabase.functions.invoke(
-      'admin-user-actions', { body: { ... } }
-    );
-    if (fnError) throw fnError;
-
-    return invite;
-  } catch (err) {
-    // ROLLBACK — libertar email para re-convite
-    await supabase.from('team_invitation_module_permissions')
-      .delete().eq('invitation_id', invite.id);
-    await supabase.from('team_invitations')
-      .delete().eq('id', invite.id);
-    throw err;
-  }
-}
-```
-
-**Efeito:** Falhas transitórias no `admin-user-actions` deixam de bloquear permanentemente o email pelo unique index.
+**Nada é corrigido nesta fase** — só diagnóstico. Tu revês e aprovas os fixes antes da Fase 2.
 
 ---
 
-## Verificação
+## Fase 2 — Correções RLS aprovadas
 
-1. Login como cliente → deve ir direto a `/portal` sem flash do `/dashboard`.
-2. Tentar convidar email com edge function temporariamente quebrada → toast de erro, e re-convite com o mesmo email deve funcionar (não dispara "duplicate").
+Para cada achado `BLOQUEANTE` / `MÉDIO` que aprovares, migration única consolidada:
 
-## Nota
-Vi no código que `mfaVerified` **usa sim** `sessionStorage` (linhas 69–78 do AuthContext) — o relatório nesse ponto estava correto. Não está no scope destes 2 patches; fica como recomendação futura para hardening server-side.
+- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` onde estiver em falta.
+- `REVOKE` em grants indevidos a `anon`.
+- Policies novas/ajustadas usando os helpers existentes (`get_org_member_ids()`, `has_role()`, `is_super_admin()`).
+- Views `security_invoker=on` para colunas sensíveis quando aplicável.
+- `set search_path = public` em funções `SECURITY DEFINER` que faltem.
+
+Tudo numa migration revisível antes de aplicar.
+
+---
+
+## Fase 3 — Tabela de auditoria + triggers
+
+### 3.1 Schema
+
+```sql
+CREATE TABLE public.audit_log (
+  id            bigserial PRIMARY KEY,
+  occurred_at   timestamptz NOT NULL DEFAULT now(),
+  actor_id      uuid,                          -- auth.uid()
+  actor_email   text,
+  organization_id uuid,
+  table_name    text NOT NULL,
+  record_id     text,                          -- PK do registo afetado (texto p/ flexibilidade)
+  action        text NOT NULL,                 -- INSERT | UPDATE | DELETE
+  old_data      jsonb,
+  new_data      jsonb,
+  diff          jsonb,                         -- só campos alterados (UPDATE)
+  ip_address    inet,                          -- via request.headers se disponível
+  user_agent    text
+);
+
+CREATE INDEX ON public.audit_log (occurred_at DESC);
+CREATE INDEX ON public.audit_log (organization_id, occurred_at DESC);
+CREATE INDEX ON public.audit_log (table_name, record_id);
+CREATE INDEX ON public.audit_log (actor_id, occurred_at DESC);
+```
+
+**Grants & RLS:**
+- `GRANT SELECT ON public.audit_log TO authenticated;`
+- `GRANT ALL ON public.audit_log TO service_role;`
+- RLS: SELECT apenas para `is_super_admin(auth.uid())` ou membros da mesma `organization_id`.
+- **Sem INSERT/UPDATE/DELETE policies** — só triggers `SECURITY DEFINER` escrevem. Frontend nunca toca aqui.
+
+### 3.2 Função de trigger genérica
+
+`public.log_audit_event()` — `SECURITY DEFINER`, `set search_path = public`:
+- Captura `TG_OP`, `TG_TABLE_NAME`, `OLD`, `NEW`.
+- Resolve `organization_id` da própria linha (fallback `NULL`).
+- Resolve `actor_email` via `auth.users` se `auth.uid()` existir.
+- Em UPDATE, calcula `diff` (só chaves cujo valor mudou).
+- Insere na `audit_log`.
+
+### 3.3 Tabelas auditadas (escopo cirúrgico — não tudo)
+
+| Tabela | Ações | Porquê |
+|---|---|---|
+| `obras` | I/U/D | Operacional crítico |
+| `orcamentos` | I/U/D | Financeiro / contratual |
+| `orcamento_itens` | U/D | Alterações pós-adjudicação |
+| `equipa_membros` | I/U/D | Recursos humanos |
+| `user_roles` | I/U/D | **Privilege escalation** |
+| `team_invitations` | I/U/D | Acesso à org |
+| `super_admins` | I/U/D | Acesso máximo |
+| `clientes` | I/U/D | PII |
+| `subempreiteiros` | I/U/D | PII + financeiro |
+| `livro_ponto` | I/U/D | Custos laborais |
+| `financeiro_*` (receitas, despesas, cycles) | I/U/D | Dinheiro |
+| `adjudicacoes` | I/U/D | Compromisso contratual |
+| `client_portal_access` | I/U/D | Acessos externos |
+| `supplier_portal_access` | I/U/D | Acessos externos |
+
+Triggers `AFTER INSERT OR UPDATE OR DELETE FOR EACH ROW EXECUTE FUNCTION log_audit_event()`.
+
+### 3.4 UI mínima (Super Admin)
+
+Página `/admin/auditoria` (lazy-loaded, só visível a super admins):
+- Filtros: data, ator, tabela, ação, organização.
+- Lista paginada com timeline + diff expansível (UPDATEs).
+- Export CSV (UTF-8 BOM, `;` — padrão PT do projeto).
+
+Standard de listagem do projeto: card grid + bottom toolbar.
+
+---
+
+## O que NÃO está incluído (e porquê)
+
+- **Não refatorar os ~100 hooks `supabase.from(...)`** — quebraria realtime, signed URLs, cache e tipos. A proteção real é o RLS, não esconder o cliente.
+- **Não criar “rotas /api”** — projeto é Vite SPA. Onde é preciso `service_role`, já existem Edge Functions.
+- **Não auditar todas as tabelas** — listing acima cobre os vetores reais (dinheiro, acesso, PII). Auditar tudo enche a tabela de ruído.
+
+---
+
+## Detalhes técnicos
+
+- Migration única por fase (Fase 2 RLS, Fase 3 audit) para rollback limpo.
+- `log_audit_event()` swallow-on-error com `RAISE WARNING` — auditoria nunca pode partir um INSERT/UPDATE legítimo.
+- `audit_log` cresce: prever job de purga (manter 24 meses) numa fase 4 futura, fora deste plano.
+- IP/user-agent: tentar via `current_setting('request.headers', true)::jsonb` — se ausente, ficam `NULL` (browser direto vs Edge Function).
+
+---
+
+## Ordem de execução após aprovares
+
+1. Fase 1 → relatório `.lovable/security-audit.md`.
+2. Tu revês, aprovas/rejeitas cada achado.
+3. Fase 2 → migration RLS.
+4. Fase 3.1–3.3 → migration audit table + triggers.
+5. Fase 3.4 → página `/admin/auditoria`.
