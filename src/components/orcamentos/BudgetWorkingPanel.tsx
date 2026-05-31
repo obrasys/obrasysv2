@@ -3,15 +3,36 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, History, Loader2, Pencil, Plus, Save, TargetIcon } from "lucide-react";
+import {
+  Archive,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Eye,
+  FileLock2,
+  GitCompare,
+  History,
+  Loader2,
+  Plus,
+  Star,
+  TargetIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import {
+  isVersionActive,
+  useApproveBudgetVersion,
+  useArchiveBudgetVersion,
   useBudgetWorkingVersions,
   useCreateBudgetWorkingVersion,
-  useLockBudgetWorkingVersion,
+  useSetActiveBudgetVersion,
+  versionStatusLabel,
+  type BudgetWorkingVersion,
 } from "@/hooks/useBudgetWorkingVersions";
 import { useOrcamento } from "@/hooks/useOrcamentos";
+import { NewBudgetVersionDialog } from "./NewBudgetVersionDialog";
+import { BudgetCompareDialog } from "./BudgetCompareDialog";
 
 interface Props {
   /** Id do orçamento base (locked) */
@@ -24,225 +45,287 @@ const fmtEUR = (v: number) =>
 export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
   const navigate = useNavigate();
   const [editorOpen, setEditorOpen] = useState(true);
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [compareForId, setCompareForId] = useState<string | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+
   const { orcamento: base } = useOrcamento(baseOrcamentoId);
   const { data: versions = [], isLoading } = useBudgetWorkingVersions(baseOrcamentoId);
   const createVersion = useCreateBudgetWorkingVersion();
-  const lockVersion = useLockBudgetWorkingVersion();
+  const approve = useApproveBudgetVersion();
+  const setActive = useSetActiveBudgetVersion();
+  const archive = useArchiveBudgetVersion();
 
-  const activeVersion = useMemo(
-    () => versions.find((v) => v.budget_version_status === "active"),
-    [versions],
-  );
+  const activeVersion = useMemo(() => versions.find(isVersionActive), [versions]);
+  const currentVersion =
+    versions.find((v) => v.id === selectedVersionId) ?? activeVersion ?? versions[0];
+
   const baseTotal = Number(base?.valor_total ?? 0);
+  const isBaseLocked = Boolean((base as any)?.is_base_locked);
 
-  const handleSaveAndOpenNew = async () => {
-    if (!activeVersion) return;
-    // Fecha a ativa e cria nova a partir dela (último estado vira ponto de partida)
-    await lockVersion.mutateAsync({ budgetId: activeVersion.id, baseId: baseOrcamentoId });
-    await createVersion.mutateAsync({
-      baseId: baseOrcamentoId,
-      cloneFrom: activeVersion.id,
-    });
-  };
-
-  // Auto-criar V1 assim que a folha de fecho base existir e ainda não houver Budget
+  // Auto-cria V1 quando ainda não existe nenhuma versão
   const autoCreatedRef = useRef(false);
   useEffect(() => {
-    if (
-      !isLoading &&
-      base?.id &&
-      versions.length === 0 &&
-      !createVersion.isPending &&
-      !autoCreatedRef.current
-    ) {
+    if (!isLoading && base?.id && versions.length === 0 && !createVersion.isPending && !autoCreatedRef.current) {
       autoCreatedRef.current = true;
       createVersion.mutate({ baseId: baseOrcamentoId });
     }
   }, [isLoading, base?.id, versions.length, baseOrcamentoId, createVersion]);
 
-  if (isLoading || versions.length === 0) {
+  if (isLoading || versions.length === 0 || !currentVersion) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-3">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          A preparar Budget a partir do Orçamento Base…
-        </p>
+        <p className="text-sm text-muted-foreground">A preparar Budget a partir do Orçamento Base…</p>
       </div>
     );
   }
 
+  const versionLabel = `V${currentVersion.budget_version_number}${
+    currentVersion.version_name ? ` · ${currentVersion.version_name}` : ""
+  }`;
+  const statusInfo = versionStatusLabel(currentVersion.budget_version_status);
+  const isReadOnly = !isVersionActive(currentVersion);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
-      {/* Coluna principal */}
-      <div className="space-y-4">
-        {/* Header da versão ativa */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex flex-wrap items-center justify-between gap-3">
-              <span className="flex items-center gap-2">
-                <TargetIcon className="h-4 w-4 text-primary" />
-                {activeVersion
-                  ? `Budget V${activeVersion.budget_version_number} · Ativa`
-                  : "Sem versão ativa"}
-              </span>
-              <div className="flex items-center gap-2">
-                {activeVersion && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditorOpen((v) => !v)}
-                    >
-                      {editorOpen ? (
-                        <ChevronUp className="h-3.5 w-3.5 mr-1.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      {editorOpen ? "Recolher editor" : "Editar artigos"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveAndOpenNew}
-                      disabled={lockVersion.isPending || createVersion.isPending}
-                    >
-                      {(lockVersion.isPending || createVersion.isPending) ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                      ) : (
-                        <Save className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      Gravar V{activeVersion.budget_version_number} e abrir V{activeVersion.budget_version_number + 1}
-                    </Button>
-                  </>
+    <div className="space-y-4">
+      {/* ===== Orçamento Base Bloqueado ===== */}
+      <Card className="border-amber-200 bg-amber-50/40">
+        <CardContent className="py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+              <FileLock2 className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                Orçamento Base
+                {isBaseLocked && (
+                  <Badge className="bg-amber-600 hover:bg-amber-600 text-white text-[10px]">Bloqueado</Badge>
                 )}
-                {!activeVersion && (
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      createVersion.mutate({
-                        baseId: baseOrcamentoId,
-                        cloneFrom: versions[0]?.id,
-                      })
-                    }
-                    disabled={createVersion.isPending}
-                  >
-                    {createVersion.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    Abrir nova versão
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isBaseLocked
+                  ? "Bloqueado pela Folha de Fecho Base · só para consulta"
+                  : "Será bloqueado quando a Folha de Fecho Base for gravada"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[11px] text-muted-foreground">Total Base</p>
+              <p className="text-base font-semibold">{fmtEUR(baseTotal)}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/orcamentos/${baseOrcamentoId}`)}>
+              <Eye className="h-3.5 w-3.5 mr-1.5" /> Ver Base
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        {/* ===== Coluna principal ===== */}
+        <div className="space-y-4">
+          {/* Header da versão selecionada + ações */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex flex-wrap items-center justify-between gap-3">
+                <span className="flex items-center gap-2 min-w-0">
+                  <TargetIcon className="h-4 w-4 text-primary shrink-0" />
+                  <span className="truncate">Budget {versionLabel}</span>
+                  <Badge className={`text-[10px] ${statusInfo.tone}`}>{statusInfo.label}</Badge>
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setCompareForId(currentVersion.id)}>
+                    <GitCompare className="h-3.5 w-3.5 mr-1.5" /> Comparar c/ Base
                   </Button>
-                )}
-              </div>
-            </CardTitle>
-          </CardHeader>
-          {activeVersion && (
-            <CardContent className="pt-0">
+                  <Button variant="outline" size="sm" onClick={() => setShowNewDialog(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Nova versão
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setEditorOpen((v) => !v)}>
+                    {editorOpen ? <ChevronUp className="h-3.5 w-3.5 mr-1.5" /> : <ChevronDown className="h-3.5 w-3.5 mr-1.5" />}
+                    {editorOpen ? "Recolher editor" : "Editar artigos"}
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <KPI label="Total Base" value={fmtEUR(baseTotal)} />
                 <KPI
-                  label={`Total V${activeVersion.budget_version_number}`}
-                  value={fmtEUR(activeVersion.valor_total)}
+                  label={`Total ${versionLabel.split(" ")[0]}`}
+                  value={fmtEUR(currentVersion.valor_total)}
                   highlight
                 />
                 <KPI
                   label="Desvio vs Base"
-                  value={fmtEUR(activeVersion.valor_total - baseTotal)}
+                  value={fmtEUR(currentVersion.valor_total - baseTotal)}
                   tone={
-                    activeVersion.valor_total > baseTotal
+                    currentVersion.valor_total > baseTotal
                       ? "negative"
-                      : activeVersion.valor_total < baseTotal
+                      : currentVersion.valor_total < baseTotal
                       ? "positive"
                       : undefined
                   }
                 />
                 <KPI
                   label="Atualizado"
-                  value={format(new Date(activeVersion.updated_at), "dd/MM/yyyy HH:mm", { locale: pt })}
+                  value={format(new Date(currentVersion.updated_at), "dd/MM/yyyy HH:mm", { locale: pt })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-3">
-                Edita capítulos e artigos diretamente abaixo. Quando gravares a
-                versão, ficará bloqueada no histórico e abre automaticamente uma
-                nova versão a partir dela.
-              </p>
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Editor embutido inline (mesma tela) */}
-        {activeVersion && editorOpen && (
-          <Card className="overflow-hidden">
-            <iframe
-              key={activeVersion.id}
-              src={`/orcamentos/${activeVersion.id}/editar?embed=1`}
-              title={`Editor Budget V${activeVersion.budget_version_number}`}
-              className="w-full border-0 bg-background"
-              style={{ height: "calc(100vh - 280px)", minHeight: 600 }}
-            />
-          </Card>
-        )}
-      </div>
-
-      {/* Sidebar: histórico */}
-      <div className="space-y-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <History className="h-4 w-4 text-primary" /> Histórico
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-3">
-            {versions.map((v) => {
-              const isActive = v.budget_version_status === "active";
-              return (
-                <button
-                  key={v.id}
-                  onClick={() => navigate(`/orcamentos/${v.id}/editar`)}
-                  className={`w-full text-left rounded-lg border p-2.5 transition-colors ${
-                    isActive
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/40"
-                  }`}
+              {currentVersion.version_reason && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Motivo:</span> {currentVersion.version_reason}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {currentVersion.budget_version_status !== "aprovado" && !isReadOnly && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => approve.mutate({ versionId: currentVersion.id, baseId: baseOrcamentoId })}
+                    disabled={approve.isPending}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Aprovar versão
+                  </Button>
+                )}
+                {!isVersionActive(currentVersion) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActive.mutate({ versionId: currentVersion.id, baseId: baseOrcamentoId })}
+                    disabled={setActive.isPending}
+                  >
+                    <Star className="h-3.5 w-3.5 mr-1.5" /> Definir como ativa
+                  </Button>
+                )}
+                {!isVersionActive(currentVersion) &&
+                  currentVersion.budget_version_status !== "arquivada" &&
+                  currentVersion.budget_version_status !== "locked" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => archive.mutate({ versionId: currentVersion.id, baseId: baseOrcamentoId })}
+                      disabled={archive.isPending}
+                    >
+                      <Archive className="h-3.5 w-3.5 mr-1.5" /> Arquivar
+                    </Button>
+                  )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    createVersion.mutate({ baseId: baseOrcamentoId, cloneFrom: currentVersion.id })
+                  }
+                  disabled={createVersion.isPending}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold leading-tight">
-                      Budget V{v.budget_version_number}
-                    </p>
-                    {isActive ? (
-                      <Badge className="text-[10px]">Ativa</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                        Histórico
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {format(new Date(v.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Total: {fmtEUR(v.valor_total)}
-                  </p>
-                </button>
-              );
-            })}
-
-            {/* Entrada Base (referência) */}
-            <div className="rounded-lg border border-dashed p-2.5 mt-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold leading-tight">Orçamento Base</p>
-                <Badge variant="outline" className="text-[10px]">
-                  Base
-                </Badge>
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Duplicar esta versão
+                </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Total: {fmtEUR(baseTotal)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Editor inline (mesma tela) */}
+          {editorOpen && (
+            <Card className="overflow-hidden">
+              {isReadOnly && (
+                <div className="bg-muted/50 border-b px-4 py-2 text-xs text-muted-foreground">
+                  Esta versão está em modo só-leitura ({statusInfo.label.toLowerCase()}). Para editar,
+                  define-a como ativa ou duplica-a numa nova versão.
+                </div>
+              )}
+              <iframe
+                key={currentVersion.id}
+                src={`/orcamentos/${currentVersion.id}/editar?embed=1`}
+                title={`Editor Budget ${versionLabel}`}
+                className="w-full border-0 bg-background"
+                style={{ height: "calc(100vh - 340px)", minHeight: 560 }}
+              />
+            </Card>
+          )}
+        </div>
+
+        {/* ===== Sidebar: histórico ===== */}
+        <div className="space-y-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" /> Versões do Budget
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 p-3">
+              {versions.map((v) => (
+                <VersionRow
+                  key={v.id}
+                  v={v}
+                  selected={v.id === currentVersion.id}
+                  onSelect={() => setSelectedVersionId(v.id)}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <NewBudgetVersionDialog
+        open={showNewDialog}
+        onOpenChange={setShowNewDialog}
+        versions={versions}
+        defaultSourceId={currentVersion.id}
+        loading={createVersion.isPending}
+        onConfirm={async ({ name, sourceId, reason, notes }) => {
+          await createVersion.mutateAsync({
+            baseId: baseOrcamentoId,
+            cloneFrom: sourceId,
+            name,
+            reason,
+            notes,
+          });
+          setShowNewDialog(false);
+        }}
+      />
+
+      {compareForId && (
+        <BudgetCompareDialog
+          open={!!compareForId}
+          onOpenChange={(o) => !o && setCompareForId(null)}
+          baseId={baseOrcamentoId}
+          versionId={compareForId}
+          versionLabel={`V${currentVersion.budget_version_number}`}
+        />
+      )}
     </div>
+  );
+}
+
+function VersionRow({
+  v,
+  selected,
+  onSelect,
+}: {
+  v: BudgetWorkingVersion;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const status = versionStatusLabel(v.budget_version_status);
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full text-left rounded-lg border p-2.5 transition-colors ${
+        selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold leading-tight truncate">
+          V{v.budget_version_number}
+          {v.version_name ? ` · ${v.version_name}` : ""}
+        </p>
+        <Badge className={`text-[10px] shrink-0 ${status.tone}`}>{status.label}</Badge>
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-1">
+        {format(new Date(v.created_at), "dd/MM/yyyy HH:mm", { locale: pt })}
+      </p>
+      <p className="text-[11px] text-muted-foreground mt-0.5">Total: {fmtEUR(v.valor_total)}</p>
+    </button>
   );
 }
 
@@ -257,20 +340,11 @@ function KPI({
   highlight?: boolean;
   tone?: "positive" | "negative";
 }) {
-  const toneClass =
-    tone === "negative"
-      ? "text-rose-600"
-      : tone === "positive"
-      ? "text-emerald-600"
-      : "";
+  const toneClass = tone === "negative" ? "text-rose-600" : tone === "positive" ? "text-emerald-600" : "";
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p
-        className={`font-semibold ${highlight ? "text-primary" : ""} ${toneClass}`}
-      >
-        {value}
-      </p>
+      <p className={`font-semibold ${highlight ? "text-primary" : ""} ${toneClass}`}>{value}</p>
     </div>
   );
 }
