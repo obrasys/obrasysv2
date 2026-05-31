@@ -28,6 +28,7 @@ export interface ClosingSheet {
   locked_at: string | null;
   notes: string | null;
   snapshot: any | null;
+  version_label?: string | null;
   details: Partial<ClosingSheetDetails> | null;
   created_at: string;
   updated_at: string;
