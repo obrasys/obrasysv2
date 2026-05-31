@@ -366,7 +366,7 @@ export default function VerOrcamentoPage() {
                   { icon: Euro, label: 'Valor Final', value: formatCurrency(valorFinal), bg: 'bg-primary/10', ic: 'text-primary' },
                   { icon: TrendingUp, label: 'Margem', value: `${orcamento.margem_lucro}%`, bg: 'bg-emerald-500/10', ic: 'text-emerald-600' },
                   { icon: Layers, label: 'Capítulos', value: String(totalCapitulos), bg: 'bg-amber-500/10', ic: 'text-amber-600' },
-                  { icon: Package, label: 'Itens', value: String(totalItens), bg: 'bg-purple-500/10', ic: 'text-purple-600' },
+                  { icon: FileStack, label: 'Itens', value: String(totalItens), bg: 'bg-purple-500/10', ic: 'text-purple-600' },
                   { icon: Calendar, label: 'Atualizado', value: format(new Date(orcamento.updated_at), 'dd/MM/yy', { locale: pt }), bg: 'bg-primary/10', ic: 'text-primary' },
                 ].map((k, i) => (
                   <Card key={i}>
