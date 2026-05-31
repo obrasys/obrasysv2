@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -121,6 +121,17 @@ const IcfDossier = lazy(() => import("./pages/icf/Dossier"));
 const CentrosDeCustoPage = lazy(() => import("./pages/empresa/CentrosDeCusto"));
 const GestaoEmpresaPage = lazy(() => import("./pages/empresa/GestaoEmpresa"));
 
+// Delays showing the fallback so quick chunk loads (<200ms) don't cause a layout flash.
+// During in-app navigation, React keeps the previous screen visible until the new chunk is ready.
+const DelayedPageLoader = () => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 200);
+    return () => clearTimeout(t);
+  }, []);
+  return show ? <PageLoader /> : null;
+};
+
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex">
     {/* Skeleton sidebar - mirrors real Sidebar dimensions */}
@@ -176,7 +187,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<DelayedPageLoader />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
