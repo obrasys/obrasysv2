@@ -330,12 +330,6 @@ export default function VerOrcamentoPage() {
             <ClosingSheetsPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
-          <TabsContent value="compras">
-            <PurchasesPanel
-              orcamentoId={orcamento.id}
-              obraId={(orcamento as any).obra_id ?? null}
-            />
-          </TabsContent>
 
           <TabsContent value="axia">
             <BudgetInsightsPanel orcamentoId={orcamento.id} />
