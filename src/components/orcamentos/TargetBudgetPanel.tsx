@@ -275,10 +275,23 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                       label: it.contracting_status,
                       cls: "bg-muted",
                     };
+                    const editable = currentVersion?.status === "active";
+                    const commit = (patch: Partial<BudgetVersionItem>) =>
+                      update.mutate({
+                        itemId: it.id,
+                        versionId: currentVersion!.id,
+                        orcamentoId,
+                        patch: patch as any,
+                      });
                     return (
                       <TableRow key={it.id}>
                         <TableCell className="text-sm">
-                          <div className="font-medium leading-tight">{it.description}</div>
+                          <InlineText
+                            value={it.description}
+                            editable={editable}
+                            onCommit={(v) => commit({ description: v })}
+                            className="font-medium leading-tight"
+                          />
                           {it.codigo && (
                             <div className="text-[11px] text-muted-foreground">{it.codigo}</div>
                           )}
@@ -286,19 +299,19 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                         <TableCell className="text-xs text-muted-foreground">
                           {it.chapter_code ?? "-"}
                         </TableCell>
-                        <TableCell className="text-xs">{it.unit ?? "-"}</TableCell>
+                        <TableCell className="text-xs">
+                          <InlineText
+                            value={it.unit ?? ""}
+                            editable={editable}
+                            onCommit={(v) => commit({ unit: v })}
+                            className="w-14"
+                          />
+                        </TableCell>
                         <TableCell className="text-right text-xs">
                           <InlineNumber
                             value={it.target_quantity}
-                            editable={currentVersion?.status === "active"}
-                            onCommit={(v) =>
-                              update.mutate({
-                                itemId: it.id,
-                                versionId: currentVersion!.id,
-                                orcamentoId,
-                                patch: { target_quantity: v },
-                              })
-                            }
+                            editable={editable}
+                            onCommit={(v) => commit({ target_quantity: v })}
                           />
                         </TableCell>
                         <TableCell className="text-right text-xs">
@@ -307,16 +320,9 @@ export function TargetBudgetPanel({ orcamentoId }: Props) {
                         <TableCell className="text-right text-xs font-semibold">
                           <InlineNumber
                             value={it.target_unit_price}
-                            editable={currentVersion?.status === "active"}
+                            editable={editable}
                             prefix="€"
-                            onCommit={(v) =>
-                              update.mutate({
-                                itemId: it.id,
-                                versionId: currentVersion!.id,
-                                orcamentoId,
-                                patch: { target_unit_price: v },
-                              })
-                            }
+                            onCommit={(v) => commit({ target_unit_price: v })}
                           />
                           <div className="text-[10px] text-muted-foreground">
                             = {formatCurrency(it.target_total)}
