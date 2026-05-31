@@ -323,7 +323,7 @@ export default function VerOrcamentoPage() {
           )}
 
           <TabsContent value="target">
-            <BudgetObjetivoPanel orcamentoId={orcamento.id} />
+            <TargetBudgetPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
           <TabsContent value="fecho">
