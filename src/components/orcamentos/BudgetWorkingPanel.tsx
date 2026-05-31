@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, History, Loader2, Pencil, Plus, Save, TargetIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, History, Loader2, Pencil, Plus, Save, TargetIcon } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import {
@@ -23,6 +23,7 @@ const fmtEUR = (v: number) =>
 
 export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
   const navigate = useNavigate();
+  const [editorOpen, setEditorOpen] = useState(true);
   const { orcamento: base } = useOrcamento(baseOrcamentoId);
   const { data: versions = [], isLoading } = useBudgetWorkingVersions(baseOrcamentoId);
   const createVersion = useCreateBudgetWorkingVersion();
@@ -90,10 +91,14 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/orcamentos/${activeVersion.id}/editar`)}
+                      onClick={() => setEditorOpen((v) => !v)}
                     >
-                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                      Editar artigos
+                      {editorOpen ? (
+                        <ChevronUp className="h-3.5 w-3.5 mr-1.5" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {editorOpen ? "Recolher editor" : "Editar artigos"}
                     </Button>
                     <Button
                       size="sm"
@@ -157,14 +162,26 @@ export function BudgetWorkingPanel({ baseOrcamentoId }: Props) {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-3">
-                Clica em <strong>Editar artigos</strong> para abrir o editor completo
-                (capítulos, adicionar artigos da Base de Preços, IA, paramétrico,
-                descontos por capítulo). Quando gravares a versão, ficará bloqueada
-                no histórico e abre automaticamente uma nova versão a partir dela.
+                Edita capítulos e artigos diretamente abaixo. Quando gravares a
+                versão, ficará bloqueada no histórico e abre automaticamente uma
+                nova versão a partir dela.
               </p>
             </CardContent>
           )}
         </Card>
+
+        {/* Editor embutido inline (mesma tela) */}
+        {activeVersion && editorOpen && (
+          <Card className="overflow-hidden">
+            <iframe
+              key={activeVersion.id}
+              src={`/orcamentos/${activeVersion.id}/editar?embed=1`}
+              title={`Editor Budget V${activeVersion.budget_version_number}`}
+              className="w-full border-0 bg-background"
+              style={{ height: "calc(100vh - 280px)", minHeight: 600 }}
+            />
+          </Card>
+        )}
       </div>
 
       {/* Sidebar: histórico */}

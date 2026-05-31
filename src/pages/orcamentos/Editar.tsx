@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamento, useOrcamentos } from '@/hooks/useOrcamentos';
 import { useClientes } from '@/hooks/useClientes';
@@ -74,6 +74,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function EditarOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get('embed') === '1';
   const { toast } = useToast();
   const { updateStatus, updateOrcamento } = useOrcamentos();
   const {
@@ -162,6 +164,13 @@ export default function EditarOrcamentoPage() {
     };
  
   if (isLoading || !orcamento) {
+    if (isEmbed) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
     return (
       <AppLayout title="Carregar Orçamento...">
         <div className="flex items-center justify-center h-64">
@@ -342,12 +351,21 @@ export default function EditarOrcamentoPage() {
     </>
   );
 
+  const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+    isEmbed ? (
+      <div className="bg-background">{children}</div>
+    ) : (
+      <AppLayout
+        title={orcamento.titulo}
+        subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
+        actions={headerActions}
+      >
+        {children}
+      </AppLayout>
+    );
+
   return (
-    <AppLayout
-      title={orcamento.titulo}
-      subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
-      actions={headerActions}
-    >
+    <Wrapper>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Status badge + Axia */}
         <div className="mb-3 md:mb-4 flex items-center gap-3 flex-wrap">
@@ -1039,6 +1057,6 @@ export default function EditarOrcamentoPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </Wrapper>
   );
 }
