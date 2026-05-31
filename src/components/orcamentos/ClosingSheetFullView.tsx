@@ -464,11 +464,13 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
                   {update.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Gravar
                 </Button>
-                <Button size="sm" variant="default" onClick={handleApprove} disabled={approve.isPending || update.isPending}
-                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
-                  {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                  Aprovar e Bloquear
-                </Button>
+                {!isLocked && (
+                  <Button size="sm" variant="default" onClick={handleApprove} disabled={approve.isPending || update.isPending}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                    Aprovar e Bloquear
+                  </Button>
+                )}
               </>
             )}
             {readOnly && (
