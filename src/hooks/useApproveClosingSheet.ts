@@ -68,7 +68,7 @@ export function useApproveClosingSheet(orcamentoId: string | undefined) {
         if (!obraId) {
           const valor =
             Number(sheet.sale_price ?? 0) ||
-            Number(params.totals?.salePrice ?? 0) ||
+            Number(params.totals?.valor_vendas ?? 0) ||
             Number(orc?.valor_total ?? 0);
 
           const { data: novaObra, error: obraErr } = await supabase
