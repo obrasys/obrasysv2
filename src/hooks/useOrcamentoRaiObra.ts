@@ -245,10 +245,12 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
       const sources: IntegrationSourceCard[] = [
         {
           key: 'orcamento-base',
-          label: 'Orçamento Base',
+          label: activeBudgetVersion
+            ? `Budget v${activeBudgetVersion.budget_version_number} (ativa)`
+            : 'Orçamento Base',
           module: 'Orçamentos',
-          state: orcsData.length > 0 ? 'consolidated' : 'no_data',
-          lastUpdate: orcsData[0]?.updated_at || null,
+          state: activeBudget ? 'consolidated' : (orcsData.length > 0 ? 'found' : 'no_data'),
+          lastUpdate: activeBudget?.updated_at || orcsData[0]?.updated_at || null,
           totalDocs: orcsData.length,
           acceptedDocs: adjudicados.length,
           pendingDocs: orcsData.length - adjudicados.length,
