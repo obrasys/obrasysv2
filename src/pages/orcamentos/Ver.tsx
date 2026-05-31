@@ -21,9 +21,9 @@ import {
 import {
   ArrowLeft, Printer, FileText, Building2, Calendar, Euro, Edit, Loader2,
   Phone, Mail, MapPin, User, Send, Copy, GitBranch, ChevronDown, ChevronRight,
-  Layers, Package, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
+  Layers, TrendingUp, AlertTriangle, Lightbulb, PackageMinus, Search,
   Zap, HardHat, MoreHorizontal, FileStack, ShoppingCart, Sparkles,
-  LockIcon, TargetIcon, FileCheck2, History,
+  TargetIcon, FileCheck2, History, LineChart,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -38,11 +38,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
-import { BaseDryBudgetPanel } from '@/components/orcamentos/BaseDryBudgetPanel';
 import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
 import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
-import { ContractingPackagesPanel } from '@/components/orcamentos/ContractingPackagesPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
 import { BudgetInsightsPanel } from '@/components/orcamentos/BudgetInsightsPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
@@ -288,17 +286,11 @@ export default function VerOrcamentoPage() {
         <Tabs defaultValue="orcamento">
           <TabsList className="mb-4 no-print flex flex-wrap h-auto">
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-            <TabsTrigger value="base">
-              <LockIcon className="h-3 w-3 mr-1.5" /> Base Seco
-            </TabsTrigger>
             <TabsTrigger value="target">
               <TargetIcon className="h-3 w-3 mr-1.5" /> {opLayerShort}
             </TabsTrigger>
             <TabsTrigger value="fecho">
-              <FileCheck2 className="h-3 w-3 mr-1.5" /> Fecho Económico
-            </TabsTrigger>
-            <TabsTrigger value="pacotes">
-              <Package className="h-3 w-3 mr-1.5" /> Pacotes
+              <FileCheck2 className="h-3 w-3 mr-1.5" /> Folha de Fecho Base
             </TabsTrigger>
             <TabsTrigger value="compras">
               <ShoppingCart className="h-3 w-3 mr-1.5" /> Compras
@@ -312,15 +304,26 @@ export default function VerOrcamentoPage() {
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="base">
-            <BaseDryBudgetPanel
-              orcamentoId={orcamento.id}
-              isLocked={isLocked}
-              lockedAt={lockedAt}
-              status={orcamento.status}
-              valorBase={valorBase}
-            />
-          </TabsContent>
+          {(orcamento as any).obra_id && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-start gap-2">
+                <LineChart className="h-4 w-4 text-primary mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-semibold text-foreground">Tudo ligado em Orçamento &amp; RAI da Obra</p>
+                  <p className="text-muted-foreground">
+                    Pacotes de contratação seguem agora pelo fluxo MCE. O bloqueio é feito exclusivamente pela Folha de Fecho Base.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/obras/${(orcamento as any).obra_id}/orcamento-rai`)}
+              >
+                Abrir Orçamento &amp; RAI
+              </Button>
+            </div>
+          )}
 
           <TabsContent value="target">
             <TargetBudgetPanel orcamentoId={orcamento.id} />
@@ -328,10 +331,6 @@ export default function VerOrcamentoPage() {
 
           <TabsContent value="fecho">
             <ClosingSheetsPanel orcamentoId={orcamento.id} />
-          </TabsContent>
-
-          <TabsContent value="pacotes">
-            <ContractingPackagesPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
           <TabsContent value="compras">
@@ -344,6 +343,7 @@ export default function VerOrcamentoPage() {
           <TabsContent value="axia">
             <BudgetInsightsPanel orcamentoId={orcamento.id} />
           </TabsContent>
+
 
 
 
@@ -366,7 +366,7 @@ export default function VerOrcamentoPage() {
                   { icon: Euro, label: 'Valor Final', value: formatCurrency(valorFinal), bg: 'bg-primary/10', ic: 'text-primary' },
                   { icon: TrendingUp, label: 'Margem', value: `${orcamento.margem_lucro}%`, bg: 'bg-emerald-500/10', ic: 'text-emerald-600' },
                   { icon: Layers, label: 'Capítulos', value: String(totalCapitulos), bg: 'bg-amber-500/10', ic: 'text-amber-600' },
-                  { icon: Package, label: 'Itens', value: String(totalItens), bg: 'bg-purple-500/10', ic: 'text-purple-600' },
+                  { icon: FileStack, label: 'Itens', value: String(totalItens), bg: 'bg-purple-500/10', ic: 'text-purple-600' },
                   { icon: Calendar, label: 'Atualizado', value: format(new Date(orcamento.updated_at), 'dd/MM/yy', { locale: pt }), bg: 'bg-primary/10', ic: 'text-primary' },
                 ].map((k, i) => (
                   <Card key={i}>

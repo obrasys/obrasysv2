@@ -334,7 +334,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
     const styles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
       .map((el) => el.outerHTML)
       .join("\n");
-    const title = `Folha de Fecho - ${isInitial ? "Inicial" : "Final"}`;
+    const title = `Folha de Fecho - ${isInitial ? "Base" : "Final"}`;
     win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${styles}
       <style>body{padding:24px;background:#fff;color:#000;} input,textarea{border:0!important;background:transparent!important;padding:0!important;height:auto!important;} button{display:none!important;}</style>
       </head><body>${html}</body></html>`);
@@ -507,7 +507,7 @@ export function ClosingSheetFullView({ sheet }: { sheet: ClosingSheet }) {
             </div>
           </div>
           <div className="text-right text-xs">
-            <p className="font-bold uppercase text-primary">{isInitial ? "Folha de Fecho Inicial" : "Folha de Fecho Final"}</p>
+            <p className="font-bold uppercase text-primary">{isInitial ? "Folha de Fecho Base" : "Folha de Fecho Final"}</p>
             <p className="font-mono text-sm font-semibold mt-1">{sheetCode}</p>
             <p className="text-muted-foreground mt-1">
               Emitido: {format(new Date(), "dd/MM/yyyy HH:mm", { locale: pt })}

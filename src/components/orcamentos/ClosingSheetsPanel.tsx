@@ -44,9 +44,9 @@ export function ClosingSheetsPanel({ orcamentoId }: { orcamentoId: string }) {
           <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
           <p className="font-semibold mb-1">Sem Folha de Fecho ainda</p>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            A <strong>Folha de Fecho Inicial</strong> é gerada automaticamente quando o Orçamento
-            Base Seco é aprovado. A <strong>Folha de Fecho Final</strong> é consolidada a partir
-            do Budget Objetivo final.
+            A <strong>Folha de Fecho Base</strong> bloqueia o orçamento e passa a ser a referência
+            oficial. A <strong>Folha de Fecho Final</strong> é consolidada a partir do Budget
+            Objetivo final.
           </p>
         </CardContent>
       </Card>
