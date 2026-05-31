@@ -43,8 +43,23 @@ export function useOrcamentoRaiObra(obraId: string | undefined) {
         }
       };
 
-      const orcsPreload = await safeList(sb.from('orcamentos').select('id,titulo,status,valor_total,updated_at').eq('obra_id', obraId));
-      const budgetIds = orcsPreload.map((o: any) => o.id).filter(Boolean);
+      const orcsPreload = await safeList(
+        sb.from('orcamentos')
+          .select('id,titulo,status,valor_total,updated_at,budget_version_number,budget_version_status,revisao_de')
+          .eq('obra_id', obraId)
+      );
+      // Também procura versões de trabalho do Budget cujo "revisao_de" aponta aos orçamentos desta obra
+      const baseIds = orcsPreload.map((o: any) => o.id).filter(Boolean);
+      const workingVersions = baseIds.length > 0
+        ? await safeList(
+            sb.from('orcamentos')
+              .select('id,titulo,status,valor_total,updated_at,budget_version_number,budget_version_status,revisao_de')
+              .in('revisao_de', baseIds)
+              .not('budget_version_number', 'is', null)
+          )
+        : [];
+      const allOrcs = [...orcsPreload, ...workingVersions];
+      const budgetIds = allOrcs.map((o: any) => o.id).filter(Boolean);
 
       const ffSelect = 'id,closing_type,status,obra_id,source_budget_id,sale_price,total_direct_cost,total_indirect_cost,site_costs,structure_costs,margin_amount,expected_result,final_result,approved_at,locked_at,updated_at';
       const ffByObra = safeList(sb.from('closing_sheets').select(ffSelect).eq('obra_id', obraId));
