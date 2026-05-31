@@ -221,11 +221,8 @@ export default function AssistenteArquitetura() {
   // ICF (existente ou nova) associada à obra, e navega para /icf onde o resumo é calculado.
   const importToIcfAndNavigate = async (statusToSet: 'pre_orcamento' | 'validado') => {
     if (!activeSessionId || !session.data || !organization) return;
-    const obra = sessionObraId || linkObraId;
-    if (!obra) {
-      toast({ title: 'Associe uma obra antes de gerar', variant: 'destructive' });
-      return;
-    }
+    // Obra é opcional: se não estiver associada, gera config ICF sem obra.
+    const obra = sessionObraId || linkObraId || null;
     const allItems = items.data ?? [];
     const wallsToImport = statusToSet === 'validado'
       ? allItems.filter((i) => (i.category === 'parede_ext' || i.category === 'parede_int') && i.user_confirmed)
@@ -235,10 +232,13 @@ export default function AssistenteArquitetura() {
       return;
     }
     try {
-      // 1) Garantir configuração ICF para a obra
-      const { data: existing } = await supabase
-        .from('icf_configuracoes').select('*').eq('obra_id', obra).order('versao', { ascending: false }).limit(1);
-      let configId = existing?.[0]?.id as string | undefined;
+      // 1) Garantir configuração ICF (associada à obra se existir, senão standalone)
+      let configId: string | undefined;
+      if (obra) {
+        const { data: existing } = await supabase
+          .from('icf_configuracoes').select('*').eq('obra_id', obra).order('versao', { ascending: false }).limit(1);
+        configId = existing?.[0]?.id as string | undefined;
+      }
       if (!configId) {
         const { data: created, error: cErr } = await supabase
           .from('icf_configuracoes')
