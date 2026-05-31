@@ -49,6 +49,7 @@ export function useOrcamentos() {
           *,
           obra:obras(id, nome, cliente)
         `)
+        .is('budget_version_number', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
