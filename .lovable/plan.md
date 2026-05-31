@@ -1,139 +1,55 @@
+## Objetivo
 
-# Hardening de Segurança — Versão Enxuta
+Transformar o separador **Budget** num espelho editável da tabela **Custos Diretos / Preços Secos – Valores s/ IVA** da Folha de Fecho Base. Cada gravação cria uma **nova Folha de Fecho** com o nome **"Budget Objetivo V1", "V2", …** mantendo histórico do mais recente até à Base.
 
-Sem refatorar hooks nem inventar rotas de servidor. Foco em fechar buracos reais de RLS e ganhar rasto auditável das operações sensíveis.
+## Como vai funcionar
 
----
+1. Ao abrir o separador **Budget**:
+   - Se ainda não existir nenhuma "Budget Objetivo Vx", carrega-se a estrutura dos **38 capítulos** (`DEFAULT_DIRECT_COST_LINES`) com os valores actualmente na **Folha de Fecho Base** (`details.direct_costs` + `direct_costs_extra` + estimativa).
+   - Se já existirem, mostra-se a versão **mais recente** (V_n) editável e as anteriores em modo só-leitura.
 
-## Fase 1 — Auditoria RLS (read-only, gera relatório)
+2. **Edição inline** (valor, desconto %, empresa, notas) por linha, mais o bloco de **Extras**, **Estimativa €/m²** e **Estimativa fixa** — exactamente como na Folha de Fecho Base.
 
-Correr no Supabase e compilar um relatório markdown com:
+3. Botão **"Gravar nova versão"**:
+   - Cria um novo registo em `closing_sheets` com `closing_type = 'initial'`, `status = 'draft'`, `notes = 'Budget Objetivo Vn'` e `details` (snapshot completo igual ao da Base, mas com `direct_costs` editados).
+   - Marca a versão anterior como `superseded` (campo já existente no enum não chega — usamos `status = 'locked'` + um sufixo no `notes` "(substituída)").
+   - Recalcula `total_direct_cost`, `sale_price`, `margin_*`, etc. via `computeClosingTotals`.
 
-1. **Tabelas `public.*` sem RLS ativo** (`rowsecurity = false`).
-2. **Tabelas com RLS mas sem qualquer policy** (efetivamente fechadas — verificar se intencional).
-3. **Policies permissivas demais**: `USING (true)`, `WITH CHECK (true)`, ou que ignoram `auth.uid()` / `get_org_member_ids()`.
-4. **Grants a `anon`** em tabelas que deviam ser só `authenticated`.
-5. **Colunas sensíveis expostas**: `nif`, `salario_base`, `telefone`, `email`, `iban`, `password_*`, tokens — listar onde aparecem e se há view restritiva.
-6. **Views sem `security_invoker=on`** (bypassam RLS do utilizador).
-7. **Funções `SECURITY DEFINER` sem `set search_path`** (vetor conhecido).
+4. **Histórico lateral**: lista vertical "V3 (actual) → V2 → V1 → Base", clicável para ver/comparar.
 
-Correr também `supabase--linter` para apanhar avisos automáticos.
+## Alterações de código
 
-**Output:** relatório em `.lovable/security-audit.md` com cada achado classificado como `BLOQUEANTE` / `MÉDIO` / `INFORMATIVO` + SQL de correção sugerido para cada um.
+### Backend (migration)
+Adicionar coluna `version_label TEXT` em `closing_sheets` para identificar "Budget Objetivo V1/V2/...". Sem alterar lógica existente das folhas Base/Final — apenas usar `closing_type='initial'` + `version_label` para distinguir.
 
-**Nada é corrigido nesta fase** — só diagnóstico. Tu revês e aprovas os fixes antes da Fase 2.
-
----
-
-## Fase 2 — Correções RLS aprovadas
-
-Para cada achado `BLOQUEANTE` / `MÉDIO` que aprovares, migration única consolidada:
-
-- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` onde estiver em falta.
-- `REVOKE` em grants indevidos a `anon`.
-- Policies novas/ajustadas usando os helpers existentes (`get_org_member_ids()`, `has_role()`, `is_super_admin()`).
-- Views `security_invoker=on` para colunas sensíveis quando aplicável.
-- `set search_path = public` em funções `SECURITY DEFINER` que faltem.
-
-Tudo numa migration revisível antes de aplicar.
-
----
-
-## Fase 3 — Tabela de auditoria + triggers
-
-### 3.1 Schema
-
-```sql
-CREATE TABLE public.audit_log (
-  id            bigserial PRIMARY KEY,
-  occurred_at   timestamptz NOT NULL DEFAULT now(),
-  actor_id      uuid,                          -- auth.uid()
-  actor_email   text,
-  organization_id uuid,
-  table_name    text NOT NULL,
-  record_id     text,                          -- PK do registo afetado (texto p/ flexibilidade)
-  action        text NOT NULL,                 -- INSERT | UPDATE | DELETE
-  old_data      jsonb,
-  new_data      jsonb,
-  diff          jsonb,                         -- só campos alterados (UPDATE)
-  ip_address    inet,                          -- via request.headers se disponível
-  user_agent    text
-);
-
-CREATE INDEX ON public.audit_log (occurred_at DESC);
-CREATE INDEX ON public.audit_log (organization_id, occurred_at DESC);
-CREATE INDEX ON public.audit_log (table_name, record_id);
-CREATE INDEX ON public.audit_log (actor_id, occurred_at DESC);
+```text
+ALTER TABLE public.closing_sheets ADD COLUMN version_label TEXT;
 ```
 
-**Grants & RLS:**
-- `GRANT SELECT ON public.audit_log TO authenticated;`
-- `GRANT ALL ON public.audit_log TO service_role;`
-- RLS: SELECT apenas para `is_super_admin(auth.uid())` ou membros da mesma `organization_id`.
-- **Sem INSERT/UPDATE/DELETE policies** — só triggers `SECURITY DEFINER` escrevem. Frontend nunca toca aqui.
+### Hooks
+- `useBudgetObjetivoVersions(orcamentoId)` — lista `closing_sheets` onde `version_label LIKE 'Budget Objetivo V%'` ordenadas desc, mais a folha Base como "âncora" final.
+- `useSaveBudgetObjetivoVersion()` — RPC client-side:
+  1. lê Base sheet
+  2. calcula próximo número `Vn`
+  3. INSERT em `closing_sheets` com `version_label='Budget Objetivo Vn'`, `details=<edição actual>`, totais recomputados
+  4. invalida queries
 
-### 3.2 Função de trigger genérica
+### UI — substitui `TargetBudgetPanel.tsx`
+Novo `BudgetObjetivoPanel.tsx`:
+- Cabeçalho: selector de versão + botão "Gravar nova versão" + KPIs (Total Directos, Custo Industrial, Margem, PV)
+- Tabela com as 38 linhas (mesma estrutura da Folha de Fecho Base, secção Custos Diretos):
+  - colunas: Cap. | Designação | Valor (€) | Desc. % | Empresa | Notas
+  - Editável apenas na **versão mais recente**; versões antigas em só-leitura
+- Bloco "Extras" + "Estimativa €/m²" + "Estimativa fixa" idênticos
+- Painel lateral "Histórico": cards verticais V_n → V_1 → **Base** (link para o separador Folha de Fecho Base)
 
-`public.log_audit_event()` — `SECURITY DEFINER`, `set search_path = public`:
-- Captura `TG_OP`, `TG_TABLE_NAME`, `OLD`, `NEW`.
-- Resolve `organization_id` da própria linha (fallback `NULL`).
-- Resolve `actor_email` via `auth.users` se `auth.uid()` existir.
-- Em UPDATE, calcula `diff` (só chaves cujo valor mudou).
-- Insere na `audit_log`.
+### Pequenas mudanças
+- `ClosingSheetsPanel.tsx`: ao listar folhas `initial`, **excluir** as que tenham `version_label` começando por "Budget Objetivo" (só a Base aparece nesse separador).
+- `src/pages/orcamentos/Ver.tsx`: trocar import `TargetBudgetPanel` → `BudgetObjetivoPanel` no `<TabsContent value="target">`.
 
-### 3.3 Tabelas auditadas (escopo cirúrgico — não tudo)
+## O que NÃO muda
+- Tabela `budget_versions` e fluxo MCE continuam intactos (são usados internamente para adjudicações/compras).
+- Folha de Fecho Base mantém comportamento actual (criação, bloqueio, criação de obra, etc.).
+- Folha de Fecho Final continua a ser gerada pelo fluxo existente.
 
-| Tabela | Ações | Porquê |
-|---|---|---|
-| `obras` | I/U/D | Operacional crítico |
-| `orcamentos` | I/U/D | Financeiro / contratual |
-| `orcamento_itens` | U/D | Alterações pós-adjudicação |
-| `equipa_membros` | I/U/D | Recursos humanos |
-| `user_roles` | I/U/D | **Privilege escalation** |
-| `team_invitations` | I/U/D | Acesso à org |
-| `super_admins` | I/U/D | Acesso máximo |
-| `clientes` | I/U/D | PII |
-| `subempreiteiros` | I/U/D | PII + financeiro |
-| `livro_ponto` | I/U/D | Custos laborais |
-| `financeiro_*` (receitas, despesas, cycles) | I/U/D | Dinheiro |
-| `adjudicacoes` | I/U/D | Compromisso contratual |
-| `client_portal_access` | I/U/D | Acessos externos |
-| `supplier_portal_access` | I/U/D | Acessos externos |
-
-Triggers `AFTER INSERT OR UPDATE OR DELETE FOR EACH ROW EXECUTE FUNCTION log_audit_event()`.
-
-### 3.4 UI mínima (Super Admin)
-
-Página `/admin/auditoria` (lazy-loaded, só visível a super admins):
-- Filtros: data, ator, tabela, ação, organização.
-- Lista paginada com timeline + diff expansível (UPDATEs).
-- Export CSV (UTF-8 BOM, `;` — padrão PT do projeto).
-
-Standard de listagem do projeto: card grid + bottom toolbar.
-
----
-
-## O que NÃO está incluído (e porquê)
-
-- **Não refatorar os ~100 hooks `supabase.from(...)`** — quebraria realtime, signed URLs, cache e tipos. A proteção real é o RLS, não esconder o cliente.
-- **Não criar “rotas /api”** — projeto é Vite SPA. Onde é preciso `service_role`, já existem Edge Functions.
-- **Não auditar todas as tabelas** — listing acima cobre os vetores reais (dinheiro, acesso, PII). Auditar tudo enche a tabela de ruído.
-
----
-
-## Detalhes técnicos
-
-- Migration única por fase (Fase 2 RLS, Fase 3 audit) para rollback limpo.
-- `log_audit_event()` swallow-on-error com `RAISE WARNING` — auditoria nunca pode partir um INSERT/UPDATE legítimo.
-- `audit_log` cresce: prever job de purga (manter 24 meses) numa fase 4 futura, fora deste plano.
-- IP/user-agent: tentar via `current_setting('request.headers', true)::jsonb` — se ausente, ficam `NULL` (browser direto vs Edge Function).
-
----
-
-## Ordem de execução após aprovares
-
-1. Fase 1 → relatório `.lovable/security-audit.md`.
-2. Tu revês, aprovas/rejeitas cada achado.
-3. Fase 2 → migration RLS.
-4. Fase 3.1–3.3 → migration audit table + triggers.
-5. Fase 3.4 → página `/admin/auditoria`.
+Confirma para eu avançar com a migration + código?

@@ -2944,6 +2944,7 @@ export type Database = {
           total_indirect_cost: number
           updated_at: string
           user_id: string
+          version_label: string | null
         }
         Insert: {
           approved_at?: string | null
@@ -2973,6 +2974,7 @@ export type Database = {
           total_indirect_cost?: number
           updated_at?: string
           user_id: string
+          version_label?: string | null
         }
         Update: {
           approved_at?: string | null
@@ -3002,6 +3004,7 @@ export type Database = {
           total_indirect_cost?: number
           updated_at?: string
           user_id?: string
+          version_label?: string | null
         }
         Relationships: [
           {

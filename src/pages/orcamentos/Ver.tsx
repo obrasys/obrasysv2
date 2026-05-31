@@ -38,7 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
-import { TargetBudgetPanel } from '@/components/orcamentos/TargetBudgetPanel';
+import { BudgetObjetivoPanel } from '@/components/orcamentos/BudgetObjetivoPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
 import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
@@ -323,7 +323,7 @@ export default function VerOrcamentoPage() {
           )}
 
           <TabsContent value="target">
-            <TargetBudgetPanel orcamentoId={orcamento.id} />
+            <BudgetObjetivoPanel orcamentoId={orcamento.id} />
           </TabsContent>
 
           <TabsContent value="fecho">
