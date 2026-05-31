@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +132,7 @@ export function BudgetChapterAccordion({
       </div>
 
       {open && (
-        <div className="border-t overflow-x-auto">
+        <div className="border-t">
           {(capitulo.artigos?.length ?? 0) === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-muted-foreground">
               Sem artigos neste capítulo.
@@ -143,68 +143,52 @@ export function BudgetChapterAccordion({
               )}
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                <tr>
-                  <th className="text-left font-medium px-3 py-2 w-24">Código</th>
-                  <th className="text-left font-medium px-3 py-2">Descrição</th>
-                  <th className="text-left font-medium px-3 py-2 w-16">Un.</th>
-                  <th className="text-right font-medium px-3 py-2 w-24">Qtd.</th>
-                  <th className="text-right font-medium px-3 py-2 w-28">Custo unit.</th>
-                  <th className="text-right font-medium px-3 py-2 w-28">Venda unit.</th>
-                  <th className="text-right font-medium px-3 py-2 w-28">Venda total</th>
-                  <th className="text-center font-medium px-3 py-2 w-24">Estado</th>
-                  <th className="px-2 py-2 w-10" />
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* ===== Mobile: card list ===== */}
+              <div className="md:hidden divide-y">
                 {(capitulo.artigos ?? []).map((art) => {
                   const { status, base } = classifyItem(art, k, comparison.baseItemsByKey);
                   const custoUnit = Number(art.preco_base ?? art.preco_unitario ?? 0);
                   const vendaUnit = Number(art.preco_unitario ?? 0);
                   const vendaTotal = Number(art.valor_total ?? vendaUnit * Number(art.quantidade ?? 0));
                   return (
-                    <tr key={art.id} className="border-t hover:bg-muted/20">
-                      <td className="px-3 py-2 text-muted-foreground">{art.codigo ?? "—"}</td>
-                      <td className="px-3 py-2 max-w-[420px]">
-                        <p className="truncate" title={art.descricao}>{art.descricao}</p>
-                        {base && status === "alterado" && (
-                          <p className="text-[10px] text-muted-foreground">
-                            Base: {base.quantidade} {base.unidade} · {fmtEUR(base.preco_unitario)}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">{art.unidade}</td>
-                      <td className="px-3 py-2 text-right">
-                        <InlineNumber
-                          value={Number(art.quantidade ?? 0)}
-                          readOnly={readOnly}
-                          onCommit={(v) => onUpdateQuantidade(art.id, v)}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <InlineNumber
-                          value={custoUnit}
-                          readOnly={readOnly}
-                          onCommit={(v) => onUpdateCustoVenda(art.id, { preco_base: v })}
-                          prefix="€"
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <InlineNumber
-                          value={vendaUnit}
-                          readOnly={readOnly}
-                          onCommit={(v) => onUpdateCustoVenda(art.id, { preco_unitario: v })}
-                          prefix="€"
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-right font-medium">{fmtEUR(vendaTotal)}</td>
-                      <td className="px-3 py-2 text-center">
-                        <Badge className={`text-[10px] ${statusStyle[status]}`}>
+                    <div key={art.id} className="px-3 py-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-muted-foreground">{art.codigo ?? "—"}</p>
+                          <p className="text-sm font-medium break-words">{art.descricao}</p>
+                        </div>
+                        <Badge className={`text-[10px] shrink-0 ${statusStyle[status]}`}>
                           {status === "original" ? "Original" : status === "alterado" ? "Alterado" : "Novo"}
                         </Badge>
-                      </td>
-                      <td className="px-2 py-2">
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <Field label={`Qtd. (${art.unidade})`}>
+                          <InlineNumber
+                            value={Number(art.quantidade ?? 0)}
+                            readOnly={readOnly}
+                            onCommit={(v) => onUpdateQuantidade(art.id, v)}
+                          />
+                        </Field>
+                        <Field label="Custo unit.">
+                          <InlineNumber
+                            value={custoUnit}
+                            readOnly={readOnly}
+                            onCommit={(v) => onUpdateCustoVenda(art.id, { preco_base: v })}
+                          />
+                        </Field>
+                        <Field label="Venda unit.">
+                          <InlineNumber
+                            value={vendaUnit}
+                            readOnly={readOnly}
+                            onCommit={(v) => onUpdateCustoVenda(art.id, { preco_unitario: v })}
+                          />
+                        </Field>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <p className="text-xs text-muted-foreground">
+                          Total: <span className="font-semibold text-foreground">{fmtEUR(vendaTotal)}</span>
+                        </p>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="icon" variant="ghost" className="h-7 w-7">
@@ -213,7 +197,7 @@ export function BudgetChapterAccordion({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => onEditArtigo(art)} disabled={readOnly}>
-                              <Pencil className="h-3.5 w-3.5 mr-2" /> Editar artigo
+                              <Pencil className="h-3.5 w-3.5 mr-2" /> Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onDeleteArtigo(art.id)}
@@ -224,12 +208,106 @@ export function BudgetChapterAccordion({
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </td>
-                    </tr>
+                      </div>
+                      {base && status === "alterado" && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Base: {base.quantidade} {base.unidade} · {fmtEUR(base.preco_unitario)}
+                        </p>
+                      )}
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+
+              {/* ===== Desktop/tablet: table ===== */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm min-w-[760px] table-fixed">
+                  <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-medium px-3 py-2 w-20">Código</th>
+                      <th className="text-left font-medium px-3 py-2">Descrição</th>
+                      <th className="text-left font-medium px-3 py-2 w-14">Un.</th>
+                      <th className="text-right font-medium px-3 py-2 w-20">Qtd.</th>
+                      <th className="text-right font-medium px-3 py-2 w-24">Custo un.</th>
+                      <th className="text-right font-medium px-3 py-2 w-24">Venda un.</th>
+                      <th className="text-right font-medium px-3 py-2 w-24 hidden lg:table-cell">Venda total</th>
+                      <th className="text-center font-medium px-3 py-2 w-20">Estado</th>
+                      <th className="px-2 py-2 w-10" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(capitulo.artigos ?? []).map((art) => {
+                      const { status, base } = classifyItem(art, k, comparison.baseItemsByKey);
+                      const custoUnit = Number(art.preco_base ?? art.preco_unitario ?? 0);
+                      const vendaUnit = Number(art.preco_unitario ?? 0);
+                      const vendaTotal = Number(art.valor_total ?? vendaUnit * Number(art.quantidade ?? 0));
+                      return (
+                        <tr key={art.id} className="border-t hover:bg-muted/20 align-top">
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{art.codigo ?? "—"}</td>
+                          <td className="px-3 py-2">
+                            <p className="break-words whitespace-normal">{art.descricao}</p>
+                            {base && status === "alterado" && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Base: {base.quantidade} {base.unidade} · {fmtEUR(base.preco_unitario)}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{art.unidade}</td>
+                          <td className="px-3 py-2 text-right">
+                            <InlineNumber
+                              value={Number(art.quantidade ?? 0)}
+                              readOnly={readOnly}
+                              onCommit={(v) => onUpdateQuantidade(art.id, v)}
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <InlineNumber
+                              value={custoUnit}
+                              readOnly={readOnly}
+                              onCommit={(v) => onUpdateCustoVenda(art.id, { preco_base: v })}
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <InlineNumber
+                              value={vendaUnit}
+                              readOnly={readOnly}
+                              onCommit={(v) => onUpdateCustoVenda(art.id, { preco_unitario: v })}
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right font-medium hidden lg:table-cell">{fmtEUR(vendaTotal)}</td>
+                          <td className="px-3 py-2 text-center">
+                            <Badge className={`text-[10px] ${statusStyle[status]}`}>
+                              {status === "original" ? "Original" : status === "alterado" ? "Alterado" : "Novo"}
+                            </Badge>
+                          </td>
+                          <td className="px-2 py-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-7 w-7">
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEditArtigo(art)} disabled={readOnly}>
+                                  <Pencil className="h-3.5 w-3.5 mr-2" /> Editar artigo
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => onDeleteArtigo(art.id)}
+                                  disabled={readOnly}
+                                  className="text-rose-600 focus:text-rose-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -266,5 +344,14 @@ function InlineNumber({
       }}
       className="w-full rounded-md border border-transparent hover:border-input focus:border-primary focus:outline-none px-2 py-1 text-right bg-transparent"
     />
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="rounded-md border bg-muted/30 px-2 py-1">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="text-sm font-medium">{children}</div>
+    </div>
   );
 }
