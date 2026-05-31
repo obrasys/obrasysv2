@@ -249,7 +249,7 @@ function InlineNumber({
   prefix?: string;
 }) {
   const [local, setLocal] = useState<string>(String(value ?? 0));
-  useMemo(() => setLocal(String(value ?? 0)), [value]);
+  useEffect(() => setLocal(String(value ?? 0)), [value]);
 
   if (readOnly) {
     return <span>{prefix ? `${prefix} ` : ""}{Number(value ?? 0).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>;
