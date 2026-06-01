@@ -652,6 +652,50 @@ export default function EssencialPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Retomar rascunho anterior — só aparece quando existe um rascunho com conteúdo */}
+      <AlertDialog open={!!resumeDraft} onOpenChange={(open) => { if (!open) { /* manter aberto até decisão */ } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retomar orçamento anterior?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Encontrámos um rascunho não finalizado. Quer continuar onde parou ou começar um novo orçamento em branco?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                // Começar novo: descarta o rascunho
+                localStorage.removeItem(DRAFT_KEY);
+                setResumeDraft(null);
+                setHydrated(true);
+              }}
+            >
+              Começar novo
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (resumeDraft) {
+                  setBudgetType(resumeDraft.budgetType ?? null);
+                  setItems(resumeDraft.items ?? []);
+                  setCustomAreas(resumeDraft.customAreas ?? []);
+                  setClientInfo(resumeDraft.clientInfo ?? getDefaultClientInfo());
+                  setContingencyPercent(resumeDraft.contingencyPercent ?? 0);
+                  setDiscountPercent(resumeDraft.discountPercent ?? 0);
+                  setVatPercent(resumeDraft.vatPercent ?? 23);
+                  setMarginPercent(resumeDraft.marginPercent ?? 0);
+                  setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
+                }
+                setResumeDraft(null);
+                setHydrated(true);
+              }}
+            >
+              Continuar rascunho
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
+
   );
 }
