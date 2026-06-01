@@ -121,26 +121,29 @@ export default function PlanDetail() {
 
   // Upload-new-plan dialog
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  // Pending page-jump for "Analisar todas as folhas em falta"
+  // Pending page-jump for "Analisar todas as folhas em falta" (uma de cada vez)
   const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
   const [autoAnalyzeToken, setAutoAnalyzeToken] = useState(0);
+  // Confirmação entre folhas: o utilizador escolhe quando avançar para a próxima
+  const [nextSheetPrompt, setNextSheetPrompt] = useState<{ nextPage: number; remaining: number } | null>(null);
 
-  // Advance queue when the current page becomes analyzed
+  // Quando a página atual fica analisada, em vez de avançar automaticamente,
+  // pedimos confirmação ao utilizador para iniciar a medição da folha seguinte.
   useEffect(() => {
     if (pendingAnalyzeQueue.length === 0) return;
     const [head, ...rest] = pendingAnalyzeQueue;
     if (axiaResultsByPage[head]) {
       if (rest.length > 0) {
+        // Remove a folha concluída da fila e mostra prompt para a próxima
         setPendingAnalyzeQueue(rest);
-        setCurrentPage(rest[0]);
-        setAutoAnalyzeToken((t) => t + 1);
-        toast.info(`A analisar folha ${rest[0]}... (${rest.length} restantes)`);
+        setNextSheetPrompt({ nextPage: rest[0], remaining: rest.length });
       } else {
         setPendingAnalyzeQueue([]);
         toast.success("Todas as folhas analisadas.");
       }
     }
   }, [axiaResultsByPage, pendingAnalyzeQueue]);
+
 
   // File URL
   const fileUrlQuery = useQuery({
