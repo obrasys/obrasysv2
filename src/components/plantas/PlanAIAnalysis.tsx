@@ -344,10 +344,28 @@ export function PlanAIAnalysis({
       let { data, error } = await callAxia(base64);
 
       if (error) {
-        // Quando a edge devolve non-2xx, supabase-js entrega o body em `data` na mesma.
+        // Tenta extrair body da resposta non-2xx para mostrar a causa real.
+        let bodyMsg = "";
+        try {
+          const ctx: any = (error as any)?.context;
+          if (ctx?.json) {
+            const j = await ctx.json();
+            bodyMsg = j?.error?.message || (typeof j?.error === "string" ? j.error : "") || j?.message || "";
+          } else if (ctx?.text) {
+            bodyMsg = await ctx.text();
+          }
+        } catch { /* ignore */ }
+
         if (!data?.analysis && !data?.error) {
-          const msg = (error as any)?.message || (typeof error === "string" ? error : "Falha na comunicação com a Axia");
-          throw new Error(msg);
+          const status = (error as any)?.context?.status;
+          const friendly =
+            status === 413 ? "Imagem demasiado grande (>12 MB). Reduza a resolução da planta."
+            : status === 401 ? "Sessão expirada. Volte a entrar e tente novamente."
+            : status === 402 ? "Créditos de IA esgotados."
+            : status === 429 ? "Limite de pedidos atingido. Tente novamente em breve."
+            : status === 500 || status === 503 ? "Serviço de análise indisponível. Tente novamente."
+            : (bodyMsg || (error as any)?.message || "Falha na comunicação com a Axia");
+          throw new Error(friendly);
         }
       }
       if (data?.error) {
