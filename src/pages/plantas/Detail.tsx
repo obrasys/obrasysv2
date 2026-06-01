@@ -1166,11 +1166,12 @@ export default function PlanDetail() {
                     toast.info("Todas as folhas já estão analisadas.");
                     return;
                   }
-                  toast.info(`A analisar ${pending.length} folhas em sequência...`);
+                  // Em vez de iniciar logo, pedimos confirmação para a primeira folha.
+                  // A medição é feita uma folha de cada vez, com confirmação entre folhas.
                   setPendingAnalyzeQueue(pending);
-                  setCurrentPage(pending[0]);
-                  setAutoAnalyzeToken((t) => t + 1);
+                  setNextSheetPrompt({ nextPage: pending[0], remaining: pending.length });
                 }}
+
                 autoAnalyzeToken={autoAnalyzeToken}
                 resultsByPage={axiaResultsByPage}
                 obraId={obraId}
