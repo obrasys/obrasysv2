@@ -121,26 +121,29 @@ export default function PlanDetail() {
 
   // Upload-new-plan dialog
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  // Pending page-jump for "Analisar todas as folhas em falta"
+  // Pending page-jump for "Analisar todas as folhas em falta" (uma de cada vez)
   const [pendingAnalyzeQueue, setPendingAnalyzeQueue] = useState<number[]>([]);
   const [autoAnalyzeToken, setAutoAnalyzeToken] = useState(0);
+  // Confirmação entre folhas: o utilizador escolhe quando avançar para a próxima
+  const [nextSheetPrompt, setNextSheetPrompt] = useState<{ nextPage: number; remaining: number } | null>(null);
 
-  // Advance queue when the current page becomes analyzed
+  // Quando a página atual fica analisada, em vez de avançar automaticamente,
+  // pedimos confirmação ao utilizador para iniciar a medição da folha seguinte.
   useEffect(() => {
     if (pendingAnalyzeQueue.length === 0) return;
     const [head, ...rest] = pendingAnalyzeQueue;
     if (axiaResultsByPage[head]) {
       if (rest.length > 0) {
+        // Remove a folha concluída da fila e mostra prompt para a próxima
         setPendingAnalyzeQueue(rest);
-        setCurrentPage(rest[0]);
-        setAutoAnalyzeToken((t) => t + 1);
-        toast.info(`A analisar folha ${rest[0]}... (${rest.length} restantes)`);
+        setNextSheetPrompt({ nextPage: rest[0], remaining: rest.length });
       } else {
         setPendingAnalyzeQueue([]);
         toast.success("Todas as folhas analisadas.");
       }
     }
   }, [axiaResultsByPage, pendingAnalyzeQueue]);
+
 
   // File URL
   const fileUrlQuery = useQuery({
@@ -1163,11 +1166,12 @@ export default function PlanDetail() {
                     toast.info("Todas as folhas já estão analisadas.");
                     return;
                   }
-                  toast.info(`A analisar ${pending.length} folhas em sequência...`);
+                  // Em vez de iniciar logo, pedimos confirmação para a primeira folha.
+                  // A medição é feita uma folha de cada vez, com confirmação entre folhas.
                   setPendingAnalyzeQueue(pending);
-                  setCurrentPage(pending[0]);
-                  setAutoAnalyzeToken((t) => t + 1);
+                  setNextSheetPrompt({ nextPage: pending[0], remaining: pending.length });
                 }}
+
                 autoAnalyzeToken={autoAnalyzeToken}
                 resultsByPage={axiaResultsByPage}
                 obraId={obraId}
@@ -1664,6 +1668,50 @@ export default function PlanDetail() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação entre folhas: medição uma de cada vez */}
+      <Dialog
+        open={!!nextSheetPrompt}
+        onOpenChange={(open) => { if (!open) { setNextSheetPrompt(null); setPendingAnalyzeQueue([]); } }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Medir folha {nextSheetPrompt?.nextPage}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Este ficheiro tem várias plantas. Vamos fazer a medição de quantitativos
+            <strong> uma folha de cada vez</strong>. Pretende iniciar agora a medição da
+            folha <strong>{nextSheetPrompt?.nextPage}</strong>?
+            {nextSheetPrompt && nextSheetPrompt.remaining > 1 && (
+              <span className="block mt-1 text-xs">
+                Restam {nextSheetPrompt.remaining} folha(s) por analisar.
+              </span>
+            )}
+          </p>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setNextSheetPrompt(null); setPendingAnalyzeQueue([]); }}
+            >
+              Parar
+            </Button>
+            <Button
+              onClick={() => {
+                const target = nextSheetPrompt?.nextPage;
+                setNextSheetPrompt(null);
+                if (target) {
+                  setCurrentPage(target);
+                  setAutoAnalyzeToken((t) => t + 1);
+                  toast.info(`A medir folha ${target}…`);
+                }
+              }}
+            >
+              Iniciar medição
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
+
   );
 }
