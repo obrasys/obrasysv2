@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { BudgetTypeSelector } from '@/components/orcamentos/essencial-v2/BudgetTypeSelector';
@@ -87,20 +87,42 @@ export default function EssencialPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const draft = useRef(loadDraft()).current;
-
-  const [budgetType, setBudgetType] = useState<BudgetType | null>(draft?.budgetType ?? null);
-  const [items, setItems] = useState<BudgetItem[]>(draft?.items ?? []);
-  const [customAreas, setCustomAreas] = useState<AreaConfig[]>(draft?.customAreas ?? []);
-  const [clientInfo, setClientInfo] = useState<BudgetClientInfo>(draft?.clientInfo ?? getDefaultClientInfo());
-  const [contingencyPercent, setContingencyPercent] = useState(draft?.contingencyPercent ?? 0);
-  const [discountPercent, setDiscountPercent] = useState(draft?.discountPercent ?? 0);
-  const [vatPercent, setVatPercent] = useState(draft?.vatPercent ?? 23);
-  const [marginPercent, setMarginPercent] = useState(draft?.marginPercent ?? 0);
-  const [observationsText, setObservationsText] = useState<string>((draft as any)?.observationsText ?? '');
+  // Sempre que se entra em "/orcamentos/essencial/novo" arrancamos LIMPO.
+  // Se existir um rascunho não finalizado, perguntamos ao utilizador se quer retomar.
+  const [budgetType, setBudgetType] = useState<BudgetType | null>(null);
+  const [items, setItems] = useState<BudgetItem[]>([]);
+  const [customAreas, setCustomAreas] = useState<AreaConfig[]>([]);
+  const [clientInfo, setClientInfo] = useState<BudgetClientInfo>(getDefaultClientInfo());
+  const [contingencyPercent, setContingencyPercent] = useState(0);
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [vatPercent, setVatPercent] = useState(23);
+  const [marginPercent, setMarginPercent] = useState(0);
+  const [observationsText, setObservationsText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
+
+  // Prompt para retomar rascunho anterior (em vez de o restaurar silenciosamente)
+  const [resumeDraft, setResumeDraft] = useState<DraftState | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const draft = loadDraft();
+    const hasContent = !!draft && (
+      (draft.items && draft.items.length > 0) ||
+      !!draft.budgetType ||
+      (draft.customAreas && draft.customAreas.length > 0) ||
+      !!draft.clientInfo?.clientName?.trim()
+    );
+    if (hasContent) {
+      setResumeDraft(draft);
+    } else {
+      // Garante começar limpo
+      localStorage.removeItem(DRAFT_KEY);
+      setHydrated(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Modal state
   const [modalArea, setModalArea] = useState<AreaConfig | null>(null);
@@ -116,11 +138,13 @@ export default function EssencialPage() {
     })();
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Autosave
+  // Autosave — só depois do utilizador escolher (continuar/novo), para não sobrescrever rascunho com vazio
   useEffect(() => {
+    if (!hydrated) return;
     const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent };
     saveDraft(state);
-  }, [budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent]);
+  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent]);
+
 
   // Computed
   const systemAreas = budgetType ? getAreasForType(budgetType) : [];
@@ -628,6 +652,50 @@ export default function EssencialPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Retomar rascunho anterior — só aparece quando existe um rascunho com conteúdo */}
+      <AlertDialog open={!!resumeDraft} onOpenChange={(open) => { if (!open) { /* manter aberto até decisão */ } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retomar orçamento anterior?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Encontrámos um rascunho não finalizado. Quer continuar onde parou ou começar um novo orçamento em branco?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                // Começar novo: descarta o rascunho
+                localStorage.removeItem(DRAFT_KEY);
+                setResumeDraft(null);
+                setHydrated(true);
+              }}
+            >
+              Começar novo
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (resumeDraft) {
+                  setBudgetType(resumeDraft.budgetType ?? null);
+                  setItems(resumeDraft.items ?? []);
+                  setCustomAreas(resumeDraft.customAreas ?? []);
+                  setClientInfo(resumeDraft.clientInfo ?? getDefaultClientInfo());
+                  setContingencyPercent(resumeDraft.contingencyPercent ?? 0);
+                  setDiscountPercent(resumeDraft.discountPercent ?? 0);
+                  setVatPercent(resumeDraft.vatPercent ?? 23);
+                  setMarginPercent(resumeDraft.marginPercent ?? 0);
+                  setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
+                }
+                setResumeDraft(null);
+                setHydrated(true);
+              }}
+            >
+              Continuar rascunho
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
+
   );
 }
