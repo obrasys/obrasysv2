@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { useOrcamentos } from '@/hooks/useOrcamentos';
@@ -18,6 +18,22 @@ export default function CriarOrcamentoPage() {
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [budgetMode, setBudgetMode] = useState<BudgetMode>('remodelacao');
+
+  // Garantir que o formulário arranca SEMPRE limpo (sem restauros do BFCache do
+  // browser ou de estados preservados entre navegações). A key força um remount
+  // do <OrcamentoForm/> a cada entrada nesta página.
+  const formMountKey = useMemo(() => `criar-orcamento-${Date.now()}`, []);
+
+  useEffect(() => {
+    // Limpa eventuais rascunhos do fluxo Essencial para evitar confusão.
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('orcamento-essencial-draft'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const buildPayload = (data: OrcamentoFormData) => ({
     ...data,
@@ -161,6 +177,7 @@ export default function CriarOrcamentoPage() {
             </CardHeader>
             <CardContent>
               <OrcamentoForm
+                key={formMountKey}
                 onSubmit={handleSubmit}
                 onSaveDraft={handleSaveDraft}
                 onImportPlanta={handleImportarPlanta}
