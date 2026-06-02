@@ -177,6 +177,7 @@ export default function CriarOrcamentoPage() {
             </CardHeader>
             <CardContent>
               <OrcamentoForm
+                key={formMountKey}
                 onSubmit={handleSubmit}
                 onSaveDraft={handleSaveDraft}
                 onImportPlanta={handleImportarPlanta}
