@@ -447,9 +447,17 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     };
 
     // Total budget must stay under 150s (edge function idle limit).
+    // PDFs só são aceites por modelos Gemini — modelos OpenAI rejeitam application/pdf
+    // ("Invalid MIME type. Only image types are supported"). Para PDFs forçamos
+    // cadeia 100% Gemini; para imagens mantemos a cadeia configurada.
+    const isPdf = mimeType === "application/pdf";
+    const pdfSafe = (m: string) => m.startsWith("google/");
+    const safePrimary = isPdf && !pdfSafe(chain.primary) ? "google/gemini-2.5-pro" : chain.primary;
+    const safeFallback = isPdf && !pdfSafe(chain.fallback) ? "google/gemini-2.5-flash" : chain.fallback;
+
     const attempts: Array<{ model: string; timeoutMs: number }> = [
-      { model: chain.primary, timeoutMs: 80_000 },
-      { model: chain.fallback, timeoutMs: 55_000 },
+      { model: safePrimary, timeoutMs: 80_000 },
+      { model: safeFallback, timeoutMs: 55_000 },
     ];
 
     let aiResponse: Response | null = null;
