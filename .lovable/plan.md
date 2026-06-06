@@ -119,9 +119,13 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 10 — UI/UX em 7 etapas (stepper)
+## Fase 10 — UI/UX em 7 etapas (stepper) ✅
 
-Stepper claro: Upload → Identificar tipo → Confirmar escala/unidade → Parâmetros ICF → Rever elementos → Gerar quantitativo → Enviar para orçamento. Indicador de etapa sempre visível.
+- ✅ Novo componente `IcfPlantaStepper` (presentational) com 7 etapas: Upload → Tipo → Escala → Parâmetros → Revisão → Quantitativo → Orçamento. Ícones por etapa, label completa em ≥sm e curta em mobile, scroll horizontal seguro.
+- ✅ Estados visuais: atual (primary), concluído (emerald + check), bloqueado (destructive), pendente (muted). Conector entre etapas mostra progresso.
+- ✅ `deriveIcfPlantaStep()` calcula a etapa atual a partir do estado do `IcfPlantAnalyzer` (sem alterar fluxo): isAnalyzing → Tipo; `__requires_unit_confirmation` → Escala; `diagnoseMissingData` → Parâmetros; `paredes_revisao>0` ou gate bloqueado → Revisão; dialog de orçamento ou `isCreating` → Orçamento.
+- ✅ Integrado no topo do `CardContent` do `IcfPlantAnalyzer` — sempre visível enquanto o utilizador percorre o fluxo.
+
 
 ---
 
