@@ -350,6 +350,15 @@ const IcfIndex = () => {
         onConfirm={handleConfirmGenerateBudget}
         isPending={generateBudget.isPending}
       />
+
+      <IcfWelcomeDialog
+        open={welcomeOpen}
+        onOpenChange={setWelcomeOpen}
+        configs={configs ?? []}
+        isCreating={createConfig.isPending}
+        onCreateNew={handleWelcomeCreateNew}
+        onLoadExisting={handleWelcomeLoadExisting}
+      />
     </AppLayout>
   );
 };
