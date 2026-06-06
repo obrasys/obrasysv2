@@ -465,6 +465,26 @@ export function IcfPlantAnalyzer({
               </p>
             )}
 
+            {foundationSuggested && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm space-y-1.5">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="h-4 w-4" />
+                  Fundação sugerida pela Axia — revisão obrigatória
+                </div>
+                <p className="text-xs text-amber-700/90 dark:text-amber-200/80">
+                  {foundationSuggested.label}. Valide as dimensões antes de enviar para orçamento.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-1"
+                  onClick={() => setFoundationsModalOpen(true)}
+                >
+                  Alterar tipo de fundação
+                </Button>
+              </div>
+            )}
+
             {diagnosis.needsReview && (
               <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm space-y-1.5">
                 <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
