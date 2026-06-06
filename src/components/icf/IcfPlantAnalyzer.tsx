@@ -325,6 +325,17 @@ export function IcfPlantAnalyzer({
           reasons={diagnosis.reasons}
         />
 
+        <DxfUnitConfirmDialog
+          open={unitDialogOpen}
+          onOpenChange={(v) => { setUnitDialogOpen(v); if (!v) setUnitDialogDismissed(true); }}
+          detectedUnit={result?.__detected_unit ?? null}
+          bbox={result?.__audit?.bbox_m ?? null}
+          warnings={result?.__sanity_warnings ?? []}
+          onConfirm={handleUnitConfirm}
+          onCancel={handleUnitCancel}
+          isReanalyzing={isAnalyzing}
+        />
+
         {isCreating && (
           <div className="flex items-center gap-3 py-6 justify-center text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
