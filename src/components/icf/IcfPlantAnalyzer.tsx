@@ -15,6 +15,7 @@ import { DxfPreviewDialog } from './DxfPreviewDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
+import { DxfDiagnosticPanel } from './DxfDiagnosticPanel';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
 import { IcfFoundationsModal } from './assistant/IcfFoundationsModal';
 import type { FoundationOptionKey } from '@/types/icf-assistant';
