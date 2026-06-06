@@ -14,8 +14,10 @@ import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDial
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
+import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
+
 
 
 interface IcfPlantAnalyzerProps {
@@ -201,6 +203,24 @@ export function IcfPlantAnalyzer({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {(() => {
+          const quants = analysisResult
+            ? buildIcfUnifiedQuantities(analysisResult, unifiedParams)
+            : null;
+          const gate = evaluateConfidenceGate(analysisResult, quants);
+          const step = deriveIcfPlantaStep({
+            hasResult: !!analysisResult,
+            isAnalyzing,
+            needsUnitConfirm: needsUnitConfirm && !unitDialogDismissed,
+            needsMissingData: diagnosis.needsReview && !missingDismissed,
+            paredesRevisao: quants?.totais.paredes_revisao ?? 0,
+            isBlocked: gate.isBlocked,
+            budgetDialogOpen,
+            isCreating,
+          });
+          const blocked = gate.isBlocked ? (["revisao"] as const) : [];
+          return <IcfPlantaStepper current={step} blocked={[...blocked]} />;
+        })()}
         {!analysisResult && (
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 flex gap-2">
