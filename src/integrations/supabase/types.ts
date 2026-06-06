@@ -9262,6 +9262,125 @@ export type Database = {
           },
         ]
       }
+      plan_analysis_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          metadata: Json
+          obra_id: string | null
+          organization_id: string
+          plan_analysis_version_id: string | null
+          plan_import_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          obra_id?: string | null
+          organization_id: string
+          plan_analysis_version_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          metadata?: Json
+          obra_id?: string | null
+          organization_id?: string
+          plan_analysis_version_id?: string | null
+          plan_import_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_analysis_logs_plan_analysis_version_id_fkey"
+            columns: ["plan_analysis_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_analysis_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_analysis_logs_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_analysis_versions: {
+        Row: {
+          analysis_payload: Json
+          confidence: number | null
+          created_at: string
+          created_by: string
+          human_reviewed: boolean
+          id: string
+          notes: string | null
+          obra_id: string | null
+          organization_id: string
+          plan_import_id: string
+          requires_review: boolean
+          source: string
+          summary: Json | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          analysis_payload: Json
+          confidence?: number | null
+          created_at?: string
+          created_by: string
+          human_reviewed?: boolean
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id: string
+          plan_import_id: string
+          requires_review?: boolean
+          source?: string
+          summary?: Json | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          analysis_payload?: Json
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          human_reviewed?: boolean
+          id?: string
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string
+          plan_import_id?: string
+          requires_review?: boolean
+          source?: string
+          summary?: Json | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_analysis_versions_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_budget_links: {
         Row: {
           artigo_orcamento_id: string
