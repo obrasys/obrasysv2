@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
+
 
 interface ExtractedVao {
   tipo_vao: string;
