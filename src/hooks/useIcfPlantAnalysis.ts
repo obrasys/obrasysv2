@@ -49,6 +49,36 @@ export interface IcfPlantAnalysisResult {
   notas?: string;
 }
 
+/** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
+export function diagnoseMissingData(result: IcfPlantAnalysisResult | null): {
+  needsReview: boolean;
+  reasons: string[];
+} {
+  if (!result) return { needsReview: false, reasons: [] };
+  const reasons: string[] = [];
+  if (result.paredes.length === 0) {
+    reasons.push('A Axia não conseguiu extrair paredes desta planta.');
+  }
+  const semAltura = result.paredes.filter((p) => !p.altura_util || p.altura_util < 1.5);
+  if (semAltura.length > 0) {
+    reasons.push(`${semAltura.length} parede(s) sem altura legível.`);
+  }
+  const baixaConfianca = result.paredes.filter(
+    (p) => typeof p.confianca === 'number' && p.confianca < 0.6,
+  );
+  if (baixaConfianca.length > 0) {
+    reasons.push(`${baixaConfianca.length} parede(s) com confiança < 60%.`);
+  }
+  const semEscala = result.paredes.filter(
+    (p) => p.metodo_medicao === 'estimativa_visual' || /sem escala|indispon/i.test(p.notas_validacao || ''),
+  );
+  if (semEscala.length > 0) {
+    reasons.push(`${semEscala.length} parede(s) sem escala/cota fiável.`);
+  }
+  return { needsReview: reasons.length > 0, reasons };
+}
+
+
 interface AnalyzeParams {
   filePath: string;
   obraId?: string | null;
