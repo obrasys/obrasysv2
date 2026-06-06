@@ -112,7 +112,12 @@ export function useIcfPlantAnalysis() {
 
       if (error) throw new Error(error.message || 'Erro na análise');
       if (data?.error) throw new Error(data.error);
-      return { ...(data.data as IcfPlantAnalysisResult), __audit: data.audit } as IcfPlantAnalysisResult & { __audit?: any };
+      return {
+        ...(data.data as IcfPlantAnalysisResult),
+        __audit: data.audit,
+        __plan_import_id: data.plan_import_id ?? null,
+        __plan_analysis_version_id: data.plan_analysis_version_id ?? null,
+      } as IcfPlantAnalysisResult & { __audit?: any };
     },
     onSuccess: (result: any) => {
       setAnalysisResult(result);
