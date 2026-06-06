@@ -176,7 +176,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       {
         type: "image_url",
         image_url: {
-          url: `data:image/jpeg;base64,${image_base64}`,
+          url: `data:${detectedMime};base64,${image_base64}`,
         },
       },
     ];
