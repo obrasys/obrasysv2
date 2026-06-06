@@ -605,7 +605,11 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     }
 
     if (!aiResponse) {
-      return jsonResponse({ error: `Erro na análise AI: ${lastErr || "indisponível"}` }, 504);
+      const isTimeout = /abort|timeout|signal/i.test(lastErr);
+      const userMsg = isTimeout
+        ? "A análise demorou demasiado. Tente um PDF mais leve (menos páginas) ou uma imagem da planta."
+        : `Erro na análise AI: ${lastErr || "indisponível"}`;
+      return jsonResponse({ error: userMsg }, 504);
     }
 
 
