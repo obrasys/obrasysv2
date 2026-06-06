@@ -116,14 +116,25 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
             <p className="text-sm font-medium text-foreground">
               {isDragActive ? "Solte o ficheiro aqui" : "Arraste ou clique para selecionar"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 12 MB</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              PDF, DXF, PNG ou JPG — até 12 MB (raster) / 20 MB (DXF vetorial)
+            </p>
           </div>
         ) : (
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            {isPdf ? <FileText className="w-8 h-8 text-destructive" /> : <Image className="w-8 h-8 text-primary" />}
+            {isDxf ? (
+              <FileCode className="w-8 h-8 text-primary" />
+            ) : isPdf ? (
+              <FileText className="w-8 h-8 text-destructive" />
+            ) : (
+              <Image className="w-8 h-8 text-primary" />
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+              <p className="text-xs text-muted-foreground">
+                {(file.size / 1024 / 1024).toFixed(1)} MB
+                {isDxf && <span className="ml-2 text-primary">· DXF vetorial</span>}
+              </p>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
               <X className="w-4 h-4" />
