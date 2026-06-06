@@ -99,7 +99,7 @@ const escapeHtml = (s: string) =>
 
     let itemsHtml = "";
     for (const cap of capitulos) {
-      itemsHtml += `<tr style="background:#f3f4f6"><td colspan="5" style="padding:8px;font-weight:bold">${cap.numero}. ${cap.titulo}</td></tr>`;
+      itemsHtml += `<tr style="background:#f3f4f6"><td colspan="5" style="padding:8px;font-weight:bold">${escapeHtml(String(cap.numero))}. ${escapeHtml(cap.titulo || "")}</td></tr>`;
       const artigos = (cap.artigos_orcamento || [])
         .sort((a: any, b: any) => a.ordem - b.ordem);
       for (const art of artigos) {
@@ -107,8 +107,8 @@ const escapeHtml = (s: string) =>
         const precoComMargem = art.preco_unitario * margemMultiplier;
         const totalComMargem = (art.valor_total || art.quantidade * art.preco_unitario) * margemMultiplier;
         itemsHtml += `<tr>
-          <td style="padding:6px 8px">${art.descricao}</td>
-          <td style="padding:6px 8px;text-align:center">${art.unidade}</td>
+          <td style="padding:6px 8px">${escapeHtml(art.descricao || "")}</td>
+          <td style="padding:6px 8px;text-align:center">${escapeHtml(art.unidade || "")}</td>
           <td style="padding:6px 8px;text-align:right">${art.quantidade}</td>
           <td style="padding:6px 8px;text-align:right">${fmt(precoComMargem)}</td>
           <td style="padding:6px 8px;text-align:right">${fmt(totalComMargem)}</td>
@@ -152,8 +152,8 @@ const escapeHtml = (s: string) =>
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;color:#333">
         <div style="background:#1a56db;padding:24px;border-radius:8px 8px 0 0">
-          <h1 style="color:#fff;margin:0;font-size:22px">Orçamento - ${orcamento.titulo}</h1>
-          <p style="color:#dbeafe;margin:4px 0 0">${senderName}</p>
+          <h1 style="color:#fff;margin:0;font-size:22px">Orçamento - ${escapeHtml(orcamento.titulo || "")}</h1>
+          <p style="color:#dbeafe;margin:4px 0 0">${escapeHtml(senderName)}</p>
         </div>
         <div style="padding:24px;border:1px solid #e5e7eb;border-top:none">
           <p style="white-space:pre-line">${escapeHtml(mensagem || "")}</p>
@@ -175,9 +175,9 @@ const escapeHtml = (s: string) =>
           
           <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb"/>
           <p style="font-size:12px;color:#6b7280">
-            Este orçamento foi gerado automaticamente por ${senderName} através da plataforma Obra Sys.
-            ${profile?.telefone ? `Contacto: ${profile.telefone}` : ""}
-            ${profile?.email ? ` | Email: ${profile.email}` : ""}
+            Este orçamento foi gerado automaticamente por ${escapeHtml(senderName)} através da plataforma Obra Sys.
+            ${profile?.telefone ? `Contacto: ${escapeHtml(profile.telefone)}` : ""}
+            ${profile?.email ? ` | Email: ${escapeHtml(profile.email)}` : ""}
           </p>
         </div>
       </div>
@@ -192,8 +192,9 @@ const escapeHtml = (s: string) =>
       );
     }
 
-    // Use verified domain obrasys.pt
-    const fromEmail = `${senderName} <noreply@obrasys.pt>`;
+    // Use verified domain obrasys.pt — sanitize display name to prevent header injection
+    const safeSender = String(senderName).replace(/[\r\n"<>]/g, "").trim().slice(0, 80) || "ObrasYS";
+    const fromEmail = `${safeSender} <noreply@obrasys.pt>`;
 
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
