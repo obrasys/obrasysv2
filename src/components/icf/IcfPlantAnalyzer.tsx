@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
+import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
+import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams } from '@/lib/icf-unified-quantities';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
