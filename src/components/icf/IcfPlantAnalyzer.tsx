@@ -17,6 +17,7 @@ import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
+import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
 
 
 
@@ -137,7 +138,7 @@ export function IcfPlantAnalyzer({
 
       runAnalyze(filePath);
     } catch (err: any) {
-      toast({ title: 'Erro no upload', description: err.message, variant: 'destructive' });
+      toast(humanizeError(err, PLAN_MESSAGES.upload_error()));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -179,10 +180,7 @@ export function IcfPlantAnalyzer({
     setAnalysisResult({ ...analysisResult, paredes: updatedParedes });
     setMissingOpen(false);
     setMissingDismissed(true);
-    toast({
-      title: 'Valores aplicados com revisão obrigatória',
-      description: 'As paredes ficam marcadas como “requer revisão” antes de irem para orçamento.',
-    });
+    toast(PLAN_MESSAGES.missing_data_applied());
   };
 
   const handleMissingDiscard = () => {

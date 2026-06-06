@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
+
 
 interface ExtractedVao {
   tipo_vao: string;
@@ -142,22 +144,20 @@ export function useIcfPlantAnalysis() {
       setAnalysisResult(result);
       const audit = result?.__audit;
       if (audit?.requer_revisao_humana) {
-        toast({
-          title: 'Revisão humana recomendada',
-          description: 'A Axia detetou possível duplicação ou baixa confiança na leitura da planta. Revise as paredes extraídas antes de gerar orçamento.',
-          variant: 'destructive',
-        });
+        toast(PLAN_MESSAGES.analysis_needs_review());
       } else {
-        toast({
-          title: 'Análise concluída',
-          description: `Encontrados: ${result.paredes.length} paredes, ${result.fundacoes.length} fundações, ${result.lajes.length} lajes`,
-        });
+        toast(PLAN_MESSAGES.analysis_done({
+          paredes: result.paredes.length,
+          fundacoes: result.fundacoes.length,
+          lajes: result.lajes.length,
+        }));
       }
     },
     onError: (e: any) => {
-      toast({ title: 'Erro na análise', description: e.message, variant: 'destructive' });
+      toast(humanizeError(e, PLAN_MESSAGES.analysis_error()));
     },
   });
+
 
   const createRecordsMutation = useMutation({
     mutationFn: async (params: {
@@ -334,10 +334,11 @@ export function useIcfPlantAnalysis() {
       }
 
       setAnalysisResult(null);
-      toast({
-        title: 'Dados ICF criados com sucesso',
-        description: `${params.result.paredes.length} paredes, ${params.result.fundacoes.length} fundações e ${params.result.lajes.length} lajes criadas.`,
-      });
+      toast(PLAN_MESSAGES.records_created({
+        paredes: params.result.paredes.length,
+        fundacoes: params.result.fundacoes.length,
+        lajes: params.result.lajes.length,
+      }));
     },
     onError: async (e: any, params) => {
       const orgId = organization?.id;
@@ -355,7 +356,7 @@ export function useIcfPlantAnalysis() {
           } as any);
         } catch {}
       }
-      toast({ title: 'Erro ao criar registos', description: e.message, variant: 'destructive' });
+      toast(humanizeError(e, PLAN_MESSAGES.records_error()));
     },
   });
 

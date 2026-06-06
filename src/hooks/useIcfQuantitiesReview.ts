@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { IcfPlantAnalysisResult } from "@/hooks/useIcfPlantAnalysis";
 import type { IcfUnifiedQuantities } from "@/lib/icf-unified-quantities";
+import { PLAN_MESSAGES, humanizeError } from "@/lib/plan-error-messages";
+
 
 interface SaveReviewParams {
   result: IcfPlantAnalysisResult;
@@ -89,22 +91,19 @@ export function useIcfQuantitiesReview() {
 
       return { versionId, stillNeedsReview };
     },
-    onSuccess: ({ stillNeedsReview }) => {
+    onSuccess: ({ stillNeedsReview }, vars) => {
       qc.invalidateQueries({ queryKey: ["plan-analysis-versions"] });
-      toast({
-        title: stillNeedsReview ? "Revisão guardada (parcial)" : "Revisão guardada",
-        description: stillNeedsReview
-          ? "Ainda há paredes marcadas para rever."
-          : "Todos os panos foram validados.",
-        variant: stillNeedsReview ? "default" : "default",
-      });
+      const total = vars.quantities.totais.paredes_total;
+      const pendentes = vars.quantities.totais.paredes_revisao;
+      toast(
+        stillNeedsReview
+          ? PLAN_MESSAGES.review_saved_partial(pendentes)
+          : PLAN_MESSAGES.review_saved_full(total),
+      );
     },
     onError: (e: any) => {
-      toast({
-        title: "Erro a guardar revisão",
-        description: e?.message || "Falha desconhecida.",
-        variant: "destructive",
-      });
+      toast(humanizeError(e, PLAN_MESSAGES.review_save_error()));
     },
   });
 }
+

@@ -129,9 +129,13 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 11 — Catálogo de mensagens ao utilizador
+## Fase 11 — Catálogo de mensagens ao utilizador ✅
 
-Mensagens curtas, humanas, sem jargão técnico, centralizadas em `src/lib/plan-error-messages.ts` (escala não detetada, layers ambíguos, PDF rasterizado, baixa confiança, cotas insuficientes, etc.).
+- ✅ Novo `src/lib/plan-error-messages.ts` consolida todas as mensagens do módulo Planta/ICF: upload, análise, escala/unidade, dados em falta, PDF rasterizado, baixa confiança, revisão, persistência, orçamento bloqueado, organização. Tom calmo, PT-PT, sem jargão.
+- ✅ `humanizeError(err, fallback)` mapeia padrões frequentes (413, timeout, 401/403, 429, escala, raster, formato) para mensagens amigáveis e usa `fallback` quando nada bate.
+- ✅ Refatoração dos callsites principais para o catálogo: `useIcfPlantAnalysis` (analyze + createRecords), `useIcfQuantitiesReview` (success + error), `IcfPlantAnalyzer` (upload + dados em falta). Mensagens passam a ser consistentes em todo o fluxo.
+- ✅ Sem alterações de fluxo nem de estado — apenas substituição das strings hard-coded por chamadas ao catálogo.
+
 
 ---
 
