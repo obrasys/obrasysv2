@@ -47,27 +47,64 @@ export function IcfPlantAnalyzer({
   const diagnosis = useMemo(() => diagnoseMissingData(analysisResult), [analysisResult]);
   const [missingOpen, setMissingOpen] = useState(false);
   const [missingDismissed, setMissingDismissed] = useState(false);
+
+  // Fase 5 — confirmação de unidade DXF
+  const [unitDialogOpen, setUnitDialogOpen] = useState(false);
+  const [unitDialogDismissed, setUnitDialogDismissed] = useState(false);
+  const [lastFilePath, setLastFilePath] = useState<string | null>(null);
+  const result = analysisResult as (IcfPlantAnalysisResult & {
+    __requires_unit_confirmation?: boolean;
+    __detected_unit?: string | null;
+    __sanity_warnings?: Array<{ code: string; message: string; severity: string }>;
+    __audit?: any;
+  }) | null;
+  const needsUnitConfirm = !!result?.__requires_unit_confirmation;
+
   useEffect(() => {
-    if (analysisResult && diagnosis.needsReview && !missingDismissed) {
+    if (result && needsUnitConfirm && !unitDialogDismissed) {
+      setUnitDialogOpen(true);
+    } else if (result && diagnosis.needsReview && !missingDismissed && !needsUnitConfirm) {
       setMissingOpen(true);
     }
-  }, [analysisResult, diagnosis.needsReview, missingDismissed]);
+  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed]);
 
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
 
-  const handleSelectExisting = () => {
-    const plan = plans.find(p => p.id === selectedPlanId);
-    if (!plan) return;
+  const runAnalyze = (filePath: string, unitOverride?: DxfUnitOverride) => {
+    setLastFilePath(filePath);
+    setMissingDismissed(false);
+    if (!unitOverride) setUnitDialogDismissed(false);
     analyze({
-      filePath: plan.file_path,
+      filePath,
       obraId: obraId || null,
       configuracaoId,
       espessuraNucleo,
       classeBetao,
       classeAco,
+      unitOverride: unitOverride ?? null,
     });
   };
+
+  const handleSelectExisting = () => {
+    const plan = plans.find(p => p.id === selectedPlanId);
+    if (!plan) return;
+    runAnalyze(plan.file_path);
+  };
+
+  const handleUnitConfirm = (unit: DxfUnitOverride) => {
+    if (!lastFilePath) return;
+    setUnitDialogOpen(false);
+    setUnitDialogDismissed(true);
+    runAnalyze(lastFilePath, unit);
+  };
+
+  const handleUnitCancel = () => {
+    setUnitDialogOpen(false);
+    setUnitDialogDismissed(true);
+    setAnalysisResult(null);
+  };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
