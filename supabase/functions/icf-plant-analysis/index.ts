@@ -261,6 +261,34 @@ serve(async (req) => {
       }
     }
 
+    // Lote 2.2: validar que o file_path pertence a um plan_import da mesma organização (anti-IDOR).
+    // Apenas exceção: ficheiros na própria pasta do utilizador (prefixo `${user.id}/...`) usados antes
+    // de a linha em plan_imports existir, mas neste endpoint exigimos sempre rastreabilidade.
+    const { data: planImport, error: planImportErr } = await supabase
+      .from("plan_imports")
+      .select("id, user_id, obra_id")
+      .eq("file_path", file_path)
+      .maybeSingle();
+
+    if (planImportErr || !planImport) {
+      return jsonResponse({ error: "Planta não encontrada ou sem registo associado." }, 404);
+    }
+
+    const { data: importerMembership } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", planImport.user_id)
+      .eq("member_status", "active")
+      .maybeSingle();
+
+    if (!importerMembership || importerMembership.organization_id !== userMembership.organization_id) {
+      return jsonResponse({ error: "Sem acesso a esta planta." }, 403);
+    }
+
+    if (obra_id && planImport.obra_id && planImport.obra_id !== obra_id) {
+      return jsonResponse({ error: "Planta não pertence à obra indicada." }, 403);
+    }
+
     // Download the file from storage
     const { data: fileData, error: dlErr } = await supabase.storage
       .from("plan-files")
@@ -269,6 +297,7 @@ serve(async (req) => {
     if (dlErr || !fileData) {
       return jsonResponse({ error: "Erro ao descarregar ficheiro" }, 404);
     }
+
 
     // Convert to base64 (chunk-safe for large files)
     const arrayBuf = await fileData.arrayBuffer();

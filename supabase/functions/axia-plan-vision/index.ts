@@ -42,6 +42,21 @@ serve(async (req) => {
     const { image_base64, calibration_info, plan_import_id, page_number, retry_hint } = await req.json();
     const isHighResRetry = retry_hint === "high_res_retry";
 
+    // Lote 2.2: se foi enviado plan_import_id, validar via RLS que pertence à org do utilizador.
+    if (plan_import_id) {
+      const { data: planRow, error: planErr } = await supabase
+        .from("plan_imports")
+        .select("id")
+        .eq("id", plan_import_id)
+        .maybeSingle();
+      if (planErr || !planRow) {
+        return new Response(JSON.stringify({ error: "Sem acesso a esta planta." }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+
 
     if (!image_base64) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
