@@ -59,6 +59,27 @@ serve(async (req) => {
       }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Lote 2.1: defensive MIME sniffing - detecta o tipo real a partir do base64
+    // para evitar enviar PDFs ao endpoint de visão como se fossem JPEG.
+    let detectedMime = "image/jpeg";
+    try {
+      const head = atob(image_base64.slice(0, 16));
+      if (head.charCodeAt(0) === 0x89 && head.charCodeAt(1) === 0x50 && head.charCodeAt(2) === 0x4e && head.charCodeAt(3) === 0x47) {
+        detectedMime = "image/png";
+      } else if (head.charCodeAt(0) === 0xff && head.charCodeAt(1) === 0xd8 && head.charCodeAt(2) === 0xff) {
+        detectedMime = "image/jpeg";
+      } else if (head.charCodeAt(0) === 0x25 && head.charCodeAt(1) === 0x50 && head.charCodeAt(2) === 0x44 && head.charCodeAt(3) === 0x46) {
+        return new Response(JSON.stringify({
+          error: "Formato inválido: este endpoint recebe imagens (PNG/JPG). Converta o PDF para imagem antes de enviar.",
+          code: "PDF_NOT_SUPPORTED_HERE",
+        }), { status: 415, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: "Base64 inválido." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const startedAt = Date.now();
     let callModel = "google/gemini-2.5-flash";
     const callType = "axia_plan_vision";
@@ -155,7 +176,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       {
         type: "image_url",
         image_url: {
-          url: `data:image/jpeg;base64,${image_base64}`,
+          url: `data:${detectedMime};base64,${image_base64}`,
         },
       },
     ];
@@ -799,8 +820,17 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       }
     }
 
+    // Lote 2.1: organization_id no log de sugestões (isolamento multi-tenant).
+    const { data: __orgMembership } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", userId)
+      .eq("member_status", "active")
+      .maybeSingle();
+
     await supabase.from("axia_suggestions_log").insert({
       user_id: userId,
+      organization_id: __orgMembership?.organization_id ?? null,
       suggestion_type: "plan_vision_analysis",
       suggestion_payload: { analysis },
     });

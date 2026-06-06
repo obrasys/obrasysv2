@@ -289,9 +289,27 @@ serve(async (req) => {
       binary += String.fromCharCode(...chunk);
     }
     const base64 = btoa(binary);
-    const mimeType = file_path.endsWith(".pdf") ? "application/pdf"
-      : file_path.endsWith(".png") ? "image/png"
-      : "image/jpeg";
+    // Lote 2.1: MIME sniffing por magic bytes (não confiar só na extensão)
+    const sniffMime = (buf: Uint8Array): { mime: string; ok: boolean } => {
+      if (buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) {
+        return { mime: "application/pdf", ok: true }; // %PDF
+      }
+      if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+        return { mime: "image/png", ok: true };
+      }
+      if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+        return { mime: "image/jpeg", ok: true };
+      }
+      return { mime: "application/octet-stream", ok: false };
+    };
+    const sniffed = sniffMime(bytes);
+    if (!sniffed.ok) {
+      return jsonResponse(
+        { error: "Tipo de ficheiro não suportado. Envie PDF, PNG ou JPG válido." },
+        415,
+      );
+    }
+    const mimeType = sniffed.mime;
 
     const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys, no papel de assistente técnico de pré-medição ICF (Insulated Concrete Forms) para construção civil em Portugal.
 Trabalhas em português de Portugal.

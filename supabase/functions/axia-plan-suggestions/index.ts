@@ -204,10 +204,18 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
       }
     }
 
-    // Log to axia_suggestions_log
+    // Log to axia_suggestions_log (Lote 2.1: incluir organization_id)
     if (suggestions.length > 0) {
+      const { data: __orgMembership } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", userId)
+        .eq("member_status", "active")
+        .maybeSingle();
+
       await supabase.from("axia_suggestions_log").insert({
         user_id: userId,
+        organization_id: __orgMembership?.organization_id ?? null,
         suggestion_type: "plan_measurement",
         suggestion_payload: { obra_id, plan_measurements_count: measurements.length, suggestions },
       });
