@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText, Image, X, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, FileCode, X, Loader2 } from "lucide-react";
 import { type PlanDisciplina } from "@/types/plan-measurements";
 import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
 import { cn } from "@/lib/utils";
