@@ -135,11 +135,26 @@ const IcfIndex = () => {
     );
   };
 
-  const handleCreateConfig = () => {
-    createConfig.mutate(
-      { obra_id: obraFilter ?? null, nome: 'Configuração ICF v1' } as any,
-      { onError: (e: any) => toast.error('Não foi possível criar a configuração', { description: e?.message }) },
-    );
+  const handleCreateConfig = async () => {
+    try {
+      // Desativar quaisquer configurações ativas anteriores no mesmo âmbito
+      // para que a nova passe a ser a única ativa.
+      const previouslyActive = (configs ?? []).filter((c) => c.ativo);
+      await Promise.all(
+        previouslyActive.map((c) =>
+          updateConfig.mutateAsync({ id: c.id, ativo: false } as any),
+        ),
+      );
+      const nextVersion =
+        Math.max(0, ...(configs ?? []).map((c: any) => Number(c.versao) || 0)) + 1;
+      await createConfig.mutateAsync({
+        obra_id: obraFilter ?? null,
+        nome: `Configuração ICF v${nextVersion}`,
+        ativo: true,
+      } as any);
+    } catch (e: any) {
+      toast.error('Não foi possível criar a configuração', { description: e?.message });
+    }
   };
 
   const handleOpenAssistant = () => {
