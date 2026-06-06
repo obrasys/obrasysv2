@@ -107,15 +107,15 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 9 — Regras de confiança e logs de auditoria
+## Fase 9 — Regras de confiança e logs de auditoria ✅
 
-Política global:
-- `≥ 0.85` → confiável
-- `0.60–0.85` → revisão obrigatória
-- `< 0.60` → bloqueado para uso automático
-- Sem escala/unidade/cota → todo o quantitativo exige revisão
+- ✅ Política global consolidada em `src/lib/icf-confidence-rules.ts`: `≥0.85` confiável, `0.60–0.85` revisão obrigatória, `<0.60` bloqueado. `evaluateConfidenceGate()` combina resultado bruto + quantitativos unificados e devolve `{ canSendToBudget, isBlocked, reasons, blockingReasons, level, avgConfidence }`.
+- ✅ Regras duras (bloqueio independente da confiança numérica): unidade DXF por confirmar, paredes com `metodo_medicao='estimativa_visual'`, paredes sem altura útil ≥1.5 m, paredes com confiança individual <0.60.
+- ✅ `IcfUnifiedQuantitiesPanel` mostra badge global (Confiável / Revisão obrigatória / Bloqueado) no cabeçalho.
+- ✅ `IcfPlantAnalyzer` desativa "Carregar para a configuração ICF" e "Enviar para orçamento" quando `isBlocked=true` e mostra banner vermelho com `blockingReasons`.
+- ✅ Nova trilha de auditoria `PlanAnalysisAuditTrail` + hook `usePlanAnalysisAudit` listam os últimos 50 eventos de `plan_analysis_logs` para a planta (status, mensagem, timestamp, metadata expansível). Eventos suportados: `analise_iniciada`, `analise_concluida`, `analise_concluida_com_revisao`, `erro`, `erro_persistencia`, `dados_validados`, `revisao_humana_guardada`, `orcamento_criado`, `orcamento_atualizado`.
+- ✅ Sem migração — `plan_analysis_logs` e `plan_analysis_versions` já existem com RLS por organização e os campos necessários (`event_type`, `status`, `metadata`, `confidence`, `human_reviewed`, `requires_review`).
 
-Tabela `plan_analysis_logs` (nova): ficheiro, tipo, data, método (gemini/dxf-parser), erros, campos assumidos, campos confirmados pelo user, versão, user_id, organization_id. RLS por organização.
 
 ---
 
