@@ -137,7 +137,7 @@ export function IcfPlantAnalyzer({
 
       runAnalyze(filePath);
     } catch (err: any) {
-      toast({ title: 'Erro no upload', description: err.message, variant: 'destructive' });
+      toast(humanizeError(err, PLAN_MESSAGES.upload_error()));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
