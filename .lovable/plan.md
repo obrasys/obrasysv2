@@ -139,14 +139,17 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 12 — Compatibilidade e segurança
+## Fase 12 — Compatibilidade e segurança ✅
 
-- Migrações aditivas apenas (sem `DROP`/quebra de tipo).
-- Análises antigas preservadas.
-- RLS por `organization_id` em todas as novas tabelas + GRANTs explícitos (`authenticated`, `service_role`).
-- Edge functions validam JWT, organização e quota.
-- Nada flui para orçamento sem aprovação humana.
-- Possíveis tabelas novas (apenas se necessário, sem duplicar existentes): `plan_analysis_versions`, `plan_analysis_logs`. As outras (`plan_files`, `plan_analyses`, `plan_detected_elements`, `plan_icf_quantities`) já têm equivalente — reutilizo.
+Auditoria escrita em `.lovable/audit-fase12-seguranca.md`. Resultados:
+
+- ✅ Zero migrações novas nesta entrega — todas as fases reutilizaram colunas existentes (`plan_imports.file_type` TEXT, `plan_analysis_versions.*`, `plan_analysis_logs.*`). Análises antigas continuam legíveis; pipeline PDF legacy intacto.
+- ✅ RLS habilitada em `plan_analysis_versions` e `plan_analysis_logs` com políticas `organization_id = get_user_org_id()` (SECURITY DEFINER, sem recursão). Sem políticas `anon`. GRANTs para `authenticated` e `service_role` confirmados.
+- ✅ Edge functions `icf-plant-analysis` e `plan-dxf-parse` validam JWT (`getUser(token)`), resolvem `organization_id` via `organization_members` e fazem anti-IDOR cruzando `plan_imports.file_path → organization_id` com o do utilizador (bloqueio 403). Logs sempre scoped pelo `organization_id` server-side.
+- ✅ Promoção para orçamento exige sempre clique humano explícito: confirmação de escala DXF → revisão técnica → gate de confiança → diálogo de envio para orçamento. Botões desativados quando `evaluateConfidenceGate().isBlocked=true`.
+- ✅ Linter Supabase: 187 findings, **todos pré-existentes** (storage buckets antigos, security definer functions legacy). Nenhum introduzido por esta entrega.
+- ⚠️ Backlog: rate-limit dedicado por organização no `plan-dxf-parse`, migração de `plan_budget_links` para quantitativos agregados, enum em `event_type` de `plan_analysis_logs`.
+
 
 ---
 
