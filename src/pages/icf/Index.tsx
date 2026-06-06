@@ -26,7 +26,7 @@ import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScop
 import { IcfWelcomeDialog } from '@/components/icf/IcfWelcomeDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 
-const ICF_WELCOME_SESSION_KEY = 'icf_welcome_shown';
+const ICF_WELCOME_SESSION_PREFIX = 'icf_welcome_shown:';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 const OBRA_NENHUMA = '__sem_obra__';
