@@ -34,18 +34,19 @@ async function renderDxf(url: string): Promise<DxfRenderResult> {
     if (y > maxY) maxY = y;
   };
 
+  // Only consider entities that we actually rasterize, so that
+  // off-canvas DIMENSION/INSERT/MTEXT anchors don't inflate the bbox
+  // and shrink the real geometry to a single pixel.
+  const DRAWABLE = new Set(["LINE", "LWPOLYLINE", "POLYLINE", "CIRCLE", "ARC", "ELLIPSE"]);
   for (const e of dxf.entities as any[]) {
-    if (e.vertices) {
+    const t = String(e.type || "").toUpperCase();
+    if (!DRAWABLE.has(t)) continue;
+    if (e.vertices?.length) {
       for (const v of e.vertices) considerPoint(v.x, v.y);
-    } else if (e.position) {
-      considerPoint(e.position.x, e.position.y);
     } else if (e.center) {
       const r = e.radius ?? 0;
       considerPoint(e.center.x - r, e.center.y - r);
       considerPoint(e.center.x + r, e.center.y + r);
-    } else if (e.startPoint && e.endPoint) {
-      considerPoint(e.startPoint.x, e.startPoint.y);
-      considerPoint(e.endPoint.x, e.endPoint.y);
     }
   }
 
