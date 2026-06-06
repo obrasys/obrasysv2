@@ -326,26 +326,63 @@ export function IcfPlantAnalyzer({
               obraId={obraId ?? null}
             />
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
-                <Check className="h-4 w-4 mr-2" />
-                Carregar para a configuração ICF
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setBudgetDialogOpen(true)}
-                disabled={isCreating}
-                className="flex-1"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                Enviar para orçamento
-              </Button>
-              <Button variant="outline" onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}>
-                Cancelar
-              </Button>
-            </div>
+            {(() => {
+              const gate = evaluateConfidenceGate(
+                analysisResult,
+                buildIcfUnifiedQuantities(analysisResult, unifiedParams),
+              );
+              return (
+                <>
+                  {gate.isBlocked && (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm space-y-1.5">
+                      <div className="flex items-center gap-2 font-medium text-destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        Bloqueado para envio automático ao orçamento
+                      </div>
+                      <ul className="text-xs text-destructive/90 list-disc pl-5 space-y-0.5">
+                        {gate.blockingReasons.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                      <p className="text-[11px] text-destructive/80">
+                        Edite ou valide as paredes em causa no painel acima antes de avançar.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      onClick={handleCreateAll}
+                      disabled={isCreating || gate.isBlocked}
+                      className="flex-1"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Carregar para a configuração ICF
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setBudgetDialogOpen(true)}
+                      disabled={isCreating || gate.isBlocked}
+                      className="flex-1"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar para orçamento
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+
+            <PlanAnalysisAuditTrail planImportId={analysisResult.__plan_import_id ?? null} />
           </div>
         )}
+
 
         {analysisResult && (
           <IcfPlanToBudgetDialog
