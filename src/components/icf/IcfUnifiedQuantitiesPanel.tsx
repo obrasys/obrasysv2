@@ -1,41 +1,159 @@
 /**
- * Fase 6 — Painel de quantitativos ICF unificados (PDF + DXF)
- *
- * Mostra parâmetros editáveis pré-fecho (pé-direito, espessura, % desperdício,
- * descontar vãos, bloco, armadura, fundações), recalcula em tempo real e
- * apresenta totais + linhas por parede com flag de revisão.
+ * Fase 6 + Fase 7 — Painel de quantitativos ICF unificados (PDF + DXF)
+ * com edição inline linha-a-linha e persistência da revisão humana.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calculator, AlertTriangle, FileBox } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Calculator,
+  AlertTriangle,
+  FileBox,
+  Pencil,
+  Check,
+  X,
+  Trash2,
+  Save,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
 import {
   buildIcfUnifiedQuantities,
   type IcfUnifiedParams,
 } from "@/lib/icf-unified-quantities";
 import type { IcfPlantAnalysisResult } from "@/hooks/useIcfPlantAnalysis";
+import { useIcfQuantitiesReview } from "@/hooks/useIcfQuantitiesReview";
 
 interface Props {
   result: IcfPlantAnalysisResult | null;
+  onResultChange: (next: IcfPlantAnalysisResult) => void;
   params: IcfUnifiedParams;
   onParamsChange: (next: IcfUnifiedParams) => void;
+  obraId?: string | null;
 }
 
-export function IcfUnifiedQuantitiesPanel({ result, params, onParamsChange }: Props) {
+interface RowEditState {
+  comprimento: string;
+  altura: string;
+  espessura: string;
+  notas: string;
+}
+
+export function IcfUnifiedQuantitiesPanel({
+  result,
+  onResultChange,
+  params,
+  onParamsChange,
+  obraId,
+}: Props) {
   const quants = useMemo(
     () => buildIcfUnifiedQuantities(result, params),
     [result, params],
   );
 
+  const [editingRef, setEditingRef] = useState<string | null>(null);
+  const [edit, setEdit] = useState<RowEditState | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const saveReview = useIcfQuantitiesReview();
+
   const set = <K extends keyof IcfUnifiedParams>(k: K, v: IcfUnifiedParams[K]) =>
     onParamsChange({ ...params, [k]: v });
 
   if (!result) return null;
+
+  const startEdit = (ref: string) => {
+    const p = result.paredes.find((x) => x.referencia === ref);
+    if (!p) return;
+    setEditingRef(ref);
+    setEdit({
+      comprimento: String(p.comprimento ?? ""),
+      altura: String(p.altura_util ?? ""),
+      espessura: String(p.espessura_nucleo ?? ""),
+      notas: p.notas_validacao ?? "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingRef(null);
+    setEdit(null);
+  };
+
+  const commitEdit = () => {
+    if (!editingRef || !edit) return;
+    const updated = result.paredes.map((p) =>
+      p.referencia === editingRef
+        ? {
+            ...p,
+            comprimento: Number(edit.comprimento) || 0,
+            altura_util: Number(edit.altura) || 0,
+            espessura_nucleo: Number(edit.espessura) || 0,
+            notas_validacao: edit.notas || null,
+            // Edição manual eleva a confiança para o piso de revisão (0.85).
+            confianca: Math.max(typeof p.confianca === "number" ? p.confianca : 0, 0.85),
+            metodo_medicao: "cota",
+          }
+        : p,
+    );
+    onResultChange({ ...result, paredes: updated });
+    cancelEdit();
+  };
+
+  const removeRow = (ref: string) => {
+    onResultChange({
+      ...result,
+      paredes: result.paredes.filter((p) => p.referencia !== ref),
+    });
+  };
+
+  const approveRow = (ref: string) => {
+    const updated = result.paredes.map((p) =>
+      p.referencia === ref
+        ? {
+            ...p,
+            confianca: Math.max(typeof p.confianca === "number" ? p.confianca : 0, 0.85),
+            metodo_medicao: p.metodo_medicao === "estimativa_visual" ? "cota" : p.metodo_medicao ?? "cota",
+            notas_validacao: [p.notas_validacao, "[validado_humano]"].filter(Boolean).join(" | "),
+          }
+        : p,
+    );
+    onResultChange({ ...result, paredes: updated });
+  };
+
+  const approveAll = () => {
+    const updated = result.paredes.map((p) => ({
+      ...p,
+      confianca: Math.max(typeof p.confianca === "number" ? p.confianca : 0, 0.85),
+      metodo_medicao: p.metodo_medicao === "estimativa_visual" ? "cota" : p.metodo_medicao ?? "cota",
+      notas_validacao: [p.notas_validacao, "[validado_humano]"].filter(Boolean).join(" | "),
+    }));
+    onResultChange({ ...result, paredes: updated });
+  };
+
+  const handleSaveReview = () => {
+    if (!result) return;
+    saveReview.mutate({
+      result,
+      quantities: quants,
+      obraId: obraId ?? null,
+      notes: reviewNotes || null,
+    });
+  };
+
+  const canPersist = !!result.__plan_analysis_version_id;
 
   return (
     <Card className="border-primary/20">
@@ -48,7 +166,7 @@ export function IcfUnifiedQuantitiesPanel({ result, params, onParamsChange }: Pr
           </Badge>
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Ajuste os parâmetros antes de carregar para o orçamento. Os valores são recalculados em tempo real.
+          Ajuste parâmetros, edite paredes linha-a-linha e guarde a revisão antes de carregar para o orçamento.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -155,13 +273,20 @@ export function IcfUnifiedQuantitiesPanel({ result, params, onParamsChange }: Pr
         {/* Avisos */}
         {(quants.avisos.length > 0 || quants.totais.paredes_revisao > 0) && (
           <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs space-y-1">
-            <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              {quants.totais.paredes_revisao} de {quants.totais.paredes_total} parede(s) a rever
-              {quants.totais.confianca_media !== null && (
-                <span className="ml-1 opacity-80">
-                  · confiança média {Math.round(quants.totais.confianca_media * 100)}%
-                </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {quants.totais.paredes_revisao} de {quants.totais.paredes_total} parede(s) a rever
+                {quants.totais.confianca_media !== null && (
+                  <span className="ml-1 opacity-80">
+                    · confiança média {Math.round(quants.totais.confianca_media * 100)}%
+                  </span>
+                )}
+              </div>
+              {quants.totais.paredes_revisao > 0 && (
+                <Button size="sm" variant="outline" onClick={approveAll}>
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Validar todas
+                </Button>
               )}
             </div>
             <ul className="list-disc pl-5 text-amber-700/90 dark:text-amber-200/80 space-y-0.5">
@@ -187,38 +312,135 @@ export function IcfUnifiedQuantitiesPanel({ result, params, onParamsChange }: Pr
                 <TableHead className="text-right">Betão (m³)</TableHead>
                 <TableHead>Confiança</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {quants.linhas.map((l) => (
-                <TableRow key={l.referencia} className={l.requires_review ? "bg-amber-50/40 dark:bg-amber-950/10" : ""}>
-                  <TableCell className="font-medium">{l.referencia}</TableCell>
-                  <TableCell>
-                    <Badge variant={l.tipo === "exterior" ? "default" : l.tipo === "interior" ? "secondary" : "outline"}>
-                      {l.tipo}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{l.comprimento_m}</TableCell>
-                  <TableCell className="text-right">{l.altura_m}</TableCell>
-                  <TableCell className="text-right">{l.espessura_m}</TableCell>
-                  <TableCell className="text-right">{l.area_liquida_m2}</TableCell>
-                  <TableCell className="text-right">{l.blocos_estimados}</TableCell>
-                  <TableCell className="text-right">{l.volume_betao_m3}</TableCell>
-                  <TableCell>
-                    {l.confianca === null ? "—" : `${Math.round(l.confianca * 100)}%`}
-                  </TableCell>
-                  <TableCell>
-                    {l.requires_review ? (
-                      <Badge variant="destructive" className="text-[10px]">Rever</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px]">OK</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {quants.linhas.map((l) => {
+                const isEditing = editingRef === l.referencia;
+                return (
+                  <TableRow
+                    key={l.referencia}
+                    className={l.requires_review ? "bg-amber-50/40 dark:bg-amber-950/10" : ""}
+                  >
+                    <TableCell className="font-medium">{l.referencia}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          l.tipo === "exterior"
+                            ? "default"
+                            : l.tipo === "interior"
+                              ? "secondary"
+                              : "outline"
+                        }
+                      >
+                        {l.tipo}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.05"
+                          className="h-7 w-20 text-right"
+                          value={edit!.comprimento}
+                          onChange={(e) => setEdit({ ...edit!, comprimento: e.target.value })}
+                        />
+                      ) : (
+                        l.comprimento_m
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.05"
+                          className="h-7 w-20 text-right"
+                          value={edit!.altura}
+                          onChange={(e) => setEdit({ ...edit!, altura: e.target.value })}
+                        />
+                      ) : (
+                        l.altura_m
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-7 w-20 text-right"
+                          value={edit!.espessura}
+                          onChange={(e) => setEdit({ ...edit!, espessura: e.target.value })}
+                        />
+                      ) : (
+                        l.espessura_m
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">{l.area_liquida_m2}</TableCell>
+                    <TableCell className="text-right">{l.blocos_estimados}</TableCell>
+                    <TableCell className="text-right">{l.volume_betao_m3}</TableCell>
+                    <TableCell>
+                      {l.confianca === null ? "—" : `${Math.round(l.confianca * 100)}%`}
+                    </TableCell>
+                    <TableCell>
+                      {l.requires_review ? (
+                        <Badge variant="destructive" className="text-[10px]">Rever</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">OK</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center gap-1 justify-end">
+                        {isEditing ? (
+                          <>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={commitEdit} title="Gravar">
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEdit} title="Cancelar">
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            {l.requires_review && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-emerald-600"
+                                onClick={() => approveRow(l.referencia)}
+                                title="Validar como está"
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={() => startEdit(l.referencia)}
+                              title="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-destructive"
+                              onClick={() => removeRow(l.referencia)}
+                              title="Remover"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {quants.linhas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-6">
                     <FileBox className="h-5 w-5 mx-auto mb-1 opacity-50" />
                     Sem paredes consolidadas.
                   </TableCell>
@@ -226,6 +448,32 @@ export function IcfUnifiedQuantitiesPanel({ result, params, onParamsChange }: Pr
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Persistência da revisão */}
+        <div className="border-t pt-3 space-y-2">
+          <Label className="text-xs">Notas da revisão (opcional)</Label>
+          <Textarea
+            rows={2}
+            placeholder="Ex.: Confirmadas medidas com cliente; PE-03 ignorada por duplicação."
+            value={reviewNotes}
+            onChange={(e) => setReviewNotes(e.target.value)}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {canPersist
+                ? "A revisão atualiza a versão atual da análise e regista evento de auditoria."
+                : "Esta análise não foi versionada (sem version_id) — guarde manualmente após carregar para o orçamento."}
+            </p>
+            <Button onClick={handleSaveReview} disabled={!canPersist || saveReview.isPending}>
+              {saveReview.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Guardar revisão
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

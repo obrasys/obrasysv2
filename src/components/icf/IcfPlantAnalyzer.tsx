@@ -313,8 +313,10 @@ export function IcfPlantAnalyzer({
             )}
             <IcfUnifiedQuantitiesPanel
               result={analysisResult}
+              onResultChange={setAnalysisResult}
               params={unifiedParams}
               onParamsChange={setUnifiedParams}
+              obraId={obraId ?? null}
             />
 
             <div className="flex gap-2">

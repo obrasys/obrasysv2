@@ -85,7 +85,13 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ## Fase 7 — Painel de revisão técnica
 
-Tabela editável por linha (compartimento, tipo parede, comprimento, altura, área, vãos descontados, qtd líquida, tipo bloco, observações, **confidence**, **estado**: validado/precisa revisão/ignorar). Botões: aprovar, editar, excluir. **Nada vai para orçamento sem aprovação explícita.**
+## Fase 7 — Painel de revisão técnica ✅
+
+- ✅ Edição inline por linha no `IcfUnifiedQuantitiesPanel`: comprimento, altura, espessura editáveis; ações Validar / Editar / Remover por parede + "Validar todas".
+- ✅ Edição manual eleva `confianca` para 0.85 e marca `metodo_medicao='cota'`; validação manual adiciona tag `[validado_humano]` às notas.
+- ✅ Novo hook `useIcfQuantitiesReview` atualiza `plan_analysis_versions` (analysis_payload + summary + human_reviewed + requires_review + confidence + notes) e grava evento `revisao_humana_guardada` em `plan_analysis_logs`.
+- ✅ Botão "Guardar revisão" com campo de notas, isolado por organização via RLS já existente nas duas tabelas.
+- ✅ Nada vai para orçamento sem ação humana — o botão "Carregar para o orçamento ICF" continua a exigir clique explícito a seguir à revisão.
 
 ---
 
