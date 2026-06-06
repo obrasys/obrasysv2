@@ -124,6 +124,11 @@ export function useIcfPlantAnalysis() {
         const p = result.paredes[i];
         const vaosArea = (p.vaos || []).reduce((sum, v) => sum + v.largura * v.altura * v.quantidade, 0);
 
+        const confianca = typeof p.confianca === 'number' ? p.confianca : null;
+        const requiresReview = confianca !== null
+          ? confianca < 0.6
+          : !!(p.notas_validacao && /indispon|estim|inferid/i.test(p.notas_validacao));
+
         const panoPayload: Record<string, unknown> = {
           empresa_id: empresaId,
           obra_id: obraId ?? null,
@@ -138,6 +143,11 @@ export function useIcfPlantAnalysis() {
           fator_cumprimento: 1,
           ordem: i + 1,
           observacoes: 'Gerado por Axia™ - análise de planta',
+          // Lote 2.3: propagar metadados de qualidade da leitura
+          confidence: confianca,
+          requires_review: requiresReview,
+          metodo_medicao: p.metodo_medicao ?? null,
+          notas_validacao: p.notas_validacao ?? null,
         };
 
         const { data: pano, error: panoErr } = await supabase
