@@ -169,10 +169,20 @@ export function IcfUnifiedQuantitiesPanel({
           <Badge variant="outline" className="ml-2 text-[10px] uppercase">
             {quants.origem === "dxf" ? "DXF vetorial" : quants.origem === "ai" ? "PDF/IA" : "—"}
           </Badge>
+          {(() => {
+            const gate = evaluateConfidenceGate(result, quants);
+            const b = confidenceBadgeProps(gate.level);
+            return (
+              <Badge variant={b.variant} className="ml-1 text-[10px]">
+                {b.label}
+              </Badge>
+            );
+          })()}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           Ajuste parâmetros, edite paredes linha-a-linha e guarde a revisão antes de carregar para o orçamento.
         </p>
+
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Parâmetros */}
