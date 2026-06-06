@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
+import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
