@@ -180,10 +180,7 @@ export function IcfPlantAnalyzer({
     setAnalysisResult({ ...analysisResult, paredes: updatedParedes });
     setMissingOpen(false);
     setMissingDismissed(true);
-    toast({
-      title: 'Valores aplicados com revisão obrigatória',
-      description: 'As paredes ficam marcadas como “requer revisão” antes de irem para orçamento.',
-    });
+    toast(PLAN_MESSAGES.missing_data_applied());
   };
 
   const handleMissingDiscard = () => {
