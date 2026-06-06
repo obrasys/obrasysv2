@@ -561,12 +561,21 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     // cadeia 100% Gemini; para imagens mantemos a cadeia configurada.
     const isPdf = mimeType === "application/pdf";
     const pdfSafe = (m: string) => m.startsWith("google/");
-    const safePrimary = isPdf && !pdfSafe(chain.primary) ? "google/gemini-2.5-pro" : chain.primary;
-    const safeFallback = isPdf && !pdfSafe(chain.fallback) ? "google/gemini-2.5-flash" : chain.fallback;
+    // Para PDFs forçamos cadeia Gemini. Flash é significativamente mais rápido
+    // que Pro em PDFs vetoriais e raramente atinge o limite de 80s da edge function;
+    // por isso usamos Flash como PRIMARY e Pro como FALLBACK. Também garantimos
+    // que primary e fallback nunca colapsam no mesmo modelo (problema observado
+    // que provocava 2× timeout consecutivos em gemini-2.5-pro).
+    let safePrimary = isPdf && !pdfSafe(chain.primary) ? "google/gemini-2.5-flash" : chain.primary;
+    let safeFallback = isPdf && !pdfSafe(chain.fallback) ? "google/gemini-2.5-pro" : chain.fallback;
+    if (isPdf) {
+      safePrimary = "google/gemini-2.5-flash";
+      safeFallback = "google/gemini-2.5-pro";
+    }
 
     const attempts: Array<{ model: string; timeoutMs: number }> = [
-      { model: safePrimary, timeoutMs: 80_000 },
-      { model: safeFallback, timeoutMs: 55_000 },
+      { model: safePrimary, timeoutMs: isPdf ? 60_000 : 80_000 },
+      { model: safeFallback, timeoutMs: isPdf ? 80_000 : 55_000 },
     ];
 
     let aiResponse: Response | null = null;
