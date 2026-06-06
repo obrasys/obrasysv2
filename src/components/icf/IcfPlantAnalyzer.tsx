@@ -13,7 +13,10 @@ import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMis
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
+import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
+import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
+
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
