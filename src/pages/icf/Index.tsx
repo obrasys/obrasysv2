@@ -72,6 +72,36 @@ const IcfIndex = () => {
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
   const [pendingScope, setPendingScope] = useState<IcfScopeSelection | null>(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  // Pergunta inicial: novo orçamento ou carregar anterior?
+  useEffect(() => {
+    if (!icfEnabled || configsLoading || configsError) return;
+    if (sessionStorage.getItem(ICF_WELCOME_SESSION_KEY) === '1') return;
+    setWelcomeOpen(true);
+    sessionStorage.setItem(ICF_WELCOME_SESSION_KEY, '1');
+  }, [icfEnabled, configsLoading, configsError]);
+
+  const handleWelcomeCreateNew = () => {
+    setWelcomeOpen(false);
+    handleCreateConfig();
+  };
+
+  const handleWelcomeLoadExisting = (configId: string) => {
+    const target = configs?.find((c) => c.id === configId);
+    if (!target) return setWelcomeOpen(false);
+    const currentActive = configs?.find((c) => c.ativo && c.id !== configId);
+    const tasks: Promise<unknown>[] = [];
+    if (!target.ativo) {
+      tasks.push(updateConfig.mutateAsync({ id: configId, ativo: true } as any));
+    }
+    if (currentActive) {
+      tasks.push(updateConfig.mutateAsync({ id: currentActive.id, ativo: false } as any));
+    }
+    Promise.all(tasks)
+      .then(() => setWelcomeOpen(false))
+      .catch((e: any) => toast.error('Não foi possível carregar a configuração', { description: e?.message }));
+  };
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo) return;
