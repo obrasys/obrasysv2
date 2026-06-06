@@ -994,7 +994,7 @@ export default function PlanDetail() {
           <PlanViewer
             imageDataUrl={effectiveImageUrl}
             dimensions={effectiveDimensions}
-            isRendering={isRendering || imageQuery.isLoading}
+            isRendering={isRendering || (!isDxf && imageQuery.isLoading) || (isDxf && dxfQuery.isLoading)}
             mode={mode}
             calibrationPoints={calibrationPoints}
             onCalibrationClick={handleCalibrationClick}
