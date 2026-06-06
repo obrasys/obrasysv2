@@ -1,14 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid } from 'lucide-react';
+import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid, AlertTriangle } from 'lucide-react';
 import { usePlanImports } from '@/hooks/usePlanImports';
-import { useIcfPlantAnalysis, type IcfPlantAnalysisResult } from '@/hooks/useIcfPlantAnalysis';
+import { useIcfPlantAnalysis, diagnoseMissingData, type IcfPlantAnalysisResult } from '@/hooks/useIcfPlantAnalysis';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
@@ -40,6 +41,16 @@ export function IcfPlantAnalyzer({
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Lote 2.3 — modal "Dados em falta"
+  const diagnosis = useMemo(() => diagnoseMissingData(analysisResult), [analysisResult]);
+  const [missingOpen, setMissingOpen] = useState(false);
+  const [missingDismissed, setMissingDismissed] = useState(false);
+  useEffect(() => {
+    if (analysisResult && diagnosis.needsReview && !missingDismissed) {
+      setMissingOpen(true);
+    }
+  }, [analysisResult, diagnosis.needsReview, missingDismissed]);
 
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
@@ -93,6 +104,43 @@ export function IcfPlantAnalyzer({
       configuracaoId,
       espessuraNucleo,
     });
+  };
+
+  // Lote 2.3 — aplicar valores fornecidos no modal "Dados em falta" sem inventar:
+  // preenche apenas paredes sem altura/espessura e marca-as como requires_review.
+  const handleMissingConfirm = (values: MissingDataValues) => {
+    if (!analysisResult) return;
+    const updatedParedes = analysisResult.paredes.map((p) => {
+      const novaAltura = !p.altura_util || p.altura_util < 1.5 ? values.alturaPadrao : p.altura_util;
+      const novaEspessura = !p.espessura_nucleo || p.espessura_nucleo < 0.05
+        ? values.espessuraPadrao
+        : p.espessura_nucleo;
+      const baixaConf = typeof p.confianca === 'number' && p.confianca < 0.6;
+      const notasExtra = [p.notas_validacao, values.notas, '[revisao_humana_pendente]']
+        .filter(Boolean)
+        .join(' | ');
+      return {
+        ...p,
+        altura_util: novaAltura,
+        espessura_nucleo: novaEspessura,
+        notas_validacao: notasExtra,
+        confianca: typeof p.confianca === 'number' ? Math.min(p.confianca, 0.6) : 0.5,
+        metodo_medicao: p.metodo_medicao ?? 'estimativa_visual',
+      };
+    });
+    setAnalysisResult({ ...analysisResult, paredes: updatedParedes });
+    setMissingOpen(false);
+    setMissingDismissed(true);
+    toast({
+      title: 'Valores aplicados com revisão obrigatória',
+      description: 'As paredes ficam marcadas como “requer revisão” antes de irem para orçamento.',
+    });
+  };
+
+  const handleMissingDiscard = () => {
+    setAnalysisResult(null);
+    setMissingOpen(false);
+    setMissingDismissed(false);
   };
 
   return (
@@ -202,6 +250,23 @@ export function IcfPlantAnalyzer({
               </p>
             )}
 
+            {diagnosis.needsReview && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm space-y-1.5">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="h-4 w-4" />
+                  Revisão humana obrigatória
+                </div>
+                <ul className="text-xs text-amber-700/90 dark:text-amber-200/80 list-disc pl-5 space-y-0.5">
+                  {diagnosis.reasons.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+                <Button size="sm" variant="outline" className="mt-1" onClick={() => setMissingOpen(true)}>
+                  Preencher dados em falta
+                </Button>
+              </div>
+            )}
+
             {!hasObra && (
               <p className="text-xs text-muted-foreground border border-dashed rounded-md p-2">
                 Modo orçamento (sem obra): os quantitativos serão carregados na configuração ICF para gerar o orçamento. O mapa visual de panos só é criado quando existe obra associada.
@@ -212,12 +277,22 @@ export function IcfPlantAnalyzer({
                 <Check className="h-4 w-4 mr-2" />
                 Carregar para o orçamento ICF
               </Button>
-              <Button variant="outline" onClick={() => setAnalysisResult(null)}>
+              <Button variant="outline" onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}>
                 Cancelar
               </Button>
             </div>
           </div>
         )}
+
+        <IcfPlantMissingDataDialog
+          open={missingOpen}
+          onOpenChange={(v) => { setMissingOpen(v); if (!v) setMissingDismissed(true); }}
+          defaultAltura={2.7}
+          defaultEspessura={espessuraNucleo || 0.15}
+          onConfirm={handleMissingConfirm}
+          onDiscard={handleMissingDiscard}
+          reasons={diagnosis.reasons}
+        />
 
         {isCreating && (
           <div className="flex items-center gap-3 py-6 justify-center text-muted-foreground">

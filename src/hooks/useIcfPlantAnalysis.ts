@@ -19,6 +19,10 @@ interface ExtractedParede {
   piso_inicial?: string;
   piso_final?: string;
   vaos?: ExtractedVao[];
+  // Lote 2.3: rastreabilidade da medição vinda da Axia
+  confianca?: number;
+  metodo_medicao?: 'cota' | 'escala' | 'estimativa_visual' | string;
+  notas_validacao?: string;
 }
 
 interface ExtractedFundacao {
@@ -44,6 +48,36 @@ export interface IcfPlantAnalysisResult {
   lajes: ExtractedLaje[];
   notas?: string;
 }
+
+/** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
+export function diagnoseMissingData(result: IcfPlantAnalysisResult | null): {
+  needsReview: boolean;
+  reasons: string[];
+} {
+  if (!result) return { needsReview: false, reasons: [] };
+  const reasons: string[] = [];
+  if (result.paredes.length === 0) {
+    reasons.push('A Axia não conseguiu extrair paredes desta planta.');
+  }
+  const semAltura = result.paredes.filter((p) => !p.altura_util || p.altura_util < 1.5);
+  if (semAltura.length > 0) {
+    reasons.push(`${semAltura.length} parede(s) sem altura legível.`);
+  }
+  const baixaConfianca = result.paredes.filter(
+    (p) => typeof p.confianca === 'number' && p.confianca < 0.6,
+  );
+  if (baixaConfianca.length > 0) {
+    reasons.push(`${baixaConfianca.length} parede(s) com confiança < 60%.`);
+  }
+  const semEscala = result.paredes.filter(
+    (p) => p.metodo_medicao === 'estimativa_visual' || /sem escala|indispon/i.test(p.notas_validacao || ''),
+  );
+  if (semEscala.length > 0) {
+    reasons.push(`${semEscala.length} parede(s) sem escala/cota fiável.`);
+  }
+  return { needsReview: reasons.length > 0, reasons };
+}
+
 
 interface AnalyzeParams {
   filePath: string;
@@ -120,6 +154,11 @@ export function useIcfPlantAnalysis() {
         const p = result.paredes[i];
         const vaosArea = (p.vaos || []).reduce((sum, v) => sum + v.largura * v.altura * v.quantidade, 0);
 
+        const confianca = typeof p.confianca === 'number' ? p.confianca : null;
+        const requiresReview = confianca !== null
+          ? confianca < 0.6
+          : !!(p.notas_validacao && /indispon|estim|inferid/i.test(p.notas_validacao));
+
         const panoPayload: Record<string, unknown> = {
           empresa_id: empresaId,
           obra_id: obraId ?? null,
@@ -134,6 +173,11 @@ export function useIcfPlantAnalysis() {
           fator_cumprimento: 1,
           ordem: i + 1,
           observacoes: 'Gerado por Axia™ - análise de planta',
+          // Lote 2.3: propagar metadados de qualidade da leitura
+          confidence: confianca,
+          requires_review: requiresReview,
+          metodo_medicao: p.metodo_medicao ?? null,
+          notas_validacao: p.notas_validacao ?? null,
         };
 
         const { data: pano, error: panoErr } = await supabase
