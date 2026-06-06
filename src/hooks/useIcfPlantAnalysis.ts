@@ -47,6 +47,9 @@ export interface IcfPlantAnalysisResult {
   fundacoes: ExtractedFundacao[];
   lajes: ExtractedLaje[];
   notas?: string;
+  // Lote 2.5: identificadores devolvidos pela edge function para rastreabilidade
+  __plan_import_id?: string | null;
+  __plan_analysis_version_id?: string | null;
 }
 
 /** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
