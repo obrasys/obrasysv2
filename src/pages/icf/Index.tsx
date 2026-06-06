@@ -152,6 +152,11 @@ const IcfIndex = () => {
         nome: `Configuração ICF v${nextVersion}`,
         ativo: true,
       } as any);
+      // Recarregar configs para refletir a nova configuração ativa
+      await refetchConfigs();
+      // Forçar recálculo do resumo para a configuração agora ativa
+      await refetchResumo();
+      toast.success('Nova configuração criada e ativada');
     } catch (e: any) {
       toast.error('Não foi possível criar a configuração', { description: e?.message });
     }
