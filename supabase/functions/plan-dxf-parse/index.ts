@@ -326,10 +326,16 @@ serve(async (req) => {
     } catch {
       return jsonResponse({ error: "Corpo do pedido inválido (JSON malformado)" }, 400);
     }
-    const { file_path, obra_id, configuracao_id, espessura_nucleo } = body;
+    const { file_path, obra_id, configuracao_id, espessura_nucleo, unit_override } = body;
     if (!file_path || !configuracao_id) {
       return jsonResponse({ error: "Campos obrigatórios em falta: file_path, configuracao_id" }, 400);
     }
+    const VALID_OVERRIDES = ["mm", "cm", "m", "in", "dm"] as const;
+    type UnitOverride = typeof VALID_OVERRIDES[number];
+    const unitOverride: UnitOverride | null =
+      typeof unit_override === "string" && (VALID_OVERRIDES as readonly string[]).includes(unit_override)
+        ? (unit_override as UnitOverride)
+        : null;
 
     // Authorization: org membership
     const { data: userMembership } = await supabase
