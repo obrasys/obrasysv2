@@ -75,12 +75,14 @@ const IcfIndex = () => {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   // Pergunta inicial: novo orçamento ou carregar anterior?
+  // Reaparece sempre que muda de âmbito (obra vs sem obra) dentro da mesma sessão.
   useEffect(() => {
     if (!icfEnabled || configsLoading || configsError) return;
-    if (sessionStorage.getItem(ICF_WELCOME_SESSION_KEY) === '1') return;
+    const key = `${ICF_WELCOME_SESSION_PREFIX}${obraFilter ?? '__sem_obra__'}`;
+    if (sessionStorage.getItem(key) === '1') return;
     setWelcomeOpen(true);
-    sessionStorage.setItem(ICF_WELCOME_SESSION_KEY, '1');
-  }, [icfEnabled, configsLoading, configsError]);
+    sessionStorage.setItem(key, '1');
+  }, [icfEnabled, configsLoading, configsError, obraFilter]);
 
   const handleWelcomeCreateNew = () => {
     setWelcomeOpen(false);
