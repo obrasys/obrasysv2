@@ -448,6 +448,15 @@ export function IcfPlantAnalyzer({
           isReanalyzing={isAnalyzing}
         />
 
+        <DxfPreviewDialog
+          open={dxfPreviewOpen}
+          onOpenChange={setDxfPreviewOpen}
+          filePath={dxfPreviewPath}
+          onConfirm={() => {
+            if (dxfPreviewPath) runAnalyze(dxfPreviewPath);
+          }}
+        />
+
         {isCreating && (
           <div className="flex items-center gap-3 py-6 justify-center text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
