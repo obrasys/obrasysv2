@@ -193,9 +193,51 @@ const ICF_TOOL_SCHEMA = {
 
 
 
+// Lote 2.5: helper de logging para plan_analysis_logs. Silencioso em caso de falha
+// para nunca quebrar o fluxo principal de análise.
+async function logPlanAnalysisEvent(
+  client: any,
+  payload: {
+    plan_import_id?: string | null;
+    plan_analysis_version_id?: string | null;
+    organization_id: string;
+    obra_id?: string | null;
+    user_id?: string | null;
+    event_type: string;
+    status?: "info" | "success" | "warning" | "error";
+    message?: string;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  try {
+    await client.from("plan_analysis_logs").insert({
+      plan_import_id: payload.plan_import_id ?? null,
+      plan_analysis_version_id: payload.plan_analysis_version_id ?? null,
+      organization_id: payload.organization_id,
+      obra_id: payload.obra_id ?? null,
+      user_id: payload.user_id ?? null,
+      event_type: payload.event_type,
+      status: payload.status ?? "info",
+      message: payload.message ?? null,
+      metadata: payload.metadata ?? {},
+    });
+  } catch (err) {
+    console.warn("plan_analysis_logs insert failed:", (err as Error)?.message ?? err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Método não permitido" }, 405);
+
+  // Contexto para logging (preenchido à medida que validamos o pedido)
+  let logCtx: {
+    supabase?: any;
+    organization_id?: string;
+    user_id?: string;
+    plan_import_id?: string | null;
+    obra_id?: string | null;
+  } = {};
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
