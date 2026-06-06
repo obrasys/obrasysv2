@@ -43,7 +43,7 @@ export function useCreateIcfConfig() {
       return data;
     },
     onSuccess: (_, v) => {
-      qc.invalidateQueries({ queryKey: ['icf-configuracoes', v.obra_id] });
+      qc.invalidateQueries({ queryKey: ['icf-configuracoes', v.obra_id ?? '__all__'] });
       toast({ title: 'Configuração ICF criada' });
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
