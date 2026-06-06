@@ -84,10 +84,12 @@ export function useAxiaEssencial(orcamentoId?: string) {
   const acceptSuggestion = useCallback(async (suggestion: AxiaSuggestion) => {
     if (!user) return;
     setSuggestions(prev => prev.map(s => s.id === suggestion.id ? { ...s, accepted: true } : s));
-    
+
     try {
+      const organization_id = await resolveOrgId();
       await supabase.from('axia_suggestions_log' as any).insert({
         user_id: user.id,
+        organization_id,
         orcamento_id: orcamentoId || null,
         suggestion_type: suggestion.type,
         suggestion_payload: suggestion.payload,
@@ -95,19 +97,21 @@ export function useAxiaEssencial(orcamentoId?: string) {
       });
     } catch { /* silent */ }
 
-    await trackAxiaEvent('axia_suggestion_accepted', orcamentoId, { 
-      type: suggestion.type, 
-      payload: suggestion.payload 
+    await trackAxiaEvent('axia_suggestion_accepted', orcamentoId, {
+      type: suggestion.type,
+      payload: suggestion.payload
     });
-  }, [user, orcamentoId, trackAxiaEvent]);
+  }, [user, orcamentoId, trackAxiaEvent, resolveOrgId]);
 
   const dismissSuggestion = useCallback(async (suggestion: AxiaSuggestion) => {
     setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
 
     if (!user) return;
     try {
+      const organization_id = await resolveOrgId();
       await supabase.from('axia_suggestions_log' as any).insert({
         user_id: user.id,
+        organization_id,
         orcamento_id: orcamentoId || null,
         suggestion_type: suggestion.type,
         suggestion_payload: suggestion.payload,
@@ -116,7 +120,7 @@ export function useAxiaEssencial(orcamentoId?: string) {
     } catch { /* silent */ }
 
     await trackAxiaEvent('axia_suggestion_dismissed', orcamentoId, { type: suggestion.type });
-  }, [user, orcamentoId, trackAxiaEvent]);
+  }, [user, orcamentoId, trackAxiaEvent, resolveOrgId]);
 
   const clearSuggestions = useCallback(() => setSuggestions([]), []);
 
