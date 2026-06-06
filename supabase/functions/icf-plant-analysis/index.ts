@@ -109,9 +109,9 @@ const ICF_TOOL_SCHEMA = {
           },
           espessura_nucleo: {
             type: "number",
-            minimum: 0.1,
-            maximum: 0.4,
-            description: "Espessura do núcleo de betão em metros.",
+            minimum: 0.05,
+            maximum: 0.6,
+            description: "Espessura do núcleo de betão em metros (intervalo alargado 0.05–0.60 para suportar paredes finas e muros).",
           },
           piso_inicial: { type: "string" },
           piso_final: { type: "string" },

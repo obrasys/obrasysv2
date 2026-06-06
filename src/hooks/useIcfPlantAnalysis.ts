@@ -19,6 +19,10 @@ interface ExtractedParede {
   piso_inicial?: string;
   piso_final?: string;
   vaos?: ExtractedVao[];
+  // Lote 2.3: rastreabilidade da medição vinda da Axia
+  confianca?: number;
+  metodo_medicao?: 'cota' | 'escala' | 'estimativa_visual' | string;
+  notas_validacao?: string;
 }
 
 interface ExtractedFundacao {
