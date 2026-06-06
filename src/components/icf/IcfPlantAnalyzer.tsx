@@ -15,6 +15,7 @@ import { DxfPreviewDialog } from './DxfPreviewDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
+import { DxfDiagnosticPanel } from './DxfDiagnosticPanel';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
 import { IcfFoundationsModal } from './assistant/IcfFoundationsModal';
 import type { FoundationOptionKey } from '@/types/icf-assistant';
@@ -568,6 +569,11 @@ export function IcfPlantAnalyzer({
               );
             })()}
 
+            <DxfDiagnosticPanel
+              diagnostico={(analysisResult as any)?.validacao?.dxf_diagnostico ?? (analysisResult as any)?.__audit?.dxf_diagnostico}
+              compartimentos={(analysisResult as any)?.compartimentos ?? []}
+              textosNaoAssociados={(analysisResult as any)?.textos_nao_associados ?? []}
+            />
             <PlanAnalysisAuditTrail planImportId={analysisResult.__plan_import_id ?? null} />
           </div>
         )}
