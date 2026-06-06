@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid, AlertTriangle } from 'lucide-react';
+import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid, AlertTriangle, Send } from 'lucide-react';
 import { usePlanImports } from '@/hooks/usePlanImports';
 import { useIcfPlantAnalysis, diagnoseMissingData, type IcfPlantAnalysisResult } from '@/hooks/useIcfPlantAnalysis';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
-import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams } from '@/lib/icf-unified-quantities';
+import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
+import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
