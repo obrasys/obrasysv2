@@ -334,10 +334,11 @@ export function useIcfPlantAnalysis() {
       }
 
       setAnalysisResult(null);
-      toast({
-        title: 'Dados ICF criados com sucesso',
-        description: `${params.result.paredes.length} paredes, ${params.result.fundacoes.length} fundações e ${params.result.lajes.length} lajes criadas.`,
-      });
+      toast(PLAN_MESSAGES.records_created({
+        paredes: params.result.paredes.length,
+        fundacoes: params.result.fundacoes.length,
+        lajes: params.result.lajes.length,
+      }));
     },
     onError: async (e: any, params) => {
       const orgId = organization?.id;
@@ -355,7 +356,7 @@ export function useIcfPlantAnalysis() {
           } as any);
         } catch {}
       }
-      toast({ title: 'Erro ao criar registos', description: e.message, variant: 'destructive' });
+      toast(humanizeError(e, PLAN_MESSAGES.records_error()));
     },
   });
 
