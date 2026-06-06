@@ -569,6 +569,11 @@ export function IcfPlantAnalyzer({
               );
             })()}
 
+            <DxfDiagnosticPanel
+              diagnostico={(analysisResult as any)?.validacao?.dxf_diagnostico ?? (analysisResult as any)?.__audit?.dxf_diagnostico}
+              compartimentos={(analysisResult as any)?.compartimentos ?? []}
+              textosNaoAssociados={(analysisResult as any)?.textos_nao_associados ?? []}
+            />
             <PlanAnalysisAuditTrail planImportId={analysisResult.__plan_import_id ?? null} />
           </div>
         )}
