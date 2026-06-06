@@ -144,22 +144,20 @@ export function useIcfPlantAnalysis() {
       setAnalysisResult(result);
       const audit = result?.__audit;
       if (audit?.requer_revisao_humana) {
-        toast({
-          title: 'Revisão humana recomendada',
-          description: 'A Axia detetou possível duplicação ou baixa confiança na leitura da planta. Revise as paredes extraídas antes de gerar orçamento.',
-          variant: 'destructive',
-        });
+        toast(PLAN_MESSAGES.analysis_needs_review());
       } else {
-        toast({
-          title: 'Análise concluída',
-          description: `Encontrados: ${result.paredes.length} paredes, ${result.fundacoes.length} fundações, ${result.lajes.length} lajes`,
-        });
+        toast(PLAN_MESSAGES.analysis_done({
+          paredes: result.paredes.length,
+          fundacoes: result.fundacoes.length,
+          lajes: result.lajes.length,
+        }));
       }
     },
     onError: (e: any) => {
-      toast({ title: 'Erro na análise', description: e.message, variant: 'destructive' });
+      toast(humanizeError(e, PLAN_MESSAGES.analysis_error()));
     },
   });
+
 
   const createRecordsMutation = useMutation({
     mutationFn: async (params: {
