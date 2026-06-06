@@ -95,12 +95,15 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 8 — Integração com orçamento
+## Fase 8 — Integração com orçamento ✅
 
-- "Criar novo orçamento a partir da planta" ou "Adicionar a orçamento existente".
-- Capítulos automáticos: Paredes ICF ext, Paredes ICF int, Blocos, Betão, Armaduras, Vergas, Acessórios, Mão de obra, Desperdícios, Observações.
-- Rastreabilidade `plan_import_id → budget_version_id` via tabela de ligação (`plan_budget_links` já existe).
-- Versionamento: reanálise cria nova versão sem apagar a anterior (`revision_number` já existe + nova `plan_analysis_versions` se necessário).
+- ✅ Novo hook `useIcfPlanToBudget` + helper `buildIcfPlanChapters` constroem capítulos a partir dos quantitativos unificados: Paredes ICF Ext, Paredes ICF Int, Blocos ICF, Betão (paredes/fundações/lajes), Armadura, Mão de obra ICF, Observações.
+- ✅ Diálogo `IcfPlanToBudgetDialog` com modos "Criar novo" (cria `orcamentos` rascunho) e "Adicionar a existente" (lista filtrada por obra, exclui adjudicados, anexa capítulos no fim respeitando `ordem`).
+- ✅ Botão "Enviar para orçamento" no `IcfPlantAnalyzer` ao lado de "Carregar para a configuração ICF" — ambos exigem clique humano explícito.
+- ✅ Rastreabilidade nos artigos: `source='axia_icf_planta'`, `linked_element_id=plan_analysis_version_id`, `chapter_code='ICF_PLANTA'`, `article_code='ICF_PLANTA_*'`.
+- ✅ Eventos `orcamento_criado` / `orcamento_atualizado` registados em `plan_analysis_logs` com totais e contagens (best-effort).
+- ✅ Sem migração de schema — reaproveita `orcamentos`, `capitulos_orcamento`, `artigos_orcamento` existentes.
+- ⏭️ Vínculo via `plan_budget_links` fica para iteração futura (requer migração: `measurement_id` atual é `NOT NULL` e não cabe em quantitativos agregados).
 
 ---
 
