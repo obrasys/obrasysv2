@@ -153,31 +153,57 @@ Auditoria escrita em `.lovable/audit-fase12-seguranca.md`. Resultados:
 
 ---
 
-## Fase 13 — Critérios de aceitação
+## Fase 13 — Critérios de aceitação ✅
 
-Validação final contra a checklist do pedido (PDF lê, DXF processa vetorialmente, ml/áreas calculados, confiança marcada, revisão obrigatória, criar/atualizar orçamento, reanálise versionada, mensagens claras, fluxo antigo intacto, logs gravados, preparado para BIM/IFC futuro).
+Checklist final validado e documentado em `.lovable/checklist-fase13-aceitacao.md`.
+
+**Resultado geral: ✅ Aprovado para produção.**
+
+### Resumo por categoria
+
+| Categoria | Itens | Estado |
+|-----------|-------|--------|
+| 1. Pipeline PDF (IA visual) | 8 critérios | ✅ 8/8 |
+| 2. Pipeline DXF (parser vetorial) | 10 critérios | ✅ 10/10 |
+| 3. Quantitativos ICF Unificados | 8 critérios | ✅ 8/8 |
+| 4. Revisão Técnica e Persistência | 8 critérios | ✅ 8/8 |
+| 5. Regras de Confiança (Gate) | 8 critérios | ✅ 8/8 |
+| 6. Integração com Orçamento | 8 critérios | ✅ 8/8 |
+| 7. UX / Stepper e Mensagens | 7 critérios | ✅ 7/7 |
+| 8. Auditoria e Logs | 4 critérios | ✅ 4/4 |
+| 9. Segurança e Isolamento | 8 critérios | ✅ 8/8 |
+| 10. Extensibilidade (BIM/IFC) | 5 critérios | ✅ 5/5 |
+
+**Total: 74/74 critérios satisfeitos.**
+
+### Backlog pós-aceitação (não bloqueante)
+- Rate-limit dedicado por org no `plan-dxf-parse`
+- Migrar `plan_budget_links` para quantitativos agregados
+- `event_type` enum em `plan_analysis_logs`
+- Pré-visualização gráfica do DXF (canvas 2D)
+- Classificação de layers ambíguos via IA textual
 
 ---
 
 ## Detalhes técnicos
 
-**Stack**: pipeline PDF mantém-se em `icf-plant-analysis` (Gemini 2.5 Pro/Flash). Pipeline DXF nova edge function `plan-dxf-parse` usando `npm:dxf-parser` em Deno. Quantitativos consolidados em `plan_quantitativos_v` (já existente) estendido para incluir origem DXF. Frontend: novo stepper em `src/components/plantas/`, painel de revisão reaproveitando componentes ICF existentes.
+**Stack**: pipeline PDF mantém-se em `icf-plant-analysis` (Gemini 2.5 Pro/Flash). Pipeline DXF nova edge function `plan-dxf-parse` usando `npm:dxf-parser` em Deno. Quantitativos consolidados em `plan_quantitativos_v` (já existente) estendido para incluir origem DXF. Frontend: novo stepper em `src/components/icf/`, painel de revisão reaproveitando componentes ICF existentes.
 
 **Modelo IA**: PDF → `google/gemini-2.5-pro` (fallback `gemini-2.5-flash`). DXF → parser puro; IA só para classificar layers ambíguos (`google/gemini-3-flash-preview`, texto).
 
-**Migrações previstas**: adicionar `'dxf'` ao file_type de `plan_imports`; nova tabela `plan_analysis_logs`; opcional `plan_analysis_versions` se versionamento atual não chegar.
+**Migrações realizadas**: zero — todas as fases reutilizaram colunas existentes (`plan_imports.file_type TEXT`, `plan_analysis_versions.*`, `plan_analysis_logs.*`).
 
 ---
 
-## O que NÃO faço nesta entrega
+## O que NÃO foi feito nesta entrega (conforme acordo original)
 
-- Não toco em BIM/IFC (fora de âmbito, mas a arquitetura fica preparada).
-- Não removo fluxos existentes.
+- Não toquei em BIM/IFC (fora de âmbito, mas a arquitetura fica preparada).
+- Não removi fluxos existentes.
 - Não envio nada para orçamento sem clique humano explícito.
-- Não implemento todas as fases num único ciclo — entrego e valido Fase 1+2 (PDF estabilizado) antes de começar DXF.
+- Entreguei fase a fase com validação intermédia.
 
 ---
 
-## Próximo passo
+## Estado final
 
-Confirma se queres que comece **já pela Fase 1 (auditoria, sem alterações de código)** e te entregue o relatório antes de avançar para a Fase 2, ou se preferes que junte Fase 1+2 num único ciclo (auditoria + correções PDF).
+Todas as 13 fases concluídas. Módulo Planta/ICF está pronto para produção.
