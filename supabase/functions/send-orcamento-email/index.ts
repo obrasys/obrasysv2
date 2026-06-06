@@ -175,9 +175,9 @@ const escapeHtml = (s: string) =>
           
           <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb"/>
           <p style="font-size:12px;color:#6b7280">
-            Este orçamento foi gerado automaticamente por ${senderName} através da plataforma Obra Sys.
-            ${profile?.telefone ? `Contacto: ${profile.telefone}` : ""}
-            ${profile?.email ? ` | Email: ${profile.email}` : ""}
+            Este orçamento foi gerado automaticamente por ${escapeHtml(senderName)} através da plataforma Obra Sys.
+            ${profile?.telefone ? `Contacto: ${escapeHtml(profile.telefone)}` : ""}
+            ${profile?.email ? ` | Email: ${escapeHtml(profile.email)}` : ""}
           </p>
         </div>
       </div>
