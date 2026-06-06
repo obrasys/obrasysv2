@@ -1,46 +1,151 @@
-# Corrigir erro "Edge Function returned non-2xx" na análise da planta ICF
 
-## Causa
+# Evolução do módulo Planta/ICF — leitura PDF + DXF com quantitativos revisíveis
 
-Confirmado nos logs da edge function `icf-plant-analysis`:
+Vou abordar isto em **13 fases sequenciais**, começando por estabilizar o PDF antes de adicionar DXF. Cada fase é entregue, testada e validada antes de avançar — nada vai para produção sem revisão humana dos quantitativos.
 
-1. O **Gemini 2.5 Pro** (modelo primário) deu **timeout/abort** ao processar a planta PDF.
-2. O **fallback GPT-5.5** (OpenAI) rejeitou o ficheiro com:
-   `Invalid MIME type. Only image types are supported` (HTTP 400).
+---
 
-Os modelos OpenAI não aceitam `application/pdf` na API de chat com imagens — só os modelos Google/Gemini aceitam PDF diretamente.
+## Fase 1 — Auditoria técnica do fluxo PDF atual (read-only)
 
-## Correção
+Antes de tocar em código, faço um relatório técnico interno cobrindo:
 
-Em `supabase/functions/icf-plant-analysis/index.ts`, ajustar a montagem da cadeia de modelos imediatamente antes do loop de tentativas (linha 450):
+- **Frontend**: `PlanUploadForm`, `usePlanImports`, página `plantas/Index.tsx` e `plantas/Quantitativos.tsx` — validações, MIME types, limites, mensagens de erro.
+- **Storage**: bucket `plan-files`, políticas, paths, URLs assinadas (`useSignedUrl`).
+- **Hooks de leitura**: `useIcfPlantAnalysis`, `usePlanAxiaPersistence`, `usePlanMeasurements`, `usePlanRooms`, `usePlanWalls`, `usePlanOpenings`, `usePlanPlacedElements`, `usePlanQuantitativos` e view `plan_quantitativos_v`.
+- **Edge functions**: `icf-plant-analysis`, `icf-complete-project-analyzer`, `icf-architecture-assistant`, `axia-plan-suggestions`, `axia-infra-scenarios` — chain de modelos, timeouts, tratamento PDF vs imagem, persistência.
+- **Lib**: `pdf-to-image.ts`, `plan-quantitativos-engine.ts`, `plan-discipline.ts`, `plan-budget-mapping.ts`, regras Axia.
+- **DB**: tabelas `plan_imports`, `plan_pages`, `plan_floors`, `plan_walls`, `plan_openings`, `plan_rooms`, `plan_measurements`, `plan_placed_elements`, `icf_assistant_sessions/items`, RLS e GRANTs.
+- **Casos-limite**: PDF sem escala, PDF rasterizado, PDF multi-página, ficheiros > 12 MB, modelos que rejeitam PDF (já corrigido recentemente para Gemini).
 
-- Detetar se o ficheiro é PDF (`mimeType === "application/pdf"`).
-- Se for PDF e o modelo primário/fallback **não** for Gemini, substituir por equivalente Google:
-  - primário → `google/gemini-2.5-pro`
-  - fallback → `google/gemini-2.5-flash` (mais rápido, reduz risco de timeout)
-- Para imagens (PNG/JPEG), manter a cadeia original do `resolveChain("icf_analysis")`.
+**Entregável**: documento `.lovable/audit-planta-icf.md` com problemas encontrados, severidade e correções propostas. Sem alterações de código nesta fase.
 
-Diff conceptual:
+---
 
-```ts
-const isPdf = mimeType === "application/pdf";
-const pdfSafe = (m: string) => m.startsWith("google/");
-const safePrimary  = isPdf && !pdfSafe(chain.primary)  ? "google/gemini-2.5-pro"   : chain.primary;
-const safeFallback = isPdf && !pdfSafe(chain.fallback) ? "google/gemini-2.5-flash" : chain.fallback;
+## Fase 2 — Estabilização e melhoria da leitura PDF
 
-const attempts = [
-  { model: safePrimary,  timeoutMs: 80_000 },
-  { model: safeFallback, timeoutMs: 55_000 },
-];
-```
+Corrijo os bugs da Fase 1 e reforço o pipeline PDF existente:
 
-## Verificação
+- Forçar Gemini para PDFs (já feito) e adicionar pré-rasterização opcional via `renderPdfFirstPageToPngBlob` quando o PDF é grande.
+- Garantir extração de: escala, piso, compartimentos, áreas, paredes ext/int, espessuras, vãos, perímetros, ml de parede, pé-direito assumido, áreas bruta/aberturas/líquida, observações, **confidence_score por item**.
+- Quando faltar info: novo modal "**Dados em falta**" perguntando escala, pé-direito, ICF ext/int, espessura bloco, descontar vãos, fundações, tipo de folha.
+- Painel de revisão antes de fechar quantitativo (reusar e melhorar componentes existentes).
+- Mensagens de erro humanas (catálogo unificado, Fase 11).
 
-1. Re-tentar carregar a mesma planta PDF.
-2. Confirmar nos logs da edge function: deve aparecer `gemini-2.5-flash` como fallback em vez de `gpt-5.5`, sem o erro `Invalid MIME type`.
-3. Se a planta for muito grande e ainda assim demorar, mostrar mensagem ao utilizador a sugerir enviar por piso (já existe a verificação de 12 MB).
+---
 
-## Fora do âmbito
+## Fase 3 — Aceitar upload DXF (frontend)
 
-- Não altero o prompt, o schema da tool call, nem a UI.
-- Não mexo no chain config (`resolveChain`) — a correção é local à função e degrada de forma segura.
+- `PlanUploadForm`: atualizar `useDropzone` accept para incluir `.dxf` (`application/dxf`, `application/x-dxf`, `image/vnd.dxf`).
+- Texto: "Carregue uma planta em PDF ou DXF para análise técnica e geração de quantitativos ICF."
+- Detecção automática do tipo no upload e routing para pipeline correto (PDF multimodal vs DXF vetorial).
+- Atualizar `usePlanImports` (`file_type` passa a aceitar `'dxf'`) e validações.
+- Migração: adicionar `'dxf'` ao enum/check de `plan_imports.file_type` se aplicável.
+
+---
+
+## Fase 4 — Pipeline técnico DXF (vetorial, sem IA visual)
+
+Nova edge function `plan-dxf-parse` usando parser DXF em Deno (`dxf-parser` via `npm:`):
+
+- Lê entidades: LINE, LWPOLYLINE, POLYLINE, ARC, CIRCLE, TEXT, MTEXT, DIMENSION, INSERT/BLOCK.
+- Classifica por **layer** (whitelist: WALL/WALLS/PAREDES/ARQ_PAREDES, DOORS/PORTAS, WINDOWS/JANELAS, ROOM/COMPARTIMENTOS, COTAS/DIMENSIONS, ICF, STRUCTURE).
+- Heurística geométrica quando layers não são claros: linhas paralelas próximas = parede, polilinhas fechadas = compartimento, textos dentro de polígonos = nome do compartimento.
+- IA opcional só para classificar layers ambíguos (texto, não imagem).
+
+---
+
+## Fase 5 — Normalização de unidades e escala DXF
+
+- Tentar inferir unidade do header DXF (`$INSUNITS`) — mm/cm/m.
+- Se ambíguo, modal obrigatório: "**Confirme a unidade do ficheiro DXF**" (mm/cm/m/estimar pelas cotas).
+- Sanity check: avisar se paredes > 100 m em moradia, áreas absurdas, etc.
+- Pré-visualização do cálculo antes de persistir.
+
+---
+
+## Fase 6 — Quantitativos ICF unificados (PDF + DXF)
+
+Pipeline final igual para ambos os formatos, devolvendo: ml parede ext/int, altura, áreas bruta/portas/janelas/líquida, espessura ICF, tipo+quantidade de blocos, peças especiais (cantos, topos, vergas, reforços), betão, armadura, % desperdício, observações, confiança, itens p/ revisão.
+
+Parametrização pré-fecho: pé-direito, espessura, tipo/dimensão bloco, % desperdício, descontar vãos, ext/int, fundações, arquitetura vs estrutura. Reusar `useIcfAssistantSession`, `useIcfBudget`, `useIcfCalculationConstants`, `icf-architecture-engine.ts`, `icf-homeblock-composition.ts`.
+
+---
+
+## Fase 7 — Painel de revisão técnica
+
+Tabela editável por linha (compartimento, tipo parede, comprimento, altura, área, vãos descontados, qtd líquida, tipo bloco, observações, **confidence**, **estado**: validado/precisa revisão/ignorar). Botões: aprovar, editar, excluir. **Nada vai para orçamento sem aprovação explícita.**
+
+---
+
+## Fase 8 — Integração com orçamento
+
+- "Criar novo orçamento a partir da planta" ou "Adicionar a orçamento existente".
+- Capítulos automáticos: Paredes ICF ext, Paredes ICF int, Blocos, Betão, Armaduras, Vergas, Acessórios, Mão de obra, Desperdícios, Observações.
+- Rastreabilidade `plan_import_id → budget_version_id` via tabela de ligação (`plan_budget_links` já existe).
+- Versionamento: reanálise cria nova versão sem apagar a anterior (`revision_number` já existe + nova `plan_analysis_versions` se necessário).
+
+---
+
+## Fase 9 — Regras de confiança e logs de auditoria
+
+Política global:
+- `≥ 0.85` → confiável
+- `0.60–0.85` → revisão obrigatória
+- `< 0.60` → bloqueado para uso automático
+- Sem escala/unidade/cota → todo o quantitativo exige revisão
+
+Tabela `plan_analysis_logs` (nova): ficheiro, tipo, data, método (gemini/dxf-parser), erros, campos assumidos, campos confirmados pelo user, versão, user_id, organization_id. RLS por organização.
+
+---
+
+## Fase 10 — UI/UX em 7 etapas (stepper)
+
+Stepper claro: Upload → Identificar tipo → Confirmar escala/unidade → Parâmetros ICF → Rever elementos → Gerar quantitativo → Enviar para orçamento. Indicador de etapa sempre visível.
+
+---
+
+## Fase 11 — Catálogo de mensagens ao utilizador
+
+Mensagens curtas, humanas, sem jargão técnico, centralizadas em `src/lib/plan-error-messages.ts` (escala não detetada, layers ambíguos, PDF rasterizado, baixa confiança, cotas insuficientes, etc.).
+
+---
+
+## Fase 12 — Compatibilidade e segurança
+
+- Migrações aditivas apenas (sem `DROP`/quebra de tipo).
+- Análises antigas preservadas.
+- RLS por `organization_id` em todas as novas tabelas + GRANTs explícitos (`authenticated`, `service_role`).
+- Edge functions validam JWT, organização e quota.
+- Nada flui para orçamento sem aprovação humana.
+- Possíveis tabelas novas (apenas se necessário, sem duplicar existentes): `plan_analysis_versions`, `plan_analysis_logs`. As outras (`plan_files`, `plan_analyses`, `plan_detected_elements`, `plan_icf_quantities`) já têm equivalente — reutilizo.
+
+---
+
+## Fase 13 — Critérios de aceitação
+
+Validação final contra a checklist do pedido (PDF lê, DXF processa vetorialmente, ml/áreas calculados, confiança marcada, revisão obrigatória, criar/atualizar orçamento, reanálise versionada, mensagens claras, fluxo antigo intacto, logs gravados, preparado para BIM/IFC futuro).
+
+---
+
+## Detalhes técnicos
+
+**Stack**: pipeline PDF mantém-se em `icf-plant-analysis` (Gemini 2.5 Pro/Flash). Pipeline DXF nova edge function `plan-dxf-parse` usando `npm:dxf-parser` em Deno. Quantitativos consolidados em `plan_quantitativos_v` (já existente) estendido para incluir origem DXF. Frontend: novo stepper em `src/components/plantas/`, painel de revisão reaproveitando componentes ICF existentes.
+
+**Modelo IA**: PDF → `google/gemini-2.5-pro` (fallback `gemini-2.5-flash`). DXF → parser puro; IA só para classificar layers ambíguos (`google/gemini-3-flash-preview`, texto).
+
+**Migrações previstas**: adicionar `'dxf'` ao file_type de `plan_imports`; nova tabela `plan_analysis_logs`; opcional `plan_analysis_versions` se versionamento atual não chegar.
+
+---
+
+## O que NÃO faço nesta entrega
+
+- Não toco em BIM/IFC (fora de âmbito, mas a arquitetura fica preparada).
+- Não removo fluxos existentes.
+- Não envio nada para orçamento sem clique humano explícito.
+- Não implemento todas as fases num único ciclo — entrego e valido Fase 1+2 (PDF estabilizado) antes de começar DXF.
+
+---
+
+## Próximo passo
+
+Confirma se queres que comece **já pela Fase 1 (auditoria, sem alterações de código)** e te entregue o relatório antes de avançar para a Fase 2, ou se preferes que junte Fase 1+2 num único ciclo (auditoria + correções PDF).
