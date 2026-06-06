@@ -32,6 +32,7 @@ import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { usePlanWalls } from "@/hooks/usePlanWalls";
 import { usePlanOpenings } from "@/hooks/usePlanOpenings";
 import { usePdfRenderer } from "@/hooks/usePdfRenderer";
+import { useDxfRenderer } from "@/hooks/useDxfRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
@@ -158,6 +159,7 @@ export default function PlanDetail() {
 
   // PDF renderer
   const isPdf = plan?.file_type === "pdf";
+  const isDxf = plan?.file_type === "dxf";
   const [currentPage, setCurrentPage] = useState(1);
   const { dimensions, isRendering, imageDataUrl, totalPages } = usePdfRenderer({
     url: isPdf ? fileUrlQuery.data ?? null : null,
@@ -168,23 +170,36 @@ export default function PlanDetail() {
   const currentPageId = axiaPersist.getPageMetadata(currentPage)?.page_id ?? null;
   const { calibration, isLoading: calibrationLoading, saveCalibration } = usePlanCalibration(planId, currentPageId, selectedFloorId);
 
-  // Image loader for non-PDF
+  // Image loader for non-PDF, non-DXF
   const imageQuery = useQuery({
-    queryKey: ["plan-image-dim", fileUrlQuery.data, isPdf],
+    queryKey: ["plan-image-dim", fileUrlQuery.data, isPdf, isDxf],
     queryFn: () =>
-      new Promise<{ width: number; height: number; dataUrl: string }>((resolve) => {
+      new Promise<{ width: number; height: number; dataUrl: string }>((resolve, reject) => {
         const url = fileUrlQuery.data;
         if (!url) return resolve({ width: 0, height: 0, dataUrl: "" });
         const img = new window.Image();
         img.crossOrigin = "anonymous";
         img.onload = () => resolve({ width: img.width, height: img.height, dataUrl: url });
+        img.onerror = () => reject(new Error("Falha ao carregar imagem"));
         img.src = url;
       }),
-    enabled: !!fileUrlQuery.data && !isPdf,
+    enabled: !!fileUrlQuery.data && !isPdf && !isDxf,
+    retry: false,
   });
 
-  const effectiveImageUrl = isPdf ? imageDataUrl : imageQuery.data?.dataUrl ?? null;
-  const effectiveDimensions = isPdf ? dimensions : { width: imageQuery.data?.width ?? 0, height: imageQuery.data?.height ?? 0 };
+  // DXF renderer (vector → raster preview)
+  const dxfQuery = useDxfRenderer(fileUrlQuery.data ?? null, isDxf);
+
+  const effectiveImageUrl = isPdf
+    ? imageDataUrl
+    : isDxf
+      ? dxfQuery.data?.dataUrl ?? null
+      : imageQuery.data?.dataUrl ?? null;
+  const effectiveDimensions = isPdf
+    ? dimensions
+    : isDxf
+      ? { width: dxfQuery.data?.width ?? 0, height: dxfQuery.data?.height ?? 0 }
+      : { width: imageQuery.data?.width ?? 0, height: imageQuery.data?.height ?? 0 };
 
   // Mode state
   const [mode, setMode] = useState<MeasureMode>("view");
@@ -979,7 +994,7 @@ export default function PlanDetail() {
           <PlanViewer
             imageDataUrl={effectiveImageUrl}
             dimensions={effectiveDimensions}
-            isRendering={isRendering || imageQuery.isLoading}
+            isRendering={isRendering || (!isDxf && imageQuery.isLoading) || (isDxf && dxfQuery.isLoading)}
             mode={mode}
             calibrationPoints={calibrationPoints}
             onCalibrationClick={handleCalibrationClick}
