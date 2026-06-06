@@ -144,11 +144,24 @@ export function IcfPlantAnalyzer({
 
     setIsUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'pdf';
+      const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
       const folder = obraId || 'standalone';
       const filePath = `${user.id}/${folder}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
+
+      // Regista a planta em plan_imports para que as edge functions (anti-IDOR)
+      // possam validar a propriedade e produzir auditoria.
+      const { error: insertErr } = await supabase.from('plan_imports').insert({
+        user_id: user.id,
+        obra_id: obraId ?? null,
+        file_path: filePath,
+        file_type: ext === 'dxf' ? 'dxf' : 'pdf',
+        nome_ficheiro: file.name,
+        disciplina: 'arquitetura',
+        status: 'pendente',
+      } as any);
+      if (insertErr) throw insertErr;
 
       requestAnalyze(filePath);
     } catch (err: any) {
