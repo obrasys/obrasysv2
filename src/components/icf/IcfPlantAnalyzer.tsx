@@ -77,6 +77,14 @@ export function IcfPlantAnalyzer({
   // Pré-visualização gráfica DXF (zoom/pan) antes do processamento final
   const [dxfPreviewOpen, setDxfPreviewOpen] = useState(false);
   const [dxfPreviewPath, setDxfPreviewPath] = useState<string | null>(null);
+
+  // Sugestão de fundações (revisão obrigatória) quando a planta não tem fundações
+  const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
+  const [foundationsDismissed, setFoundationsDismissed] = useState(false);
+  const [foundationSuggested, setFoundationSuggested] = useState<{
+    option: FoundationOptionKey;
+    label: string;
+  } | null>(null);
   const isDxfPath = (p: string) => /\.dxf$/i.test(p);
   const requestAnalyze = (filePath: string) => {
     if (isDxfPath(filePath)) {
