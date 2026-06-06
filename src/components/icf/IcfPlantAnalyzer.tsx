@@ -250,6 +250,23 @@ export function IcfPlantAnalyzer({
               </p>
             )}
 
+            {diagnosis.needsReview && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm space-y-1.5">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="h-4 w-4" />
+                  Revisão humana obrigatória
+                </div>
+                <ul className="text-xs text-amber-700/90 dark:text-amber-200/80 list-disc pl-5 space-y-0.5">
+                  {diagnosis.reasons.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+                <Button size="sm" variant="outline" className="mt-1" onClick={() => setMissingOpen(true)}>
+                  Preencher dados em falta
+                </Button>
+              </div>
+            )}
+
             {!hasObra && (
               <p className="text-xs text-muted-foreground border border-dashed rounded-md p-2">
                 Modo orçamento (sem obra): os quantitativos serão carregados na configuração ICF para gerar o orçamento. O mapa visual de panos só é criado quando existe obra associada.
@@ -260,12 +277,22 @@ export function IcfPlantAnalyzer({
                 <Check className="h-4 w-4 mr-2" />
                 Carregar para o orçamento ICF
               </Button>
-              <Button variant="outline" onClick={() => setAnalysisResult(null)}>
+              <Button variant="outline" onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}>
                 Cancelar
               </Button>
             </div>
           </div>
         )}
+
+        <IcfPlantMissingDataDialog
+          open={missingOpen}
+          onOpenChange={(v) => { setMissingOpen(v); if (!v) setMissingDismissed(true); }}
+          defaultAltura={2.7}
+          defaultEspessura={espessuraNucleo || 0.15}
+          onConfirm={handleMissingConfirm}
+          onDiscard={handleMissingDiscard}
+          reasons={diagnosis.reasons}
+        />
 
         {isCreating && (
           <div className="flex items-center gap-3 py-6 justify-center text-muted-foreground">
