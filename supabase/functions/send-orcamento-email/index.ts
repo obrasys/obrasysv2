@@ -152,8 +152,8 @@ const escapeHtml = (s: string) =>
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;color:#333">
         <div style="background:#1a56db;padding:24px;border-radius:8px 8px 0 0">
-          <h1 style="color:#fff;margin:0;font-size:22px">Orçamento - ${orcamento.titulo}</h1>
-          <p style="color:#dbeafe;margin:4px 0 0">${senderName}</p>
+          <h1 style="color:#fff;margin:0;font-size:22px">Orçamento - ${escapeHtml(orcamento.titulo || "")}</h1>
+          <p style="color:#dbeafe;margin:4px 0 0">${escapeHtml(senderName)}</p>
         </div>
         <div style="padding:24px;border:1px solid #e5e7eb;border-top:none">
           <p style="white-space:pre-line">${escapeHtml(mensagem || "")}</p>
