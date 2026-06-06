@@ -192,8 +192,9 @@ const escapeHtml = (s: string) =>
       );
     }
 
-    // Use verified domain obrasys.pt
-    const fromEmail = `${senderName} <noreply@obrasys.pt>`;
+    // Use verified domain obrasys.pt — sanitize display name to prevent header injection
+    const safeSender = String(senderName).replace(/[\r\n"<>]/g, "").trim().slice(0, 80) || "ObrasYS";
+    const fromEmail = `${safeSender} <noreply@obrasys.pt>`;
 
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
