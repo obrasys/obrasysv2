@@ -106,6 +106,43 @@ export function IcfPlantAnalyzer({
     });
   };
 
+  // Lote 2.3 — aplicar valores fornecidos no modal "Dados em falta" sem inventar:
+  // preenche apenas paredes sem altura/espessura e marca-as como requires_review.
+  const handleMissingConfirm = (values: MissingDataValues) => {
+    if (!analysisResult) return;
+    const updatedParedes = analysisResult.paredes.map((p) => {
+      const novaAltura = !p.altura_util || p.altura_util < 1.5 ? values.alturaPadrao : p.altura_util;
+      const novaEspessura = !p.espessura_nucleo || p.espessura_nucleo < 0.05
+        ? values.espessuraPadrao
+        : p.espessura_nucleo;
+      const baixaConf = typeof p.confianca === 'number' && p.confianca < 0.6;
+      const notasExtra = [p.notas_validacao, values.notas, '[revisao_humana_pendente]']
+        .filter(Boolean)
+        .join(' | ');
+      return {
+        ...p,
+        altura_util: novaAltura,
+        espessura_nucleo: novaEspessura,
+        notas_validacao: notasExtra,
+        confianca: typeof p.confianca === 'number' ? Math.min(p.confianca, 0.6) : 0.5,
+        metodo_medicao: p.metodo_medicao ?? 'estimativa_visual',
+      };
+    });
+    setAnalysisResult({ ...analysisResult, paredes: updatedParedes });
+    setMissingOpen(false);
+    setMissingDismissed(true);
+    toast({
+      title: 'Valores aplicados com revisão obrigatória',
+      description: 'As paredes ficam marcadas como “requer revisão” antes de irem para orçamento.',
+    });
+  };
+
+  const handleMissingDiscard = () => {
+    setAnalysisResult(null);
+    setMissingOpen(false);
+    setMissingDismissed(false);
+  };
+
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader className="pb-3">
