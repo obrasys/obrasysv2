@@ -57,6 +57,9 @@ export function IcfPlantAnalyzer({
     espessuraNucleoPadrao: espessuraNucleo || DEFAULT_ICF_UNIFIED_PARAMS.espessuraNucleoPadrao,
   });
 
+  // Fase 8 — diálogo "Enviar para orçamento"
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+
   // Fase 5 — confirmação de unidade DXF
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
   const [unitDialogDismissed, setUnitDialogDismissed] = useState(false);
