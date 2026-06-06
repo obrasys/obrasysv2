@@ -561,11 +561,8 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     // cadeia 100% Gemini; para imagens mantemos a cadeia configurada.
     const isPdf = mimeType === "application/pdf";
     const pdfSafe = (m: string) => m.startsWith("google/");
-    // Para PDFs forçamos cadeia Gemini. Flash é significativamente mais rápido
-    // que Pro em PDFs vetoriais e raramente atinge o limite de 80s da edge function;
-    // por isso usamos Flash como PRIMARY e Pro como FALLBACK. Também garantimos
-    // que primary e fallback nunca colapsam no mesmo modelo (problema observado
-    // que provocava 2× timeout consecutivos em gemini-2.5-pro).
+    // Para PDFs forçamos Gemini Flash (suporta PDF e é ~3-5x mais rápido que Pro
+    // para extração estruturada). Pro como fallback quando dá tempo.
     let safePrimary = isPdf && !pdfSafe(chain.primary) ? "google/gemini-2.5-flash" : chain.primary;
     let safeFallback = isPdf && !pdfSafe(chain.fallback) ? "google/gemini-2.5-pro" : chain.fallback;
     if (isPdf) {
@@ -573,10 +570,14 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
       safeFallback = "google/gemini-2.5-pro";
     }
 
-    const attempts: Array<{ model: string; timeoutMs: number }> = [
-      { model: safePrimary, timeoutMs: isPdf ? 60_000 : 80_000 },
-      { model: safeFallback, timeoutMs: isPdf ? 80_000 : 55_000 },
-    ];
+    // Edge function tem ~150s. Damos 130s ao Flash (única tentativa para PDFs)
+    // para evitar duplo timeout. Para imagens mantemos cadeia dupla menor.
+    const attempts: Array<{ model: string; timeoutMs: number }> = isPdf
+      ? [{ model: safePrimary, timeoutMs: 130_000 }]
+      : [
+          { model: safePrimary, timeoutMs: 80_000 },
+          { model: safeFallback, timeoutMs: 55_000 },
+        ];
 
     let aiResponse: Response | null = null;
     let modelUsed = chain.primary;
@@ -604,7 +605,11 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     }
 
     if (!aiResponse) {
-      return jsonResponse({ error: `Erro na análise AI: ${lastErr || "indisponível"}` }, 504);
+      const isTimeout = /abort|timeout|signal/i.test(lastErr);
+      const userMsg = isTimeout
+        ? "A análise demorou demasiado. Tente um PDF mais leve (menos páginas) ou uma imagem da planta."
+        : `Erro na análise AI: ${lastErr || "indisponível"}`;
+      return jsonResponse({ error: userMsg }, 504);
     }
 
 
