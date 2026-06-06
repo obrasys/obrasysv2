@@ -23,7 +23,10 @@ import { IcfConfigsList } from '@/components/icf/IcfConfigsList';
 import { IcfPlantAnalyzer } from '@/components/icf/IcfPlantAnalyzer';
 import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
+import { IcfWelcomeDialog } from '@/components/icf/IcfWelcomeDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+
+const ICF_WELCOME_SESSION_KEY = 'icf_welcome_shown';
 
 const ICF_LAST_OBRA_KEY = 'icf_last_obra_id';
 const OBRA_NENHUMA = '__sem_obra__';
@@ -69,6 +72,36 @@ const IcfIndex = () => {
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
   const [pendingScope, setPendingScope] = useState<IcfScopeSelection | null>(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  // Pergunta inicial: novo orçamento ou carregar anterior?
+  useEffect(() => {
+    if (!icfEnabled || configsLoading || configsError) return;
+    if (sessionStorage.getItem(ICF_WELCOME_SESSION_KEY) === '1') return;
+    setWelcomeOpen(true);
+    sessionStorage.setItem(ICF_WELCOME_SESSION_KEY, '1');
+  }, [icfEnabled, configsLoading, configsError]);
+
+  const handleWelcomeCreateNew = () => {
+    setWelcomeOpen(false);
+    handleCreateConfig();
+  };
+
+  const handleWelcomeLoadExisting = (configId: string) => {
+    const target = configs?.find((c) => c.id === configId);
+    if (!target) return setWelcomeOpen(false);
+    const currentActive = configs?.find((c) => c.ativo && c.id !== configId);
+    const tasks: Promise<unknown>[] = [];
+    if (!target.ativo) {
+      tasks.push(updateConfig.mutateAsync({ id: configId, ativo: true } as any));
+    }
+    if (currentActive) {
+      tasks.push(updateConfig.mutateAsync({ id: currentActive.id, ativo: false } as any));
+    }
+    Promise.all(tasks)
+      .then(() => setWelcomeOpen(false))
+      .catch((e: any) => toast.error('Não foi possível carregar a configuração', { description: e?.message }));
+  };
 
   const handleOpenBudgetDialog = () => {
     if (!activeConfig || !resumo) return;
@@ -316,6 +349,15 @@ const IcfIndex = () => {
         onOpenChange={setBudgetDialogOpen}
         onConfirm={handleConfirmGenerateBudget}
         isPending={generateBudget.isPending}
+      />
+
+      <IcfWelcomeDialog
+        open={welcomeOpen}
+        onOpenChange={setWelcomeOpen}
+        configs={configs ?? []}
+        isCreating={createConfig.isPending}
+        onCreateNew={handleWelcomeCreateNew}
+        onLoadExisting={handleWelcomeLoadExisting}
       />
     </AppLayout>
   );
