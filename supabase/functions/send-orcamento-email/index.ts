@@ -99,7 +99,7 @@ const escapeHtml = (s: string) =>
 
     let itemsHtml = "";
     for (const cap of capitulos) {
-      itemsHtml += `<tr style="background:#f3f4f6"><td colspan="5" style="padding:8px;font-weight:bold">${cap.numero}. ${cap.titulo}</td></tr>`;
+      itemsHtml += `<tr style="background:#f3f4f6"><td colspan="5" style="padding:8px;font-weight:bold">${escapeHtml(String(cap.numero))}. ${escapeHtml(cap.titulo || "")}</td></tr>`;
       const artigos = (cap.artigos_orcamento || [])
         .sort((a: any, b: any) => a.ordem - b.ordem);
       for (const art of artigos) {
@@ -107,8 +107,8 @@ const escapeHtml = (s: string) =>
         const precoComMargem = art.preco_unitario * margemMultiplier;
         const totalComMargem = (art.valor_total || art.quantidade * art.preco_unitario) * margemMultiplier;
         itemsHtml += `<tr>
-          <td style="padding:6px 8px">${art.descricao}</td>
-          <td style="padding:6px 8px;text-align:center">${art.unidade}</td>
+          <td style="padding:6px 8px">${escapeHtml(art.descricao || "")}</td>
+          <td style="padding:6px 8px;text-align:center">${escapeHtml(art.unidade || "")}</td>
           <td style="padding:6px 8px;text-align:right">${art.quantidade}</td>
           <td style="padding:6px 8px;text-align:right">${fmt(precoComMargem)}</td>
           <td style="padding:6px 8px;text-align:right">${fmt(totalComMargem)}</td>
