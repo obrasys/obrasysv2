@@ -411,11 +411,42 @@ serve(async (req) => {
     }
 
     const insUnits = dxf?.header?.$INSUNITS;
-    const unit = metersPerUnit(insUnits);
+    let unit = metersPerUnit(insUnits);
+    const detectedUnit = { ...unit };
+
+    // Fase 5: override explícito do utilizador tem precedência sobre $INSUNITS.
+    if (unitOverride) {
+      const overrideMap: Record<string, { factor: number; unit: string }> = {
+        mm: { factor: 0.001, unit: "mm" },
+        cm: { factor: 0.01, unit: "cm" },
+        m: { factor: 1, unit: "m" },
+        in: { factor: 0.0254, unit: "in" },
+        dm: { factor: 0.1, unit: "dm" },
+      };
+      const o = overrideMap[unitOverride];
+      unit = { factor: o.factor, assumed: false, unit: `${o.unit} (confirmado pelo utilizador)` };
+    }
     const toMeters = (n: number) => n * unit.factor;
 
     const entities: any[] = Array.isArray(dxf?.entities) ? dxf.entities : [];
     const segments = extractSegments(entities);
+
+    // Fase 5: bounding box (raw units) para sanity check de escala
+    let bMinX = Infinity, bMinY = Infinity, bMaxX = -Infinity, bMaxY = -Infinity;
+    for (const s of segments) {
+      for (const p of [s.a, s.b]) {
+        if (p.x < bMinX) bMinX = p.x;
+        if (p.y < bMinY) bMinY = p.y;
+        if (p.x > bMaxX) bMaxX = p.x;
+        if (p.y > bMaxY) bMaxY = p.y;
+      }
+    }
+    const bboxRawDiag = segments.length ? Math.hypot(bMaxX - bMinX, bMaxY - bMinY) : 0;
+    const bboxMeters = {
+      width: Number(toMeters(segments.length ? bMaxX - bMinX : 0).toFixed(2)),
+      height: Number(toMeters(segments.length ? bMaxY - bMinY : 0).toFixed(2)),
+      diagonal: Number(toMeters(bboxRawDiag).toFixed(2)),
+    };
 
     // Layer inventory for audit
     const layerInventory: Record<string, { count: number; kind: LayerKind }> = {};
