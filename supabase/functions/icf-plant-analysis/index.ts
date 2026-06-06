@@ -652,9 +652,96 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     };
 
 
-    return jsonResponse({ success: true, data: extracted, audit: extracted.validacao });
+    // Lote 2.5: criar snapshot versionado em plan_analysis_versions
+    let planAnalysisVersionId: string | null = null;
+    try {
+      const { data: lastVersion } = await supabase
+        .from("plan_analysis_versions")
+        .select("version")
+        .eq("plan_import_id", logCtx.plan_import_id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextVersion = (lastVersion?.version ?? 0) + 1;
+
+      const summary = {
+        paredes: extracted.paredes?.length ?? 0,
+        fundacoes: extracted.fundacoes?.length ?? 0,
+        lajes: extracted.lajes?.length ?? 0,
+        comprimento_total_m: correctedTotal,
+        modelo_utilizado: modelUsed,
+      };
+      const confidences = (extracted.paredes ?? [])
+        .map((p: any) => Number(p.confianca))
+        .filter((n: number) => Number.isFinite(n));
+      const avgConfidence = confidences.length
+        ? Number((confidences.reduce((a: number, b: number) => a + b, 0) / confidences.length).toFixed(3))
+        : null;
+
+      const { data: versionRow, error: versionErr } = await supabase
+        .from("plan_analysis_versions")
+        .insert({
+          plan_import_id: logCtx.plan_import_id,
+          organization_id: logCtx.organization_id!,
+          obra_id: logCtx.obra_id,
+          version: nextVersion,
+          created_by: logCtx.user_id!,
+          source: "icf-plant-analysis",
+          analysis_payload: extracted,
+          summary,
+          confidence: avgConfidence,
+          requires_review: !!extracted.validacao?.requer_revisao_humana,
+          human_reviewed: false,
+        })
+        .select("id")
+        .single();
+      if (versionErr) {
+        console.warn("plan_analysis_versions insert failed:", versionErr.message);
+      } else {
+        planAnalysisVersionId = versionRow?.id ?? null;
+      }
+    } catch (err) {
+      console.warn("plan_analysis_versions insert exception:", (err as Error)?.message ?? err);
+    }
+
+    await logPlanAnalysisEvent(supabase, {
+      plan_import_id: logCtx.plan_import_id,
+      plan_analysis_version_id: planAnalysisVersionId,
+      organization_id: logCtx.organization_id!,
+      obra_id: logCtx.obra_id,
+      user_id: logCtx.user_id,
+      event_type: extracted.validacao?.requer_revisao_humana ? "analise_concluida_com_revisao" : "analise_concluida",
+      status: extracted.validacao?.requer_revisao_humana ? "warning" : "success",
+      message: `Análise concluída (${extracted.paredes?.length ?? 0} paredes)`,
+      metadata: {
+        modelo: modelUsed,
+        paredes: extracted.paredes?.length ?? 0,
+        possivel_contagem_dupla: !!extracted.validacao?.possivel_contagem_dupla,
+        baixa_confianca: !!extracted.validacao?.baixa_confianca_detectada,
+      },
+    });
+
+    return jsonResponse({
+      success: true,
+      data: extracted,
+      audit: extracted.validacao,
+      plan_import_id: logCtx.plan_import_id,
+      plan_analysis_version_id: planAnalysisVersionId,
+    });
   } catch (e) {
     console.error("icf-plant-analysis error:", e);
+    // Lote 2.5: registar erro se já tivermos contexto da organização
+    if (logCtx.supabase && logCtx.organization_id) {
+      await logPlanAnalysisEvent(logCtx.supabase, {
+        plan_import_id: logCtx.plan_import_id,
+        organization_id: logCtx.organization_id,
+        obra_id: logCtx.obra_id,
+        user_id: logCtx.user_id,
+        event_type: "erro",
+        status: "error",
+        message: (e as Error)?.message?.slice(0, 500) ?? "Erro interno",
+      });
+    }
     return jsonResponse({ error: "Erro interno ao processar a planta" }, 500);
   }
 });
