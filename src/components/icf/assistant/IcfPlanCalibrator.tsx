@@ -170,8 +170,10 @@ export function IcfPlanCalibrator({ filePath, initialPage = 1, initial, onConfir
   }, []);
 
   const handleStageClick = (e: any) => {
-    if (panActive) return;
     if (method !== 'known_distance') return;
+    // Nota: não bloqueamos quando panActive — no Konva, onClick só dispara
+    // em clique real; arrastar dispara onDragEnd. Assim o utilizador pode
+    // marcar pontos mesmo com o Pan ativo.
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
     if (!pos) return;
