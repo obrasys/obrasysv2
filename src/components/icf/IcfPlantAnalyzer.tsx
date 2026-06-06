@@ -311,6 +311,12 @@ export function IcfPlantAnalyzer({
                 Modo orçamento (sem obra): os quantitativos serão carregados na configuração ICF para gerar o orçamento. O mapa visual de panos só é criado quando existe obra associada.
               </p>
             )}
+            <IcfUnifiedQuantitiesPanel
+              result={analysisResult}
+              params={unifiedParams}
+              onParamsChange={setUnifiedParams}
+            />
+
             <div className="flex gap-2">
               <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
