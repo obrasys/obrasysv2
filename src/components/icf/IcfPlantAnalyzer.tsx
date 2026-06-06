@@ -16,6 +16,8 @@ import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
+import { IcfFoundationsModal } from './assistant/IcfFoundationsModal';
+import type { FoundationOptionKey } from '@/types/icf-assistant';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
 import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
@@ -75,6 +77,14 @@ export function IcfPlantAnalyzer({
   // Pré-visualização gráfica DXF (zoom/pan) antes do processamento final
   const [dxfPreviewOpen, setDxfPreviewOpen] = useState(false);
   const [dxfPreviewPath, setDxfPreviewPath] = useState<string | null>(null);
+
+  // Sugestão de fundações (revisão obrigatória) quando a planta não tem fundações
+  const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
+  const [foundationsDismissed, setFoundationsDismissed] = useState(false);
+  const [foundationSuggested, setFoundationSuggested] = useState<{
+    option: FoundationOptionKey;
+    label: string;
+  } | null>(null);
   const isDxfPath = (p: string) => /\.dxf$/i.test(p);
   const requestAnalyze = (filePath: string) => {
     if (isDxfPath(filePath)) {
@@ -97,8 +107,16 @@ export function IcfPlantAnalyzer({
       setUnitDialogOpen(true);
     } else if (result && diagnosis.needsReview && !missingDismissed && !needsUnitConfirm) {
       setMissingOpen(true);
+    } else if (
+      result &&
+      !needsUnitConfirm &&
+      (result.fundacoes?.length ?? 0) === 0 &&
+      !foundationsDismissed &&
+      !foundationSuggested
+    ) {
+      setFoundationsModalOpen(true);
     }
-  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed]);
+  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed, foundationsDismissed, foundationSuggested]);
 
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
@@ -106,6 +124,8 @@ export function IcfPlantAnalyzer({
   const runAnalyze = (filePath: string, unitOverride?: DxfUnitOverride) => {
     setLastFilePath(filePath);
     setMissingDismissed(false);
+    setFoundationsDismissed(false);
+    setFoundationSuggested(null);
     if (!unitOverride) setUnitDialogDismissed(false);
     analyze({
       filePath,
@@ -117,6 +137,7 @@ export function IcfPlantAnalyzer({
       unitOverride: unitOverride ?? null,
     });
   };
+
 
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
@@ -215,6 +236,109 @@ export function IcfPlantAnalyzer({
     setMissingOpen(false);
     setMissingDismissed(false);
   };
+
+  // Comprimento total das paredes (base para sugerir fundação)
+  const baseIcfWallLength = useMemo(() => {
+    if (!analysisResult) return 0;
+    return analysisResult.paredes.reduce((s, p) => s + (Number(p.comprimento) || 0), 0);
+  }, [analysisResult]);
+
+  // Aplica fundação sugerida pela Axia (marcada para revisão obrigatória).
+  const handleFoundationApply = (
+    option: FoundationOptionKey,
+    params: Record<string, number | boolean>,
+  ) => {
+    if (!analysisResult) return;
+    const num = (k: string, fb = 0) =>
+      typeof params[k] === 'number' ? (params[k] as number) : fb;
+
+    let novaFundacao: IcfPlantAnalysisResult['fundacoes'][number] | null = null;
+    const labelMap: Record<FoundationOptionKey, string> = {
+      sapata_continua: 'Sapata contínua (sugestão Axia — revisão obrigatória)',
+      laje_terrea_bordo: 'Laje térrea c/ bordo (sugestão Axia — revisão obrigatória)',
+      stem_wall: 'Stem wall ICF (sugestão Axia — revisão obrigatória)',
+      cave_basement: 'Cave ICF (sugestão Axia — revisão obrigatória)',
+      radier: 'Radier (sugestão Axia — revisão obrigatória)',
+      nenhuma: 'Sem fundações (tratadas externamente)',
+    };
+
+    switch (option) {
+      case 'sapata_continua':
+        novaFundacao = {
+          tipo_fundacao: 'sapata_continua',
+          referencia: '[REVISÃO] Sapata contínua sob paredes ICF',
+          comprimento: Math.round(baseIcfWallLength * 100) / 100,
+          largura: num('largura', 0.6),
+          altura: num('altura', 0.4),
+          quantidade: 1,
+        };
+        break;
+      case 'stem_wall':
+        novaFundacao = {
+          tipo_fundacao: 'sapata_continua',
+          referencia: '[REVISÃO] Sapata sob stem wall ICF',
+          comprimento: Math.round(num('comprimento', baseIcfWallLength) * 100) / 100,
+          largura: 0.6,
+          altura: num('altura', 1.2),
+          quantidade: 1,
+        };
+        break;
+      case 'laje_terrea_bordo':
+        novaFundacao = {
+          tipo_fundacao: 'outra',
+          referencia: '[REVISÃO] Laje térrea com bordo espessado',
+          comprimento: Math.round(num('perimetro', baseIcfWallLength) * 100) / 100,
+          largura: num('largura_bordo', 0.4),
+          altura: num('altura_bordo', 0.5),
+          quantidade: 1,
+        };
+        break;
+      case 'cave_basement':
+        novaFundacao = {
+          tipo_fundacao: 'outra',
+          referencia: '[REVISÃO] Cave ICF (paredes enterradas)',
+          comprimento: Math.round(num('perimetro', baseIcfWallLength) * 100) / 100,
+          largura: num('nucleo', 0.25),
+          altura: num('altura', 2.5),
+          quantidade: 1,
+        };
+        break;
+      case 'radier': {
+        const area = num('area');
+        const lado = area > 0 ? Math.sqrt(area) : 0;
+        novaFundacao = {
+          tipo_fundacao: 'outra',
+          referencia: '[REVISÃO] Radier / laje de fundação',
+          comprimento: Math.round(lado * 100) / 100,
+          largura: Math.round(lado * 100) / 100,
+          altura: num('espessura', 0.25),
+          quantidade: 1,
+        };
+        break;
+      }
+      case 'nenhuma':
+        novaFundacao = null;
+        break;
+    }
+
+    const fundacoes = novaFundacao ? [novaFundacao] : [];
+    const notas = [
+      analysisResult.notas,
+      `[axia] Fundação sugerida (${option}) — requer validação técnica.`,
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+    setAnalysisResult({ ...analysisResult, fundacoes, notas });
+    setFoundationSuggested({ option, label: labelMap[option] });
+    setFoundationsModalOpen(false);
+    setFoundationsDismissed(true);
+    toast({
+      title: 'Sugestão aplicada',
+      description: labelMap[option] + ' — confirme as quantidades antes de enviar.',
+    });
+  };
+
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -339,6 +463,26 @@ export function IcfPlantAnalyzer({
               <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">
                 {analysisResult.notas}
               </p>
+            )}
+
+            {foundationSuggested && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm space-y-1.5">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-300">
+                  <AlertTriangle className="h-4 w-4" />
+                  Fundação sugerida pela Axia — revisão obrigatória
+                </div>
+                <p className="text-xs text-amber-700/90 dark:text-amber-200/80">
+                  {foundationSuggested.label}. Valide as dimensões antes de enviar para orçamento.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-1"
+                  onClick={() => setFoundationsModalOpen(true)}
+                >
+                  Alterar tipo de fundação
+                </Button>
+              </div>
             )}
 
             {diagnosis.needsReview && (
@@ -468,6 +612,21 @@ export function IcfPlantAnalyzer({
           onConfirm={() => {
             if (dxfPreviewPath) runAnalyze(dxfPreviewPath);
           }}
+        />
+
+        <IcfFoundationsModal
+          open={foundationsModalOpen}
+          onOpenChange={(v) => {
+            setFoundationsModalOpen(v);
+            if (!v) setFoundationsDismissed(true);
+          }}
+          baseIcfWallLength={baseIcfWallLength}
+          defaultsOverride={{
+            perimetro: Math.round(baseIcfWallLength * 100) / 100,
+            comprimento: Math.round(baseIcfWallLength * 100) / 100,
+          }}
+          selectedOption={foundationSuggested?.option ?? null}
+          onApply={handleFoundationApply}
         />
 
         {isCreating && (
