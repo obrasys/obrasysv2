@@ -331,6 +331,26 @@ serve(async (req) => {
       return jsonResponse({ error: "Planta não pertence à obra indicada." }, 403);
     }
 
+    // Lote 2.5: preencher contexto de logging
+    logCtx = {
+      supabase,
+      organization_id: userMembership.organization_id,
+      user_id: user.id,
+      plan_import_id: planImport.id,
+      obra_id: obra_id ?? planImport.obra_id ?? null,
+    };
+
+    await logPlanAnalysisEvent(supabase, {
+      plan_import_id: planImport.id,
+      organization_id: userMembership.organization_id,
+      obra_id: logCtx.obra_id,
+      user_id: user.id,
+      event_type: "analise_iniciada",
+      status: "info",
+      message: "Análise ICF iniciada",
+      metadata: { configuracao_id: configuracao_id, file_path },
+    });
+
     // Download the file from storage
     const { data: fileData, error: dlErr } = await supabase.storage
       .from("plan-files")
