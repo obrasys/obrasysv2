@@ -6362,12 +6362,15 @@ export type Database = {
           armadura_horizontal: string | null
           armadura_vertical: string | null
           comprimento: number
+          confidence: number | null
           configuracao_id: string
           created_at: string
           empresa_id: string
           espessura_nucleo: number
           fator_cumprimento: number
           id: string
+          metodo_medicao: string | null
+          notas_validacao: string | null
           obra_id: string | null
           observacoes: string | null
           ordem: number | null
@@ -6375,6 +6378,7 @@ export type Database = {
           piso_inicial: string | null
           referencia: string
           reforco_transversal: string | null
+          requires_review: boolean
           tipo_armadura: string | null
           updated_at: string
           volume_betao: number | null
@@ -6387,12 +6391,15 @@ export type Database = {
           armadura_horizontal?: string | null
           armadura_vertical?: string | null
           comprimento: number
+          confidence?: number | null
           configuracao_id: string
           created_at?: string
           empresa_id?: string
           espessura_nucleo?: number
           fator_cumprimento?: number
           id?: string
+          metodo_medicao?: string | null
+          notas_validacao?: string | null
           obra_id?: string | null
           observacoes?: string | null
           ordem?: number | null
@@ -6400,6 +6407,7 @@ export type Database = {
           piso_inicial?: string | null
           referencia: string
           reforco_transversal?: string | null
+          requires_review?: boolean
           tipo_armadura?: string | null
           updated_at?: string
           volume_betao?: number | null
@@ -6412,12 +6420,15 @@ export type Database = {
           armadura_horizontal?: string | null
           armadura_vertical?: string | null
           comprimento?: number
+          confidence?: number | null
           configuracao_id?: string
           created_at?: string
           empresa_id?: string
           espessura_nucleo?: number
           fator_cumprimento?: number
           id?: string
+          metodo_medicao?: string | null
+          notas_validacao?: string | null
           obra_id?: string | null
           observacoes?: string | null
           ordem?: number | null
@@ -6425,6 +6436,7 @@ export type Database = {
           piso_inicial?: string | null
           referencia?: string
           reforco_transversal?: string | null
+          requires_review?: boolean
           tipo_armadura?: string | null
           updated_at?: string
           volume_betao?: number | null
