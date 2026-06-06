@@ -90,16 +90,19 @@ async function renderDxf(url: string): Promise<DxfRenderResult> {
 
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasW, canvasH);
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 1;
+  // Stroke width relative to drawing scale for crisp lines at high res
+  ctx.lineWidth = Math.max(1, scale * 0.015);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  (ctx as any).imageSmoothingEnabled = true;
+  (ctx as any).imageSmoothingQuality = "high";
 
   const tx = (x: number) => PADDING + (x - minX) * scale;
   const ty = (y: number) => canvasH - PADDING - (y - minY) * scale; // flip Y
 
   for (const e of dxf.entities as any[]) {
     const type = String(e.type || "").toUpperCase();
+    ctx.strokeStyle = entityColor(e);
     ctx.beginPath();
     if (type === "LINE" && e.vertices?.length >= 2) {
       ctx.moveTo(tx(e.vertices[0].x), ty(e.vertices[0].y));
