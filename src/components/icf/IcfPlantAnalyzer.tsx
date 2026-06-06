@@ -17,6 +17,7 @@ import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
+import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
 
 
 
