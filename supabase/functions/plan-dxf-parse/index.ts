@@ -718,6 +718,19 @@ serve(async (req) => {
       },
     });
 
+    // Fase 8: log específico da extração de textos DXF
+    await logPlanAnalysisEvent(supabase, {
+      plan_import_id: logCtx.plan_import_id,
+      plan_analysis_version_id: planAnalysisVersionId,
+      organization_id: logCtx.organization_id!,
+      obra_id: logCtx.obra_id,
+      user_id: logCtx.user_id,
+      event_type: "dxf_textos_extraidos",
+      status: assoc.textos_nao_associados.length > 0 ? "warning" : "info",
+      message: `Textos DXF: ${textosDxf.length} extraídos, ${assoc.compartimentos.length} compartimentos, ${assoc.textos_nao_associados.length} a rever`,
+      metadata: dxfDiagnostico,
+    });
+
     return jsonResponse({
       success: true,
       data: extracted,
