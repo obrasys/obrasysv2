@@ -8,6 +8,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 // dxf-parser é puro JS, sem dependências nativas — compatível com Deno via esm.sh.
 import DxfParser from "https://esm.sh/dxf-parser@1.1.2";
+import { extractDxfTexts } from "./dxf-text.ts";
+import { detectRooms, associateTexts } from "./dxf-rooms.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
