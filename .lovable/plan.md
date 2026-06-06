@@ -60,12 +60,15 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 5 — Normalização de unidades e escala DXF
+## Fase 5 — Normalização de unidades e escala DXF ✅
 
-- Tentar inferir unidade do header DXF (`$INSUNITS`) — mm/cm/m.
-- Se ambíguo, modal obrigatório: "**Confirme a unidade do ficheiro DXF**" (mm/cm/m/estimar pelas cotas).
-- Sanity check: avisar se paredes > 100 m em moradia, áreas absurdas, etc.
-- Pré-visualização do cálculo antes de persistir.
+- ✅ Inferência de unidade via `$INSUNITS` (in/mm/cm/dm/m); quando ausente, assumir mm e marcar `unidade_assumida=true`.
+- ✅ `plan-dxf-parse` aceita `unit_override` (`mm|cm|m|in|dm`) — sobrepõe-se ao header e marca `unidade_dxf` com sufixo "(confirmado pelo utilizador)".
+- ✅ Sanity checks no audit (`validacao.sanity_warnings[]`): bbox < 1 m, bbox > 500 m, parede > 100 m, comprimento total > 5000 m. `bbox_m` (width/height/diagonal) exposto em `totais` + `validacao`.
+- ✅ `requires_unit_confirmation` devolvido sempre que a unidade foi assumida ou há sanity warning de escala sem override aplicado.
+- ✅ Novo `DxfUnitConfirmDialog` (mm/cm/m/in/dm) com bounding box atual + lista de warnings. Confirmação reinvoca a análise com `unit_override`; cancelar descarta o resultado.
+- ✅ Hook `useIcfPlantAnalysis` aceita `unitOverride` e propaga `__requires_unit_confirmation`, `__detected_unit`, `__sanity_warnings`, `__file_path` para a UI.
+- ⏭️ Pré-visualização gráfica do cálculo antes de persistir fica para Fase 7 (painel de revisão técnica).
 
 ---
 

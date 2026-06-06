@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
+import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
@@ -46,27 +47,64 @@ export function IcfPlantAnalyzer({
   const diagnosis = useMemo(() => diagnoseMissingData(analysisResult), [analysisResult]);
   const [missingOpen, setMissingOpen] = useState(false);
   const [missingDismissed, setMissingDismissed] = useState(false);
+
+  // Fase 5 — confirmação de unidade DXF
+  const [unitDialogOpen, setUnitDialogOpen] = useState(false);
+  const [unitDialogDismissed, setUnitDialogDismissed] = useState(false);
+  const [lastFilePath, setLastFilePath] = useState<string | null>(null);
+  const result = analysisResult as (IcfPlantAnalysisResult & {
+    __requires_unit_confirmation?: boolean;
+    __detected_unit?: string | null;
+    __sanity_warnings?: Array<{ code: string; message: string; severity: string }>;
+    __audit?: any;
+  }) | null;
+  const needsUnitConfirm = !!result?.__requires_unit_confirmation;
+
   useEffect(() => {
-    if (analysisResult && diagnosis.needsReview && !missingDismissed) {
+    if (result && needsUnitConfirm && !unitDialogDismissed) {
+      setUnitDialogOpen(true);
+    } else if (result && diagnosis.needsReview && !missingDismissed && !needsUnitConfirm) {
       setMissingOpen(true);
     }
-  }, [analysisResult, diagnosis.needsReview, missingDismissed]);
+  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed]);
 
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
 
-  const handleSelectExisting = () => {
-    const plan = plans.find(p => p.id === selectedPlanId);
-    if (!plan) return;
+  const runAnalyze = (filePath: string, unitOverride?: DxfUnitOverride) => {
+    setLastFilePath(filePath);
+    setMissingDismissed(false);
+    if (!unitOverride) setUnitDialogDismissed(false);
     analyze({
-      filePath: plan.file_path,
+      filePath,
       obraId: obraId || null,
       configuracaoId,
       espessuraNucleo,
       classeBetao,
       classeAco,
+      unitOverride: unitOverride ?? null,
     });
   };
+
+  const handleSelectExisting = () => {
+    const plan = plans.find(p => p.id === selectedPlanId);
+    if (!plan) return;
+    runAnalyze(plan.file_path);
+  };
+
+  const handleUnitConfirm = (unit: DxfUnitOverride) => {
+    if (!lastFilePath) return;
+    setUnitDialogOpen(false);
+    setUnitDialogDismissed(true);
+    runAnalyze(lastFilePath, unit);
+  };
+
+  const handleUnitCancel = () => {
+    setUnitDialogOpen(false);
+    setUnitDialogDismissed(true);
+    setAnalysisResult(null);
+  };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,14 +118,7 @@ export function IcfPlantAnalyzer({
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
-      analyze({
-        filePath,
-        obraId: obraId || null,
-        configuracaoId,
-        espessuraNucleo,
-        classeBetao,
-        classeAco,
-      });
+      runAnalyze(filePath);
     } catch (err: any) {
       toast({ title: 'Erro no upload', description: err.message, variant: 'destructive' });
     } finally {
@@ -292,6 +323,17 @@ export function IcfPlantAnalyzer({
           onConfirm={handleMissingConfirm}
           onDiscard={handleMissingDiscard}
           reasons={diagnosis.reasons}
+        />
+
+        <DxfUnitConfirmDialog
+          open={unitDialogOpen}
+          onOpenChange={(v) => { setUnitDialogOpen(v); if (!v) setUnitDialogDismissed(true); }}
+          detectedUnit={result?.__detected_unit ?? null}
+          bbox={result?.__audit?.bbox_m ?? null}
+          warnings={result?.__sanity_warnings ?? []}
+          onConfirm={handleUnitConfirm}
+          onCancel={handleUnitCancel}
+          isReanalyzing={isAnalyzing}
         />
 
         {isCreating && (

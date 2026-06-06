@@ -50,6 +50,12 @@ export interface IcfPlantAnalysisResult {
   // Lote 2.5: identificadores devolvidos pela edge function para rastreabilidade
   __plan_import_id?: string | null;
   __plan_analysis_version_id?: string | null;
+  // Fase 4/5: origem e confirmação de escala (DXF)
+  __source?: 'dxf' | 'ai';
+  __file_path?: string;
+  __requires_unit_confirmation?: boolean;
+  __detected_unit?: string | null;
+  __sanity_warnings?: Array<{ code: string; message: string; severity: string }>;
 }
 
 /** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
@@ -89,6 +95,8 @@ interface AnalyzeParams {
   espessuraNucleo: number;
   classeBetao: string;
   classeAco: string;
+  // Fase 5: override explícito da unidade DXF (mm/cm/m/in/dm)
+  unitOverride?: 'mm' | 'cm' | 'm' | 'in' | 'dm' | null;
 }
 
 export function useIcfPlantAnalysis() {
@@ -110,18 +118,25 @@ export function useIcfPlantAnalysis() {
           espessura_nucleo: params.espessuraNucleo,
           classe_betao: params.classeBetao,
           classe_aco: params.classeAco,
+          // Fase 5: enviado apenas para DXF; ignorado pelo icf-plant-analysis
+          ...(isDxf && params.unitOverride ? { unit_override: params.unitOverride } : {}),
         },
       });
 
       if (error) throw new Error(error.message || 'Erro na análise');
       if (data?.error) throw new Error(data.error);
+      const audit = data.audit ?? {};
       return {
         ...(data.data as IcfPlantAnalysisResult),
-        __audit: data.audit,
+        __audit: audit,
         __source: isDxf ? 'dxf' : 'ai',
+        __file_path: params.filePath,
         __plan_import_id: data.plan_import_id ?? null,
         __plan_analysis_version_id: data.plan_analysis_version_id ?? null,
-      } as IcfPlantAnalysisResult & { __audit?: any; __source?: 'dxf' | 'ai' };
+        __requires_unit_confirmation: !!audit.requires_unit_confirmation,
+        __detected_unit: audit.unidade_dxf ?? null,
+        __sanity_warnings: Array.isArray(audit.sanity_warnings) ? audit.sanity_warnings : [],
+      } as IcfPlantAnalysisResult & { __audit?: any };
     },
     onSuccess: (result: any) => {
       setAnalysisResult(result);
