@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid, AlertTriangle } from 'lucide-react';
+import { Loader2, Upload, FileImage, Sparkles, Check, Layers, Box, LayoutGrid, AlertTriangle, Send } from 'lucide-react';
 import { usePlanImports } from '@/hooks/usePlanImports';
 import { useIcfPlantAnalysis, diagnoseMissingData, type IcfPlantAnalysisResult } from '@/hooks/useIcfPlantAnalysis';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
-import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams } from '@/lib/icf-unified-quantities';
+import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
+import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
@@ -55,6 +56,9 @@ export function IcfPlantAnalyzer({
     ...DEFAULT_ICF_UNIFIED_PARAMS,
     espessuraNucleoPadrao: espessuraNucleo || DEFAULT_ICF_UNIFIED_PARAMS.espessuraNucleoPadrao,
   });
+
+  // Fase 8 — diálogo "Enviar para orçamento"
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
 
   // Fase 5 — confirmação de unidade DXF
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
@@ -319,16 +323,36 @@ export function IcfPlantAnalyzer({
               obraId={obraId ?? null}
             />
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
-                Carregar para o orçamento ICF
+                Carregar para a configuração ICF
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setBudgetDialogOpen(true)}
+                disabled={isCreating}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Enviar para orçamento
               </Button>
               <Button variant="outline" onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}>
                 Cancelar
               </Button>
             </div>
           </div>
+        )}
+
+        {analysisResult && (
+          <IcfPlanToBudgetDialog
+            open={budgetDialogOpen}
+            onOpenChange={setBudgetDialogOpen}
+            result={analysisResult}
+            quantities={buildIcfUnifiedQuantities(analysisResult, unifiedParams)}
+            params={unifiedParams}
+            obraId={obraId ?? null}
+          />
         )}
 
         <IcfPlantMissingDataDialog
