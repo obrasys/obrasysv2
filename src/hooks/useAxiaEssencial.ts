@@ -16,6 +16,23 @@ export function useAxiaEssencial(orcamentoId?: string) {
   const [suggestions, setSuggestions] = useState<AxiaSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const lastFetch = useRef<number>(0);
+  const orgIdRef = useRef<string | null>(null);
+
+  // Lote 2.1: resolver organization_id do utilizador uma vez para anexar aos logs.
+  const resolveOrgId = useCallback(async (): Promise<string | null> => {
+    if (orgIdRef.current) return orgIdRef.current;
+    if (!user) return null;
+    try {
+      const { data } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .eq('member_status', 'active')
+        .maybeSingle();
+      orgIdRef.current = (data?.organization_id as string | undefined) ?? null;
+    } catch { /* silent */ }
+    return orgIdRef.current;
+  }, [user]);
 
   const trackAxiaEvent = useCallback(async (eventName: string, entityId?: string, metadata?: Record<string, any>) => {
     if (!user) return;
