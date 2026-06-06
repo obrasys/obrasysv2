@@ -9,8 +9,30 @@ interface DxfRenderResult {
   pixelsPerUnit: number;
 }
 
-const CANVAS_MAX = 2400;
-const PADDING = 40;
+const CANVAS_MAX = 6000;
+const PADDING = 60;
+
+// AutoCAD Color Index → CSS (subset, most common)
+const ACI: Record<number, string> = {
+  1: "#ff0000", 2: "#ffff00", 3: "#00ff00", 4: "#00ffff",
+  5: "#0000ff", 6: "#ff00ff", 7: "#111827", 8: "#414141",
+  9: "#808080",
+};
+function colorForLayer(layer: string): string {
+  const l = (layer || "").toLowerCase();
+  if (/(wall|parede|icf|muro|alvenaria)/.test(l)) return "#1f3a8a";
+  if (/(door|porta)/.test(l)) return "#c2410c";
+  if (/(window|janela|vao)/.test(l)) return "#0369a1";
+  if (/(fund|sapata|footing)/.test(l)) return "#6b21a8";
+  if (/(laje|slab)/.test(l)) return "#15803d";
+  if (/(dim|cota)/.test(l)) return "#9ca3af";
+  if (/(pilar|viga|column|beam|estrutura|structure)/.test(l)) return "#b91c1c";
+  return "#111827";
+}
+function entityColor(e: any): string {
+  if (typeof e.color === "number" && ACI[e.color]) return ACI[e.color];
+  return colorForLayer(e.layer || "0");
+}
 
 async function renderDxf(url: string): Promise<DxfRenderResult> {
   const res = await fetch(url);
