@@ -72,11 +72,14 @@ Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
 ---
 
-## Fase 6 — Quantitativos ICF unificados (PDF + DXF)
+## Fase 6 — Quantitativos ICF unificados (PDF + DXF) ✅
 
-Pipeline final igual para ambos os formatos, devolvendo: ml parede ext/int, altura, áreas bruta/portas/janelas/líquida, espessura ICF, tipo+quantidade de blocos, peças especiais (cantos, topos, vergas, reforços), betão, armadura, % desperdício, observações, confiança, itens p/ revisão.
-
-Parametrização pré-fecho: pé-direito, espessura, tipo/dimensão bloco, % desperdício, descontar vãos, ext/int, fundações, arquitetura vs estrutura. Reusar `useIcfAssistantSession`, `useIcfBudget`, `useIcfCalculationConstants`, `icf-architecture-engine.ts`, `icf-homeblock-composition.ts`.
+- ✅ Novo motor `src/lib/icf-unified-quantities.ts`: consome `IcfPlantAnalysisResult` (origem PDF/IA ou DXF vetorial) e devolve linhas por parede + totais consolidados (ml ext/int, área bruta/vãos/líquida, blocos base + com desperdício, betão paredes/fundações/lajes, armadura estimada, contagem de revisões, confiança média).
+- ✅ Classificação ext/int por regex sobre `referencia` (PE/Ext/Fachada vs PI/Int/Divisória). "Indeterminado" gera aviso.
+- ✅ Parâmetros pré-fecho editáveis: pé-direito padrão, espessura núcleo, % desperdício, kg armadura/m³, dimensões do bloco, descontar vãos, incluir fundações. Recalculo em tempo real via `useMemo`.
+- ✅ Novo `IcfUnifiedQuantitiesPanel` integrado no `IcfPlantAnalyzer` entre o resultado da análise e o botão "Carregar para o orçamento ICF". Tabela por parede com badge `Rever`/`OK` e KPIs.
+- ✅ Reaproveita `IcfPlantAnalysisResult` sem mexer no schema da edge function — ambos os pipelines (PDF e DXF) entram no mesmo painel.
+- ⏭️ Edição inline linha-a-linha e persistência consolidada ficam para a **Fase 7 (painel de revisão técnica)**.
 
 ---
 
