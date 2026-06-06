@@ -54,18 +54,28 @@ export function usePlanImports(input?: string | Ctx) {
       const { file, disciplina, dataPlanta, observacoes } = params;
 
       // ── Validação de upload ─────────────────────────────────────────────
-      const MAX_BYTES = 25 * 1024 * 1024;
-      const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
-      const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg"];
+      // Fase 3: DXF é processado por parser determinístico no servidor.
+      // Aceitamos até 20 MB para DXF (texto vetorial) e 25 MB para os restantes.
+      const MAX_BYTES_RASTER = 25 * 1024 * 1024;
+      const MAX_BYTES_DXF = 20 * 1024 * 1024;
+      const ALLOWED_RASTER_MIME = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+      const ALLOWED_DXF_MIME = ["application/dxf", "application/x-dxf", "image/vnd.dxf", "application/octet-stream", ""];
+      const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg", "dxf"];
       const ext = (file.name.split(".").pop() || "").toLowerCase();
+      const isDxf = ext === "dxf";
+
       if (!file || file.size === 0) {
         throw new Error("Não foi possível carregar o ficheiro. Verifique se o documento não está corrompido.");
       }
-      if (file.size > MAX_BYTES) {
-        throw new Error("O ficheiro excede o limite de 25 MB.");
+      const sizeLimit = isDxf ? MAX_BYTES_DXF : MAX_BYTES_RASTER;
+      if (file.size > sizeLimit) {
+        throw new Error(`O ficheiro excede o limite de ${isDxf ? "20" : "25"} MB.`);
       }
-      if (!ALLOWED_MIME.includes(file.type) || !ALLOWED_EXT.includes(ext)) {
-        throw new Error("Este ficheiro não é suportado. Use PDF, PNG ou JPG.");
+      const mimeOk = isDxf
+        ? ALLOWED_DXF_MIME.includes(file.type)
+        : ALLOWED_RASTER_MIME.includes(file.type);
+      if (!ALLOWED_EXT.includes(ext) || !mimeOk) {
+        throw new Error("Este ficheiro não é suportado. Use PDF, DXF, PNG ou JPG.");
       }
 
       // Next revision number (scoped to the link in use)
@@ -86,10 +96,12 @@ export function usePlanImports(input?: string | Ctx) {
 
       const { error: uploadError } = await supabase.storage
         .from("plan-files")
-        .upload(filePath, file);
+        .upload(filePath, file, isDxf ? { contentType: "application/dxf" } : undefined);
       if (uploadError) throw uploadError;
 
-      const fileType = file.type.includes("pdf")
+      const fileType = isDxf
+        ? "dxf"
+        : file.type.includes("pdf")
         ? "pdf"
         : file.type.includes("png")
         ? "png"

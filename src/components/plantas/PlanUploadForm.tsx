@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText, Image, X, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, FileCode, X, Loader2 } from "lucide-react";
 import { type PlanDisciplina } from "@/types/plan-measurements";
 import { DISCIPLINE_LIST, DISCIPLINE_META } from "@/lib/plan-discipline";
 import { cn } from "@/lib/utils";
@@ -32,23 +32,37 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
   const [observacoes, setObservacoes] = useState("");
   const activeMeta = disciplina ? DISCIPLINE_META[disciplina] : null;
 
-  // Lote 2.1: alinhar com o limite das edge functions (12 MB) para evitar 413 após upload.
-  const MAX_FILE_BYTES = 12 * 1024 * 1024;
+  // Lote 2.1: alinhar com o limite das edge functions (12 MB) para PDF/imagem.
+  // Fase 3: DXF é texto vetorial — permitimos até 20 MB porque é processado server-side
+  // por parser determinístico (sem chamada multimodal).
+  const MAX_FILE_BYTES_RASTER = 12 * 1024 * 1024;
+  const MAX_FILE_BYTES_DXF = 20 * 1024 * 1024;
+
+  // DXF: browsers nem sempre devolvem MIME (string vazia ou "application/octet-stream").
+  // Validamos por extensão como fallback.
+  const isDxfFile = (f: File) => {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (ext === "dxf") return true;
+    return ["application/dxf", "application/x-dxf", "image/vnd.dxf"].includes(f.type);
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     const f = acceptedFiles[0];
-    const ALLOWED = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
-    if (!ALLOWED.includes(f.type)) {
-      import("sonner").then(({ toast }) => toast.error("Este ficheiro não é suportado. Use PDF, PNG ou JPG."));
+    const dxf = isDxfFile(f);
+    const ALLOWED_RASTER = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+    if (!dxf && !ALLOWED_RASTER.includes(f.type)) {
+      import("sonner").then(({ toast }) => toast.error("Este ficheiro não é suportado. Use PDF, DXF, PNG ou JPG."));
       return;
     }
     if (f.size === 0) {
       import("sonner").then(({ toast }) => toast.error("Não foi possível carregar o ficheiro. Verifique se o documento não está corrompido."));
       return;
     }
-    if (f.size > MAX_FILE_BYTES) {
-      import("sonner").then(({ toast }) => toast.error("O ficheiro excede o limite de 12 MB. Divida a planta por piso ou reduza a resolução."));
+    const limit = dxf ? MAX_FILE_BYTES_DXF : MAX_FILE_BYTES_RASTER;
+    if (f.size > limit) {
+      const mb = dxf ? "20 MB" : "12 MB";
+      import("sonner").then(({ toast }) => toast.error(`O ficheiro excede o limite de ${mb}. Divida a planta por piso ou reduza a resolução.`));
       return;
     }
     setFile(f);
@@ -60,9 +74,14 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
       "application/pdf": [".pdf"],
       "image/png": [".png"],
       "image/jpeg": [".jpg", ".jpeg"],
+      // Fase 3: aceitar DXF (vários MIMEs possíveis + fallback por extensão).
+      "application/dxf": [".dxf"],
+      "application/x-dxf": [".dxf"],
+      "image/vnd.dxf": [".dxf"],
+      "application/octet-stream": [".dxf"],
     },
     maxFiles: 1,
-    maxSize: MAX_FILE_BYTES,
+    maxSize: MAX_FILE_BYTES_DXF,
   });
 
   const handleSubmit = async () => {
@@ -71,6 +90,7 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
   };
 
   const isPdf = file?.type.includes("pdf");
+  const isDxf = file ? isDxfFile(file) : false;
 
   return (
     <Card>
@@ -96,14 +116,25 @@ export function PlanUploadForm({ obraId, budgetId, onUpload, isUploading, onCanc
             <p className="text-sm font-medium text-foreground">
               {isDragActive ? "Solte o ficheiro aqui" : "Arraste ou clique para selecionar"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, PNG ou JPG até 12 MB</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              PDF, DXF, PNG ou JPG — até 12 MB (raster) / 20 MB (DXF vetorial)
+            </p>
           </div>
         ) : (
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            {isPdf ? <FileText className="w-8 h-8 text-destructive" /> : <Image className="w-8 h-8 text-primary" />}
+            {isDxf ? (
+              <FileCode className="w-8 h-8 text-primary" />
+            ) : isPdf ? (
+              <FileText className="w-8 h-8 text-destructive" />
+            ) : (
+              <Image className="w-8 h-8 text-primary" />
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+              <p className="text-xs text-muted-foreground">
+                {(file.size / 1024 / 1024).toFixed(1)} MB
+                {isDxf && <span className="ml-2 text-primary">· DXF vetorial</span>}
+              </p>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
               <X className="w-4 h-4" />

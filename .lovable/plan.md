@@ -33,13 +33,13 @@ Corrijo os bugs da Fase 1 e reforço o pipeline PDF existente:
 
 ---
 
-## Fase 3 — Aceitar upload DXF (frontend)
+## Fase 3 — Aceitar upload DXF (frontend) ✅
 
-- `PlanUploadForm`: atualizar `useDropzone` accept para incluir `.dxf` (`application/dxf`, `application/x-dxf`, `image/vnd.dxf`).
-- Texto: "Carregue uma planta em PDF ou DXF para análise técnica e geração de quantitativos ICF."
-- Detecção automática do tipo no upload e routing para pipeline correto (PDF multimodal vs DXF vetorial).
-- Atualizar `usePlanImports` (`file_type` passa a aceitar `'dxf'`) e validações.
-- Migração: adicionar `'dxf'` ao enum/check de `plan_imports.file_type` se aplicável.
+- ✅ `PlanUploadForm`: `useDropzone` aceita `.dxf` (MIMEs `application/dxf`, `application/x-dxf`, `image/vnd.dxf`, `application/octet-stream` + fallback por extensão). Limite 20 MB para DXF, 12 MB para raster. Ícone `FileCode` + badge "DXF vetorial".
+- ✅ Texto da dropzone: "PDF, DXF, PNG ou JPG — até 12 MB (raster) / 20 MB (DXF vetorial)".
+- ✅ `usePlanImports`: deteta `dxf` por extensão, faz upload com `contentType: application/dxf`, persiste `file_type='dxf'`.
+- ⏭️ Migração de `plan_imports.file_type`: não necessária (coluna é `TEXT` sem CHECK).
+- ⏭️ Routing real para o pipeline DXF é entregue na **Fase 4** (`plan-dxf-parse`). Por agora a planta entra na lista mas o painel de análise IA não a usa.
 
 ---
 
