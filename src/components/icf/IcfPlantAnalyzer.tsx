@@ -594,6 +594,21 @@ export function IcfPlantAnalyzer({
           }}
         />
 
+        <IcfFoundationsModal
+          open={foundationsModalOpen}
+          onOpenChange={(v) => {
+            setFoundationsModalOpen(v);
+            if (!v) setFoundationsDismissed(true);
+          }}
+          baseIcfWallLength={baseIcfWallLength}
+          defaultsOverride={{
+            perimetro: Math.round(baseIcfWallLength * 100) / 100,
+            comprimento: Math.round(baseIcfWallLength * 100) / 100,
+          }}
+          selectedOption={foundationSuggested?.option ?? null}
+          onApply={handleFoundationApply}
+        />
+
         {isCreating && (
           <div className="flex items-center gap-3 py-6 justify-center text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
