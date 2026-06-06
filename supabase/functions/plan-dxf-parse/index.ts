@@ -550,10 +550,69 @@ serve(async (req) => {
     );
     const requiresUnitConfirmation = !unitOverride && (unit.assumed || escalaSuspeita);
 
+    // Fase 2-6: textos DXF + compartimentos
+    const textExtraction = extractDxfTexts(dxf);
+    const rooms = detectRooms(entities, toMeters);
+    // distância de "snap" do texto ao centroide do compartimento, em unidades RAW (~5 m)
+    const maxDistRaw = 5 / unit.factor;
+    const assoc = associateTexts(rooms, textExtraction.texts, toMeters, maxDistRaw);
+
+    // Converte coordenadas dos textos para metros (mais útil no frontend)
+    const textosDxf = textExtraction.texts.map((t) => ({
+      raw: t.raw,
+      normalized: t.normalized,
+      layer: t.layer,
+      entity_type: t.entity_type,
+      x_m: Number(toMeters(t.x).toFixed(3)),
+      y_m: Number(toMeters(t.y).toFixed(3)),
+      rotation: t.rotation,
+      height: t.height,
+      style: t.style ?? undefined,
+      color: t.color ?? undefined,
+      block_source: t.block_source ?? undefined,
+      confidence: t.confidence,
+      needs_review: t.needs_review,
+      is_text_layer: t.is_text_layer,
+    }));
+
+    const cotasDxf = textExtraction.dimensions.map((d) => ({
+      raw_text: d.raw_text,
+      normalized_text: d.normalized_text,
+      measured_value_m: d.measured_value != null ? Number(toMeters(d.measured_value).toFixed(3)) : null,
+      x_m: Number(toMeters(d.x).toFixed(3)),
+      y_m: Number(toMeters(d.y).toFixed(3)),
+      rotation: d.rotation,
+      layer: d.layer,
+      confidence: d.confidence,
+    }));
+
+    const dxfDiagnostico = {
+      total_entidades: textExtraction.counts.total_entities,
+      n_text: textExtraction.counts.n_text,
+      n_mtext: textExtraction.counts.n_mtext,
+      n_attrib: textExtraction.counts.n_attrib,
+      n_attdef: textExtraction.counts.n_attdef,
+      n_dimension: textExtraction.counts.n_dimension,
+      n_block: textExtraction.counts.n_block,
+      n_insert: textExtraction.counts.n_insert,
+      n_textos_de_blocos: textExtraction.counts.n_texts_from_blocks,
+      n_textos_extraidos: textExtraction.counts.n_texts_extracted,
+      n_textos_associados: textosDxf.length - assoc.textos_nao_associados.length,
+      n_textos_nao_associados: assoc.textos_nao_associados.length,
+      layers_encontrados: textExtraction.layers_found,
+      layers_texto_reconhecidos: textExtraction.layers_text_recognized,
+      erros_parsing: textExtraction.parse_errors,
+    };
+
     const extracted: any = {
       paredes,
       fundacoes: [],
       lajes: [],
+      // Fase 2-6: textos, cotas e compartimentos extraídos do DXF
+      textos_dxf: textosDxf,
+      cotas_dxf: cotasDxf,
+      compartimentos: assoc.compartimentos,
+      textos_nao_associados: assoc.textos_nao_associados,
       notas: [
         "Quantitativos extraídos por leitura vetorial do DXF.",
         unit.assumed
@@ -561,6 +620,9 @@ serve(async (req) => {
           : `Unidade ${unitOverride ? "confirmada" : "detetada"}: ${unit.unit}.`,
         usedFallback ? "Nenhuma layer de paredes reconhecida — confirmar cada pano." : null,
         sanityWarnings.length > 0 ? "Avisos de sanidade na escala — ver lista de validação." : null,
+        textosDxf.length > 0
+          ? `${textosDxf.length} textos DXF extraídos (${assoc.compartimentos.length} compartimentos identificados).`
+          : "Nenhum texto encontrado no DXF — verifique se contém entidades TEXT/MTEXT.",
         "Altura útil 2.70 m e descontos de vãos por confirmar na revisão humana.",
       ].filter(Boolean).join(" "),
       totais: {
@@ -569,6 +631,8 @@ serve(async (req) => {
         total_portas: totalDoors,
         total_janelas: totalWindows,
         bbox_m: bboxMeters,
+        total_textos_dxf: textosDxf.length,
+        total_compartimentos: assoc.compartimentos.length,
       },
       validacao: {
         metodo: "dxf-parser",
@@ -586,6 +650,8 @@ serve(async (req) => {
         paredes_emparelhadas: walls.filter((w) => w.paired).length,
         paredes_unicas_sem_par: walls.filter((w) => !w.paired).length,
         requer_revisao_humana: true, // v1 DXF: revisão sempre obrigatória
+        // Fase 8: diagnóstico DXF para o painel "Diagnóstico DXF" no frontend
+        dxf_diagnostico: dxfDiagnostico,
       },
     };
 
