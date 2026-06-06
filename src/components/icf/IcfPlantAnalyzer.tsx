@@ -50,6 +50,12 @@ export function IcfPlantAnalyzer({
   const [missingOpen, setMissingOpen] = useState(false);
   const [missingDismissed, setMissingDismissed] = useState(false);
 
+  // Fase 6 — parâmetros pré-fecho dos quantitativos unificados
+  const [unifiedParams, setUnifiedParams] = useState<IcfUnifiedParams>({
+    ...DEFAULT_ICF_UNIFIED_PARAMS,
+    espessuraNucleoPadrao: espessuraNucleo || DEFAULT_ICF_UNIFIED_PARAMS.espessuraNucleoPadrao,
+  });
+
   // Fase 5 — confirmação de unidade DXF
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
   const [unitDialogDismissed, setUnitDialogDismissed] = useState(false);
