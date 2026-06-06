@@ -32,6 +32,7 @@ import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { usePlanWalls } from "@/hooks/usePlanWalls";
 import { usePlanOpenings } from "@/hooks/usePlanOpenings";
 import { usePdfRenderer } from "@/hooks/usePdfRenderer";
+import { useDxfRenderer } from "@/hooks/useDxfRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CAMADA_OPTIONS } from "@/types/plan-measurements";
