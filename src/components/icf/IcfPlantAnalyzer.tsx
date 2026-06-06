@@ -107,8 +107,16 @@ export function IcfPlantAnalyzer({
       setUnitDialogOpen(true);
     } else if (result && diagnosis.needsReview && !missingDismissed && !needsUnitConfirm) {
       setMissingOpen(true);
+    } else if (
+      result &&
+      !needsUnitConfirm &&
+      (result.fundacoes?.length ?? 0) === 0 &&
+      !foundationsDismissed &&
+      !foundationSuggested
+    ) {
+      setFoundationsModalOpen(true);
     }
-  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed]);
+  }, [result, diagnosis.needsReview, missingDismissed, needsUnitConfirm, unitDialogDismissed, foundationsDismissed, foundationSuggested]);
 
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
@@ -116,6 +124,8 @@ export function IcfPlantAnalyzer({
   const runAnalyze = (filePath: string, unitOverride?: DxfUnitOverride) => {
     setLastFilePath(filePath);
     setMissingDismissed(false);
+    setFoundationsDismissed(false);
+    setFoundationSuggested(null);
     if (!unitOverride) setUnitDialogDismissed(false);
     analyze({
       filePath,
@@ -127,6 +137,7 @@ export function IcfPlantAnalyzer({
       unitOverride: unitOverride ?? null,
     });
   };
+
 
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
