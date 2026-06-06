@@ -118,14 +118,7 @@ export function IcfPlantAnalyzer({
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
-      analyze({
-        filePath,
-        obraId: obraId || null,
-        configuracaoId,
-        espessuraNucleo,
-        classeBetao,
-        classeAco,
-      });
+      runAnalyze(filePath);
     } catch (err: any) {
       toast({ title: 'Erro no upload', description: err.message, variant: 'destructive' });
     } finally {
