@@ -323,16 +323,36 @@ export function IcfPlantAnalyzer({
               obraId={obraId ?? null}
             />
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
-                Carregar para o orçamento ICF
+                Carregar para a configuração ICF
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setBudgetDialogOpen(true)}
+                disabled={isCreating}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Enviar para orçamento
               </Button>
               <Button variant="outline" onClick={() => { setAnalysisResult(null); setMissingDismissed(false); }}>
                 Cancelar
               </Button>
             </div>
           </div>
+        )}
+
+        {analysisResult && (
+          <IcfPlanToBudgetDialog
+            open={budgetDialogOpen}
+            onOpenChange={setBudgetDialogOpen}
+            result={analysisResult}
+            quantities={buildIcfUnifiedQuantities(analysisResult, unifiedParams)}
+            params={unifiedParams}
+            obraId={obraId ?? null}
+          />
         )}
 
         <IcfPlantMissingDataDialog
