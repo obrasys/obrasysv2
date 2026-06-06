@@ -1,0 +1,1 @@
+ALTER TABLE public.plan_imports DROP CONSTRAINT IF EXISTS plan_imports_link_required;
