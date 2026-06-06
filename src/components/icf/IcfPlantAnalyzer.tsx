@@ -42,6 +42,16 @@ export function IcfPlantAnalyzer({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Lote 2.3 — modal "Dados em falta"
+  const diagnosis = useMemo(() => diagnoseMissingData(analysisResult), [analysisResult]);
+  const [missingOpen, setMissingOpen] = useState(false);
+  const [missingDismissed, setMissingDismissed] = useState(false);
+  useEffect(() => {
+    if (analysisResult && diagnosis.needsReview && !missingDismissed) {
+      setMissingOpen(true);
+    }
+  }, [analysisResult, diagnosis.needsReview, missingDismissed]);
+
   const empresaId = organization?.id || '';
   const hasObra = !!obraId;
 
