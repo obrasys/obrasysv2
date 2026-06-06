@@ -16,6 +16,8 @@ import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
 import { IcfPlantaStepper, deriveIcfPlantaStep } from './IcfPlantaStepper';
+import { IcfFoundationsModal } from './assistant/IcfFoundationsModal';
+import type { FoundationOptionKey } from '@/types/icf-assistant';
 import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams, buildIcfUnifiedQuantities } from '@/lib/icf-unified-quantities';
 import { evaluateConfidenceGate } from '@/lib/icf-confidence-rules';
 import { PLAN_MESSAGES, humanizeError } from '@/lib/plan-error-messages';
