@@ -47,6 +47,9 @@ export interface IcfPlantAnalysisResult {
   fundacoes: ExtractedFundacao[];
   lajes: ExtractedLaje[];
   notas?: string;
+  // Lote 2.5: identificadores devolvidos pela edge function para rastreabilidade
+  __plan_import_id?: string | null;
+  __plan_analysis_version_id?: string | null;
 }
 
 /** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
@@ -109,7 +112,12 @@ export function useIcfPlantAnalysis() {
 
       if (error) throw new Error(error.message || 'Erro na análise');
       if (data?.error) throw new Error(data.error);
-      return { ...(data.data as IcfPlantAnalysisResult), __audit: data.audit } as IcfPlantAnalysisResult & { __audit?: any };
+      return {
+        ...(data.data as IcfPlantAnalysisResult),
+        __audit: data.audit,
+        __plan_import_id: data.plan_import_id ?? null,
+        __plan_analysis_version_id: data.plan_analysis_version_id ?? null,
+      } as IcfPlantAnalysisResult & { __audit?: any };
     },
     onSuccess: (result: any) => {
       setAnalysisResult(result);
@@ -267,19 +275,67 @@ export function useIcfPlantAnalysis() {
         if (lajeErr) throw lajeErr;
       }
     },
-    onSuccess: (_, params) => {
+    onSuccess: async (_, params) => {
       qc.invalidateQueries({ queryKey: ['icf-panos', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-fundacoes', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-lajes', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-resumo', params.configuracaoId] });
       qc.invalidateQueries({ queryKey: ['icf-wall-panels', params.obraId] });
+
+      // Lote 2.5: registar evento de validação humana / persistência
+      const orgId = organization?.id;
+      const planImportId = params.result.__plan_import_id ?? null;
+      const versionId = params.result.__plan_analysis_version_id ?? null;
+      if (orgId && planImportId) {
+        try {
+          await supabase.from('plan_analysis_logs').insert({
+            plan_import_id: planImportId,
+            plan_analysis_version_id: versionId,
+            organization_id: orgId,
+            obra_id: params.obraId ?? null,
+            event_type: 'dados_validados',
+            status: 'success',
+            message: `Registos ICF criados: ${params.result.paredes.length} paredes`,
+            metadata: {
+              paredes: params.result.paredes.length,
+              fundacoes: params.result.fundacoes.length,
+              lajes: params.result.lajes.length,
+              configuracao_id: params.configuracaoId,
+            },
+          } as any);
+          if (versionId) {
+            await supabase
+              .from('plan_analysis_versions')
+              .update({ human_reviewed: true } as any)
+              .eq('id', versionId);
+          }
+        } catch (err) {
+          console.warn('plan_analysis_logs insert failed:', err);
+        }
+      }
+
       setAnalysisResult(null);
       toast({
         title: 'Dados ICF criados com sucesso',
         description: `${params.result.paredes.length} paredes, ${params.result.fundacoes.length} fundações e ${params.result.lajes.length} lajes criadas.`,
       });
     },
-    onError: (e: any) => {
+    onError: async (e: any, params) => {
+      const orgId = organization?.id;
+      const planImportId = params?.result.__plan_import_id ?? null;
+      if (orgId && planImportId) {
+        try {
+          await supabase.from('plan_analysis_logs').insert({
+            plan_import_id: planImportId,
+            plan_analysis_version_id: params?.result.__plan_analysis_version_id ?? null,
+            organization_id: orgId,
+            obra_id: params?.obraId ?? null,
+            event_type: 'erro_persistencia',
+            status: 'error',
+            message: (e?.message || 'Erro ao criar registos ICF').slice(0, 500),
+          } as any);
+        } catch {}
+      }
       toast({ title: 'Erro ao criar registos', description: e.message, variant: 'destructive' });
     },
   });

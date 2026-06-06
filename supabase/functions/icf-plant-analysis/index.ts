@@ -193,9 +193,51 @@ const ICF_TOOL_SCHEMA = {
 
 
 
+// Lote 2.5: helper de logging para plan_analysis_logs. Silencioso em caso de falha
+// para nunca quebrar o fluxo principal de análise.
+async function logPlanAnalysisEvent(
+  client: any,
+  payload: {
+    plan_import_id?: string | null;
+    plan_analysis_version_id?: string | null;
+    organization_id: string;
+    obra_id?: string | null;
+    user_id?: string | null;
+    event_type: string;
+    status?: "info" | "success" | "warning" | "error";
+    message?: string;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  try {
+    await client.from("plan_analysis_logs").insert({
+      plan_import_id: payload.plan_import_id ?? null,
+      plan_analysis_version_id: payload.plan_analysis_version_id ?? null,
+      organization_id: payload.organization_id,
+      obra_id: payload.obra_id ?? null,
+      user_id: payload.user_id ?? null,
+      event_type: payload.event_type,
+      status: payload.status ?? "info",
+      message: payload.message ?? null,
+      metadata: payload.metadata ?? {},
+    });
+  } catch (err) {
+    console.warn("plan_analysis_logs insert failed:", (err as Error)?.message ?? err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Método não permitido" }, 405);
+
+  // Contexto para logging (preenchido à medida que validamos o pedido)
+  let logCtx: {
+    supabase?: any;
+    organization_id?: string;
+    user_id?: string;
+    plan_import_id?: string | null;
+    obra_id?: string | null;
+  } = {};
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -288,6 +330,26 @@ serve(async (req) => {
     if (obra_id && planImport.obra_id && planImport.obra_id !== obra_id) {
       return jsonResponse({ error: "Planta não pertence à obra indicada." }, 403);
     }
+
+    // Lote 2.5: preencher contexto de logging
+    logCtx = {
+      supabase,
+      organization_id: userMembership.organization_id,
+      user_id: user.id,
+      plan_import_id: planImport.id,
+      obra_id: obra_id ?? planImport.obra_id ?? null,
+    };
+
+    await logPlanAnalysisEvent(supabase, {
+      plan_import_id: planImport.id,
+      organization_id: userMembership.organization_id,
+      obra_id: logCtx.obra_id,
+      user_id: user.id,
+      event_type: "analise_iniciada",
+      status: "info",
+      message: "Análise ICF iniciada",
+      metadata: { configuracao_id: configuracao_id, file_path },
+    });
 
     // Download the file from storage
     const { data: fileData, error: dlErr } = await supabase.storage
@@ -590,9 +652,96 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     };
 
 
-    return jsonResponse({ success: true, data: extracted, audit: extracted.validacao });
+    // Lote 2.5: criar snapshot versionado em plan_analysis_versions
+    let planAnalysisVersionId: string | null = null;
+    try {
+      const { data: lastVersion } = await supabase
+        .from("plan_analysis_versions")
+        .select("version")
+        .eq("plan_import_id", logCtx.plan_import_id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextVersion = (lastVersion?.version ?? 0) + 1;
+
+      const summary = {
+        paredes: extracted.paredes?.length ?? 0,
+        fundacoes: extracted.fundacoes?.length ?? 0,
+        lajes: extracted.lajes?.length ?? 0,
+        comprimento_total_m: correctedTotal,
+        modelo_utilizado: modelUsed,
+      };
+      const confidences = (extracted.paredes ?? [])
+        .map((p: any) => Number(p.confianca))
+        .filter((n: number) => Number.isFinite(n));
+      const avgConfidence = confidences.length
+        ? Number((confidences.reduce((a: number, b: number) => a + b, 0) / confidences.length).toFixed(3))
+        : null;
+
+      const { data: versionRow, error: versionErr } = await supabase
+        .from("plan_analysis_versions")
+        .insert({
+          plan_import_id: logCtx.plan_import_id,
+          organization_id: logCtx.organization_id!,
+          obra_id: logCtx.obra_id,
+          version: nextVersion,
+          created_by: logCtx.user_id!,
+          source: "icf-plant-analysis",
+          analysis_payload: extracted,
+          summary,
+          confidence: avgConfidence,
+          requires_review: !!extracted.validacao?.requer_revisao_humana,
+          human_reviewed: false,
+        })
+        .select("id")
+        .single();
+      if (versionErr) {
+        console.warn("plan_analysis_versions insert failed:", versionErr.message);
+      } else {
+        planAnalysisVersionId = versionRow?.id ?? null;
+      }
+    } catch (err) {
+      console.warn("plan_analysis_versions insert exception:", (err as Error)?.message ?? err);
+    }
+
+    await logPlanAnalysisEvent(supabase, {
+      plan_import_id: logCtx.plan_import_id,
+      plan_analysis_version_id: planAnalysisVersionId,
+      organization_id: logCtx.organization_id!,
+      obra_id: logCtx.obra_id,
+      user_id: logCtx.user_id,
+      event_type: extracted.validacao?.requer_revisao_humana ? "analise_concluida_com_revisao" : "analise_concluida",
+      status: extracted.validacao?.requer_revisao_humana ? "warning" : "success",
+      message: `Análise concluída (${extracted.paredes?.length ?? 0} paredes)`,
+      metadata: {
+        modelo: modelUsed,
+        paredes: extracted.paredes?.length ?? 0,
+        possivel_contagem_dupla: !!extracted.validacao?.possivel_contagem_dupla,
+        baixa_confianca: !!extracted.validacao?.baixa_confianca_detectada,
+      },
+    });
+
+    return jsonResponse({
+      success: true,
+      data: extracted,
+      audit: extracted.validacao,
+      plan_import_id: logCtx.plan_import_id,
+      plan_analysis_version_id: planAnalysisVersionId,
+    });
   } catch (e) {
     console.error("icf-plant-analysis error:", e);
+    // Lote 2.5: registar erro se já tivermos contexto da organização
+    if (logCtx.supabase && logCtx.organization_id) {
+      await logPlanAnalysisEvent(logCtx.supabase, {
+        plan_import_id: logCtx.plan_import_id,
+        organization_id: logCtx.organization_id,
+        obra_id: logCtx.obra_id,
+        user_id: logCtx.user_id,
+        event_type: "erro",
+        status: "error",
+        message: (e as Error)?.message?.slice(0, 500) ?? "Erro interno",
+      });
+    }
     return jsonResponse({ error: "Erro interno ao processar a planta" }, 500);
   }
 });
