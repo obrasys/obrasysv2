@@ -37,6 +37,11 @@ import {
 } from "@/lib/icf-unified-quantities";
 import type { IcfPlantAnalysisResult } from "@/hooks/useIcfPlantAnalysis";
 import { useIcfQuantitiesReview } from "@/hooks/useIcfQuantitiesReview";
+import {
+  evaluateConfidenceGate,
+  confidenceBadgeProps,
+} from "@/lib/icf-confidence-rules";
+
 
 interface Props {
   result: IcfPlantAnalysisResult | null;
