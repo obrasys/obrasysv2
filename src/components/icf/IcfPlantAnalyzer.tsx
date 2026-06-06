@@ -188,7 +188,7 @@ export function IcfPlantAnalyzer({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
+                accept=".pdf,.png,.jpg,.jpeg,.dxf"
                 className="hidden"
                 onChange={handleFileUpload}
               />

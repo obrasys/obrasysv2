@@ -43,14 +43,20 @@ Corrijo os bugs da Fase 1 e reforço o pipeline PDF existente:
 
 ---
 
-## Fase 4 — Pipeline técnico DXF (vetorial, sem IA visual)
+## Fase 4 — Pipeline técnico DXF (vetorial, sem IA visual) ✅
 
-Nova edge function `plan-dxf-parse` usando parser DXF em Deno (`dxf-parser` via `npm:`):
+Nova edge function `plan-dxf-parse` (Deno + `npm:dxf-parser@1.1.2`):
 
-- Lê entidades: LINE, LWPOLYLINE, POLYLINE, ARC, CIRCLE, TEXT, MTEXT, DIMENSION, INSERT/BLOCK.
-- Classifica por **layer** (whitelist: WALL/WALLS/PAREDES/ARQ_PAREDES, DOORS/PORTAS, WINDOWS/JANELAS, ROOM/COMPARTIMENTOS, COTAS/DIMENSIONS, ICF, STRUCTURE).
-- Heurística geométrica quando layers não são claros: linhas paralelas próximas = parede, polilinhas fechadas = compartimento, textos dentro de polígonos = nome do compartimento.
-- IA opcional só para classificar layers ambíguos (texto, não imagem).
+- ✅ Auth + validação de organização + anti-IDOR sobre `file_path` (mesma política do `icf-plant-analysis`).
+- ✅ Lê entidades LINE / LWPOLYLINE / POLYLINE / INSERT, classifica por layer (whitelist regex: paredes/portas/janelas/fundações/lajes/estrutura/cotas).
+- ✅ Unidade inferida via `$INSUNITS` (in/mm/cm/dm/m). Quando ausente → assume mm e marca `unidade_assumida=true` + confiança 0.45.
+- ✅ Heurística de paredes: emparelhamento de linhas paralelas dentro de 0.05–0.60 m → eixo único, espessura medida; linhas sem par → confiança 0.45 + `metodo_medicao='estimativa_visual'`.
+- ✅ Vãos (portas/janelas) por layer ou bloco INSERT, distribuídos round-robin pelos panos para revisão humana.
+- ✅ Output igual ao `icf-plant-analysis` (`paredes/fundacoes/lajes/notas/totais/validacao`) → `useIcfPlantAnalysis` consome sem alterações no painel ICF.
+- ✅ Snapshot em `plan_analysis_versions` com `source='plan-dxf-parse'`, `requires_review=true` sempre.
+- ✅ Eventos em `plan_analysis_logs` (`analise_iniciada`, `analise_concluida_com_revisao`, `erro`).
+- ✅ Routing no frontend: `useIcfPlantAnalysis` deteta `.dxf` no `file_path` e invoca `plan-dxf-parse`; `IcfPlantAnalyzer` aceita `.dxf` no `accept` do input.
+- ⏭️ Layers ambíguos via IA textual (Gemini Flash) e fundações/lajes via parser ficam para iteração futura.
 
 ---
 

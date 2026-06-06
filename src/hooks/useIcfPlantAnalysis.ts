@@ -99,7 +99,10 @@ export function useIcfPlantAnalysis() {
 
   const analyzeMutation = useMutation({
     mutationFn: async (params: AnalyzeParams): Promise<IcfPlantAnalysisResult> => {
-      const { data, error } = await supabase.functions.invoke('icf-plant-analysis', {
+      // Fase 4: DXF é processado por parser vetorial determinístico, sem IA visual.
+      const isDxf = /\.dxf$/i.test(params.filePath);
+      const fnName = isDxf ? 'plan-dxf-parse' : 'icf-plant-analysis';
+      const { data, error } = await supabase.functions.invoke(fnName, {
         body: {
           file_path: params.filePath,
           obra_id: params.obraId || null,
@@ -115,9 +118,10 @@ export function useIcfPlantAnalysis() {
       return {
         ...(data.data as IcfPlantAnalysisResult),
         __audit: data.audit,
+        __source: isDxf ? 'dxf' : 'ai',
         __plan_import_id: data.plan_import_id ?? null,
         __plan_analysis_version_id: data.plan_analysis_version_id ?? null,
-      } as IcfPlantAnalysisResult & { __audit?: any };
+      } as IcfPlantAnalysisResult & { __audit?: any; __source?: 'dxf' | 'ai' };
     },
     onSuccess: (result: any) => {
       setAnalysisResult(result);
