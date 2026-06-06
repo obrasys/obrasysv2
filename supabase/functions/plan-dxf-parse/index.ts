@@ -507,26 +507,77 @@ serve(async (req) => {
       };
     });
 
+    // Fase 5: sanity checks — escala absurda, paredes gigantes, bbox impossível
+    const sanityWarnings: Array<{ code: string; message: string; severity: "info" | "warning" | "error" }> = [];
+    const comprimentoTotal = paredes.reduce((s, p) => s + p.comprimento, 0);
+    const maxParede = paredes.reduce((m, p) => Math.max(m, p.comprimento), 0);
+
+    if (bboxMeters.diagonal > 0 && bboxMeters.diagonal < 1) {
+      sanityWarnings.push({
+        code: "bbox_muito_pequena",
+        severity: "warning",
+        message: `Bounding box ≈ ${bboxMeters.diagonal} m — a unidade poderá estar em cm/mm em vez do assumido. Confirme a escala.`,
+      });
+    }
+    if (bboxMeters.diagonal > 500) {
+      sanityWarnings.push({
+        code: "bbox_muito_grande",
+        severity: "warning",
+        message: `Bounding box ≈ ${bboxMeters.diagonal} m — a unidade poderá estar em m em vez de mm. Confirme a escala.`,
+      });
+    }
+    if (maxParede > 100) {
+      sanityWarnings.push({
+        code: "parede_excessiva",
+        severity: "warning",
+        message: `Parede com ${maxParede.toFixed(1)} m detetada — verifique se a unidade está correta.`,
+      });
+    }
+    if (comprimentoTotal > 5000) {
+      sanityWarnings.push({
+        code: "comprimento_total_excessivo",
+        severity: "warning",
+        message: `Comprimento total > 5000 m — provavelmente unidade trocada ou plantas duplicadas.`,
+      });
+    }
+
+    // Confirmação obrigatória quando a unidade foi assumida ou há sanity warning de escala,
+    // e o utilizador ainda não enviou override.
+    const escalaSuspeita = sanityWarnings.some((w) =>
+      w.code === "bbox_muito_pequena" || w.code === "bbox_muito_grande" || w.code === "parede_excessiva"
+    );
+    const requiresUnitConfirmation = !unitOverride && (unit.assumed || escalaSuspeita);
+
     const extracted: any = {
       paredes,
       fundacoes: [],
       lajes: [],
       notas: [
         "Quantitativos extraídos por leitura vetorial do DXF.",
-        unit.assumed ? "Unidade do ficheiro não declarada — assumido milímetros." : `Unidade detetada: ${unit.unit}.`,
+        unit.assumed
+          ? "Unidade do ficheiro não declarada — assumido milímetros."
+          : `Unidade ${unitOverride ? "confirmada" : "detetada"}: ${unit.unit}.`,
         usedFallback ? "Nenhuma layer de paredes reconhecida — confirmar cada pano." : null,
+        sanityWarnings.length > 0 ? "Avisos de sanidade na escala — ver lista de validação." : null,
         "Altura útil 2.70 m e descontos de vãos por confirmar na revisão humana.",
       ].filter(Boolean).join(" "),
       totais: {
-        comprimento_paredes_m: Number(paredes.reduce((s, p) => s + p.comprimento, 0).toFixed(2)),
+        comprimento_paredes_m: Number(comprimentoTotal.toFixed(2)),
         total_vaos: totalDoors + totalWindows,
         total_portas: totalDoors,
         total_janelas: totalWindows,
+        bbox_m: bboxMeters,
       },
       validacao: {
         metodo: "dxf-parser",
         unidade_dxf: unit.unit,
         unidade_assumida: unit.assumed,
+        unidade_detetada_original: detectedUnit.unit,
+        unidade_detetada_assumida: detectedUnit.assumed,
+        unit_override_aplicado: unitOverride,
+        requires_unit_confirmation: requiresUnitConfirmation,
+        sanity_warnings: sanityWarnings,
+        bbox_m: bboxMeters,
         layers_inventario: layerInventory,
         fallback_sem_layer_paredes: usedFallback,
         segmentos_totais: segments.length,
