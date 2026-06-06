@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
+import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
+import { DEFAULT_ICF_UNIFIED_PARAMS, type IcfUnifiedParams } from '@/lib/icf-unified-quantities';
 
 interface IcfPlantAnalyzerProps {
   obraId?: string | null;
@@ -47,6 +49,12 @@ export function IcfPlantAnalyzer({
   const diagnosis = useMemo(() => diagnoseMissingData(analysisResult), [analysisResult]);
   const [missingOpen, setMissingOpen] = useState(false);
   const [missingDismissed, setMissingDismissed] = useState(false);
+
+  // Fase 6 — parâmetros pré-fecho dos quantitativos unificados
+  const [unifiedParams, setUnifiedParams] = useState<IcfUnifiedParams>({
+    ...DEFAULT_ICF_UNIFIED_PARAMS,
+    espessuraNucleoPadrao: espessuraNucleo || DEFAULT_ICF_UNIFIED_PARAMS.espessuraNucleoPadrao,
+  });
 
   // Fase 5 — confirmação de unidade DXF
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
@@ -303,6 +311,12 @@ export function IcfPlantAnalyzer({
                 Modo orçamento (sem obra): os quantitativos serão carregados na configuração ICF para gerar o orçamento. O mapa visual de panos só é criado quando existe obra associada.
               </p>
             )}
+            <IcfUnifiedQuantitiesPanel
+              result={analysisResult}
+              params={unifiedParams}
+              onParamsChange={setUnifiedParams}
+            />
+
             <div className="flex gap-2">
               <Button onClick={handleCreateAll} disabled={isCreating} className="flex-1">
                 <Check className="h-4 w-4 mr-2" />
