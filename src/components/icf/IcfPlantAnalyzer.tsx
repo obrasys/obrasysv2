@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { IcfPlantMissingDataDialog, type MissingDataValues } from './IcfPlantMissingDataDialog';
 import { DxfUnitConfirmDialog, type DxfUnitOverride } from './DxfUnitConfirmDialog';
+import { DxfPreviewDialog } from './DxfPreviewDialog';
 import { IcfUnifiedQuantitiesPanel } from './IcfUnifiedQuantitiesPanel';
 import { IcfPlanToBudgetDialog } from './IcfPlanToBudgetDialog';
 import { PlanAnalysisAuditTrail } from './PlanAnalysisAuditTrail';
@@ -70,6 +71,19 @@ export function IcfPlantAnalyzer({
   const [unitDialogOpen, setUnitDialogOpen] = useState(false);
   const [unitDialogDismissed, setUnitDialogDismissed] = useState(false);
   const [lastFilePath, setLastFilePath] = useState<string | null>(null);
+
+  // Pré-visualização gráfica DXF (zoom/pan) antes do processamento final
+  const [dxfPreviewOpen, setDxfPreviewOpen] = useState(false);
+  const [dxfPreviewPath, setDxfPreviewPath] = useState<string | null>(null);
+  const isDxfPath = (p: string) => /\.dxf$/i.test(p);
+  const requestAnalyze = (filePath: string) => {
+    if (isDxfPath(filePath)) {
+      setDxfPreviewPath(filePath);
+      setDxfPreviewOpen(true);
+    } else {
+      runAnalyze(filePath);
+    }
+  };
   const result = analysisResult as (IcfPlantAnalysisResult & {
     __requires_unit_confirmation?: boolean;
     __detected_unit?: string | null;
@@ -107,7 +121,7 @@ export function IcfPlantAnalyzer({
   const handleSelectExisting = () => {
     const plan = plans.find(p => p.id === selectedPlanId);
     if (!plan) return;
-    runAnalyze(plan.file_path);
+    requestAnalyze(plan.file_path);
   };
 
   const handleUnitConfirm = (unit: DxfUnitOverride) => {
@@ -136,7 +150,7 @@ export function IcfPlantAnalyzer({
       const { error: uploadErr } = await supabase.storage.from('plan-files').upload(filePath, file);
       if (uploadErr) throw uploadErr;
 
-      runAnalyze(filePath);
+      requestAnalyze(filePath);
     } catch (err: any) {
       toast(humanizeError(err, PLAN_MESSAGES.upload_error()));
     } finally {
@@ -432,6 +446,15 @@ export function IcfPlantAnalyzer({
           onConfirm={handleUnitConfirm}
           onCancel={handleUnitCancel}
           isReanalyzing={isAnalyzing}
+        />
+
+        <DxfPreviewDialog
+          open={dxfPreviewOpen}
+          onOpenChange={setDxfPreviewOpen}
+          filePath={dxfPreviewPath}
+          onConfirm={() => {
+            if (dxfPreviewPath) runAnalyze(dxfPreviewPath);
+          }}
         />
 
         {isCreating && (
