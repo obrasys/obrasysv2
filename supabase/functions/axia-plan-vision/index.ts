@@ -820,8 +820,17 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       }
     }
 
+    // Lote 2.1: organization_id no log de sugestões (isolamento multi-tenant).
+    const { data: __orgMembership } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", userId)
+      .eq("member_status", "active")
+      .maybeSingle();
+
     await supabase.from("axia_suggestions_log").insert({
       user_id: userId,
+      organization_id: __orgMembership?.organization_id ?? null,
       suggestion_type: "plan_vision_analysis",
       suggestion_payload: { analysis },
     });
