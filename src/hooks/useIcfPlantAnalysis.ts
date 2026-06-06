@@ -50,6 +50,12 @@ export interface IcfPlantAnalysisResult {
   // Lote 2.5: identificadores devolvidos pela edge function para rastreabilidade
   __plan_import_id?: string | null;
   __plan_analysis_version_id?: string | null;
+  // Fase 4/5: origem e confirmação de escala (DXF)
+  __source?: 'dxf' | 'ai';
+  __file_path?: string;
+  __requires_unit_confirmation?: boolean;
+  __detected_unit?: string | null;
+  __sanity_warnings?: Array<{ code: string; message: string; severity: string }>;
 }
 
 /** Lote 2.3 — diagnóstico de "dados em falta" sobre um resultado da Axia. */
