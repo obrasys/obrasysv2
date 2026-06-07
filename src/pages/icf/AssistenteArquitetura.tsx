@@ -59,7 +59,14 @@ export default function AssistenteArquitetura() {
   const [scale, setScale] = useState<string>('');
   const [linkObraId, setLinkObraId] = useState<string>('');
   const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [sheetPickerOpen, setSheetPickerOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Lista de sessões (folhas) do mesmo projeto/obra para navegação rápida entre folhas.
+  const siblingSessions = useIcfAssistantSessions(
+    (session.data?.obra_id || initialObra) ?? undefined,
+  );
 
   const step = session.data?.current_step ?? 1;
   const sessionObraId = session.data?.obra_id || null;
