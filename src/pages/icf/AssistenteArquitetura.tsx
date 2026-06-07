@@ -785,6 +785,31 @@ export default function AssistenteArquitetura() {
             </CardContent>
           </Card>
 
+          <Card className="rounded-xl border-dashed">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Plus className="h-4 w-4 text-primary" /> Adicionar nova folha ao orçamento
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Carregue outra folha do projeto (ex: piso 1, cobertura, alçados) para acrescentar
+                mais itens ao resumo. Cada folha torna-se uma sessão própria e fica disponível no
+                seletor de folhas no topo - todas as folhas associadas à mesma obra são agregadas
+                ao gerar o orçamento ICF.
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handlePickFile} disabled={uploading} variant="outline">
+                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                Carregar nova folha (PDF/Imagem)
+              </Button>
+              <p className="text-[11px] text-muted-foreground self-center">
+                {(siblingSessions.data ?? []).filter((s: any) => (sessionObraId || initialObra) ? s.obra_id === (sessionObraId || initialObra) : true).length} folha(s) nesta obra
+              </p>
+            </CardContent>
+          </Card>
+
+
+
           <Card className="rounded-xl border-primary/30">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
