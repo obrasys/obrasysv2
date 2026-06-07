@@ -77,43 +77,86 @@ export default function AssistenteArquitetura() {
   };
 
 
-  // STEP 1 - upload + tipo. Se for PDF, converte 1ª página em PNG (Axia vision só aceita imagem).
-  const handleUpload = async (file: File) => {
+  // STEP 1 - upload + tipo.
+  // PDFs com múltiplas folhas abrem um seletor (cada folha = sessão própria).
+  const handleFileSelected = async (file: File) => {
+    if (!user || !organization) return;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      await handleUploadPages(file, [1]);
+      return;
+    }
+    try {
+      const pageCount = await getPdfPageCount(file);
+      if (pageCount > 1) {
+        setPendingFile(file);
+        setSheetPickerOpen(true);
+        return;
+      }
+      await handleUploadPages(file, [1]);
+    } catch (e: any) {
+      toast({ title: 'Erro ao ler PDF', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUploadPages = async (file: File, pages: number[]) => {
     if (!user || !organization) return;
     setUploading(true);
     try {
       const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      let uploadBlob: Blob = file;
-      let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+      const createdIds: string[] = [];
 
-      if (isPdf) {
-        toast({ title: 'A converter PDF para imagem...', description: 'Para análise pela Axia.' });
-        try {
-          uploadBlob = await renderPdfFirstPageToPngBlob(file, 2);
-          ext = 'png';
-        } catch (convErr: any) {
-          throw new Error(
-            `Não foi possível converter o PDF para imagem (${convErr?.message || 'erro desconhecido'}). ` +
-            'Exporte a página da planta como PNG/JPG e volte a carregar.',
-          );
+      for (const pageNum of pages) {
+        let uploadBlob: Blob = file;
+        let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+
+        if (isPdf) {
+          try {
+            uploadBlob = await renderPdfPageToPngBlob(file, pageNum, 2);
+            ext = 'png';
+          } catch (convErr: any) {
+            throw new Error(
+              `Não foi possível converter a folha ${pageNum} (${convErr?.message || 'erro desconhecido'}). ` +
+              'Exporte essa página como PNG/JPG e volte a carregar.',
+            );
+          }
         }
+
+        const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('plan-files')
+          .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
+        if (upErr) throw upErr;
+        const created = await createSession.mutateAsync({
+          obra_id: session.data?.obra_id || initialObra,
+          plan_kind: planKind,
+          file_path: path,
+        });
+        createdIds.push(created.id);
       }
 
-      const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('plan-files')
-        .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
-      if (upErr) throw upErr;
-      const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
-      setActiveSessionId(created.id);
-      navigate(`/icf/assistente?${initialObra ? `obra=${initialObra}&` : ''}s=${created.id}`, { replace: true });
-      toast({ title: 'Planta carregada', description: 'Avance para a calibração.' });
+      setSheetPickerOpen(false);
+      setPendingFile(null);
+      const firstId = createdIds[0];
+      setActiveSessionId(firstId);
+      const obraId = session.data?.obra_id || initialObra;
+      const obraParam = obraId ? `obra=${obraId}&` : '';
+      navigate(`/icf/assistente?${obraParam}s=${firstId}`, { replace: true });
+      siblingSessions.refetch();
+      toast({
+        title: createdIds.length > 1 ? `${createdIds.length} folhas importadas` : 'Planta carregada',
+        description: createdIds.length > 1
+          ? 'Cada folha é uma sessão própria - alterne no seletor de folhas no topo.'
+          : 'Avance para a calibração.',
+      });
     } catch (e: any) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
     }
   };
+
+  const handleUpload = (file: File) => handleFileSelected(file);
 
   // STEP 2 - guardar calibração
   const handleSaveCalibration = (p: CalibrationPayload) => {
