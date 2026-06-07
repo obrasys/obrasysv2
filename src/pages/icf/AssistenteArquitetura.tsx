@@ -837,7 +837,69 @@ export default function AssistenteArquitetura() {
           );
         }}
       />
+
+      <PdfSheetPickerDialog
+        file={pendingFile}
+        open={sheetPickerOpen}
+        onOpenChange={(v) => { setSheetPickerOpen(v); if (!v) setPendingFile(null); }}
+        onConfirm={(pages) => { if (pendingFile) handleUploadPages(pendingFile, pages); }}
+        isProcessing={uploading}
+      />
     </div>
+  );
+}
+
+function SheetSwitcher({
+  sessions,
+  activeId,
+  onPick,
+  onAddSheet,
+  isUploading,
+}: {
+  sessions: Array<{ id: string; file_path: string | null; plan_kind: string; created_at: string }>;
+  activeId: string | null;
+  onPick: (id: string) => void;
+  onAddSheet: () => void;
+  isUploading: boolean;
+}) {
+  if (sessions.length <= 1) {
+    return (
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={onAddSheet} disabled={isUploading}>
+          {isUploading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
+          Adicionar outra folha
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <Card className="rounded-xl">
+      <CardContent className="py-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mr-1">
+          <FileText className="h-3.5 w-3.5" /> Folhas do projeto ({sessions.length}):
+        </span>
+        {sessions.map((s, idx) => {
+          const active = s.id === activeId;
+          return (
+            <button
+              key={s.id}
+              onClick={() => onPick(s.id)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                active ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/30 border-border hover:border-primary/40'
+              }`}
+              title={s.file_path ?? ''}
+            >
+              Folha {idx + 1}
+            </button>
+          );
+        })}
+        <Button size="sm" variant="outline" onClick={onAddSheet} disabled={isUploading} className="ml-auto">
+          {isUploading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
+          Adicionar folha
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
