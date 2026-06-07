@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  ArrowLeft, Upload, Loader2, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Ruler, Layers, Box,
+  ArrowLeft, Upload, Loader2, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Ruler, Layers, Box, FileText, Plus,
 } from 'lucide-react';
 import {
-  useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession,
+  useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession, useIcfAssistantSessions,
   useUpdateAssistantSession, useUpdateAssistantItem, useApplyFoundationSuggestion,
 } from '@/hooks/useIcfAssistantSession';
 import { useObras } from '@/hooks/useObras';
@@ -25,7 +25,8 @@ import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptio
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
 import { IcfPlanCalibrator, type CalibrationPayload } from '@/components/icf/assistant/IcfPlanCalibrator';
 import { IcfFoundationsModal } from '@/components/icf/assistant/IcfFoundationsModal';
-import { renderPdfFirstPageToPngBlob } from '@/lib/pdf-to-image';
+import { PdfSheetPickerDialog } from '@/components/icf/assistant/PdfSheetPickerDialog';
+import { renderPdfFirstPageToPngBlob, renderPdfPageToPngBlob, getPdfPageCount } from '@/lib/pdf-to-image';
 
 
 const STEPS = [
