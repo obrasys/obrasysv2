@@ -531,6 +531,21 @@ export default function AssistenteArquitetura() {
         }}
       />
 
+      <SheetSwitcher
+        sessions={(siblingSessions.data ?? []).filter((s) => (sessionObraId || initialObra)
+          ? s.obra_id === (sessionObraId || initialObra)
+          : true)}
+        activeId={activeSessionId}
+        onPick={(id) => {
+          setActiveSessionId(id);
+          const obraId = sessionObraId || initialObra;
+          const obraParam = obraId ? `obra=${obraId}&` : '';
+          navigate(`/icf/assistente?${obraParam}s=${id}`, { replace: true });
+        }}
+        onAddSheet={handlePickFile}
+        isUploading={uploading}
+      />
+
       <Stepper step={step} onJump={goStep} />
 
       {step === 1 && (
