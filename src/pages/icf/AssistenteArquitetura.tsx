@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  ArrowLeft, Upload, Loader2, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Ruler, Layers, Box,
+  ArrowLeft, Upload, Loader2, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Ruler, Layers, Box, FileText, Plus,
 } from 'lucide-react';
 import {
-  useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession,
+  useCreateAssistantSession, useIcfAssistantItems, useIcfAssistantSession, useIcfAssistantSessions,
   useUpdateAssistantSession, useUpdateAssistantItem, useApplyFoundationSuggestion,
 } from '@/hooks/useIcfAssistantSession';
 import { useObras } from '@/hooks/useObras';
@@ -25,7 +25,8 @@ import { FoundationOptionCard } from '@/components/icf/assistant/FoundationOptio
 import { AuditPanel } from '@/components/icf/assistant/AuditPanel';
 import { IcfPlanCalibrator, type CalibrationPayload } from '@/components/icf/assistant/IcfPlanCalibrator';
 import { IcfFoundationsModal } from '@/components/icf/assistant/IcfFoundationsModal';
-import { renderPdfFirstPageToPngBlob } from '@/lib/pdf-to-image';
+import { PdfSheetPickerDialog } from '@/components/icf/assistant/PdfSheetPickerDialog';
+import { renderPdfFirstPageToPngBlob, renderPdfPageToPngBlob, getPdfPageCount } from '@/lib/pdf-to-image';
 
 
 const STEPS = [
@@ -58,7 +59,14 @@ export default function AssistenteArquitetura() {
   const [scale, setScale] = useState<string>('');
   const [linkObraId, setLinkObraId] = useState<string>('');
   const [foundationsModalOpen, setFoundationsModalOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [sheetPickerOpen, setSheetPickerOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Lista de sessões (folhas) do mesmo projeto/obra para navegação rápida entre folhas.
+  const siblingSessions = useIcfAssistantSessions(
+    (session.data?.obra_id || initialObra) ?? undefined,
+  );
 
   const step = session.data?.current_step ?? 1;
   const sessionObraId = session.data?.obra_id || null;
@@ -69,43 +77,86 @@ export default function AssistenteArquitetura() {
   };
 
 
-  // STEP 1 - upload + tipo. Se for PDF, converte 1ª página em PNG (Axia vision só aceita imagem).
-  const handleUpload = async (file: File) => {
+  // STEP 1 - upload + tipo.
+  // PDFs com múltiplas folhas abrem um seletor (cada folha = sessão própria).
+  const handleFileSelected = async (file: File) => {
+    if (!user || !organization) return;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      await handleUploadPages(file, [1]);
+      return;
+    }
+    try {
+      const pageCount = await getPdfPageCount(file);
+      if (pageCount > 1) {
+        setPendingFile(file);
+        setSheetPickerOpen(true);
+        return;
+      }
+      await handleUploadPages(file, [1]);
+    } catch (e: any) {
+      toast({ title: 'Erro ao ler PDF', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUploadPages = async (file: File, pages: number[]) => {
     if (!user || !organization) return;
     setUploading(true);
     try {
       const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      let uploadBlob: Blob = file;
-      let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+      const createdIds: string[] = [];
 
-      if (isPdf) {
-        toast({ title: 'A converter PDF para imagem...', description: 'Para análise pela Axia.' });
-        try {
-          uploadBlob = await renderPdfFirstPageToPngBlob(file, 2);
-          ext = 'png';
-        } catch (convErr: any) {
-          throw new Error(
-            `Não foi possível converter o PDF para imagem (${convErr?.message || 'erro desconhecido'}). ` +
-            'Exporte a página da planta como PNG/JPG e volte a carregar.',
-          );
+      for (const pageNum of pages) {
+        let uploadBlob: Blob = file;
+        let ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+
+        if (isPdf) {
+          try {
+            uploadBlob = await renderPdfPageToPngBlob(file, pageNum, 2);
+            ext = 'png';
+          } catch (convErr: any) {
+            throw new Error(
+              `Não foi possível converter a folha ${pageNum} (${convErr?.message || 'erro desconhecido'}). ` +
+              'Exporte essa página como PNG/JPG e volte a carregar.',
+            );
+          }
         }
+
+        const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('plan-files')
+          .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
+        if (upErr) throw upErr;
+        const created = await createSession.mutateAsync({
+          obra_id: session.data?.obra_id || initialObra,
+          plan_kind: planKind,
+          file_path: path,
+        });
+        createdIds.push(created.id);
       }
 
-      const path = `${user.id}/icf-assistant/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('plan-files')
-        .upload(path, uploadBlob, { contentType: ext === 'png' ? 'image/png' : file.type || undefined });
-      if (upErr) throw upErr;
-      const created = await createSession.mutateAsync({ obra_id: initialObra, plan_kind: planKind, file_path: path });
-      setActiveSessionId(created.id);
-      navigate(`/icf/assistente?${initialObra ? `obra=${initialObra}&` : ''}s=${created.id}`, { replace: true });
-      toast({ title: 'Planta carregada', description: 'Avance para a calibração.' });
+      setSheetPickerOpen(false);
+      setPendingFile(null);
+      const firstId = createdIds[0];
+      setActiveSessionId(firstId);
+      const obraId = session.data?.obra_id || initialObra;
+      const obraParam = obraId ? `obra=${obraId}&` : '';
+      navigate(`/icf/assistente?${obraParam}s=${firstId}`, { replace: true });
+      siblingSessions.refetch();
+      toast({
+        title: createdIds.length > 1 ? `${createdIds.length} folhas importadas` : 'Planta carregada',
+        description: createdIds.length > 1
+          ? 'Cada folha é uma sessão própria - alterne no seletor de folhas no topo.'
+          : 'Avance para a calibração.',
+      });
     } catch (e: any) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setUploading(false);
     }
   };
+
+  const handleUpload = (file: File) => handleFileSelected(file);
 
   // STEP 2 - guardar calibração
   const handleSaveCalibration = (p: CalibrationPayload) => {
@@ -446,8 +497,20 @@ export default function AssistenteArquitetura() {
               {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
               Carregar planta
             </Button>
+            <p className="text-[11px] text-muted-foreground">
+              Se o PDF tiver várias folhas (projeto completo: piso 0, piso 1, cobertura…), poderá
+              escolher quais folhas importar - cada folha torna-se uma sessão própria.
+            </p>
           </CardContent>
         </Card>
+
+        <PdfSheetPickerDialog
+          file={pendingFile}
+          open={sheetPickerOpen}
+          onOpenChange={(v) => { setSheetPickerOpen(v); if (!v) setPendingFile(null); }}
+          onConfirm={(pages) => { if (pendingFile) handleUploadPages(pendingFile, pages); }}
+          isProcessing={uploading}
+        />
       </div>
     );
   }
@@ -466,6 +529,21 @@ export default function AssistenteArquitetura() {
           e.currentTarget.value = '';
           if (file) handleUpload(file);
         }}
+      />
+
+      <SheetSwitcher
+        sessions={(siblingSessions.data ?? []).filter((s) => (sessionObraId || initialObra)
+          ? s.obra_id === (sessionObraId || initialObra)
+          : true)}
+        activeId={activeSessionId}
+        onPick={(id) => {
+          setActiveSessionId(id);
+          const obraId = sessionObraId || initialObra;
+          const obraParam = obraId ? `obra=${obraId}&` : '';
+          navigate(`/icf/assistente?${obraParam}s=${id}`, { replace: true });
+        }}
+        onAddSheet={handlePickFile}
+        isUploading={uploading}
       />
 
       <Stepper step={step} onJump={goStep} />
@@ -759,7 +837,69 @@ export default function AssistenteArquitetura() {
           );
         }}
       />
+
+      <PdfSheetPickerDialog
+        file={pendingFile}
+        open={sheetPickerOpen}
+        onOpenChange={(v) => { setSheetPickerOpen(v); if (!v) setPendingFile(null); }}
+        onConfirm={(pages) => { if (pendingFile) handleUploadPages(pendingFile, pages); }}
+        isProcessing={uploading}
+      />
     </div>
+  );
+}
+
+function SheetSwitcher({
+  sessions,
+  activeId,
+  onPick,
+  onAddSheet,
+  isUploading,
+}: {
+  sessions: Array<{ id: string; file_path: string | null; plan_kind: string; created_at: string }>;
+  activeId: string | null;
+  onPick: (id: string) => void;
+  onAddSheet: () => void;
+  isUploading: boolean;
+}) {
+  if (sessions.length <= 1) {
+    return (
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={onAddSheet} disabled={isUploading}>
+          {isUploading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
+          Adicionar outra folha
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <Card className="rounded-xl">
+      <CardContent className="py-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mr-1">
+          <FileText className="h-3.5 w-3.5" /> Folhas do projeto ({sessions.length}):
+        </span>
+        {sessions.map((s, idx) => {
+          const active = s.id === activeId;
+          return (
+            <button
+              key={s.id}
+              onClick={() => onPick(s.id)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                active ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/30 border-border hover:border-primary/40'
+              }`}
+              title={s.file_path ?? ''}
+            >
+              Folha {idx + 1}
+            </button>
+          );
+        })}
+        <Button size="sm" variant="outline" onClick={onAddSheet} disabled={isUploading} className="ml-auto">
+          {isUploading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
+          Adicionar folha
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
