@@ -497,8 +497,20 @@ export default function AssistenteArquitetura() {
               {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
               Carregar planta
             </Button>
+            <p className="text-[11px] text-muted-foreground">
+              Se o PDF tiver várias folhas (projeto completo: piso 0, piso 1, cobertura…), poderá
+              escolher quais folhas importar - cada folha torna-se uma sessão própria.
+            </p>
           </CardContent>
         </Card>
+
+        <PdfSheetPickerDialog
+          file={pendingFile}
+          open={sheetPickerOpen}
+          onOpenChange={(v) => { setSheetPickerOpen(v); if (!v) setPendingFile(null); }}
+          onConfirm={(pages) => { if (pendingFile) handleUploadPages(pendingFile, pages); }}
+          isProcessing={uploading}
+        />
       </div>
     );
   }
