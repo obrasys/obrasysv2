@@ -43,6 +43,26 @@ export default function PlanQuantitativos() {
     isBudgetScope ? { budgetId } : { obraId },
   );
   const plan = plans.find((p) => p.id === planId);
+
+  // When entering via /orcamentos/:budgetId/plantas, obraId is not in the URL.
+  // Resolve it from the budget so "Enviar para Orçamento" (PlanBudgetSendDialog
+  // only renders when obraId is known) works in this scope too.
+  const budgetObraQuery = useQuery({
+    queryKey: ["budget-obra-id", budgetId],
+    queryFn: async () => {
+      if (!budgetId) return null;
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("obra_id")
+        .eq("id", budgetId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.obra_id as string | null) ?? null;
+    },
+    enabled: !!budgetId,
+  });
+  const effectiveObraId = obraId ?? budgetObraQuery.data ?? undefined;
+
   const { measurements, updateMeasurement, bulkUpdateValidation } = usePlanMeasurements(planId);
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
   const { rooms, roomMeasurements } = usePlanRooms(planId);
