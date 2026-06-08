@@ -240,7 +240,7 @@ export default function PlanQuantitativos() {
               </Badge>
             </div>
             <PlanBudgetGenerator
-              obraId={obraId}
+              obraId={effectiveObraId}
               targetBudgetId={budgetId}
               planId={planId!}
               planName={plan.nome_ficheiro}
