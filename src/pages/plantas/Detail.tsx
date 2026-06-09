@@ -1207,7 +1207,7 @@ export default function PlanDetail() {
 
                 autoAnalyzeToken={autoAnalyzeToken}
                 resultsByPage={axiaResultsByPage}
-                obraId={obraId}
+                obraId={effectiveObraId}
                 planImportId={planId}
                 planName={plan?.nome_ficheiro ?? undefined}
                 onHighlightPosition={(x, y) => {
