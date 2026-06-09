@@ -67,6 +67,24 @@ export default function PlanDetail() {
     isBudgetScope ? { budgetId } : { obraId },
   );
   const plan = plans.find((p) => p.id === planId);
+  // When entering via /orcamentos/:budgetId/plantas, obraId is not in the URL.
+  // Resolve it from the budget so the Axia "Enviar p/ Quantitativos" button
+  // (which requires obraId) renders in budget scope as well.
+  const budgetObraQuery = useQuery({
+    queryKey: ["budget-obra-id-detail", budgetId],
+    queryFn: async () => {
+      if (!budgetId) return null;
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("obra_id")
+        .eq("id", budgetId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.obra_id as string | null) ?? null;
+    },
+    enabled: !!budgetId,
+  });
+  const effectiveObraId = obraId ?? budgetObraQuery.data ?? undefined;
   const scope = disciplineScope((plan as any)?.disciplina);
   const disciplineMeta = (plan as any)?.disciplina ? DISCIPLINE_META[(plan as any).disciplina as keyof typeof DISCIPLINE_META] : null;
   // Axia persistence (DB-backed, com fallback localStorage)
