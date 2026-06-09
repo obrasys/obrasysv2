@@ -51,6 +51,21 @@ export function usePlanImports(input?: string | Ctx) {
         throw new Error("É necessário associar a planta a um orçamento ou obra.");
       }
 
+      // Validar que o orçamento ainda existe (evita FK violation por URL desatualizado).
+      if (targetBudget) {
+        const { data: budgetRow, error: budgetErr } = await supabase
+          .from("orcamentos")
+          .select("id")
+          .eq("id", targetBudget)
+          .maybeSingle();
+        if (budgetErr) throw budgetErr;
+        if (!budgetRow) {
+          throw new Error(
+            "O orçamento associado a este URL já não existe ou foi eliminado. Volte à lista de orçamentos e abra a planta a partir de um orçamento válido.",
+          );
+        }
+      }
+
       const { file, disciplina, dataPlanta, observacoes } = params;
 
       // ── Validação de upload ─────────────────────────────────────────────
