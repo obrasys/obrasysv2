@@ -1792,12 +1792,14 @@ function SheetsClassificationSection({
 
   return (
     <div className="space-y-3">
+      <PlanAlertsPanel planImportId={planId} obraId={obraId} />
       <SheetsIdentifiedPanel
         planImportId={planId}
         onClassifyRequest={handleClassify}
         isClassifying={classify.isPending}
       />
       <StructureFoundationTab planImportId={planId} obraId={obraId} />
+      <PlanSummaryCard planImportId={planId} obraId={obraId} />
     </div>
   );
 }
