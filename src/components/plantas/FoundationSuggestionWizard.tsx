@@ -28,6 +28,8 @@ const DEFAULT_INPUTS: FoundationInputs = {
   grandes_vaos: false,
   altura_pisos_m: 2.7,
   tipo_laje_terrea: "laje_massame",
+  desniveis_terreno: false,
+  tem_estudo_geotecnico: false,
 };
 
 export function FoundationSuggestionWizard({
