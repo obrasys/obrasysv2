@@ -60,7 +60,7 @@ export function PlanAlertsPanel({ planImportId, obraId }: Props) {
     pages.filter((p) => p.discipline === "estrutura").map((p) => p.detected_floor).filter(Boolean),
   );
   if (hasStructure && archFloors.size > 0 && strFloors.size > 0) {
-    const missing = Array.from(archFloors).filter((f) => !strFloors.has(f as string));
+    const missing = Array.from(archFloors).filter((f) => !strFloors.has(f));
     if (missing.length > 0) {
       alerts.push({
         level: "warning",
