@@ -1233,6 +1233,16 @@ export default function PlanDetail() {
               />
             )}
 
+            {/* Axia — Classificação multi-folha + Estrutura/Fundação */}
+            {planId && (
+              <SheetsClassificationSection
+                planId={planId}
+                obraId={effectiveObraId}
+                totalPages={totalPages}
+                planName={plan?.nome_ficheiro ?? undefined}
+              />
+            )}
+
             {/* Measurements/Rooms/Walls tabs - show on measure step or when there's data */}
             {(effectiveStep === "measure" || measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
               <Tabs defaultValue="measurements" className="w-full">
