@@ -9194,13 +9194,22 @@ export type Database = {
           budget_artigo_id: string | null
           budget_link_status: string
           category: string | null
+          confidence_score: number | null
           created_at: string
           description: string
+          disciplina_origem: string | null
+          estado_quantitativo: string
           floor_id: string | null
+          folha_origem: string | null
           id: string
+          metodo_calculo: string | null
           notes: string | null
           obra_id: string
+          observacoes: string | null
+          pagina_origem: number | null
+          piso_origem: string | null
           quantity: number
+          requer_validacao_tecnica: boolean
           room_id: string | null
           unit: string
           updated_at: string
@@ -9210,13 +9219,22 @@ export type Database = {
           budget_artigo_id?: string | null
           budget_link_status?: string
           category?: string | null
+          confidence_score?: number | null
           created_at?: string
           description: string
+          disciplina_origem?: string | null
+          estado_quantitativo?: string
           floor_id?: string | null
+          folha_origem?: string | null
           id?: string
+          metodo_calculo?: string | null
           notes?: string | null
           obra_id: string
+          observacoes?: string | null
+          pagina_origem?: number | null
+          piso_origem?: string | null
           quantity?: number
+          requer_validacao_tecnica?: boolean
           room_id?: string | null
           unit?: string
           updated_at?: string
@@ -9226,13 +9244,22 @@ export type Database = {
           budget_artigo_id?: string | null
           budget_link_status?: string
           category?: string | null
+          confidence_score?: number | null
           created_at?: string
           description?: string
+          disciplina_origem?: string | null
+          estado_quantitativo?: string
           floor_id?: string | null
+          folha_origem?: string | null
           id?: string
+          metodo_calculo?: string | null
           notes?: string | null
           obra_id?: string
+          observacoes?: string | null
+          pagina_origem?: number | null
+          piso_origem?: string | null
           quantity?: number
+          requer_validacao_tecnica?: boolean
           room_id?: string | null
           unit?: string
           updated_at?: string
@@ -9627,6 +9654,56 @@ export type Database = {
           },
         ]
       }
+      plan_foundation_suggestions: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          generated_at: string | null
+          id: string
+          inputs: Json
+          obra_id: string
+          plan_import_id: string
+          result: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          inputs?: Json
+          obra_id: string
+          plan_import_id: string
+          result?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          inputs?: Json
+          obra_id?: string
+          plan_import_id?: string
+          result?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_foundation_suggestions_plan_import_id_fkey"
+            columns: ["plan_import_id"]
+            isOneToOne: false
+            referencedRelation: "plan_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_imports: {
         Row: {
           budget_id: string | null
@@ -9929,21 +10006,30 @@ export type Database = {
           camada: string | null
           ceiling_height: number | null
           confidence: string
+          confidence_score: number | null
           coordinates: Json
           cor: string | null
           created_at: string
           demolition_volume: number | null
+          disciplina_origem: string | null
+          estado_quantitativo: string
           estado_validacao: string
           etiqueta: string | null
           floor_id: string | null
+          folha_origem: string | null
           id: string
           material_id: string | null
           material_label: string | null
           measurement_origin: string
+          metodo_calculo: string | null
           observacao: string | null
+          observacoes: string | null
           openings_area: number | null
           page_id: string | null
+          pagina_origem: number | null
+          piso_origem: string | null
           plan_import_id: string
+          requer_validacao_tecnica: boolean
           room_id: string | null
           segment_length: number | null
           tipo: string
@@ -9966,21 +10052,30 @@ export type Database = {
           camada?: string | null
           ceiling_height?: number | null
           confidence?: string
+          confidence_score?: number | null
           coordinates?: Json
           cor?: string | null
           created_at?: string
           demolition_volume?: number | null
+          disciplina_origem?: string | null
+          estado_quantitativo?: string
           estado_validacao?: string
           etiqueta?: string | null
           floor_id?: string | null
+          folha_origem?: string | null
           id?: string
           material_id?: string | null
           material_label?: string | null
           measurement_origin?: string
+          metodo_calculo?: string | null
           observacao?: string | null
+          observacoes?: string | null
           openings_area?: number | null
           page_id?: string | null
+          pagina_origem?: number | null
+          piso_origem?: string | null
           plan_import_id: string
+          requer_validacao_tecnica?: boolean
           room_id?: string | null
           segment_length?: number | null
           tipo?: string
@@ -10003,21 +10098,30 @@ export type Database = {
           camada?: string | null
           ceiling_height?: number | null
           confidence?: string
+          confidence_score?: number | null
           coordinates?: Json
           cor?: string | null
           created_at?: string
           demolition_volume?: number | null
+          disciplina_origem?: string | null
+          estado_quantitativo?: string
           estado_validacao?: string
           etiqueta?: string | null
           floor_id?: string | null
+          folha_origem?: string | null
           id?: string
           material_id?: string | null
           material_label?: string | null
           measurement_origin?: string
+          metodo_calculo?: string | null
           observacao?: string | null
+          observacoes?: string | null
           openings_area?: number | null
           page_id?: string | null
+          pagina_origem?: number | null
+          piso_origem?: string | null
           plan_import_id?: string
+          requer_validacao_tecnica?: boolean
           room_id?: string | null
           segment_length?: number | null
           tipo?: string
@@ -10121,13 +10225,24 @@ export type Database = {
           axia_model: string | null
           axia_review_required: boolean
           axia_risk_level: string | null
+          classification_confidence: number | null
+          classification_warnings: Json
+          classified_at: string | null
+          classified_by: string | null
           created_at: string
+          detected_floor: string | null
+          discipline: string | null
+          drawing_code: string | null
           floor_id: string | null
           id: string
           notes: string | null
           page_number: number
           plan_import_id: string
+          sheet_title: string | null
+          sheet_type: string | null
+          should_extract_quantities: boolean
           updated_at: string
+          use_for_validation_only: boolean
           user_id: string
         }
         Insert: {
@@ -10136,13 +10251,24 @@ export type Database = {
           axia_model?: string | null
           axia_review_required?: boolean
           axia_risk_level?: string | null
+          classification_confidence?: number | null
+          classification_warnings?: Json
+          classified_at?: string | null
+          classified_by?: string | null
           created_at?: string
+          detected_floor?: string | null
+          discipline?: string | null
+          drawing_code?: string | null
           floor_id?: string | null
           id?: string
           notes?: string | null
           page_number?: number
           plan_import_id: string
+          sheet_title?: string | null
+          sheet_type?: string | null
+          should_extract_quantities?: boolean
           updated_at?: string
+          use_for_validation_only?: boolean
           user_id: string
         }
         Update: {
@@ -10151,13 +10277,24 @@ export type Database = {
           axia_model?: string | null
           axia_review_required?: boolean
           axia_risk_level?: string | null
+          classification_confidence?: number | null
+          classification_warnings?: Json
+          classified_at?: string | null
+          classified_by?: string | null
           created_at?: string
+          detected_floor?: string | null
+          discipline?: string | null
+          drawing_code?: string | null
           floor_id?: string | null
           id?: string
           notes?: string | null
           page_number?: number
           plan_import_id?: string
+          sheet_title?: string | null
+          sheet_type?: string | null
+          should_extract_quantities?: boolean
           updated_at?: string
+          use_for_validation_only?: boolean
           user_id?: string
         }
         Relationships: [
@@ -10183,18 +10320,27 @@ export type Database = {
           cable_section_mm2: number | null
           category: string
           circuit_number: string | null
+          confidence_score: number | null
           created_at: string
           data_source: string | null
+          disciplina_origem: string | null
           distribution_board: string | null
           environment: string | null
+          estado_quantitativo: string
+          folha_origem: string | null
           id: string
           installation_height: string | null
           is_existing: boolean | null
+          metodo_calculo: string | null
           note: string | null
+          observacoes: string | null
           origin: string
+          pagina_origem: number | null
+          piso_origem: string | null
           plan_import_id: string
           power_w: number | null
           quantity: number | null
+          requer_validacao_tecnica: boolean
           review_required: boolean | null
           room_name: string | null
           rotation: number | null
@@ -10214,18 +10360,27 @@ export type Database = {
           cable_section_mm2?: number | null
           category: string
           circuit_number?: string | null
+          confidence_score?: number | null
           created_at?: string
           data_source?: string | null
+          disciplina_origem?: string | null
           distribution_board?: string | null
           environment?: string | null
+          estado_quantitativo?: string
+          folha_origem?: string | null
           id?: string
           installation_height?: string | null
           is_existing?: boolean | null
+          metodo_calculo?: string | null
           note?: string | null
+          observacoes?: string | null
           origin?: string
+          pagina_origem?: number | null
+          piso_origem?: string | null
           plan_import_id: string
           power_w?: number | null
           quantity?: number | null
+          requer_validacao_tecnica?: boolean
           review_required?: boolean | null
           room_name?: string | null
           rotation?: number | null
@@ -10245,18 +10400,27 @@ export type Database = {
           cable_section_mm2?: number | null
           category?: string
           circuit_number?: string | null
+          confidence_score?: number | null
           created_at?: string
           data_source?: string | null
+          disciplina_origem?: string | null
           distribution_board?: string | null
           environment?: string | null
+          estado_quantitativo?: string
+          folha_origem?: string | null
           id?: string
           installation_height?: string | null
           is_existing?: boolean | null
+          metodo_calculo?: string | null
           note?: string | null
+          observacoes?: string | null
           origin?: string
+          pagina_origem?: number | null
+          piso_origem?: string | null
           plan_import_id?: string
           power_w?: number | null
           quantity?: number | null
+          requer_validacao_tecnica?: boolean
           review_required?: boolean | null
           room_name?: string | null
           rotation?: number | null

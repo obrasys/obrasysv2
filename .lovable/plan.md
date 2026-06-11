@@ -1,71 +1,119 @@
+# Plano — Axia multi-folha + Sugestão de Fundação ICF
 
-## Diagnóstico (Fase 1)
+Objetivo: permitir que a Axia leia projetos com múltiplas folhas (arquitetura + estrutura), classifique cada folha por disciplina/piso, e gere quantitativos rastreáveis. Quando não houver estrutura, oferecer fluxo guiado de **Sugestão Preliminar de Fundação ICF**.
 
-O pipeline DXF atual (`supabase/functions/plan-dxf-parse/index.ts`) só processa `LINE`, `LWPOLYLINE`, `POLYLINE` e `INSERT` (apenas para vãos). **Não lê** nenhuma entidade de texto: `TEXT`, `MTEXT`, `ATTRIB`, `ATTDEF`, `DIMENSION`. Também não resolve `BLOCKS` (entidades internas de inserts) nem aplica transformação (posição/escala/rotação). Por isso nomes de compartimentos, áreas, cotas e legendas vêm vazios em DXF — o PDF funciona porque passa por outro caminho com OCR/IA.
+---
 
-## Objetivo
+## 1. Base de dados (migration)
 
-Corrigir apenas o pipeline DXF. PDF fica intocado.
+### 1.1 Estender `plan_pages`
+Adicionar colunas (nullable, default seguro):
+- `sheet_title text`
+- `drawing_code text`
+- `discipline text` — `arquitetura | estrutura | mep | outro`
+- `sheet_type text` — `planta_fundacoes | armaduras_sapatas | quadro_pilares | planta_estrutural | armaduras_vigas | armaduras_lajes | armaduras_paredes | pormenor_icf | pormenor_metalico | planta_arquitetura | alcado | corte | cobertura | outro`
+- `detected_floor text` — `fundacao | piso_-1 | piso_0 | piso_1 | piso_2 | cobertura | generico`
+- `should_extract_quantities boolean default true`
+- `use_for_validation_only boolean default false`
+- `classification_confidence numeric(3,2)`
+- `classification_warnings jsonb default '[]'`
+- `classified_by text` — `axia | user`
+- `classified_at timestamptz`
 
-## Mudanças
+### 1.2 Estender `plan_measurements` e `plan_placed_elements`
+- `piso_origem text`
+- `folha_origem text` (sheet_title livre)
+- `pagina_origem int` (FK lógico para plan_pages.page_number)
+- `disciplina_origem text`
+- `metodo_calculo text`
+- `estado_quantitativo text default 'manual'` — `confirmado_por_projeto_estrutura | sugestao_preliminar | manual | extraido_arquitetura`
+- `confidence_score numeric(3,2)`
+- `requer_validacao_tecnica boolean default false`
+- `observacoes text`
 
-### 1) Novo módulo `supabase/functions/plan-dxf-parse/dxf-text.ts`
-- `extractTexts(dxf)`: percorre `dxf.entities` e `dxf.blocks` e devolve `DxfText[]` com:
-  - `raw`, `normalized`, `layer`, `entity_type` (TEXT/MTEXT/ATTRIB/ATTDEF/DIMENSION/INSERT_TEXT), `x`, `y`, `rotation`, `height`, `style`, `color`, `block_source`, `confidence`, `needs_review`.
-- `normalizeMText(raw)`: limpa códigos AutoCAD — `\P`→espaço, `\~`→espaço, `\f...;`, `\H...;`, `\C...;`, `\L`, `\O`, `{...}`, `\\`→`\`, `%%c`→Ø, `%%d`→°, `%%p`→±, `m2|M2`→m², `m3`→m³.
-- `expandInsert(insert, blocksMap, parentTransform?)`: dado um `INSERT`, encontra a definição em `dxf.blocks[insert.name]`, percorre entidades internas (recursivo para inserts aninhados, profundidade máx. 5), aplica transformação composta (`basePoint` do bloco + `position`, `xScale`, `yScale`, `rotation` do insert) a cada `TEXT`/`MTEXT`/`ATTRIB` e devolve textos com coords no espaço do modelo.
-- `extractAttribsFromInsert(insert)`: lê `insert.attributes ?? []` (dxf-parser já os anexa) com a mesma transformação.
-- `extractDimensions(entities)`: para `DIMENSION`, extrai `text` (override), `actualMeasurement` quando disponível, `defaultValue`, ponto de inserção, rotação, layer.
-- `classifyTextLayer(layer)`: regex para `TEXT|TEXTO|ANNO|ANNOTATION|ROOM_TEXT|COMPARTIMENTOS|AREAS|COTAS|DIM|LEGENDA|NOTES|ARQ_TEXT|A-TEXT|A-ANNO`. Não filtra — só anota `is_text_layer` para diagnóstico. Toda entidade textual é extraída independentemente do layer.
+(Mesmas colunas em `plan_additional_items` para itens sugeridos sem origem geométrica.)
 
-### 2) Novo módulo `supabase/functions/plan-dxf-parse/dxf-text-classify.ts`
-- `classifyText(text)`: heurística — extrai possível **área** (`/([\d.,]+)\s*m[²2]/i`), **dimensão linear** (`/([\d.,]+)\s*(m|cm|mm)\b/i`), **nome de compartimento** (match contra dicionário PT: `SALA|COZINHA|QUARTO|SUITE|WC|I\.?S\.?|BANHO|GARAGEM|LAVANDARIA|HALL|ENTRADA|ESCRITÓRIO|DESPENSA|VARANDA|TERRAÇO|ARRUMO|CIRCULAÇÃO`).
-- Devolve `{ kind: "room_label" | "area" | "dimension_text" | "note" | "legend" | "unknown", roomName?, areaM2?, value? }`.
+### 1.3 Nova tabela `plan_foundation_suggestions`
+Guarda a sessão do wizard "Sugestão de Fundação ICF":
+```
+id uuid pk, plan_import_id uuid fk, obra_id uuid, user_id uuid, organization_id uuid,
+inputs jsonb,        -- respostas ao questionário
+result jsonb,        -- itens sugeridos + raciocínio Axia
+status text,         -- draft | gerado | aplicado | descartado
+generated_at timestamptz, applied_at timestamptz,
+created_at, updated_at
+```
+GRANT + RLS por organização (mesmo padrão de `plan_imports`).
 
-### 3) Associação texto→compartimento (Fase 6) em `dxf-rooms.ts`
-- `detectRooms(segments)`: deteta polilinhas fechadas (já existentes em entities `LWPOLYLINE` com `shape=true` ou `POLYLINE`) num layer tipo `room` ou em qualquer layer, calcula área pelo shoelace.
-- `associateTexts(rooms, texts)`:
-  - Se ponto do texto está dentro de polígono (ray-casting) → atribui a esse compartimento.
-  - Senão, atribui ao compartimento cujo centroide é o mais próximo (`maxDist` = 5 m).
-  - Junta `room_label` + `area` próximos (≤ 2 m) no mesmo compartimento.
-  - Compartimento sem nome → `Compartimento N`.
-  - Texto sem geometria → guarda em `unassigned_texts` com `needs_review: true`.
+---
 
-### 4) Atualizar `supabase/functions/plan-dxf-parse/index.ts`
-- Chamar os novos módulos após `extractSegments`.
-- Construir `blocksMap = dxf.blocks` (objeto `{name: BlockDef}`).
-- Para cada `INSERT` no espaço do modelo, expandir em textos transformados.
-- Adicionar ao payload `extracted`:
-  - `textos_dxf`: array completo (com coords em metros via `toMeters`).
-  - `compartimentos`: lista com `{ id, nome, area_declarada_m2, area_calculada_m2, centroide, textos_associados[] }`.
-  - `cotas_dxf`: lista de DIMENSION normalizadas.
-  - `textos_nao_associados`: array com `needs_review`.
-- Adicionar `validacao.dxf_diagnostico`:
-  - contagens: `total_entidades`, `n_text`, `n_mtext`, `n_attrib`, `n_attdef`, `n_dimension`, `n_block`, `n_insert`, `n_textos_de_blocos`, `n_textos_extraidos`, `n_textos_associados`, `n_textos_nao_associados`.
-  - `layers_encontrados`, `layers_texto_reconhecidos`, `erros_parsing[]`.
-- Manter retrocompatibilidade — `paredes/fundacoes/lajes/totais` continuam iguais. Apenas adicionamos campos.
+## 2. Edge functions
 
-### 5) Frontend — `src/hooks/useIcfPlantAnalysis.ts`
-- Estender o tipo do payload com `textos_dxf?`, `compartimentos?`, `cotas_dxf?`, `textos_nao_associados?`, `validacao.dxf_diagnostico?`.
+### 2.1 Nova `axia-classify-sheets`
+Input: `plan_import_id`. Lê todas as `plan_pages` + snapshot OCR/thumbs. Chama Gemini 2.5 Pro (multi-imagem) com prompt PT-PT baseado em `AXIA_GLOBAL_SAFETY_BLOCK`. Devolve por página: `sheet_title, drawing_code, discipline, sheet_type, detected_floor, should_extract_quantities, use_for_validation_only, confidence, warnings`. Persiste em `plan_pages` e regista em `plan_analysis_logs`.
 
-### 6) Novo componente `src/components/icf/DxfDiagnosticPanel.tsx`
-- Aba colapsável dentro do `IcfPlantAnalyzer` (visível só quando há `dxf_diagnostico`).
-- Mostra contagens de entidades, layers, textos extraídos (com filtro), e tabela de textos não associados marcados “Precisa revisão”.
+### 2.2 Estender `axia-analysis` (e specialty)
+Após classificação, ao gerar measurements/elementos passa a preencher os novos campos de origem e `estado_quantitativo`:
+- folhas `discipline='estrutura'` → `confirmado_por_projeto_estrutura`
+- folhas `discipline='arquitetura'` → `extraido_arquitetura`
+Regra anti-duplicação: se existe folha estrutural para o mesmo piso, suprimir extrações estruturais derivadas da arquitetura (paredes portantes, lajes, fundações).
 
-### 7) Overlay visual (Fase 8/10)
-- Em `DxfPreviewDialog.tsx`, adicionar toggle “Mostrar textos DXF”: quando ativo, renderiza `Konva.Text` para cada texto extraído nas coords do modelo (usa o mesmo bbox/scale já calculados). Faz `fetch` ao novo endpoint só uma vez, partilha o resultado via prop ou refaz parse local (preferir prop a partir do hook se o componente estiver no fluxo de análise).
+### 2.3 Nova `axia-foundation-suggestion`
+Input: `plan_import_id` + respostas do questionário. Gera itens preliminares ICF (fundação contínua perímetro, sapatas isoladas, laje térrea, betão limpeza, drenagem, arranques, vigas fundação) com base no perímetro do R/C e regras do `icf-foundation-suggestions.ts` existente. Persiste `plan_foundation_suggestions` e cria linhas em `plan_additional_items` com `estado_quantitativo='sugestao_preliminar'`, `requer_validacao_tecnica=true`, `observacoes` padrão. Reutiliza `AXIA_GLOBAL_SAFETY_BLOCK` + `icf-foundation-suggestions`.
 
-### 8) Logs e auditoria
-- `plan_analysis_logs` ganha eventos:
-  - `dxf_textos_extraidos` (info) com metadata = contagens.
-  - `dxf_textos_nao_associados` (warning) se > 0.
+---
 
-## Não-objetivos
+## 3. Hooks
 
-- Não tocar pipeline PDF (`icf-plant-analysis`, OCR, IA).
-- Não inventar textos: se a heurística não conseguir associar, fica como `needs_review`.
-- Sem migrações SQL — todo o detalhe novo entra em `analysis_payload` (jsonb) e `metadata` (jsonb).
+- `useSheetClassification(planImportId)` — invoca `axia-classify-sheets`, query de `plan_pages` enriquecidas, mutation `updateSheet` (correção manual: discipline/sheet_type/floor/should_extract).
+- `useFoundationSuggestion(planImportId)` — carrega/cria `plan_foundation_suggestions`, mutation `generate` (chama edge), mutation `discard`/`apply`.
+- Estender `usePlanQuantitativos` para incluir os novos campos e expor `grouping` por `(disciplina, piso, folha)`.
 
-## Critérios de aceitação
+## 4. UI
 
-Conforme Fase 10 do pedido: textos de compartimentos, áreas, DIMENSIONs, MTEXT limpos, ATTRIB de blocos, e associação a polígonos — todos presentes no payload e visíveis no painel de diagnóstico; toggle de overlay no preview; PDF continua a funcionar exatamente como antes.
+### 4.1 Painel "Folhas identificadas" (`SheetsIdentifiedPanel.tsx`)
+Renderizado em `pages/plantas/Detail.tsx` antes do painel de quantitativos. Lista cards: thumbnail (já existe via `plan_pages.thumbnail_url`), nº página, título, badges disciplina/tipo/piso, estado (`Usar p/ quantitativos | Validação | Ignorar`), barra de confiança, botão "Editar classificação" (dialog com selects). Botão topo: "Reclassificar com Axia".
+
+### 4.2 Aba "Estrutura e Fundação" (`StructureFoundationTab.tsx`)
+Adicionar tab no Detail. Dois estados:
+- **A — Encontrada**: badge verde + lista folhas estruturais usadas + link "Ver quantitativos estruturais".
+- **B — Não encontrada**: alerta amber + mensagem obrigatória + 3 botões (`Gerar sugestão preliminar`, `Enviar pedido de validação técnica`, `Ignorar por agora`).
+
+### 4.3 Wizard `FoundationSuggestionWizard.tsx`
+Dialog stepper 3 passos: Questionário (nº pisos, cave, garagem, terreno, ICF integral, muros contenção, grandes vãos, tipo laje térrea, altura pisos, localização) → Resumo → Resultado (lista itens sugeridos com badges "preliminar", botão "Aplicar ao orçamento" / "Descartar"). Toast com aviso técnico ao concluir.
+
+### 4.4 Mapa de quantitativos agrupado
+Em `pages/plantas/Quantitativos.tsx` (ou componente equivalente) agrupar por:
+- Arquitetura — R/C / 1º Piso / Cobertura / Fachadas
+- Estrutura — Fundação / Piso 0 / Piso 1 / Armaduras / Perfis metálicos
+- Fundação sugerida
+
+Cada linha mostra badge de `estado_quantitativo` (Confirmado/Preliminar/Manual) + tooltip `folha_origem · pág X · disciplina`.
+
+## 5. Regras anti-erro (lib)
+
+Novo `src/lib/plan-sheet-classification.ts`:
+- heurísticas regex iniciais (fallback offline) para `sheet_type`/`discipline`/`floor` a partir do título/drawing_code.
+- função `dedupeAcrossDisciplines(measurements)` que, para o mesmo piso, mantém o item estrutural quando existir e descarta o equivalente vindo da arquitetura.
+
+## 6. Testes
+- `plan-sheet-classification.test.ts` — regex/heurísticas.
+- `icf-foundation-suggestions.test.ts` — adicionar casos com novas inputs (cave, garagem, grandes vãos).
+- Smoke manual: PDF EST.-ICF (11 páginas) deve classificar conforme exemplo.
+
+## 7. Memória do projeto
+Atualizar `mem://features/medicao-planta/overview` e adicionar:
+- `mem://features/medicao-planta/multi-sheet-classification`
+- `mem://features/icf/foundation-suggestion-flow`
+
+---
+
+### Notas técnicas
+- Reaproveitar `pdf-to-image.ts` para thumbnails por página.
+- Gemini 2.5 Pro com multi-image input via Lovable AI Gateway (até ~20 páginas por chamada; chunking se mais).
+- Mensagens e UI 100% PT-PT, deep teal + rounded-xl conforme design system.
+- Nenhum item sugerido entra como confirmado; trigger DB poderia validar, mas começamos com regra na edge function.
+
+### Fora do âmbito (próxima fase)
+- Dimensionamento estrutural real (continua a depender de engenheiro).
+- Sincronização automática com cronograma/MCE — só após validação técnica.

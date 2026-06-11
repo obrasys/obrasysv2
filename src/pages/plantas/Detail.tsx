@@ -50,6 +50,9 @@ import { PlanAnalysisParametersCard } from "@/components/plantas/PlanAnalysisPar
 import { PlanRoomBreakdownTable } from "@/components/plantas/PlanRoomBreakdownTable";
 import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantityTable";
 import { disciplineScope, DISCIPLINE_META } from "@/lib/plan-discipline";
+import { SheetsIdentifiedPanel } from "@/components/plantas/SheetsIdentifiedPanel";
+import { StructureFoundationTab } from "@/components/plantas/StructureFoundationTab";
+import { useSheetClassification } from "@/hooks/useSheetClassification";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 
@@ -1230,6 +1233,16 @@ export default function PlanDetail() {
               />
             )}
 
+            {/* Axia — Classificação multi-folha + Estrutura/Fundação */}
+            {planId && (
+              <SheetsClassificationSection
+                planId={planId}
+                obraId={effectiveObraId}
+                totalPages={totalPages}
+                planName={plan?.nome_ficheiro ?? undefined}
+              />
+            )}
+
             {/* Measurements/Rooms/Walls tabs - show on measure step or when there's data */}
             {(effectiveStep === "measure" || measurements.length > 0 || rooms.length > 0 || walls.length > 0) && (
               <Tabs defaultValue="measurements" className="w-full">
@@ -1746,5 +1759,43 @@ export default function PlanDetail() {
       </Dialog>
     </AppLayout>
 
+  );
+}
+
+/**
+ * Secção Axia — classificação de folhas + painel Estrutura/Fundação.
+ * Encapsulada para manter o hook scope curto e evitar reflow do componente principal.
+ */
+function SheetsClassificationSection({
+  planId,
+  obraId,
+  totalPages,
+  planName,
+}: {
+  planId: string;
+  obraId?: string;
+  totalPages: number;
+  planName?: string;
+}) {
+  const { classify } = useSheetClassification(planId);
+
+  const handleClassify = async () => {
+    const n = Math.max(1, totalPages);
+    const pages = Array.from({ length: n }, (_, i) => ({
+      page_number: i + 1,
+      text_hint: planName ?? undefined,
+    }));
+    await classify.mutateAsync({ pages });
+  };
+
+  return (
+    <div className="space-y-3">
+      <SheetsIdentifiedPanel
+        planImportId={planId}
+        onClassifyRequest={handleClassify}
+        isClassifying={classify.isPending}
+      />
+      <StructureFoundationTab planImportId={planId} obraId={obraId} />
+    </div>
   );
 }
