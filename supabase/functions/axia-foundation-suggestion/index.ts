@@ -19,6 +19,8 @@ const InputsSchema = z.object({
   tipo_laje_terrea: z.string().optional(),
   altura_pisos_m: z.number().min(2).max(6).optional(),
   localizacao: z.string().optional(),
+  desniveis_terreno: z.boolean().optional(),
+  tem_estudo_geotecnico: z.boolean().optional(),
 });
 
 const BodySchema = z.object({
