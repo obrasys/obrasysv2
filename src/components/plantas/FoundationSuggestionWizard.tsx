@@ -137,6 +137,8 @@ export function FoundationSuggestionWizard({
                 ["icf_integral", "Construção integralmente em ICF?"],
                 ["muros_contencao", "Existem muros de contenção?"],
                 ["grandes_vaos", "Existem grandes vãos?"],
+                ["desniveis_terreno", "Desníveis relevantes no terreno?"],
+                ["tem_estudo_geotecnico", "Existe estudo geotécnico?"],
               ] as Array<[keyof FoundationInputs, string]>).map(([k, label]) => (
                 <div key={k} className="flex items-center justify-between border rounded-md p-2.5">
                   <Label className="text-xs">{label}</Label>
