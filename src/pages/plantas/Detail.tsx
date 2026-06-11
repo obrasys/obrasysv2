@@ -1761,3 +1761,41 @@ export default function PlanDetail() {
 
   );
 }
+
+/**
+ * Secção Axia — classificação de folhas + painel Estrutura/Fundação.
+ * Encapsulada para manter o hook scope curto e evitar reflow do componente principal.
+ */
+function SheetsClassificationSection({
+  planId,
+  obraId,
+  totalPages,
+  planName,
+}: {
+  planId: string;
+  obraId?: string;
+  totalPages: number;
+  planName?: string;
+}) {
+  const { classify } = useSheetClassification(planId);
+
+  const handleClassify = async () => {
+    const n = Math.max(1, totalPages);
+    const pages = Array.from({ length: n }, (_, i) => ({
+      page_number: i + 1,
+      text_hint: planName ?? undefined,
+    }));
+    await classify.mutateAsync({ pages });
+  };
+
+  return (
+    <div className="space-y-3">
+      <SheetsIdentifiedPanel
+        planImportId={planId}
+        onClassifyRequest={handleClassify}
+        isClassifying={classify.isPending}
+      />
+      <StructureFoundationTab planImportId={planId} obraId={obraId} />
+    </div>
+  );
+}
