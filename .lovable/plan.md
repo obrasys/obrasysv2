@@ -1,119 +1,109 @@
-# Plano — Axia multi-folha + Sugestão de Fundação ICF
+# Plano — Planta/ICF multi-folha com sugestão de fundação ICF
 
-Objetivo: permitir que a Axia leia projetos com múltiplas folhas (arquitetura + estrutura), classifique cada folha por disciplina/piso, e gere quantitativos rastreáveis. Quando não houver estrutura, oferecer fluxo guiado de **Sugestão Preliminar de Fundação ICF**.
+Já existe a base (migração de `plan_pages`, `plan_measurements` com colunas de origem, `plan_foundation_suggestions`, edge functions `axia-classify-sheets` e `axia-foundation-suggestion`, hooks e componentes `SheetsIdentifiedPanel`, `StructureFoundationTab`, `FoundationSuggestionWizard`). Este plano completa as lacunas e alinha o comportamento com as regras detalhadas que descreveste.
 
----
+## 1. Classificação das folhas (Etapa 1)
 
-## 1. Base de dados (migration)
+**Backend — `axia-classify-sheets`**
+- Reescrever prompt Gemini 2.5 Pro com a tabela completa de palavras-chave PT (arquitetura, estrutura, alçados, cortes, ICF, metálicos).
+- Devolver, por folha: `page_number`, `sheet_title`, `drawing_code`, `discipline`, `sheet_type` (15 tipos: floor_plan, roof_plan, elevation, section, foundation_plan, structural_floor_plan, reinforcement_detail, wall_reinforcement, beam_reinforcement, slab_reinforcement, metallic_structure_detail, icf_detail, unknown…), `detected_floor`, `should_extract_quantities`, `use_for_validation_only`, `confidence_score`, `warnings[]`.
+- Aplicar regras determinísticas após Gemini (override por regex) para garantir as combinações exatas pedidas (R/C → architecture+floor_plan+R/C; Pormenores ICF → use_for_validation_only=true; Alçado/Corte → architecture+validation_only; etc.).
+- Persistir em `plan_pages`, devolver miniatura (já gerada por `pdf-to-image`).
 
-### 1.1 Estender `plan_pages`
-Adicionar colunas (nullable, default seguro):
-- `sheet_title text`
-- `drawing_code text`
-- `discipline text` — `arquitetura | estrutura | mep | outro`
-- `sheet_type text` — `planta_fundacoes | armaduras_sapatas | quadro_pilares | planta_estrutural | armaduras_vigas | armaduras_lajes | armaduras_paredes | pormenor_icf | pormenor_metalico | planta_arquitetura | alcado | corte | cobertura | outro`
-- `detected_floor text` — `fundacao | piso_-1 | piso_0 | piso_1 | piso_2 | cobertura | generico`
-- `should_extract_quantities boolean default true`
-- `use_for_validation_only boolean default false`
-- `classification_confidence numeric(3,2)`
-- `classification_warnings jsonb default '[]'`
-- `classified_by text` — `axia | user`
-- `classified_at timestamptz`
+**Frontend — `SheetsIdentifiedPanel`**
+- Lista com miniatura, página, nome, código, badge de disciplina, tipo, piso, barra de confiança, warnings.
+- Selector inline para editar disciplina, tipo, piso, e três toggles: usar para quantitativos / usar só para validação / ignorar.
+- Botão "Reclassificar com Axia" e "Confirmar classificação e continuar".
 
-### 1.2 Estender `plan_measurements` e `plan_placed_elements`
-- `piso_origem text`
-- `folha_origem text` (sheet_title livre)
-- `pagina_origem int` (FK lógico para plan_pages.page_number)
-- `disciplina_origem text`
-- `metodo_calculo text`
-- `estado_quantitativo text default 'manual'` — `confirmado_por_projeto_estrutura | sugestao_preliminar | manual | extraido_arquitetura`
-- `confidence_score numeric(3,2)`
-- `requer_validacao_tecnica boolean default false`
-- `observacoes text`
+## 2. Extração de quantitativos (Etapa 2)
 
-(Mesmas colunas em `plan_additional_items` para itens sugeridos sem origem geométrica.)
+**Backend — `axia-analysis`**
+- Aceitar `sheet_classification` como input; iterar apenas folhas com `should_extract_quantities=true`.
+- Para cada item extraído, preencher obrigatoriamente: `capitulo`, `artigo`, `descricao`, `unidade`, `quantidade`, `piso_origem`, `compartimento_origem`, `folha_origem`, `pagina_origem`, `disciplina_origem`, `tipo_folha_origem`, `metodo_calculo`, `estado_quantitativo`, `confidence_score`, `requer_validacao_tecnica`, `observacoes`.
+- Regra de anti-duplicação (`src/lib/plan-dedupe.ts` estendido):
+  - Para o mesmo piso, se houver folha estrutural, suprimir paredes/lajes/pilares vindos da arquitetura.
+  - Cortes e alçados → só validação, nunca quantitativo principal.
+  - Pormenores ICF/metálicos → validação de composição, não área.
 
-### 1.3 Nova tabela `plan_foundation_suggestions`
-Guarda a sessão do wizard "Sugestão de Fundação ICF":
+**Frontend — `Quantitativos`**
+- Agrupamento obrigatório no mapa:
+  - Arquitetura — R/C, 1.º Piso, Cobertura, Fachadas/Exterior
+  - Estrutura — Fundação, Piso 0, Piso 1, Armaduras, Perfis metálicos
+  - Fundação sugerida (separador distinto)
+- Filtros laterais: piso, disciplina, folha, estado, confiança, "requer validação".
+- Badge por linha com `estado_quantitativo` (confirmado por estrutura / sugestão / extraído arquitetura / manual).
+
+## 3. Sugestão de fundação ICF (Etapa 3)
+
+**Trigger**
+- Em `StructureFoundationTab`, se `plan_pages` não contiver nenhuma `discipline='structure'`, mostrar mensagem oficial e 3 botões: gerar sugestão / carregar estrutura / ignorar.
+
+**Wizard** (`FoundationSuggestionWizard` estendido para 12 perguntas)
+- Pisos, cave, garagem, terreno, ICF integral, muros contenção, grandes vãos, tipo laje térrea, altura média pisos, localização, desníveis, estudo geotécnico.
+
+**Backend — `axia-foundation-suggestion`**
+- Calcula a partir da arquitetura: perímetro R/C, área implantação, alinhamentos verticais (R/C ↔ pisos), grandes vãos, presença garagem.
+- Devolve itens preliminares:
+  - Betão de limpeza, Fundação contínua exterior, Fundação contínua interior estrutural, Sapatas isoladas, Vigas/lintéis de fundação, Laje térrea ICF ou massame, Impermeabilização periférica, Drenagem periférica, Arranques/esperas.
+- Cada item: `estado_quantitativo='sugestao_preliminar'`, `confidence_score` baixa/média, `requer_validacao_tecnica=true`, `disciplina_origem='architecture'`, `tipo_folha_origem='floor_plan'`, observação obrigatória "Sugestão... Requer validação por projeto de estabilidade."
+- Persistir em `plan_foundation_suggestions` + injetar como linhas em `plan_additional_items` com flag `estado_quantitativo='sugestao_preliminar'`.
+
+## 4. Alertas e validações
+
+Componente `PlanAlertsPanel` no topo do Detail:
+- Sem folhas de estrutura
+- Estrutura sem planta de fundações
+- Diferença de pisos entre arquitetura/estrutura
+- Quantitativos com baixa confiança
+- Possível duplicação detetada
+- Sugestão de fundação ativa sem geotécnico
+- Mensagens oficiais "Projeto estrutural identificado..." / "Projeto estrutural não encontrado..."
+
+## 5. Resumo final e envio para orçamento
+
+Card "Resumo do projeto" no fim:
+- Total de folhas, n.º arquitetura, n.º estrutura, pisos, flags (fundação? estrutural piso 0? piso 1? armaduras? metálicos?), se houve sugestão de fundação, nível geral de confiança.
+- Botão "Validar e enviar para orçamento" — usa `useCanSendPlanToBudget` (já bloqueia se houver linhas `requer_validacao_tecnica=true` por confirmar).
+
+## 6. Anti-duplicação (regras técnicas)
+
+`src/lib/plan-dedupe.ts`:
 ```
-id uuid pk, plan_import_id uuid fk, obra_id uuid, user_id uuid, organization_id uuid,
-inputs jsonb,        -- respostas ao questionário
-result jsonb,        -- itens sugeridos + raciocínio Axia
-status text,         -- draft | gerado | aplicado | descartado
-generated_at timestamptz, applied_at timestamptz,
-created_at, updated_at
+dedupeAcrossDisciplines(items):
+  for each (piso, elemento_tipo):
+    if existe item structure → manter structure, descartar architecture
+  for cortes/alçados: estado_quantitativo='validacao_apenas', excluir do mapa principal
+  para pormenores ICF/metálicos: apenas para enriquecer composição
 ```
-GRANT + RLS por organização (mesmo padrão de `plan_imports`).
 
----
+## 7. Detalhes técnicos
 
-## 2. Edge functions
+- Tipos: estender `src/types/plan-measurements.ts` com novos enums (`SheetType`, `DisciplineType`, `EstadoQuantitativo`).
+- Hooks: estender `usePlanQuantitativos` com `groupByDisciplinaPisoFolha()`.
+- Migração mínima adicional: adicionar colunas em falta (`metodo_calculo`, `tipo_folha_origem`, `compartimento_origem`) se ainda não existirem em `plan_measurements`/`plan_additional_items`.
+- RLS: todas as tabelas já têm policies org-scoped, mantém-se.
+- Testes: estender `icf-foundation-suggestions.test.ts` com cenários (cave, garagem, ICF integral, grandes vãos).
 
-### 2.1 Nova `axia-classify-sheets`
-Input: `plan_import_id`. Lê todas as `plan_pages` + snapshot OCR/thumbs. Chama Gemini 2.5 Pro (multi-imagem) com prompt PT-PT baseado em `AXIA_GLOBAL_SAFETY_BLOCK`. Devolve por página: `sheet_title, drawing_code, discipline, sheet_type, detected_floor, should_extract_quantities, use_for_validation_only, confidence, warnings`. Persiste em `plan_pages` e regista em `plan_analysis_logs`.
+## 8. Ficheiros tocados (resumo)
 
-### 2.2 Estender `axia-analysis` (e specialty)
-Após classificação, ao gerar measurements/elementos passa a preencher os novos campos de origem e `estado_quantitativo`:
-- folhas `discipline='estrutura'` → `confirmado_por_projeto_estrutura`
-- folhas `discipline='arquitetura'` → `extraido_arquitetura`
-Regra anti-duplicação: se existe folha estrutural para o mesmo piso, suprimir extrações estruturais derivadas da arquitetura (paredes portantes, lajes, fundações).
+- `supabase/migrations/<nova>.sql` (colunas em falta, se aplicável)
+- `supabase/functions/axia-classify-sheets/index.ts` (prompt + override regex)
+- `supabase/functions/axia-analysis/index.ts` (origem obrigatória + dedupe)
+- `supabase/functions/axia-foundation-suggestion/index.ts` (12 inputs + 9 itens)
+- `src/lib/plan-sheet-classification.ts` (override determinístico)
+- `src/lib/plan-dedupe.ts` (cross-disciplina)
+- `src/types/plan-measurements.ts` (enums)
+- `src/hooks/usePlanQuantitativos.ts` (agrupamento)
+- `src/hooks/useSheetClassification.ts`, `useFoundationSuggestion.ts` (estender)
+- `src/components/plantas/SheetsIdentifiedPanel.tsx` (editor inline)
+- `src/components/plantas/StructureFoundationTab.tsx` (estados A/B)
+- `src/components/plantas/FoundationSuggestionWizard.tsx` (12 perguntas)
+- `src/components/plantas/PlanAlertsPanel.tsx` (novo)
+- `src/components/plantas/PlanSummaryCard.tsx` (novo)
+- `src/pages/plantas/Detail.tsx` e `Quantitativos.tsx` (integração + filtros)
+- `src/lib/icf-foundation-suggestions.test.ts` (novos cenários)
 
-### 2.3 Nova `axia-foundation-suggestion`
-Input: `plan_import_id` + respostas do questionário. Gera itens preliminares ICF (fundação contínua perímetro, sapatas isoladas, laje térrea, betão limpeza, drenagem, arranques, vigas fundação) com base no perímetro do R/C e regras do `icf-foundation-suggestions.ts` existente. Persiste `plan_foundation_suggestions` e cria linhas em `plan_additional_items` com `estado_quantitativo='sugestao_preliminar'`, `requer_validacao_tecnica=true`, `observacoes` padrão. Reutiliza `AXIA_GLOBAL_SAFETY_BLOCK` + `icf-foundation-suggestions`.
+## Notas
 
----
-
-## 3. Hooks
-
-- `useSheetClassification(planImportId)` — invoca `axia-classify-sheets`, query de `plan_pages` enriquecidas, mutation `updateSheet` (correção manual: discipline/sheet_type/floor/should_extract).
-- `useFoundationSuggestion(planImportId)` — carrega/cria `plan_foundation_suggestions`, mutation `generate` (chama edge), mutation `discard`/`apply`.
-- Estender `usePlanQuantitativos` para incluir os novos campos e expor `grouping` por `(disciplina, piso, folha)`.
-
-## 4. UI
-
-### 4.1 Painel "Folhas identificadas" (`SheetsIdentifiedPanel.tsx`)
-Renderizado em `pages/plantas/Detail.tsx` antes do painel de quantitativos. Lista cards: thumbnail (já existe via `plan_pages.thumbnail_url`), nº página, título, badges disciplina/tipo/piso, estado (`Usar p/ quantitativos | Validação | Ignorar`), barra de confiança, botão "Editar classificação" (dialog com selects). Botão topo: "Reclassificar com Axia".
-
-### 4.2 Aba "Estrutura e Fundação" (`StructureFoundationTab.tsx`)
-Adicionar tab no Detail. Dois estados:
-- **A — Encontrada**: badge verde + lista folhas estruturais usadas + link "Ver quantitativos estruturais".
-- **B — Não encontrada**: alerta amber + mensagem obrigatória + 3 botões (`Gerar sugestão preliminar`, `Enviar pedido de validação técnica`, `Ignorar por agora`).
-
-### 4.3 Wizard `FoundationSuggestionWizard.tsx`
-Dialog stepper 3 passos: Questionário (nº pisos, cave, garagem, terreno, ICF integral, muros contenção, grandes vãos, tipo laje térrea, altura pisos, localização) → Resumo → Resultado (lista itens sugeridos com badges "preliminar", botão "Aplicar ao orçamento" / "Descartar"). Toast com aviso técnico ao concluir.
-
-### 4.4 Mapa de quantitativos agrupado
-Em `pages/plantas/Quantitativos.tsx` (ou componente equivalente) agrupar por:
-- Arquitetura — R/C / 1º Piso / Cobertura / Fachadas
-- Estrutura — Fundação / Piso 0 / Piso 1 / Armaduras / Perfis metálicos
-- Fundação sugerida
-
-Cada linha mostra badge de `estado_quantitativo` (Confirmado/Preliminar/Manual) + tooltip `folha_origem · pág X · disciplina`.
-
-## 5. Regras anti-erro (lib)
-
-Novo `src/lib/plan-sheet-classification.ts`:
-- heurísticas regex iniciais (fallback offline) para `sheet_type`/`discipline`/`floor` a partir do título/drawing_code.
-- função `dedupeAcrossDisciplines(measurements)` que, para o mesmo piso, mantém o item estrutural quando existir e descarta o equivalente vindo da arquitetura.
-
-## 6. Testes
-- `plan-sheet-classification.test.ts` — regex/heurísticas.
-- `icf-foundation-suggestions.test.ts` — adicionar casos com novas inputs (cave, garagem, grandes vãos).
-- Smoke manual: PDF EST.-ICF (11 páginas) deve classificar conforme exemplo.
-
-## 7. Memória do projeto
-Atualizar `mem://features/medicao-planta/overview` e adicionar:
-- `mem://features/medicao-planta/multi-sheet-classification`
-- `mem://features/icf/foundation-suggestion-flow`
-
----
-
-### Notas técnicas
-- Reaproveitar `pdf-to-image.ts` para thumbnails por página.
-- Gemini 2.5 Pro com multi-image input via Lovable AI Gateway (até ~20 páginas por chamada; chunking se mais).
-- Mensagens e UI 100% PT-PT, deep teal + rounded-xl conforme design system.
-- Nenhum item sugerido entra como confirmado; trigger DB poderia validar, mas começamos com regra na edge function.
-
-### Fora do âmbito (próxima fase)
-- Dimensionamento estrutural real (continua a depender de engenheiro).
-- Sincronização automática com cronograma/MCE — só após validação técnica.
+- Toda a sugestão de fundação fica visualmente distinta com badge "Preliminar — Requer validação técnica" e nunca passa o gate de envio para orçamento sem confirmação explícita do utilizador.
+- O fluxo respeita: classificar → confirmar → extrair → validar/sugerir → enviar para orçamento.

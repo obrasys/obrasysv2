@@ -52,6 +52,8 @@ import { PlanGlobalQuantityTable } from "@/components/plantas/PlanGlobalQuantity
 import { disciplineScope, DISCIPLINE_META } from "@/lib/plan-discipline";
 import { SheetsIdentifiedPanel } from "@/components/plantas/SheetsIdentifiedPanel";
 import { StructureFoundationTab } from "@/components/plantas/StructureFoundationTab";
+import { PlanAlertsPanel } from "@/components/plantas/PlanAlertsPanel";
+import { PlanSummaryCard } from "@/components/plantas/PlanSummaryCard";
 import { useSheetClassification } from "@/hooks/useSheetClassification";
 
 const MEASUREMENT_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
@@ -1790,12 +1792,14 @@ function SheetsClassificationSection({
 
   return (
     <div className="space-y-3">
+      <PlanAlertsPanel planImportId={planId} obraId={obraId} />
       <SheetsIdentifiedPanel
         planImportId={planId}
         onClassifyRequest={handleClassify}
         isClassifying={classify.isPending}
       />
       <StructureFoundationTab planImportId={planId} obraId={obraId} />
+      <PlanSummaryCard planImportId={planId} obraId={obraId} />
     </div>
   );
 }

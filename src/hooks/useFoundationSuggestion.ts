@@ -14,6 +14,8 @@ export interface FoundationInputs {
   tipo_laje_terrea?: string;
   altura_pisos_m?: number;
   localizacao?: string;
+  desniveis_terreno?: boolean;
+  tem_estudo_geotecnico?: boolean;
 }
 
 export interface FoundationItem {

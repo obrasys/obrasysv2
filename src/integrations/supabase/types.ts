@@ -9194,6 +9194,7 @@ export type Database = {
           budget_artigo_id: string | null
           budget_link_status: string
           category: string | null
+          compartimento_origem: string | null
           confidence_score: number | null
           created_at: string
           description: string
@@ -9211,6 +9212,7 @@ export type Database = {
           quantity: number
           requer_validacao_tecnica: boolean
           room_id: string | null
+          tipo_folha_origem: string | null
           unit: string
           updated_at: string
           user_id: string
@@ -9219,6 +9221,7 @@ export type Database = {
           budget_artigo_id?: string | null
           budget_link_status?: string
           category?: string | null
+          compartimento_origem?: string | null
           confidence_score?: number | null
           created_at?: string
           description: string
@@ -9236,6 +9239,7 @@ export type Database = {
           quantity?: number
           requer_validacao_tecnica?: boolean
           room_id?: string | null
+          tipo_folha_origem?: string | null
           unit?: string
           updated_at?: string
           user_id: string
@@ -9244,6 +9248,7 @@ export type Database = {
           budget_artigo_id?: string | null
           budget_link_status?: string
           category?: string | null
+          compartimento_origem?: string | null
           confidence_score?: number | null
           created_at?: string
           description?: string
@@ -9261,6 +9266,7 @@ export type Database = {
           quantity?: number
           requer_validacao_tecnica?: boolean
           room_id?: string | null
+          tipo_folha_origem?: string | null
           unit?: string
           updated_at?: string
           user_id?: string
@@ -10005,6 +10011,7 @@ export type Database = {
           budget_link_status: string
           camada: string | null
           ceiling_height: number | null
+          compartimento_origem: string | null
           confidence: string
           confidence_score: number | null
           coordinates: Json
@@ -10033,6 +10040,7 @@ export type Database = {
           room_id: string | null
           segment_length: number | null
           tipo: string
+          tipo_folha_origem: string | null
           unidade: string
           updated_at: string
           user_id: string
@@ -10051,6 +10059,7 @@ export type Database = {
           budget_link_status?: string
           camada?: string | null
           ceiling_height?: number | null
+          compartimento_origem?: string | null
           confidence?: string
           confidence_score?: number | null
           coordinates?: Json
@@ -10079,6 +10088,7 @@ export type Database = {
           room_id?: string | null
           segment_length?: number | null
           tipo?: string
+          tipo_folha_origem?: string | null
           unidade?: string
           updated_at?: string
           user_id: string
@@ -10097,6 +10107,7 @@ export type Database = {
           budget_link_status?: string
           camada?: string | null
           ceiling_height?: number | null
+          compartimento_origem?: string | null
           confidence?: string
           confidence_score?: number | null
           coordinates?: Json
@@ -10125,6 +10136,7 @@ export type Database = {
           room_id?: string | null
           segment_length?: number | null
           tipo?: string
+          tipo_folha_origem?: string | null
           unidade?: string
           updated_at?: string
           user_id?: string

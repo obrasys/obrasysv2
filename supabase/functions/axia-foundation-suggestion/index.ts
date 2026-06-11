@@ -19,6 +19,8 @@ const InputsSchema = z.object({
   tipo_laje_terrea: z.string().optional(),
   altura_pisos_m: z.number().min(2).max(6).optional(),
   localizacao: z.string().optional(),
+  desniveis_terreno: z.boolean().optional(),
+  tem_estudo_geotecnico: z.boolean().optional(),
 });
 
 const BodySchema = z.object({
@@ -33,26 +35,42 @@ const SYSTEM_PROMPT = `
 És a Axia, motor técnico do Obra Sys (Portugal). Vais gerar uma SUGESTÃO PRELIMINAR
 de fundação ICF, a partir da arquitetura (sem projecto de estabilidade).
 
-Tipos de item permitidos:
-- "fundacao_continua_exterior"   (ml)
-- "fundacao_continua_interior"   (ml)
-- "sapata_isolada"               (un)
-- "laje_terrea_icf"              (m2)
-- "laje_massame"                 (m2)
+ITENS PERMITIDOS (usa exactamente estes tipos):
 - "betao_limpeza"                (m2)
-- "drenagem_perimetral"          (ml)
+- "fundacao_continua_exterior"   (ml)  — sob paredes ICF exteriores (perímetro R/C)
+- "fundacao_continua_interior"   (ml)  — sob paredes interiores prováveis estruturais
+- "sapata_isolada"               (un)  — em pontos de pilares/cargas concentradas
+- "viga_fundacao"                (ml)  — vigas/lintéis de fundação
+- "laje_terrea_icf"              (m2)  — se utilizador escolheu este tipo
+- "laje_massame"                 (m2)  — alternativa a laje térrea ICF
 - "impermeabilizacao_periferica" (ml)
-- "arranque_paredes_icf"         (un)
-- "viga_fundacao"                (ml)
+- "drenagem_perimetral"          (ml)
+- "arranque_paredes_icf"         (un)  — esperas para arranque ICF
+
+REGRAS DE CÁLCULO PRELIMINAR:
+- Fundação contínua exterior ≈ perímetro_exterior_m do R/C.
+- Fundação contínua interior ≈ 30–50% do perímetro exterior (aproximação grosseira).
+- Sapatas isoladas: estimar 4–8 unidades para moradia comum, mais se houver grandes vãos.
+- Betão de limpeza ≈ área de implantação × 1.1.
+- Laje térrea (ICF ou massame) ≈ área de implantação.
+- Impermeabilização periférica e drenagem ≈ perímetro exterior.
+- Arranques ICF ≈ perímetro exterior / 1.2 (cada bloco ~1.2m).
+- Se tem_cave=true: adicionar paredes de cave e drenagem reforçada.
+- Se tem_garagem=true: adicionar reforço local na zona.
+- Se grandes_vaos=true: aumentar quantidade de sapatas e vigas de fundação.
+- Se muros_contencao=true: nota explícita de muros adicionais.
+- Se desniveis_terreno=true ou tem_estudo_geotecnico=false: subir requer_validacao.
 
 Para cada item devolve:
 { "tipo": "...", "descricao": "...", "unidade": "ml|m2|un", "quantidade": number,
-  "metodo_calculo": "...", "confidence": 0..1, "observacoes": "..." }
+  "metodo_calculo": "fórmula usada", "confidence": 0..1,
+  "observacoes": "Sugestão preliminar. Requer validação por projeto de estabilidade." }
 
 REGRAS CRÍTICAS:
 - TUDO é "sugestao_preliminar". NUNCA marques nada como confirmado.
 - Sem projecto de estabilidade NÃO há cálculo estrutural real. Indica explicitamente.
 - Se faltarem dados, regista em "missing_data" e baixa "confidence".
+- Sem estudo geotécnico: missing_data deve incluir "estudo_geotecnico".
 - Devolve PT-PT.
 
 ${AXIA_GLOBAL_SAFETY_BLOCK}
