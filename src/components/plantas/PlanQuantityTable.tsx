@@ -280,7 +280,7 @@ export function PlanQuantityTable({
             </SelectContent>
           </Select>
           <Select value={confidenceFilter} onValueChange={(v) => setConfidenceFilter(v as any)}>
-            <SelectTrigger className="h-9 w-[170px]">
+            <SelectTrigger className="h-9 w-[150px]">
               <SelectValue placeholder="Confiança" />
             </SelectTrigger>
             <SelectContent>
@@ -288,6 +288,55 @@ export function PlanQuantityTable({
               {CONFIDENCE_OPTIONS.map((c) => (
                 <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          {disciplinaOptions.length > 0 && (
+            <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Disciplina" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as disciplinas</SelectItem>
+                {disciplinaOptions.map((d) => (
+                  <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {folhaOptions.length > 0 && (
+            <Select value={folhaFilter} onValueChange={setFolhaFilter}>
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue placeholder="Folha de origem" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as folhas</SelectItem>
+                {folhaOptions.map((f) => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={estadoQFilter} onValueChange={setEstadoQFilter}>
+            <SelectTrigger className="h-9 w-[170px]">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os estados</SelectItem>
+              <SelectItem value="confirmado">Confirmado</SelectItem>
+              <SelectItem value="sugestao_preliminar">Sugestão preliminar</SelectItem>
+              <SelectItem value="requer_validacao">Requer validação</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
+            <SelectTrigger className="h-9 w-[200px]">
+              <SelectValue placeholder="Agrupar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem agrupamento</SelectItem>
+              <SelectItem value="disciplina_piso">Disciplina + Piso</SelectItem>
+              <SelectItem value="disciplina">Disciplina</SelectItem>
+              <SelectItem value="piso">Piso</SelectItem>
+              <SelectItem value="folha">Folha de origem</SelectItem>
             </SelectContent>
           </Select>
         </div>
