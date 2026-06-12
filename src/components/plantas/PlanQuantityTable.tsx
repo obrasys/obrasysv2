@@ -83,12 +83,42 @@ export function PlanQuantityTable({
   const [floorFilter, setFloorFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<QuantitativoSource | "all">("all");
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceLevel | "all">("all");
+  const [disciplinaFilter, setDisciplinaFilter] = useState<string>("all");
+  const [folhaFilter, setFolhaFilter] = useState<string>("all");
+  const [estadoQFilter, setEstadoQFilter] = useState<string>("all");
+  const [groupBy, setGroupBy] = useState<"none" | "disciplina" | "piso" | "folha" | "disciplina_piso">("disciplina_piso");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sendOpen, setSendOpen] = useState(false);
+
+  const disciplinaOptions = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.disciplina_origem && set.add(r.disciplina_origem));
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const folhaOptions = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.folha_origem && set.add(r.folha_origem));
+    return Array.from(set).sort();
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return rows.filter((r) => {
+      if (sourceFilter !== "all" && r.source !== sourceFilter) return false;
+      if (confidenceFilter !== "all" && r.confidence !== confidenceFilter) return false;
+      if (floorFilter === "__none__" && r.floor_id) return false;
+      if (floorFilter !== "all" && floorFilter !== "__none__" && r.floor_id !== floorFilter) return false;
+      if (disciplinaFilter !== "all" && (r.disciplina_origem ?? "") !== disciplinaFilter) return false;
+      if (folhaFilter !== "all" && (r.folha_origem ?? "") !== folhaFilter) return false;
+      if (estadoQFilter !== "all" && (r.estado_quantitativo ?? "confirmado") !== estadoQFilter) return false;
+      if (term) {
+        const hay = `${r.descricao} ${r.categoria} ${r.camada} ${r.folha_origem ?? ""} ${r.disciplina_origem ?? ""}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [rows, search, floorFilter, sourceFilter, confidenceFilter, disciplinaFilter, folhaFilter, estadoQFilter]);
       if (sourceFilter !== "all" && r.source !== sourceFilter) return false;
       if (confidenceFilter !== "all" && r.confidence !== confidenceFilter) return false;
       if (floorFilter === "__none__" && r.floor_id) return false;
