@@ -386,56 +386,44 @@ export function PlanQuantityTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => {
-                const meta = SOURCE_META[r.source];
-                const Icon = meta?.icon ?? Ruler;
-                const isSelected = selected.has(r.id);
-                return (
-                  <TableRow
-                    key={`${r.source}-${r.id}-${r.camada}`}
-                    className={cn(isSelected && "bg-primary/5")}
-                  >
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleOne(r.id)}
-                        className="cursor-pointer"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn("inline-flex items-center gap-1 text-xs", meta?.tone)}>
-                        <Icon className="h-3.5 w-3.5" />
-                        {meta?.label ?? r.source}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {r.descricao}
-                      {r.action_type && (
-                        <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1">
-                          {r.action_type}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.camada}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {r.floor_id ? (
-                        floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">-</span>
-                      ) : (
-                        <span className="text-muted-foreground italic">Sem pavimento</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {Number(r.valor).toFixed(2)} <span className="text-muted-foreground">{r.unidade}</span>
-                    </TableCell>
-                    <TableCell>
-                      <ConfidenceBadge level={r.confidence} origin={r.origem} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {(() => {
+                const rowsToRender = filtered;
+                if (groupBy === "none") {
+                  return rowsToRender.map((r) => renderRow(r));
+                }
+                const groups = new Map<string, typeof rowsToRender>();
+                for (const r of rowsToRender) {
+                  const disc = r.disciplina_origem ?? "—";
+                  const piso = r.floor_id ? (floorMap.get(r.floor_id) ?? r.piso_origem_label ?? "Sem pavimento") : (r.piso_origem_label ?? "Sem pavimento");
+                  const folha = r.folha_origem ?? "Sem folha";
+                  let key = "—";
+                  if (groupBy === "disciplina") key = disc;
+                  else if (groupBy === "piso") key = piso;
+                  else if (groupBy === "folha") key = folha;
+                  else if (groupBy === "disciplina_piso") key = `${disc} — ${piso}`;
+                  if (!groups.has(key)) groups.set(key, [] as any);
+                  (groups.get(key) as any).push(r);
+                }
+                const sortedKeys = Array.from(groups.keys()).sort();
+                return sortedKeys.flatMap((k) => {
+                  const list = groups.get(k)!;
+                  const totalByUnit: Record<string, number> = {};
+                  for (const r of list) totalByUnit[r.unidade] = (totalByUnit[r.unidade] || 0) + Number(r.valor || 0);
+                  const totalsStr = Object.entries(totalByUnit)
+                    .map(([u, v]) => `${v.toFixed(2)} ${u}`)
+                    .join(" · ");
+                  return [
+                    <TableRow key={`grp-${k}`} className="bg-muted/40 hover:bg-muted/40">
+                      <TableCell colSpan={7} className="py-1.5 text-xs font-semibold capitalize">
+                        {k}
+                        <Badge variant="secondary" className="ml-2 text-[9px]">{list.length}</Badge>
+                        <span className="ml-3 text-[10px] font-mono text-muted-foreground">{totalsStr}</span>
+                      </TableCell>
+                    </TableRow>,
+                    ...list.map((r) => renderRow(r)),
+                  ];
+                });
+              })()}
             </TableBody>
           </Table>
         )}
