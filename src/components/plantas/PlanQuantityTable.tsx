@@ -119,17 +119,6 @@ export function PlanQuantityTable({
       return true;
     });
   }, [rows, search, floorFilter, sourceFilter, confidenceFilter, disciplinaFilter, folhaFilter, estadoQFilter]);
-      if (sourceFilter !== "all" && r.source !== sourceFilter) return false;
-      if (confidenceFilter !== "all" && r.confidence !== confidenceFilter) return false;
-      if (floorFilter === "__none__" && r.floor_id) return false;
-      if (floorFilter !== "all" && floorFilter !== "__none__" && r.floor_id !== floorFilter) return false;
-      if (term) {
-        const hay = `${r.descricao} ${r.categoria} ${r.camada}`.toLowerCase();
-        if (!hay.includes(term)) return false;
-      }
-      return true;
-    });
-  }, [rows, search, floorFilter, sourceFilter, confidenceFilter]);
 
   const totals = useMemo(() => {
     const byUnit: Record<string, number> = {};
