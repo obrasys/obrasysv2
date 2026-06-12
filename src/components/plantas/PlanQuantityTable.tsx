@@ -162,6 +162,73 @@ export function PlanQuantityTable({
     setSelected(next);
   };
 
+  const renderRow = (r: PlanQuantitativoRow) => {
+    const meta = SOURCE_META[r.source];
+    const Icon = meta?.icon ?? Ruler;
+    const isSelected = selected.has(r.id);
+    const isPreliminar = r.estado_quantitativo === "sugestao_preliminar";
+    const requerValid = r.estado_quantitativo === "requer_validacao";
+    return (
+      <TableRow
+        key={`${r.source}-${r.id}-${r.camada}`}
+        className={cn(isSelected && "bg-primary/5", isPreliminar && "bg-amber-50/40")}
+      >
+        <TableCell>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => toggleOne(r.id)}
+            className="cursor-pointer"
+          />
+        </TableCell>
+        <TableCell>
+          <span className={cn("inline-flex items-center gap-1 text-xs", meta?.tone)}>
+            <Icon className="h-3.5 w-3.5" />
+            {meta?.label ?? r.source}
+          </span>
+        </TableCell>
+        <TableCell className="text-sm font-medium">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span>{r.descricao}</span>
+            {r.action_type && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1">{r.action_type}</Badge>
+            )}
+            {isPreliminar && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1 border-amber-500 text-amber-700">Sugestão</Badge>
+            )}
+            {requerValid && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1 border-orange-500 text-orange-700">Validar</Badge>
+            )}
+          </div>
+          {(r.folha_origem || r.disciplina_origem) && (
+            <div className="text-[10px] text-muted-foreground mt-0.5">
+              {r.disciplina_origem && <span className="capitalize">{r.disciplina_origem}</span>}
+              {r.folha_origem && <span> · {r.folha_origem}</span>}
+              {r.tipo_folha_origem && <span className="opacity-70"> ({r.tipo_folha_origem})</span>}
+            </div>
+          )}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{r.camada}</TableCell>
+        <TableCell className="text-xs">
+          {r.floor_id ? (
+            floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">-</span>
+          ) : r.piso_origem_label ? (
+            <span className="text-muted-foreground">{r.piso_origem_label}</span>
+          ) : (
+            <span className="text-muted-foreground italic">Sem pavimento</span>
+          )}
+        </TableCell>
+        <TableCell className="text-right font-mono text-sm">
+          {Number(r.valor).toFixed(2)} <span className="text-muted-foreground">{r.unidade}</span>
+        </TableCell>
+        <TableCell>
+          <ConfidenceBadge level={r.confidence} origin={r.origem} />
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+
   const exportCsv = () => {
     const headers = [
       "Tipo",
