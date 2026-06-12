@@ -83,8 +83,24 @@ export function PlanQuantityTable({
   const [floorFilter, setFloorFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<QuantitativoSource | "all">("all");
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceLevel | "all">("all");
+  const [disciplinaFilter, setDisciplinaFilter] = useState<string>("all");
+  const [folhaFilter, setFolhaFilter] = useState<string>("all");
+  const [estadoQFilter, setEstadoQFilter] = useState<string>("all");
+  const [groupBy, setGroupBy] = useState<"none" | "disciplina" | "piso" | "folha" | "disciplina_piso">("disciplina_piso");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sendOpen, setSendOpen] = useState(false);
+
+  const disciplinaOptions = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.disciplina_origem && set.add(r.disciplina_origem));
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const folhaOptions = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.folha_origem && set.add(r.folha_origem));
+    return Array.from(set).sort();
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -93,13 +109,16 @@ export function PlanQuantityTable({
       if (confidenceFilter !== "all" && r.confidence !== confidenceFilter) return false;
       if (floorFilter === "__none__" && r.floor_id) return false;
       if (floorFilter !== "all" && floorFilter !== "__none__" && r.floor_id !== floorFilter) return false;
+      if (disciplinaFilter !== "all" && (r.disciplina_origem ?? "") !== disciplinaFilter) return false;
+      if (folhaFilter !== "all" && (r.folha_origem ?? "") !== folhaFilter) return false;
+      if (estadoQFilter !== "all" && (r.estado_quantitativo ?? "confirmado") !== estadoQFilter) return false;
       if (term) {
-        const hay = `${r.descricao} ${r.categoria} ${r.camada}`.toLowerCase();
+        const hay = `${r.descricao} ${r.categoria} ${r.camada} ${r.folha_origem ?? ""} ${r.disciplina_origem ?? ""}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [rows, search, floorFilter, sourceFilter, confidenceFilter]);
+  }, [rows, search, floorFilter, sourceFilter, confidenceFilter, disciplinaFilter, folhaFilter, estadoQFilter]);
 
   const totals = useMemo(() => {
     const byUnit: Record<string, number> = {};
@@ -142,6 +161,73 @@ export function PlanQuantityTable({
     else next.add(id);
     setSelected(next);
   };
+
+  const renderRow = (r: PlanQuantitativoRow) => {
+    const meta = SOURCE_META[r.source];
+    const Icon = meta?.icon ?? Ruler;
+    const isSelected = selected.has(r.id);
+    const isPreliminar = r.estado_quantitativo === "sugestao_preliminar";
+    const requerValid = r.estado_quantitativo === "requer_validacao";
+    return (
+      <TableRow
+        key={`${r.source}-${r.id}-${r.camada}`}
+        className={cn(isSelected && "bg-primary/5", isPreliminar && "bg-amber-50/40")}
+      >
+        <TableCell>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => toggleOne(r.id)}
+            className="cursor-pointer"
+          />
+        </TableCell>
+        <TableCell>
+          <span className={cn("inline-flex items-center gap-1 text-xs", meta?.tone)}>
+            <Icon className="h-3.5 w-3.5" />
+            {meta?.label ?? r.source}
+          </span>
+        </TableCell>
+        <TableCell className="text-sm font-medium">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span>{r.descricao}</span>
+            {r.action_type && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1">{r.action_type}</Badge>
+            )}
+            {isPreliminar && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1 border-amber-500 text-amber-700">Sugestão</Badge>
+            )}
+            {requerValid && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1 border-orange-500 text-orange-700">Validar</Badge>
+            )}
+          </div>
+          {(r.folha_origem || r.disciplina_origem) && (
+            <div className="text-[10px] text-muted-foreground mt-0.5">
+              {r.disciplina_origem && <span className="capitalize">{r.disciplina_origem}</span>}
+              {r.folha_origem && <span> · {r.folha_origem}</span>}
+              {r.tipo_folha_origem && <span className="opacity-70"> ({r.tipo_folha_origem})</span>}
+            </div>
+          )}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{r.camada}</TableCell>
+        <TableCell className="text-xs">
+          {r.floor_id ? (
+            floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">-</span>
+          ) : r.piso_origem_label ? (
+            <span className="text-muted-foreground">{r.piso_origem_label}</span>
+          ) : (
+            <span className="text-muted-foreground italic">Sem pavimento</span>
+          )}
+        </TableCell>
+        <TableCell className="text-right font-mono text-sm">
+          {Number(r.valor).toFixed(2)} <span className="text-muted-foreground">{r.unidade}</span>
+        </TableCell>
+        <TableCell>
+          <ConfidenceBadge level={r.confidence} origin={r.origem} />
+        </TableCell>
+      </TableRow>
+    );
+  };
+
 
   const exportCsv = () => {
     const headers = [
@@ -261,7 +347,7 @@ export function PlanQuantityTable({
             </SelectContent>
           </Select>
           <Select value={confidenceFilter} onValueChange={(v) => setConfidenceFilter(v as any)}>
-            <SelectTrigger className="h-9 w-[170px]">
+            <SelectTrigger className="h-9 w-[150px]">
               <SelectValue placeholder="Confiança" />
             </SelectTrigger>
             <SelectContent>
@@ -269,6 +355,55 @@ export function PlanQuantityTable({
               {CONFIDENCE_OPTIONS.map((c) => (
                 <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          {disciplinaOptions.length > 0 && (
+            <Select value={disciplinaFilter} onValueChange={setDisciplinaFilter}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Disciplina" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as disciplinas</SelectItem>
+                {disciplinaOptions.map((d) => (
+                  <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {folhaOptions.length > 0 && (
+            <Select value={folhaFilter} onValueChange={setFolhaFilter}>
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue placeholder="Folha de origem" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as folhas</SelectItem>
+                {folhaOptions.map((f) => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={estadoQFilter} onValueChange={setEstadoQFilter}>
+            <SelectTrigger className="h-9 w-[170px]">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os estados</SelectItem>
+              <SelectItem value="confirmado">Confirmado</SelectItem>
+              <SelectItem value="sugestao_preliminar">Sugestão preliminar</SelectItem>
+              <SelectItem value="requer_validacao">Requer validação</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
+            <SelectTrigger className="h-9 w-[200px]">
+              <SelectValue placeholder="Agrupar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem agrupamento</SelectItem>
+              <SelectItem value="disciplina_piso">Disciplina + Piso</SelectItem>
+              <SelectItem value="disciplina">Disciplina</SelectItem>
+              <SelectItem value="piso">Piso</SelectItem>
+              <SelectItem value="folha">Folha de origem</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -318,56 +453,44 @@ export function PlanQuantityTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => {
-                const meta = SOURCE_META[r.source];
-                const Icon = meta?.icon ?? Ruler;
-                const isSelected = selected.has(r.id);
-                return (
-                  <TableRow
-                    key={`${r.source}-${r.id}-${r.camada}`}
-                    className={cn(isSelected && "bg-primary/5")}
-                  >
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleOne(r.id)}
-                        className="cursor-pointer"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn("inline-flex items-center gap-1 text-xs", meta?.tone)}>
-                        <Icon className="h-3.5 w-3.5" />
-                        {meta?.label ?? r.source}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {r.descricao}
-                      {r.action_type && (
-                        <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1">
-                          {r.action_type}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.camada}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {r.floor_id ? (
-                        floorMap.get(r.floor_id) ?? <span className="text-muted-foreground">-</span>
-                      ) : (
-                        <span className="text-muted-foreground italic">Sem pavimento</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {Number(r.valor).toFixed(2)} <span className="text-muted-foreground">{r.unidade}</span>
-                    </TableCell>
-                    <TableCell>
-                      <ConfidenceBadge level={r.confidence} origin={r.origem} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {(() => {
+                const rowsToRender = filtered;
+                if (groupBy === "none") {
+                  return rowsToRender.map((r) => renderRow(r));
+                }
+                const groups = new Map<string, typeof rowsToRender>();
+                for (const r of rowsToRender) {
+                  const disc = r.disciplina_origem ?? "—";
+                  const piso = r.floor_id ? (floorMap.get(r.floor_id) ?? r.piso_origem_label ?? "Sem pavimento") : (r.piso_origem_label ?? "Sem pavimento");
+                  const folha = r.folha_origem ?? "Sem folha";
+                  let key = "—";
+                  if (groupBy === "disciplina") key = disc;
+                  else if (groupBy === "piso") key = piso;
+                  else if (groupBy === "folha") key = folha;
+                  else if (groupBy === "disciplina_piso") key = `${disc} — ${piso}`;
+                  if (!groups.has(key)) groups.set(key, [] as any);
+                  (groups.get(key) as any).push(r);
+                }
+                const sortedKeys = Array.from(groups.keys()).sort();
+                return sortedKeys.flatMap((k) => {
+                  const list = groups.get(k)!;
+                  const totalByUnit: Record<string, number> = {};
+                  for (const r of list) totalByUnit[r.unidade] = (totalByUnit[r.unidade] || 0) + Number(r.valor || 0);
+                  const totalsStr = Object.entries(totalByUnit)
+                    .map(([u, v]) => `${v.toFixed(2)} ${u}`)
+                    .join(" · ");
+                  return [
+                    <TableRow key={`grp-${k}`} className="bg-muted/40 hover:bg-muted/40">
+                      <TableCell colSpan={7} className="py-1.5 text-xs font-semibold capitalize">
+                        {k}
+                        <Badge variant="secondary" className="ml-2 text-[9px]">{list.length}</Badge>
+                        <span className="ml-3 text-[10px] font-mono text-muted-foreground">{totalsStr}</span>
+                      </TableCell>
+                    </TableRow>,
+                    ...list.map((r) => renderRow(r)),
+                  ];
+                });
+              })()}
             </TableBody>
           </Table>
         )}

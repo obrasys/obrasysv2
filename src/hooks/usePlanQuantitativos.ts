@@ -32,6 +32,12 @@ export interface PlanQuantitativoRow {
   symbol_type_id: string | null;
   created_at: string;
   updated_at: string;
+  disciplina_origem: string | null;
+  folha_origem: string | null;
+  tipo_folha_origem: string | null;
+  compartimento_origem: string | null;
+  estado_quantitativo: string | null;
+  piso_origem_label: string | null;
 }
 
 interface UsePlanQuantitativosOptions {
