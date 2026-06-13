@@ -191,7 +191,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     const userContent = [
       {
         type: "text",
-        text: "Analisa esta planta de construção seguindo as 9 etapas. Devolve JSON estruturado completo via plan_analysis.",
+        text: "Analisa esta planta de construção seguindo as 9 etapas. Devolve JSON estruturado completo via plan_analysis.\n\nIMPORTANTE: se a folha for planta_piso ou implantacao e tiver compartimentos rotulados ou contornos visíveis, rooms[] NÃO PODE estar vazio. Lista TODOS os compartimentos que vês, mesmo que estimes a área por tipologia (com confidence baixa e review_required=true).",
       },
       {
         type: "image_url",
