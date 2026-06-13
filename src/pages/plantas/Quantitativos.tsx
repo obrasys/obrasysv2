@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers, Database } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
