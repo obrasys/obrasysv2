@@ -1167,9 +1167,25 @@ export default function PlanDetail() {
                     });
                   });
                 }}
-                onAnalysisComplete={() => {
+                onAnalysisComplete={(res) => {
                   setHasAnalysis(true);
                   setWorkflowStep("analyze");
+                  // Auto-prompt: se a Axia identificou compartimentos, oferece ir já para Quantitativos + Orçamento.
+                  const roomsCount = res?.rooms?.length ?? 0;
+                  const elementsCount = res?.elements?.length ?? 0;
+                  if (roomsCount > 0 || elementsCount > 0) {
+                    toast.success(
+                      `Axia identificou ${roomsCount} compartimento(s) e ${elementsCount} elemento(s). Quer criar o orçamento agora?`,
+                      {
+                        duration: 12000,
+                        action: {
+                          label: "Criar orçamento",
+                          onClick: () =>
+                            navigate(`${baseRoute}/${planId}/quantitativos?openBudget=1`),
+                        },
+                      },
+                    );
+                  }
                   // mark current page as analyzed (handled via onResultChange below)
                 }}
                 result={axiaResultsByPage[currentPage] ?? null}
