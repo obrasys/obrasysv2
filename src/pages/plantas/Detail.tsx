@@ -1175,13 +1175,15 @@ export default function PlanDetail() {
 
                   // Persistir quantitativos da Axia para plan_rooms/plan_measurements
                   // para que a Tabela Unificada (plan_quantitativos_v) deixe de vir a zeros.
-                  if ((roomsCount > 0 || elementsCount > 0) && planId && currentUser?.id) {
+                  if ((roomsCount > 0 || elementsCount > 0) && planId) {
                     try {
+                      const { data: { user: authUser } } = await supabase.auth.getUser();
+                      if (!authUser) throw new Error("Não autenticado");
                       const pageId = await axiaPersist.ensurePageId(currentPage, selectedFloorId);
                       const { persistAxiaQuantitativos } = await import("@/lib/plan-axia-persist-quantitativos");
                       const out = await persistAxiaQuantitativos({
                         planImportId: planId,
-                        userId: currentUser.id,
+                        userId: authUser.id,
                         pageId,
                         floorId: selectedFloorId,
                         pageNumber: currentPage,
