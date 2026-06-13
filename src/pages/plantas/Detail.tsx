@@ -1167,12 +1167,33 @@ export default function PlanDetail() {
                     });
                   });
                 }}
-                onAnalysisComplete={(res) => {
+                onAnalysisComplete={async (res) => {
                   setHasAnalysis(true);
                   setWorkflowStep("analyze");
-                  // Auto-prompt: se a Axia identificou compartimentos, oferece ir já para Quantitativos + Orçamento.
                   const roomsCount = res?.rooms?.length ?? 0;
                   const elementsCount = res?.elements?.length ?? 0;
+
+                  // Persistir quantitativos da Axia para plan_rooms/plan_measurements
+                  // para que a Tabela Unificada (plan_quantitativos_v) deixe de vir a zeros.
+                  if ((roomsCount > 0 || elementsCount > 0) && planId && currentUser?.id) {
+                    try {
+                      const pageId = await axiaPersist.ensurePageId(currentPage, selectedFloorId);
+                      const { persistAxiaQuantitativos } = await import("@/lib/plan-axia-persist-quantitativos");
+                      const out = await persistAxiaQuantitativos({
+                        planImportId: planId,
+                        userId: currentUser.id,
+                        pageId,
+                        floorId: selectedFloorId,
+                        pageNumber: currentPage,
+                        analysis: res,
+                        ceilingHeightM: analysisParams.ceilingHeightM,
+                      });
+                      console.log("[axia-persist-quantitativos]", out);
+                    } catch (e) {
+                      console.error("[axia-persist-quantitativos] erro", e);
+                    }
+                  }
+
                   if (roomsCount > 0 || elementsCount > 0) {
                     toast.success(
                       `Axia identificou ${roomsCount} compartimento(s) e ${elementsCount} elemento(s). Quer criar o orçamento agora?`,
@@ -1186,7 +1207,6 @@ export default function PlanDetail() {
                       },
                     );
                   }
-                  // mark current page as analyzed (handled via onResultChange below)
                 }}
                 result={axiaResultsByPage[currentPage] ?? null}
                 onResultChange={(next) => {
