@@ -135,7 +135,7 @@ interface PlanAIAnalysisProps {
   } | null;
   onHighlightPosition?: (x: number, y: number) => void;
   onConvertDimensions?: (dimensions: PlanAnalysisResult["dimensions"]) => void;
-  onAnalysisComplete?: () => void;
+  onAnalysisComplete?: (result?: PlanAnalysisResult) => void;
   // Multi-page support - controlled from parent so analyses persist per page
   result?: PlanAnalysisResult | null;
   onResultChange?: (result: PlanAnalysisResult | null) => void;
@@ -417,7 +417,7 @@ export function PlanAIAnalysis({
           elements: safe.elements.length,
         });
         toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
-        onAnalysisComplete?.();
+        onAnalysisComplete?.(safe);
       } else {
         const msg = "A IA não conseguiu analisar esta planta.";
         toast.warning(msg);
