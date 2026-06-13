@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Table2, ClipboardList, Home, FileDown, CheckSquare, HardHat, Layers, Database } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TipoBase } from "@/hooks/useBaseArtigos";
 import { usePlanImports } from "@/hooks/usePlanImports";
 import { usePlanMeasurements } from "@/hooks/usePlanMeasurements";
@@ -128,6 +128,52 @@ export default function PlanQuantitativos() {
     }
     bulkUpdateValidation.mutate({ ids, estado: estado as any });
   };
+
+  // Backfill: se a Axia analisou (axia_analysis em plan_pages) mas plan_rooms está vazio,
+  // sincroniza uma única vez para que a Tabela Unificada deixe de vir a zeros.
+  const backfilledRef = useRef(false);
+  useEffect(() => {
+    if (!planId || backfilledRef.current) return;
+    if (rooms && rooms.length > 0) return;
+    backfilledRef.current = true;
+    (async () => {
+      try {
+        const { data: pages } = await supabase
+          .from("plan_pages")
+          .select("id, page_number, axia_analysis, floor_id")
+          .eq("plan_import_id", planId);
+        const candidates = (pages ?? []).filter(
+          (p: any) => p.axia_analysis && (p.axia_analysis.rooms?.length || p.axia_analysis.elements?.length),
+        );
+        if (candidates.length === 0) {
+          backfilledRef.current = false;
+          return;
+        }
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return;
+        const { persistAxiaQuantitativos } = await import("@/lib/plan-axia-persist-quantitativos");
+        let total = 0;
+        for (const p of candidates as any[]) {
+          const out = await persistAxiaQuantitativos({
+            planImportId: planId,
+            userId,
+            pageId: p.id,
+            floorId: p.floor_id ?? null,
+            pageNumber: p.page_number,
+            analysis: p.axia_analysis,
+          });
+          total += out.rooms + out.measurements;
+        }
+        if (total > 0) {
+          toast.success(`Sincronizados ${total} quantitativos da análise Axia.`);
+          window.location.reload();
+        }
+      } catch (e) {
+        console.error("[quantitativos-backfill] erro", e);
+      }
+    })();
+  }, [planId, rooms]);
 
   if (plansLoading) {
     return (
