@@ -417,7 +417,7 @@ export function PlanAIAnalysis({
           elements: safe.elements.length,
         });
         toast.success(`Análise concluída: ${safe.dimensions.length} cotas, ${safe.rooms.length} compartimentos identificados`);
-        onAnalysisComplete?.();
+        onAnalysisComplete?.(safe);
       } else {
         const msg = "A IA não conseguiu analisar esta planta.";
         toast.warning(msg);
