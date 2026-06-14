@@ -95,7 +95,12 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       pe_direito_m: r.pe_direito_m,
       estado_validacao: r.review_required ? "pendente" : "validado",
       origem: "ia_inferida" as const,
-      confidence: (r.confidence ?? 0) >= 0.7 ? "alta" : (r.confidence ?? 0) >= 0.4 ? "provavel" : "baixa",
+      confidence:
+        (r.confidence ?? 0) >= 0.7
+          ? "confirmado"
+          : (r.confidence ?? 0) >= 0.4
+            ? "provavel"
+            : "precisa_validar",
     };
   });
 
