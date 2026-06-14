@@ -68,7 +68,7 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       .delete()
       .eq("plan_import_id", planImportId)
       .eq("page_id", pageId)
-      .eq("measurement_origin", "ia");
+      .eq("measurement_origin", "axia_auto");
   }
 
   // Insert plan_rooms (boundary derivado do bbox quando disponível)
@@ -95,7 +95,12 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       pe_direito_m: r.pe_direito_m,
       estado_validacao: r.review_required ? "pendente" : "validado",
       origem: "ia_inferida" as const,
-      confidence: (r.confidence ?? 0) >= 0.7 ? "alta" : (r.confidence ?? 0) >= 0.4 ? "provavel" : "baixa",
+      confidence:
+        (r.confidence ?? 0) >= 0.7
+          ? "confirmado"
+          : (r.confidence ?? 0) >= 0.4
+            ? "provavel"
+            : "precisa_validar",
     };
   });
 
@@ -129,7 +134,7 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       etiqueta: `Rodapé · ${bb.room_name}`,
       compartimento_origem: bb.room_name,
       estado_validacao: "pendente",
-      measurement_origin: "ia",
+      measurement_origin: "axia_auto",
       confidence: "provavel",
       pagina_origem: pageNumber ?? null,
       budget_link_status: "not_linked",
@@ -155,7 +160,7 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       etiqueta: `Paredes · ${w.room_name}`,
       compartimento_origem: w.room_name,
       estado_validacao: "pendente",
-      measurement_origin: "ia",
+      measurement_origin: "axia_auto",
       confidence: "provavel",
       pagina_origem: pageNumber ?? null,
       budget_link_status: "not_linked",
@@ -179,8 +184,8 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
       camada: "vãos",
       etiqueta: op.label,
       estado_validacao: op.review_required ? "pendente" : "validado",
-      measurement_origin: "ia",
-      confidence: op.review_required ? "baixa" : "provavel",
+      measurement_origin: "axia_auto",
+      confidence: op.review_required ? "precisa_validar" : "provavel",
       pagina_origem: pageNumber ?? null,
       budget_link_status: "not_linked",
       axia_status: "valid",
