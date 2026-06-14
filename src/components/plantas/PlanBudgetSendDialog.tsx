@@ -314,17 +314,19 @@ export function PlanBudgetSendDialog({
         totalArticles += insertedArticles?.length ?? 0;
 
         // Traceability: link each measurement-sourced article back to the plan.
-        // dedupe_key = measurement_id ensures re-sends update instead of duplicating.
+        // dedupe_key = measurement_id:ordem ensures multiple finishings per medição
+        // não colidem na upsert.
+        const rowById = new Map(items.map((r) => [r.id, r]));
         const links = (insertedArticles ?? [])
           .map((a) => {
-            const row = items[(a.ordem ?? 1) - 1];
+            const row = a.linked_element_id ? rowById.get(a.linked_element_id) : null;
             if (!row || row.source !== "medicao") return null;
             return {
               measurement_id: row.id,
               user_id: row.user_id,
               orcamento_id: targetOrcamentoId,
               artigo_orcamento_id: a.id,
-              dedupe_key: row.id,
+              dedupe_key: `${row.id}:${a.ordem ?? 0}`,
               source_type: row.source,
               source_id: row.id,
               quantity_origin: row.origem ?? null,
