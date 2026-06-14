@@ -24,7 +24,7 @@ import { usePlanMappings } from "@/hooks/usePlanMappings";
 import { usePlanRooms } from "@/hooks/usePlanRooms";
 import { useAxiaPlanSuggestions } from "@/hooks/useAxiaPlanSuggestions";
 import { useAxiaCrossValidation } from "@/hooks/useAxiaCrossValidation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -36,6 +36,7 @@ export default function PlanQuantitativos() {
   const isBudgetScope = !!budgetId;
   const baseRoute = isBudgetScope ? `/orcamentos/${budgetId}/plantas` : `/obras/${obraId}/plantas`;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const autoOpenBudget = searchParams.get("openBudget") === "1";
 
@@ -63,9 +64,9 @@ export default function PlanQuantitativos() {
   });
   const effectiveObraId = obraId ?? budgetObraQuery.data ?? undefined;
 
-  const { measurements, updateMeasurement, bulkUpdateValidation } = usePlanMeasurements(planId);
+  const { measurements, isLoading: measurementsLoading, updateMeasurement, bulkUpdateValidation } = usePlanMeasurements(planId);
   const { mappings, createMapping, updateMapping, deleteMapping } = usePlanMappings(planId);
-  const { rooms, roomMeasurements } = usePlanRooms(planId);
+  const { rooms, roomMeasurements, isLoading: roomsLoading } = usePlanRooms(planId);
   const { suggestions, loading: axiaLoading, error: axiaError, fetchSuggestions, dismissSuggestion } = useAxiaPlanSuggestions();
   const { alerts, loading: cvLoading, error: cvError, validate: runCrossValidation, dismissAlert } = useAxiaCrossValidation();
 
@@ -133,7 +134,7 @@ export default function PlanQuantitativos() {
   // sincroniza uma única vez para que a Tabela Unificada deixe de vir a zeros.
   const backfilledRef = useRef(false);
   useEffect(() => {
-    if (!planId || backfilledRef.current) return;
+    if (!planId || backfilledRef.current || roomsLoading || measurementsLoading) return;
     if (rooms && rooms.length > 0) return;
     backfilledRef.current = true;
     (async () => {
@@ -167,13 +168,17 @@ export default function PlanQuantitativos() {
         }
         if (total > 0) {
           toast.success(`Sincronizados ${total} quantitativos da análise Axia.`);
-          window.location.reload();
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["plan-rooms", planId] }),
+            queryClient.invalidateQueries({ queryKey: ["plan-measurements", planId] }),
+            queryClient.invalidateQueries({ queryKey: ["plan-room-measurements", planId] }),
+          ]);
         }
       } catch (e) {
         console.error("[quantitativos-backfill] erro", e);
       }
     })();
-  }, [planId, rooms]);
+  }, [measurementsLoading, planId, queryClient, rooms, roomsLoading]);
 
   if (plansLoading) {
     return (
