@@ -255,30 +255,50 @@ export function PlanBudgetSendDialog({
           .single();
         if (chErr) throw chErr;
 
-        const articlesPayload = items.map((r, idx) => {
+        const articlesPayload: any[] = [];
+        items.forEach((r, idx) => {
           const mapping = r.source === "medicao" ? mappingByMeasurement.get(r.id) : undefined;
           const artigo = mapping?.artigo_base_id
             ? articleById.get(mapping.artigo_base_id)
             : undefined;
-          const finishing = !artigo ? finishingChoices.get(r.id) : undefined;
           const coef = mapping?.coeficiente ?? 1;
           const desp = mapping?.fator_desperdicio ?? 1;
           const qty = (Number(r.valor) || 0) * coef * desp;
-          if (artigo) totalMapped++;
-          const baseDesc = artigo?.descricao ?? finishing?.descricao ?? r.descricao;
-          const descricao = finishing?.pendente ? `[PENDENTE] ${baseDesc}` : baseDesc;
-          return {
-            capitulo_id: chapter.id,
-            codigo: artigo?.codigo ?? null,
-            descricao,
-            unidade: artigo?.unidade ?? finishing?.unidade ?? mapping?.unidade_artigo ?? r.unidade,
-            quantidade: Number(qty.toFixed(3)),
-            preco_unitario: artigo?.preco_unitario ?? finishing?.preco_unitario ?? 0,
-            ordem: idx + 1,
-            quantity_source: r.origem || "plan",
-            // row.id is the measurement uuid for source='medicao' (see plan_quantitativos_v).
-            linked_element_id: r.source === "medicao" ? r.id : null,
-          };
+
+          if (artigo) {
+            totalMapped++;
+            articlesPayload.push({
+              capitulo_id: chapter.id,
+              codigo: artigo.codigo,
+              descricao: artigo.descricao,
+              unidade: artigo.unidade,
+              quantidade: Number(qty.toFixed(3)),
+              preco_unitario: artigo.preco_unitario,
+              ordem: articlesPayload.length + 1,
+              quantity_source: r.origem || "plan",
+              linked_element_id: r.source === "medicao" ? r.id : null,
+            });
+            return;
+          }
+
+          // Sem artigo da Base: usa as escolhas de acabamento (podem ser várias)
+          const finishings = finishingChoices.get(r.id) ?? [
+            { descricao: r.descricao, unidade: r.unidade, pendente: true },
+          ];
+          finishings.forEach((f) => {
+            const descricao = f.pendente ? `[PENDENTE] ${f.descricao}` : f.descricao;
+            articlesPayload.push({
+              capitulo_id: chapter.id,
+              codigo: null,
+              descricao,
+              unidade: f.unidade ?? mapping?.unidade_artigo ?? r.unidade,
+              quantidade: Number(qty.toFixed(3)),
+              preco_unitario: f.preco_unitario ?? 0,
+              ordem: articlesPayload.length + 1,
+              quantity_source: r.origem || "plan",
+              linked_element_id: r.source === "medicao" ? r.id : null,
+            });
+          });
         });
 
         if (articlesPayload.length === 0) {
@@ -294,17 +314,19 @@ export function PlanBudgetSendDialog({
         totalArticles += insertedArticles?.length ?? 0;
 
         // Traceability: link each measurement-sourced article back to the plan.
-        // dedupe_key = measurement_id ensures re-sends update instead of duplicating.
+        // dedupe_key = measurement_id:ordem ensures multiple finishings per medição
+        // não colidem na upsert.
+        const rowById = new Map(items.map((r) => [r.id, r]));
         const links = (insertedArticles ?? [])
           .map((a) => {
-            const row = items[(a.ordem ?? 1) - 1];
+            const row = a.linked_element_id ? rowById.get(a.linked_element_id) : null;
             if (!row || row.source !== "medicao") return null;
             return {
               measurement_id: row.id,
               user_id: row.user_id,
               orcamento_id: targetOrcamentoId,
               artigo_orcamento_id: a.id,
-              dedupe_key: row.id,
+              dedupe_key: `${row.id}:${a.ordem ?? 0}`,
               source_type: row.source,
               source_id: row.id,
               quantity_origin: row.origem ?? null,

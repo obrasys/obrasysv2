@@ -1,14 +1,7 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Sparkles, Paintbrush, SquareStack, LayoutPanelTop, DoorOpen, RectangleHorizontal, Layers as LayersIcon } from "lucide-react";
 import type { PlanQuantitativoRow } from "@/hooks/usePlanQuantitativos";
 
@@ -20,19 +13,15 @@ export type FinishingType =
   | "portas"
   | "janelas";
 
-export interface FinishingChoice {
-  /** Descrição final do artigo (sobrepõe r.descricao no envio). */
+export interface FinishingChoiceItem {
   descricao: string;
-  /** Unidade efetiva. */
   unidade?: string;
-  /** Preço unitário (opcional, sem preço fica 0). */
   preco_unitario?: number;
-  /** Marca o artigo como pendente_definicao. */
   pendente?: boolean;
 }
 
-/** Choice indexed by quantitativo row id. */
-export type FinishingChoiceMap = Map<string, FinishingChoice>;
+/** Cada quantitativo pode produzir vários artigos (ex.: parede = barramento + pintura). */
+export type FinishingChoiceMap = Map<string, FinishingChoiceItem[]>;
 
 interface Preset {
   label: string;
@@ -42,35 +31,39 @@ interface Preset {
 
 const PRESETS: Record<FinishingType, Preset[]> = {
   paredes: [
-    { label: "Reboco + pintura branca", descricao: "Reboco areado fino com pintura tinta plástica branca em paredes interiores", unidade: "m²" },
-    { label: "Estuque + pintura", descricao: "Estuque projetado liso com pintura plástica acetinada em paredes", unidade: "m²" },
-    { label: "Azulejo cerâmico", descricao: "Revestimento em azulejo cerâmico 30x60 assente com cimento-cola, juntas refechadas", unidade: "m²" },
-    { label: "Pladur duplo", descricao: "Forra interior em pladur 12,5 mm sobre estrutura metálica, isolada com lã mineral", unidade: "m²" },
+    { label: "Reboco areado", descricao: "Reboco areado fino em paredes interiores", unidade: "m²" },
+    { label: "Barramento / estuque", descricao: "Barramento de paredes com massa de acabamento", unidade: "m²" },
+    { label: "Primário", descricao: "Aplicação de primário selante em paredes", unidade: "m²" },
+    { label: "Pintura tinta plástica branca", descricao: "Pintura em tinta plástica branca, duas demãos", unidade: "m²" },
+    { label: "Azulejo cerâmico 30x60", descricao: "Revestimento em azulejo cerâmico 30x60 assente com cimento-cola", unidade: "m²" },
+    { label: "Pladur 12,5 mm", descricao: "Forra interior em pladur 12,5 mm sobre estrutura metálica", unidade: "m²" },
   ],
   rodape: [
-    { label: "Rodapé MDF lacado branco 8 cm", descricao: "Rodapé em MDF hidrófugo 8 cm lacado branco, assente com cola e remates", unidade: "ml" },
-    { label: "Rodapé cerâmico", descricao: "Rodapé cerâmico 7 cm a condizer com pavimento, assente e rejuntado", unidade: "ml" },
-    { label: "Rodapé madeira maciça", descricao: "Rodapé em madeira maciça 10 cm envernizado, assente com pregagem oculta", unidade: "ml" },
+    { label: "Rodapé MDF lacado branco 8 cm", descricao: "Rodapé em MDF hidrófugo 8 cm lacado branco", unidade: "ml" },
+    { label: "Rodapé cerâmico 7 cm", descricao: "Rodapé cerâmico 7 cm a condizer com pavimento", unidade: "ml" },
+    { label: "Rodapé madeira maciça", descricao: "Rodapé em madeira maciça 10 cm envernizado", unidade: "ml" },
   ],
   pavimento: [
-    { label: "Cerâmico 60x60 retificado", descricao: "Pavimento cerâmico retificado 60x60 assente com cimento-cola, juntas finas", unidade: "m²" },
-    { label: "Flutuante AC4", descricao: "Pavimento flutuante laminado AC4 8 mm com manta acústica e rodapé incluído", unidade: "m²" },
-    { label: "Madeira maciça envernizada", descricao: "Soalho em madeira maciça assente e envernizado in situ", unidade: "m²" },
-    { label: "Microcimento", descricao: "Pavimento em microcimento aplicado em 2 demãos com primário e verniz selante", unidade: "m²" },
+    { label: "Betonilha de regularização", descricao: "Betonilha de regularização do pavimento", unidade: "m²" },
+    { label: "Cerâmico 60x60 retificado", descricao: "Pavimento cerâmico retificado 60x60 assente com cimento-cola", unidade: "m²" },
+    { label: "Flutuante AC4", descricao: "Pavimento flutuante laminado AC4 8 mm com manta acústica", unidade: "m²" },
+    { label: "Madeira maciça envernizada", descricao: "Soalho em madeira maciça envernizado in situ", unidade: "m²" },
+    { label: "Microcimento", descricao: "Pavimento em microcimento aplicado em duas demãos com selante", unidade: "m²" },
   ],
   teto: [
-    { label: "Estuque + pintura branca", descricao: "Teto em estuque com pintura plástica branca", unidade: "m²" },
-    { label: "Teto falso pladur", descricao: "Teto falso em pladur 12,5 mm sobre estrutura metálica, com pintura acabada", unidade: "m²" },
-    { label: "Teto falso acústico", descricao: "Teto falso modular acústico 60x60 sobre estrutura T24 vista", unidade: "m²" },
+    { label: "Estuque", descricao: "Teto em estuque pronto a pintar", unidade: "m²" },
+    { label: "Pintura branca", descricao: "Pintura de teto em tinta plástica branca, duas demãos", unidade: "m²" },
+    { label: "Teto falso pladur", descricao: "Teto falso em pladur 12,5 mm sobre estrutura metálica", unidade: "m²" },
+    { label: "Teto falso acústico 60x60", descricao: "Teto falso modular acústico 60x60 sobre estrutura T24", unidade: "m²" },
   ],
   portas: [
     { label: "Porta interior lacada", descricao: "Porta interior em MDF lacado branco com aro, guarnições e ferragens", unidade: "un" },
-    { label: "Porta de entrada blindada", descricao: "Porta de entrada blindada classe 3 com aro metálico e fechadura multi-ponto", unidade: "un" },
-    { label: "Porta de correr embutida", descricao: "Porta de correr embutida em parede com sistema oculto e guias", unidade: "un" },
+    { label: "Porta de entrada blindada", descricao: "Porta de entrada blindada classe 3 com fechadura multi-ponto", unidade: "un" },
+    { label: "Porta de correr embutida", descricao: "Porta de correr embutida em parede com sistema oculto", unidade: "un" },
   ],
   janelas: [
-    { label: "Janela PVC oscilo-batente vidro duplo", descricao: "Janela em PVC com vidro duplo 4/16/4, oscilo-batente, com estore exterior", unidade: "un" },
-    { label: "Janela alumínio RPT", descricao: "Janela em alumínio com rotura de ponte térmica, vidro duplo low-E", unidade: "un" },
+    { label: "Janela PVC oscilo-batente vidro duplo", descricao: "Janela PVC vidro duplo 4/16/4, oscilo-batente, com estore", unidade: "un" },
+    { label: "Janela alumínio RPT", descricao: "Janela alumínio com rotura de ponte térmica, vidro duplo low-E", unidade: "un" },
     { label: "Janela madeira tradicional", descricao: "Janela em madeira pinho tratado, vidro duplo, ferragens em latão", unidade: "un" },
   ],
 };
@@ -78,7 +71,7 @@ const PRESETS: Record<FinishingType, Preset[]> = {
 const TYPE_META: Record<FinishingType, { label: string; icon: typeof Paintbrush }> = {
   paredes: { label: "Paredes", icon: Paintbrush },
   rodape: { label: "Rodapé", icon: SquareStack },
-  pavimento: { label: "Pavimento", icon: LayersIcon },
+  pavimento: { label: "Pavimento / Piso", icon: LayersIcon },
   teto: { label: "Teto", icon: LayoutPanelTop },
   portas: { label: "Portas", icon: DoorOpen },
   janelas: { label: "Janelas", icon: RectangleHorizontal },
@@ -103,16 +96,16 @@ function inferType(row: PlanQuantitativoRow): FinishingType | null {
 
 interface Props {
   rows: PlanQuantitativoRow[];
-  /** Ids de medições já mapeadas a um artigo da Base (não precisam de escolha). */
   mappedMeasurementIds: Set<string>;
   value: FinishingChoiceMap;
   onChange: (next: FinishingChoiceMap) => void;
 }
 
 /**
- * Step opcional antes do envio para orçamento (Fase 4).
- * Agrupa linhas sem mapeamento por tipo de acabamento e oferece presets.
- * "Definir depois" marca o item como pendente_definicao no envio.
+ * Step opcional antes do envio para orçamento.
+ * Agrupa linhas sem mapeamento por tipo de acabamento e permite selecionar
+ * MÚLTIPLOS artigos por tipo (ex.: paredes = barramento + pintura).
+ * Sem seleção → artigo pendente_definicao.
  */
 export function FinishingChoicesStep({ rows, mappedMeasurementIds, value, onChange }: Props) {
   const groups = useMemo(() => {
@@ -136,7 +129,7 @@ export function FinishingChoicesStep({ rows, mappedMeasurementIds, value, onChan
     for (const [, items] of groups) {
       for (const r of items) {
         if (!next.has(r.id)) {
-          next.set(r.id, { descricao: r.descricao, unidade: r.unidade, pendente: true });
+          next.set(r.id, [{ descricao: r.descricao, unidade: r.unidade, pendente: true }]);
           changed = true;
         }
       }
@@ -153,14 +146,25 @@ export function FinishingChoicesStep({ rows, mappedMeasurementIds, value, onChan
     );
   }
 
-  const applyToGroup = (type: FinishingType, items: PlanQuantitativoRow[], presetIdx: number | "pendente") => {
+  const togglePreset = (type: FinishingType, items: PlanQuantitativoRow[], presetIdx: number, checked: boolean) => {
+    const preset = PRESETS[type][presetIdx];
     const next = new Map(value);
     for (const r of items) {
-      if (presetIdx === "pendente") {
-        next.set(r.id, { descricao: r.descricao, unidade: r.unidade, pendente: true });
+      const current = (next.get(r.id) ?? []).filter((c) => !c.pendente);
+      let updated: FinishingChoiceItem[];
+      if (checked) {
+        if (current.some((c) => c.descricao === preset.descricao)) {
+          updated = current;
+        } else {
+          updated = [...current, { descricao: preset.descricao, unidade: preset.unidade, pendente: false }];
+        }
       } else {
-        const preset = PRESETS[type][presetIdx];
-        next.set(r.id, { descricao: preset.descricao, unidade: preset.unidade, pendente: false });
+        updated = current.filter((c) => c.descricao !== preset.descricao);
+      }
+      if (updated.length === 0) {
+        next.set(r.id, [{ descricao: r.descricao, unidade: r.unidade, pendente: true }]);
+      } else {
+        next.set(r.id, updated);
       }
     }
     onChange(next);
@@ -170,23 +174,16 @@ export function FinishingChoicesStep({ rows, mappedMeasurementIds, value, onChan
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Sparkles className="h-3.5 w-3.5 text-primary" />
-        Escolha um acabamento para cada tipo. Pode deixar como
-        <Badge variant="outline" className="text-[10px]">pendente</Badge>
-        para definir mais tarde.
+        Marque um ou vários acabamentos por tipo (ex.: paredes = barramento + pintura).
+        Sem seleção → fica
+        <Badge variant="outline" className="text-[10px]">pendente</Badge>.
       </div>
 
       {Array.from(groups.entries()).map(([type, items]) => {
         const meta = TYPE_META[type];
         const Icon = meta.icon;
-        // Detect current selection (assume homogeneous per group, take first).
-        const current = value.get(items[0].id);
-        const currentIdx = current?.pendente
-          ? "pendente"
-          : PRESETS[type].findIndex((p) => p.descricao === current?.descricao);
-        const selectValue =
-          currentIdx === "pendente" || currentIdx === -1 || currentIdx === undefined
-            ? "pendente"
-            : String(currentIdx);
+        const current = value.get(items[0].id) ?? [];
+        const selectedDescriptions = new Set(current.filter((c) => !c.pendente).map((c) => c.descricao));
 
         return (
           <div key={type} className="rounded-md border p-3 space-y-2">
@@ -196,32 +193,32 @@ export function FinishingChoicesStep({ rows, mappedMeasurementIds, value, onChan
                 {meta.label}
               </div>
               <Badge variant="secondary" className="text-[10px]">
-                {items.length} item(s)
+                {items.length} compartimento(s) · {selectedDescriptions.size || "pendente"} artigo(s)
               </Badge>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] text-muted-foreground">Solução técnica</Label>
-              <Select
-                value={selectValue}
-                onValueChange={(v) =>
-                  applyToGroup(type, items, v === "pendente" ? "pendente" : Number(v))
-                }
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRESETS[type].map((p, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="pendente">
-                    Definir depois (pendente)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-[11px] text-muted-foreground">
+                Soluções técnicas a incluir
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {PRESETS[type].map((p, i) => {
+                  const checked = selectedDescriptions.has(p.descricao);
+                  return (
+                    <label
+                      key={i}
+                      className="flex items-start gap-2 rounded-md border px-2.5 py-2 cursor-pointer hover:bg-muted/40 text-xs"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => togglePreset(type, items, i, v === true)}
+                        className="mt-0.5"
+                      />
+                      <span>{p.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );

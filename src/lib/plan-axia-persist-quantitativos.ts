@@ -170,6 +170,42 @@ export async function persistAxiaQuantitativos(args: PersistAxiaQuantitativosArg
     });
   }
 
+  // Teto e Pavimento (piso) por compartimento - área = área do compartimento
+  for (const r of built.rooms) {
+    if (r.area_m2 <= 0) continue;
+    const roomId = roomIdByName.get(r.name) ?? null;
+    const base = {
+      plan_import_id: planImportId,
+      user_id: userId,
+      page_id: pageId,
+      floor_id: floorId ?? null,
+      room_id: roomId,
+      tipo: "area" as const,
+      coordinates: [],
+      valor_bruto: r.area_m2,
+      unidade: "m2",
+      compartimento_origem: r.name,
+      estado_validacao: "pendente",
+      measurement_origin: "axia_auto",
+      confidence: "provavel",
+      pagina_origem: pageNumber ?? null,
+      budget_link_status: "not_linked",
+      axia_status: "valid",
+      estado_quantitativo: "confirmado",
+      requer_validacao_tecnica: false,
+    };
+    measurementRows.push({
+      ...base,
+      camada: "teto",
+      etiqueta: `Teto · ${r.name}`,
+    });
+    measurementRows.push({
+      ...base,
+      camada: "pavimento",
+      etiqueta: `Pavimento · ${r.name}`,
+    });
+  }
+
   for (const op of built.openingsByDim) {
     if (op.qtd <= 0) continue;
     measurementRows.push({
