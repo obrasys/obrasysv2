@@ -132,11 +132,17 @@ export default function PlanQuantitativos() {
 
   // Backfill: se a Axia analisou (axia_analysis em plan_pages) mas plan_rooms está vazio,
   // sincroniza uma única vez para que a Tabela Unificada deixe de vir a zeros.
-  const backfilledRef = useRef(false);
+  const backfilledPlanRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!planId || backfilledRef.current || roomsLoading || measurementsLoading) return;
-    if (rooms && rooms.length > 0) return;
-    backfilledRef.current = true;
+    if (!planId || roomsLoading || measurementsLoading) return;
+    if (backfilledPlanRef.current === planId) return;
+    if (rooms && rooms.length > 0) {
+      backfilledPlanRef.current = planId;
+      return;
+    }
+    // Marca já como tentado para este planId — evita loop caso a query
+    // re-renderize (rooms array com nova referência) ou candidates seja vazio.
+    backfilledPlanRef.current = planId;
     (async () => {
       try {
         const { data: pages } = await supabase
@@ -146,10 +152,7 @@ export default function PlanQuantitativos() {
         const candidates = (pages ?? []).filter(
           (p: any) => p.axia_analysis && (p.axia_analysis.rooms?.length || p.axia_analysis.elements?.length),
         );
-        if (candidates.length === 0) {
-          backfilledRef.current = false;
-          return;
-        }
+        if (candidates.length === 0) return;
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id;
         if (!userId) return;

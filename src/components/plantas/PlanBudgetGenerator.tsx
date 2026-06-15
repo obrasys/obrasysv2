@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -747,8 +747,8 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
                 </TableHeader>
                 <TableBody>
                   {chapters.map(([cat, items]) => (
-                    <>
-                      <TableRow key={`cap-${cat}`} className="bg-muted/50">
+                    <Fragment key={`cap-${cat}`}>
+                      <TableRow className="bg-muted/50">
                         <TableCell colSpan={6} className="font-medium text-xs py-1.5">
                           {cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </TableCell>
@@ -763,7 +763,7 @@ export function PlanBudgetGenerator({ obraId, targetBudgetId, planId, planName, 
                           <TableCell className="text-right font-mono text-xs font-medium">{item.valorTotal.toFixed(2)} €</TableCell>
                         </TableRow>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>
