@@ -8,6 +8,7 @@ import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { prefetchRoute } from '@/lib/route-prefetch';
+import { ChangelogDialog } from '@/components/layout/ChangelogDialog';
 
 export function Sidebar() {
   const location = useLocation();
