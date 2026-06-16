@@ -64,6 +64,7 @@ export function CapituloAccordion({
   onEditArtigo,
   onDeleteArtigo,
   onOpenCatalog,
+  onOpenPricebook,
   onUpdateCommercial,
   onUpdateDiscount,
   isReadOnly = false,
