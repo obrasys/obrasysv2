@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { SupplierLayout } from '@/components/fornecedor/SupplierLayout';
 import {
   useSupplierQuoteRequests,
@@ -11,6 +13,10 @@ import {
   useSupplierItemsByCategories,
   useSupplierProfile,
 } from '@/hooks/useSuppliers';
+import {
+  useCreateDirectQuoteResponse,
+  useDeclineDirectQuote,
+} from '@/hooks/useSupplierDirectQuotes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
