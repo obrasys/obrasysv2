@@ -120,6 +120,7 @@ const IcfNovoDossier = lazy(() => import("./pages/icf/NovoDossier"));
 const IcfDossier = lazy(() => import("./pages/icf/Dossier"));
 const CentrosDeCustoPage = lazy(() => import("./pages/empresa/CentrosDeCusto"));
 const GestaoEmpresaPage = lazy(() => import("./pages/empresa/GestaoEmpresa"));
+const FaturacaoEmpresaPage = lazy(() => import("./pages/empresa/Faturacao"));
 
 // Delays showing the fallback so quick chunk loads (<200ms) don't cause a layout flash.
 // During in-app navigation, React keeps the previous screen visible until the new chunk is ready.
@@ -239,6 +240,7 @@ const App = () => (
                   <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
                   <Route path="/empresa/centros-de-custo" element={<ManagerRoute><CentrosDeCustoPage /></ManagerRoute>} />
                   <Route path="/empresa/gestao" element={<ManagerRoute><GestaoEmpresaPage /></ManagerRoute>} />
+                  <Route path="/empresa/definicoes/faturacao" element={<ManagerRoute><FaturacaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
                   <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
                   <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
