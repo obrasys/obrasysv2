@@ -49,9 +49,32 @@ export async function authenticate(req: Request): Promise<BillingContext> {
 }
 
 export async function requirePermission(ctx: BillingContext, perm: BillingPermission): Promise<void> {
-  const { data, error } = await ctx.asUser.rpc("has_billing_permission", { _perm: perm });
-  if (error) throw new BillingError("PERMISSION_CHECK_FAILED", error.message, 500);
-  if (!data) throw new BillingError("FORBIDDEN", `Missing billing.${perm} permission`, 403);
+  // Check via service role to avoid auth.uid() dependency in RPC context.
+  // Org admins/owners get implicit access; otherwise look up explicit member_module_permissions.
+  const { data: memberships, error: memErr } = await ctx.admin
+    .from("organization_members")
+    .select("id, role")
+    .eq("user_id", ctx.userId)
+    .eq("organization_id", ctx.organizationId)
+    .eq("member_status", "active");
+  if (memErr) throw new BillingError("PERMISSION_CHECK_FAILED", memErr.message, 500);
+  if (!memberships || memberships.length === 0) {
+    throw new BillingError("FORBIDDEN", `Missing billing.${perm} permission`, 403);
+  }
+  if (memberships.some((m) => m.role === "admin" || m.role === "owner")) return;
+
+  const memberIds = memberships.map((m) => m.id);
+  const { data: perms, error: pErr } = await ctx.admin
+    .from("member_module_permissions")
+    .select("can_view")
+    .in("member_id", memberIds)
+    .eq("module_code", `billing.${perm}`)
+    .eq("can_view", true)
+    .limit(1);
+  if (pErr) throw new BillingError("PERMISSION_CHECK_FAILED", pErr.message, 500);
+  if (!perms || perms.length === 0) {
+    throw new BillingError("FORBIDDEN", `Missing billing.${perm} permission`, 403);
+  }
 }
 
 export class BillingError extends Error {
