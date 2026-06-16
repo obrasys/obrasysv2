@@ -96,7 +96,16 @@ export function Sidebar() {
           </div>
         </div>
         <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
-        <p className="text-[10px] text-white/40">ObraSys - Versão {APP_VERSION}</p>
+        <button
+          type="button"
+          onClick={() => setChangelogOpen(true)}
+          className="mt-0.5 text-[10px] text-white/40 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
+          title="Ver notas de versão"
+        >
+          ObraSys - Versão {APP_VERSION}
+        </button>
+      </div>
+      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       </div>
 
       {/* Navigation */}
