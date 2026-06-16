@@ -496,9 +496,9 @@ export default function FornecedorPedidoDetalhe() {
                 <Button
                   className="flex-1"
                   onClick={handleSubmit}
-                  disabled={items.length === 0 || createResponse.isPending}
+                  disabled={items.length === 0 || createResponse.isPending || createDirectResponse.isPending}
                 >
-                  {createResponse.isPending ? (
+                  {(createResponse.isPending || createDirectResponse.isPending) ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
