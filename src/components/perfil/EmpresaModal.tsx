@@ -315,6 +315,32 @@ export function EmpresaModal({ open, onOpenChange }: EmpresaModalProps) {
 
           <Separator />
 
+          {/* Integrações de Faturação */}
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false);
+              navigate('/empresa/definicoes/faturacao');
+            }}
+            className="w-full flex items-center justify-between gap-4 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Receipt className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">Integrações de Faturação</div>
+                <p className="text-xs text-muted-foreground">
+                  Configure Moloni, InvoiceXpress ou exportação manual
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          <Separator />
+
+
           <div className="flex justify-end gap-4">
             <Button
               type="button"
