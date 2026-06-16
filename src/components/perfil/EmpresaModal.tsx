@@ -11,10 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Building2, Upload, Loader2, Save, Trash2 } from 'lucide-react';
+import { Building2, Upload, Loader2, Save, Trash2, Receipt, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface EmpresaModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface EmpresaModalProps {
 
 export function EmpresaModal({ open, onOpenChange }: EmpresaModalProps) {
   const { profile, user, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isLoading, setIsLoading] = useState(false);
@@ -312,6 +314,32 @@ export function EmpresaModal({ open, onOpenChange }: EmpresaModalProps) {
           </div>
 
           <Separator />
+
+          {/* Integrações de Faturação */}
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false);
+              navigate('/empresa/definicoes/faturacao');
+            }}
+            className="w-full flex items-center justify-between gap-4 p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Receipt className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">Integrações de Faturação</div>
+                <p className="text-xs text-muted-foreground">
+                  Configure Moloni, InvoiceXpress ou exportação manual
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          <Separator />
+
 
           <div className="flex justify-end gap-4">
             <Button
