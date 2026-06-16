@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     const { data: obra } = await ctx.admin
       .from("obras")
-      .select("id, cliente_id, user_id")
+      .select("id, cliente_id, cliente, user_id")
       .eq("id", auto.obra_id)
       .maybeSingle();
     if (!obra) return errorResponse("OBRA_NOT_FOUND", "Obra não encontrada", 404);
@@ -62,8 +62,27 @@ Deno.serve(async (req) => {
     if (!membership) {
       return errorResponse("FORBIDDEN", "Obra fora da organização", 403);
     }
-    if (!obra.cliente_id) {
-      return errorResponse("NO_CLIENT", "A obra não tem cliente associado", 400);
+
+    // Resolve cliente_id (fallback by name match within the same owner)
+    let clienteId: string | null = obra.cliente_id ?? null;
+    if (!clienteId && obra.cliente) {
+      const { data: matched } = await ctx.admin
+        .from("clientes")
+        .select("id")
+        .eq("user_id", obra.user_id)
+        .ilike("nome", obra.cliente.trim())
+        .maybeSingle();
+      if (matched?.id) {
+        clienteId = matched.id;
+        await ctx.admin.from("obras").update({ cliente_id: matched.id }).eq("id", obra.id);
+      }
+    }
+    if (!clienteId) {
+      return errorResponse(
+        "NO_CLIENT",
+        "A obra não tem cliente associado. Edite a obra e selecione um cliente do registo.",
+        400,
+      );
     }
 
     // Validate integration belongs to org
