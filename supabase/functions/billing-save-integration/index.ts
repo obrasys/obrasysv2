@@ -45,6 +45,19 @@ Deno.serve(async (req) => {
 
   try {
     let integrationId = id;
+
+    // If no id was passed, check for an existing active integration for this provider
+    if (!integrationId) {
+      const { data: existing } = await ctx.admin
+        .from("billing_integrations")
+        .select("id")
+        .eq("organization_id", ctx.organizationId)
+        .eq("provider", rest.provider)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (existing?.id) integrationId = existing.id;
+    }
+
     if (integrationId) {
       const { error } = await ctx.admin
         .from("billing_integrations")
