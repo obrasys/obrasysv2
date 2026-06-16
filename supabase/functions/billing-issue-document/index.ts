@@ -42,19 +42,56 @@ Deno.serve(async (req) => {
     }
     if (!doc.integration_id) return errorResponse("NO_INTEGRATION", "Document has no integration_id", 400);
 
-    // Customer mapping
+    // Customer mapping (auto-sync if missing)
     let externalCustomerId: string | null = null;
-    if (doc.cliente_id) {
-      const { data: bc } = await ctx.admin
-        .from("billing_customers")
-        .select("external_customer_id")
-        .eq("integration_id", doc.integration_id)
-        .eq("cliente_id", doc.cliente_id)
-        .maybeSingle();
-      externalCustomerId = bc?.external_customer_id ?? null;
+    if (!doc.cliente_id) {
+      return errorResponse("NO_CLIENT", "Document has no client", 400);
     }
+    const { data: bc } = await ctx.admin
+      .from("billing_customers")
+      .select("external_customer_id")
+      .eq("integration_id", doc.integration_id)
+      .eq("cliente_id", doc.cliente_id)
+      .maybeSingle();
+    externalCustomerId = bc?.external_customer_id ?? null;
+
     if (!externalCustomerId) {
-      return errorResponse("CUSTOMER_NOT_SYNCED", "Run billing-create-or-update-customer first", 400);
+      // Auto-create on provider
+      const { data: cli } = await ctx.admin
+        .from("clientes")
+        .select("*")
+        .eq("id", doc.cliente_id)
+        .maybeSingle();
+      if (!cli) return errorResponse("CLIENT_NOT_FOUND", "Client not found", 404);
+
+      const intRow = await loadIntegration(ctx.admin, ctx.organizationId, doc.integration_id);
+      const intProvider = buildProvider(intRow.provider);
+      const intCtx = await buildContext(ctx.admin, intRow);
+
+      const customerInput = {
+        internalId: cli.id,
+        name: cli.nome ?? cli.name ?? "",
+        nif: cli.nif ?? null,
+        email: cli.email ?? null,
+        phone: cli.telefone ?? cli.phone ?? null,
+        address: cli.endereco ?? cli.morada ?? cli.address ?? null,
+        postalCode: cli.codigo_postal ?? cli.postal_code ?? null,
+        city: cli.cidade ?? cli.city ?? null,
+        country: cli.pais ?? cli.country ?? "PT",
+      };
+      if (!customerInput.name) return errorResponse("CUSTOMER_MISSING_NAME", "Client has no name", 400);
+
+      const ext = await intProvider.upsertCustomer(intCtx, customerInput);
+      externalCustomerId = ext.externalCustomerId;
+
+      await ctx.admin.from("billing_customers").upsert({
+        organization_id: ctx.organizationId,
+        integration_id: doc.integration_id,
+        cliente_id: doc.cliente_id,
+        external_customer_id: ext.externalCustomerId,
+        external_payload: ext.raw ?? {},
+        last_synced_at: new Date().toISOString(),
+      }, { onConflict: "integration_id,cliente_id" });
     }
 
     const { data: lines, error: linesErr } = await ctx.admin
