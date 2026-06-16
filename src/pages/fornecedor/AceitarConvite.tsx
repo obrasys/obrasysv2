@@ -54,7 +54,11 @@ export default function AceitarConvite() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <SEO title="Aceitar convite de fornecedor - ObraSys" path="/fornecedor/aceitar" />
+      <SEO
+        title="Aceitar convite de fornecedor - ObraSys"
+        description="Aceite o convite para se juntar à rede de fornecedores de uma empresa no ObraSys."
+        path="/fornecedor/aceitar"
+      />
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <img src={logo} alt="ObraSys" className="h-10 w-auto mx-auto mb-3" />
