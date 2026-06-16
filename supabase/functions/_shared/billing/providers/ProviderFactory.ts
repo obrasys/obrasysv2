@@ -3,12 +3,13 @@ import { BillingProvider, ProviderContext, ProviderId, ProviderCredentials } fro
 import { ManualExportAdapter } from "./ManualExportAdapter.ts";
 import { StubAdapter } from "./StubAdapter.ts";
 import { MoloniAdapter } from "./MoloniAdapter.ts";
+import { KeyInvoiceAdapter } from "./KeyInvoiceAdapter.ts";
 
 export function buildProvider(id: ProviderId): BillingProvider {
   switch (id) {
     case "manual_export": return new ManualExportAdapter();
     case "moloni":        return new MoloniAdapter();
-    case "keyinvoice":    return new StubAdapter("keyinvoice");
+    case "keyinvoice":    return new KeyInvoiceAdapter();
     case "invoicexpress": return new StubAdapter("invoicexpress");
     case "vendus":        return new StubAdapter("vendus");
   }
