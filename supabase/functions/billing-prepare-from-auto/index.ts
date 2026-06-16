@@ -47,11 +47,19 @@ Deno.serve(async (req) => {
 
     const { data: obra } = await ctx.admin
       .from("obras")
-      .select("id, cliente_id, organization_id")
+      .select("id, cliente_id, user_id")
       .eq("id", auto.obra_id)
       .maybeSingle();
     if (!obra) return errorResponse("OBRA_NOT_FOUND", "Obra não encontrada", 404);
-    if (obra.organization_id !== ctx.organizationId) {
+
+    // Verify obra belongs to the caller's organization via organization_members
+    const { data: membership } = await ctx.admin
+      .from("organization_members")
+      .select("user_id")
+      .eq("organization_id", ctx.organizationId)
+      .eq("user_id", obra.user_id)
+      .maybeSingle();
+    if (!membership) {
       return errorResponse("FORBIDDEN", "Obra fora da organização", 403);
     }
     if (!obra.cliente_id) {
