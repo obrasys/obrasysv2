@@ -238,6 +238,20 @@ export default function FornecedorPedidoDetalhe() {
 
   const handleSubmit = () => {
     if (items.length === 0) return;
+    if (isDirect) {
+      createDirectResponse.mutate(
+        {
+          quoteRequestId: qr.id,
+          form: {
+            notes,
+            estimated_delivery_days: deliveryDays ? parseInt(deliveryDays) : undefined,
+            items,
+          },
+        },
+        { onSuccess: () => navigate('/fornecedor/pedidos') }
+      );
+      return;
+    }
     createResponse.mutate({
       quoteRequestId: qr.id,
       quoteRequestSupplierId: assignment.id,
@@ -250,6 +264,10 @@ export default function FornecedorPedidoDetalhe() {
   };
 
   const handleDecline = () => {
+    if (isDirect) {
+      declineDirect.mutate(qr.id, { onSuccess: () => navigate('/fornecedor/pedidos') });
+      return;
+    }
     declineQuote.mutate(assignment.id, { onSuccess: () => navigate('/fornecedor/pedidos') });
   };
 
