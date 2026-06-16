@@ -37,7 +37,11 @@ const PROVIDERS: BillingProvider[] = [
 
 const CREDENTIAL_FIELDS: Record<BillingProvider, Array<{ key: string; label: string; type?: string }>> = {
   manual_export: [],
-  keyinvoice: [{ key: "api_key", label: "API Key", type: "password" }],
+  keyinvoice: [
+    { key: "api_key", label: "API Key (KeyInvoice → Definições → API)", type: "password" },
+    { key: "default_product_id", label: "IdProduct genérico (obrigatório p/ linhas)" },
+    { key: "doc_series", label: "Série de documento (opcional)" },
+  ],
   invoicexpress: [
     { key: "api_key", label: "API Key", type: "password" },
     { key: "account_name", label: "Account name" },
