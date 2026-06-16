@@ -88,9 +88,13 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
                 <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">
                   {profile?.empresa_nome || profile?.empresa || 'Empresa'}
                 </p>
-                <p className="text-[10px] text-sidebar-foreground/50">
+                <button
+                  type="button"
+                  onClick={() => { setMobileMenuOpen(false); setChangelogOpen(true); }}
+                  className="text-[10px] text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors underline-offset-2 hover:underline"
+                >
                   ObraSys - Versão {APP_VERSION}
-                </p>
+                </button>
               </div>
               {/* Use inline nav for mobile sheet */}
               <MobileNav onNavigate={() => setMobileMenuOpen(false)} />
