@@ -46,7 +46,7 @@ export function useSupplierDirectQuoteRequests() {
         `)
         .in('fornecedor_id', fornecedorIds)
         .not('fornecedor_id', 'is', null)
-        .neq('status', 'draft')
+        .in('status', ['open', 'sent', 'in_review', 'closed'])
         .order('created_at', { ascending: false })
         .limit(200);
       if (error) throw error;
