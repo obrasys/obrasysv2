@@ -54,6 +54,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   const { totalAlerts, errorCount, hasAlerts } = useObraAlerts();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
