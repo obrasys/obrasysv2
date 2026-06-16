@@ -159,21 +159,26 @@ export function useAwardDirectQuoteResponse() {
   const { toast } = useToast();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ responseId, requestId }: { responseId: string; requestId: string }) => {
-      const { error: r1 } = await supabase
-        .from('quote_responses')
-        .update({ status: 'accepted' })
-        .eq('id', responseId);
-      if (r1) throw r1;
-      const { error: r2 } = await supabase
-        .from('quote_requests')
-        .update({ status: 'closed' })
-        .eq('id', requestId);
-      if (r2) throw r2;
+    mutationFn: async ({ responseId }: { responseId: string; requestId?: string }) => {
+      const { data, error } = await supabase.rpc('award_direct_quote_response', {
+        p_response_id: responseId,
+      });
+      if (error) throw error;
+      return data as { ok: boolean; purchases_created: number; obra_id: string | null };
     },
-    onSuccess: () => {
-      toast({ title: 'Proposta adjudicada' });
+    onSuccess: (data) => {
+      const created = data?.purchases_created || 0;
+      toast({
+        title: 'Proposta adjudicada',
+        description:
+          created > 0
+            ? `${created} compra(s) criada(s) na obra para o Forecast/EAC.`
+            : data?.obra_id
+              ? 'Adjudicação concluída.'
+              : 'Adjudicação concluída. Associe um pedido a uma obra para alimentar o Forecast automaticamente.',
+      });
       qc.invalidateQueries({ queryKey: ['fornecedor_quote_requests'] });
+      qc.invalidateQueries({ queryKey: ['obra_purchases'] });
     },
     onError: (e: any) => {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
