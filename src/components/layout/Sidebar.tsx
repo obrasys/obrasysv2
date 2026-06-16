@@ -104,8 +104,7 @@ export function Sidebar() {
         >
           ObraSys - Versão {APP_VERSION}
         </button>
-      </div>
-      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
+        <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       </div>
 
       {/* Navigation */}
