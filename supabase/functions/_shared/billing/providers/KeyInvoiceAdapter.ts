@@ -1,6 +1,9 @@
-// KeyInvoice adapter — implementação REST contra a API pública KeyInvoice.
-// Autenticação: Bearer api_key (guardado em Vault em credentials.api_key).
-// Base URL pode ser sobreposto via billing_integrations.api_base_url.
+// KeyInvoice adapter — API 5.0 (single endpoint POST).
+// Endpoint default: https://login.keyinvoice.com/API5.php
+// Auth: 2 passos →
+//   1) POST {method:"authenticate"} c/ header `Apikey: <api_key>` → devolve Sid (válido ~1h)
+//   2) Todas as chamadas seguintes c/ header `Sid: <sid>` e body {method:"...", ...params}
+// Resposta: {Status:1, Data:{...}} ou {Status:0, ErrorMessage:"..."}
 
 import {
   BillingProvider, ProviderContext, TestConnectionResult,
@@ -8,105 +11,112 @@ import {
   ProviderNotConfiguredError,
 } from "./BillingProvider.ts";
 
-const DEFAULT_BASE = "https://api.keyinvoice.pt/v1";
+const DEFAULT_BASE = "https://login.keyinvoice.com/API5.php";
 
 interface KeyInvoiceCreds {
   api_key?: string;
+  default_product_id?: string; // IdProduct genérico para linhas (KeyInvoice obriga)
+  doc_type_map?: Partial<Record<DocumentDraft["documentType"], string | number>>;
+  doc_series?: string | number;
 }
 
-const DOC_TYPE_MAP: Record<DocumentDraft["documentType"], string> = {
-  invoice: "FT",
-  simplified_invoice: "FS",
-  credit_note: "NC",
-  debit_note: "ND",
-  receipt: "RC",
-  proforma: "PF",
+// Mapa default — KeyInvoice usa códigos numéricos por DocType (configurável por user via doc_type_map).
+const DEFAULT_DOC_TYPE_MAP: Record<DocumentDraft["documentType"], string> = {
+  invoice: "1",
+  simplified_invoice: "2",
+  credit_note: "3",
+  debit_note: "4",
+  receipt: "5",
+  proforma: "6",
 };
 
-function authHeader(ctx: ProviderContext): string {
-  const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
-  if (!creds.api_key) throw new ProviderNotConfiguredError("keyinvoice");
-  return `Bearer ${creds.api_key}`;
-}
+// Cache Sid em memória do worker (TTL 50min para segurança).
+const sidCache = new Map<string, { sid: string; exp: number }>();
+const SID_TTL_MS = 50 * 60 * 1000;
 
 function baseUrl(ctx: ProviderContext): string {
-  return (ctx.apiBaseUrl || DEFAULT_BASE).replace(/\/+$/, "");
+  return (ctx.apiBaseUrl || DEFAULT_BASE).trim();
 }
 
-async function kiFetch(
-  ctx: ProviderContext,
-  path: string,
-  init: RequestInit & { idempotencyKey?: string } = {},
-): Promise<any> {
-  const headers: Record<string, string> = {
-    "Authorization": authHeader(ctx),
-    "Accept": "application/json",
-    ...(init.body ? { "Content-Type": "application/json" } : {}),
-    ...((init.headers as Record<string, string>) ?? {}),
-  };
-  if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
+function getApiKey(ctx: ProviderContext): string {
+  const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
+  if (!creds.api_key) throw new ProviderNotConfiguredError("keyinvoice");
+  return creds.api_key;
+}
 
-  const r = await fetch(`${baseUrl(ctx)}${path}`, { ...init, headers });
+async function rawCall(
+  url: string,
+  headers: Record<string, string>,
+  payload: Record<string, unknown>,
+): Promise<any> {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(payload),
+  });
   const text = await r.text();
   let body: any = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
   if (!r.ok) {
-    const msg = (body && (body.message || body.error || body.error_description))
-      || `KeyInvoice HTTP ${r.status}`;
-    const err = new Error(`KEYINVOICE_${r.status}: ${msg}`);
+    const err = new Error(`KEYINVOICE_HTTP_${r.status}: ${typeof body === "string" ? body : JSON.stringify(body)}`);
     (err as any).status = r.status;
-    (err as any).body = body;
     throw err;
   }
-  return body;
+  if (!body || typeof body !== "object") {
+    throw new Error(`KEYINVOICE: resposta inválida (${typeof body})`);
+  }
+  if (body.Status === 0 || body.Status === "0") {
+    throw new Error(`KEYINVOICE: ${body.ErrorMessage || "Erro desconhecido"}`);
+  }
+  return body.Data ?? {};
 }
 
-function buildCustomerPayload(c: CustomerInput): Record<string, unknown> {
-  return {
-    name: c.name,
-    tax_id: c.nif ?? undefined,
-    email: c.email ?? undefined,
-    phone: c.phone ?? undefined,
-    address: c.address ?? undefined,
-    postal_code: c.postalCode ?? undefined,
-    city: c.city ?? undefined,
-    country: c.country ?? "PT",
-    external_id: c.internalId,
-  };
+async function authenticate(ctx: ProviderContext): Promise<string> {
+  const apiKey = getApiKey(ctx);
+  const cached = sidCache.get(apiKey);
+  if (cached && cached.exp > Date.now()) return cached.sid;
+
+  const data = await rawCall(baseUrl(ctx), { Apikey: apiKey }, { method: "authenticate" });
+  const sid = data?.Sid ?? data?.sid;
+  if (!sid) throw new Error("KEYINVOICE: authenticate não devolveu Sid");
+  sidCache.set(apiKey, { sid: String(sid), exp: Date.now() + SID_TTL_MS });
+  return String(sid);
 }
 
-function buildDocumentPayload(draft: DocumentDraft): Record<string, unknown> {
-  return {
-    document_type: DOC_TYPE_MAP[draft.documentType] ?? "FT",
-    currency: draft.currency || "EUR",
-    customer_id: draft.customer.externalCustomerId,
-    notes: draft.notes ?? undefined,
-    credited_document_id: draft.creditedExternalDocumentId ?? undefined,
-    lines: draft.lines.map((l) => ({
-      code: l.code ?? undefined,
-      description: l.description,
-      unit: l.unit ?? "un",
-      quantity: l.quantity,
-      unit_price: l.unitPrice,
-      discount_pct: l.discountPct ?? 0,
-      tax_rate: l.taxRate,
-      tax_exemption_code: l.taxExemptionCode ?? undefined,
-      retention_rate: l.retentionRate ?? 0,
-    })),
-  };
+async function kiCall(ctx: ProviderContext, payload: Record<string, unknown>): Promise<any> {
+  let sid = await authenticate(ctx);
+  try {
+    return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+  } catch (e) {
+    // Se Sid expirou, força refresh e tenta 1x.
+    const msg = String((e as Error).message || "");
+    if (/sess|sid|auth/i.test(msg)) {
+      sidCache.delete(getApiKey(ctx));
+      sid = await authenticate(ctx);
+      return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+    }
+    throw e;
+  }
 }
 
-function mapIssue(body: any): IssueResult {
-  const d = body?.document ?? body ?? {};
-  return {
-    externalDocumentId: String(d.id ?? d.document_id ?? d.uuid ?? ""),
-    externalNumber: d.number ?? d.document_number ?? null,
-    externalSeries: d.series ?? null,
-    externalStatus: d.status ?? "issued",
-    externalIssuedAt: d.issued_at ?? d.date ?? new Date().toISOString(),
-    externalPdfUrl: d.pdf_url ?? null,
-    raw: d,
+function buildClientPayload(c: CustomerInput): Record<string, unknown> {
+  const p: Record<string, unknown> = {
+    Name: c.name,
+    Address: c.address ?? undefined,
+    PostalCode: c.postalCode ?? undefined,
+    Locality: c.city ?? undefined,
+    Phone: c.phone ?? undefined,
+    Email: c.email ?? undefined,
   };
+  if (c.nif) p.VATIN = c.nif;
+  return p;
+}
+
+function resolveDocType(ctx: ProviderContext, t: DocumentDraft["documentType"]): string {
+  const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
+  const fromCreds = creds.doc_type_map?.[t];
+  if (fromCreds !== undefined && fromCreds !== null) return String(fromCreds);
+  return DEFAULT_DOC_TYPE_MAP[t];
 }
 
 export class KeyInvoiceAdapter implements BillingProvider {
@@ -116,69 +126,117 @@ export class KeyInvoiceAdapter implements BillingProvider {
     const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
     if (!creds.api_key) return { status: "not_configured", message: "API Key não configurada." };
     try {
-      await kiFetch(ctx, "/account", { method: "GET" });
-      return { status: "ok", message: "Ligação KeyInvoice verificada." };
+      await authenticate(ctx);
+      return { status: "ok", message: "Ligação KeyInvoice verificada (Sid obtido)." };
     } catch (e) {
       return { status: "error", message: (e as Error).message };
     }
   }
 
   async upsertCustomer(ctx: ProviderContext, c: CustomerInput): Promise<ExternalCustomer> {
-    const payload = buildCustomerPayload(c);
-    // Tenta procurar por external_id (idempotência). Se não existir, cria.
-    try {
-      const found = await kiFetch(ctx, `/customers?external_id=${encodeURIComponent(c.internalId)}`, { method: "GET" });
-      const existing = Array.isArray(found?.data) ? found.data[0] : (Array.isArray(found) ? found[0] : null);
-      if (existing?.id) {
-        const updated = await kiFetch(ctx, `/customers/${existing.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
-        const row = updated?.customer ?? updated ?? existing;
-        return { externalCustomerId: String(row.id ?? existing.id), raw: row };
+    const payload = buildClientPayload(c);
+
+    // 1) Se temos NIF, tenta getClient por VATIN.
+    if (c.nif) {
+      try {
+        const found = await kiCall(ctx, { method: "getClient", VATIN: c.nif });
+        const id = found?.IdClient;
+        if (id) {
+          await kiCall(ctx, { method: "updateClient", IdClient: id, ...payload });
+          return { externalCustomerId: String(id), raw: found };
+        }
+      } catch (_e) {
+        // não encontrado → segue p/ insert
       }
-    } catch (e) {
-      // 404 na busca é aceitável — segue para create.
-      if ((e as any).status && (e as any).status !== 404) throw e;
     }
-    const created = await kiFetch(ctx, "/customers", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const row = created?.customer ?? created;
-    if (!row?.id) throw new Error("KEYINVOICE: resposta inválida ao criar cliente");
-    return { externalCustomerId: String(row.id), raw: row };
+
+    // 2) Insert (KeyInvoice exige VATIN OU permite consumidor final sem ele em insertDocument,
+    //    mas insertClient normalmente requer VATIN. Se não houver, devolvemos um marcador sintético
+    //    que será resolvido em issueDocument via dados inline).
+    if (!c.nif) {
+      return { externalCustomerId: `inline:${c.internalId}`, raw: { inline: true } };
+    }
+
+    const created = await kiCall(ctx, { method: "insertClient", ...payload });
+    const id = created?.IdClient ?? created?.Id;
+    if (!id) throw new Error("KEYINVOICE: insertClient não devolveu IdClient");
+    return { externalCustomerId: String(id), raw: created };
   }
 
   async issueDocument(ctx: ProviderContext, draft: DocumentDraft): Promise<IssueResult> {
-    const payload = buildDocumentPayload(draft);
-    const body = await kiFetch(ctx, "/documents", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      idempotencyKey: draft.idempotencyKey,
-    });
-    return mapIssue(body);
-  }
+    const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
+    const defaultProductId = creds.default_product_id ?? "1";
 
-  async syncDocumentStatus(ctx: ProviderContext, externalDocumentId: string): Promise<SyncResult> {
-    const body = await kiFetch(ctx, `/documents/${encodeURIComponent(externalDocumentId)}`, { method: "GET" });
-    const d = body?.document ?? body ?? {};
+    const docPayload: Record<string, unknown> = {
+      method: "insertDocument",
+      DocType: resolveDocType(ctx, draft.documentType),
+    };
+    if (creds.doc_series !== undefined && creds.doc_series !== null) {
+      docPayload.DocSeries = creds.doc_series;
+    }
+
+    // Cliente: externalCustomerId pode ser "inline:..." → omite IdClient (consumidor final).
+    const extId = draft.customer.externalCustomerId;
+    if (extId && !extId.startsWith("inline:")) {
+      docPayload.IdClient = extId;
+    }
+
+    docPayload.DocDate = new Date().toISOString().slice(0, 10);
+    if (draft.notes) docPayload.Comments = draft.notes;
+
+    docPayload.DocLines = draft.lines.map((l) => ({
+      IdProduct: l.code || defaultProductId,
+      ProductName: l.description,
+      Qty: l.quantity,
+      Price: l.unitPrice,
+      IdTax: l.taxRate, // KeyInvoice usa IdTax (id da taxa); user pode mapear via taxRate
+      Discount: l.discountPct ?? 0,
+    }));
+
+    const data = await kiCall(ctx, docPayload);
     return {
-      externalStatus: d.status ?? "unknown",
-      externalPdfUrl: d.pdf_url ?? null,
-      raw: d,
+      externalDocumentId: String(data?.FullDocNumber ?? data?.DocNum ?? ""),
+      externalNumber: data?.FullDocNumber ?? data?.DocNum ?? null,
+      externalSeries: data?.DocSeries ?? null,
+      externalStatus: "issued",
+      externalIssuedAt: new Date().toISOString(),
+      externalPdfUrl: null,
+      raw: data,
     };
   }
 
+  async syncDocumentStatus(_ctx: ProviderContext, externalDocumentId: string): Promise<SyncResult> {
+    // KeyInvoice API 5.0 não expõe getDocument status; documento emitido = "issued".
+    return { externalStatus: "issued", externalPdfUrl: null, raw: { externalDocumentId } };
+  }
+
   async getDocumentPdfUrl(ctx: ProviderContext, externalDocumentId: string): Promise<string | null> {
-    try {
-      const body = await kiFetch(ctx, `/documents/${encodeURIComponent(externalDocumentId)}/pdf`, { method: "GET" });
-      return body?.url ?? body?.pdf_url ?? null;
-    } catch {
-      const body = await kiFetch(ctx, `/documents/${encodeURIComponent(externalDocumentId)}`, { method: "GET" });
-      const d = body?.document ?? body ?? {};
-      return d.pdf_url ?? null;
+    // externalDocumentId guardamos como FullDocNumber tipo "FT A/2024/1" → precisamos DocType + DocNum.
+    // Estratégia: aceitamos formato "DocType:DocNum" ou tentamos parse de FullDocNumber.
+    let docType: string | undefined;
+    let docNum: string | undefined;
+    let docSeries: string | undefined;
+
+    if (externalDocumentId.includes(":")) {
+      [docType, docNum, docSeries] = externalDocumentId.split(":");
+    } else {
+      // FullDocNumber: "<TYPE> <SERIES>/<YEAR>/<NUM>" — tenta extrair último número
+      const m = externalDocumentId.match(/^(\S+)\s+(\S+?)\/(\d+)\/(\d+)$/);
+      if (m) { docType = m[1]; docSeries = m[2]; docNum = m[4]; }
+      else { docNum = externalDocumentId; }
     }
+    if (!docType || !docNum) return null;
+
+    const data = await kiCall(ctx, {
+      method: "getDocumentPDF",
+      DocType: docType,
+      DocNum: docNum,
+      ...(docSeries ? { DocSeries: docSeries } : {}),
+      Format: "A4",
+    });
+    const b64 = data?.DocumentBinary;
+    if (!b64) return null;
+    return `data:application/pdf;base64,${b64}`;
   }
 
   async createCreditNote(ctx: ProviderContext, draft: DocumentDraft): Promise<IssueResult> {
