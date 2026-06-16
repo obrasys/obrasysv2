@@ -57,11 +57,26 @@ export async function requirePermission(ctx: BillingContext, perm: BillingPermis
     .eq("user_id", ctx.userId)
     .eq("organization_id", ctx.organizationId)
     .eq("member_status", "active");
+  console.log("[billing.requirePermission]", { userId: ctx.userId, orgId: ctx.organizationId, perm, memberships, memErr });
   if (memErr) throw new BillingError("PERMISSION_CHECK_FAILED", memErr.message, 500);
+
+  // Org admins/owners always pass.
+  if (memberships?.some((m) => {
+    const r = String(m.role ?? "").toLowerCase();
+    return r === "admin" || r === "owner";
+  })) return;
+
+  // Fallback: super admins always pass.
+  const { data: superAdmin } = await ctx.admin
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+  if (superAdmin) return;
+
   if (!memberships || memberships.length === 0) {
-    throw new BillingError("FORBIDDEN", `Missing billing.${perm} permission`, 403);
+    throw new BillingError("FORBIDDEN", `Missing billing.${perm} permission (no membership)`, 403);
   }
-  if (memberships.some((m) => m.role === "admin" || m.role === "owner")) return;
 
   const memberIds = memberships.map((m) => m.id);
   const { data: perms, error: pErr } = await ctx.admin
