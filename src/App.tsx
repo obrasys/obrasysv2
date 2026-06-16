@@ -12,6 +12,7 @@ import { ClientRoute } from "./components/portal/ClientRoute";
 import { ManagerRoute } from "./components/portal/ManagerRoute";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import CookieConsent from "./components/CookieConsent";
 
 
 // Landing + Auth (keep eager for initial load)
@@ -308,7 +309,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
-              
+              <CookieConsent />
             </BrowserRouter>
           </AuthProvider>
         </PreferencesProvider>
