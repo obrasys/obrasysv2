@@ -12,6 +12,7 @@ import { ClientRoute } from "./components/portal/ClientRoute";
 import { ManagerRoute } from "./components/portal/ManagerRoute";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import CookieConsent from "./components/CookieConsent";
 
 
 // Landing + Auth (keep eager for initial load)
