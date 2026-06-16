@@ -15,6 +15,7 @@ import {
   Phone,
   MapPin,
   FileText,
+  Upload,
 } from 'lucide-react';
 import type { Fornecedor } from '@/types/financeiro';
 
@@ -22,9 +23,10 @@ interface FornecedorCardProps {
   fornecedor: Fornecedor;
   onEdit: (fornecedor: Fornecedor) => void;
   onDelete: (id: string) => void;
+  onImportPricebook?: (fornecedor: Fornecedor) => void;
 }
 
-export function FornecedorCard({ fornecedor, onEdit, onDelete }: FornecedorCardProps) {
+export function FornecedorCard({ fornecedor, onEdit, onDelete, onImportPricebook }: FornecedorCardProps) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardContent className="p-4">
@@ -86,6 +88,12 @@ export function FornecedorCard({ fornecedor, onEdit, onDelete }: FornecedorCardP
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
+              {onImportPricebook && (
+                <DropdownMenuItem onClick={() => onImportPricebook(fornecedor)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Importar tabela de preços
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem 
                 onClick={() => onDelete(fornecedor.id)}
                 className="text-destructive focus:text-destructive"

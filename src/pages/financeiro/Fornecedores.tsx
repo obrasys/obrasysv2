@@ -27,6 +27,7 @@ import { FornecedorForm } from '@/components/financeiro/FornecedorForm';
 import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
 import { InviteSupplierModal } from '@/components/fornecedor/InviteSupplierModal';
 import { TenantInvitesDialog } from '@/components/fornecedor/TenantInvitesDialog';
+import { ImportPricebookModal } from '@/components/fornecedor/ImportPricebookModal';
 import { useTenantSupplierInvites } from '@/hooks/useTenantSupplierInvites';
 import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
@@ -41,6 +42,7 @@ const FornecedoresPage = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [invitesListOpen, setInvitesListOpen] = useState(false);
+  const [pricebookFornecedor, setPricebookFornecedor] = useState<Fornecedor | null>(null);
   const { data: invites } = useTenantSupplierInvites();
   const pendingInvites = invites?.filter((i) => i.status === 'pending').length || 0;
 
@@ -286,6 +288,7 @@ const FornecedoresPage = () => {
                 fornecedor={fornecedor}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onImportPricebook={setPricebookFornecedor}
               />
             ))}
           </div>
@@ -330,6 +333,13 @@ const FornecedoresPage = () => {
 
         {/* Invites List Dialog */}
         <TenantInvitesDialog open={invitesListOpen} onOpenChange={setInvitesListOpen} />
+
+        {/* Pricebook Import Modal */}
+        <ImportPricebookModal
+          open={!!pricebookFornecedor}
+          onOpenChange={(v) => !v && setPricebookFornecedor(null)}
+          fornecedor={pricebookFornecedor}
+        />
       </div>
     </AppLayout>
   );
