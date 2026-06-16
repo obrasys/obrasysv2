@@ -8,7 +8,7 @@ import {
   CheckCircle, Upload, BookOpen, Flag, Wallet, TrendingUp, TrendingDown,
   CircleDollarSign, GitBranch, Activity, Target, DollarSign, BarChart3,
   HardHat, Clock, Percent, ArrowUpRight, ArrowDownRight, Link as LinkIcon,
-  AlertTriangle,
+  AlertTriangle, Receipt,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -508,6 +508,7 @@ export default function VerObraPage() {
               <TabsTrigger value="financeiro-previsto" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><DollarSign className="h-3.5 w-3.5" /><span className="hidden sm:inline">Financeiro</span></TabsTrigger>
               <TabsTrigger value="dossier" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><BookOpen className="h-3.5 w-3.5" /><span className="hidden sm:inline">Dossier</span></TabsTrigger>
               <TabsTrigger value="mce" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">MCE</span></TabsTrigger>
+              <TabsTrigger value="faturacao" className="text-xs gap-1.5 rounded-lg px-3 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-primary/10 transition-all"><Receipt className="h-3.5 w-3.5" /><span className="hidden sm:inline">Faturação</span></TabsTrigger>
             </TabsList>
 
           </div>
@@ -853,6 +854,10 @@ export default function VerObraPage() {
                 <FileText className="h-4 w-4 mr-2" /> Abrir Mapas Comparativos Económicos (MCE)
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="faturacao" className="mt-4 space-y-4">
+            <ObraFaturacaoTab obraId={id!} />
           </TabsContent>
         </Tabs>
 
