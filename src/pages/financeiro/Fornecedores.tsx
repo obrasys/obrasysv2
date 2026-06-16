@@ -28,6 +28,7 @@ import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedo
 import { InviteSupplierModal } from '@/components/fornecedor/InviteSupplierModal';
 import { TenantInvitesDialog } from '@/components/fornecedor/TenantInvitesDialog';
 import { ImportPricebookModal } from '@/components/fornecedor/ImportPricebookModal';
+import { DirectQuoteRequestModal } from '@/components/fornecedor/DirectQuoteRequestModal';
 import { useTenantSupplierInvites } from '@/hooks/useTenantSupplierInvites';
 import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
