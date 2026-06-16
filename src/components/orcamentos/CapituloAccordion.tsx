@@ -45,6 +45,7 @@ interface CapituloAccordionProps {
   onEditArtigo: (artigoId: string) => void;
   onDeleteArtigo: (artigoId: string) => void;
   onOpenCatalog: (capituloId: string) => void;
+  onOpenPricebook?: (capituloId: string) => void;
   onUpdateCommercial?: (capituloId: string, data: {
     client_summary_title?: string;
     client_summary_text?: string;
