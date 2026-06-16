@@ -195,10 +195,18 @@ export function useAutosMedicao(obraId?: string) {
   const updateEstadoMutation = useMutation({
     mutationFn: async ({ id, estado }: { id: string; estado: string }) => {
       const updates: Record<string, unknown> = { estado };
-      
+
       if (estado === 'validado') {
         updates.validado_em = new Date().toISOString();
-        updates.validado_por = user?.id;
+        // validado_por references profiles.id (not auth.uid). Resolve it.
+        if (user?.id) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (prof?.id) updates.validado_por = prof.id;
+        }
       }
 
       const { error } = await supabase
