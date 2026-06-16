@@ -46,12 +46,18 @@ interface ResponseItem {
 }
 
 export default function FornecedorPedidoDetalhe() {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const isDirect = rawId.startsWith('direct-');
+  const directQrId = isDirect ? rawId.slice('direct-'.length) : '';
+
   const { data: assignments = [] } = useSupplierQuoteRequests();
   const markViewed = useMarkQuoteViewed();
   const declineQuote = useDeclineQuote();
   const createResponse = useCreateQuoteResponse();
+  const createDirectResponse = useCreateDirectQuoteResponse();
+  const declineDirect = useDeclineDirectQuote();
   const { data: pricebooks = [] } = useSupplierPricebooks();
   const { data: profile } = useSupplierProfile();
   const [selectedPricebook, setSelectedPricebook] = useState<string>('');
@@ -63,7 +69,46 @@ export default function FornecedorPedidoDetalhe() {
 
   const { data: pricebookItems = [] } = usePricebookItems(selectedPricebook || undefined);
 
-  const assignment: any = assignments.find((a: any) => a.id === id);
+  // Direct quote: fetch the quote_request by id, then synthesize an assignment-shape.
+  const { data: directQr } = useQuery({
+    queryKey: ['supplier-direct-quote', directQrId, profile?.id],
+    queryFn: async () => {
+      if (!directQrId) return null;
+      const { data, error } = await supabase
+        .from('quote_requests')
+        .select(`
+          id, status, requested_deadline, message_to_suppliers, terms,
+          delivery_location, location_district, location_municipality,
+          fornecedor_id, organization_id, created_at,
+          organizations:organization_id(name),
+          quote_request_items(id, descricao, unidade, quantidade, codigo, capitulo),
+          quote_responses(id, status, supplier_id)
+        `)
+        .eq('id', directQrId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isDirect && !!directQrId,
+  });
+
+  const assignment: any = useMemo(() => {
+    if (isDirect) {
+      if (!directQr) return null;
+      const alreadyResponded = (directQr.quote_responses || []).some(
+        (r: any) => r.supplier_id === profile?.id
+      );
+      return {
+        id: `direct-${directQr.id}`,
+        status: alreadyResponded ? 'responded' : 'invited',
+        quote_requests: {
+          ...directQr,
+          quote_request_categories: [],
+        },
+      };
+    }
+    return assignments.find((a: any) => a.id === rawId);
+  }, [isDirect, directQr, assignments, rawId, profile?.id]);
 
   // Extract category IDs from the quote request
   const categoryIds = assignment?.quote_requests?.quote_request_categories
