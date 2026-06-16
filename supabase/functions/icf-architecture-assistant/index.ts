@@ -144,16 +144,21 @@ Deno.serve(async (req) => {
       .from("icf_assistant_sessions")
       .select("*")
       .eq("id", body.session_id)
-      .single();
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
     if (sessErr || !sess) return json({ error: "Sessão não encontrada" }, 404);
+
+    // SECURITY: derive file_path from validated session record, never trust caller input
+    const filePath: string = sess.file_path;
+    if (!filePath) return json({ error: "Sessão sem ficheiro associado" }, 400);
 
     // Download plant file and convert to data URL (Gemini requires data URL for PDFs)
     const { data: fileBlob, error: dlErr } = await admin.storage
       .from("plan-files")
-      .download(body.file_path);
+      .download(filePath);
     if (dlErr || !fileBlob) return json({ error: "Não foi possível ler a planta" }, 500);
 
-    const lowerPath = body.file_path.toLowerCase();
+    const lowerPath = filePath.toLowerCase();
     let mimeType = fileBlob.type || "";
     if (!mimeType || mimeType === "application/octet-stream") {
       if (lowerPath.endsWith(".png")) mimeType = "image/png";
