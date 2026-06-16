@@ -16133,6 +16133,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_supplier_invite: { Args: { _token: string }; Returns: Json }
       admin_get_all_supplier_profiles: {
         Args: never
         Returns: {
@@ -16246,6 +16247,10 @@ export type Database = {
         Returns: undefined
       }
       can_access_rdo_photo: { Args: { _path: string }; Returns: boolean }
+      cancel_supplier_invite: {
+        Args: { _invite_id: string }
+        Returns: undefined
+      }
       classify_task_delay: { Args: { p_task_id: string }; Returns: string }
       cleanup_expired_mfa_data: { Args: never; Returns: undefined }
       confirm_award: {
@@ -16374,6 +16379,7 @@ export type Database = {
         }
         Returns: number
       }
+      expire_old_supplier_invites: { Args: never; Returns: number }
       generate_final_closing_sheet: {
         Args: { _notes?: string; _orcamento_id: string }
         Returns: string
@@ -16562,6 +16568,20 @@ export type Database = {
             }
             Returns: string
           }
+      lookup_supplier_invite: {
+        Args: { _token: string }
+        Returns: {
+          categoria: string
+          email: string
+          expires_at: string
+          id: string
+          mensagem: string
+          nome_fornecedor: string
+          organization_id: string
+          organization_name: string
+          status: string
+        }[]
+      }
       next_obra_cost_center_code: { Args: { _org_id: string }; Returns: string }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       propagate_dependency_impact: {
