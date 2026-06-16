@@ -162,6 +162,31 @@ export function BillingIntegrationSettings() {
             </div>
           </div>
 
+          {environment === "sandbox" ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Modo Sandbox ativo</AlertTitle>
+              <AlertDescription className="text-sm">
+                Esta integração está em ambiente de testes. Os documentos enviados para o provider são apenas para validação técnica e não devem ser tratados como documentos fiscais reais.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Atenção: Modo Produção</AlertTitle>
+              <AlertDescription className="text-sm">
+                Este ambiente pode emitir documentos fiscais reais no provider externo configurado. Antes de ativar produção, confirme que:
+                <ul className="list-disc pl-5 mt-2 space-y-0.5">
+                  <li>as credenciais são reais;</li>
+                  <li>o provider está correto;</li>
+                  <li>a empresa/NIF está correto;</li>
+                  <li>os testes em sandbox foram concluídos;</li>
+                  <li>apenas utilizadores autorizados têm permissão para emitir documentos.</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {fields.length > 0 && (
             <div className="border-t pt-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-medium">
@@ -186,12 +211,27 @@ export function BillingIntegrationSettings() {
             </div>
           )}
 
+          {isProduction && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+              <Checkbox
+                id="prod-confirm"
+                checked={prodConfirmed}
+                onCheckedChange={(c) => setProdConfirmed(c === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="prod-confirm" className="text-sm font-normal leading-relaxed cursor-pointer">
+                Confirmo que compreendo que o ambiente de Produção pode emitir documentos fiscais reais no provider externo.
+              </Label>
+            </div>
+          )}
+
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={save.isPending}>
+            <Button onClick={handleSave} disabled={!canSave}>
               {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Guardar integração
             </Button>
           </div>
+
         </CardContent>
       </Card>
 
