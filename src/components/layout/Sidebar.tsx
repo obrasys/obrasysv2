@@ -19,10 +19,17 @@ export function Sidebar() {
   const showPortalLink = hasClientAccess && profile?.role !== 'cliente';
   const [changelogOpen, setChangelogOpen] = useState(false);
 
+  // Longest-prefix-wins: an item is active only if no other registered href
+  // is a more specific match for the current pathname. Prevents e.g. /financeiro
+  // from highlighting when the user is at /financeiro/fornecedores.
+  const allHrefs = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
   const isActive = (href: string) => {
-    if (href === '/dashboard') return location.pathname === '/dashboard';
-    if (href === '/admin') return location.pathname === '/admin';
-    return location.pathname.startsWith(href);
+    const path = location.pathname;
+    if (path !== href && !path.startsWith(href + '/')) return false;
+    // Check that no longer matching href exists
+    return !allHrefs.some(
+      (h) => h !== href && h.startsWith(href + '/') && (path === h || path.startsWith(h + '/'))
+    );
   };
 
   const getActiveGroups = useCallback(() => {
