@@ -76,7 +76,13 @@ async function authenticate(ctx: ProviderContext): Promise<string> {
   const cached = sidCache.get(apiKey);
   if (cached && cached.exp > Date.now()) return cached.sid;
 
-  const data = await rawCall(baseUrl(ctx), { Apikey: apiKey }, { method: "authenticate" });
+  // KeyInvoice aceita a ApiKey tanto via header como no corpo — enviamos ambos
+  // para evitar "Configuração da chave API incompleta" quando o servidor lê de um sítio específico.
+  const data = await rawCall(
+    baseUrl(ctx),
+    { Apikey: apiKey, ApiKey: apiKey },
+    { method: "authenticate", ApiKey: apiKey, Apikey: apiKey, apikey: apiKey },
+  );
   const sid = data?.Sid ?? data?.sid;
   if (!sid) throw new Error("KEYINVOICE: authenticate não devolveu Sid");
   sidCache.set(apiKey, { sid: String(sid), exp: Date.now() + SID_TTL_MS });
