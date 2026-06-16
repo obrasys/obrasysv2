@@ -27,6 +27,9 @@ import {
   ArrowRightLeft,
   Network,
   UserCog,
+  Truck,
+  Send,
+
 } from "lucide-react";
 
 export type NavItem = {
