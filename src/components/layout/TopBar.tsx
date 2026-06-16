@@ -250,10 +250,13 @@ function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
 
+  const allHrefs = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
   const isActive = (href: string) => {
-    if (href === '/dashboard') return location.pathname === '/dashboard';
-    if (href === '/admin') return location.pathname === '/admin';
-    return location.pathname.startsWith(href);
+    const path = location.pathname;
+    if (path !== href && !path.startsWith(href + '/')) return false;
+    return !allHrefs.some(
+      (h) => h !== href && h.startsWith(href + '/') && (path === h || path.startsWith(h + '/'))
+    );
   };
 
   const getActiveGroups = useCallback(() => {

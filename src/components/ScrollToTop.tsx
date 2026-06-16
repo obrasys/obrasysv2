@@ -1,0 +1,19 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
+/**
+ * Scrolls to the top of the page on every route change.
+ * Prevents the "flash" effect where users see the bottom of the previous page
+ * when navigating to a new route.
+ */
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, [pathname]);
+
+  return null;
+};
+
+export default ScrollToTop;

@@ -11,6 +11,7 @@ import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import { ClientRoute } from "./components/portal/ClientRoute";
 import { ManagerRoute } from "./components/portal/ManagerRoute";
 import { SupplierRoute } from "./components/fornecedor/SupplierRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 
 // Landing + Auth (keep eager for initial load)
@@ -190,6 +191,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ScrollToTop />
               <Suspense fallback={<DelayedPageLoader />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
