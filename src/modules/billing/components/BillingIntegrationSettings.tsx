@@ -215,7 +215,7 @@ export function BillingIntegrationSettings() {
                       <Badge
                         variant="outline"
                         className={
-                          it.status === "connected"
+                          it.status === "active" || it.status === "configured"
                             ? "bg-emerald-50 text-emerald-700"
                             : it.status === "error"
                               ? "bg-red-50 text-red-700"

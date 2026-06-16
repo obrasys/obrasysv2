@@ -26,7 +26,9 @@ export const PROVIDER_LABELS: Record<BillingProvider, string> = {
 
 export const INTERNAL_STATUS_LABELS: Record<BillingInternalStatus, string> = {
   draft: "Rascunho",
-  prepared: "Preparado",
+  ready: "Pronto",
+  queued: "Em fila",
+  issuing: "A emitir",
   issued: "Emitido",
   paid: "Pago",
   partially_paid: "Parcialmente Pago",
@@ -37,7 +39,9 @@ export const INTERNAL_STATUS_LABELS: Record<BillingInternalStatus, string> = {
 
 export const DOCUMENT_TYPE_LABELS: Record<BillingDocumentType, string> = {
   invoice: "Fatura",
+  simplified_invoice: "Fatura Simplificada",
   credit_note: "Nota de Crédito",
+  debit_note: "Nota de Débito",
   receipt: "Recibo",
   proforma: "Proforma",
 };

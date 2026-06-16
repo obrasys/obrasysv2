@@ -3,7 +3,9 @@ import { INTERNAL_STATUS_LABELS, type BillingInternalStatus } from "../types";
 
 const VARIANT: Record<BillingInternalStatus, string> = {
   draft: "bg-muted text-muted-foreground",
-  prepared: "bg-blue-100 text-blue-800 border-blue-200",
+  ready: "bg-blue-100 text-blue-800 border-blue-200",
+  queued: "bg-blue-100 text-blue-800 border-blue-200",
+  issuing: "bg-amber-100 text-amber-800 border-amber-200",
   issued: "bg-emerald-100 text-emerald-800 border-emerald-200",
   paid: "bg-emerald-600 text-white",
   partially_paid: "bg-amber-100 text-amber-800 border-amber-200",
