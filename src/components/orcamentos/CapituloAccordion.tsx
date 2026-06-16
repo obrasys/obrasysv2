@@ -252,6 +252,12 @@ export function CapituloAccordion({
                     <Search className="mr-2 h-4 w-4" />
                     Catálogo
                   </Button>
+                  {onOpenPricebook && (
+                    <Button variant="outline" size="sm" onClick={() => onOpenPricebook(capitulo.id)}>
+                      <Search className="mr-2 h-4 w-4" />
+                      Fornecedor
+                    </Button>
+                  )}
                   <Button size="sm" onClick={onAddArtigo}>
                     <Plus className="mr-2 h-4 w-4" />
                     Artigo
