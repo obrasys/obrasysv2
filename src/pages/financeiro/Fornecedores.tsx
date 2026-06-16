@@ -44,6 +44,7 @@ const FornecedoresPage = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [invitesListOpen, setInvitesListOpen] = useState(false);
   const [pricebookFornecedor, setPricebookFornecedor] = useState<Fornecedor | null>(null);
+  const [quoteFornecedor, setQuoteFornecedor] = useState<Fornecedor | null>(null);
   const { data: invites } = useTenantSupplierInvites();
   const pendingInvites = invites?.filter((i) => i.status === 'pending').length || 0;
 
