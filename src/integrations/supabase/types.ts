@@ -5974,12 +5974,21 @@ export type Database = {
         Row: {
           area_atuacao: string | null
           ativo: boolean
+          categoria: string | null
+          condicoes_comerciais: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           endereco: string | null
           id: string
           nif: string | null
           nome: string
+          observacoes: string | null
+          organization_id: string | null
+          pessoa_contacto: string | null
+          prazo_medio_entrega_dias: number | null
+          prazo_medio_pagamento_dias: number | null
+          supplier_profile_id: string | null
           telefone: string | null
           updated_at: string
           user_id: string
@@ -5987,12 +5996,21 @@ export type Database = {
         Insert: {
           area_atuacao?: string | null
           ativo?: boolean
+          categoria?: string | null
+          condicoes_comerciais?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
           nif?: string | null
           nome: string
+          observacoes?: string | null
+          organization_id?: string | null
+          pessoa_contacto?: string | null
+          prazo_medio_entrega_dias?: number | null
+          prazo_medio_pagamento_dias?: number | null
+          supplier_profile_id?: string | null
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -6000,17 +6018,41 @@ export type Database = {
         Update: {
           area_atuacao?: string | null
           ativo?: boolean
+          categoria?: string | null
+          condicoes_comerciais?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
           nif?: string | null
           nome?: string
+          observacoes?: string | null
+          organization_id?: string | null
+          pessoa_contacto?: string | null
+          prazo_medio_entrega_dias?: number | null
+          prazo_medio_pagamento_dias?: number | null
+          supplier_profile_id?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedores_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       guarantee_retentions: {
         Row: {
@@ -12451,42 +12493,60 @@ export type Database = {
       }
       quote_requests: {
         Row: {
+          attachments: Json | null
           budget_id: string | null
           builder_user_id: string
           created_at: string
+          delivery_location: string | null
+          fornecedor_id: string | null
           id: string
           location_district: string | null
           location_municipality: string | null
           message_to_suppliers: string | null
+          obra_id: string | null
+          organization_id: string | null
           project_id: string | null
           requested_deadline: string | null
           status: Database["public"]["Enums"]["quote_request_status_enum"]
+          terms: string | null
           updated_at: string
         }
         Insert: {
+          attachments?: Json | null
           budget_id?: string | null
           builder_user_id: string
           created_at?: string
+          delivery_location?: string | null
+          fornecedor_id?: string | null
           id?: string
           location_district?: string | null
           location_municipality?: string | null
           message_to_suppliers?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
           project_id?: string | null
           requested_deadline?: string | null
           status?: Database["public"]["Enums"]["quote_request_status_enum"]
+          terms?: string | null
           updated_at?: string
         }
         Update: {
+          attachments?: Json | null
           budget_id?: string | null
           builder_user_id?: string
           created_at?: string
+          delivery_location?: string | null
+          fornecedor_id?: string | null
           id?: string
           location_district?: string | null
           location_municipality?: string | null
           message_to_suppliers?: string | null
+          obra_id?: string | null
+          organization_id?: string | null
           project_id?: string | null
           requested_deadline?: string | null
           status?: Database["public"]["Enums"]["quote_request_status_enum"]
+          terms?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -12495,6 +12555,27 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -12574,11 +12655,14 @@ export type Database = {
           estimated_delivery_days: number | null
           id: string
           notes: string | null
+          organization_id: string | null
           quote_request_id: string
           status: Database["public"]["Enums"]["quote_response_status_enum"]
           supplier_id: string
+          terms: string | null
           total_amount: number | null
           updated_at: string
+          valid_until: string | null
         }
         Insert: {
           attachment_urls?: string[] | null
@@ -12587,11 +12671,14 @@ export type Database = {
           estimated_delivery_days?: number | null
           id?: string
           notes?: string | null
+          organization_id?: string | null
           quote_request_id: string
           status?: Database["public"]["Enums"]["quote_response_status_enum"]
           supplier_id: string
+          terms?: string | null
           total_amount?: number | null
           updated_at?: string
+          valid_until?: string | null
         }
         Update: {
           attachment_urls?: string[] | null
@@ -12600,13 +12687,23 @@ export type Database = {
           estimated_delivery_days?: number | null
           id?: string
           notes?: string | null
+          organization_id?: string | null
           quote_request_id?: string
           status?: Database["public"]["Enums"]["quote_response_status_enum"]
           supplier_id?: string
+          terms?: string | null
           total_amount?: number | null
           updated_at?: string
+          valid_until?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quote_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quote_responses_quote_request_id_fkey"
             columns: ["quote_request_id"]
@@ -13785,35 +13882,68 @@ export type Database = {
       supplier_invites: {
         Row: {
           accepted_at: string | null
+          cancelled_at: string | null
+          categoria: string | null
           created_at: string
           email: string
           expires_at: string
+          fornecedor_id: string | null
           id: string
           invited_by_admin_user_id: string | null
+          mensagem: string | null
+          nome_fornecedor: string | null
+          organization_id: string | null
           status: string
           token: string
         }
         Insert: {
           accepted_at?: string | null
+          cancelled_at?: string | null
+          categoria?: string | null
           created_at?: string
           email: string
           expires_at?: string
+          fornecedor_id?: string | null
           id?: string
           invited_by_admin_user_id?: string | null
+          mensagem?: string | null
+          nome_fornecedor?: string | null
+          organization_id?: string | null
           status?: string
           token?: string
         }
         Update: {
           accepted_at?: string | null
+          cancelled_at?: string | null
+          categoria?: string | null
           created_at?: string
           email?: string
           expires_at?: string
+          fornecedor_id?: string | null
           id?: string
           invited_by_admin_user_id?: string | null
+          mensagem?: string | null
+          nome_fornecedor?: string | null
+          organization_id?: string | null
           status?: string
           token?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invites_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_pricebook_items: {
         Row: {
@@ -14749,6 +14879,234 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      tenant_supplier_links: {
+        Row: {
+          created_at: string
+          fornecedor_id: string | null
+          id: string
+          invite_id: string | null
+          linked_at: string
+          organization_id: string
+          status: string
+          supplier_profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          invite_id?: string | null
+          linked_at?: string
+          organization_id: string
+          status?: string
+          supplier_profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fornecedor_id?: string | null
+          id?: string
+          invite_id?: string | null
+          linked_at?: string
+          organization_id?: string
+          status?: string
+          supplier_profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_supplier_links_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_links_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_links_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_supplier_pricebook_items: {
+        Row: {
+          categoria: string | null
+          codigo_artigo: string | null
+          created_at: string
+          descricao: string
+          fornecedor_id: string
+          id: string
+          iva: number | null
+          lead_time_days: number | null
+          marca: string | null
+          observacoes: string | null
+          organization_id: string
+          origem_importacao: string | null
+          preco_com_iva: number | null
+          preco_unitario: number
+          pricebook_id: string
+          referencia: string | null
+          unidade: string | null
+          updated_at: string
+          validade: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          codigo_artigo?: string | null
+          created_at?: string
+          descricao: string
+          fornecedor_id: string
+          id?: string
+          iva?: number | null
+          lead_time_days?: number | null
+          marca?: string | null
+          observacoes?: string | null
+          organization_id: string
+          origem_importacao?: string | null
+          preco_com_iva?: number | null
+          preco_unitario?: number
+          pricebook_id: string
+          referencia?: string | null
+          unidade?: string | null
+          updated_at?: string
+          validade?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          codigo_artigo?: string | null
+          created_at?: string
+          descricao?: string
+          fornecedor_id?: string
+          id?: string
+          iva?: number | null
+          lead_time_days?: number | null
+          marca?: string | null
+          observacoes?: string | null
+          organization_id?: string
+          origem_importacao?: string | null
+          preco_com_iva?: number | null
+          preco_unitario?: number
+          pricebook_id?: string
+          referencia?: string | null
+          unidade?: string | null
+          updated_at?: string
+          validade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_supplier_pricebook_items_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_pricebook_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_pricebook_items_pricebook_id_fkey"
+            columns: ["pricebook_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_supplier_pricebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_supplier_pricebooks: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          file_name: string | null
+          file_path: string | null
+          file_size_bytes: number | null
+          file_type: string | null
+          fornecedor_id: string
+          id: string
+          item_count: number
+          name: string
+          notes: string | null
+          organization_id: string
+          status: string
+          updated_at: string
+          uploaded_by: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          fornecedor_id: string
+          id?: string
+          item_count?: number
+          name: string
+          notes?: string | null
+          organization_id: string
+          status?: string
+          updated_at?: string
+          uploaded_by: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          fornecedor_id?: string
+          id?: string
+          item_count?: number
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_supplier_pricebooks_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_pricebooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       timesheet_allocations: {
         Row: {
@@ -16159,11 +16517,14 @@ export type Database = {
           zona_atuacao: string
         }[]
       }
-      get_user_org_id: { Args: never; Returns: string }
+      get_user_org_id:
+        | { Args: never; Returns: string }
+        | { Args: { _user_id?: string }; Returns: string }
       has_billing_permission: { Args: { _perm: string }; Returns: boolean }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_org_admin: { Args: never; Returns: boolean }
       is_org_admin_or_self: { Args: { _target: string }; Returns: boolean }
+      is_org_member: { Args: { _org_id: string }; Returns: boolean }
       is_quote_request_owner: {
         Args: { _quote_request_id: string }
         Returns: boolean
@@ -16244,6 +16605,7 @@ export type Database = {
         Args: { p_version_id: string }
         Returns: undefined
       }
+      supplier_can_access_org: { Args: { _org_id: string }; Returns: boolean }
       sync_onboarding_progress: {
         Args: { p_user_id: string }
         Returns: undefined
