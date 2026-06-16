@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { useEffect } from 'react';
+
 import { generateCotacaoPdf } from '@/lib/cotacao-pdf';
 
 interface ResponseItem {
