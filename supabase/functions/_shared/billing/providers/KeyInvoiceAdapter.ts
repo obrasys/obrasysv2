@@ -87,12 +87,12 @@ async function authenticate(ctx: ProviderContext): Promise<string> {
   const cached = sidCache.get(apiKey);
   if (cached && cached.exp > Date.now()) return cached.sid;
 
-  // KeyInvoice aceita a ApiKey tanto via header como no corpo — enviamos ambos
-  // para evitar "Configuração da chave API incompleta" quando o servidor lê de um sítio específico.
+  // KeyInvoice 5.0 exige o header `Apikey` (k minúsculo) para devolver JSON.
+  // O body deve conter apenas method:"authenticate" e ApiKey (K maiúsculo).
   const data = await rawCall(
     baseUrl(ctx),
-    { Apikey: apiKey, ApiKey: apiKey },
-    { method: "authenticate", ApiKey: apiKey, Apikey: apiKey, apikey: apiKey },
+    { Apikey: apiKey },
+    { method: "authenticate", ApiKey: apiKey },
   );
   const sid = data?.Sid ?? data?.sid;
   if (!sid) throw new Error("KEYINVOICE: authenticate não devolveu Sid");
@@ -101,16 +101,17 @@ async function authenticate(ctx: ProviderContext): Promise<string> {
 }
 
 async function kiCall(ctx: ProviderContext, payload: Record<string, unknown>): Promise<any> {
+  const apiKey = getApiKey(ctx);
   let sid = await authenticate(ctx);
   try {
-    return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+    return await rawCall(baseUrl(ctx), { Apikey: apiKey, Sid: sid }, payload);
   } catch (e) {
     // Se Sid expirou, força refresh e tenta 1x.
     const msg = String((e as Error).message || "");
     if (/sess|sid|auth/i.test(msg)) {
-      sidCache.delete(getApiKey(ctx));
+      sidCache.delete(apiKey);
       sid = await authenticate(ctx);
-      return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+      return await rawCall(baseUrl(ctx), { Apikey: apiKey, Sid: sid }, payload);
     }
     throw e;
   }
