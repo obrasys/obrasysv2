@@ -78,7 +78,7 @@ export default function CotacoesFornecedoresPage() {
   }, [requests]);
 
   return (
-    <AppLayout>
+    <AppLayout title="Cotações a fornecedores">
       <div className="container py-6 space-y-6">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
