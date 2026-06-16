@@ -15,6 +15,7 @@ import {
   Phone,
   MapPin,
   FileText,
+  Upload,
 } from 'lucide-react';
 import type { Fornecedor } from '@/types/financeiro';
 
@@ -22,6 +23,7 @@ interface FornecedorCardProps {
   fornecedor: Fornecedor;
   onEdit: (fornecedor: Fornecedor) => void;
   onDelete: (id: string) => void;
+  onImportPricebook?: (fornecedor: Fornecedor) => void;
 }
 
 export function FornecedorCard({ fornecedor, onEdit, onDelete }: FornecedorCardProps) {
