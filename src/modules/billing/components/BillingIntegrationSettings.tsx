@@ -63,6 +63,10 @@ export function BillingIntegrationSettings() {
   const [accountId, setAccountId] = useState("");
   const [orgExt, setOrgExt] = useState("");
   const [credentials, setCredentials] = useState<Record<string, string>>({});
+  const [prodConfirmed, setProdConfirmed] = useState(false);
+
+  const isProduction = environment === "production";
+  const canSave = !save.isPending && (!isProduction || prodConfirmed);
 
   const fields = CREDENTIAL_FIELDS[provider];
 
