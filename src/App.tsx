@@ -100,6 +100,7 @@ const AdminFornecedores = lazy(() => import("./pages/admin/Fornecedores"));
 const PortalIndex = lazy(() => import("./pages/portal/Index"));
 const PortalObra = lazy(() => import("./pages/portal/Obra"));
 const FornecedorAuth = lazy(() => import("./pages/fornecedor/Auth"));
+const FornecedorAceitarConvite = lazy(() => import("./pages/fornecedor/AceitarConvite"));
 const FornecedorPendingApproval = lazy(() => import("./pages/fornecedor/PendingApproval"));
 const FornecedorDashboard = lazy(() => import("./pages/fornecedor/Dashboard"));
 const FornecedorPedidos = lazy(() => import("./pages/fornecedor/Pedidos"));
@@ -293,6 +294,7 @@ const App = () => (
                   <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
                   <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
                   <Route path="/fornecedor/auth" element={<FornecedorAuth />} />
+                  <Route path="/fornecedor/aceitar" element={<FornecedorAceitarConvite />} />
                   <Route path="/fornecedor/pending" element={<FornecedorPendingApproval />} />
                   <Route path="/fornecedor/dashboard" element={<SupplierRoute><FornecedorDashboard /></SupplierRoute>} />
                   <Route path="/fornecedor/pedidos" element={<SupplierRoute><FornecedorPedidos /></SupplierRoute>} />

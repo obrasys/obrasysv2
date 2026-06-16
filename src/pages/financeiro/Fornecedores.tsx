@@ -19,12 +19,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download, Truck, UserCircle, Briefcase } from 'lucide-react';
+import { Plus, Search, Loader2, Users, ArrowLeft, Upload, Download, Truck, UserCircle, Briefcase, Mail, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFornecedores } from '@/hooks/useFinanceiro';
 import { FornecedorCard } from '@/components/financeiro/FornecedorCard';
 import { FornecedorForm } from '@/components/financeiro/FornecedorForm';
 import { ImportFornecedoresModal } from '@/components/financeiro/ImportFornecedoresModal';
+import { InviteSupplierModal } from '@/components/fornecedor/InviteSupplierModal';
+import { TenantInvitesDialog } from '@/components/fornecedor/TenantInvitesDialog';
+import { useTenantSupplierInvites } from '@/hooks/useTenantSupplierInvites';
 import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
 
 const FornecedoresPage = () => {
@@ -36,6 +39,10 @@ const FornecedoresPage = () => {
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [invitesListOpen, setInvitesListOpen] = useState(false);
+  const { data: invites } = useTenantSupplierInvites();
+  const pendingInvites = invites?.filter((i) => i.status === 'pending').length || 0;
 
   const { 
     fornecedores, 
@@ -221,13 +228,26 @@ const FornecedoresPage = () => {
             </Select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setInvitesListOpen(true)} className="relative">
+              <Mail className="w-4 h-4 mr-2" />
+              Convites
+              {pendingInvites > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
+                  {pendingInvites}
+                </span>
+              )}
+            </Button>
+            <Button variant="outline" onClick={() => setInviteOpen(true)}>
+              <Send className="w-4 h-4 mr-2" />
+              Convidar
+            </Button>
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
               Importar
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleExportCSV}
               disabled={!fornecedores || fornecedores.length === 0}
             >
@@ -304,6 +324,12 @@ const FornecedoresPage = () => {
           open={importOpen}
           onOpenChange={setImportOpen}
         />
+
+        {/* Invite Modal */}
+        <InviteSupplierModal open={inviteOpen} onOpenChange={setInviteOpen} />
+
+        {/* Invites List Dialog */}
+        <TenantInvitesDialog open={invitesListOpen} onOpenChange={setInvitesListOpen} />
       </div>
     </AppLayout>
   );
