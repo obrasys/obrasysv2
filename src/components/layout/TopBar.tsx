@@ -236,7 +236,12 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         </DropdownMenu>
       </div>
     </header>
+    <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
+    </>
   );
+}
+
+const _wrap = true;
 }
 
 // Mobile navigation component with collapsible groups
