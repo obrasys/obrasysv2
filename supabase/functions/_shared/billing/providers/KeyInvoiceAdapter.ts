@@ -101,16 +101,17 @@ async function authenticate(ctx: ProviderContext): Promise<string> {
 }
 
 async function kiCall(ctx: ProviderContext, payload: Record<string, unknown>): Promise<any> {
+  const apiKey = getApiKey(ctx);
   let sid = await authenticate(ctx);
   try {
-    return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+    return await rawCall(baseUrl(ctx), { Apikey: apiKey, Sid: sid }, payload);
   } catch (e) {
     // Se Sid expirou, força refresh e tenta 1x.
     const msg = String((e as Error).message || "");
     if (/sess|sid|auth/i.test(msg)) {
-      sidCache.delete(getApiKey(ctx));
+      sidCache.delete(apiKey);
       sid = await authenticate(ctx);
-      return await rawCall(baseUrl(ctx), { Sid: sid }, payload);
+      return await rawCall(baseUrl(ctx), { Apikey: apiKey, Sid: sid }, payload);
     }
     throw e;
   }
