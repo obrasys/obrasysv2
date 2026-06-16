@@ -130,14 +130,19 @@ export function BillingIntegrationSettings() {
               </Select>
             </div>
             <div>
-              <Label>Ambiente</Label>
-              <Select value={environment} onValueChange={(v) => setEnvironment(v as BillingEnvironment)}>
+              <Label>Ambiente da integração</Label>
+              <Select value={environment} onValueChange={(v) => { setEnvironment(v as BillingEnvironment); setProdConfirmed(false); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sandbox">Sandbox</SelectItem>
-                  <SelectItem value="production">Produção</SelectItem>
+                  <SelectItem value="sandbox">Sandbox / Testes</SelectItem>
+                  <SelectItem value="production">Produção / Real</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                <b>Sandbox</b> é um ambiente de testes. Permite validar ligação, clientes, documentos, PDFs e sincronização sem criar documentos fiscais reais.
+                <br />
+                <b>Produção</b> é o ambiente real. Documentos emitidos neste modo podem criar faturas, recibos ou notas de crédito oficiais no provider externo.
+              </p>
             </div>
             <div>
               <Label>Nome</Label>
