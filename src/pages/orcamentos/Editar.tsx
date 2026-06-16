@@ -934,6 +934,15 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
         onAddArtigos={handleAddFromCatalog}
       />
 
+      {/* Pricebook (Fornecedor) Modal */}
+      <AddFromPricebookDialog
+        open={showPricebookModal}
+        onOpenChange={(v) => { setShowPricebookModal(v); if (!v) setPricebookCapituloId(null); }}
+        capituloId={pricebookCapituloId}
+        orcamentoId={orcamento.id}
+      />
+
+
       <AlertDialog open={!!deleteCapituloId} onOpenChange={() => setDeleteCapituloId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
