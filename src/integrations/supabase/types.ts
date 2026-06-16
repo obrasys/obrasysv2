@@ -9055,6 +9055,7 @@ export type Database = {
           cost_nature: Database["public"]["Enums"]["cost_nature"] | null
           created_at: string
           description: string
+          fornecedor_id: string | null
           id: string
           invoice_date: string | null
           invoice_number: string | null
@@ -9063,6 +9064,7 @@ export type Database = {
           organization_id: string | null
           package_id: string | null
           quantity: number
+          quote_response_id: string | null
           source_budget_id: string | null
           status: string
           supplier_id: string | null
@@ -9078,6 +9080,7 @@ export type Database = {
           cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description: string
+          fornecedor_id?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
@@ -9086,6 +9089,7 @@ export type Database = {
           organization_id?: string | null
           package_id?: string | null
           quantity?: number
+          quote_response_id?: string | null
           source_budget_id?: string | null
           status?: string
           supplier_id?: string | null
@@ -9101,6 +9105,7 @@ export type Database = {
           cost_nature?: Database["public"]["Enums"]["cost_nature"] | null
           created_at?: string
           description?: string
+          fornecedor_id?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
@@ -9109,6 +9114,7 @@ export type Database = {
           organization_id?: string | null
           package_id?: string | null
           quantity?: number
+          quote_response_id?: string | null
           source_budget_id?: string | null
           status?: string
           supplier_id?: string | null
@@ -9140,6 +9146,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obra_purchases_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obra_purchases_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
@@ -9151,6 +9164,13 @@ export type Database = {
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "contracting_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_purchases_quote_response_id_fkey"
+            columns: ["quote_response_id"]
+            isOneToOne: false
+            referencedRelation: "quote_responses"
             referencedColumns: ["id"]
           },
           {
@@ -16248,6 +16268,10 @@ export type Database = {
       archive_budget_version: {
         Args: { p_version_id: string }
         Returns: undefined
+      }
+      award_direct_quote_response: {
+        Args: { p_response_id: string }
+        Returns: Json
       }
       award_mce: {
         Args: {
