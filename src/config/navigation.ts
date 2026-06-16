@@ -27,6 +27,9 @@ import {
   ArrowRightLeft,
   Network,
   UserCog,
+  Truck,
+  Send,
+
 } from "lucide-react";
 
 export type NavItem = {
@@ -77,7 +80,9 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { icon: HardHat, label: "Equipas", href: "/recursos" },
       { icon: Plug, label: "Instalações", href: "/instalacoes" },
-      { icon: Network, label: "Fornecedores", href: "/rede-fornecedores" },
+      { icon: Network, label: "Rede de Fornecedores", href: "/rede-fornecedores" },
+      { icon: Truck, label: "Os Meus Fornecedores", href: "/financeiro/fornecedores" },
+      { icon: Send, label: "Cotações", href: "/financeiro/cotacoes" },
     ],
   },
   {

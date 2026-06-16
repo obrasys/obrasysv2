@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { SupplierLayout } from '@/components/fornecedor/SupplierLayout';
 import {
   useSupplierQuoteRequests,
@@ -11,6 +13,10 @@ import {
   useSupplierItemsByCategories,
   useSupplierProfile,
 } from '@/hooks/useSuppliers';
+import {
+  useCreateDirectQuoteResponse,
+  useDeclineDirectQuote,
+} from '@/hooks/useSupplierDirectQuotes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,7 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { useEffect } from 'react';
+
 import { generateCotacaoPdf } from '@/lib/cotacao-pdf';
 
 interface ResponseItem {
@@ -40,12 +46,18 @@ interface ResponseItem {
 }
 
 export default function FornecedorPedidoDetalhe() {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const isDirect = rawId.startsWith('direct-');
+  const directQrId = isDirect ? rawId.slice('direct-'.length) : '';
+
   const { data: assignments = [] } = useSupplierQuoteRequests();
   const markViewed = useMarkQuoteViewed();
   const declineQuote = useDeclineQuote();
   const createResponse = useCreateQuoteResponse();
+  const createDirectResponse = useCreateDirectQuoteResponse();
+  const declineDirect = useDeclineDirectQuote();
   const { data: pricebooks = [] } = useSupplierPricebooks();
   const { data: profile } = useSupplierProfile();
   const [selectedPricebook, setSelectedPricebook] = useState<string>('');
@@ -57,7 +69,46 @@ export default function FornecedorPedidoDetalhe() {
 
   const { data: pricebookItems = [] } = usePricebookItems(selectedPricebook || undefined);
 
-  const assignment: any = assignments.find((a: any) => a.id === id);
+  // Direct quote: fetch the quote_request by id, then synthesize an assignment-shape.
+  const { data: directQr } = useQuery({
+    queryKey: ['supplier-direct-quote', directQrId, profile?.id],
+    queryFn: async () => {
+      if (!directQrId) return null;
+      const { data, error } = await supabase
+        .from('quote_requests')
+        .select(`
+          id, status, requested_deadline, message_to_suppliers, terms,
+          delivery_location, location_district, location_municipality,
+          fornecedor_id, organization_id, created_at,
+          organizations:organization_id(name),
+          quote_request_items(id, descricao, unidade, quantidade, codigo, capitulo),
+          quote_responses(id, status, supplier_id)
+        `)
+        .eq('id', directQrId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isDirect && !!directQrId,
+  });
+
+  const assignment: any = useMemo(() => {
+    if (isDirect) {
+      if (!directQr) return null;
+      const alreadyResponded = (directQr.quote_responses || []).some(
+        (r: any) => r.supplier_id === profile?.id
+      );
+      return {
+        id: `direct-${directQr.id}`,
+        status: alreadyResponded ? 'responded' : 'invited',
+        quote_requests: {
+          ...directQr,
+          quote_request_categories: [],
+        },
+      };
+    }
+    return assignments.find((a: any) => a.id === rawId);
+  }, [isDirect, directQr, assignments, rawId, profile?.id]);
 
   // Extract category IDs from the quote request
   const categoryIds = assignment?.quote_requests?.quote_request_categories
@@ -69,12 +120,12 @@ export default function FornecedorPedidoDetalhe() {
 
   const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
 
-  // Mark as viewed
+  // Mark as viewed (legacy assignment flow only)
   useEffect(() => {
-    if (assignment && assignment.status === 'invited') {
+    if (!isDirect && assignment && assignment.status === 'invited') {
       markViewed.mutate(assignment.id);
     }
-  }, [assignment?.id, assignment?.status]);
+  }, [assignment?.id, assignment?.status, isDirect]);
 
   // Auto-fill: use budget items and match prices from supplier pricebook
   useEffect(() => {
@@ -124,10 +175,11 @@ export default function FornecedorPedidoDetalhe() {
   }, [matchedItems, budgetItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
+    const stillLoading = isDirect ? !directQr : assignments.length === 0;
     return (
       <SupplierLayout title="Pedido de Cotação">
         <div className="text-center py-16 text-muted-foreground">
-          {assignments.length === 0 ? 'A carregar...' : 'Pedido não encontrado'}
+          {stillLoading ? 'A carregar...' : 'Pedido não encontrado'}
         </div>
       </SupplierLayout>
     );
@@ -186,6 +238,20 @@ export default function FornecedorPedidoDetalhe() {
 
   const handleSubmit = () => {
     if (items.length === 0) return;
+    if (isDirect) {
+      createDirectResponse.mutate(
+        {
+          quoteRequestId: qr.id,
+          form: {
+            notes,
+            estimated_delivery_days: deliveryDays ? parseInt(deliveryDays) : undefined,
+            items,
+          },
+        },
+        { onSuccess: () => navigate('/fornecedor/pedidos') }
+      );
+      return;
+    }
     createResponse.mutate({
       quoteRequestId: qr.id,
       quoteRequestSupplierId: assignment.id,
@@ -198,6 +264,10 @@ export default function FornecedorPedidoDetalhe() {
   };
 
   const handleDecline = () => {
+    if (isDirect) {
+      declineDirect.mutate(qr.id, { onSuccess: () => navigate('/fornecedor/pedidos') });
+      return;
+    }
     declineQuote.mutate(assignment.id, { onSuccess: () => navigate('/fornecedor/pedidos') });
   };
 
@@ -426,9 +496,9 @@ export default function FornecedorPedidoDetalhe() {
                 <Button
                   className="flex-1"
                   onClick={handleSubmit}
-                  disabled={items.length === 0 || createResponse.isPending}
+                  disabled={items.length === 0 || createResponse.isPending || createDirectResponse.isPending}
                 >
-                  {createResponse.isPending ? (
+                  {(createResponse.isPending || createDirectResponse.isPending) ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
