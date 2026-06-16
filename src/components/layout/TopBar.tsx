@@ -40,6 +40,7 @@ import { ObraAlertsPanel } from '@/components/alerts/ObraAlertsPanel';
 import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { ChangelogDialog } from '@/components/layout/ChangelogDialog';
 
 interface TopBarProps {
   title: string;
@@ -53,6 +54,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   const { totalAlerts, errorCount, hasAlerts } = useObraAlerts();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -60,6 +62,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   };
 
   return (
+    <>
     <header className="h-14 md:h-16 border-b border-border bg-card px-3 md:px-6 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
         {/* Mobile menu */}
@@ -86,9 +89,13 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
                 <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">
                   {profile?.empresa_nome || profile?.empresa || 'Empresa'}
                 </p>
-                <p className="text-[10px] text-sidebar-foreground/50">
+                <button
+                  type="button"
+                  onClick={() => { setMobileMenuOpen(false); setChangelogOpen(true); }}
+                  className="text-[10px] text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors underline-offset-2 hover:underline"
+                >
                   ObraSys - Versão {APP_VERSION}
-                </p>
+                </button>
               </div>
               {/* Use inline nav for mobile sheet */}
               <MobileNav onNavigate={() => setMobileMenuOpen(false)} />
@@ -230,8 +237,12 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         </DropdownMenu>
       </div>
     </header>
+    <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
+    </>
   );
 }
+
+
 
 // Mobile navigation component with collapsible groups
 function MobileNav({ onNavigate }: { onNavigate?: () => void }) {

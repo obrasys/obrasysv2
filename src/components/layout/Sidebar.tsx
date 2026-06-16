@@ -8,6 +8,7 @@ import { ADMIN_NAV_ITEMS, NAV_GROUPS } from '@/config/navigation';
 import { APP_VERSION } from '@/config/version';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { prefetchRoute } from '@/lib/route-prefetch';
+import { ChangelogDialog } from '@/components/layout/ChangelogDialog';
 
 export function Sidebar() {
   const location = useLocation();
@@ -16,6 +17,7 @@ export function Sidebar() {
   const { isSuperAdmin } = useSuperAdmin();
   const { hasClientAccess } = useClientAccess();
   const showPortalLink = hasClientAccess && profile?.role !== 'cliente';
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
@@ -94,7 +96,15 @@ export function Sidebar() {
           </div>
         </div>
         <p className="mt-2 text-sm font-semibold text-sidebar-foreground text-center truncate max-w-full">{empresaNome}</p>
-        <p className="text-[10px] text-white/40">ObraSys - Versão {APP_VERSION}</p>
+        <button
+          type="button"
+          onClick={() => setChangelogOpen(true)}
+          className="mt-0.5 text-[10px] text-white/40 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
+          title="Ver notas de versão"
+        >
+          ObraSys - Versão {APP_VERSION}
+        </button>
+        <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       </div>
 
       {/* Navigation */}
