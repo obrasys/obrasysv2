@@ -19,6 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ObraStatusBadge } from '@/components/obras/ObraStatusBadge';
+import { ObraFaturacaoTab } from '@/components/obras/ObraFaturacaoTab';
 import { ObraProgressTracker } from '@/components/obras/ObraProgressTracker';
 import { FinalizarObraModal } from '@/components/obras/FinalizarObraModal';
 import { RDOStatusBadge } from '@/components/rdos';
