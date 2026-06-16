@@ -1560,6 +1560,480 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_customers: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          external_customer_id: string
+          external_payload: Json
+          id: string
+          integration_id: string
+          last_synced_at: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          external_customer_id: string
+          external_payload?: Json
+          id?: string
+          integration_id: string
+          last_synced_at?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          external_customer_id?: string
+          external_payload?: Json
+          id?: string
+          integration_id?: string
+          last_synced_at?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_customers_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_customers_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_customers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_customers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_document_lines: {
+        Row: {
+          code: string | null
+          created_at: string
+          description: string
+          discount_pct: number
+          document_id: string
+          gross_amount: number
+          id: string
+          line_order: number
+          metadata: Json | null
+          net_amount: number
+          organization_id: string
+          quantity: number
+          retention_amount: number
+          retention_rate: number
+          source_line_id: string | null
+          tax_amount: number
+          tax_exemption_code: string | null
+          tax_rate: number
+          unit: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          description: string
+          discount_pct?: number
+          document_id: string
+          gross_amount?: number
+          id?: string
+          line_order?: number
+          metadata?: Json | null
+          net_amount?: number
+          organization_id: string
+          quantity?: number
+          retention_amount?: number
+          retention_rate?: number
+          source_line_id?: string | null
+          tax_amount?: number
+          tax_exemption_code?: string | null
+          tax_rate?: number
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          description?: string
+          discount_pct?: number
+          document_id?: string
+          gross_amount?: number
+          id?: string
+          line_order?: number
+          metadata?: Json | null
+          net_amount?: number
+          organization_id?: string
+          quantity?: number
+          retention_amount?: number
+          retention_rate?: number
+          source_line_id?: string | null
+          tax_amount?: number
+          tax_exemption_code?: string | null
+          tax_rate?: number
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_document_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_documents: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          credited_document_id: string | null
+          currency: string
+          document_type: Database["public"]["Enums"]["billing_document_type"]
+          external_document_id: string | null
+          external_issued_at: string | null
+          external_number: string | null
+          external_payload: Json | null
+          external_pdf_url: string | null
+          external_series: string | null
+          external_status: string | null
+          id: string
+          idempotency_key: string
+          integration_id: string | null
+          internal_status: Database["public"]["Enums"]["billing_internal_status"]
+          issued_at: string | null
+          issued_by: string | null
+          notes: string | null
+          obra_id: string | null
+          organization_id: string
+          prepared_at: string | null
+          prepared_by: string | null
+          source_id: string | null
+          source_revision: number
+          source_type: Database["public"]["Enums"]["billing_source_type"]
+          subtotal_net: number
+          total_gross: number
+          total_payable: number
+          total_retention: number
+          total_tax: number
+          updated_at: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          credited_document_id?: string | null
+          currency?: string
+          document_type: Database["public"]["Enums"]["billing_document_type"]
+          external_document_id?: string | null
+          external_issued_at?: string | null
+          external_number?: string | null
+          external_payload?: Json | null
+          external_pdf_url?: string | null
+          external_series?: string | null
+          external_status?: string | null
+          id?: string
+          idempotency_key: string
+          integration_id?: string | null
+          internal_status?: Database["public"]["Enums"]["billing_internal_status"]
+          issued_at?: string | null
+          issued_by?: string | null
+          notes?: string | null
+          obra_id?: string | null
+          organization_id: string
+          prepared_at?: string | null
+          prepared_by?: string | null
+          source_id?: string | null
+          source_revision?: number
+          source_type: Database["public"]["Enums"]["billing_source_type"]
+          subtotal_net?: number
+          total_gross?: number
+          total_payable?: number
+          total_retention?: number
+          total_tax?: number
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          credited_document_id?: string | null
+          currency?: string
+          document_type?: Database["public"]["Enums"]["billing_document_type"]
+          external_document_id?: string | null
+          external_issued_at?: string | null
+          external_number?: string | null
+          external_payload?: Json | null
+          external_pdf_url?: string | null
+          external_series?: string | null
+          external_status?: string | null
+          id?: string
+          idempotency_key?: string
+          integration_id?: string | null
+          internal_status?: Database["public"]["Enums"]["billing_internal_status"]
+          issued_at?: string | null
+          issued_by?: string | null
+          notes?: string | null
+          obra_id?: string | null
+          organization_id?: string
+          prepared_at?: string | null
+          prepared_by?: string | null
+          source_id?: string | null
+          source_revision?: number
+          source_type?: Database["public"]["Enums"]["billing_source_type"]
+          subtotal_net?: number
+          total_gross?: number
+          total_payable?: number
+          total_retention?: number
+          total_tax?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_documents_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_credited_document_id_fkey"
+            columns: ["credited_document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_integrations: {
+        Row: {
+          account_id: string | null
+          api_base_url: string | null
+          created_at: string
+          created_by: string | null
+          environment: Database["public"]["Enums"]["billing_environment"]
+          id: string
+          is_active: boolean
+          last_connection_test_at: string | null
+          last_connection_test_status: string | null
+          last_sync_at: string | null
+          name: string
+          organization_external_id: string | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["billing_provider"]
+          settings_json: Json
+          status: Database["public"]["Enums"]["billing_integration_status"]
+          token_expires_at: string | null
+          updated_at: string
+          vault_secret_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          api_base_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          environment?: Database["public"]["Enums"]["billing_environment"]
+          id?: string
+          is_active?: boolean
+          last_connection_test_at?: string | null
+          last_connection_test_status?: string | null
+          last_sync_at?: string | null
+          name: string
+          organization_external_id?: string | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["billing_provider"]
+          settings_json?: Json
+          status?: Database["public"]["Enums"]["billing_integration_status"]
+          token_expires_at?: string | null
+          updated_at?: string
+          vault_secret_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          api_base_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          environment?: Database["public"]["Enums"]["billing_environment"]
+          id?: string
+          is_active?: boolean
+          last_connection_test_at?: string | null
+          last_connection_test_status?: string | null
+          last_sync_at?: string | null
+          name?: string
+          organization_external_id?: string | null
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["billing_provider"]
+          settings_json?: Json
+          status?: Database["public"]["Enums"]["billing_integration_status"]
+          token_expires_at?: string | null
+          updated_at?: string
+          vault_secret_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_sync_logs: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          http_status: number | null
+          id: string
+          idempotency_key: string | null
+          integration_id: string | null
+          operation: string
+          organization_id: string
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_count: number
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          idempotency_key?: string | null
+          integration_id?: string | null
+          operation: string
+          organization_id: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number
+          status: string
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          idempotency_key?: string | null
+          integration_id?: string | null
+          operation?: string
+          organization_id?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_sync_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_sync_logs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_sync_logs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "billing_integrations_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_article_templates: {
         Row: {
           active: boolean
@@ -14779,6 +15253,90 @@ export type Database = {
       }
     }
     Views: {
+      billing_integrations_safe: {
+        Row: {
+          account_id: string | null
+          api_base_url: string | null
+          created_at: string | null
+          created_by: string | null
+          environment: Database["public"]["Enums"]["billing_environment"] | null
+          has_credentials: boolean | null
+          id: string | null
+          is_active: boolean | null
+          last_connection_test_at: string | null
+          last_connection_test_status: string | null
+          last_sync_at: string | null
+          name: string | null
+          organization_external_id: string | null
+          organization_id: string | null
+          provider: Database["public"]["Enums"]["billing_provider"] | null
+          settings_json: Json | null
+          status:
+            | Database["public"]["Enums"]["billing_integration_status"]
+            | null
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          api_base_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          environment?:
+            | Database["public"]["Enums"]["billing_environment"]
+            | null
+          has_credentials?: never
+          id?: string | null
+          is_active?: boolean | null
+          last_connection_test_at?: string | null
+          last_connection_test_status?: string | null
+          last_sync_at?: string | null
+          name?: string | null
+          organization_external_id?: string | null
+          organization_id?: string | null
+          provider?: Database["public"]["Enums"]["billing_provider"] | null
+          settings_json?: Json | null
+          status?:
+            | Database["public"]["Enums"]["billing_integration_status"]
+            | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          api_base_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          environment?:
+            | Database["public"]["Enums"]["billing_environment"]
+            | null
+          has_credentials?: never
+          id?: string | null
+          is_active?: boolean | null
+          last_connection_test_at?: string | null
+          last_connection_test_status?: string | null
+          last_sync_at?: string | null
+          name?: string | null
+          organization_external_id?: string | null
+          organization_id?: string | null
+          provider?: Database["public"]["Enums"]["billing_provider"] | null
+          settings_json?: Json | null
+          status?:
+            | Database["public"]["Enums"]["billing_integration_status"]
+            | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes_view: {
         Row: {
           ativo: boolean | null
@@ -15295,6 +15853,11 @@ export type Database = {
         }
         Returns: Json
       }
+      billing_vault_get: { Args: { p_integration_id: string }; Returns: Json }
+      billing_vault_put: {
+        Args: { p_integration_id: string; p_payload: Json }
+        Returns: string
+      }
       buscar_historico_match: {
         Args: { p_descricao: string; p_limite?: number; p_user_id: string }
         Returns: {
@@ -15583,6 +16146,7 @@ export type Database = {
         }[]
       }
       get_user_org_id: { Args: never; Returns: string }
+      has_billing_permission: { Args: { _perm: string }; Returns: boolean }
       is_obra_owner: { Args: { _obra_id: string }; Returns: boolean }
       is_org_admin: { Args: never; Returns: boolean }
       is_org_admin_or_self: { Args: { _target: string }; Returns: boolean }
@@ -15686,6 +16250,43 @@ export type Database = {
     }
     Enums: {
       aftercare_status: "aberto" | "em_analise" | "resolvido" | "rejeitado"
+      billing_document_type:
+        | "invoice"
+        | "simplified_invoice"
+        | "credit_note"
+        | "debit_note"
+        | "receipt"
+        | "proforma"
+      billing_environment: "sandbox" | "production"
+      billing_integration_status:
+        | "not_configured"
+        | "configured"
+        | "active"
+        | "error"
+        | "disabled"
+      billing_internal_status:
+        | "draft"
+        | "ready"
+        | "queued"
+        | "issuing"
+        | "issued"
+        | "paid"
+        | "partially_paid"
+        | "credited"
+        | "cancelled"
+        | "error"
+      billing_provider:
+        | "keyinvoice"
+        | "invoicexpress"
+        | "moloni"
+        | "vendus"
+        | "manual_export"
+      billing_source_type:
+        | "orcamento"
+        | "auto_medicao"
+        | "folha_fecho"
+        | "mce_map"
+        | "manual"
       cost_nature: "MO" | "MAT" | "SRV" | "INS" | "ALU" | "DIV"
       financial_cycle_status: "draft" | "active" | "locked" | "closed"
       financial_line_nature:
@@ -15912,6 +16513,48 @@ export const Constants = {
   public: {
     Enums: {
       aftercare_status: ["aberto", "em_analise", "resolvido", "rejeitado"],
+      billing_document_type: [
+        "invoice",
+        "simplified_invoice",
+        "credit_note",
+        "debit_note",
+        "receipt",
+        "proforma",
+      ],
+      billing_environment: ["sandbox", "production"],
+      billing_integration_status: [
+        "not_configured",
+        "configured",
+        "active",
+        "error",
+        "disabled",
+      ],
+      billing_internal_status: [
+        "draft",
+        "ready",
+        "queued",
+        "issuing",
+        "issued",
+        "paid",
+        "partially_paid",
+        "credited",
+        "cancelled",
+        "error",
+      ],
+      billing_provider: [
+        "keyinvoice",
+        "invoicexpress",
+        "moloni",
+        "vendus",
+        "manual_export",
+      ],
+      billing_source_type: [
+        "orcamento",
+        "auto_medicao",
+        "folha_fecho",
+        "mce_map",
+        "manual",
+      ],
       cost_nature: ["MO", "MAT", "SRV", "INS", "ALU", "DIV"],
       financial_cycle_status: ["draft", "active", "locked", "closed"],
       financial_line_nature: [
