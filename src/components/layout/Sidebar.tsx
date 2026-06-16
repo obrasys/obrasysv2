@@ -17,6 +17,7 @@ export function Sidebar() {
   const { isSuperAdmin } = useSuperAdmin();
   const { hasClientAccess } = useClientAccess();
   const showPortalLink = hasClientAccess && profile?.role !== 'cliente';
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
