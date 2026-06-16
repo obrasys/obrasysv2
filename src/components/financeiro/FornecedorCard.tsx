@@ -96,6 +96,12 @@ export function FornecedorCard({ fornecedor, onEdit, onDelete, onImportPricebook
                   Importar tabela de preços
                 </DropdownMenuItem>
               )}
+              {onRequestQuote && (
+                <DropdownMenuItem onClick={() => onRequestQuote(fornecedor)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Pedir cotação
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem 
                 onClick={() => onDelete(fornecedor.id)}
                 className="text-destructive focus:text-destructive"
