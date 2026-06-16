@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import type { CreateQuoteResponseForm } from '@/hooks/useSuppliers';
+import type { CreateQuoteResponseForm } from '@/types/suppliers';
 
 /**
  * Direct (tenant→fornecedor) quote requests received by the logged-in supplier.
