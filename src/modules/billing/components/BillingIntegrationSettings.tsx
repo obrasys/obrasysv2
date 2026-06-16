@@ -11,8 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, Loader2, Plug, ShieldCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertTriangle, Info, Loader2, Plug, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -62,6 +63,10 @@ export function BillingIntegrationSettings() {
   const [accountId, setAccountId] = useState("");
   const [orgExt, setOrgExt] = useState("");
   const [credentials, setCredentials] = useState<Record<string, string>>({});
+  const [prodConfirmed, setProdConfirmed] = useState(false);
+
+  const isProduction = environment === "production";
+  const canSave = !save.isPending && (!isProduction || prodConfirmed);
 
   const fields = CREDENTIAL_FIELDS[provider];
 
@@ -125,14 +130,19 @@ export function BillingIntegrationSettings() {
               </Select>
             </div>
             <div>
-              <Label>Ambiente</Label>
-              <Select value={environment} onValueChange={(v) => setEnvironment(v as BillingEnvironment)}>
+              <Label>Ambiente da integração</Label>
+              <Select value={environment} onValueChange={(v) => { setEnvironment(v as BillingEnvironment); setProdConfirmed(false); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sandbox">Sandbox</SelectItem>
-                  <SelectItem value="production">Produção</SelectItem>
+                  <SelectItem value="sandbox">Sandbox / Testes</SelectItem>
+                  <SelectItem value="production">Produção / Real</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                <b>Sandbox</b> é um ambiente de testes. Permite validar ligação, clientes, documentos, PDFs e sincronização sem criar documentos fiscais reais.
+                <br />
+                <b>Produção</b> é o ambiente real. Documentos emitidos neste modo podem criar faturas, recibos ou notas de crédito oficiais no provider externo.
+              </p>
             </div>
             <div>
               <Label>Nome</Label>
@@ -151,6 +161,31 @@ export function BillingIntegrationSettings() {
               <Input value={orgExt} onChange={(e) => setOrgExt(e.target.value)} />
             </div>
           </div>
+
+          {environment === "sandbox" ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Modo Sandbox ativo</AlertTitle>
+              <AlertDescription className="text-sm">
+                Esta integração está em ambiente de testes. Os documentos enviados para o provider são apenas para validação técnica e não devem ser tratados como documentos fiscais reais.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Atenção: Modo Produção</AlertTitle>
+              <AlertDescription className="text-sm">
+                Este ambiente pode emitir documentos fiscais reais no provider externo configurado. Antes de ativar produção, confirme que:
+                <ul className="list-disc pl-5 mt-2 space-y-0.5">
+                  <li>as credenciais são reais;</li>
+                  <li>o provider está correto;</li>
+                  <li>a empresa/NIF está correto;</li>
+                  <li>os testes em sandbox foram concluídos;</li>
+                  <li>apenas utilizadores autorizados têm permissão para emitir documentos.</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {fields.length > 0 && (
             <div className="border-t pt-4">
@@ -176,12 +211,27 @@ export function BillingIntegrationSettings() {
             </div>
           )}
 
+          {isProduction && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+              <Checkbox
+                id="prod-confirm"
+                checked={prodConfirmed}
+                onCheckedChange={(c) => setProdConfirmed(c === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="prod-confirm" className="text-sm font-normal leading-relaxed cursor-pointer">
+                Confirmo que compreendo que o ambiente de Produção pode emitir documentos fiscais reais no provider externo.
+              </Label>
+            </div>
+          )}
+
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={save.isPending}>
+            <Button onClick={handleSave} disabled={!canSave}>
               {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Guardar integração
             </Button>
           </div>
+
         </CardContent>
       </Card>
 
