@@ -124,6 +124,8 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
   const [showCapituloModal, setShowCapituloModal] = useState(false);
   const [showArtigoModal, setShowArtigoModal] = useState(false);
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
+  const [showPricebookModal, setShowPricebookModal] = useState(false);
+  const [pricebookCapituloId, setPricebookCapituloId] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
