@@ -333,6 +333,13 @@ const FornecedoresPage = () => {
 
         {/* Invites List Dialog */}
         <TenantInvitesDialog open={invitesListOpen} onOpenChange={setInvitesListOpen} />
+
+        {/* Pricebook Import Modal */}
+        <ImportPricebookModal
+          open={!!pricebookFornecedor}
+          onOpenChange={(v) => !v && setPricebookFornecedor(null)}
+          fornecedor={pricebookFornecedor}
+        />
       </div>
     </AppLayout>
   );
