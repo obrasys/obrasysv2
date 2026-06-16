@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       .download(filePath);
     if (dlErr || !fileBlob) return json({ error: "Não foi possível ler a planta" }, 500);
 
-    const lowerPath = body.file_path.toLowerCase();
+    const lowerPath = filePath.toLowerCase();
     let mimeType = fileBlob.type || "";
     if (!mimeType || mimeType === "application/octet-stream") {
       if (lowerPath.endsWith(".png")) mimeType = "image/png";
