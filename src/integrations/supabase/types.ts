@@ -448,6 +448,20 @@ export type Database = {
             referencedRelation: "cost_centers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "artigos_orcamento_linked_element_id_fkey"
+            columns: ["linked_element_id"]
+            isOneToOne: false
+            referencedRelation: "constructive_elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_linked_rule_id_fkey"
+            columns: ["linked_rule_id"]
+            isOneToOne: false
+            referencedRelation: "parametric_rules"
+            referencedColumns: ["id"]
+          },
         ]
       }
       artigos_trabalho: {
