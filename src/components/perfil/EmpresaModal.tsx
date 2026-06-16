@@ -24,6 +24,7 @@ interface EmpresaModalProps {
 
 export function EmpresaModal({ open, onOpenChange }: EmpresaModalProps) {
   const { profile, user, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isLoading, setIsLoading] = useState(false);
