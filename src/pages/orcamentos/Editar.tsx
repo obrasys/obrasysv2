@@ -458,6 +458,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
                        onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
                        onDeleteArtigo={setDeleteArtigoId}
                        onOpenCatalog={handleOpenCatalog}
+                       onOpenPricebook={(capId) => { setPricebookCapituloId(capId); setShowPricebookModal(true); }}
                        onUpdateCommercial={(capId, data) => updateCapitulo.mutateAsync({ capituloId: capId, ...data })}
                        onUpdateDiscount={(capId, descontoPct) => updateCapitulo.mutateAsync({ capituloId: capId, desconto_pct: descontoPct })}
                        isReadOnly={isReadOnly}
