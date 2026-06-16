@@ -175,10 +175,11 @@ export default function FornecedorPedidoDetalhe() {
   }, [matchedItems, budgetItems, autoFilled, assignment?.status]);
 
   if (!assignment) {
+    const stillLoading = isDirect ? !directQr : assignments.length === 0;
     return (
       <SupplierLayout title="Pedido de Cotação">
         <div className="text-center py-16 text-muted-foreground">
-          {assignments.length === 0 ? 'A carregar...' : 'Pedido não encontrado'}
+          {stillLoading ? 'A carregar...' : 'Pedido não encontrado'}
         </div>
       </SupplierLayout>
     );
