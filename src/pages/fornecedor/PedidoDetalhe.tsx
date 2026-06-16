@@ -120,12 +120,12 @@ export default function FornecedorPedidoDetalhe() {
 
   const { data: matchedItems = [] } = useSupplierItemsByCategories(categoryIds);
 
-  // Mark as viewed
+  // Mark as viewed (legacy assignment flow only)
   useEffect(() => {
-    if (assignment && assignment.status === 'invited') {
+    if (!isDirect && assignment && assignment.status === 'invited') {
       markViewed.mutate(assignment.id);
     }
-  }, [assignment?.id, assignment?.status]);
+  }, [assignment?.id, assignment?.status, isDirect]);
 
   // Auto-fill: use budget items and match prices from supplier pricebook
   useEffect(() => {
