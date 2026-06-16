@@ -242,8 +242,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   );
 }
 
-const _wrap = true;
-}
+
 
 // Mobile navigation component with collapsible groups
 function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
