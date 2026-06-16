@@ -291,6 +291,7 @@ const FornecedoresPage = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onImportPricebook={setPricebookFornecedor}
+                onRequestQuote={setQuoteFornecedor}
               />
             ))}
           </div>
