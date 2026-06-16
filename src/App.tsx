@@ -52,6 +52,7 @@ const BasePrecosAuditoriaPage = lazy(() => import("./pages/base-precos/Auditoria
 const SuportePage = lazy(() => import("./pages/suporte/Index"));
 const FinanceiroPage = lazy(() => import("./pages/financeiro/Index"));
 const FornecedoresPage = lazy(() => import("./pages/financeiro/Fornecedores"));
+const CotacoesFornecedoresPage = lazy(() => import("./pages/financeiro/CotacoesFornecedores"));
 const PerfilPage = lazy(() => import("./pages/Perfil"));
 const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
 const DefinicoesFolhaFechoQualidadesPage = lazy(() => import("./pages/DefinicoesFolhaFechoQualidades"));
