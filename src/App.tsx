@@ -240,6 +240,7 @@ const App = () => (
                   <Route path="/suporte" element={<ManagerRoute><SuportePage /></ManagerRoute>} />
                   <Route path="/financeiro" element={<ManagerRoute><FinanceiroPage /></ManagerRoute>} />
                   <Route path="/financeiro/fornecedores" element={<ManagerRoute><FornecedoresPage /></ManagerRoute>} />
+                  <Route path="/financeiro/cotacoes" element={<ManagerRoute><CotacoesFornecedoresPage /></ManagerRoute>} />
                   <Route path="/empresa/centros-de-custo" element={<ManagerRoute><CentrosDeCustoPage /></ManagerRoute>} />
                   <Route path="/empresa/gestao" element={<ManagerRoute><GestaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/empresa/definicoes/faturacao" element={<ManagerRoute><FaturacaoEmpresaPage /></ManagerRoute>} />
