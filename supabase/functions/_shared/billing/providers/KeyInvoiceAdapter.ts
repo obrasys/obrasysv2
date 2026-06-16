@@ -40,8 +40,19 @@ function baseUrl(ctx: ProviderContext): string {
 
 function getApiKey(ctx: ProviderContext): string {
   const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
-  if (!creds.api_key) throw new ProviderNotConfiguredError("keyinvoice");
-  return creds.api_key;
+  const apiKey = typeof creds.api_key === "string" ? creds.api_key.trim() : "";
+  if (!apiKey) throw new ProviderNotConfiguredError("keyinvoice");
+  return apiKey;
+}
+
+function normalizeKeyInvoiceError(message: string): string {
+  if (/Autentica(?:ç|c)[aã]o inv[aá]lida/i.test(message)) {
+    return "KEYINVOICE: Autenticação inválida. Confirme que copiou a API Key ativa do KeyInvoice, sem espaços, e que a conta tem a API 5.0 ativa.";
+  }
+  if (/Configura(?:ç|c)[aã]o da chave API incompleta/i.test(message)) {
+    return "KEYINVOICE: Configuração da chave API incompleta. Regrave a API Key ativa do KeyInvoice e teste novamente.";
+  }
+  return message;
 }
 
 async function rawCall(
@@ -130,12 +141,12 @@ export class KeyInvoiceAdapter implements BillingProvider {
 
   async testConnection(ctx: ProviderContext): Promise<TestConnectionResult> {
     const creds = (ctx.credentials ?? {}) as KeyInvoiceCreds;
-    if (!creds.api_key) return { status: "not_configured", message: "API Key não configurada." };
+    if (!String(creds.api_key ?? "").trim()) return { status: "not_configured", message: "API Key não configurada." };
     try {
       await authenticate(ctx);
       return { status: "ok", message: "Ligação KeyInvoice verificada (Sid obtido)." };
     } catch (e) {
-      return { status: "error", message: (e as Error).message };
+      return { status: "error", message: normalizeKeyInvoiceError((e as Error).message) };
     }
   }
 
