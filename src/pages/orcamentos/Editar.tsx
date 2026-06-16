@@ -7,6 +7,7 @@ import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
 import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
 import { CatalogoModal } from '@/components/orcamentos/CatalogoModal';
+import { AddFromPricebookDialog } from '@/components/orcamentos/AddFromPricebookDialog';
 import { ResumoTotal } from '@/components/orcamentos/ResumoTotal';
 import { ParametricMeasurements } from '@/components/parametric';
 import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
