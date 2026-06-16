@@ -367,6 +367,10 @@ export type Database = {
           quantidade: number
           quantity_source: string
           source: string | null
+          supplier_fornecedor_id: string | null
+          supplier_pricebook_id: string | null
+          supplier_pricebook_item_id: string | null
+          supplier_pricebook_origin_price: number | null
           unidade: string
           updated_at: string
           valor_total: number | null
@@ -398,6 +402,10 @@ export type Database = {
           quantidade?: number
           quantity_source?: string
           source?: string | null
+          supplier_fornecedor_id?: string | null
+          supplier_pricebook_id?: string | null
+          supplier_pricebook_item_id?: string | null
+          supplier_pricebook_origin_price?: number | null
           unidade: string
           updated_at?: string
           valor_total?: number | null
@@ -429,6 +437,10 @@ export type Database = {
           quantidade?: number
           quantity_source?: string
           source?: string | null
+          supplier_fornecedor_id?: string | null
+          supplier_pricebook_id?: string | null
+          supplier_pricebook_item_id?: string | null
+          supplier_pricebook_origin_price?: number | null
           unidade?: string
           updated_at?: string
           valor_total?: number | null
@@ -460,6 +472,27 @@ export type Database = {
             columns: ["linked_rule_id"]
             isOneToOne: false
             referencedRelation: "parametric_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_supplier_fornecedor_id_fkey"
+            columns: ["supplier_fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_supplier_pricebook_id_fkey"
+            columns: ["supplier_pricebook_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_supplier_pricebooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_supplier_pricebook_item_id_fkey"
+            columns: ["supplier_pricebook_item_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_supplier_pricebook_items"
             referencedColumns: ["id"]
           },
         ]

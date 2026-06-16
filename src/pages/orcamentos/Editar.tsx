@@ -7,6 +7,7 @@ import { OrcamentoStatus } from '@/components/orcamentos/OrcamentoStatus';
 import { CapituloAccordion } from '@/components/orcamentos/CapituloAccordion';
 import { ArtigoForm } from '@/components/orcamentos/ArtigoForm';
 import { CatalogoModal } from '@/components/orcamentos/CatalogoModal';
+import { AddFromPricebookDialog } from '@/components/orcamentos/AddFromPricebookDialog';
 import { ResumoTotal } from '@/components/orcamentos/ResumoTotal';
 import { ParametricMeasurements } from '@/components/parametric';
 import { SmartInsightsPanel } from '@/components/orcamentos/SmartInsightsPanel';
@@ -123,6 +124,8 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
   const [showCapituloModal, setShowCapituloModal] = useState(false);
   const [showArtigoModal, setShowArtigoModal] = useState(false);
   const [showCatalogoModal, setShowCatalogoModal] = useState(false);
+  const [showPricebookModal, setShowPricebookModal] = useState(false);
+  const [pricebookCapituloId, setPricebookCapituloId] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
   const [showFinalizarModal, setShowFinalizarModal] = useState(false);
@@ -455,6 +458,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
                        onEditArtigo={(artigoId) => handleEditArtigo(artigoId, capitulo.id)}
                        onDeleteArtigo={setDeleteArtigoId}
                        onOpenCatalog={handleOpenCatalog}
+                       onOpenPricebook={(capId) => { setPricebookCapituloId(capId); setShowPricebookModal(true); }}
                        onUpdateCommercial={(capId, data) => updateCapitulo.mutateAsync({ capituloId: capId, ...data })}
                        onUpdateDiscount={(capId, descontoPct) => updateCapitulo.mutateAsync({ capituloId: capId, desconto_pct: descontoPct })}
                        isReadOnly={isReadOnly}
@@ -929,6 +933,15 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
         onClose={() => setShowCatalogoModal(false)}
         onAddArtigos={handleAddFromCatalog}
       />
+
+      {/* Pricebook (Fornecedor) Modal */}
+      <AddFromPricebookDialog
+        open={showPricebookModal}
+        onOpenChange={(v) => { setShowPricebookModal(v); if (!v) setPricebookCapituloId(null); }}
+        capituloId={pricebookCapituloId}
+        orcamentoId={orcamento.id}
+      />
+
 
       <AlertDialog open={!!deleteCapituloId} onOpenChange={() => setDeleteCapituloId(null)}>
         <AlertDialogContent>

@@ -45,6 +45,7 @@ interface CapituloAccordionProps {
   onEditArtigo: (artigoId: string) => void;
   onDeleteArtigo: (artigoId: string) => void;
   onOpenCatalog: (capituloId: string) => void;
+  onOpenPricebook?: (capituloId: string) => void;
   onUpdateCommercial?: (capituloId: string, data: {
     client_summary_title?: string;
     client_summary_text?: string;
@@ -63,6 +64,7 @@ export function CapituloAccordion({
   onEditArtigo,
   onDeleteArtigo,
   onOpenCatalog,
+  onOpenPricebook,
   onUpdateCommercial,
   onUpdateDiscount,
   isReadOnly = false,
@@ -250,6 +252,12 @@ export function CapituloAccordion({
                     <Search className="mr-2 h-4 w-4" />
                     Catálogo
                   </Button>
+                  {onOpenPricebook && (
+                    <Button variant="outline" size="sm" onClick={() => onOpenPricebook(capitulo.id)}>
+                      <Search className="mr-2 h-4 w-4" />
+                      Fornecedor
+                    </Button>
+                  )}
                   <Button size="sm" onClick={onAddArtigo}>
                     <Plus className="mr-2 h-4 w-4" />
                     Artigo
