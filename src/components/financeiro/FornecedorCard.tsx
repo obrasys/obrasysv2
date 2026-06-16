@@ -28,7 +28,7 @@ interface FornecedorCardProps {
   onRequestQuote?: (fornecedor: Fornecedor) => void;
 }
 
-export function FornecedorCard({ fornecedor, onEdit, onDelete, onImportPricebook }: FornecedorCardProps) {
+export function FornecedorCard({ fornecedor, onEdit, onDelete, onImportPricebook, onRequestQuote }: FornecedorCardProps) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardContent className="p-4">
