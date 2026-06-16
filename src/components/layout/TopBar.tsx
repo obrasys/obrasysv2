@@ -62,6 +62,7 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
   };
 
   return (
+    <>
     <header className="h-14 md:h-16 border-b border-border bg-card px-3 md:px-6 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
         {/* Mobile menu */}
