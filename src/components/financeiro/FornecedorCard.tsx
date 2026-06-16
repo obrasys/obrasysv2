@@ -26,7 +26,7 @@ interface FornecedorCardProps {
   onImportPricebook?: (fornecedor: Fornecedor) => void;
 }
 
-export function FornecedorCard({ fornecedor, onEdit, onDelete }: FornecedorCardProps) {
+export function FornecedorCard({ fornecedor, onEdit, onDelete, onImportPricebook }: FornecedorCardProps) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardContent className="p-4">
