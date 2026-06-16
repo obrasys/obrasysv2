@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       organization_id: ctx.organizationId,
       integration_id: b.integration_id,
       obra_id: obra.id,
-      cliente_id: obra.cliente_id,
+      cliente_id: clienteId,
       source_type: "auto_medicao",
       source_id: b.auto_id,
       source_revision: revision,
