@@ -343,6 +343,13 @@ const FornecedoresPage = () => {
           onOpenChange={(v) => !v && setPricebookFornecedor(null)}
           fornecedor={pricebookFornecedor}
         />
+
+        {/* Direct Quote Request Modal */}
+        <DirectQuoteRequestModal
+          open={!!quoteFornecedor}
+          onOpenChange={(v) => !v && setQuoteFornecedor(null)}
+          fornecedor={quoteFornecedor}
+        />
       </div>
     </AppLayout>
   );
