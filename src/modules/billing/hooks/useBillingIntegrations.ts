@@ -33,8 +33,8 @@ export function useSaveBillingIntegration() {
   return useMutation({
     mutationFn: async (input: SaveIntegrationInput) => {
       const { data, error } = await supabase.functions.invoke(
-        "billing-test-connection",
-        { body: { action: "save", ...input } },
+        "billing-save-integration",
+        { body: input },
       );
       if (error) throw error;
       return data;
