@@ -23,12 +23,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ClienteCard, ImportCSVModal } from '@/components/clientes';
 import { useClientes } from '@/hooks/useClientes';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import type { Cliente, NivelAcesso } from '@/types/clientes';
-import { 
-  Plus, 
-  Search, 
-  Users, 
-  UserCheck, 
+import {
+  Plus,
+  Search,
+  Users,
+  UserCheck,
   UserX,
   Loader2,
   Upload,
