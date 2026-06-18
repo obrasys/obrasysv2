@@ -31,6 +31,7 @@ import { ImportPricebookModal } from '@/components/fornecedor/ImportPricebookMod
 import { DirectQuoteRequestModal } from '@/components/fornecedor/DirectQuoteRequestModal';
 import { useTenantSupplierInvites } from '@/hooks/useTenantSupplierInvites';
 import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 
 const FornecedoresPage = () => {
   const navigate = useNavigate();
