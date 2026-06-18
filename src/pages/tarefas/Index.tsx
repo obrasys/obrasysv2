@@ -260,13 +260,6 @@ export default function TarefasPage() {
           </div>
 
           <TabsContent value="tarefas" className="space-y-4">
-            <div className="flex justify-end">
-              <Button onClick={handleCreateTarefa}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Tarefa
-              </Button>
-            </div>
-
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -285,23 +278,23 @@ export default function TarefasPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckSquare className="h-12 w-12 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-semibold">Nenhuma tarefa encontrada</h3>
-                  <p className="mt-2 text-sm text-muted-foreground text-center">
-                    {search || filterObra !== 'all' || filterStatus !== 'all'
-                      ? 'Tente ajustar os filtros de pesquisa'
-                      : 'Comece criando a sua primeira tarefa'}
-                  </p>
-                  {!search && filterObra === 'all' && filterStatus === 'all' && (
-                    <Button className="mt-4" onClick={handleCreateTarefa}>
+              <EmptyState
+                icon={CheckSquare}
+                title="Nenhuma tarefa encontrada"
+                description={
+                  search || filterObra !== 'all' || filterStatus !== 'all'
+                    ? 'Tente ajustar os filtros de pesquisa'
+                    : 'Comece criando a sua primeira tarefa'
+                }
+                action={
+                  !search && filterObra === 'all' && filterStatus === 'all' ? (
+                    <Button onClick={handleCreateTarefa}>
                       <Plus className="mr-2 h-4 w-4" />
                       Nova Tarefa
                     </Button>
-                  )}
-                </CardContent>
-              </Card>
+                  ) : undefined
+                }
+              />
             )}
           </TabsContent>
 
