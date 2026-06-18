@@ -31,6 +31,7 @@ import { ImportPricebookModal } from '@/components/fornecedor/ImportPricebookMod
 import { DirectQuoteRequestModal } from '@/components/fornecedor/DirectQuoteRequestModal';
 import { useTenantSupplierInvites } from '@/hooks/useTenantSupplierInvites';
 import { AREAS_ATUACAO_FORNECEDOR, type Fornecedor, type FornecedorFormData } from '@/types/financeiro';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 
 const FornecedoresPage = () => {
   const navigate = useNavigate();
@@ -145,51 +146,47 @@ const FornecedoresPage = () => {
 
   return (
     <AppLayout title="Fornecedores">
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 md:gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/financeiro')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold">Gestão de Fornecedores</h1>
-              <p className="text-muted-foreground">
-                {fornecedores?.length || 0} fornecedores cadastrados
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/financeiro')} className="-ml-2">
+          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar ao Financeiro
+        </Button>
 
-        {/* Separador visual: Fornecedores ≠ Clientes */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Truck className="h-5 w-5 text-primary" />
+        <PageHeader
+          eyebrow="Comercial"
+          title="Gestão de Fornecedores"
+          subtitle="Contactos de quem fornece materiais ou serviços (carpinteiros, eletricistas, etc.). Distinto dos clientes."
+          actions={
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setInvitesListOpen(true)} className="relative gap-2">
+                <Mail className="w-4 h-4" /> Convites
+                {pendingInvites > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
+                    {pendingInvites}
+                  </span>
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => setInviteOpen(true)} className="gap-2">
+                <Send className="w-4 h-4" /> Convidar
+              </Button>
+              <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+                <Upload className="w-4 h-4" /> Importar
+              </Button>
+              <Button variant="outline" onClick={handleExportCSV} disabled={!fornecedores || fornecedores.length === 0} className="gap-2">
+                <Download className="w-4 h-4" /> Exportar
+              </Button>
+              <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }} className="gap-2">
+                <Plus className="w-4 h-4" /> Novo Fornecedor
+              </Button>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Fornecedores (esta página)</p>
-              <p className="text-xs text-muted-foreground">
-                Contactos de quem te <strong>fornece</strong> materiais ou serviços (carpinteiros, eletricistas, etc.).
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/clientes')}
-            className="rounded-xl border bg-card p-4 flex items-start gap-3 hover:border-primary/40 hover:bg-accent transition text-left"
-          >
-            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <UserCircle className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Clientes (página separada)</p>
-              <p className="text-xs text-muted-foreground">
-                Quem te <strong>contrata</strong> obras e orçamentos. Clica para ir para a lista de clientes →
-              </p>
-            </div>
-          </button>
-        </div>
+          }
+        />
+
+        <MetricCardGrid columns={4}>
+          <MetricCard label="Total" value={fornecedores?.length || 0} icon={Truck} tone="primary" />
+          <MetricCard label="Ativos" value={fornecedores?.filter(f => f.ativo).length || 0} icon={UserCircle} tone="success" />
+          <MetricCard label="Áreas distintas" value={Object.keys(areaCounts).filter(k => k !== '__none__').length} icon={Briefcase} tone="default" />
+          <MetricCard label="Convites pendentes" value={pendingInvites} icon={Mail} tone="warning" />
+        </MetricCardGrid>
 
         {/* Filters and Actions */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -231,57 +228,22 @@ const FornecedoresPage = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setInvitesListOpen(true)} className="relative">
-              <Mail className="w-4 h-4 mr-2" />
-              Convites
-              {pendingInvites > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
-                  {pendingInvites}
-                </span>
-              )}
-            </Button>
-            <Button variant="outline" onClick={() => setInviteOpen(true)}>
-              <Send className="w-4 h-4 mr-2" />
-              Convidar
-            </Button>
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-2" />
-              Importar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExportCSV}
-              disabled={!fornecedores || fornecedores.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Fornecedor
-            </Button>
-          </div>
         </div>
 
         {/* Fornecedores List */}
         {filteredFornecedores?.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Nenhum fornecedor encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              {search ? 'Tente ajustar os filtros de pesquisa' : 'Comece adicionando o primeiro fornecedor'}
-            </p>
-            {!search && (
-              <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Fornecedor
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={Truck}
+            title="Nenhum fornecedor encontrado"
+            description={search ? 'Tente ajustar os filtros de pesquisa.' : 'Comece adicionando o primeiro fornecedor.'}
+            action={
+              !search ? (
+                <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }} className="gap-2">
+                  <Plus className="w-4 h-4" /> Novo Fornecedor
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredFornecedores?.map((fornecedor) => (

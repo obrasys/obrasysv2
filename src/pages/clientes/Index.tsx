@@ -23,12 +23,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ClienteCard, ImportCSVModal } from '@/components/clientes';
 import { useClientes } from '@/hooks/useClientes';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import type { Cliente, NivelAcesso } from '@/types/clientes';
-import { 
-  Plus, 
-  Search, 
-  Users, 
-  UserCheck, 
+import {
+  Plus,
+  Search,
+  Users,
+  UserCheck,
   UserX,
   Loader2,
   Upload,
@@ -78,62 +79,32 @@ export default function ClientesPage() {
   };
 
   return (
-    <AppLayout 
+    <AppLayout
       title="Clientes"
       subtitle="Gerir clientes e suas associações a obras e orçamentos"
-      actions={
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowImportModal(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            Importar CSV
-          </Button>
-          <Button onClick={() => navigate('/clientes/criar')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        </div>
-      }
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Comercial"
+          title="Clientes"
+          subtitle="Gere a sua carteira de clientes, contactos e níveis de acesso ao portal."
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowImportModal(true)} className="gap-2">
+                <Upload className="h-4 w-4" /> Importar CSV
+              </Button>
+              <Button onClick={() => navigate('/clientes/criar')} className="gap-2">
+                <Plus className="h-4 w-4" /> Novo Cliente
+              </Button>
+            </div>
+          }
+        />
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Clientes
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.total || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Clientes Ativos
-              </CardTitle>
-              <UserCheck className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats?.ativos || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Clientes Inativos
-              </CardTitle>
-              <UserX className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-muted-foreground">{stats?.inativos || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <MetricCardGrid columns={3}>
+          <MetricCard label="Total de Clientes" value={stats?.total || 0} icon={Users} tone="primary" />
+          <MetricCard label="Clientes Ativos" value={stats?.ativos || 0} icon={UserCheck} tone="success" />
+          <MetricCard label="Clientes Inativos" value={stats?.inativos || 0} icon={UserX} tone="default" />
+        </MetricCardGrid>
 
         {/* Filters */}
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -189,23 +160,22 @@ export default function ClientesPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">Nenhum cliente encontrado</h3>
-              <p className="mt-2 text-sm text-muted-foreground text-center">
-                {search || filterNivel !== 'all' || filterAtivo !== 'all'
-                  ? 'Tente ajustar os filtros de pesquisa'
-                  : 'Comece adicionando o seu primeiro cliente'}
-              </p>
-              {!search && filterNivel === 'all' && filterAtivo === 'all' && (
-                <Button className="mt-4" onClick={() => navigate('/clientes/criar')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Adicionar Cliente
+          <EmptyState
+            icon={Users}
+            title="Nenhum cliente encontrado"
+            description={
+              search || filterNivel !== 'all' || filterAtivo !== 'all'
+                ? 'Tente ajustar os filtros de pesquisa.'
+                : 'Comece adicionando o seu primeiro cliente.'
+            }
+            action={
+              !search && filterNivel === 'all' && filterAtivo === 'all' ? (
+                <Button onClick={() => navigate('/clientes/criar')} className="gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar Cliente
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         )}
       </div>
 
