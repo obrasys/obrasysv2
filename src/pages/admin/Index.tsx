@@ -118,7 +118,7 @@ export default function AdminDashboard() {
       title="Painel Administrativo"
       subtitle="Visão geral do sistema"
     >
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
