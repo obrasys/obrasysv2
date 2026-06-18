@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { AppLayout } from "@/components/layout";
+import { PageHeader } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -332,16 +333,22 @@ export default function SuportePage() {
     <AppLayout 
       title="Centro de Suporte"
       subtitle="Ajuda, documentação e contacto direto"
-      actions={
-        <Button variant="outline" asChild>
-          <a href="mailto:suporte@obrasys.pt" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            suporte@obrasys.pt
-          </a>
-        </Button>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Ajuda"
+          title="Centro de Suporte"
+          subtitle="Assistente IA, tickets, FAQ e contacto direto com a equipa"
+          actions={
+            <Button variant="outline" asChild>
+              <a href="mailto:suporte@obrasys.pt" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                suporte@obrasys.pt
+              </a>
+            </Button>
+          }
+        />
+
 
         {/* Quick Access Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

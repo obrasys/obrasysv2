@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader, MetricCardGrid, MetricCard, EmptyState } from '@/components/patterns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -196,100 +197,66 @@ export default function ConformidadeIndex() {
     <AppLayout
       title="Conformidade e Livro de Obra"
       subtitle="Gestão de documentos, checklists e aprovações"
-      actions={
-        <div className="flex gap-2">
-          {activeTab === 'livros' && (
-            <Button onClick={() => setLivroObraModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Livro
-            </Button>
-          )}
-          {activeTab === 'documentos' && (
-            <Button onClick={() => setDocumentoModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Documento
-            </Button>
-          )}
-          {activeTab === 'checklists' && (
-            <Button onClick={() => setChecklistModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Checklist
-            </Button>
-          )}
-        </div>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Livros de Obra</p>
-                  <p className="text-2xl font-bold">{stats.totalLivrosObra}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.livrosSubmetidos} submetidos
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <PageHeader
+          eyebrow="Qualidade"
+          title="Conformidade e Livro de Obra"
+          subtitle="Gestão de documentos, checklists e aprovações"
+          actions={
+            <>
+              {activeTab === 'livros' && (
+                <Button onClick={() => setLivroObraModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Livro
+                </Button>
+              )}
+              {activeTab === 'documentos' && (
+                <Button onClick={() => setDocumentoModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Documento
+                </Button>
+              )}
+              {activeTab === 'checklists' && (
+                <Button onClick={() => setChecklistModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Checklist
+                </Button>
+              )}
+            </>
+          }
+        />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 text-green-600">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Documentos</p>
-                  <p className="text-2xl font-bold">{stats.totalDocumentos}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.documentosAprovados} aprovados
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
-                  <ClipboardCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Checklists</p>
-                  <p className="text-2xl font-bold">{stats.totalChecklists}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.checklistsConcluidas} concluídas
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-100 text-yellow-600">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Aprovações Pendentes</p>
-                  <p className="text-2xl font-bold">{stats.aprovacoesPendentes}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.totalAprovacoes} total
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats */}
+        <MetricCardGrid columns={4}>
+          <MetricCard
+            label="Livros de Obra"
+            value={stats.totalLivrosObra}
+            hint={`${stats.livrosSubmetidos} submetidos`}
+            icon={BookOpen}
+            tone="primary"
+          />
+          <MetricCard
+            label="Documentos"
+            value={stats.totalDocumentos}
+            hint={`${stats.documentosAprovados} aprovados`}
+            icon={FileText}
+            tone="success"
+          />
+          <MetricCard
+            label="Checklists"
+            value={stats.totalChecklists}
+            hint={`${stats.checklistsConcluidas} concluídas`}
+            icon={ClipboardCheck}
+          />
+          <MetricCard
+            label="Aprovações Pendentes"
+            value={stats.aprovacoesPendentes}
+            hint={`${stats.totalAprovacoes} total`}
+            icon={Clock}
+            tone="warning"
+          />
+        </MetricCardGrid>
 
         {/* Search */}
         <div className="relative max-w-md">
@@ -348,8 +315,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredLivrosObra.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhum livro de obra encontrado
+                <div className="col-span-full">
+                  <EmptyState icon={BookOpen} title="Nenhum livro de obra encontrado" />
                 </div>
               )}
             </div>
@@ -376,8 +343,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredDocumentos.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhum documento encontrado
+                <div className="col-span-full">
+                  <EmptyState icon={FileText} title="Nenhum documento encontrado" />
                 </div>
               )}
             </div>
@@ -402,8 +369,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredChecklists.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhuma checklist encontrada
+                <div className="col-span-full">
+                  <EmptyState icon={ClipboardCheck} title="Nenhuma checklist encontrada" />
                 </div>
               )}
             </div>
@@ -425,9 +392,7 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {aprovacoes.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  Nenhuma aprovação encontrada
-                </div>
+                <EmptyState icon={CheckCircle2} title="Nenhuma aprovação encontrada" />
               )}
             </div>
           </TabsContent>
