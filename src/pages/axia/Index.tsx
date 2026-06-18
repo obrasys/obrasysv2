@@ -330,26 +330,12 @@ export default function AxiaPage() {
         </Card>
 
         {/* ═══ KPI STRIP ═══ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { icon: AlertTriangle, label: 'Itens Críticos', value: d.criticalCount, bg: 'bg-red-500/10', ic: 'text-red-500' },
-            { icon: TrendingDown, label: 'Desvios de Preço', value: d.outlierCount, bg: 'bg-amber-500/10', ic: 'text-amber-500' },
-            { icon: PackageMinus, label: 'Itens em Falta', value: d.missingCount, bg: 'bg-primary/10', ic: 'text-primary' },
-            { icon: ShieldAlert, label: 'Risco de Margem', value: d.marginCount, bg: 'bg-purple-500/10', ic: 'text-purple-500' },
-          ].map((k, i) => (
-            <Card key={i} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-5 pb-4 flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${k.bg}`}>
-                  <k.icon className={`w-5 h-5 ${k.ic}`} />
-                </div>
-                <div>
-                  <p className="text-xl font-bold leading-none">{k.value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{k.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <MetricCardGrid columns={4}>
+          <MetricCard label="Itens Críticos" value={d.criticalCount} icon={AlertTriangle} tone="destructive" />
+          <MetricCard label="Desvios de Preço" value={d.outlierCount} icon={TrendingDown} tone="warning" />
+          <MetricCard label="Itens em Falta" value={d.missingCount} icon={PackageMinus} tone="primary" />
+          <MetricCard label="Risco de Margem" value={d.marginCount} icon={ShieldAlert} tone="warning" />
+        </MetricCardGrid>
 
         {/* ═══ 1. PERGUNTAS RÁPIDAS (CHAT) ═══ */}
         <Section icon={MessageSquare} title="Perguntas Rápidas" description="Faça perguntas sobre os seus dados operacionais"
