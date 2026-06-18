@@ -26,6 +26,7 @@ import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
 import type { ObraStatus } from '@/types/obras';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 
 const PAGE_SIZE = 8;
 
