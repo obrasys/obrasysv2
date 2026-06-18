@@ -31,12 +31,12 @@ export default function DefinicoesFaturacao() {
           </div>
           <div className="flex-1">
             <p className="text-xs uppercase tracking-wide text-text-muted">Plano</p>
-            <p className="text-xl font-bold text-text-strong">
-              {isLoading ? "A carregar…" : planName}
+            <p className="text-xl font-bold capitalize text-text-strong">
+              {loading ? "A carregar…" : planName}
             </p>
-            {subscription?.current_period_end ? (
+            {subscription?.subscription_end ? (
               <p className="text-xs text-text-muted">
-                Próxima renovação: {new Date(subscription.current_period_end).toLocaleDateString("pt-PT")}
+                Próxima renovação: {new Date(subscription.subscription_end).toLocaleDateString("pt-PT")}
               </p>
             ) : null}
           </div>
