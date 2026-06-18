@@ -100,6 +100,7 @@ const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const MigracaoPage = lazy(() => import("./pages/admin/Migracao"));
 const AdminTickets = lazy(() => import("./pages/admin/Tickets"));
 const AdminFornecedores = lazy(() => import("./pages/admin/Fornecedores"));
+const AdminAxiaNvidiaTest = lazy(() => import("./pages/admin/AxiaNvidiaTest"));
 const PortalIndex = lazy(() => import("./pages/portal/Index"));
 const PortalObra = lazy(() => import("./pages/portal/Obra"));
 const FornecedorAuth = lazy(() => import("./pages/fornecedor/Auth"));
@@ -296,6 +297,7 @@ const App = () => (
                   <Route path="/admin/migracao" element={<SuperAdminRoute><MigracaoPage /></SuperAdminRoute>} />
                   <Route path="/admin/tickets" element={<SuperAdminRoute><AdminTickets /></SuperAdminRoute>} />
                   <Route path="/admin/fornecedores" element={<SuperAdminRoute><AdminFornecedores /></SuperAdminRoute>} />
+                  <Route path="/admin/axia-nvidia-test" element={<SuperAdminRoute><AdminAxiaNvidiaTest /></SuperAdminRoute>} />
                   <Route path="/portal" element={<ClientRoute><PortalIndex /></ClientRoute>} />
                   <Route path="/portal/obra/:id" element={<ClientRoute><PortalObra /></ClientRoute>} />
                   <Route path="/fornecedor/auth" element={<FornecedorAuth />} />

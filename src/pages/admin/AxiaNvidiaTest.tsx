@@ -31,7 +31,7 @@ export default function AxiaNvidiaTest() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Axia × NVIDIA">
       <div className="space-y-6 max-w-3xl">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
