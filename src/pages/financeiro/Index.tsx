@@ -189,17 +189,13 @@ const FinanceiroIndex = () => {
             </Select>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setCategoriasOpen(true)}>
-              <Tags className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={() => setCategoriasOpen(true)} className="gap-2">
+              <Tags className="w-4 h-4" />
               <span className="hidden sm:inline">Categorias</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')}>
-              <Users className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')} className="gap-2">
+              <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Fornecedores</span>
-            </Button>
-            <Button onClick={() => { setEditingConta(null); setFormOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Conta
             </Button>
           </div>
         </div>
