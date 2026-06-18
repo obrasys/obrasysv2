@@ -39,6 +39,7 @@ import { useFiscalEngine } from '@/hooks/useFiscalEngine';
 import { CotacoesTab } from '@/components/orcamentos/CotacoesTab';
 import { OrcamentoAuditPanel } from '@/components/orcamentos/OrcamentoAuditPanel';
 import { BudgetWorkingPanel } from '@/components/orcamentos/BudgetWorkingPanel';
+import { CommercialProposalsPanel } from '@/components/orcamentos/CommercialProposalsPanel';
 import { ClosingSheetsPanel } from '@/components/orcamentos/ClosingSheetsPanel';
 import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
@@ -307,6 +308,9 @@ export default function VerOrcamentoPage() {
               <History className="h-3 w-3 mr-1.5" /> Histórico
             </TabsTrigger>
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
+            <TabsTrigger value="proposta">
+              <FileText className="h-3 w-3 mr-1.5" /> Proposta
+            </TabsTrigger>
           </TabsList>
 
           {(orcamento as any).obra_id && (
@@ -354,6 +358,17 @@ export default function VerOrcamentoPage() {
           <TabsContent value="cotacoes">
             <CotacoesTab orcamentoId={id!} />
           </TabsContent>
+
+          <TabsContent value="proposta">
+            <CommercialProposalsPanel
+              orcamento={orcamento}
+              valorBase={valorBase}
+              valorIVA={valorIVA}
+              valorFinal={valorFinal}
+              taxaIVA={taxaIVA}
+            />
+          </TabsContent>
+
 
 
 
