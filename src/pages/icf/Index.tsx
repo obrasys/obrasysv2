@@ -284,20 +284,20 @@ const IcfIndex = () => {
             )}
 
             {!configsLoading && !configsError && !activeConfig && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground space-y-3">
-                  <Inbox className="h-10 w-10 mx-auto opacity-50" />
-                  <p>
-                    {obraFilter
-                      ? 'Ainda não existe nenhuma configuração ICF ativa para esta obra.'
-                      : 'Ainda não tem configurações ICF de orçamentação.'}
-                  </p>
-                  <Button onClick={handleCreateConfig} disabled={createConfig.isPending}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar primeira configuração
+              <EmptyState
+                icon={Inbox}
+                title={obraFilter ? 'Sem configuração ICF para esta obra' : 'Sem configurações ICF'}
+                description={
+                  obraFilter
+                    ? 'Crie a primeira configuração paramétrica para esta obra para começar.'
+                    : 'Crie uma configuração ICF para começar a orçamentar com o motor paramétrico.'
+                }
+                action={
+                  <Button onClick={handleCreateConfig} disabled={createConfig.isPending} className="gap-2">
+                    <Plus className="h-4 w-4" /> Criar primeira configuração
                   </Button>
-                </CardContent>
-              </Card>
+                }
+              />
             )}
 
             {activeConfig && (
