@@ -1069,6 +1069,48 @@ export type Database = {
           },
         ]
       }
+      axia_ai_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          model_used: string | null
+          module: string | null
+          organization_id: string | null
+          provider_used: string | null
+          status: string | null
+          task_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model_used?: string | null
+          module?: string | null
+          organization_id?: string | null
+          provider_used?: string | null
+          status?: string | null
+          task_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model_used?: string | null
+          module?: string | null
+          organization_id?: string | null
+          provider_used?: string | null
+          status?: string | null
+          task_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       axia_budget_stats: {
         Row: {
           canonical_label: string
