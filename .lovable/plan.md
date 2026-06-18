@@ -1,62 +1,86 @@
-# Plano: Corrigir truncamento da Axia no módulo Planta/ICF
 
-## Diagnóstico
+# Orçamentação Inteligente — Plano Faseado
 
-A análise da planta em `supabase/functions/axia-plan-vision/index.ts` faz uma única chamada multimodal pedindo um JSON estruturado enorme (sheet_classification + dimensions + rooms + elements + walls + openings + exterior_elements + reading_quality + limitations + summary). Com `max_tokens` apenas **4000** (tool mode) ou **6000** (json mode), Gemini corta a resposta (`finish_reason=length`) — o parser falha e a planta volta vazia. Além disso a cadeia de fallback termina em `google/gemini-2.5-flash-lite`, que é o pior modelo para esta tarefa técnica densa. `icf-plant-analysis/index.ts` tem o mesmo padrão monolítico.
+Este é um plano grande (5+ fases). Vou implementar em incrementos, com testes de regressão entre cada fase, para não quebrar Orçamentos, Axia, Plantas/ICF, Obras, Budget, Forecast e Folha de Fecho.
 
-## Mudanças (apenas backend de análise — sem mexer no UI)
+## Fase 0 — Auditoria (sem alterar código)
 
-### 1. Token budget e timeout (axia-plan-vision + icf-plant-analysis)
-- `tokenLimit()`: subir para `16000` (json) / `12000` (tool) por chamada em modelos Gemini Pro/Flash, mantendo `4000`/`6000` apenas na etapa de classificação.
-- Subir `HARD_DEADLINE_MS` de 140s para o máximo seguro (~150s do edge runtime) e aumentar `timeoutMs` das tentativas Pro para 90s.
-- Antes de gravar, exigir `finish_reason === "stop" | "tool_calls"`. Se vier `length` → tratar como truncado e seguir para fallback compacto/etapas.
+Antes de qualquer alteração, faço um relatório curto em `.lovable/audit-orcamentacao-inteligente.md` mapeando:
+- Pontos de entrada atuais de orçamento (`Essencial v2`, criação manual, importação caderno encargos, ICF, plantas, instalações paramétricas).
+- Hooks/tabelas afetados: `orcamentos`, `budget_versions`, `budget_version_items`, `capitulos_orcamento`, `artigos_orcamento`, `caderno_*`, `plan_*`, `icf_*`, `budget_awards`, `financial_work_*`, `closing_sheets`.
+- Edge functions Axia já existentes (`axia-chat`, `axia-ai-gateway`, intake de voz, organização IA de orçamentos, RAI).
+- Fluxo atual de adjudicação → obra/budget/forecast.
+- Riscos de regressão por fase.
 
-### 2. Validação robusta de JSON
-- Após `parseJsonWithRepair`, validar braces/brackets balanceados e ausência de padrões `...`/`[truncated]` (helper novo `detectTruncation`).
-- Se truncado/incompleto: **não gravar** como `final`, devolver `{ success:false, error.code:"AI_STRUCTURED_OUTPUT_TRUNCATED", message:"A análise ficou demasiado extensa e precisa ser processada em etapas." }` e registar em `axia_call_logs` com `status="truncated"` + `error_message` (motivo: truncated / invalid_json / timeout).
-- Acrescentar status `"truncated"` ao enum usado em `persistCallLog`.
+Entrega: documento + confirmação contigo antes de Fase 1.
 
-### 3. Análise em etapas (novo pipeline "staged")
-Quando a chamada monolítica truncar OU quando `approxBytes > 3.2MB` (planta densa) OU `high_res_retry`, partir para pipeline:
-- **Etapa 1 — Classificação**: `gemini-2.5-flash-lite`, schema mínimo (`sheet_classification`, `scale_detected`, `reading_quality`). ~1500 tokens.
-- **Etapa 2 — Elementos construtivos**: `gemini-2.5-pro`, schema só com `elements`, `walls`, `openings`. ~10000 tokens.
-- **Etapa 3 — Medidas/cotas/áreas/vãos/observações**: `gemini-2.5-pro`, schema só com `dimensions`, `rooms`, `exterior_elements`, `limitations`, `validation_questions`. ~10000 tokens.
-- **Etapa 4 — Quantitativos**: reaproveitar `plan-quantitativos-engine.ts` já existente sobre o output consolidado (sem nova chamada AI).
-- **Etapa 5 — Consolidação**: merge em memória num único JSON conforme o schema actual; passa por `normalizeAnalysis` + `hasMinimumFields` antes de devolver.
-- Para PDFs multi-folha em `icf-plant-analysis`: processar 1 folha por chamada e consolidar.
+## Fase 1 — Esqueleto do fluxo "Orçamentação Inteligente"
 
-### 4. Prompt da Axia (systemPrompt em axia-plan-vision e icf-plant-analysis)
-Adicionar regras explícitas:
-- "Devolve APENAS JSON válido e fechado. Sem markdown, sem texto antes/depois."
-- "Usa `null` quando a informação não existir; nunca inventes."
-- "Observações em máximo 80 caracteres; nunca repetir dados de outros campos."
-- "Não repetir entradas em arrays — uma parede/dimensão por ID lógico."
-- "Se faltar espaço, prioriza fechar o JSON em vez de continuar a listar."
+- Nova rota `/orcamentos/inteligente` com wizard de 5 passos (Stepper):
+  1. Contexto da obra (cliente, prazo, regime fiscal)
+  2. Importar documentos (PDF, Excel, caderno encargos, planta PDF/DXF)
+  3. Estruturação Axia (capítulos/artigos/unidades/quantidades)
+  4. Revisão assistida obrigatória
+  5. Gravar como rascunho de orçamento
+- Reaproveita componentes existentes: `useCadernos`, `useBudgetVersions`, importadores Excel/PDF, motor `axia-organize-budget`.
+- Entradas no Dashboard e em `/orcamentos` ao lado de "Essencial" e "Avançado" (sem remover os existentes).
+- **Sem persistir nada definitivo** sem clicar "Confirmar revisão".
 
-### 5. Fallback em cascata
-Nova cadeia em `attempts`:
-1. `gemini-2.5-pro` tool mode, 90s, token budget alto (monolítico).
-2. Se truncar → `gemini-2.5-pro` json mode compacto (mesmo schema, prompt reforçado "responde no menor número de tokens possível").
-3. Se truncar de novo → pipeline staged (etapas 1–5 acima).
-4. Para multi-folha → loop folha-a-folha.
-- `flash-lite` deixa de ser tentativa final para vision crítica; fica reservado apenas à Etapa 1 (classificação).
+## Fase 2 — Revisão assistida + tabela de pendências
 
-### 6. Troca de modelo principal
-- `axia-plan-vision`: `visionChain.primary` passa a `google/gemini-2.5-pro` (já é o fallback hoje); `fallback` passa a `google/gemini-2.5-flash`.
-- `icf-plant-analysis`: idem na sua `chain`.
-- Manter as overrides via `AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY/_FALLBACK`.
+- Nova tabela `axia_budget_review_items` (organization_id, orcamento_id, tipo: `missing_price` | `suspect_quantity` | `ambiguous_unit` | `doc_mismatch` | `human_question`, severity, payload jsonb, status `pending|accepted|rejected|fixed`, resolved_by).
+- UI de revisão: lista lado-a-lado com origem (documento/página/linha), sugestão Axia, ação do utilizador.
+- Bloqueio: gravação só permitida quando nenhum item `severity=critical` está `pending`.
+- Mensagem padrão Axia: "Esta análise requer validação humana."
 
-### 7. Telemetria
-- Em cada tentativa: logar `model`, `mode`, `finish_reason`, `output_tokens`, `truncated:boolean`, `stage` ("monolithic" | "classification" | "elements" | "measures" | "consolidation").
-- Persistir `stage` num novo campo (opcional) ou concatenar em `error_message` quando não houver coluna.
+## Fase 3 — "Auditar orçamento com Axia"
 
-## Ficheiros tocados
-- `supabase/functions/axia-plan-vision/index.ts` — token budget, detecção truncamento, prompt, cadeia de fallback, novo pipeline staged.
-- `supabase/functions/icf-plant-analysis/index.ts` — mesmas mudanças + loop folha-a-folha.
-- `supabase/functions/axia-classify-sheets/index.ts` — alinhar prompt compacto (sem reescrita estrutural).
-- `src/hooks/usePlanQuantitativos.ts` / `useSheetClassification.ts` / `PlanMeasurementAxiaPanel.tsx` — só tratar novo erro `AI_STRUCTURED_OUTPUT_TRUNCATED` para mostrar a mensagem "A análise ficou demasiado extensa e precisa ser processada em etapas." (UI mínima, sem redesenho).
+- Botão em qualquer orçamento (rascunho ou em revisão).
+- Edge function `axia-budget-audit` (passa pelo `axia-ai-gateway`, sem expor provider) que valida:
+  artigos sem preço, quantidades fora de banda histórica, capítulos sem margem, custos indiretos, estaleiro, IVA por regime, divergências doc vs orçamento, riscos técnicos, exclusões sugeridas, observações.
+- Resultado guardado em `axia_budget_review_items` para reuso da UI da Fase 2.
 
-## Fora de scope
-- Não alterar schema das tabelas.
-- Não mexer em outros módulos Axia (chat, budget, foundation, mce).
-- Sem mudanças no layout/visual do módulo Planta.
+## Fase 4 — Proposta Comercial em PDF
+
+- Novo gerador `src/lib/proposta-comercial-pdf.ts` (jsPDF, mesmo padrão vetorial do PDF atual) com:
+  capa branded, dados cliente/obra, resumo por capítulos (sem custos internos nem margens), prazo, condições pagamento, validade, exclusões, observações técnicas, anexos.
+- Mantém o PDF técnico atual intacto.
+- Nova tabela `commercial_proposals` (orcamento_id, version, snapshot jsonb, valid_until, status, pdf_url).
+
+## Fase 5 — Adjudicação → Orçamento Base + rastreabilidade
+
+- Ao marcar proposta como adjudicada:
+  - Snapshot imutável do orçamento original (já existe parcialmente via `budget_awards`).
+  - Cria "Orçamento Base" da obra alimentando Budget e Forecast inicial (`financial_work_cycles` / `financial_milestones`) sem alterar o orçamento original.
+  - Liga `proposal_id → budget_base_id → obra_id → folha_fecho_id` via nova tabela `budget_lineage` (proposal_id, budget_id, base_budget_id, obra_id, closing_sheet_id, created_at).
+- UI de "Rastreabilidade" no detalhe da obra mostrando a cadeia completa.
+
+## Fase 6 — Dashboard guiado por ações
+
+- Refazer o topo do Dashboard com 7 cards de ação principais:
+  Criar orçamento · Importar documentos · Analisar planta · Gerar proposta · Acompanhar margem · Rever documentos · Auditar orçamento.
+- Manter KPIs e widgets existentes em baixo, com menos peso visual.
+- Sem remover nenhum bloco atual sem confirmação.
+
+## Princípios transversais
+
+- Nenhuma referência a provider/modelo IA na UI pública (mantém regra já em vigor).
+- Todas as chamadas IA pelo `axia-ai-gateway` com log em `axia_ai_logs`.
+- Cada fase entrega: migrações com GRANT + RLS, hooks tipados, UI, e um curto checklist de regressão (`.lovable/checklist-orc-inteligente-fase-N.md`).
+- Feature flag por organização (`feature_flags.orcamentacao_inteligente`) para ativar gradualmente.
+
+## Detalhes técnicos resumidos
+
+- Stack: React/Vite + Supabase + Edge Functions Deno (sem mudanças).
+- Reuso máximo: importadores Excel/PDF, `useBudgetVersions`, motor Axia de organização, gerador PDF atual como base.
+- Novas tabelas (todas com `organization_id`, RLS multi-tenant, GRANTs):
+  `axia_budget_review_items`, `commercial_proposals`, `budget_lineage`.
+- Novas edge functions: `axia-budget-audit`, `generate-commercial-proposal-pdf` (server-side opcional; default client-side jsPDF).
+
+## Como avançamos
+
+Confirma-me só **3 coisas** antes de eu começar a Fase 0:
+
+1. Posso adicionar o fluxo como **opção adicional** ao lado de Essencial/Avançado (não substitui)?
+2. A Proposta Comercial deve esconder por completo custos unitários e margens (só totais por capítulo)?
+3. Ativação inicial só na tua conta via feature flag, depois alargamos?
