@@ -162,7 +162,7 @@ export default function TarefasPage() {
       title="Tarefas e Cronograma"
       subtitle="Gestão de tarefas e acompanhamento do cronograma das obras"
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Planeamento"
           title="Tarefas e Cronograma"

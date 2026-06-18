@@ -28,7 +28,7 @@ export default function EspecialidadesIndex() {
 
   return (
     <AppLayout title="Plantas de Especialidades" subtitle="Carregue plantas técnicas e marque pontos por sistema">
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Obra"
           title="Plantas de Especialidades"

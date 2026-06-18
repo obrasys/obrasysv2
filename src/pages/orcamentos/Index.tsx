@@ -80,7 +80,7 @@ export default function OrcamentosPage() {
 
   return (
     <AppLayout title="Orçamentos" subtitle="Gestão comercial e técnica de propostas">
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Comercial"
           title="Orçamentos"

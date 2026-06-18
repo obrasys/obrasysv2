@@ -93,7 +93,7 @@ export default function BasePrecosIndex() {
       title="Base de Preços"
       subtitle="Pesquisa inteligente e referências de materiais de construção"
     >
-      <div className="p-4 md:p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Catálogo"
           title="Base de Preços"
