@@ -1,13 +1,17 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
-const SYSTEM_PROMPT = `És a Axia, assistente do Obra Sys. Responde em português europeu. Ajuda em gestão de obra, orçamento, compras, medições, folha de fecho, MCE, Forecast, EAC, RAI, documentos e apoio ao utilizador.
+const SYSTEM_PROMPT = `És a Axia, assistente inteligente do Obra Sys. Responde em português europeu, com linguagem clara e útil. Apoias utilizadores em gestão de obra, orçamentos, compras, medições, documentos, folha de fecho, MCE, Forecast, EAC, RAI, ICF e apoio ao uso da plataforma.
 
-REGRAS:
-- Nunca inventes valores financeiros, margens, RAI, EAC, Forecast, desvios ou totais.
-- Quando não tiveres dados determinísticos do sistema, diz claramente que precisas desses dados e indica que fontes do Obra Sys devem ser consultadas (orçamento aprovado, custos registados, vendas previstas/confirmadas, compras/adjudicações, medições, folha de fecho).
-- Sugestões financeiras voltam como proposta/draft e devem ser validadas por humano. Termina respostas financeiras com a frase: "Esta análise requer validação humana."
-- Nunca escrevas tags técnicas como "Proposed/Draft/Requires_Human_Review" no texto.
-- Não reveles dados sensíveis, margem ou RAI a fornecedores ou utilizadores externos.`;
+Regras críticas:
+- Nunca inventes valores financeiros.
+- Nunca calcules margem, RAI, EAC, Forecast, desvios, totais, custos ou vendas sem dados determinísticos enviados pelo sistema.
+- Quando faltarem dados, diz claramente quais dados são necessários (orçamento aprovado, custos registados, vendas previstas/confirmadas, compras/adjudicações, medições, folha de fecho).
+- Sugestões com impacto financeiro devem ser tratadas como proposta e exigir validação humana. Termina respostas financeiras com: "Esta análise requer validação humana."
+- Fornecedores, clientes externos e utilizadores sem permissão nunca podem ver margem, RAI ou dados financeiros sensíveis.
+- Se não tiveres base suficiente para responder, diz que precisas consultar dados do Obra Sys.
+- Não menciones NVIDIA, provider, modelo, API, backend ou infraestrutura técnica ao utilizador final.
+- Nunca escrevas tags técnicas como "Proposed/Draft/Requires_Human_Review" no texto.`;
 
 const FALLBACK_MODEL = 'google/gemini-2.5-flash';
 const TECHNICAL_TAG = /\s*\**\s*Proposed\s*\/\s*Draft\s*\/\s*Requires[_ ]?Human[_ ]?Review\s*\.?\**\s*$/i;
@@ -125,10 +129,33 @@ async function callLovableFallback(message: string) {
   };
 }
 
+async function writeLog(admin: ReturnType<typeof createClient>, row: Record<string, unknown>) {
+  try {
+    await admin.from('axia_ai_logs').insert(row);
+  } catch (e) {
+    console.error('axia-ai-gateway: log insert failed', (e as Error).message);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+  // ── Auth ─────────────────────────────────────────
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) return json(401, { error: 'Não autorizado' });
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: userData, error: authErr } = await userClient.auth.getUser();
+  if (authErr || !userData?.user) return json(401, { error: 'Sessão inválida' });
+  const authUserId = userData.user.id;
+
+  // ── Input ────────────────────────────────────────
   let body: Input;
   try {
     body = await req.json();
@@ -137,34 +164,85 @@ Deno.serve(async (req) => {
   }
 
   const message = body?.message;
-  const task_type = (body?.task_type ?? 'general').toString();
+  const task_type = (body?.task_type ?? 'general').toString().slice(0, 64);
+  const moduleName = (body?.module ?? 'unknown').toString().slice(0, 64);
   if (typeof message !== 'string' || message.trim().length === 0 || message.length > 8000) {
     return json(400, { error: 'Campo "message" inválido (string 1-8000 chars)' });
   }
 
+  // ── Validate org membership (if provided) ────────
+  const admin = createClient(supabaseUrl, serviceKey);
+  let organization_id: string | null = body?.organization_id ?? null;
+  if (organization_id) {
+    const { data: member } = await admin
+      .from('organization_members')
+      .select('organization_id')
+      .eq('organization_id', organization_id)
+      .eq('user_id', authUserId)
+      .maybeSingle();
+    if (!member) return json(403, { error: 'Sem acesso à organização' });
+  }
+
   const nvidiaEnabled = (Deno.env.get('AXIA_NVIDIA_ENABLED') ?? '').toLowerCase() === 'true';
   const errors: string[] = [];
+  const startedAt = Date.now();
+
+  const baseLog = {
+    organization_id,
+    user_id: authUserId,
+    module: moduleName,
+    task_type,
+  };
 
   if (nvidiaEnabled) {
     try {
       const r = await callNvidia(message);
-      return json(200, postProcess(r.answer, task_type, 'nvidia', r.model));
+      const result = postProcess(r.answer, task_type, 'nvidia', r.model);
+      await writeLog(admin, {
+        ...baseLog,
+        provider_used: 'nvidia',
+        model_used: r.model,
+        status: 'ok',
+        latency_ms: Date.now() - startedAt,
+      });
+      return json(200, result);
     } catch (e) {
-      console.error('axia-ai-gateway: NVIDIA failed, falling back', (e as Error).message);
-      errors.push(`nvidia_failed: ${(e as Error).message.slice(0, 200)}`);
+      const msg = (e as Error).message;
+      console.error('axia-ai-gateway: NVIDIA failed, falling back', msg);
+      errors.push('nvidia_failed');
+      await writeLog(admin, {
+        ...baseLog,
+        provider_used: 'nvidia',
+        status: 'error',
+        latency_ms: Date.now() - startedAt,
+        error_message: msg.slice(0, 500),
+      });
     }
   }
 
+  const fbStarted = Date.now();
   try {
     const r = await callLovableFallback(message);
     const result = postProcess(r.answer, task_type, 'fallback', r.model);
     if (errors.length) (result.warnings as string[]).push(...errors);
+    await writeLog(admin, {
+      ...baseLog,
+      provider_used: 'fallback',
+      model_used: r.model,
+      status: 'ok',
+      latency_ms: Date.now() - fbStarted,
+    });
     return json(200, result);
   } catch (e) {
-    console.error('axia-ai-gateway: fallback failed', (e as Error).message);
-    return json(502, {
-      error: 'Falha em todos os providers',
-      details: [...errors, (e as Error).message.slice(0, 200)],
+    const msg = (e as Error).message;
+    console.error('axia-ai-gateway: fallback failed', msg);
+    await writeLog(admin, {
+      ...baseLog,
+      provider_used: 'fallback',
+      status: 'error',
+      latency_ms: Date.now() - fbStarted,
+      error_message: msg.slice(0, 500),
     });
+    return json(502, { error: 'Serviço Axia indisponível de momento.' });
   }
 });

@@ -226,6 +226,88 @@ ${contextBlock}`;
 
     messages.push({ role: "user", content: question });
 
+    // ── NVIDIA via gateway (feature-flagged, reversible) ────
+    const useGateway = (Deno.env.get("AXIA_USE_GATEWAY") ?? "").toLowerCase() === "true";
+    const nvidiaEnabled = (Deno.env.get("AXIA_NVIDIA_ENABLED") ?? "").toLowerCase() === "true";
+    if (useGateway && nvidiaEnabled) {
+      try {
+        const nvidiaKey = Deno.env.get("NVIDIA_API_KEY");
+        const nvidiaBase = (Deno.env.get("NVIDIA_BASE_URL") || "https://integrate.api.nvidia.com/v1").replace(/\/$/, "");
+        const nvidiaModel = Deno.env.get("AXIA_DEFAULT_MODEL");
+        if (!nvidiaKey || !nvidiaModel) throw new Error("NVIDIA not configured");
+
+        const nvRes = await fetch(`${nvidiaBase}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${nvidiaKey}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            model: nvidiaModel,
+            temperature: 0.2,
+            max_tokens: 1200,
+            messages,
+          }),
+        });
+        if (!nvRes.ok) {
+          const detail = (await nvRes.text().catch(() => "")).slice(0, 200);
+          throw new Error(`NVIDIA ${nvRes.status}: ${detail}`);
+        }
+        const nvJson = await nvRes.json();
+        const content: string = nvJson?.choices?.[0]?.message?.content ?? "";
+
+        // internal log only — no provider/model leaks to the client
+        try {
+          const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+          await admin.from("axia_ai_logs").insert({
+            user_id: user.id,
+            module: "axia_chat",
+            task_type: "simple_chat",
+            provider_used: "nvidia",
+            model_used: nvJson?.model ?? nvidiaModel,
+            status: "ok",
+          });
+        } catch (_) { /* ignore */ }
+
+        // Emit SSE in the same shape the frontend already consumes
+        const stream = new ReadableStream({
+          start(controller) {
+            const enc = new TextEncoder();
+            const chunkSize = 240;
+            for (let i = 0; i < content.length; i += chunkSize) {
+              const piece = content.slice(i, i + chunkSize);
+              const payload = JSON.stringify({ choices: [{ delta: { content: piece } }] });
+              controller.enqueue(enc.encode(`data: ${payload}\n\n`));
+            }
+            controller.enqueue(enc.encode("data: [DONE]\n\n"));
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+          },
+        });
+      } catch (e) {
+        console.warn("axia-chat: NVIDIA path failed, falling back to Lovable AI:", (e as Error).message);
+        try {
+          const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+          await admin.from("axia_ai_logs").insert({
+            user_id: user.id,
+            module: "axia_chat",
+            task_type: "simple_chat",
+            provider_used: "nvidia",
+            status: "error",
+            error_message: (e as Error).message.slice(0, 500),
+          });
+        } catch (_) { /* ignore */ }
+        // fall through to existing Lovable streaming path
+      }
+    }
+
     // ── Call Lovable AI Gateway (streaming) ─────────────────
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -239,6 +321,7 @@ ${contextBlock}`;
         stream: true,
       }),
     });
+
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
