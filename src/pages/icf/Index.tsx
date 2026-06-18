@@ -25,6 +25,7 @@ import { IcfConstantsDialog } from '@/components/icf/IcfConstantsDialog';
 import { IcfScopeDialog, type IcfScopeSelection } from '@/components/icf/IcfScopeDialog';
 import { IcfWelcomeDialog } from '@/components/icf/IcfWelcomeDialog';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
+import { PageHeader, EmptyState } from '@/components/patterns';
 
 const ICF_WELCOME_SESSION_PREFIX = 'icf_welcome_shown:';
 
