@@ -633,6 +633,7 @@ export default function AxiaInboxPage() {
       </Tabs>
 
       <AxiaIntakeReviewDialog item={selected} open={open} onOpenChange={setOpen} />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
