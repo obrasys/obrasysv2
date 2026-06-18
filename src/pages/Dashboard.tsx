@@ -1,3 +1,4 @@
+// Dashboard v2 - redesigned
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
@@ -18,9 +19,9 @@ import {
   DashboardWelcome,
   DashboardKPIStrip,
   DashboardGuidedActions,
-  DashboardProjetosAtivos,
-  DashboardAtividadeIA,
 } from '@/components/dashboard';
+import { DashboardProjetosAtivos } from '@/components/dashboard/DashboardProjetosAtivos';
+import { DashboardAtividadeIA } from '@/components/dashboard/DashboardAtividadeIA';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 

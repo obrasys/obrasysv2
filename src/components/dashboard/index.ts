@@ -1,3 +1,4 @@
+// Dashboard components exports
 export { DashboardCharts } from './DashboardCharts';
 export { DashboardMetrics } from './DashboardMetrics';
 export { DashboardStats } from './DashboardStats';

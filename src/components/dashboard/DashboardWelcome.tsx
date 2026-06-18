@@ -51,7 +51,7 @@ export function DashboardWelcome({ obrasEmRisco, acoesPrioritarias, medicoesPend
           </Button>
           <Button size="sm" onClick={() => navigate('/obras/criar')}>
             <Plus className="w-4 h-4 mr-1.5" />
-            Novo projeto
+            Nova obra
           </Button>
         </div>
       </div>

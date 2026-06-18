@@ -76,8 +76,8 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
       <Card className="rounded-xl border-border/50 shadow-sm">
         <CardContent className="py-12 text-center">
           <Star className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Sem projetos ativos. Crie um projeto para começar.</p>
-          <Button className="mt-4" size="sm" onClick={() => navigate('/obras/criar')}>Criar projeto</Button>
+          <p className="text-sm text-muted-foreground">Sem obras ativas. Crie uma obra para começar.</p>
+          <Button className="mt-4" size="sm" onClick={() => navigate('/obras/criar')}>Criar obra</Button>
         </CardContent>
       </Card>
     );
@@ -88,14 +88,14 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
       <CardHeader className="pb-3 pt-4 px-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Projetos ativos</h3>
-            <p className="text-[11px] text-muted-foreground">Ordenados por urgência de entrega</p>
+            <h3 className="text-sm font-semibold text-foreground">Obras ativas</h3>
+            <p className="text-[11px] text-muted-foreground">Ordenadas por urgência de entrega</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Pesquisar projeto, cliente ou id..."
+                placeholder="Pesquisar obra, cliente ou id..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8 h-8 text-xs w-56"
@@ -120,7 +120,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-5 py-2.5 w-16">REF</th>
-                <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">PROJETO</th>
+                <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">OBRA</th>
                 <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">CLIENTE</th>
                 <th className="text-right font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">VALOR BASE</th>
                 <th className="text-right font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">MARGEM</th>
@@ -177,7 +177,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
         {sorted.length > 6 && (
           <div className="px-5 py-3 border-t border-border/50 flex justify-center">
             <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/obras')}>
-              Ver todos os projetos <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              Ver todas as obras <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </div>
         )}
