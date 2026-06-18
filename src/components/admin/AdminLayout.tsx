@@ -20,7 +20,7 @@ const ADMIN_NAV = [
   { icon: Store, label: "Fornecedores", href: "/admin/fornecedores" },
   { icon: TicketCheck, label: "Tickets", href: "/admin/tickets" },
   { icon: ArrowRightLeft, label: "Migração", href: "/admin/migracao" },
-  { icon: Sparkles, label: "Axia × NVIDIA", href: "/admin/axia-nvidia-test" },
+  { icon: Sparkles, label: "Axia — Teste", href: "/admin/axia-nvidia-test" },
 ];
 
 interface AdminLayoutProps {
