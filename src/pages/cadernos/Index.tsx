@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, FileText, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout";
+import { PageHeader, MetricCardGrid, MetricCard, EmptyState } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCadernos } from "@/hooks/useCadernos";
@@ -73,20 +74,50 @@ export default function CadernosPage() {
     <AppLayout
       title="Cadernos de Encargos"
       subtitle={obra.nome}
-      actions={
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/obras/${obraId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar à Obra
-          </Button>
-          <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Importar Caderno
-          </Button>
-        </div>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Orçamentação"
+          title="Cadernos de Encargos"
+          subtitle={obra.nome}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => navigate(`/obras/${obraId}`)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar à Obra
+              </Button>
+              <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Importar Caderno
+              </Button>
+            </div>
+          }
+        />
+
+        {cadernos && cadernos.length > 0 ? (
+          <>
+            <MetricCardGrid columns={4}>
+              <MetricCard label="Total" value={cadernos.length} icon={FileText} />
+              <MetricCard
+                label="Importados"
+                value={cadernos.filter((c) => c.status === "importado").length}
+                icon={Upload}
+              />
+              <MetricCard
+                label="Validados"
+                value={cadernos.filter((c) => c.status === "validado").length}
+                icon={FileText}
+                tone="success"
+              />
+              <MetricCard
+                label="Orçamentados"
+                value={cadernos.filter((c) => c.status === "orcamentado").length}
+                icon={ExternalLink}
+                tone="primary"
+              />
+            </MetricCardGrid>
+          </>
+        ) : null}
         {cadernos && cadernos.length > 0 ? (
           <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cadernos.map((caderno) => (
@@ -178,19 +209,17 @@ export default function CadernosPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Upload className="w-16 h-16 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum caderno importado</h3>
-              <p className="text-muted-foreground text-center mb-6 max-w-md">
-                Importe um caderno de encargos para começar a criar orçamentos de forma rápida e precisa.
-              </p>
+          <EmptyState
+            icon={Upload}
+            title="Nenhum caderno importado"
+            description="Importe um caderno de encargos para começar a criar orçamentos de forma rápida e precisa."
+            action={
               <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Importar Primeiro Caderno
               </Button>
-            </CardContent>
-          </Card>
+            }
+          />
         )}
       </div>
 

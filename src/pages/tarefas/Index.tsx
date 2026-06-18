@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,68 +163,26 @@ export default function TarefasPage() {
       subtitle="Gestão de tarefas e acompanhamento do cronograma das obras"
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total
-              </CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
+        <PageHeader
+          eyebrow="Planeamento"
+          title="Tarefas e Cronograma"
+          subtitle="Organize tarefas, agenda diária e o cronograma físico das obras"
+          actions={
+            <Button onClick={handleCreateTarefa}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Tarefa
+            </Button>
+          }
+        />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pendentes
-              </CardTitle>
-              <Clock className="h-4 w-4 text-slate-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-600">{stats.pendentes}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Em Progresso
-              </CardTitle>
-              <ListTodo className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.emProgresso}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Atrasadas
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{stats.atrasadas}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Concluídas
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.concluidas}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats */}
+        <MetricCardGrid columns={5}>
+          <MetricCard label="Total" value={stats.total} icon={CheckSquare} />
+          <MetricCard label="Pendentes" value={stats.pendentes} icon={Clock} />
+          <MetricCard label="Em Progresso" value={stats.emProgresso} icon={ListTodo} tone="primary" />
+          <MetricCard label="Atrasadas" value={stats.atrasadas} icon={AlertTriangle} tone="destructive" />
+          <MetricCard label="Concluídas" value={stats.concluidas} icon={CheckCircle} tone="success" />
+        </MetricCardGrid>
 
         {/* Filters */}
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -301,13 +260,6 @@ export default function TarefasPage() {
           </div>
 
           <TabsContent value="tarefas" className="space-y-4">
-            <div className="flex justify-end">
-              <Button onClick={handleCreateTarefa}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Tarefa
-              </Button>
-            </div>
-
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -326,23 +278,23 @@ export default function TarefasPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckSquare className="h-12 w-12 text-muted-foreground/50" />
-                  <h3 className="mt-4 text-lg font-semibold">Nenhuma tarefa encontrada</h3>
-                  <p className="mt-2 text-sm text-muted-foreground text-center">
-                    {search || filterObra !== 'all' || filterStatus !== 'all'
-                      ? 'Tente ajustar os filtros de pesquisa'
-                      : 'Comece criando a sua primeira tarefa'}
-                  </p>
-                  {!search && filterObra === 'all' && filterStatus === 'all' && (
-                    <Button className="mt-4" onClick={handleCreateTarefa}>
+              <EmptyState
+                icon={CheckSquare}
+                title="Nenhuma tarefa encontrada"
+                description={
+                  search || filterObra !== 'all' || filterStatus !== 'all'
+                    ? 'Tente ajustar os filtros de pesquisa'
+                    : 'Comece criando a sua primeira tarefa'
+                }
+                action={
+                  !search && filterObra === 'all' && filterStatus === 'all' ? (
+                    <Button onClick={handleCreateTarefa}>
                       <Plus className="mr-2 h-4 w-4" />
                       Nova Tarefa
                     </Button>
-                  )}
-                </CardContent>
-              </Card>
+                  ) : undefined
+                }
+              />
             )}
           </TabsContent>
 
