@@ -315,8 +315,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredLivrosObra.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhum livro de obra encontrado
+                <div className="col-span-full">
+                  <EmptyState icon={BookOpen} title="Nenhum livro de obra encontrado" />
                 </div>
               )}
             </div>
@@ -343,8 +343,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredDocumentos.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhum documento encontrado
+                <div className="col-span-full">
+                  <EmptyState icon={FileText} title="Nenhum documento encontrado" />
                 </div>
               )}
             </div>
@@ -369,8 +369,8 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {filteredChecklists.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhuma checklist encontrada
+                <div className="col-span-full">
+                  <EmptyState icon={ClipboardCheck} title="Nenhuma checklist encontrada" />
                 </div>
               )}
             </div>
@@ -392,9 +392,7 @@ export default function ConformidadeIndex() {
                 />
               ))}
               {aprovacoes.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  Nenhuma aprovação encontrada
-                </div>
+                <EmptyState icon={CheckCircle2} title="Nenhuma aprovação encontrada" />
               )}
             </div>
           </TabsContent>
