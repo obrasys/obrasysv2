@@ -6,8 +6,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 
 export default function DefinicoesFaturacao() {
   const navigate = useNavigate();
-  const { subscription, isLoading } = useSubscription();
-  const planName = subscription?.plan_name ?? subscription?.tier ?? "Trial";
+  const { subscription, loading } = useSubscription();
+  const planName = subscription?.subscription_tier ?? "trial";
 
   return (
     <div className="space-y-6">
