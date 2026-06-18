@@ -60,6 +60,7 @@ const PerfilPage = lazy(() => import("./pages/Perfil"));
 const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
 const DefinicoesFolhaFechoQualidadesPage = lazy(() => import("./pages/DefinicoesFolhaFechoQualidades"));
 const DefinicoesShell = lazy(() => import("./components/definicoes/DefinicoesShell").then(m => ({ default: m.DefinicoesShell })));
+const DefinicoesIndexPage = lazy(() => import("./pages/definicoes/Index"));
 const DefinicoesPerfilPage = lazy(() => import("./pages/definicoes/Perfil"));
 const DefinicoesContaPage = lazy(() => import("./pages/definicoes/Conta"));
 const DefinicoesNotificacoesPage = lazy(() => import("./pages/definicoes/Notificacoes"));
@@ -265,7 +266,7 @@ const App = () => (
                   <Route path="/empresa/definicoes/faturacao" element={<ManagerRoute><FaturacaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
                   <Route path="/definicoes" element={<ManagerRoute><DefinicoesShell /></ManagerRoute>}>
-                    <Route index element={<DefinicoesPerfilPage />} />
+                    <Route index element={<DefinicoesIndexPage />} />
                     <Route path="perfil" element={<DefinicoesPerfilPage />} />
                     <Route path="conta" element={<DefinicoesContaPage />} />
                     <Route path="notificacoes" element={<DefinicoesNotificacoesPage />} />
