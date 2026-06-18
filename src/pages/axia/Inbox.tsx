@@ -477,30 +477,22 @@ export default function AxiaInboxPage() {
   };
 
   return (
-    <AppLayout title="Caixa Axia" subtitle="Revisão de capturas por voz">
-      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Caixa Axia</h1>
-            <p className="text-sm text-muted-foreground">
-              Revise os dados criados por voz antes de finalizar no Obra Sys.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+    <AppLayout
+      title="Caixa Axia"
+      subtitle="Revise os dados criados por voz antes de finalizar no Obra Sys."
+      actions={
+        <>
           <Button asChild variant="outline" size="sm" className="gap-2">
             <Link to="/axia/inbox?historico=1">
               <History className="h-4 w-4" /> Ver histórico
             </Link>
           </Button>
-          <VoiceCommandButton  size="sm" />
-        </div>
-      </div>
+          <VoiceCommandButton size="sm" />
+        </>
+      }
+    >
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+
 
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
