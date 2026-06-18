@@ -160,23 +160,22 @@ export default function ClientesPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">Nenhum cliente encontrado</h3>
-              <p className="mt-2 text-sm text-muted-foreground text-center">
-                {search || filterNivel !== 'all' || filterAtivo !== 'all'
-                  ? 'Tente ajustar os filtros de pesquisa'
-                  : 'Comece adicionando o seu primeiro cliente'}
-              </p>
-              {!search && filterNivel === 'all' && filterAtivo === 'all' && (
-                <Button className="mt-4" onClick={() => navigate('/clientes/criar')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Adicionar Cliente
+          <EmptyState
+            icon={Users}
+            title="Nenhum cliente encontrado"
+            description={
+              search || filterNivel !== 'all' || filterAtivo !== 'all'
+                ? 'Tente ajustar os filtros de pesquisa.'
+                : 'Comece adicionando o seu primeiro cliente.'
+            }
+            action={
+              !search && filterNivel === 'all' && filterAtivo === 'all' ? (
+                <Button onClick={() => navigate('/clientes/criar')} className="gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar Cliente
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         )}
       </div>
 
