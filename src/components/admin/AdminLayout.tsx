@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Wallet, ClipboardList, Mail,
   BarChart3, Store, TicketCheck, ArrowRightLeft, ChevronLeft,
-  Shield,
+  Shield, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,7 @@ const ADMIN_NAV = [
   { icon: Store, label: "Fornecedores", href: "/admin/fornecedores" },
   { icon: TicketCheck, label: "Tickets", href: "/admin/tickets" },
   { icon: ArrowRightLeft, label: "Migração", href: "/admin/migracao" },
+  { icon: Sparkles, label: "Axia × NVIDIA", href: "/admin/axia-nvidia-test" },
 ];
 
 interface AdminLayoutProps {
