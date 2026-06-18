@@ -790,8 +790,20 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
       const toolCall = choice?.message?.tool_calls?.[0];
       const messageText = extractTextContent(choice?.message?.content);
 
+      // finish_reason "length" indica truncamento por max_tokens -> não confiar no parse
+      const truncatedByLength = finishReason === "length" || finishReason === "MAX_TOKENS";
+
       if (att.mode === "tool" && toolCall) {
         const rawArgs: string = toolCall.function?.arguments ?? "";
+        if (truncatedByLength || detectTruncation(rawArgs)) {
+          console.warn(
+            `[truncated] tool args ${att.model}. finish_reason=${finishReason} len=${rawArgs.length}`,
+          );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
+          lastErrDetail = `truncated finish_reason=${finishReason} len=${rawArgs.length}`;
+          analysis = null;
+          continue;
+        }
         try {
           analysis = parseJsonWithRepair(rawArgs);
         } catch (e) {
@@ -807,6 +819,15 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
           lastErrDetail = `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`;
         }
       } else if (messageText) {
+        if (truncatedByLength || detectTruncation(messageText)) {
+          console.warn(
+            `[truncated] json content ${att.model}. finish_reason=${finishReason} len=${messageText.length}`,
+          );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
+          lastErrDetail = `truncated finish_reason=${finishReason} len=${messageText.length}`;
+          analysis = null;
+          continue;
+        }
         try {
           analysis = parseJsonWithRepair(messageText);
         } catch (jsonErr) {
@@ -814,7 +835,7 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
             `JSON parse failed (${att.model}/${att.mode}):`,
             jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
           );
-          lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
           lastErrDetail = `json_parse_failed finish_reason=${finishReason}`;
         }
       } else {
@@ -824,10 +845,11 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
           "toolCall=",
           !!toolCall,
         );
-        lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+        lastErrCode = truncatedByLength ? "AI_STRUCTURED_OUTPUT_TRUNCATED" : "AI_STRUCTURED_OUTPUT_MISSING";
         lastErrDetail = `no_content finish_reason=${finishReason}`;
       }
     }
+
 
     if (!analysis) {
         return await controlledFailure(
