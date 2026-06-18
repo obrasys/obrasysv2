@@ -206,23 +206,22 @@ export default function RDOsPage() {
               ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">Nenhum RDO encontrado</h3>
-              <p className="mt-2 text-sm text-muted-foreground text-center">
-                {search || filterObra !== 'all' || filterStatus !== 'all'
-                  ? 'Tente ajustar os filtros de pesquisa'
-                  : 'Comece criando o seu primeiro relatório diário'}
-              </p>
-              {!search && filterObra === 'all' && filterStatus === 'all' && (
-                <Button className="mt-4" onClick={() => navigate('/rdos/criar')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar RDO
+          <EmptyState
+            icon={FileText}
+            title="Nenhum RDO encontrado"
+            description={
+              search || filterObra !== 'all' || filterStatus !== 'all'
+                ? 'Tente ajustar os filtros de pesquisa.'
+                : 'Comece criando o seu primeiro relatório diário.'
+            }
+            action={
+              !search && filterObra === 'all' && filterStatus === 'all' ? (
+                <Button onClick={() => navigate('/rdos/criar')} className="gap-2">
+                  <Plus className="h-4 w-4" /> Criar RDO
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         )}
       </div>
 
