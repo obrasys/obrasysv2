@@ -374,7 +374,7 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
     });
 
     const persistCallLog = async (
-      status: "ok" | "error" | "timeout",
+      status: "ok" | "error" | "timeout" | "truncated",
       errorMessage: string | null,
     ) => {
       logStatus = status;
