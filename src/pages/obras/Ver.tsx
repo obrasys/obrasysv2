@@ -48,6 +48,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ObraStatus } from '@/types/obras';
 import { CONDICOES_METEOROLOGICAS } from '@/types/rdos';
+import { RastreabilidadePanel } from '@/components/orcamentos/RastreabilidadePanel';
 
 interface AIProgressResult {
   success: boolean;
@@ -845,9 +846,11 @@ export default function VerObraPage() {
           </TabsContent>
 
           {/* Tab: Dossier do Promotor */}
-          <TabsContent value="dossier" className="mt-4">
+          <TabsContent value="dossier" className="mt-4 space-y-4">
+            <RastreabilidadePanel obraId={id!} />
             <ObraDossierTab obraId={id!} />
           </TabsContent>
+
 
           <TabsContent value="mce" className="mt-4">
             <div className="flex justify-center">
