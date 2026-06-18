@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, FileText, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout";
+import { PageHeader, MetricCardGrid, MetricCard, EmptyState } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCadernos } from "@/hooks/useCadernos";
