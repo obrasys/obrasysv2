@@ -43,6 +43,7 @@ import {
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
 import { SalariosTab } from '@/components/recursos/SalariosTab';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import {
   ESTADO_EQUIPAMENTO_CONFIG,
   TIPO_CONTRATO_CONFIG,
