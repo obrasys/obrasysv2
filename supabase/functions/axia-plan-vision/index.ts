@@ -858,7 +858,7 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
         return await controlledFailure(
         lastErrCode,
         lastErrCode === "AI_STRUCTURED_OUTPUT_TRUNCATED"
-          ? "Análise truncada (planta muito densa)."
+          ? "A análise ficou demasiado extensa e precisa ser processada em etapas. Tente novamente — a Axia vai usar um modo mais compacto."
           : "A Axia não conseguiu devolver uma análise estruturada desta planta.",
         lastErrDetail,
       );
