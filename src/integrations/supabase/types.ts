@@ -1111,6 +1111,96 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_budget_review_items: {
+        Row: {
+          artigo_id: string | null
+          axia_suggestion: Json | null
+          budget_version_id: string | null
+          capitulo_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          item_type: string
+          orcamento_id: string | null
+          organization_id: string
+          original_value: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source_document_id: string | null
+          source_line: string | null
+          source_page: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_action: Json | null
+        }
+        Insert: {
+          artigo_id?: string | null
+          axia_suggestion?: Json | null
+          budget_version_id?: string | null
+          capitulo_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          item_type: string
+          orcamento_id?: string | null
+          organization_id: string
+          original_value?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_document_id?: string | null
+          source_line?: string | null
+          source_page?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_action?: Json | null
+        }
+        Update: {
+          artigo_id?: string | null
+          axia_suggestion?: Json | null
+          budget_version_id?: string | null
+          capitulo_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          item_type?: string
+          orcamento_id?: string | null
+          organization_id?: string
+          original_value?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_document_id?: string | null
+          source_line?: string | null
+          source_page?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_action?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "axia_budget_review_items_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "axia_budget_review_items_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       axia_budget_stats: {
         Row: {
           canonical_label: string
