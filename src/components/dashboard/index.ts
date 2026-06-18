@@ -9,3 +9,4 @@ export { DashboardObrasActive } from './DashboardObrasActive';
 export { DashboardFlowNav } from './DashboardFlowNav';
 export { DashboardAgendaPerformance } from './DashboardAgendaPerformance';
 export { DashboardSetupProgress } from './DashboardSetupProgress';
+export { DashboardGuidedActions } from './DashboardGuidedActions';
