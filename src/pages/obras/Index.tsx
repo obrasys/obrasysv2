@@ -26,6 +26,7 @@ import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { UpgradePromptModal } from '@/components/subscription/UpgradePromptModal';
 import { OBRA_STATUS_OPTIONS } from '@/types/obras';
 import type { ObraStatus } from '@/types/obras';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 
 const PAGE_SIZE = 8;
 
@@ -116,28 +117,29 @@ export default function ObrasPage() {
     <AppLayout
       title="Gestão de Obras"
       subtitle="Gerencie todas as suas obras e projetos"
-      actions={
-        <Button onClick={() => {
-          if (canCreateObra) {
-            navigate('/obras/criar');
-          } else {
-            setShowUpgradeModal(true);
-          }
-        }}>
-          {!canCreateObra && <Lock className="w-4 h-4 mr-2" />}
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Obra
-        </Button>
-      }
     >
-      <div className="p-4 md:p-6 space-y-5">
-        {/* KPIs */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-          <KpiCard index={0} label="Total de Obras" value={totalObras} />
-          <KpiCard index={1} label="Em Curso" value={obrasEmCurso} />
-          <KpiCard index={2} label="Concluídas" value={obrasConcluidas} />
-          <KpiCard index={3} label="Progresso Médio" value={progressoMedio} suffix="%" />
-        </div>
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Operação"
+          title="Gestão de Obras"
+          subtitle="Acompanhe o estado, progresso físico e valor previsto de todas as suas obras."
+          actions={
+            <Button
+              onClick={() => (canCreateObra ? navigate('/obras/criar') : setShowUpgradeModal(true))}
+              className="gap-2"
+            >
+              {!canCreateObra && <Lock className="w-4 h-4" />}
+              <Plus className="w-4 h-4" /> Nova Obra
+            </Button>
+          }
+        />
+
+        <MetricCardGrid columns={4}>
+          <MetricCard label="Total de Obras" value={totalObras} icon={Building2} tone="primary" />
+          <MetricCard label="Em Curso" value={obrasEmCurso} icon={Play} tone="success" />
+          <MetricCard label="Concluídas" value={obrasConcluidas} icon={CheckCircle} tone="default" />
+          <MetricCard label="Progresso Médio" value={`${progressoMedio}%`} icon={TrendingUp} tone="warning" />
+        </MetricCardGrid>
 
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList>
@@ -286,12 +288,16 @@ export default function ObrasPage() {
                 <Pagination current={page} total={totalPages} onChange={setPage} />
               </>
             ) : (
-              <div className="text-center py-12 bg-muted/30 rounded-xl">
-                <p className="text-muted-foreground">Nenhuma obra encontrada.</p>
-                <Button variant="outline" className="mt-4" onClick={() => navigate('/obras/criar')}>
-                  <Plus className="w-4 h-4 mr-2" /> Criar primeira obra
-                </Button>
-              </div>
+              <EmptyState
+                icon={Building2}
+                title="Nenhuma obra encontrada"
+                description="Crie a sua primeira obra para começar a gerir progresso, equipas e financeiro."
+                action={
+                  <Button onClick={() => navigate('/obras/criar')} className="gap-2">
+                    <Plus className="w-4 h-4" /> Criar primeira obra
+                  </Button>
+                }
+              />
             )}
           </TabsContent>
 

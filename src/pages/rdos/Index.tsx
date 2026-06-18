@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RDOCard } from '@/components/rdos';
-import { KpiCard } from '@/components/relatorios/KpiCard';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import { useRDOs } from '@/hooks/useRDOs';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 import { useObras } from '@/hooks/useObras';
@@ -108,28 +108,31 @@ export default function RDOsPage() {
   };
 
   return (
-    <AppLayout 
+    <AppLayout
       title="Relatórios Diários"
       subtitle="Gestão de RDOs das suas obras"
-      actions={
-        <div className="flex items-center gap-2">
-          <VoiceCommandButton sourceContext="rdo" variant="outline" size="default"  />
-          <Button onClick={() => navigate('/rdos/criar')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo RDO
-          </Button>
-        </div>
-      }
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-5">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Obras"
+          title="Relatórios Diários"
+          subtitle="Acompanhe trabalhos executados, equipas, materiais e ocorrências dia a dia."
+          actions={
+            <div className="flex items-center gap-2">
+              <VoiceCommandButton sourceContext="rdo" variant="outline" size="default" />
+              <Button onClick={() => navigate('/rdos/criar')} className="gap-2">
+                <Plus className="h-4 w-4" /> Novo RDO
+              </Button>
+            </div>
+          }
+        />
 
-        {/* Stats Cards */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          <KpiCard title="Total de RDOs" value={totalRDOs} icon={FileText} iconClassName="bg-primary/10" />
-          <KpiCard title="RDOs Hoje" value={rdosHoje} icon={Calendar} iconClassName="bg-blue-500/10" />
-          <KpiCard title="Pendentes" value={rdosPendentes} icon={Clock} iconClassName="bg-amber-500/10" />
-          <KpiCard title="Aprovados" value={rdosAprovados} icon={CheckCircle} iconClassName="bg-emerald-500/10" />
-        </div>
+        <MetricCardGrid columns={4}>
+          <MetricCard label="Total de RDOs" value={totalRDOs} icon={FileText} tone="primary" />
+          <MetricCard label="RDOs Hoje" value={rdosHoje} icon={Calendar} tone="default" />
+          <MetricCard label="Pendentes" value={rdosPendentes} icon={Clock} tone="warning" />
+          <MetricCard label="Aprovados" value={rdosAprovados} icon={CheckCircle} tone="success" />
+        </MetricCardGrid>
 
         {/* Filters */}
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -203,23 +206,22 @@ export default function RDOsPage() {
               ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">Nenhum RDO encontrado</h3>
-              <p className="mt-2 text-sm text-muted-foreground text-center">
-                {search || filterObra !== 'all' || filterStatus !== 'all'
-                  ? 'Tente ajustar os filtros de pesquisa'
-                  : 'Comece criando o seu primeiro relatório diário'}
-              </p>
-              {!search && filterObra === 'all' && filterStatus === 'all' && (
-                <Button className="mt-4" onClick={() => navigate('/rdos/criar')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar RDO
+          <EmptyState
+            icon={FileText}
+            title="Nenhum RDO encontrado"
+            description={
+              search || filterObra !== 'all' || filterStatus !== 'all'
+                ? 'Tente ajustar os filtros de pesquisa.'
+                : 'Comece criando o seu primeiro relatório diário.'
+            }
+            action={
+              !search && filterObra === 'all' && filterStatus === 'all' ? (
+                <Button onClick={() => navigate('/rdos/criar')} className="gap-2">
+                  <Plus className="h-4 w-4" /> Criar RDO
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         )}
       </div>
 
