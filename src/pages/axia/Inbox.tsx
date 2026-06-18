@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AppLayout } from "@/components/layout";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
