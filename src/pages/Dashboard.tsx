@@ -19,9 +19,9 @@ import {
   DashboardWelcome,
   DashboardKPIStrip,
   DashboardGuidedActions,
-  DashboardProjetosAtivos,
-  DashboardAtividadeIA,
 } from '@/components/dashboard';
+import { DashboardProjetosAtivos } from '@/components/dashboard/DashboardProjetosAtivos';
+import { DashboardAtividadeIA } from '@/components/dashboard/DashboardAtividadeIA';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
