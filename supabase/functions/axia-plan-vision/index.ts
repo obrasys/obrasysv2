@@ -714,22 +714,23 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
     // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
     const visionChain = resolveChain("critical_vision_analysis");
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
-    // Estratégia: tool mode com Gemini Flash primeiro (mais rápido e fiável em vision+schema),
-    // Pro como fallback de precisão, Flash-Lite como último recurso.
-    // JSON mode reservado para retries quando o tool call falhar a devolver argumentos.
+    // Estratégia: Pro primeiro (mais consistente em JSON técnico) com budget alto;
+    // fallback Flash em tool mode; depois JSON compacto; flash-lite só como rede final.
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "tool", timeoutMs: 75_000 },
-          { model: visionChain.fallback, mode: "tool", timeoutMs: 45_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 20_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 90_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 70_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 55_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 35_000 },
         ]
       : [
-          { model: visionChain.fallback, mode: "tool", timeoutMs: 50_000 },
-          { model: visionChain.primary, mode: "tool", timeoutMs: 60_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 80_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 55_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 50_000 },
           { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 18_000 },
         ];
+
+
 
 
     let analysis: any = null;
