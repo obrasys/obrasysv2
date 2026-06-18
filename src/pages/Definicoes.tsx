@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
+import { PageHeader } from '@/components/patterns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -275,14 +276,19 @@ export default function DefinicoesPage() {
     <AppLayout 
       title={t('settings_title')}
       subtitle={t('settings_subtitle')}
-      actions={
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          {t('back')}
-        </Button>
-      }
     >
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6 space-y-6">
+        <PageHeader
+          eyebrow="Configuração"
+          title={t('settings_title')}
+          subtitle={t('settings_subtitle')}
+          actions={
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t('back')}
+            </Button>
+          }
+        />
         <Tabs defaultValue="notifications" className="space-y-6">
           <TabsList className="w-full justify-start overflow-x-auto bg-muted/50 p-1 h-auto flex-wrap">
             <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm">

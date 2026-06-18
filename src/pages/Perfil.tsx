@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
+import { PageHeader } from '@/components/patterns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -209,14 +210,20 @@ export default function PerfilPage() {
     <AppLayout 
       title="O Meu Perfil"
       subtitle="Gerir informações pessoais e da empresa"
-      actions={
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Conta"
+          title="O Meu Perfil"
+          subtitle="Gerir informações pessoais e da empresa"
+          actions={
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          }
+        />
+
         {/* Profile Hero Card */}
         <Card>
           <CardContent className="pt-6 pb-6">
