@@ -31,14 +31,14 @@ export default function AxiaNvidiaTest() {
   };
 
   return (
-    <AdminLayout title="Axia × NVIDIA">
+    <AdminLayout title="Axia — Teste Interno">
       <div className="space-y-6 max-w-3xl">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" /> Axia × NVIDIA — Teste
+            <Sparkles className="h-6 w-6 text-primary" /> Axia — Teste Interno
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Valida a integração com NVIDIA via Edge Function segura. A API Key nunca sai do backend.
+            Valida a resposta da Axia através de uma Edge Function segura. A chave de API nunca sai do backend.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export default function AxiaNvidiaTest() {
             />
             <Button onClick={run} disabled={loading || !message.trim()}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Enviar para NVIDIA
+              Enviar para a Axia
             </Button>
           </CardContent>
         </Card>
@@ -71,9 +71,7 @@ export default function AxiaNvidiaTest() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 flex-wrap">
-                Resposta
-                <Badge variant="secondary">{result.provider_used}</Badge>
-                {result.model_used && <Badge variant="outline">{result.model_used}</Badge>}
+                <Sparkles className="h-5 w-5 text-primary" /> Axia
                 {result.requires_human_review && (
                   <Badge variant="destructive" className="gap-1">
                     <ShieldAlert className="h-3 w-3" /> Requer validação humana
@@ -83,7 +81,7 @@ export default function AxiaNvidiaTest() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-sm whitespace-pre-wrap bg-muted p-4 rounded-lg leading-relaxed">
-                {result.answer || JSON.stringify(result, null, 2)}
+                {result.answer || "Sem resposta."}
               </div>
               {Array.isArray(result.warnings) && result.warnings.length > 0 && (
                 <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-1">
@@ -95,9 +93,16 @@ export default function AxiaNvidiaTest() {
                   ))}
                 </div>
               )}
+              {/* Metadados técnicos: visíveis apenas nesta página interna/dev, escondidos por defeito */}
               <details className="text-xs text-muted-foreground">
-                <summary className="cursor-pointer">Ver JSON completo</summary>
-                <pre className="mt-2 p-3 bg-muted/50 rounded overflow-auto">{JSON.stringify(result, null, 2)}</pre>
+                <summary className="cursor-pointer">Detalhes técnicos (interno)</summary>
+                <div className="mt-2 space-y-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {result.provider_used && <Badge variant="secondary">{result.provider_used}</Badge>}
+                    {result.model_used && <Badge variant="outline">{result.model_used}</Badge>}
+                  </div>
+                  <pre className="p-3 bg-muted/50 rounded overflow-auto">{JSON.stringify(result, null, 2)}</pre>
+                </div>
               </details>
             </CardContent>
           </Card>
