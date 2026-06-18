@@ -22,6 +22,7 @@ import {
   DashboardFlowNav,
   DashboardAgendaPerformance,
   DashboardSetupProgress,
+  DashboardGuidedActions,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { DashboardAlertsWidget } from '@/components/axia/DashboardAlertsWidget';
