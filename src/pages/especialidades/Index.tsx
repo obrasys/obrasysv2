@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
+import { PageHeader } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Layers } from "lucide-react";
 import { useSpecialtyPlans } from "@/hooks/useSpecialtyPlans";
@@ -28,12 +29,19 @@ export default function EspecialidadesIndex() {
   return (
     <AppLayout title="Plantas de Especialidades" subtitle="Carregue plantas técnicas e marque pontos por sistema">
       <div className="p-4 md:p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à obra
-          </Button>
-          <Button onClick={() => setShowUpload(true)}>Carregar planta de especialidade</Button>
-        </div>
+        <PageHeader
+          eyebrow="Obra"
+          title="Plantas de Especialidades"
+          subtitle="Carregue plantas técnicas e marque pontos por sistema"
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
+                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à obra
+              </Button>
+              <Button onClick={() => setShowUpload(true)}>Carregar planta de especialidade</Button>
+            </div>
+          }
+        />
 
         {showUpload && (
           <SpecialtyPlanUploadForm
