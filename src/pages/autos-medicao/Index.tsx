@@ -140,21 +140,25 @@ export default function AutosMedicaoPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredAutos.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              {autos?.length === 0 
-                ? 'Nenhum auto de medição criado ainda.'
-                : 'Nenhum resultado encontrado para os filtros aplicados.'}
-            </p>
-            {autos?.length === 0 && (
-              <Button className="mt-4" asChild>
-                <Link to="/autos-medicao/criar">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar Primeiro Auto
-                </Link>
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={List}
+            title={autos?.length === 0 ? 'Nenhum auto de medição criado ainda' : 'Sem resultados'}
+            description={
+              autos?.length === 0
+                ? 'Crie o primeiro auto de medição para começar a registar quantidades executadas.'
+                : 'Nenhum resultado encontrado para os filtros aplicados.'
+            }
+            action={
+              autos?.length === 0 ? (
+                <Button asChild>
+                  <Link to="/autos-medicao/criar">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar primeiro auto
+                  </Link>
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className={viewMode === 'grid' 
             ? 'grid gap-4 md:grid-cols-2 lg:grid-cols-3' 
