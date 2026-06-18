@@ -228,38 +228,6 @@ const FornecedoresPage = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setInvitesListOpen(true)} className="relative">
-              <Mail className="w-4 h-4 mr-2" />
-              Convites
-              {pendingInvites > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-accent text-accent-foreground">
-                  {pendingInvites}
-                </span>
-              )}
-            </Button>
-            <Button variant="outline" onClick={() => setInviteOpen(true)}>
-              <Send className="w-4 h-4 mr-2" />
-              Convidar
-            </Button>
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-2" />
-              Importar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExportCSV}
-              disabled={!fornecedores || fornecedores.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Fornecedor
-            </Button>
-          </div>
         </div>
 
         {/* Fornecedores List */}
