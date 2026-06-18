@@ -27,7 +27,7 @@ export function DashboardKPIStrip({ pipelineValue, rfqsCount, confiancaMedia, ci
       value: formatCurrency(pipelineValue),
       change: '+8,4%',
       changeUp: true,
-      subtitle: '5 projetos · 11 pacotes',
+      subtitle: '5 obras · 11 pacotes',
       spark: sparkData[0],
       sparkColor: '#3B82F6',
     },

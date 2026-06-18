@@ -120,7 +120,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-5 py-2.5 w-16">REF</th>
-                <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">PROJETO</th>
+                <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">OBRA</th>
                 <th className="text-left font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">CLIENTE</th>
                 <th className="text-right font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">VALOR BASE</th>
                 <th className="text-right font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2.5">MARGEM</th>
