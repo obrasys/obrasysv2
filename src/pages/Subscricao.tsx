@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
+import { PageHeader } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -104,14 +105,19 @@ export default function SubscricaoPage() {
     <AppLayout
       title="Gestão de Subscrição"
       subtitle="Gerir o seu plano, ver histórico e alterar opções de pagamento"
-      actions={
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Conta"
+          title="Gestão de Subscrição"
+          subtitle="Gerir o seu plano, ver histórico e alterar opções de pagamento"
+          actions={
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+          }
+        />
         {/* Current Subscription Status */}
         <SubscriptionStatusCard
           subscription={subscription}
