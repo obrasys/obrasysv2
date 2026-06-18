@@ -215,6 +215,14 @@ export default function VerOrcamentoPage() {
               <DropdownMenuItem onClick={() => setEnviarDialogOpen(true)}>
                 <Send className="w-3.5 h-3.5 mr-2" /> Enviar
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(`/orcamentos/inteligente?orcamentoId=${id}&step=revisao&run=audit`)
+                }
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-2" /> Auditar com Axia
+              </DropdownMenuItem>
               {canAdjudicar && (
                 <>
                   <DropdownMenuSeparator />

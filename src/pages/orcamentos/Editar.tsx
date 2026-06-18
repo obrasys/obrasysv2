@@ -342,6 +342,16 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
         <Eye className="mr-2 h-4 w-4" />
         Ver Orçamento
       </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          navigate(`/orcamentos/inteligente?orcamentoId=${id}&step=revisao&run=audit`)
+        }
+      >
+        <Sparkles className="mr-2 h-4 w-4 text-primary" />
+        Auditar com Axia
+      </Button>
       {orcamento.status === 'rascunho' && (
         <Button onClick={handleOpenFinalizar}>
           <Send className="mr-2 h-4 w-4" />
