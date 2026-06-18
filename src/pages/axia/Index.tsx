@@ -272,7 +272,7 @@ export default function AxiaPage() {
       title="Axia IA"
       subtitle="Central de Inteligência Operacional"
     >
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Inteligência"
           title="Axia IA"

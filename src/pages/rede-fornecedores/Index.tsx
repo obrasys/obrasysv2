@@ -700,7 +700,7 @@ export default function RedeFornecedoresPage() {
 
   return (
     <AppLayout title="Rede de Fornecedores" subtitle="Diretório de fornecedores certificados para a sua obra">
-      <div className="max-w-screen-xl mx-auto px-4 py-8">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Comercial"
           title="Rede de Fornecedores"
