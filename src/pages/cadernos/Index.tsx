@@ -74,20 +74,50 @@ export default function CadernosPage() {
     <AppLayout
       title="Cadernos de Encargos"
       subtitle={obra.nome}
-      actions={
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/obras/${obraId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar à Obra
-          </Button>
-          <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Importar Caderno
-          </Button>
-        </div>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Orçamentação"
+          title="Cadernos de Encargos"
+          subtitle={obra.nome}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => navigate(`/obras/${obraId}`)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar à Obra
+              </Button>
+              <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Importar Caderno
+              </Button>
+            </div>
+          }
+        />
+
+        {cadernos && cadernos.length > 0 ? (
+          <>
+            <MetricCardGrid columns={4}>
+              <MetricCard label="Total" value={cadernos.length} icon={FileText} />
+              <MetricCard
+                label="Importados"
+                value={cadernos.filter((c) => c.status === "importado").length}
+                icon={Upload}
+              />
+              <MetricCard
+                label="Validados"
+                value={cadernos.filter((c) => c.status === "validado").length}
+                icon={FileText}
+                tone="success"
+              />
+              <MetricCard
+                label="Orçamentados"
+                value={cadernos.filter((c) => c.status === "orcamentado").length}
+                icon={ExternalLink}
+                tone="primary"
+              />
+            </MetricCardGrid>
+          </>
+        ) : null}
         {cadernos && cadernos.length > 0 ? (
           <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cadernos.map((caderno) => (
