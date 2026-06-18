@@ -76,8 +76,8 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
       <Card className="rounded-xl border-border/50 shadow-sm">
         <CardContent className="py-12 text-center">
           <Star className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Sem projetos ativos. Crie um projeto para começar.</p>
-          <Button className="mt-4" size="sm" onClick={() => navigate('/obras/criar')}>Criar projeto</Button>
+          <p className="text-sm text-muted-foreground">Sem obras ativas. Crie uma obra para começar.</p>
+          <Button className="mt-4" size="sm" onClick={() => navigate('/obras/criar')}>Criar obra</Button>
         </CardContent>
       </Card>
     );
