@@ -21,9 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, Tags } from 'lucide-react';
+import { Plus, Search, Loader2, Users, Tags, Receipt } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
+import { PageHeader, EmptyState } from '@/components/patterns';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
