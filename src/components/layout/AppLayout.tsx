@@ -40,7 +40,7 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
   }
 
   return (
-    <div className="min-h-screen bg-background flex w-full max-w-[100vw] overflow-x-hidden">
+    <div className="h-screen bg-background flex w-full max-w-[100vw] overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
 

@@ -76,7 +76,7 @@ export function Sidebar() {
   const empresaInitial = empresaNome?.charAt(0)?.toUpperCase() || 'E';
 
   return (
-    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-screen sticky top-0">
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border hidden lg:flex flex-col h-full shrink-0">
       {/* Company Logo */}
       <div className="px-5 pt-5 pb-4 flex flex-col items-center">
         <div
