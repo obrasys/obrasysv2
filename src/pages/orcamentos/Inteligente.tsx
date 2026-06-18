@@ -4,7 +4,9 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RevisaoAssistida } from '@/components/orcamentos/inteligente/RevisaoAssistida';
 import { cn } from '@/lib/utils';
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -62,9 +64,14 @@ const STEPS: Step[] = [
 export default function OrcamentacaoInteligentePage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [orcamentoId] = useState<string | null>(null);
+  const [budgetVersionId] = useState<string | null>(null);
+  const [canProceedReview, setCanProceedReview] = useState(true);
 
   const step = STEPS[currentStep];
   const isLast = currentStep === STEPS.length - 1;
+  const isReviewBlocked = step.id === 'gravar' && !canProceedReview;
+
 
   return (
     <AppLayout
