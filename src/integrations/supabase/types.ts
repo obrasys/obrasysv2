@@ -2523,6 +2523,97 @@ export type Database = {
           },
         ]
       }
+      budget_lineage: {
+        Row: {
+          adjudicated_at: string | null
+          adjudicated_by: string | null
+          base_budget_id: string | null
+          budget_version_id: string | null
+          closing_sheet_id: string | null
+          commercial_proposal_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          obra_id: string | null
+          orcamento_id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          adjudicated_at?: string | null
+          adjudicated_by?: string | null
+          base_budget_id?: string | null
+          budget_version_id?: string | null
+          closing_sheet_id?: string | null
+          commercial_proposal_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          obra_id?: string | null
+          orcamento_id: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          adjudicated_at?: string | null
+          adjudicated_by?: string | null
+          base_budget_id?: string | null
+          budget_version_id?: string | null
+          closing_sheet_id?: string | null
+          commercial_proposal_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          obra_id?: string | null
+          orcamento_id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lineage_base_budget_id_fkey"
+            columns: ["base_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lineage_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lineage_closing_sheet_id_fkey"
+            columns: ["closing_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "closing_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lineage_commercial_proposal_id_fkey"
+            columns: ["commercial_proposal_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lineage_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lineage_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_payment_plans: {
         Row: {
           amount: number
