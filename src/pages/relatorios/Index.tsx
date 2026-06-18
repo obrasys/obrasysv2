@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout';
+import { PageHeader } from '@/components/patterns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReportPieChart, ReportBarChart } from '@/components/relatorios';
 import { useRelatorios } from '@/hooks/useRelatorios';
@@ -103,6 +104,11 @@ export default function RelatoriosPage() {
   return (
     <AppLayout title="Relatórios" subtitle="Análise e métricas do negócio">
       <div className="p-4 md:p-6 space-y-6">
+        <PageHeader
+          eyebrow="Análise"
+          title="Relatórios"
+          subtitle="Análise e métricas do negócio em tempo real"
+        />
         {/* Hero Summary Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard
