@@ -1,0 +1,112 @@
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+
+const SYSTEM_PROMPT = "És a Axia, assistente do Obra Sys. Responde em português europeu. Nunca inventes valores financeiros, margens, RAI, EAC, Forecast ou desvios. Quando não tiveres dados suficientes, diz que precisas de dados determinísticos do sistema. Sugestões financeiras devem voltar como proposed/draft/requires_human_review.";
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const apiKey = Deno.env.get('NVIDIA_API_KEY');
+    const baseUrl = Deno.env.get('NVIDIA_BASE_URL') || 'https://integrate.api.nvidia.com/v1';
+    const model = Deno.env.get('AXIA_DEFAULT_MODEL');
+    const enabled = Deno.env.get('AXIA_NVIDIA_ENABLED');
+
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'NVIDIA_API_KEY não configurada' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!model) {
+      return new Response(JSON.stringify({ error: 'AXIA_DEFAULT_MODEL não configurado' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (enabled && enabled.toLowerCase() === 'false') {
+      return new Response(JSON.stringify({ error: 'Integração NVIDIA desativada (AXIA_NVIDIA_ENABLED=false)' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let body: { message?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'JSON inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const message = body?.message;
+    if (typeof message !== 'string' || message.trim().length === 0 || message.length > 8000) {
+      return new Response(JSON.stringify({ error: 'Campo "message" inválido (string 1-8000 chars)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 800,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: message },
+        ],
+      }),
+    });
+
+    if (!upstream.ok) {
+      const text = await upstream.text().catch(() => '');
+      // sanitize: never echo headers; trim and avoid leaking
+      const safe = text.slice(0, 500);
+      console.error('NVIDIA upstream error', upstream.status);
+      return new Response(JSON.stringify({
+        error: 'Falha na chamada à NVIDIA',
+        status: upstream.status,
+        detail: safe,
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const data = await upstream.json();
+    const answer = data?.choices?.[0]?.message?.content ?? '';
+    const modelUsed = data?.model ?? model;
+
+    return new Response(JSON.stringify({
+      provider_used: 'nvidia',
+      model_used: modelUsed,
+      answer,
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('axia-nvidia-test error', (err as Error)?.message);
+    return new Response(JSON.stringify({ error: 'Erro interno' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
