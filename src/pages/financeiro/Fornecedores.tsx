@@ -232,21 +232,18 @@ const FornecedoresPage = () => {
 
         {/* Fornecedores List */}
         {filteredFornecedores?.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Nenhum fornecedor encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              {search ? 'Tente ajustar os filtros de pesquisa' : 'Comece adicionando o primeiro fornecedor'}
-            </p>
-            {!search && (
-              <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Fornecedor
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={Truck}
+            title="Nenhum fornecedor encontrado"
+            description={search ? 'Tente ajustar os filtros de pesquisa.' : 'Comece adicionando o primeiro fornecedor.'}
+            action={
+              !search ? (
+                <Button onClick={() => { setEditingFornecedor(null); setFormOpen(true); }} className="gap-2">
+                  <Plus className="w-4 h-4" /> Novo Fornecedor
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredFornecedores?.map((fornecedor) => (
