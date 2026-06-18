@@ -264,7 +264,21 @@ const App = () => (
                   <Route path="/empresa/gestao" element={<ManagerRoute><GestaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/empresa/definicoes/faturacao" element={<ManagerRoute><FaturacaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
-                  <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+                  <Route path="/definicoes" element={<ManagerRoute><DefinicoesShell /></ManagerRoute>}>
+                    <Route index element={<DefinicoesPerfilPage />} />
+                    <Route path="perfil" element={<DefinicoesPerfilPage />} />
+                    <Route path="conta" element={<DefinicoesContaPage />} />
+                    <Route path="notificacoes" element={<DefinicoesNotificacoesPage />} />
+                    <Route path="aparencia" element={<DefinicoesAparenciaPage />} />
+                    <Route path="organizacao" element={<DefinicoesOrganizacaoPage />} />
+                    <Route path="equipa" element={<DefinicoesEquipaPage />} />
+                    <Route path="papeis" element={<DefinicoesPapeisPage />} />
+                    <Route path="faturacao" element={<DefinicoesFaturacaoPage />} />
+                    <Route path="integracoes" element={<DefinicoesIntegracoesPage />} />
+                    <Route path="auditoria" element={<DefinicoesAuditoriaPage />} />
+                    <Route path="legal" element={<DefinicoesLegalPage />} />
+                  </Route>
+                  <Route path="/definicoes/preferencias" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
                   <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
 
                   <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
