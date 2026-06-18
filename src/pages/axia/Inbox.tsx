@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AppLayout } from "@/components/layout";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -476,7 +477,8 @@ export default function AxiaInboxPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+    <AppLayout title="Caixa Axia" subtitle="Revisão de capturas por voz">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
@@ -631,6 +633,7 @@ export default function AxiaInboxPage() {
       </Tabs>
 
       <AxiaIntakeReviewDialog item={selected} open={open} onOpenChange={setOpen} />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
