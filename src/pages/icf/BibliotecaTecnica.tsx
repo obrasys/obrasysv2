@@ -35,7 +35,7 @@ const IcfBibliotecaTecnica = () => {
       title="Biblioteca Técnica ICF"
       subtitle="Catálogo de componentes HOMEBLOCK - desenhos técnicos oficiais"
     >
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
