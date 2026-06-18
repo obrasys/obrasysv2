@@ -43,7 +43,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
       })
       .filter((o) => {
         const q = search.toLowerCase();
-        const matchesSearch = !q || o.nome?.toLowerCase().includes(q) || o.cliente?.toLowerCase().includes(q) || o.ref?.toLowerCase().includes(q);
+        const matchesSearch = !q || o.nome?.toLowerCase().includes(q) || o.cliente?.toLowerCase().includes(q) || o.id?.toLowerCase().includes(q);
         const matchesFase = faseFilter === 'Todas as fases' || faseLabels[o.status] === faseFilter;
         return matchesSearch && matchesFase;
       });
