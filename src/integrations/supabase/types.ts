@@ -3679,6 +3679,65 @@ export type Database = {
           },
         ]
       }
+      commercial_proposals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          orcamento_id: string
+          organization_id: string
+          pdf_path: string | null
+          sent_at: string | null
+          sent_to: string | null
+          snapshot: Json
+          status: string
+          updated_at: string
+          valid_until: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          orcamento_id: string
+          organization_id: string
+          pdf_path?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          snapshot?: Json
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          orcamento_id?: string
+          organization_id?: string
+          pdf_path?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          snapshot?: Json
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_proposals_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_ai_settings: {
         Row: {
           contextual_assistant_enabled: boolean
