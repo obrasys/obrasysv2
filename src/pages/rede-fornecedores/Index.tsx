@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PageHeader } from "@/components/patterns";
+import { PageHeader, EmptyState } from "@/components/patterns";
 import {
   useDiscoverSuppliers,
   useSupplierCategories,
