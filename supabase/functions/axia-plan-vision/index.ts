@@ -428,15 +428,44 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 140_000; // edge runtime permite ~150s; deixamos margem
+    const HARD_DEADLINE_MS = 148_000; // edge runtime permite ~150s; deixamos margem mínima
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
+    // Token budget generoso para evitar truncamento do JSON estruturado em plantas densas.
+    // flash-lite só é usado como último recurso de classificação; mantém budget pequeno.
     const tokenLimit = (modelName: string, mode: "tool" | "json") => {
-      const limit = mode === "json" ? 6000 : 4000;
+      const isLite = /flash-lite/i.test(modelName);
+      const isPro = /gemini-2\.5-pro|gpt-5\.5|gpt-5\.4-pro/i.test(modelName);
+      const limit = isLite
+        ? 4000
+        : isPro
+          ? (mode === "json" ? 16000 : 12000)
+          : (mode === "json" ? 12000 : 8000);
       return modelName.startsWith("openai/")
         ? { max_completion_tokens: limit }
         : { max_tokens: limit };
+    };
+
+    // Deteta JSON incompleto (chaves/colchetes desbalanceados ou padrões típicos de truncamento).
+    const detectTruncation = (raw: string): boolean => {
+      if (!raw) return true;
+      const text = raw.trim();
+      // padrões explícitos de corte
+      if (/\.{3}$|\u2026$|\[truncated\]|\[continued\]/i.test(text)) return true;
+      // contagem ignorando strings
+      let open = 0, openB = 0, inStr = false, esc = false;
+      for (const c of text) {
+        if (esc) { esc = false; continue; }
+        if (c === "\\") { esc = true; continue; }
+        if (c === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (c === "{") open++;
+        else if (c === "}") open--;
+        else if (c === "[") openB++;
+        else if (c === "]") openB--;
+      }
+      return open !== 0 || openB !== 0 || inStr;
     };
 
     const modelSpecificParams = (modelName: string) => {
