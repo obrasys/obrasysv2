@@ -22,6 +22,7 @@ import {
   DashboardFlowNav,
   DashboardAgendaPerformance,
   DashboardSetupProgress,
+  DashboardGuidedActions,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { DashboardAlertsWidget } from '@/components/axia/DashboardAlertsWidget';
@@ -157,6 +158,9 @@ const Dashboard = () => {
               acoesPrioritarias={kpis.tarefasPendentes}
               medicoesPendentes={kpis.medicoesPendentes}
             />
+
+            {/* 1.2. Guided Actions (Fase 6 — Orçamentação Inteligente) */}
+            <DashboardGuidedActions />
 
             {/* 1.5. Setup Progress */}
             <DashboardSetupProgress
