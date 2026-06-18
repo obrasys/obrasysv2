@@ -209,19 +209,17 @@ export default function CadernosPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Upload className="w-16 h-16 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum caderno importado</h3>
-              <p className="text-muted-foreground text-center mb-6 max-w-md">
-                Importe um caderno de encargos para começar a criar orçamentos de forma rápida e precisa.
-              </p>
+          <EmptyState
+            icon={Upload}
+            title="Nenhum caderno importado"
+            description="Importe um caderno de encargos para começar a criar orçamentos de forma rápida e precisa."
+            action={
               <Button onClick={() => navigate(`/obras/${obraId}/cadernos/importar`)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Importar Primeiro Caderno
               </Button>
-            </CardContent>
-          </Card>
+            }
+          />
         )}
       </div>
 
