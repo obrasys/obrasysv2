@@ -514,6 +514,34 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     // ModelRouter: cadeia primary → fallback. Permite override via
     // AXIA_MODEL_ICF_ANALYSIS_PRIMARY / _FALLBACK.
     const chain = resolveChain("icf_analysis");
+
+    // Token budget alto para evitar truncamento de JSON técnico denso.
+    const icfTokenLimit = (modelName: string) => {
+      const isPro = /gemini-2\.5-pro|gpt-5\.5|gpt-5\.4-pro/i.test(modelName);
+      const limit = isPro ? 16000 : 12000;
+      return modelName.startsWith("openai/")
+        ? { max_completion_tokens: limit }
+        : { max_tokens: limit };
+    };
+
+    const detectTruncationIcf = (raw: string): boolean => {
+      if (!raw) return true;
+      const text = raw.trim();
+      if (/\.{3}$|\u2026$|\[truncated\]|\[continued\]/i.test(text)) return true;
+      let open = 0, openB = 0, inStr = false, esc = false;
+      for (const c of text) {
+        if (esc) { esc = false; continue; }
+        if (c === "\\") { esc = true; continue; }
+        if (c === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (c === "{") open++;
+        else if (c === "}") open--;
+        else if (c === "[") openB++;
+        else if (c === "]") openB--;
+      }
+      return open !== 0 || openB !== 0 || inStr;
+    };
+
     const callIcfAi = async (modelName: string, timeoutMs = 110_000) => {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -527,6 +555,8 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
           },
           body: JSON.stringify({
             model: modelName,
+            ...icfTokenLimit(modelName),
+            ...(modelName.startsWith("openai/gpt-5") ? {} : { temperature: 0.1 }),
             messages: [
               { role: "system", content: systemPrompt },
               {
@@ -554,6 +584,7 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
         clearTimeout(timer);
       }
     };
+
 
     // Total budget must stay under 150s (edge function idle limit).
     // PDFs só são aceites por modelos Gemini — modelos OpenAI rejeitam application/pdf
