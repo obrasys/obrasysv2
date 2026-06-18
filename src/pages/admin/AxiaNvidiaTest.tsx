@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ShieldAlert, AlertTriangle } from "lucide-react";
 
 export default function AxiaNvidiaTest() {
   const [message, setMessage] = useState("Olá Axia, faz um ping de verificação.");
@@ -70,16 +70,35 @@ export default function AxiaNvidiaTest() {
         {result && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 flex-wrap">
                 Resposta
                 <Badge variant="secondary">{result.provider_used}</Badge>
                 {result.model_used && <Badge variant="outline">{result.model_used}</Badge>}
+                {result.requires_human_review && (
+                  <Badge variant="destructive" className="gap-1">
+                    <ShieldAlert className="h-3 w-3" /> Requer validação humana
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <pre className="text-sm whitespace-pre-wrap bg-muted p-4 rounded-lg">
+            <CardContent className="space-y-3">
+              <div className="text-sm whitespace-pre-wrap bg-muted p-4 rounded-lg leading-relaxed">
                 {result.answer || JSON.stringify(result, null, 2)}
-              </pre>
+              </div>
+              {Array.isArray(result.warnings) && result.warnings.length > 0 && (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-1">
+                  {result.warnings.map((w: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-200">
+                      <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer">Ver JSON completo</summary>
+                <pre className="mt-2 p-3 bg-muted/50 rounded overflow-auto">{JSON.stringify(result, null, 2)}</pre>
+              </details>
             </CardContent>
           </Card>
         )}
