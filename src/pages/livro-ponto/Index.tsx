@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Clock, Users, Building2, CheckCircle, Calendar, Euro, Timer } from "lucide-react";
 import { useTimesheets, useTimesheetAllocations, useWorkers, useApproveTimesheet } from "@/hooks/useLivroPonto";
 import { useObras } from "@/hooks/useObras";
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from "@/components/patterns";
 
 const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Rascunho", variant: "secondary" },
