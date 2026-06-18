@@ -476,7 +476,7 @@ export default function AxiaInboxPage() {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
