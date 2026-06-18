@@ -30,6 +30,7 @@ const CriarOrcamentoPage = lazy(() => import("./pages/orcamentos/Criar"));
 const EditarOrcamentoPage = lazy(() => import("./pages/orcamentos/Editar"));
 const VerOrcamentoPage = lazy(() => import("./pages/orcamentos/Ver"));
 const EssencialPage = lazy(() => import("./pages/orcamentos/Essencial"));
+const OrcamentacaoInteligentePage = lazy(() => import("./pages/orcamentos/Inteligente"));
 const ObrasPage = lazy(() => import("./pages/obras/Index"));
 const CriarObraPage = lazy(() => import("./pages/obras/Criar"));
 const EditarObraPage = lazy(() => import("./pages/obras/Editar"));
@@ -208,6 +209,7 @@ const App = () => (
                   <Route path="/orcamentos/:id" element={<ManagerRoute><VerOrcamentoPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:id/editar" element={<ManagerRoute><EditarOrcamentoPage /></ManagerRoute>} />
                   <Route path="/orcamentos/essencial/novo" element={<ManagerRoute><EssencialPage /></ManagerRoute>} />
+                  <Route path="/orcamentos/inteligente" element={<ManagerRoute><OrcamentacaoInteligentePage /></ManagerRoute>} />
                   <Route path="/obras" element={<ManagerRoute><ObrasPage /></ManagerRoute>} />
                   <Route path="/obras/criar" element={<ManagerRoute><CriarObraPage /></ManagerRoute>} />
                   <Route path="/obras/:id" element={<ManagerRoute><VerObraPage /></ManagerRoute>} />

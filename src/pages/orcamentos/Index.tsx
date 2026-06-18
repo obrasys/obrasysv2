@@ -16,7 +16,7 @@ import {
 import { STATUS_CONFIG } from '@/types/orcamentos';
 import {
   Plus, Search, FileText, Loader2, Sparkles, Filter, Euro, Layers, Package,
-  Clock, ChevronLeft, ChevronRight, TrendingUp, Building2,
+  Clock, ChevronLeft, ChevronRight, TrendingUp, Building2, Wand2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -100,6 +100,13 @@ export default function OrcamentosPage() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate('/orcamentos/essencial/novo')}>
             <Sparkles className="mr-2 h-4 w-4" /> Essencial
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/orcamentos/inteligente')}
+            className="border-primary/40 text-primary hover:bg-primary/5"
+          >
+            <Wand2 className="mr-2 h-4 w-4" /> Inteligente
           </Button>
           <Button variant="outline" onClick={() => navigate('/icf')} className="border-primary/40 text-primary hover:bg-primary/5">
             <Building2 className="mr-2 h-4 w-4" /> Orçamento ICF
