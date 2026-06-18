@@ -135,7 +135,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
                 const prazo = getPrazo(obra);
                 const margem = getMargem(obra);
                 const confianca = getConfianca(obra);
-                const ref = obra.ref || `TH-${String(obra.id).slice(0, 6)}`;
+                const ref = `TH-${String(obra.id).slice(0, 6).toUpperCase()}`;
 
                 return (
                   <tr
