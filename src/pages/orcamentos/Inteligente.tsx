@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RevisaoAssistida } from '@/components/orcamentos/inteligente/RevisaoAssistida';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
 
 import {
   ChevronLeft,
@@ -63,10 +66,46 @@ const STEPS: Step[] = [
 
 export default function OrcamentacaoInteligentePage() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [orcamentoId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialOrcamentoId = searchParams.get('orcamentoId');
+  const initialStep = searchParams.get('step');
+  const shouldRunAudit = searchParams.get('run') === 'audit';
+
+  const initialIndex = initialStep === 'revisao' ? 3 : 0;
+  const [currentStep, setCurrentStep] = useState(initialIndex);
+  const [orcamentoId] = useState<string | null>(initialOrcamentoId);
   const [budgetVersionId] = useState<string | null>(null);
   const [canProceedReview, setCanProceedReview] = useState(true);
+  const [auditRunning, setAuditRunning] = useState(false);
+  const auditRanRef = useRef(false);
+
+  useEffect(() => {
+    if (!shouldRunAudit || !orcamentoId || auditRanRef.current) return;
+    auditRanRef.current = true;
+    setAuditRunning(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('axia-budget-audit', {
+          body: { orcamento_id: orcamentoId },
+        });
+        if (error) throw error;
+        const total = data?.summary?.total_findings ?? 0;
+        toast.success(
+          total === 0
+            ? 'Auditoria concluída. Sem itens críticos.'
+            : `Auditoria concluída. ${total} item(s) para rever.`,
+        );
+      } catch (e: any) {
+        toast.error(e?.message ?? 'Falha ao executar auditoria');
+      } finally {
+        setAuditRunning(false);
+        const next = new URLSearchParams(searchParams);
+        next.delete('run');
+        setSearchParams(next, { replace: true });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldRunAudit, orcamentoId]);
 
   const step = STEPS[currentStep];
   const isLast = currentStep === STEPS.length - 1;

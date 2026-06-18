@@ -68,6 +68,7 @@ import {
   Eye,
   User,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
  import { useFiscalEngine } from '@/hooks/useFiscalEngine';
@@ -341,6 +342,16 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
       <Button variant="outline" size="sm" onClick={() => navigate(`/orcamentos/${id}`)}>
         <Eye className="mr-2 h-4 w-4" />
         Ver Orçamento
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          navigate(`/orcamentos/inteligente?orcamentoId=${id}&step=revisao&run=audit`)
+        }
+      >
+        <Sparkles className="mr-2 h-4 w-4 text-primary" />
+        Auditar com Axia
       </Button>
       {orcamento.status === 'rascunho' && (
         <Button onClick={handleOpenFinalizar}>
