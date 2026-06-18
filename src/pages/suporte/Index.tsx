@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { AppLayout } from "@/components/layout";
-import { PageHeader } from "@/components/patterns";
+import { PageHeader, EmptyState } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -334,7 +334,7 @@ export default function SuportePage() {
       title="Centro de Suporte"
       subtitle="Ajuda, documentação e contacto direto"
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Ajuda"
           title="Centro de Suporte"
@@ -628,7 +628,11 @@ export default function SuportePage() {
                   {ticketsQuery.isLoading ? (
                     <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                   ) : tickets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">Ainda não criou nenhum ticket.</p>
+                    <EmptyState
+                      icon={TicketCheck}
+                      title="Sem tickets de suporte"
+                      description="Ainda não criou nenhum ticket. Quando precisar de ajuda, abra um pedido e a nossa equipa responde com brevidade."
+                    />
                   ) : (
                     <div className="space-y-3">
                       {tickets.map((ticket) => (

@@ -198,7 +198,7 @@ export default function ConformidadeIndex() {
       title="Conformidade e Livro de Obra"
       subtitle="Gestão de documentos, checklists e aprovações"
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Qualidade"
           title="Conformidade e Livro de Obra"

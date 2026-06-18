@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout";
-import { PageHeader } from "@/components/patterns";
+import { PageHeader, EmptyState } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -93,7 +93,7 @@ export default function BasePrecosIndex() {
       title="Base de Preços"
       subtitle="Pesquisa inteligente e referências de materiais de construção"
     >
-      <div className="p-4 md:p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <PageHeader
           eyebrow="Catálogo"
           title="Base de Preços"
@@ -219,12 +219,12 @@ export default function BasePrecosIndex() {
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : sortedPrices.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Database className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="font-medium">Nenhum preço de referência encontrado</p>
-                    <p className="text-sm mt-1">
-                      Use a pesquisa Axia™ para encontrar preços de mercado ou insira manualmente.
-                    </p>
+                  <div className="p-6">
+                    <EmptyState
+                      icon={Database}
+                      title="Nenhum preço de referência encontrado"
+                      description="Use a pesquisa Axia™ para encontrar preços de mercado ou insira manualmente."
+                    />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
