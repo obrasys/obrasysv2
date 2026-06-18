@@ -645,23 +645,71 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
 
 
     const aiData = await aiResponse.json();
+    const choice0 = aiData.choices?.[0];
+    const finishReason = choice0?.finish_reason;
+    const truncatedByLength = finishReason === "length" || finishReason === "MAX_TOKENS";
 
     // Extract from tool call
     let extracted: any;
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    const toolCall = choice0?.message?.tool_calls?.[0];
+    const rawArgs: string = typeof toolCall?.function?.arguments === "string"
+      ? toolCall.function.arguments
+      : toolCall?.function?.arguments
+        ? JSON.stringify(toolCall.function.arguments)
+        : "";
+    const contentText: string = choice0?.message?.content || "";
+
+    const looksTruncated =
+      truncatedByLength ||
+      (rawArgs && detectTruncationIcf(rawArgs)) ||
+      (!rawArgs && contentText && detectTruncationIcf(contentText));
+
+    if (looksTruncated) {
+      console.warn(
+        `[icf-plant-analysis] truncated finish_reason=${finishReason} model=${modelUsed} argsLen=${rawArgs.length} contentLen=${contentText.length}`,
+      );
+      if (logCtx.supabase && logCtx.organization_id) {
+        await logPlanAnalysisEvent(logCtx.supabase, {
+          plan_import_id: logCtx.plan_import_id,
+          organization_id: logCtx.organization_id,
+          obra_id: logCtx.obra_id,
+          user_id: logCtx.user_id,
+          event_type: "erro",
+          status: "error",
+          message: `Resposta truncada (finish_reason=${finishReason}, modelo=${modelUsed})`,
+        });
+      }
+      return jsonResponse({
+        error: "A análise ficou demasiado extensa e precisa ser processada em etapas. Tente novamente — recomendamos analisar uma folha por vez ou reduzir a página enviada.",
+        code: "AI_STRUCTURED_OUTPUT_TRUNCATED",
+      }, 200);
+    }
+
     if (toolCall?.function?.arguments) {
-      extracted = typeof toolCall.function.arguments === "string"
-        ? JSON.parse(toolCall.function.arguments)
-        : toolCall.function.arguments;
+      try {
+        extracted = typeof toolCall.function.arguments === "string"
+          ? JSON.parse(toolCall.function.arguments)
+          : toolCall.function.arguments;
+      } catch (e) {
+        console.error("[icf-plant-analysis] tool args JSON parse failed:", (e as Error)?.message);
+        return jsonResponse({
+          error: "A análise devolveu JSON inválido. Tente novamente.",
+          code: "AI_STRUCTURED_OUTPUT_INVALID",
+        }, 200);
+      }
     } else {
-      const content = aiData.choices?.[0]?.message?.content || "";
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = contentText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        extracted = JSON.parse(jsonMatch[0]);
+        try {
+          extracted = JSON.parse(jsonMatch[0]);
+        } catch {
+          return jsonResponse({ error: "Não foi possível extrair dados da planta" }, 500);
+        }
       } else {
         return jsonResponse({ error: "Não foi possível extrair dados da planta" }, 500);
       }
     }
+
 
     // Pós-processamento anti-duplicação
     const originalParedes = Array.isArray(extracted.paredes) ? extracted.paredes : [];
