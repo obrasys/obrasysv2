@@ -400,10 +400,13 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
       retryable = true,
     ) => {
       console.warn(`[axia-plan-vision] controlled failure ${code}: ${details}`);
-      await persistCallLog(
-        /timeout|abort|deadline/i.test(details) ? "timeout" : "error",
-        `${code}: ${details}`,
-      );
+      const logStatusForFailure: "timeout" | "error" | "truncated" =
+        code === "AI_STRUCTURED_OUTPUT_TRUNCATED"
+          ? "truncated"
+          : /timeout|abort|deadline/i.test(details)
+            ? "timeout"
+            : "error";
+      await persistCallLog(logStatusForFailure, `${code}: ${details}`);
       return new Response(
         JSON.stringify({
           success: false,
