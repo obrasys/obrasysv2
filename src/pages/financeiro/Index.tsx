@@ -21,9 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Loader2, Users, Tags } from 'lucide-react';
+import { Plus, Search, Loader2, Users, Tags, Receipt } from 'lucide-react';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
+import { PageHeader, EmptyState } from '@/components/patterns';
 import { useObras } from '@/hooks/useObras';
 import { useClientes } from '@/hooks/useClientes';
 import { useCategorias } from '@/hooks/useCategorias';
@@ -126,11 +127,22 @@ const FinanceiroIndex = () => {
   }
 
   return (
-    <AppLayout
-      title="Financeiro"
-      actions={<VoiceCommandButton sourceContext="financial" variant="outline" size="default"  />}
-    >
-      <div className="p-4 md:p-6 space-y-6">
+    <AppLayout title="Financeiro">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Financeiro"
+          title="Tesouraria & Contas"
+          subtitle="Controle contas a pagar e a receber, margens, despesas por origem e financeiro por obra."
+          actions={
+            <div className="flex items-center gap-2">
+              <VoiceCommandButton sourceContext="financial" variant="outline" size="default" />
+              <Button onClick={() => { setEditingConta(null); setFormOpen(true); }} className="gap-2">
+                <Plus className="w-4 h-4" /> Nova Conta
+              </Button>
+            </div>
+          }
+        />
+
         {/* Global KPIs */}
         <FinanceiroGlobalKPIs data={dashboard} isLoading={loadingDashboard} />
 
@@ -177,17 +189,13 @@ const FinanceiroIndex = () => {
             </Select>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setCategoriasOpen(true)}>
-              <Tags className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={() => setCategoriasOpen(true)} className="gap-2">
+              <Tags className="w-4 h-4" />
               <span className="hidden sm:inline">Categorias</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')}>
-              <Users className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={() => navigate('/financeiro/fornecedores')} className="gap-2">
+              <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Fornecedores</span>
-            </Button>
-            <Button onClick={() => { setEditingConta(null); setFormOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Conta
             </Button>
           </div>
         </div>
@@ -205,9 +213,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="todas" className="mt-4">
             <div className="space-y-3">
               {filteredContas?.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta encontrada</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta encontrada" description="Ajuste os filtros ou registe uma nova conta." />
               ) : (
                 filteredContas?.map((conta) => (
                   <ContaCard
@@ -226,9 +232,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="pagar" className="mt-4">
             <div className="space-y-3">
               {contasPagar.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta a pagar</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta a pagar" />
               ) : (
                 contasPagar.map((conta) => (
                   <ContaCard
@@ -247,9 +251,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="receber" className="mt-4">
             <div className="space-y-3">
               {contasReceber.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta a receber</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta a receber" />
               ) : (
                 contasReceber.map((conta) => (
                   <ContaCard
