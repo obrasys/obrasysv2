@@ -10,3 +10,6 @@ export { DashboardFlowNav } from './DashboardFlowNav';
 export { DashboardAgendaPerformance } from './DashboardAgendaPerformance';
 export { DashboardSetupProgress } from './DashboardSetupProgress';
 export { DashboardGuidedActions } from './DashboardGuidedActions';
+export { DashboardProjetosAtivos } from './DashboardProjetosAtivos';
+export { DashboardAtividadeIA } from './DashboardAtividadeIA';
+export { Sparkline } from './Sparkline';

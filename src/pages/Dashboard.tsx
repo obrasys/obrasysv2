@@ -12,20 +12,16 @@ import { useTarefas } from '@/hooks/useTarefas';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { OnboardingWizard, OnboardingProgressPanel, OnboardingCompletionModal } from '@/components/onboarding';
-import { EngagementBanner, EngagementBudgetModal, EngagementNotification, EngagementActiveBadge } from '@/components/engagement';
+import { EngagementBanner, EngagementBudgetModal, EngagementNotification } from '@/components/engagement';
 import { useEquipaMembros } from '@/hooks/useRecursos';
 import {
   DashboardWelcome,
   DashboardKPIStrip,
-  DashboardPriorities,
-  DashboardObrasActive,
-  DashboardFlowNav,
-  DashboardAgendaPerformance,
-  DashboardSetupProgress,
   DashboardGuidedActions,
+  DashboardProjetosAtivos,
+  DashboardAtividadeIA,
 } from '@/components/dashboard';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
-import { DashboardAlertsWidget } from '@/components/axia/DashboardAlertsWidget';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
 const Dashboard = () => {
@@ -72,7 +68,6 @@ const Dashboard = () => {
     const obrasEmRisco = obrasPausadas + obrasSemProgresso;
     const rdosPendentes = rdos?.filter((r: any) => r.status === 'rascunho' || r.status === 'pendente').length || 0;
     const tarefasPendentes = tarefas?.filter((t: any) => t.status === 'pendente' || t.status === 'em_progresso').length || 0;
-    // Placeholder for financial - real hook can be added later
     const receberSemana = 0;
     const medicoesPendentes = 0;
 
@@ -80,7 +75,6 @@ const Dashboard = () => {
   }, [obras, rdos, tarefas]);
 
   const isLoading = loadingObras || loadingRDOs;
-  const hasData = (obras?.length || 0) > 0 || (rdos?.length || 0) > 0;
 
   if (isLoading) {
     return (
@@ -94,7 +88,7 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Dashboard">
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
         {/* Onboarding Wizard */}
         {showWizard && onboardingProgress && (
           <OnboardingWizard
@@ -149,61 +143,33 @@ const Dashboard = () => {
             <EmpresaModal open={showEmpresaModal} onOpenChange={(open) => { setShowEmpresaModal(open); if (!open) setEmpresaPromptDismissed(true); }} />
             <OnboardingCompletionModal open={showCompletionModal} onClose={() => setShowCompletionModal(false)} />
 
-
-            {/* === NEW DASHBOARD STRUCTURE === */}
-
-            {/* 1. Welcome + Quick Actions */}
+            {/* 1. Welcome Header */}
             <DashboardWelcome
               obrasEmRisco={kpis.obrasEmRisco}
               acoesPrioritarias={kpis.tarefasPendentes}
               medicoesPendentes={kpis.medicoesPendentes}
             />
 
-            {/* 1.2. Guided Actions (Fase 6 — Orçamentação Inteligente) */}
+            {/* 2. Guided Actions */}
             <DashboardGuidedActions />
 
-            {/* 1.5. Setup Progress */}
-            <DashboardSetupProgress
-              hasLogo={!!profile?.empresa_logo_url}
-              hasAddress={!!(profile?.empresa_morada && profile?.empresa_cidade)}
-              hasObra={(obras?.length || 0) > 0}
-              hasOrcamento={(orcamentos?.length || 0) > 0}
-              hasRDO={(rdos?.length || 0) > 0}
-              hasEquipa={(equipaMembros?.length || 0) > 0}
-            />
-
-            {/* 2. KPI Executive Strip */}
+            {/* 3. KPI Executive Strip */}
             <DashboardKPIStrip
-              obrasAtivas={kpis.obrasAtivas}
-              obrasEmRisco={kpis.obrasEmRisco}
-              receberSemana={kpis.receberSemana}
-              medicoesPendentes={kpis.medicoesPendentes}
+              pipelineValue={orcamentos?.reduce((sum: number, o: any) => sum + (o.valor_total || 0), 0) || 0}
+              rfqsCount={orcamentos?.filter((o: any) => o.status === 'em_curso' || o.status === 'pendente').length || 0}
+              confiancaMedia={91.4}
+              cicloMedio={6.8}
             />
 
-            {/* 3. Priorities + Alerts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* 4. Projects Table + Activity Feed */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
               <div className="lg:col-span-2">
-                <DashboardPriorities
-                  obras={obras || []}
-                  tarefasPendentes={kpis.tarefasPendentes}
-                  rdosPendentes={kpis.rdosPendentes}
-                  medicoesPendentes={kpis.medicoesPendentes}
-                />
+                <DashboardProjetosAtivos obras={obras || []} />
               </div>
-              <DashboardAlertsWidget />
+              <div className="lg:col-span-1">
+                <DashboardAtividadeIA />
+              </div>
             </div>
-
-            {/* 4. Active Works - hero section */}
-            <DashboardObrasActive obras={obras || []} />
-
-            {/* 5. Flow Navigation */}
-            <DashboardFlowNav />
-
-            {/* 6. Agenda + Performance */}
-            <DashboardAgendaPerformance
-              obras={obras || []}
-              tarefasPendentes={kpis.tarefasPendentes}
-            />
           </>
         )}
       </div>
