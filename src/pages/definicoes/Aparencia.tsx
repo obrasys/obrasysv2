@@ -62,31 +62,32 @@ export default function DefinicoesAparencia() {
             <Label>Idioma</Label>
             <Select
               value={preferences.language}
-              onValueChange={(v) => updatePreferences({ language: v as typeof preferences.language })}
+              onValueChange={(v) => updatePreferences({ language: v })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pt">Português</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="pt-PT">Português (PT)</SelectItem>
+                <SelectItem value="en-US">English (US)</SelectItem>
+                <SelectItem value="es-ES">Español (ES)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Formato de números</Label>
+            <Label>Moeda</Label>
             <Select
-              value={preferences.numberFormat}
-              onValueChange={(v) => updatePreferences({ numberFormat: v as typeof preferences.numberFormat })}
+              value={preferences.currency}
+              onValueChange={(v) => updatePreferences({ currency: v })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pt-PT">1.234,56 (PT)</SelectItem>
-                <SelectItem value="en-US">1,234.56 (US)</SelectItem>
-                <SelectItem value="es-ES">1.234,56 (ES)</SelectItem>
+                <SelectItem value="EUR">EUR — Euro</SelectItem>
+                <SelectItem value="USD">USD — Dólar</SelectItem>
+                <SelectItem value="GBP">GBP — Libra</SelectItem>
+                <SelectItem value="BRL">BRL — Real</SelectItem>
               </SelectContent>
             </Select>
           </div>
