@@ -59,6 +59,18 @@ const CotacoesFornecedoresPage = lazy(() => import("./pages/financeiro/CotacoesF
 const PerfilPage = lazy(() => import("./pages/Perfil"));
 const DefinicoesPage = lazy(() => import("./pages/Definicoes"));
 const DefinicoesFolhaFechoQualidadesPage = lazy(() => import("./pages/DefinicoesFolhaFechoQualidades"));
+const DefinicoesShell = lazy(() => import("./components/definicoes/DefinicoesShell").then(m => ({ default: m.DefinicoesShell })));
+const DefinicoesPerfilPage = lazy(() => import("./pages/definicoes/Perfil"));
+const DefinicoesContaPage = lazy(() => import("./pages/definicoes/Conta"));
+const DefinicoesNotificacoesPage = lazy(() => import("./pages/definicoes/Notificacoes"));
+const DefinicoesAparenciaPage = lazy(() => import("./pages/definicoes/Aparencia"));
+const DefinicoesOrganizacaoPage = lazy(() => import("./pages/definicoes/Organizacao"));
+const DefinicoesEquipaPage = lazy(() => import("./pages/definicoes/Equipa"));
+const DefinicoesPapeisPage = lazy(() => import("./pages/definicoes/Papeis"));
+const DefinicoesFaturacaoPage = lazy(() => import("./pages/definicoes/Faturacao"));
+const DefinicoesIntegracoesPage = lazy(() => import("./pages/definicoes/Integracoes"));
+const DefinicoesAuditoriaPage = lazy(() => import("./pages/definicoes/Auditoria"));
+const DefinicoesLegalPage = lazy(() => import("./pages/definicoes/Legal"));
 
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
@@ -252,7 +264,21 @@ const App = () => (
                   <Route path="/empresa/gestao" element={<ManagerRoute><GestaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/empresa/definicoes/faturacao" element={<ManagerRoute><FaturacaoEmpresaPage /></ManagerRoute>} />
                   <Route path="/perfil" element={<ManagerRoute><PerfilPage /></ManagerRoute>} />
-                  <Route path="/definicoes" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
+                  <Route path="/definicoes" element={<ManagerRoute><DefinicoesShell /></ManagerRoute>}>
+                    <Route index element={<DefinicoesPerfilPage />} />
+                    <Route path="perfil" element={<DefinicoesPerfilPage />} />
+                    <Route path="conta" element={<DefinicoesContaPage />} />
+                    <Route path="notificacoes" element={<DefinicoesNotificacoesPage />} />
+                    <Route path="aparencia" element={<DefinicoesAparenciaPage />} />
+                    <Route path="organizacao" element={<DefinicoesOrganizacaoPage />} />
+                    <Route path="equipa" element={<DefinicoesEquipaPage />} />
+                    <Route path="papeis" element={<DefinicoesPapeisPage />} />
+                    <Route path="faturacao" element={<DefinicoesFaturacaoPage />} />
+                    <Route path="integracoes" element={<DefinicoesIntegracoesPage />} />
+                    <Route path="auditoria" element={<DefinicoesAuditoriaPage />} />
+                    <Route path="legal" element={<DefinicoesLegalPage />} />
+                  </Route>
+                  <Route path="/definicoes/preferencias" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
                   <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
 
                   <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
