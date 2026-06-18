@@ -99,7 +99,7 @@ serve(async (req) => {
     let callModel = "google/gemini-2.5-flash";
     const callType = "axia_plan_vision";
     const inputSizeBytes = approxBytes;
-    let logStatus: "ok" | "error" | "timeout" = "ok";
+    let logStatus: "ok" | "error" | "timeout" | "truncated" = "ok";
     let logErrorMessage: string | null = null;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -186,7 +186,15 @@ REFORÇOS GPT-5.5 (CRÍTICO):
 - VÃOS (portas/janelas): Vãos inferidos por padrão são SEMPRE dimensao_legivel=false, confidence_score <= 0.55 e review_required=true. NUNCA usar dimensões padrão como finais para orçamento sem confirmação humana.
 - ORÇAMENTO: As quantidades deste módulo NÃO podem ir automaticamente para orçamento como finais. Devem alimentar uma etapa de revisão com botões: Confirmar, Corrigir manualmente, Pedir nova análise, Calibrar escala, Enviar para orçamento. Marca validation_status=draft_ai em notes quando o schema não tiver campo dedicado.
 - FOLHA NÃO-ARQUITETÓNICA: Se a folha for corte, alçado, detalhe, legenda, carimbo, tabela ou outro documento não compatível com planta horizontal → walls=[], elements=[], rooms=[]. Explica em limitations. NÃO tentar aproveitar elementos como se fossem planta.
-- RASTREABILIDADE: Toda saída prefixa origem em evidencias/notes: "[lido]", "[calculado]", "[inferido]", "[estimado]", "[indisponivel]". Em caso de dúvida sempre review_required=true. confidence sempre entre 0 e 1. Coordenadas e bbox sempre normalizadas 0-1.`;
+- RASTREABILIDADE: Toda saída prefixa origem em evidencias/notes: "[lido]", "[calculado]", "[inferido]", "[estimado]", "[indisponivel]". Em caso de dúvida sempre review_required=true. confidence sempre entre 0 e 1. Coordenadas e bbox sempre normalizadas 0-1.
+
+COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
+- Devolve APENAS JSON válido e fechado. Sem markdown, sem texto antes/depois.
+- Usa null quando a informação não existir; nunca inventes.
+- Observações/notas com no máximo 80 caracteres; sem repetir dados de outros campos.
+- Não dupliques entradas em arrays: uma parede / vão / cota por entidade lógica.
+- Se faltar espaço, PRIORIZA fechar o JSON em vez de continuar a listar (omite itens menos importantes e regista a omissão em limitations: "[truncado_por_espaço]").
+- Evita evidências/limitations longas e textos descritivos extensos.`;
 
     const userContent = [
       {
@@ -366,7 +374,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     });
 
     const persistCallLog = async (
-      status: "ok" | "error" | "timeout",
+      status: "ok" | "error" | "timeout" | "truncated",
       errorMessage: string | null,
     ) => {
       logStatus = status;
@@ -392,10 +400,13 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       retryable = true,
     ) => {
       console.warn(`[axia-plan-vision] controlled failure ${code}: ${details}`);
-      await persistCallLog(
-        /timeout|abort|deadline/i.test(details) ? "timeout" : "error",
-        `${code}: ${details}`,
-      );
+      const logStatusForFailure: "timeout" | "error" | "truncated" =
+        code === "AI_STRUCTURED_OUTPUT_TRUNCATED"
+          ? "truncated"
+          : /timeout|abort|deadline/i.test(details)
+            ? "timeout"
+            : "error";
+      await persistCallLog(logStatusForFailure, `${code}: ${details}`);
       return new Response(
         JSON.stringify({
           success: false,
@@ -420,15 +431,44 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       return hasArrays || hasMeta;
     };
 
-    const HARD_DEADLINE_MS = 140_000; // edge runtime permite ~150s; deixamos margem
+    const HARD_DEADLINE_MS = 148_000; // edge runtime permite ~150s; deixamos margem mínima
     const deadline = startedAt + HARD_DEADLINE_MS;
     const remainingMs = () => deadline - Date.now();
 
+    // Token budget generoso para evitar truncamento do JSON estruturado em plantas densas.
+    // flash-lite só é usado como último recurso de classificação; mantém budget pequeno.
     const tokenLimit = (modelName: string, mode: "tool" | "json") => {
-      const limit = mode === "json" ? 6000 : 4000;
+      const isLite = /flash-lite/i.test(modelName);
+      const isPro = /gemini-2\.5-pro|gpt-5\.5|gpt-5\.4-pro/i.test(modelName);
+      const limit = isLite
+        ? 4000
+        : isPro
+          ? (mode === "json" ? 16000 : 12000)
+          : (mode === "json" ? 12000 : 8000);
       return modelName.startsWith("openai/")
         ? { max_completion_tokens: limit }
         : { max_tokens: limit };
+    };
+
+    // Deteta JSON incompleto (chaves/colchetes desbalanceados ou padrões típicos de truncamento).
+    const detectTruncation = (raw: string): boolean => {
+      if (!raw) return true;
+      const text = raw.trim();
+      // padrões explícitos de corte
+      if (/\.{3}$|\u2026$|\[truncated\]|\[continued\]/i.test(text)) return true;
+      // contagem ignorando strings
+      let open = 0, openB = 0, inStr = false, esc = false;
+      for (const c of text) {
+        if (esc) { esc = false; continue; }
+        if (c === "\\") { esc = true; continue; }
+        if (c === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (c === "{") open++;
+        else if (c === "}") open--;
+        else if (c === "[") openB++;
+        else if (c === "]") openB--;
+      }
+      return open !== 0 || openB !== 0 || inStr;
     };
 
     const modelSpecificParams = (modelName: string) => {
@@ -677,22 +717,23 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     // AXIA_MODEL_CRITICAL_VISION_ANALYSIS_PRIMARY / _FALLBACK.
     const visionChain = resolveChain("critical_vision_analysis");
     const isDenseImage = approxBytes > 3.2 * 1024 * 1024;
-    // Estratégia: tool mode com Gemini Flash primeiro (mais rápido e fiável em vision+schema),
-    // Pro como fallback de precisão, Flash-Lite como último recurso.
-    // JSON mode reservado para retries quando o tool call falhar a devolver argumentos.
+    // Estratégia: Pro primeiro (mais consistente em JSON técnico) com budget alto;
+    // fallback Flash em tool mode; depois JSON compacto; flash-lite só como rede final.
     const attempts: Attempt[] = isHighResRetry
       ? [
-          { model: visionChain.primary, mode: "tool", timeoutMs: 75_000 },
-          { model: visionChain.fallback, mode: "tool", timeoutMs: 45_000 },
-          { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 20_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 90_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 70_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 55_000 },
+          { model: visionChain.fallback, mode: "json", timeoutMs: 35_000 },
         ]
       : [
-          { model: visionChain.fallback, mode: "tool", timeoutMs: 50_000 },
-          { model: visionChain.primary, mode: "tool", timeoutMs: 60_000 },
+          { model: visionChain.primary, mode: "tool", timeoutMs: 80_000 },
+          { model: visionChain.fallback, mode: "tool", timeoutMs: 55_000 },
+          { model: visionChain.primary, mode: "json", timeoutMs: 50_000 },
           { model: visionChain.fallback, mode: "json", timeoutMs: 30_000 },
-          { model: "google/gemini-2.5-flash-lite", mode: "json", timeoutMs: 18_000 },
         ];
+
+
 
 
     let analysis: any = null;
@@ -752,8 +793,20 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       const toolCall = choice?.message?.tool_calls?.[0];
       const messageText = extractTextContent(choice?.message?.content);
 
+      // finish_reason "length" indica truncamento por max_tokens -> não confiar no parse
+      const truncatedByLength = finishReason === "length" || finishReason === "MAX_TOKENS";
+
       if (att.mode === "tool" && toolCall) {
         const rawArgs: string = toolCall.function?.arguments ?? "";
+        if (truncatedByLength || detectTruncation(rawArgs)) {
+          console.warn(
+            `[truncated] tool args ${att.model}. finish_reason=${finishReason} len=${rawArgs.length}`,
+          );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
+          lastErrDetail = `truncated finish_reason=${finishReason} len=${rawArgs.length}`;
+          analysis = null;
+          continue;
+        }
         try {
           analysis = parseJsonWithRepair(rawArgs);
         } catch (e) {
@@ -769,6 +822,15 @@ REFORÇOS GPT-5.5 (CRÍTICO):
           lastErrDetail = `parse_failed finish_reason=${finishReason} len=${rawArgs.length}`;
         }
       } else if (messageText) {
+        if (truncatedByLength || detectTruncation(messageText)) {
+          console.warn(
+            `[truncated] json content ${att.model}. finish_reason=${finishReason} len=${messageText.length}`,
+          );
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
+          lastErrDetail = `truncated finish_reason=${finishReason} len=${messageText.length}`;
+          analysis = null;
+          continue;
+        }
         try {
           analysis = parseJsonWithRepair(messageText);
         } catch (jsonErr) {
@@ -776,7 +838,7 @@ REFORÇOS GPT-5.5 (CRÍTICO):
             `JSON parse failed (${att.model}/${att.mode}):`,
             jsonErr instanceof Error ? jsonErr.message : String(jsonErr),
           );
-          lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+          lastErrCode = "AI_STRUCTURED_OUTPUT_TRUNCATED";
           lastErrDetail = `json_parse_failed finish_reason=${finishReason}`;
         }
       } else {
@@ -786,16 +848,17 @@ REFORÇOS GPT-5.5 (CRÍTICO):
           "toolCall=",
           !!toolCall,
         );
-        lastErrCode = "AI_STRUCTURED_OUTPUT_MISSING";
+        lastErrCode = truncatedByLength ? "AI_STRUCTURED_OUTPUT_TRUNCATED" : "AI_STRUCTURED_OUTPUT_MISSING";
         lastErrDetail = `no_content finish_reason=${finishReason}`;
       }
     }
+
 
     if (!analysis) {
         return await controlledFailure(
         lastErrCode,
         lastErrCode === "AI_STRUCTURED_OUTPUT_TRUNCATED"
-          ? "Análise truncada (planta muito densa)."
+          ? "A análise ficou demasiado extensa e precisa ser processada em etapas. Tente novamente — a Axia vai usar um modo mais compacto."
           : "A Axia não conseguiu devolver uma análise estruturada desta planta.",
         lastErrDetail,
       );

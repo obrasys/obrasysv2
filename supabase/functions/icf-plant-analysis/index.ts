@@ -496,7 +496,14 @@ REFORÇOS GPT-5.5 (CRÍTICO):
 - DEDUPLICAÇÃO FINAL: Antes de devolver, verifica duplicações por (a) duas faces paralelas da mesma parede, (b) repetição em corte/detalhe, (c) repetição entre planta geral e ampliação, (d) repetição entre páginas, (e) segmentos colineares contínuos que deveriam ser um único pano. Se houver dúvida entre 1 ou 2 paredes, devolver UMA única com review_required=true e explicação.
 - HOMEBLOCK: A escolha do código é PRELIMINAR e deve ser validada pelo backend conforme espessura do núcleo declarada. Se espessura_nucleo estiver ausente, inconsistente ou diferente das opções suportadas → NÃO escolher código principal final + review_required=true.
 - SVGs HOMEBLOCK são APENAS referência visual. Não extrair dimensões, escala, quantidades ou proporções a partir dos SVGs.
-- FUNDAÇÕES NO ICF: Se a planta arquitetónica não mostrar fundações, NÃO inventar sapatas/fundações. Devolver fundacoes_encontradas=false (quando aplicável no schema) e sugerir fluxo separado de cenários preliminares, sempre com revisão humana e aviso de que não substitui projeto de estabilidade.`;
+- FUNDAÇÕES NO ICF: Se a planta arquitetónica não mostrar fundações, NÃO inventar sapatas/fundações. Devolver fundacoes_encontradas=false (quando aplicável no schema) e sugerir fluxo separado de cenários preliminares, sempre com revisão humana e aviso de que não substitui projeto de estabilidade.
+
+COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
+- Devolve APENAS o JSON da tool call, válido e fechado. Sem texto fora do JSON.
+- Usa null quando a informação não existir; nunca inventes.
+- Notas/observações com no máximo 80 caracteres; não repitas dados de outros campos.
+- Não dupliques paredes/vãos/lajes; consolida segmentos colineares contínuos.
+- Se faltar espaço, prioriza fechar o JSON e omite os itens menos relevantes (regista a omissão em notas).`;
 
 
 
@@ -514,6 +521,34 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
     // ModelRouter: cadeia primary → fallback. Permite override via
     // AXIA_MODEL_ICF_ANALYSIS_PRIMARY / _FALLBACK.
     const chain = resolveChain("icf_analysis");
+
+    // Token budget alto para evitar truncamento de JSON técnico denso.
+    const icfTokenLimit = (modelName: string) => {
+      const isPro = /gemini-2\.5-pro|gpt-5\.5|gpt-5\.4-pro/i.test(modelName);
+      const limit = isPro ? 16000 : 12000;
+      return modelName.startsWith("openai/")
+        ? { max_completion_tokens: limit }
+        : { max_tokens: limit };
+    };
+
+    const detectTruncationIcf = (raw: string): boolean => {
+      if (!raw) return true;
+      const text = raw.trim();
+      if (/\.{3}$|\u2026$|\[truncated\]|\[continued\]/i.test(text)) return true;
+      let open = 0, openB = 0, inStr = false, esc = false;
+      for (const c of text) {
+        if (esc) { esc = false; continue; }
+        if (c === "\\") { esc = true; continue; }
+        if (c === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (c === "{") open++;
+        else if (c === "}") open--;
+        else if (c === "[") openB++;
+        else if (c === "]") openB--;
+      }
+      return open !== 0 || openB !== 0 || inStr;
+    };
+
     const callIcfAi = async (modelName: string, timeoutMs = 110_000) => {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -527,6 +562,8 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
           },
           body: JSON.stringify({
             model: modelName,
+            ...icfTokenLimit(modelName),
+            ...(modelName.startsWith("openai/gpt-5") ? {} : { temperature: 0.1 }),
             messages: [
               { role: "system", content: systemPrompt },
               {
@@ -554,6 +591,7 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
         clearTimeout(timer);
       }
     };
+
 
     // Total budget must stay under 150s (edge function idle limit).
     // PDFs só são aceites por modelos Gemini — modelos OpenAI rejeitam application/pdf
@@ -614,23 +652,71 @@ Devolva a análise usando exclusivamente a tool call configurada.`;
 
 
     const aiData = await aiResponse.json();
+    const choice0 = aiData.choices?.[0];
+    const finishReason = choice0?.finish_reason;
+    const truncatedByLength = finishReason === "length" || finishReason === "MAX_TOKENS";
 
     // Extract from tool call
     let extracted: any;
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    const toolCall = choice0?.message?.tool_calls?.[0];
+    const rawArgs: string = typeof toolCall?.function?.arguments === "string"
+      ? toolCall.function.arguments
+      : toolCall?.function?.arguments
+        ? JSON.stringify(toolCall.function.arguments)
+        : "";
+    const contentText: string = choice0?.message?.content || "";
+
+    const looksTruncated =
+      truncatedByLength ||
+      (rawArgs && detectTruncationIcf(rawArgs)) ||
+      (!rawArgs && contentText && detectTruncationIcf(contentText));
+
+    if (looksTruncated) {
+      console.warn(
+        `[icf-plant-analysis] truncated finish_reason=${finishReason} model=${modelUsed} argsLen=${rawArgs.length} contentLen=${contentText.length}`,
+      );
+      if (logCtx.supabase && logCtx.organization_id) {
+        await logPlanAnalysisEvent(logCtx.supabase, {
+          plan_import_id: logCtx.plan_import_id,
+          organization_id: logCtx.organization_id,
+          obra_id: logCtx.obra_id,
+          user_id: logCtx.user_id,
+          event_type: "erro",
+          status: "error",
+          message: `Resposta truncada (finish_reason=${finishReason}, modelo=${modelUsed})`,
+        });
+      }
+      return jsonResponse({
+        error: "A análise ficou demasiado extensa e precisa ser processada em etapas. Tente novamente — recomendamos analisar uma folha por vez ou reduzir a página enviada.",
+        code: "AI_STRUCTURED_OUTPUT_TRUNCATED",
+      }, 200);
+    }
+
     if (toolCall?.function?.arguments) {
-      extracted = typeof toolCall.function.arguments === "string"
-        ? JSON.parse(toolCall.function.arguments)
-        : toolCall.function.arguments;
+      try {
+        extracted = typeof toolCall.function.arguments === "string"
+          ? JSON.parse(toolCall.function.arguments)
+          : toolCall.function.arguments;
+      } catch (e) {
+        console.error("[icf-plant-analysis] tool args JSON parse failed:", (e as Error)?.message);
+        return jsonResponse({
+          error: "A análise devolveu JSON inválido. Tente novamente.",
+          code: "AI_STRUCTURED_OUTPUT_INVALID",
+        }, 200);
+      }
     } else {
-      const content = aiData.choices?.[0]?.message?.content || "";
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = contentText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        extracted = JSON.parse(jsonMatch[0]);
+        try {
+          extracted = JSON.parse(jsonMatch[0]);
+        } catch {
+          return jsonResponse({ error: "Não foi possível extrair dados da planta" }, 500);
+        }
       } else {
         return jsonResponse({ error: "Não foi possível extrair dados da planta" }, 500);
       }
     }
+
 
     // Pós-processamento anti-duplicação
     const originalParedes = Array.isArray(extracted.paredes) ? extracted.paredes : [];
