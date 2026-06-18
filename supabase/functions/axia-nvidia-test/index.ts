@@ -1,6 +1,12 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
-const SYSTEM_PROMPT = "És a Axia, assistente do Obra Sys. Responde em português europeu. Nunca inventes valores financeiros, margens, RAI, EAC, Forecast ou desvios. Quando não tiveres dados suficientes, diz que precisas de dados determinísticos do sistema. Sugestões financeiras devem voltar como proposed/draft/requires_human_review.";
+const SYSTEM_PROMPT = `És a Axia, assistente do Obra Sys. Responde em português europeu, de forma clara e natural para o utilizador final.
+
+REGRAS:
+- Nunca inventes valores financeiros, margens, RAI, EAC, Forecast ou desvios.
+- Quando não tiveres dados suficientes, indica EXPLICITAMENTE quais fontes do Obra Sys precisas consultar, escolhendo de entre: orçamento aprovado, custos registados, vendas previstas ou confirmadas, compras/adjudicações, medições, folha de fecho da obra.
+- Nunca escrevas tags técnicas como "Proposed/Draft/Requires_Human_Review" no texto. Em vez disso, termina respostas que envolvam análise financeira com a frase: "Esta análise requer validação humana."
+- Sê conciso. Não repitas o pedido do utilizador.`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -91,13 +97,38 @@ Deno.serve(async (req) => {
     }
 
     const data = await upstream.json();
-    const answer = data?.choices?.[0]?.message?.content ?? '';
+    let answer: string = data?.choices?.[0]?.message?.content ?? '';
     const modelUsed = data?.model ?? model;
+
+    // Sanitização: remover tags técnicas que o modelo possa devolver no texto
+    const technicalTagPattern = /\s*\**\s*Proposed\s*\/\s*Draft\s*\/\s*Requires[_ ]?Human[_ ]?Review\s*\.?\**\s*$/i;
+    const hadTechnicalTag = technicalTagPattern.test(answer);
+    answer = answer.replace(technicalTagPattern, '').trimEnd();
+
+    // Heurísticas de revisão humana e avisos
+    const lower = answer.toLowerCase();
+    const financialKeywords = ['margem', 'custo', 'venda', 'rai', 'eac', 'forecast', 'desvio', 'orçamento', 'lucro', 'financeir'];
+    const mentionsFinance = financialKeywords.some((k) => lower.includes(k));
+    const lacksData = /sem (esses |estes )?dados|preciso (de |consultar)|não (tenho|possuo) (acesso|dados)|dados (insuficientes|determinístic)/i.test(answer);
+
+    const requiresHumanReview = hadTechnicalTag || mentionsFinance;
+    const warnings: string[] = [];
+    if (mentionsFinance && lacksData) {
+      warnings.push('Dados financeiros insuficientes para um cálculo determinístico.');
+    }
+
+    // Garantir frase final amigável quando envolve análise financeira
+    if (requiresHumanReview && !/validação humana/i.test(answer)) {
+      answer = `${answer}\n\nEsta análise requer validação humana.`;
+    }
 
     return new Response(JSON.stringify({
       provider_used: 'nvidia',
       model_used: modelUsed,
       answer,
+      requires_human_review: requiresHumanReview,
+      warnings,
+      suggestions: [],
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
