@@ -21,6 +21,7 @@ const ADMIN_NAV = [
   { icon: TicketCheck, label: "Tickets", href: "/admin/tickets" },
   { icon: ArrowRightLeft, label: "Migração", href: "/admin/migracao" },
   { icon: Sparkles, label: "Axia — Teste", href: "/admin/axia-nvidia-test" },
+  { icon: Sparkles, label: "Axia Gateway", href: "/admin/axia-gateway-test" },
 ];
 
 interface AdminLayoutProps {
