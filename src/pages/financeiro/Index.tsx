@@ -251,9 +251,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="receber" className="mt-4">
             <div className="space-y-3">
               {contasReceber.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta a receber</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta a receber" />
               ) : (
                 contasReceber.map((conta) => (
                   <ContaCard
