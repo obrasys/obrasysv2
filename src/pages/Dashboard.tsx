@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+// Dashboard v2 - redesigned
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
