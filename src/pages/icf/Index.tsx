@@ -217,6 +217,25 @@ const IcfIndex = () => {
           </Card>
         ) : (
           <>
+            <PageHeader
+              eyebrow="Planta & ICF"
+              title="Sistema Construtivo ICF"
+              subtitle="Motor paramétrico para orçamentação ICF. Configure panos, fundações e lajes e gere orçamentos profissionais."
+              actions={
+                <>
+                  {!activeConfig && (
+                    <Button onClick={handleCreateConfig} disabled={createConfig.isPending} className="gap-2">
+                      <Plus className="h-4 w-4" /> Nova Configuração
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={handleOpenAssistant} className="gap-2">
+                    <Upload className="h-4 w-4" /> Carregar planta
+                  </Button>
+                  <IcfConstantsDialog />
+                </>
+              }
+            />
+
             {/* Selector — obra é opcional */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               <Select value={selectedObraId} onValueChange={setSelectedObraId}>
@@ -236,22 +255,6 @@ const IcfIndex = () => {
                   ))}
                 </SelectContent>
               </Select>
-
-              {!activeConfig && (
-                <Button onClick={handleCreateConfig} disabled={createConfig.isPending}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Configuração ICF
-                </Button>
-              )}
-
-              <Button variant="outline" onClick={handleOpenAssistant}>
-                <Upload className="h-4 w-4 mr-2" />
-                Carregar planta
-              </Button>
-
-              <div className="sm:ml-auto flex items-center gap-2">
-                <IcfConstantsDialog />
-              </div>
             </div>
 
             {configsLoading && (
