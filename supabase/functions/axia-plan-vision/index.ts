@@ -99,7 +99,7 @@ serve(async (req) => {
     let callModel = "google/gemini-2.5-flash";
     const callType = "axia_plan_vision";
     const inputSizeBytes = approxBytes;
-    let logStatus: "ok" | "error" | "timeout" = "ok";
+    let logStatus: "ok" | "error" | "timeout" | "truncated" = "ok";
     let logErrorMessage: string | null = null;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
