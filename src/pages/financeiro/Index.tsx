@@ -127,11 +127,22 @@ const FinanceiroIndex = () => {
   }
 
   return (
-    <AppLayout
-      title="Financeiro"
-      actions={<VoiceCommandButton sourceContext="financial" variant="outline" size="default"  />}
-    >
-      <div className="p-4 md:p-6 space-y-6">
+    <AppLayout title="Financeiro">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Financeiro"
+          title="Tesouraria & Contas"
+          subtitle="Controle contas a pagar e a receber, margens, despesas por origem e financeiro por obra."
+          actions={
+            <div className="flex items-center gap-2">
+              <VoiceCommandButton sourceContext="financial" variant="outline" size="default" />
+              <Button onClick={() => { setEditingConta(null); setFormOpen(true); }} className="gap-2">
+                <Plus className="w-4 h-4" /> Nova Conta
+              </Button>
+            </div>
+          }
+        />
+
         {/* Global KPIs */}
         <FinanceiroGlobalKPIs data={dashboard} isLoading={loadingDashboard} />
 
