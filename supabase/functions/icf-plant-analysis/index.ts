@@ -496,7 +496,14 @@ REFORÇOS GPT-5.5 (CRÍTICO):
 - DEDUPLICAÇÃO FINAL: Antes de devolver, verifica duplicações por (a) duas faces paralelas da mesma parede, (b) repetição em corte/detalhe, (c) repetição entre planta geral e ampliação, (d) repetição entre páginas, (e) segmentos colineares contínuos que deveriam ser um único pano. Se houver dúvida entre 1 ou 2 paredes, devolver UMA única com review_required=true e explicação.
 - HOMEBLOCK: A escolha do código é PRELIMINAR e deve ser validada pelo backend conforme espessura do núcleo declarada. Se espessura_nucleo estiver ausente, inconsistente ou diferente das opções suportadas → NÃO escolher código principal final + review_required=true.
 - SVGs HOMEBLOCK são APENAS referência visual. Não extrair dimensões, escala, quantidades ou proporções a partir dos SVGs.
-- FUNDAÇÕES NO ICF: Se a planta arquitetónica não mostrar fundações, NÃO inventar sapatas/fundações. Devolver fundacoes_encontradas=false (quando aplicável no schema) e sugerir fluxo separado de cenários preliminares, sempre com revisão humana e aviso de que não substitui projeto de estabilidade.`;
+- FUNDAÇÕES NO ICF: Se a planta arquitetónica não mostrar fundações, NÃO inventar sapatas/fundações. Devolver fundacoes_encontradas=false (quando aplicável no schema) e sugerir fluxo separado de cenários preliminares, sempre com revisão humana e aviso de que não substitui projeto de estabilidade.
+
+COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
+- Devolve APENAS o JSON da tool call, válido e fechado. Sem texto fora do JSON.
+- Usa null quando a informação não existir; nunca inventes.
+- Notas/observações com no máximo 80 caracteres; não repitas dados de outros campos.
+- Não dupliques paredes/vãos/lajes; consolida segmentos colineares contínuos.
+- Se faltar espaço, prioriza fechar o JSON e omite os itens menos relevantes (regista a omissão em notas).`;
 
 
 
