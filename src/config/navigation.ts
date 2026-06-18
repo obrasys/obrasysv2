@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Blocks,
-  Briefcase,
   BrainCircuit,
   Building2,
   Calendar,
@@ -15,21 +14,24 @@ import {
   HardHat,
   HelpCircle,
   Home,
+  Layers,
   Mail,
+  Map,
+  Network,
+  Package,
   Plug,
+  Send,
   Settings,
   Shield,
   Store,
   TicketCheck,
+  Truck,
   Upload,
+  UserCog,
   Users,
   Wallet,
   ArrowRightLeft,
-  Network,
-  UserCog,
-  Truck,
-  Send,
-
+  Briefcase,
 } from "lucide-react";
 
 export type NavItem = {
@@ -44,45 +46,53 @@ export type NavGroup = {
   items: NavItem[];
 };
 
+/**
+ * Navigation taxonomy aligned with the redesign plan.
+ * Only routes that actually exist in App.tsx are listed here.
+ * Items marked "em breve" in the plan are intentionally omitted until backing routes exist.
+ */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Visão Geral",
+    label: "Dashboard",
     icon: Home,
+    items: [{ icon: Home, label: "Dashboard", href: "/dashboard" }],
+  },
+  {
+    label: "Obras",
+    icon: Building2,
     items: [
-      { icon: Home, label: "Dashboard", href: "/dashboard" },
+      { icon: Building2, label: "Todas as obras", href: "/obras" },
+      { icon: ClipboardCheck, label: "Autos de medição", href: "/autos-medicao" },
+      { icon: ClipboardList, label: "RDOs", href: "/rdos" },
+      { icon: Calendar, label: "Tarefas", href: "/tarefas" },
+      { icon: Clock, label: "Livro de ponto", href: "/livro-ponto" },
+      { icon: Shield, label: "Conformidade", href: "/conformidade" },
+    ],
+  },
+  {
+    label: "Orçamentos",
+    icon: FileText,
+    items: [
+      { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
+      { icon: Users, label: "Clientes", href: "/clientes" },
+    ],
+  },
+  {
+    label: "Planta & ICF",
+    icon: Map,
+    items: [
+      { icon: Blocks, label: "ICF", href: "/icf" },
+      { icon: Layers, label: "Biblioteca ICF", href: "/icf/biblioteca" },
+      { icon: Upload, label: "Importar dados", href: "/importar" },
     ],
   },
   {
     label: "Comercial",
     icon: Briefcase,
     items: [
-      { icon: Users, label: "Clientes", href: "/clientes" },
-      { icon: FileText, label: "Orçamentos", href: "/orcamentos" },
-      { icon: Blocks, label: "ICF", href: "/icf" },
-      { icon: Database, label: "Base de Preços", href: "/base-precos" },
-    ],
-  },
-  {
-    label: "Obras",
-    icon: Building2,
-    items: [
-      { icon: Building2, label: "Todas as Obras", href: "/obras" },
-      { icon: Calendar, label: "Tarefas", href: "/tarefas" },
-      { icon: ClipboardList, label: "RDOs", href: "/rdos" },
-      { icon: ClipboardCheck, label: "Autos de Medição", href: "/autos-medicao" },
-      { icon: Clock, label: "Livro de Ponto", href: "/livro-ponto" },
-      { icon: Shield, label: "Conformidade", href: "/conformidade" },
-    ],
-  },
-  {
-    label: "Recursos",
-    icon: HardHat,
-    items: [
-      { icon: HardHat, label: "Equipas", href: "/recursos" },
-      { icon: Plug, label: "Instalações", href: "/instalacoes" },
-      { icon: Network, label: "Rede de Fornecedores", href: "/rede-fornecedores" },
-      { icon: Truck, label: "Os Meus Fornecedores", href: "/financeiro/fornecedores" },
       { icon: Send, label: "Cotações", href: "/financeiro/cotacoes" },
+      { icon: Network, label: "Rede de fornecedores", href: "/rede-fornecedores" },
+      { icon: Truck, label: "Os meus fornecedores", href: "/financeiro/fornecedores" },
     ],
   },
   {
@@ -90,18 +100,30 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Wallet,
     items: [
       { icon: Wallet, label: "Financeiro", href: "/financeiro" },
-      { icon: BarChart3, label: "Gestão da Empresa", href: "/empresa/gestao" },
-      { icon: Blocks, label: "Centros de Custo", href: "/empresa/centros-de-custo" },
+      { icon: BarChart3, label: "Gestão da empresa", href: "/empresa/gestao" },
+      { icon: Blocks, label: "Centros de custo", href: "/empresa/centros-de-custo" },
     ],
   },
   {
-    label: "Documentos & IA",
+    label: "Biblioteca",
+    icon: Package,
+    items: [
+      { icon: Database, label: "Base de preços", href: "/base-precos" },
+      { icon: Plug, label: "Instalações", href: "/instalacoes" },
+    ],
+  },
+  {
+    label: "Axia",
     icon: BrainCircuit,
     items: [
-      { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
-      { icon: BrainCircuit, label: "Axia", href: "/axia" },
-      { icon: Upload, label: "Importar Dados", href: "/importar" },
+      { icon: BrainCircuit, label: "Agente Axia", href: "/axia" },
+      { icon: ClipboardList, label: "Inbox Axia", href: "/axia/inbox" },
     ],
+  },
+  {
+    label: "Relatórios",
+    icon: BarChart3,
+    items: [{ icon: BarChart3, label: "Relatórios", href: "/relatorios" }],
   },
   {
     label: "Conta",

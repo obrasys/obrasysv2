@@ -50,6 +50,28 @@
     --warning-foreground: 0 0% 100%;
     --info: 199 45% 94%;
 
+    /* Surface tokens */
+    --surface: 60 24% 96%;
+    --surface-elevated: 0 0% 100%;
+    --surface-sunken: 60 14% 93%;
+    --border-subtle: 205 17% 92%;
+    --text-strong: 215 28% 12%;
+    --text-muted: 220 9% 46%;
+
+    /* Workflow state tokens (HSL) — used by StatusBadge */
+    --state-draft: 220 9% 46%;
+    --state-review: 38 92% 44%;
+    --state-approved: 146 50% 36%;
+    --state-sent: 217 91% 55%;
+    --state-awarded: 192 73% 21%;
+    --state-lost: 0 72% 50%;
+    --state-blocked: 0 0% 35%;
+    --state-paid: 158 64% 32%;
+    --state-inprogress: 217 91% 55%;
+    --state-done: 146 50% 36%;
+    --state-expired: 20 88% 40%;
+    --state-pending: 38 92% 44%;
+
     /* Custom tokens */
     --gradient-hero: linear-gradient(135deg, hsl(192 73% 15%) 0%, hsl(192 73% 21%) 50%, hsl(195 62% 28%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(192 73% 21%) 0%, hsl(195 62% 28%) 100%);
@@ -57,6 +79,7 @@
     --shadow-card: 0 1px 3px 0 hsl(215 28% 17% / 0.04), 0 1px 2px -1px hsl(215 28% 17% / 0.04);
     --shadow-card-hover: 0 10px 15px -3px hsl(215 28% 17% / 0.06), 0 4px 6px -4px hsl(215 28% 17% / 0.04);
     --shadow-hero: 0 25px 50px -12px hsl(192 73% 21% / 0.15);
+    --shadow-elevated: 0 4px 14px -2px hsl(215 28% 17% / 0.08), 0 2px 6px -2px hsl(215 28% 17% / 0.04);
 
     /* Sidebar - Deep Teal */
     --sidebar-background: 192 73% 21%;
