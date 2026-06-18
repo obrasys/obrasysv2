@@ -43,6 +43,7 @@ import {
 import { useSubempreiteiros, useEquipamentos, useEquipaMembros } from '@/hooks/useRecursos';
 import { SubempreiteiroForm, EquipamentoForm, EquipaMembroForm } from '@/components/recursos';
 import { SalariosTab } from '@/components/recursos/SalariosTab';
+import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import {
   ESTADO_EQUIPAMENTO_CONFIG,
   TIPO_CONTRATO_CONFIG,
@@ -97,16 +98,18 @@ export default function RecursosPage() {
 
   return (
     <AppLayout title="Recursos" subtitle="Gerir subempreiteiros, equipamentos e equipa">
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><HardHat className="h-4 w-4" />Subempreiteiros</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{subempreiteiros.filter(s => s.ativo).length}</p><p className="text-xs text-muted-foreground">ativos</p></CardContent></Card>
-          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Wrench className="h-4 w-4" />Equipamentos</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{equipamentos.filter(e => e.estado === 'disponivel').length}</p><p className="text-xs text-muted-foreground">disponíveis</p></CardContent></Card>
-          <Card className="col-span-2 md:col-span-1"><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Equipa</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{membros.filter(m => m.ativo).length}</p><p className="text-xs text-muted-foreground">membros ativos</p></CardContent></Card>
-        </div>
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Operação"
+          title="Recursos"
+          subtitle="Subempreiteiros, equipamentos, equipa interna e salários — tudo num só lugar."
+        />
+
+        <MetricCardGrid columns={3}>
+          <MetricCard label="Subempreiteiros ativos" value={subempreiteiros.filter(s => s.ativo).length} icon={HardHat} tone="primary" />
+          <MetricCard label="Equipamentos disponíveis" value={equipamentos.filter(e => e.estado === 'disponivel').length} icon={Wrench} tone="success" />
+          <MetricCard label="Membros de equipa ativos" value={membros.filter(m => m.ativo).length} icon={Users} tone="default" />
+        </MetricCardGrid>
 
         {/* Tabs */}
         <Card>
