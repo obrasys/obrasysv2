@@ -88,14 +88,14 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
       <CardHeader className="pb-3 pt-4 px-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Projetos ativos</h3>
-            <p className="text-[11px] text-muted-foreground">Ordenados por urgência de entrega</p>
+            <h3 className="text-sm font-semibold text-foreground">Obras ativas</h3>
+            <p className="text-[11px] text-muted-foreground">Ordenadas por urgência de entrega</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Pesquisar projeto, cliente ou id..."
+                placeholder="Pesquisar obra, cliente ou id..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8 h-8 text-xs w-56"
@@ -177,7 +177,7 @@ export function DashboardProjetosAtivos({ obras }: DashboardProjetosAtivosProps)
         {sorted.length > 6 && (
           <div className="px-5 py-3 border-t border-border/50 flex justify-center">
             <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/obras')}>
-              Ver todos os projetos <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              Ver todas as obras <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </div>
         )}
