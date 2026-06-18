@@ -23,24 +23,28 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <header className={cn("flex flex-col gap-4 pb-6", className)}>
-      {breadcrumbs ? <div className="text-xs text-text-muted">{breadcrumbs}</div> : null}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="min-w-0 space-y-1.5">
+    <header className={cn("flex w-full min-w-0 flex-col gap-4 pb-4 md:pb-6", className)}>
+      {breadcrumbs ? (
+        <div className="min-w-0 truncate text-xs text-text-muted">{breadcrumbs}</div>
+      ) : null}
+      <div className="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-4">
+        <div className="min-w-0 flex-1 space-y-1.5">
           {eyebrow ? (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
               {eyebrow}
             </p>
           ) : null}
-          <h1 className="text-3xl font-bold tracking-tight text-text-strong md:text-4xl">
+          <h1 className="break-words text-2xl font-bold leading-tight tracking-tight text-text-strong sm:text-3xl md:text-4xl">
             {title}
           </h1>
           {subtitle ? (
-            <p className="max-w-2xl text-sm text-text-muted md:text-base">{subtitle}</p>
+            <p className="max-w-2xl break-words text-sm text-text-muted md:text-base">{subtitle}</p>
           ) : null}
         </div>
         {actions ? (
-          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end [&>*]:min-w-0 [&>a]:flex-1 [&>button]:flex-1 md:[&>a]:flex-none md:[&>button]:flex-none">
+            {actions}
+          </div>
         ) : null}
       </div>
     </header>
