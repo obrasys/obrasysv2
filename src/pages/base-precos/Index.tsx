@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout";
-import { PageHeader } from "@/components/patterns";
+import { PageHeader, EmptyState } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
