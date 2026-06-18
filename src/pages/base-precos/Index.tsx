@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout";
+import { PageHeader } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -91,16 +92,22 @@ export default function BasePrecosIndex() {
     <AppLayout
       title="Base de Preços"
       subtitle="Pesquisa inteligente e referências de materiais de construção"
-      actions={
-        <Link to="/base-precos/inserir">
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Inserir Preço
-          </Button>
-        </Link>
-      }
     >
       <div className="p-4 md:p-6 space-y-5">
+        <PageHeader
+          eyebrow="Catálogo"
+          title="Base de Preços"
+          subtitle="Pesquisa inteligente e referências de materiais de construção"
+          actions={
+            <Link to="/base-precos/inserir">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Inserir Preço
+              </Button>
+            </Link>
+          }
+        />
+
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini icon={Package} label="Materiais" value={totalMaterials} />

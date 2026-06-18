@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PageHeader } from "@/components/patterns";
 import {
   useDiscoverSuppliers,
   useSupplierCategories,
@@ -700,25 +701,18 @@ export default function RedeFornecedoresPage() {
   return (
     <AppLayout title="Rede de Fornecedores" subtitle="Diretório de fornecedores certificados para a sua obra">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Store className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Rede de Fornecedores</h1>
-                <p className="text-sm text-muted-foreground">
-                  Diretório de fornecedores certificados para a sua obra
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => setShowInvite(true)} className="shrink-0">
+        <PageHeader
+          eyebrow="Comercial"
+          title="Rede de Fornecedores"
+          subtitle="Diretório de fornecedores certificados para a sua obra"
+          actions={
+            <Button onClick={() => setShowInvite(true)}>
               <UserPlus className="w-4 h-4 mr-2" />
               Convidar Fornecedor
             </Button>
-          </div>
+          }
+        />
+        <div className="mb-4">
           {/* Mobile filter toggle */}
           <Button
             variant="outline"
