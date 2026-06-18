@@ -288,12 +288,16 @@ export default function ObrasPage() {
                 <Pagination current={page} total={totalPages} onChange={setPage} />
               </>
             ) : (
-              <div className="text-center py-12 bg-muted/30 rounded-xl">
-                <p className="text-muted-foreground">Nenhuma obra encontrada.</p>
-                <Button variant="outline" className="mt-4" onClick={() => navigate('/obras/criar')}>
-                  <Plus className="w-4 h-4 mr-2" /> Criar primeira obra
-                </Button>
-              </div>
+              <EmptyState
+                icon={Building2}
+                title="Nenhuma obra encontrada"
+                description="Crie a sua primeira obra para começar a gerir progresso, equipas e financeiro."
+                action={
+                  <Button onClick={() => navigate('/obras/criar')} className="gap-2">
+                    <Plus className="w-4 h-4" /> Criar primeira obra
+                  </Button>
+                }
+              />
             )}
           </TabsContent>
 
