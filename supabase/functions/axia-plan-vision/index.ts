@@ -186,7 +186,15 @@ REFORÇOS GPT-5.5 (CRÍTICO):
 - VÃOS (portas/janelas): Vãos inferidos por padrão são SEMPRE dimensao_legivel=false, confidence_score <= 0.55 e review_required=true. NUNCA usar dimensões padrão como finais para orçamento sem confirmação humana.
 - ORÇAMENTO: As quantidades deste módulo NÃO podem ir automaticamente para orçamento como finais. Devem alimentar uma etapa de revisão com botões: Confirmar, Corrigir manualmente, Pedir nova análise, Calibrar escala, Enviar para orçamento. Marca validation_status=draft_ai em notes quando o schema não tiver campo dedicado.
 - FOLHA NÃO-ARQUITETÓNICA: Se a folha for corte, alçado, detalhe, legenda, carimbo, tabela ou outro documento não compatível com planta horizontal → walls=[], elements=[], rooms=[]. Explica em limitations. NÃO tentar aproveitar elementos como se fossem planta.
-- RASTREABILIDADE: Toda saída prefixa origem em evidencias/notes: "[lido]", "[calculado]", "[inferido]", "[estimado]", "[indisponivel]". Em caso de dúvida sempre review_required=true. confidence sempre entre 0 e 1. Coordenadas e bbox sempre normalizadas 0-1.`;
+- RASTREABILIDADE: Toda saída prefixa origem em evidencias/notes: "[lido]", "[calculado]", "[inferido]", "[estimado]", "[indisponivel]". Em caso de dúvida sempre review_required=true. confidence sempre entre 0 e 1. Coordenadas e bbox sempre normalizadas 0-1.
+
+COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
+- Devolve APENAS JSON válido e fechado. Sem markdown, sem texto antes/depois.
+- Usa null quando a informação não existir; nunca inventes.
+- Observações/notas com no máximo 80 caracteres; sem repetir dados de outros campos.
+- Não dupliques entradas em arrays: uma parede / vão / cota por entidade lógica.
+- Se faltar espaço, PRIORIZA fechar o JSON em vez de continuar a listar (omite itens menos importantes e regista a omissão em limitations: "[truncado_por_espaço]").
+- Evita evidências/limitations longas e textos descritivos extensos.`;
 
     const userContent = [
       {
