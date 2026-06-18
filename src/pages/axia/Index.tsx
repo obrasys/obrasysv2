@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { AppLayout } from '@/components/layout';
+import { PageHeader, MetricCardGrid, MetricCard } from '@/components/patterns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -272,6 +273,18 @@ export default function AxiaPage() {
       subtitle="Central de Inteligência Operacional"
     >
       <div className="p-4 md:p-6 space-y-6">
+        <PageHeader
+          eyebrow="Inteligência"
+          title="Axia IA"
+          subtitle="Central de Inteligência Operacional — monitorização preditiva de obras, orçamentos e prazos"
+          actions={
+            <Button variant="outline" size="sm" onClick={() => refetchAnalysis()} disabled={analysisLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${analysisLoading ? 'animate-spin' : ''}`} />
+              Atualizar análise
+            </Button>
+          }
+        />
+
 
         {/* ═══ HERO ═══ */}
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent overflow-hidden relative">
