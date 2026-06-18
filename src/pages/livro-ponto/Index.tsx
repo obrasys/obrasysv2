@@ -90,47 +90,33 @@ export default function LivroPontoIndex() {
   const pendingTimesheets = timesheets.filter((t: any) => t.status === "draft" || t.status === "submitted");
 
   return (
-    <AppLayout 
-      title="Livro de Ponto" 
+    <AppLayout
+      title="Livro de Ponto"
       subtitle="Gestão de presenças, horas e custos de mão de obra"
-      actions={
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/livro-ponto/trabalhadores")}>
-            <Users className="h-4 w-4 mr-2" />
-            Trabalhadores
-          </Button>
-          <Button onClick={() => navigate("/livro-ponto/lancar")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Lançar Horas
-          </Button>
-        </div>
-      }
     >
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+        <PageHeader
+          eyebrow="Recursos Humanos"
+          title="Livro de Ponto"
+          subtitle="Controle presenças, horas trabalhadas e custos de mão de obra por obra e por trabalhador."
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/livro-ponto/trabalhadores")} className="gap-2">
+                <Users className="h-4 w-4" /> Trabalhadores
+              </Button>
+              <Button onClick={() => navigate("/livro-ponto/lancar")} className="gap-2">
+                <Plus className="h-4 w-4" /> Lançar Horas
+              </Button>
+            </div>
+          }
+        />
 
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { title: "Trabalhadores", value: totalWorkers, icon: Users, color: "text-blue-600", bgColor: "bg-blue-100" },
-            { title: "Horas Totais", value: formatMinutes(totalMinutes), icon: Timer, color: "text-green-600", bgColor: "bg-green-100" },
-            { title: "Custo Total", value: formatCurrency(totalCost), icon: Euro, color: "text-purple-600", bgColor: "bg-purple-100" },
-            { title: "Pendentes", value: pendingTimesheets.length, icon: Clock, color: "text-amber-600", bgColor: "bg-amber-100" },
-          ].map((card, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{card.title}</p>
-                    <p className="text-2xl font-bold mt-1">{card.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${card.bgColor}`}>
-                    <card.icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <MetricCardGrid columns={4}>
+          <MetricCard label="Trabalhadores" value={totalWorkers} icon={Users} tone="primary" />
+          <MetricCard label="Horas Totais" value={formatMinutes(totalMinutes)} icon={Timer} tone="success" />
+          <MetricCard label="Custo Total" value={formatCurrency(totalCost)} icon={Euro} tone="default" />
+          <MetricCard label="Pendentes" value={pendingTimesheets.length} icon={Clock} tone="warning" />
+        </MetricCardGrid>
 
         {/* Filters */}
         <Card>
