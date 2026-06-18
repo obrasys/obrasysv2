@@ -232,9 +232,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="pagar" className="mt-4">
             <div className="space-y-3">
               {contasPagar.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta a pagar</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta a pagar" />
               ) : (
                 contasPagar.map((conta) => (
                   <ContaCard
