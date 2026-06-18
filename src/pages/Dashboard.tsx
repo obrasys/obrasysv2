@@ -159,6 +159,9 @@ const Dashboard = () => {
               medicoesPendentes={kpis.medicoesPendentes}
             />
 
+            {/* 1.2. Guided Actions (Fase 6 — Orçamentação Inteligente) */}
+            <DashboardGuidedActions />
+
             {/* 1.5. Setup Progress */}
             <DashboardSetupProgress
               hasLogo={!!profile?.empresa_logo_url}
