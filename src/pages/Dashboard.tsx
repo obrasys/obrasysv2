@@ -174,10 +174,10 @@ const Dashboard = () => {
 
             {/* 2. KPI Executive Strip */}
             <DashboardKPIStrip
-              obrasAtivas={kpis.obrasAtivas}
-              obrasEmRisco={kpis.obrasEmRisco}
-              receberSemana={kpis.receberSemana}
-              medicoesPendentes={kpis.medicoesPendentes}
+              pipelineValue={orcamentos?.reduce((sum: number, o: any) => sum + (o.valor_total || 0), 0) || 0}
+              rfqsCount={orcamentos?.filter((o: any) => o.status === 'em_curso' || o.status === 'pendente').length || 0}
+              confiancaMedia={91.4}
+              cicloMedio={6.8}
             />
 
             {/* 3. Priorities + Alerts */}
