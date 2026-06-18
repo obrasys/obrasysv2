@@ -4,7 +4,9 @@ import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RevisaoAssistida } from '@/components/orcamentos/inteligente/RevisaoAssistida';
 import { cn } from '@/lib/utils';
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -62,9 +64,14 @@ const STEPS: Step[] = [
 export default function OrcamentacaoInteligentePage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [orcamentoId] = useState<string | null>(null);
+  const [budgetVersionId] = useState<string | null>(null);
+  const [canProceedReview, setCanProceedReview] = useState(true);
 
   const step = STEPS[currentStep];
   const isLast = currentStep === STEPS.length - 1;
+  const isReviewBlocked = step.id === 'gravar' && !canProceedReview;
+
 
   return (
     <AppLayout
@@ -140,7 +147,15 @@ export default function OrcamentacaoInteligentePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <StepPlaceholder stepId={step.id} />
+            {step.id === 'revisao' ? (
+              <RevisaoAssistida
+                orcamentoId={orcamentoId}
+                budgetVersionId={budgetVersionId}
+                onCanProceedChange={setCanProceedReview}
+              />
+            ) : (
+              <StepPlaceholder stepId={step.id} />
+            )}
           </CardContent>
         </Card>
 
@@ -154,7 +169,8 @@ export default function OrcamentacaoInteligentePage() {
             {currentStep === 0 ? 'Sair' : 'Anterior'}
           </Button>
           <Button
-            disabled={isLast}
+            disabled={isLast || isReviewBlocked}
+            title={isReviewBlocked ? 'Resolve os itens críticos antes de continuar' : undefined}
             onClick={() => setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))}
           >
             {isLast ? 'Concluir (em breve)' : 'Próximo'}
