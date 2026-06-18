@@ -213,9 +213,7 @@ const FinanceiroIndex = () => {
           <TabsContent value="todas" className="mt-4">
             <div className="space-y-3">
               {filteredContas?.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p>Nenhuma conta encontrada</p>
-                </div>
+                <EmptyState icon={Receipt} title="Nenhuma conta encontrada" description="Ajuste os filtros ou registe uma nova conta." />
               ) : (
                 filteredContas?.map((conta) => (
                   <ContaCard
