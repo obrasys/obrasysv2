@@ -147,7 +147,15 @@ export default function OrcamentacaoInteligentePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <StepPlaceholder stepId={step.id} />
+            {step.id === 'revisao' ? (
+              <RevisaoAssistida
+                orcamentoId={orcamentoId}
+                budgetVersionId={budgetVersionId}
+                onCanProceedChange={setCanProceedReview}
+              />
+            ) : (
+              <StepPlaceholder stepId={step.id} />
+            )}
           </CardContent>
         </Card>
 
@@ -161,7 +169,8 @@ export default function OrcamentacaoInteligentePage() {
             {currentStep === 0 ? 'Sair' : 'Anterior'}
           </Button>
           <Button
-            disabled={isLast}
+            disabled={isLast || isReviewBlocked}
+            title={isReviewBlocked ? 'Resolve os itens críticos antes de continuar' : undefined}
             onClick={() => setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))}
           >
             {isLast ? 'Concluir (em breve)' : 'Próximo'}
