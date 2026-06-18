@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
+import { PageHeader } from '@/components/patterns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,16 +55,21 @@ export default function AutosMedicaoPage() {
     <AppLayout 
       title="Autos de Medição" 
       subtitle="Gestão de certificados de medição"
-      actions={
-        <Button asChild>
-          <Link to="/autos-medicao/criar">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Auto
-          </Link>
-        </Button>
-      }
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Obras"
+          title="Autos de Medição"
+          subtitle="Gestão de certificados de medição"
+          actions={
+            <Button asChild>
+              <Link to="/autos-medicao/criar">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Auto
+              </Link>
+            </Button>
+          }
+        />
 
         {/* Dashboard */}
         {autos && autos.length > 0 && (
