@@ -628,7 +628,11 @@ export default function SuportePage() {
                   {ticketsQuery.isLoading ? (
                     <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                   ) : tickets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">Ainda não criou nenhum ticket.</p>
+                    <EmptyState
+                      icon={TicketCheck}
+                      title="Sem tickets de suporte"
+                      description="Ainda não criou nenhum ticket. Quando precisar de ajuda, abra um pedido e a nossa equipa responde com brevidade."
+                    />
                   ) : (
                     <div className="space-y-3">
                       {tickets.map((ticket) => (
