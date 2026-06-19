@@ -55,26 +55,22 @@ export default function DefinicoesFaturacao() {
 
     (async () => {
       const orgId = organization.id;
+      const sb = supabase as any;
       const [obrasRes, membersRes, docsRes, axiaRes, integRes] = await Promise.all([
-        supabase
-          .from("obras")
+        sb.from("obras")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", orgId)
           .eq("status", "em_curso"),
-        supabase
-          .from("organization_members")
+        sb.from("organization_members")
           .select("user_id", { count: "exact", head: true })
           .eq("organization_id", orgId),
-        supabase
-          .from("documentos")
+        sb.from("documentos")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", orgId),
-        supabase
-          .from("axia_usage_log" as any)
+        sb.from("axia_usage_log")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", orgId),
-        supabase
-          .from("integrations" as any)
+        sb.from("integrations")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", orgId),
       ]);
