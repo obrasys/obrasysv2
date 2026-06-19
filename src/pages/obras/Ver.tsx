@@ -557,9 +557,14 @@ export default function VerObraPage() {
                     <p className="text-xs text-muted-foreground">Importe plantas, meça quantitativos e gere pré-orçamentos</p>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => navigate(`/obras/${id}/plantas`)}>
-                  Abrir Plantas
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/obras/${id}/planta-leitura`)}>
+                    Leitura Assistida
+                  </Button>
+                  <Button size="sm" onClick={() => navigate(`/obras/${id}/plantas`)}>
+                    Abrir Plantas
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
