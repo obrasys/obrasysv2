@@ -1,4 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
 
 const SYSTEM_PROMPT = `És a Axia, assistente do Obra Sys. Responde em português europeu, de forma clara e natural para o utilizador final.
 
