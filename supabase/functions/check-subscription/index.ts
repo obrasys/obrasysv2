@@ -22,7 +22,11 @@ const logStep = (step: string, details?: any) => {
 // Map Stripe product IDs to subscription tiers.
 // Keep legacy IDs to avoid breaking historical subscriptions.
 const PRODUCT_TIERS: Record<string, string> = {
-  // Current live products
+  // Current live products (Obra Sys 2026 pricing: 29€ / 99€ / 179€)
+  "prod_UjWLBCby5zhLab": "starter",       // STRIPE_PRICE_STARTER_MONTHLY
+  "prod_UjWMbiGskJiQ9H": "professional",  // STRIPE_PRICE_PROFESSIONAL_MONTHLY
+  "prod_UjWNwEfMO2UegY": "promotor",      // STRIPE_PRICE_PROMOTOR_MONTHLY
+  // Previous live products
   "prod_U4iBFoVt8KJkb6": "starter",
   "prod_U4iBLTVrZfpcur": "professional",
   // Legacy products (kept for backwards compatibility)

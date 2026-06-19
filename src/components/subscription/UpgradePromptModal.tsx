@@ -14,6 +14,7 @@ const PLAN_LABELS: Record<string, string> = {
   trial: 'Trial',
   starter: 'Starter',
   professional: 'Professional',
+  promotor: 'Promotor',
   enterprise: 'Enterprise',
   founder: 'Founder',
 };

@@ -49,8 +49,10 @@ export function useFeatureGate() {
     (feature: PlanFeature): string | null => {
       if (isUnlimited) return null;
       if (hasFeature(feature)) return null;
+      if (tier === 'trial') return 'Starter';
       if (tier === 'starter') return 'Professional';
-      return 'Starter';
+      if (tier === 'professional') return 'Promotor';
+      return 'Professional';
     },
     [hasFeature, tier, isUnlimited]
   );

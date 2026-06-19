@@ -60,6 +60,24 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
   },
   professional: {
     maxObrasAtivas: 0, // unlimited
+    maxUtilizadores: 5,
+    features: {
+      controloOrcamentos: true,
+      gestaoDocumentos: true,
+      aplicacaoMovel: true,
+      suporteEmail: true,
+      gestaoEquipasAvancada: true,
+      relatoriosPersonalizados: true,
+      suportePrioritario: true,
+      basePrecos: true,
+      conformidade: true,
+      gestaoFinanceira: true,
+      calculosIcfLsfAutomatico: true,
+      comandoVoz: true,
+    },
+  },
+  promotor: {
+    maxObrasAtivas: 0, // unlimited
     maxUtilizadores: 10,
     features: {
       controloOrcamentos: true,

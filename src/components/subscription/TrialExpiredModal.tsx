@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Sparkles, Phone } from "lucide-react";
+import { AlertTriangle, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,28 +27,18 @@ export function TrialExpiredModal() {
           </div>
           <DialogTitle className="text-2xl">Trial Expirado</DialogTitle>
           <DialogDescription className="text-base">
-            O seu período de trial de 30 dias chegou ao fim. Para continuar a usar todas as funcionalidades do ObraSys, escolha um dos nossos planos.
+            O seu período de trial de 30 dias chegou ao fim. Para continuar a usar o Obra Sys, escolha um dos planos: Starter, Professional ou Promotor.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 mt-6">
-          <Button 
-            className="w-full gap-2" 
+          <Button
+            className="w-full gap-2"
             size="lg"
-            onClick={() => navigate("/planos")}
+            onClick={() => navigate("/planos?trial=expired")}
           >
             <Sparkles className="w-5 h-5" />
-            Ver Planos e Preços
-          </Button>
-
-          <Button 
-            variant="outline" 
-            className="w-full gap-2" 
-            size="lg"
-            onClick={() => window.open("mailto:contacto@obrasys.pt?subject=Enterprise%20Plan", "_blank")}
-          >
-            <Phone className="w-5 h-5" />
-            Contactar Vendas (Enterprise)
+            Ver Planos e Assinar
           </Button>
         </div>
 
@@ -59,3 +49,4 @@ export function TrialExpiredModal() {
     </Dialog>
   );
 }
+
