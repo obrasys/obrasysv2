@@ -194,7 +194,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
         setUploading(false);
       }
     },
-    [user, profile, obraId, toast],
+    [user, organization, obraId, toast],
   );
 
   return { upload, uploading, progress };
@@ -341,7 +341,7 @@ export async function reviewElement(
     reviewed_by: u.user!.id,
     action,
     old_value_json: cur,
-    new_value_json: { ...cur, ...update },
+    new_value_json: { ...(cur as any), ...update },
     notes: notes || null,
   });
 }
