@@ -69,11 +69,12 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       gestaoEquipasAvancada: true,
       relatoriosPersonalizados: true,
       suportePrioritario: true,
-      basePrecos: true,
-      conformidade: true,
-      gestaoFinanceira: true,
-      calculosIcfLsfAutomatico: true,
-      comandoVoz: true,
+      // Features avançadas — exclusivas do plano Promotor (ver src/config/plans.ts)
+      basePrecos: false,
+      conformidade: false,
+      gestaoFinanceira: false,
+      calculosIcfLsfAutomatico: false,
+      comandoVoz: false,
     },
   },
   promotor: {
