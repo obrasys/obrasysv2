@@ -241,7 +241,6 @@ const App = () => (
                   <Route path="/obras/:id/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />
                   <Route path="/planta-leitura" element={<ManagerRoute><PlantaLeituraPage /></ManagerRoute>} />
-                  <Route path="/planta-leitura/:obraId" element={<ManagerRoute><PlantaLeituraPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />

@@ -25,7 +25,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const { plant_file_id, obra_id, target, budget_id, budget_name, cliente_id } = body || {};
-    if (!plant_file_id || !obra_id || !target) {
+    if (!plant_file_id || !target) {
       return new Response(JSON.stringify({ error: "Parâmetros obrigatórios em falta." }), { status: 400, headers: corsHeaders });
     }
 
@@ -37,6 +37,8 @@ serve(async (req) => {
 
     const { data: pf, error: pfErr } = await supabase.from("plant_files").select("*").eq("id", plant_file_id).maybeSingle();
     if (pfErr || !pf) return new Response(JSON.stringify({ error: "Sem acesso a este ficheiro." }), { status: 403, headers: corsHeaders });
+
+    const effectiveObraId = obra_id ?? pf.obra_id ?? null;
 
     const { data: approved } = await service.from("plant_elements")
       .select("*")
@@ -52,7 +54,7 @@ serve(async (req) => {
     if (target === "new") {
       const { data: novo, error: nErr } = await service.from("orcamentos").insert({
         organization_id: pf.organization_id,
-        obra_id,
+        obra_id: effectiveObraId,
         cliente_id: cliente_id || null,
         nome: budget_name || `Orçamento Planta — ${pf.file_name}`,
         estado: "rascunho",
@@ -117,7 +119,7 @@ serve(async (req) => {
       .in("id", items.map((i: any) => i.id));
 
     await service.from("plant_budget_exports").insert({
-      organization_id: pf.organization_id, obra_id, plant_file_id, budget_id: targetBudgetId,
+      organization_id: pf.organization_id, obra_id: effectiveObraId, plant_file_id, budget_id: targetBudgetId,
       exported_by: userId, status: "completed", items_exported: totalCreated,
       details_json: { groups: Array.from(groups.keys()) },
     });

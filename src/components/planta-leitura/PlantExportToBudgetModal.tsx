@@ -32,8 +32,9 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
 
   useEffect(() => {
     if (!open) return;
-    supabase.from("orcamentos").select("id, nome").eq("obra_id", file.obra_id).order("created_at", { ascending: false }).limit(50)
-      .then(({ data }) => setBudgets((data as any) || []));
+    let q = supabase.from("orcamentos").select("id, nome").order("created_at", { ascending: false }).limit(50);
+    if (file.obra_id) q = q.eq("obra_id", file.obra_id);
+    q.then(({ data }) => setBudgets((data as any) || []));
   }, [open, file.obra_id]);
 
   const submit = async () => {
@@ -45,7 +46,7 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
     try {
       const res = await exportToBudget({
         plant_file_id: file.id,
-        obra_id: file.obra_id,
+        obra_id: file.obra_id ?? null,
         target,
         budget_id: target === "existing" ? budgetId : undefined,
         budget_name: target === "new" ? budgetName : undefined,
