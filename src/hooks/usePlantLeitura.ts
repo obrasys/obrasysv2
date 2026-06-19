@@ -73,7 +73,7 @@ export function usePlantFiles(obraId: string | undefined) {
 }
 
 export function usePlantUploadAndProcess(obraId: string | undefined) {
-  const { user, profile } = useAuth();
+  const { user, organization } = useAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<string>("");
@@ -85,13 +85,13 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
         toast({ title: "Ficheiro inválido", description: err, variant: "destructive" });
         return null;
       }
-      if (!user || !profile?.organization_id || !obraId) {
+      if (!user || !organization?.id || !obraId) {
         toast({ title: "Erro", description: "Sessão inválida.", variant: "destructive" });
         return null;
       }
       setUploading(true);
       try {
-        const orgId = profile.organization_id;
+        const orgId = organization.id;
         const ext = file.name.split(".").pop()!.toLowerCase();
         setProgress("A carregar ficheiro...");
         const baseId = crypto.randomUUID();
