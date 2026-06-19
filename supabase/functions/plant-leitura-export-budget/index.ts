@@ -119,7 +119,7 @@ serve(async (req) => {
       .in("id", items.map((i: any) => i.id));
 
     await service.from("plant_budget_exports").insert({
-      organization_id: pf.organization_id, obra_id, plant_file_id, budget_id: targetBudgetId,
+      organization_id: pf.organization_id, obra_id: effectiveObraId, plant_file_id, budget_id: targetBudgetId,
       exported_by: userId, status: "completed", items_exported: totalCreated,
       details_json: { groups: Array.from(groups.keys()) },
     });
