@@ -1,6 +1,15 @@
 /**
  * Plan feature definitions and limits for ObraSys subscription tiers.
+ *
+ * ÚNICA FONTE DE VERDADE para feature-gating em runtime (via useFeatureGate).
+ * Os 3 tiers comerciais (starter/professional/promotor) DEVEM refletir as
+ * features prometidas em `src/config/plans.ts`. Os restantes (trial,
+ * enterprise, founder) são tiers internos atribuídos pelo backend.
  */
+
+import type { PlanKey } from '@/config/plans';
+
+export type RuntimeTier = PlanKey | 'trial' | 'enterprise' | 'founder';
 
 export interface PlanLimits {
   maxObrasAtivas: number; // 0 = unlimited
@@ -21,7 +30,7 @@ export interface PlanLimits {
   };
 }
 
-export const PLAN_LIMITS: Record<string, PlanLimits> = {
+export const PLAN_LIMITS: Record<RuntimeTier, PlanLimits> = {
   trial: {
     maxObrasAtivas: 1,
     maxUtilizadores: 1,

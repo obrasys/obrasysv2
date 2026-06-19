@@ -15,24 +15,12 @@ export interface PlanLimitsConfig {
   unlimitedProjects: boolean;
 }
 
-export interface PlanPermissionsConfig {
-  basicBudgets: boolean;
-  documents: boolean;
-  emailSupport: boolean;
-  advancedTeamManagement: boolean;
-  customReports: boolean;
-  plantBudgeting: boolean;
-  prioritySupport: boolean;
-  advancedBudgeting: boolean;
-  closingSheet: boolean;
-  advancedProjectManagement: boolean;
-  comparativeMap: boolean;
-  projectBudget: boolean;
-  forecastEac: boolean;
-  marginControl: boolean;
-  advancedDocumentManagement: boolean;
-  executiveReports: boolean;
-}
+/**
+ * NOTA: O gate de funcionalidades em runtime vive em `src/config/planLimits.ts`
+ * (consumido por `useFeatureGate`). Este ficheiro detém apenas a configuração
+ * comercial — preços, copy de marketing, IDs Stripe e limites apresentados.
+ * Mantém os dois ficheiros coerentes ao alterar qualquer plano.
+ */
 
 export interface PlanConfig {
   key: PlanKey;
@@ -46,7 +34,6 @@ export interface PlanConfig {
   badge?: string;
   features: string[];
   limits: PlanLimitsConfig;
-  permissions: PlanPermissionsConfig;
   /** Nome da env var no edge function que contém o price_id Stripe */
   stripePriceEnvKey: string;
   /** Stripe Price ID (fallback / fonte para o frontend) */
@@ -78,24 +65,6 @@ export const PLANS: Record<PlanKey, PlanConfig> = {
       includedUsers: 1,
       unlimitedProjects: false,
     },
-    permissions: {
-      basicBudgets: true,
-      documents: true,
-      emailSupport: true,
-      advancedTeamManagement: false,
-      customReports: false,
-      plantBudgeting: false,
-      prioritySupport: false,
-      advancedBudgeting: false,
-      closingSheet: false,
-      advancedProjectManagement: false,
-      comparativeMap: false,
-      projectBudget: false,
-      forecastEac: false,
-      marginControl: false,
-      advancedDocumentManagement: false,
-      executiveReports: false,
-    },
     stripePriceEnvKey: "STRIPE_PRICE_STARTER_MONTHLY",
     stripePriceId: "price_1Tk3JHP3LW226r1jImkBoYqd",
     stripeProductId: "prod_UjWLBCby5zhLab",
@@ -124,24 +93,6 @@ export const PLANS: Record<PlanKey, PlanConfig> = {
       maxActiveProjects: null,
       includedUsers: 5,
       unlimitedProjects: true,
-    },
-    permissions: {
-      basicBudgets: true,
-      documents: true,
-      emailSupport: true,
-      advancedTeamManagement: true,
-      customReports: true,
-      plantBudgeting: true,
-      prioritySupport: true,
-      advancedBudgeting: false,
-      closingSheet: false,
-      advancedProjectManagement: false,
-      comparativeMap: false,
-      projectBudget: false,
-      forecastEac: false,
-      marginControl: false,
-      advancedDocumentManagement: false,
-      executiveReports: false,
     },
     stripePriceEnvKey: "STRIPE_PRICE_PROFESSIONAL_MONTHLY",
     stripePriceId: "price_1Tk3KCP3LW226r1jBsSOXD3x",
@@ -175,24 +126,6 @@ export const PLANS: Record<PlanKey, PlanConfig> = {
       maxActiveProjects: null,
       includedUsers: 10,
       unlimitedProjects: true,
-    },
-    permissions: {
-      basicBudgets: true,
-      documents: true,
-      emailSupport: true,
-      advancedTeamManagement: true,
-      customReports: true,
-      plantBudgeting: true,
-      prioritySupport: true,
-      advancedBudgeting: true,
-      closingSheet: true,
-      advancedProjectManagement: true,
-      comparativeMap: true,
-      projectBudget: true,
-      forecastEac: true,
-      marginControl: true,
-      advancedDocumentManagement: true,
-      executiveReports: true,
     },
     stripePriceEnvKey: "STRIPE_PRICE_PROMOTOR_MONTHLY",
     stripePriceId: "price_1Tk3KfP3LW226r1jOuGpvcfe",
