@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { useObras } from "@/hooks/useObras";
 import {
   usePlantFiles,
