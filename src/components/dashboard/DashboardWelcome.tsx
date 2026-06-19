@@ -45,7 +45,7 @@ export function DashboardWelcome({ obrasEmRisco, acoesPrioritarias, medicoesPend
           <p className="text-sm text-muted-foreground mt-1.5 max-w-lg">{summaryText}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => navigate('/plantas')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/obras')}>
             <Upload className="w-4 h-4 mr-1.5" />
             Importar CAD/PDF
           </Button>

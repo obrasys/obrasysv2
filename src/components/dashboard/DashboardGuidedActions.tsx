@@ -47,7 +47,7 @@ const ACTIONS: ActionItem[] = [
     title: 'Analisar planta',
     description: 'Medição automática a partir de plantas',
     icon: Map,
-    to: '/plantas',
+    to: '/obras',
     accent: 'hover:border-emerald-400/40',
     iconBg: 'bg-emerald-500/10',
     iconColor: 'text-emerald-600',
