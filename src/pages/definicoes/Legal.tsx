@@ -1,10 +1,12 @@
 import { useCallback, useState } from "react";
-import { Download, FileText, Shield, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, Download, FileText, Shield, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/patterns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { LEGAL_DOCUMENTS, type LegalSlug } from "@/content/legal";
 
 export default function DefinicoesLegal() {
   const { user } = useAuth();
@@ -51,22 +53,25 @@ export default function DefinicoesLegal() {
 
   return (
     <div className="space-y-6">
-      <SectionCard title="Documentos legais" description="Termos, política de privacidade e RGPD.">
+      <SectionCard title="Documentos legais" description="Termos, política de privacidade e cookies.">
         <ul className="space-y-2 text-sm">
-          {[
-            { label: "Termos de Serviço", href: "/legal/termos" },
-            { label: "Política de Privacidade", href: "/legal/privacidade" },
-            { label: "Política RGPD", href: "/legal/rgpd" },
-          ].map((d) => (
+          {(Object.entries(LEGAL_DOCUMENTS) as [LegalSlug, { title: string; updatedAt: string }][]).map(([slug, d]) => (
             <li
-              key={d.label}
+              key={slug}
               className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-elevated p-3"
             >
               <span className="flex items-center gap-2 text-text-strong">
                 <FileText className="h-4 w-4 text-text-muted" />
-                {d.label}
+                <span>
+                  {d.title}
+                  <span className="ml-2 text-xs text-text-muted">Atualizado em {d.updatedAt}</span>
+                </span>
               </span>
-              <span className="text-xs text-text-muted">Em breve</span>
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/legal/${slug}`} target="_blank" rel="noopener noreferrer">
+                  Abrir <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </li>
           ))}
         </ul>

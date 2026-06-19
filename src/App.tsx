@@ -72,6 +72,7 @@ const DefinicoesFaturacaoPage = lazy(() => import("./pages/definicoes/Faturacao"
 const DefinicoesIntegracoesPage = lazy(() => import("./pages/definicoes/Integracoes"));
 const DefinicoesAuditoriaPage = lazy(() => import("./pages/definicoes/Auditoria"));
 const DefinicoesLegalPage = lazy(() => import("./pages/definicoes/Legal"));
+const LegalDocumentPage = lazy(() => import("./pages/legal/LegalDocument"));
 
 const PlanosPage = lazy(() => import("./pages/Planos"));
 const SubscricaoPage = lazy(() => import("./pages/Subscricao"));
@@ -341,6 +342,7 @@ const App = () => (
                   <Route path="/fornecedor/pedidos/:id" element={<SupplierRoute><FornecedorPedidoDetalhe /></SupplierRoute>} />
                   <Route path="/fornecedor/precos" element={<SupplierRoute><FornecedorPrecos /></SupplierRoute>} />
                   <Route path="/fornecedor/perfil" element={<SupplierRoute><FornecedorPerfil /></SupplierRoute>} />
+                  <Route path="/legal/:slug" element={<LegalDocumentPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
