@@ -49,21 +49,22 @@ async function renderPdfPageToPngBlob(doc: pdfjs.PDFDocumentProxy, pageNum: numb
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
 }
 
-export function usePlantFiles(obraId: string | undefined) {
+export function usePlantFiles() {
+  const { organization } = useAuth();
   const [files, setFiles] = useState<PlantFile[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!obraId) return;
+    if (!organization?.id) return;
     setLoading(true);
     const { data } = await supabase
       .from("plant_files" as any)
       .select("*")
-      .eq("obra_id", obraId)
+      .eq("organization_id", organization.id)
       .order("created_at", { ascending: false });
     setFiles((data as any) || []);
     setLoading(false);
-  }, [obraId]);
+  }, [organization?.id]);
 
   useEffect(() => {
     refresh();
@@ -72,7 +73,7 @@ export function usePlantFiles(obraId: string | undefined) {
   return { files, loading, refresh };
 }
 
-export function usePlantUploadAndProcess(obraId: string | undefined) {
+export function usePlantUploadAndProcess() {
   const { user, organization } = useAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
@@ -85,7 +86,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
         toast({ title: "Ficheiro inválido", description: err, variant: "destructive" });
         return null;
       }
-      if (!user || !organization?.id || !obraId) {
+      if (!user || !organization?.id) {
         toast({ title: "Erro", description: "Sessão inválida.", variant: "destructive" });
         return null;
       }
@@ -104,7 +105,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
           .from("plant_files" as any)
           .insert({
             organization_id: orgId,
-            obra_id: obraId,
+            obra_id: null,
             uploaded_by: user.id,
             file_name: file.name,
             file_type: ext,
@@ -140,7 +141,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
             await supabase.from("plant_sheets" as any).insert({
               plant_file_id: plantFile.id,
               organization_id: orgId,
-              obra_id: obraId,
+              obra_id: null,
               sheet_index: i,
               sheet_name: `Folha ${i}`,
               image_path: imgPath,
@@ -155,7 +156,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
           await supabase.from("plant_sheets" as any).insert({
             plant_file_id: plantFile.id,
             organization_id: orgId,
-            obra_id: obraId,
+            obra_id: null,
             sheet_index: 1,
             sheet_name: file.name,
             image_path: storagePath,
@@ -170,7 +171,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
           await supabase.from("plant_sheets" as any).insert({
             plant_file_id: plantFile.id,
             organization_id: orgId,
-            obra_id: obraId,
+            obra_id: null,
             sheet_index: 1,
             sheet_name: file.name,
             image_path: null,
@@ -194,7 +195,7 @@ export function usePlantUploadAndProcess(obraId: string | undefined) {
         setUploading(false);
       }
     },
-    [user, organization, obraId, toast],
+    [user, organization, toast],
   );
 
   return { upload, uploading, progress };
