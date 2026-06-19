@@ -324,7 +324,7 @@ export default function PlantaLeituraIndexPage() {
                 onOpenChange={setExportOpen}
                 file={activeFile}
                 elements={allElements}
-                onExported={(bid) => navigate(`/orcamentos/${bid}/ver`)}
+                onExported={(bid) => navigate(`/orcamentos/${bid}`)}
               />
             )}
           </>
