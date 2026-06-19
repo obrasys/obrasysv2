@@ -11704,7 +11704,7 @@ export type Database = {
           exported_by: string
           id: string
           items_exported: number
-          obra_id: string
+          obra_id: string | null
           organization_id: string
           plant_file_id: string
           status: string
@@ -11716,7 +11716,7 @@ export type Database = {
           exported_by: string
           id?: string
           items_exported?: number
-          obra_id: string
+          obra_id?: string | null
           organization_id: string
           plant_file_id: string
           status?: string
@@ -11728,7 +11728,7 @@ export type Database = {
           exported_by?: string
           id?: string
           items_exported?: number
-          obra_id?: string
+          obra_id?: string | null
           organization_id?: string
           plant_file_id?: string
           status?: string
@@ -11802,7 +11802,7 @@ export type Database = {
           dimensions_json: Json | null
           id: string
           notes: string | null
-          obra_id: string
+          obra_id: string | null
           organization_id: string
           plant_file_id: string
           plant_sheet_id: string
@@ -11829,7 +11829,7 @@ export type Database = {
           dimensions_json?: Json | null
           id?: string
           notes?: string | null
-          obra_id: string
+          obra_id?: string | null
           organization_id: string
           plant_file_id: string
           plant_sheet_id: string
@@ -11856,7 +11856,7 @@ export type Database = {
           dimensions_json?: Json | null
           id?: string
           notes?: string | null
-          obra_id?: string
+          obra_id?: string | null
           organization_id?: string
           plant_file_id?: string
           plant_sheet_id?: string
@@ -11894,7 +11894,7 @@ export type Database = {
           file_size: number
           file_type: string
           id: string
-          obra_id: string
+          obra_id: string | null
           organization_id: string
           status: string
           storage_path: string
@@ -11909,7 +11909,7 @@ export type Database = {
           file_size: number
           file_type: string
           id?: string
-          obra_id: string
+          obra_id?: string | null
           organization_id: string
           status?: string
           storage_path: string
@@ -11924,7 +11924,7 @@ export type Database = {
           file_size?: number
           file_type?: string
           id?: string
-          obra_id?: string
+          obra_id?: string | null
           organization_id?: string
           status?: string
           storage_path?: string
@@ -11998,7 +11998,7 @@ export type Database = {
           id: string
           image_path: string | null
           needs_review: boolean
-          obra_id: string
+          obra_id: string | null
           organization_id: string
           plant_file_id: string
           scale: string | null
@@ -12016,7 +12016,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           needs_review?: boolean
-          obra_id: string
+          obra_id?: string | null
           organization_id: string
           plant_file_id: string
           scale?: string | null
@@ -12034,7 +12034,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           needs_review?: boolean
-          obra_id?: string
+          obra_id?: string | null
           organization_id?: string
           plant_file_id?: string
           scale?: string | null
