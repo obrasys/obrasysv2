@@ -58,7 +58,7 @@ serve(async (req) => {
         cliente_id: cliente_id || null,
         nome: budget_name || `Orçamento Planta — ${pf.file_name}`,
         estado: "rascunho",
-        created_by: userId,
+        user_id: userId,
       }).select().single();
       if (nErr) throw nErr;
       targetBudgetId = (novo as any).id;
