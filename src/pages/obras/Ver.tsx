@@ -234,35 +234,28 @@ export default function VerObraPage() {
       }
     >
       <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
-        {/* Hero Section: Status + Key Info */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 pb-2">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <HardHat className="w-6 h-6 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <ObraStatusBadge status={obra.status as ObraStatus} />
-                {obra.endereco && (
-                  <span className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                    <MapPin className="w-3 h-3 shrink-0" />{obra.endereco}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {obra.data_inicio ? format(new Date(obra.data_inicio), "dd/MM/yyyy", { locale: pt }) : '-'}
-                  {obra.data_fim && (<> → {format(new Date(obra.data_fim), "dd/MM/yyyy", { locale: pt })}</>)}
-                </span>
-              </div>
-            </div>
+        {/* Meta strip: status + location + dates */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
+            <ObraStatusBadge status={obra.status as ObraStatus} />
+            {obra.endereco && (
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0">
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{obra.endereco}</span>
+              </span>
+            )}
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              {obra.data_inicio ? format(new Date(obra.data_inicio), "dd/MM/yyyy", { locale: pt }) : '-'}
+              {obra.data_fim && (<> → {format(new Date(obra.data_fim), "dd/MM/yyyy", { locale: pt })}</>)}
+            </span>
           </div>
-          <Button size="sm" variant="outline" onClick={calculateProgressWithAI} disabled={isCalculating} className="shrink-0">
+          <Button size="sm" variant="outline" onClick={calculateProgressWithAI} disabled={isCalculating} className="shrink-0 self-start sm:self-auto">
             {isCalculating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
             Calcular Progresso IA
           </Button>
         </div>
+
 
         {/* ═══ BALANÇO DA OBRA ═══ */}
         {isObraAtiva && (
