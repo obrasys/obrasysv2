@@ -84,6 +84,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { icon: Blocks, label: "ICF", href: "/icf" },
       { icon: Layers, label: "Biblioteca ICF", href: "/icf/biblioteca" },
+      { icon: Sparkles, label: "Leitura Assistida", href: "/planta-leitura" },
       { icon: Upload, label: "Importar dados", href: "/importar" },
     ],
   },
