@@ -41,7 +41,7 @@ export interface PlantSheet {
   id: string;
   plant_file_id: string;
   organization_id: string;
-  obra_id: string;
+  obra_id: string | null;
   sheet_index: number;
   sheet_name: string | null;
   discipline: string | null;
