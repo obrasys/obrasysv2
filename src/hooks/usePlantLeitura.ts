@@ -391,7 +391,7 @@ export function usePlantHistory(plantFileId: string | undefined) {
 
 export async function exportToBudget(args: {
   plant_file_id: string;
-  obra_id: string;
+  obra_id?: string | null;
   target: "new" | "existing";
   budget_id?: string;
   budget_name?: string;
