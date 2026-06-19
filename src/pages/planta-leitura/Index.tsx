@@ -52,7 +52,6 @@ export default function PlantaLeituraIndexPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { obras } = useObras();
-  const { profile } = useAuth();
   const obra = obras.find((o) => o.id === obraId);
 
   const { files, refresh: refreshFiles } = usePlantFiles(obraId);
