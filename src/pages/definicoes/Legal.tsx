@@ -88,7 +88,7 @@ export default function DefinicoesLegal() {
       >
         <div className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-sunken/40 p-4 text-sm text-text-muted">
           <Shield className="h-4 w-4 text-text-muted" />
-          <span>Backups geridos pela Lovable Cloud. Para recuperação de dados, contacta o suporte.</span>
+          <span>Backups geridos pela infraestrutura cloud do ObraSys. Para recuperação de dados, contacta o suporte.</span>
         </div>
       </SectionCard>
 

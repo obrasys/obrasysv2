@@ -3,7 +3,7 @@ import { SectionCard } from "@/components/patterns";
 
 const integrations = [
   { name: "Stripe", description: "Pagamentos e subscrições", icon: CreditCard, status: "Ativa" },
-  { name: "Supabase", description: "Backend gerido (Lovable Cloud)", icon: Database, status: "Ativa" },
+  { name: "Base de dados", description: "Backend gerido (cloud do ObraSys)", icon: Database, status: "Ativa" },
   { name: "KeyInvoice", description: "Faturação certificada", icon: FileText, status: "Em breve" },
   { name: "InvoiceXpress", description: "Faturação certificada", icon: FileText, status: "Em breve" },
   { name: "Moloni", description: "Faturação certificada", icon: FileText, status: "Em breve" },
