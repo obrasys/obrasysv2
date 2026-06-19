@@ -107,13 +107,18 @@ serve(async (req) => {
       .eq("user_id", qr.builder_user_id)
       .single();
 
-    const builderName = profile?.nome || "Utilizador";
-    const cats = qr.quote_request_categories?.map((c: any) => c.supplier_categories?.name).filter(Boolean).join(", ") || "Geral";
+    const builderNameRaw = profile?.nome || "Utilizador";
+    const builderName = escapeHtml(builderNameRaw.toString().slice(0, 200));
+    const catsRaw = qr.quote_request_categories?.map((c: any) => c.supplier_categories?.name).filter(Boolean).join(", ") || "Geral";
+    const cats = escapeHtml(catsRaw.toString().slice(0, 500));
     const portalUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/rede-fornecedores`;
 
-    const formattedTotal = total_amount
-      ? new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(total_amount)
+    const formattedTotal = totalAmountNum !== null
+      ? new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(totalAmountNum)
       : null;
+
+    const district = qr.location_district ? escapeHtml(qr.location_district.toString().slice(0, 200)) : "";
+    const municipality = qr.location_municipality ? escapeHtml(qr.location_municipality.toString().slice(0, 200)) : "";
 
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -128,10 +133,10 @@ serve(async (req) => {
             <p>Olá <strong>${builderName}</strong>,</p>
             <p>Recebeu uma nova proposta de cotação de um fornecedor da Rede ObraSys.</p>
             <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
-              <p><strong>Fornecedor:</strong> ${supplier_name || "Fornecedor"}</p>
+              <p><strong>Fornecedor:</strong> ${supplierNameSafe}</p>
               <p><strong>Categorias:</strong> ${cats}</p>
               ${formattedTotal ? `<p><strong>Valor total:</strong> ${formattedTotal}</p>` : ""}
-              ${qr.location_district ? `<p><strong>Local:</strong> ${qr.location_district}${qr.location_municipality ? `, ${qr.location_municipality}` : ""}</p>` : ""}
+              ${district ? `<p><strong>Local:</strong> ${district}${municipality ? `, ${municipality}` : ""}</p>` : ""}
             </div>
             <a href="${portalUrl}" style="display:inline-block;background:#00679d;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
               Ver Proposta na Plataforma
