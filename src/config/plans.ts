@@ -15,24 +15,12 @@ export interface PlanLimitsConfig {
   unlimitedProjects: boolean;
 }
 
-export interface PlanPermissionsConfig {
-  basicBudgets: boolean;
-  documents: boolean;
-  emailSupport: boolean;
-  advancedTeamManagement: boolean;
-  customReports: boolean;
-  plantBudgeting: boolean;
-  prioritySupport: boolean;
-  advancedBudgeting: boolean;
-  closingSheet: boolean;
-  advancedProjectManagement: boolean;
-  comparativeMap: boolean;
-  projectBudget: boolean;
-  forecastEac: boolean;
-  marginControl: boolean;
-  advancedDocumentManagement: boolean;
-  executiveReports: boolean;
-}
+/**
+ * NOTA: O gate de funcionalidades em runtime vive em `src/config/planLimits.ts`
+ * (consumido por `useFeatureGate`). Este ficheiro detém apenas a configuração
+ * comercial — preços, copy de marketing, IDs Stripe e limites apresentados.
+ * Mantém os dois ficheiros coerentes ao alterar qualquer plano.
+ */
 
 export interface PlanConfig {
   key: PlanKey;
@@ -46,7 +34,6 @@ export interface PlanConfig {
   badge?: string;
   features: string[];
   limits: PlanLimitsConfig;
-  permissions: PlanPermissionsConfig;
   /** Nome da env var no edge function que contém o price_id Stripe */
   stripePriceEnvKey: string;
   /** Stripe Price ID (fallback / fonte para o frontend) */
