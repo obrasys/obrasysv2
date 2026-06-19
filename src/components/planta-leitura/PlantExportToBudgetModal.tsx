@@ -32,9 +32,9 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
 
   useEffect(() => {
     if (!open) return;
-    let q = supabase.from("orcamentos").select("id, nome").order("created_at", { ascending: false }).limit(50);
+    let q = supabase.from("orcamentos").select("id, titulo").order("created_at", { ascending: false }).limit(50);
     if (file.obra_id) q = q.eq("obra_id", file.obra_id);
-    q.then(({ data }) => setBudgets((data as any) || []));
+    q.then(({ data }) => setBudgets(((data as any) || []).map((b: any) => ({ id: b.id, nome: b.titulo }))));
   }, [open, file.obra_id]);
 
   const submit = async () => {
