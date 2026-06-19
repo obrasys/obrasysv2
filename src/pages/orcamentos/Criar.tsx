@@ -156,10 +156,7 @@ export default function CriarOrcamentoPage() {
                 <Button
                   variant="outline"
                   className="mt-auto"
-                  onClick={() => {
-                    const btn = document.querySelector<HTMLButtonElement>('[data-orcamento-import-planta]');
-                    btn?.click();
-                  }}
+                  onClick={() => navigate('/planta-leitura')}
                 >
                   <Map className="w-4 h-4 mr-2" />
                   Importar Planta
