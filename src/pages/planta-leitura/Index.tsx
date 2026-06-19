@@ -52,7 +52,7 @@ export default function PlantaLeituraIndexPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { obras } = useObras();
-  const obra = obras.find((o) => o.id === obraId);
+  const obra = (obras ?? []).find((o) => o.id === obraId);
 
   const { files, refresh: refreshFiles } = usePlantFiles(obraId);
   const { upload, uploading, progress } = usePlantUploadAndProcess(obraId);
