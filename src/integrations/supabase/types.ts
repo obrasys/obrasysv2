@@ -362,6 +362,7 @@ export type Database = {
           linked_rule_id: string | null
           margem_lucro_artigo: number | null
           ordem: number
+          plant_source: Json | null
           preco_base: number | null
           preco_unitario: number
           quantidade: number
@@ -397,6 +398,7 @@ export type Database = {
           linked_rule_id?: string | null
           margem_lucro_artigo?: number | null
           ordem?: number
+          plant_source?: Json | null
           preco_base?: number | null
           preco_unitario?: number
           quantidade?: number
@@ -432,6 +434,7 @@ export type Database = {
           linked_rule_id?: string | null
           margem_lucro_artigo?: number | null
           ordem?: number
+          plant_source?: Json | null
           preco_base?: number | null
           preco_unitario?: number
           quantidade?: number
@@ -11689,6 +11692,363 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "plan_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_budget_exports: {
+        Row: {
+          budget_id: string | null
+          created_at: string
+          details_json: Json | null
+          exported_by: string
+          id: string
+          items_exported: number
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          status: string
+        }
+        Insert: {
+          budget_id?: string | null
+          created_at?: string
+          details_json?: Json | null
+          exported_by: string
+          id?: string
+          items_exported?: number
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          status?: string
+        }
+        Update: {
+          budget_id?: string | null
+          created_at?: string
+          details_json?: Json | null
+          exported_by?: string
+          id?: string
+          items_exported?: number
+          obra_id?: string
+          organization_id?: string
+          plant_file_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_budget_exports_plant_file_id_fkey"
+            columns: ["plant_file_id"]
+            isOneToOne: false
+            referencedRelation: "plant_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_element_reviews: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_value_json: Json | null
+          notes: string | null
+          old_value_json: Json | null
+          organization_id: string
+          plant_element_id: string
+          reviewed_by: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_value_json?: Json | null
+          notes?: string | null
+          old_value_json?: Json | null
+          organization_id: string
+          plant_element_id: string
+          reviewed_by: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_value_json?: Json | null
+          notes?: string | null
+          old_value_json?: Json | null
+          organization_id?: string
+          plant_element_id?: string
+          reviewed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_element_reviews_plant_element_id_fkey"
+            columns: ["plant_element_id"]
+            isOneToOne: false
+            referencedRelation: "plant_elements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_elements: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          budget_chapter_suggestion: string | null
+          budget_item_suggestion: string | null
+          category: string | null
+          code: string | null
+          confidence: number | null
+          coordinates_json: Json | null
+          created_at: string
+          description: string | null
+          dimensions_json: Json | null
+          id: string
+          notes: string | null
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          plant_sheet_id: string
+          quantity: number | null
+          read_method: string | null
+          sent_to_budget: boolean
+          source_text: string | null
+          status: string
+          unit: string | null
+          updated_at: string
+          validation_required: boolean
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_chapter_suggestion?: string | null
+          budget_item_suggestion?: string | null
+          category?: string | null
+          code?: string | null
+          confidence?: number | null
+          coordinates_json?: Json | null
+          created_at?: string
+          description?: string | null
+          dimensions_json?: Json | null
+          id?: string
+          notes?: string | null
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          plant_sheet_id: string
+          quantity?: number | null
+          read_method?: string | null
+          sent_to_budget?: boolean
+          source_text?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          validation_required?: boolean
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_chapter_suggestion?: string | null
+          budget_item_suggestion?: string | null
+          category?: string | null
+          code?: string | null
+          confidence?: number | null
+          coordinates_json?: Json | null
+          created_at?: string
+          description?: string | null
+          dimensions_json?: Json | null
+          id?: string
+          notes?: string | null
+          obra_id?: string
+          organization_id?: string
+          plant_file_id?: string
+          plant_sheet_id?: string
+          quantity?: number | null
+          read_method?: string | null
+          sent_to_budget?: boolean
+          source_text?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+          validation_required?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_elements_plant_file_id_fkey"
+            columns: ["plant_file_id"]
+            isOneToOne: false
+            referencedRelation: "plant_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plant_elements_plant_sheet_id_fkey"
+            columns: ["plant_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "plant_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_files: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          obra_id: string
+          organization_id: string
+          status: string
+          storage_path: string
+          total_sheets: number
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          obra_id: string
+          organization_id: string
+          status?: string
+          storage_path: string
+          total_sheets?: number
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          obra_id?: string
+          organization_id?: string
+          status?: string
+          storage_path?: string
+          total_sheets?: number
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      plant_processing_logs: {
+        Row: {
+          created_at: string
+          details_json: Json | null
+          id: string
+          message: string | null
+          obra_id: string | null
+          organization_id: string
+          plant_file_id: string | null
+          plant_sheet_id: string | null
+          status: string
+          step: string
+        }
+        Insert: {
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          message?: string | null
+          obra_id?: string | null
+          organization_id: string
+          plant_file_id?: string | null
+          plant_sheet_id?: string | null
+          status: string
+          step: string
+        }
+        Update: {
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          message?: string | null
+          obra_id?: string | null
+          organization_id?: string
+          plant_file_id?: string | null
+          plant_sheet_id?: string | null
+          status?: string
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_processing_logs_plant_file_id_fkey"
+            columns: ["plant_file_id"]
+            isOneToOne: false
+            referencedRelation: "plant_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plant_processing_logs_plant_sheet_id_fkey"
+            columns: ["plant_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "plant_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_sheets: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          discipline: string | null
+          error_message: string | null
+          floor_level: string | null
+          id: string
+          image_path: string | null
+          needs_review: boolean
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          scale: string | null
+          sheet_index: number
+          sheet_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          discipline?: string | null
+          error_message?: string | null
+          floor_level?: string | null
+          id?: string
+          image_path?: string | null
+          needs_review?: boolean
+          obra_id: string
+          organization_id: string
+          plant_file_id: string
+          scale?: string | null
+          sheet_index: number
+          sheet_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          discipline?: string | null
+          error_message?: string | null
+          floor_level?: string | null
+          id?: string
+          image_path?: string | null
+          needs_review?: boolean
+          obra_id?: string
+          organization_id?: string
+          plant_file_id?: string
+          scale?: string | null
+          sheet_index?: number
+          sheet_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_sheets_plant_file_id_fkey"
+            columns: ["plant_file_id"]
+            isOneToOne: false
+            referencedRelation: "plant_files"
             referencedColumns: ["id"]
           },
         ]

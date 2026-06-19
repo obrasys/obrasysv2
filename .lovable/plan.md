@@ -1,139 +1,112 @@
-# Redesign Obra Sys — Plano Faseado
+# Planta / Leitura Assistida — Plano de Implementação
 
-Refatoração visual profunda, **sem alterar regras de negócio, base de dados, autenticação, Stripe/trial, permissões ou fluxos existentes**. Tudo é feito em camadas de apresentação (tokens, layout, componentes UI) e reorganização de navegação. Cada fase é entregável e testável de forma independente.
+Módulo novo, aditivo, dentro do fluxo existente de Obras. Reaproveita componentes já existentes (`PlanUploadForm`, `usePlanAnalysisAudit`, `usePdfRenderer`, `useDxfRenderer`, `useIcfPlantAnalysis`) e introduz uma nova camada de "Leitura Assistida" estruturada por folha, com pipeline Axia em JSON estruturado e exportação rastreável para orçamento.
 
----
+## 1. Escopo desta fase
 
-## Princípios transversais
+Implementar a página, schema, edge function de análise e ligação ao orçamento. Excluímos desta fase: edição vetorial avançada (medições manuais com ferramentas tipo CAD), DXF interativo (será apenas viewer básico reutilizando `useDxfRenderer`), pacotes drag-and-drop entre capítulos (aba Pacotes será editável mas simples).
 
-- **Zero regressões funcionais**: nenhuma rota, hook, edge function, RLS ou tabela é alterada nesta refatoração.
-- **Design tokens em `src/index.css` + `tailwind.config.ts`** (HSL semânticos). Nada de cores hardcoded em componentes.
-- **Componentes reutilizáveis** em `src/components/ui/*` (já existentes via shadcn) + nova camada `src/components/shell/*` (layout) e `src/components/patterns/*` (PageHeader, MetricCard, DataTable, StatusBadge, FilterBar, SidePanel, EmptyState).
-- **Identidade mantida**: Deep Teal `#0F4C5C` como primária, Red Hat Display, base 18px, rounded-xl, premium enterprise feel (alinhado com memória de projeto).
-- **Mobile-first revisitado**: sidebar colapsável, tabelas com fallback para cards, `viewport-fit=cover`.
-- Cada fase termina com smoke test manual das rotas tocadas + verificação visual em desktop/tablet/mobile.
+Critérios de aceitação cobertos integralmente: validação 20MB / formatos, split de PDF por folha, classificação Axia, estados por item, aprovação/edição/ignorar, reprocessar folha, envio só de aprovados, rastreabilidade no orçamento, RLS multi-tenant.
 
----
+## 2. Rota e navegação
 
-## Fase 1 — Design System + Shell Global
+- Nova rota: `/obras/:obraId/planta-leitura` (dentro da obra, consistente com `/obras/:id/plantas` existente).
+- Entrada secundária no Dashboard "Analisar planta" continua a apontar para `/obras` (já corrigido); dentro da obra, novo card no menu lateral da obra: **Planta / Leitura Assistida**.
+- Não substitui o módulo `/plantas` atual nem o ICF — coexiste.
 
-**Objetivo**: base visual nova aplicada a todas as páginas existentes sem mexer no conteúdo delas.
+## 3. Layout (desktop ≥1024px)
 
-1. **Tokens** (`src/index.css`, `tailwind.config.ts`):
-   - Revisão da paleta semântica: `--surface`, `--surface-elevated`, `--border-subtle`, `--text-strong`, `--text-muted`, `--accent`, estados (`--state-draft|review|approved|sent|awarded|lost|blocked|paid|inprogress|done`).
-   - Tipografia escalonada (display, h1-h4, body, caption, mono financeiro).
-   - Densidade (3 níveis via CSS var `--density`).
-   - Sombras suaves (`--shadow-card`, `--shadow-elevated`), bordas finas, radii.
-2. **Shell**:
-   - `AppShell` (sidebar fixa + topbar fixa + main com max-width controlado e padding generoso).
-   - **Sidebar** reorganizada por grupos colapsáveis (ver mapa abaixo), com NavLink ativo, badge de contagens, mini-mode com ícones.
-   - **Topbar**: pesquisa global (reutiliza `Pesquisa.tsx`), notificações (sino), botão Axia, chip do plano/trial, avatar com menu.
-3. **Padrões reutilizáveis** (novos componentes presentational):
-   - `PageHeader` (título grande + subtítulo + ações à direita + breadcrumbs).
-   - `MetricCard` (KPI com ícone, valor, delta, tooltip).
-   - `MetricCardGrid`.
-   - `DataTable` wrapper sobre tabela atual com cabeçalho limpo, zebra opcional, ações coladas à direita, paginação, vazio.
-   - `StatusBadge` com mapa central de estados.
-   - `FilterBar`, `TabsBar`, `SidePanel` (drawer), `EmptyState`, `SectionCard`.
-4. **Substituição não-invasiva**: `AppLayout.tsx` e `Sidebar.tsx` adotam o novo shell; páginas existentes continuam a renderizar dentro sem alteração.
-
-**Mapa da sidebar** (apenas reorganização de itens já existentes; itens sem rota correspondente ficam ocultos ou marcados "em breve" — sem criar novas funcionalidades):
-
-```
-Dashboard
-Obras: Todas · Em execução · Autos de medição · Documentos · Relatórios
-Orçamentos: Lista · RAI da Obra · Propostas comerciais · Folha de fecho · Budget · Forecast/EAC · Outturn
-Planta/ICF: Planta · Importação · Extração assistida · Revisão quantitativos · Biblioteca ICF
-Comercial: RFQ · Fornecedores · Comparativos · Adjudicações
-Financeiro: Ciclo · Faturação · Custos · Recebimentos · Centros de custo
-Biblioteca: Materiais · Artigos · Composições · Histórico de preços
-Axia: Agente · Auditoria orçamento · Auditoria obra · Sugestões pendentes · Histórico
-Relatórios
-Definições (entrada para área dedicada)
+```text
+┌───────────────────────────────────────────────────────────────────────────┐
+│ Resumo: Confiança média │ Extraídos │ Rever │ Aprovados │ Folhas 2/4      │
+├──────────────────────────────────────────────┬────────────────────────────┤
+│ Toolbar: módulo · ficheiro · PÁG 2/4 · ESC   │ Extração assistida         │
+│         1:100 · sync · zoom- + fit · pan ·   │ [IA + Humano]              │
+│         select · medir · grelha · pins       │ ficheiro · data · user     │
+├──────────────────────────────────────────────┤ folha · tipo · confiança   │
+│                                              │ [Aprovar todos][Auto-fix]  │
+│              VIEWER (canvas)                 │ [Substituir][Reprocessar]  │
+│         grelha + planta + pins               │ Tabs: Elementos · Pacotes  │
+│         (~70% largura)                       │       · Histórico          │
+│                                              │ lista de itens (scroll)    │
+│                                              │ ────────────────────────── │
+│                                              │ [Enviar para Orçamento]    │
+└──────────────────────────────────────────────┴────────────────────────────┘
 ```
 
-**Critério de aceitação F1**: todas as rotas atuais funcionam; visual base novo; nenhuma página com cor hardcoded; tema claro/escuro mantém contraste.
+- Tablet: painel lateral recolhível (Sheet).
+- Mobile: tabs no topo (Folhas · Elementos · Viewer); viewer simplificado.
 
----
+## 4. Banco de dados (migração única)
 
-## Fase 2 — Definições (Settings Hub)
+7 tabelas novas, todas com `organization_id`, RLS estrita via `has_role` / membership existente, GRANTs explícitos para `authenticated` e `service_role`.
 
-Nova área `/definicoes/*` com sidebar secundária própria. Cada página é casca visual + reutiliza hooks/dados já existentes (`useUserSettings`, `useTeamManagement`, `useGestaoEmpresa`, `useSubscription`, etc.). Quando o dado ainda não existe, mostrar `EmptyState` "em breve" — sem inventar backend.
+- `plant_files` — ficheiro carregado, status (uploaded/processing/ready/error), total_sheets.
+- `plant_sheets` — uma linha por folha; sheet_index, discipline, floor_level, scale, image_path, status, confidence.
+- `plant_elements` — elementos extraídos; code, category, description, quantity, unit, dimensions_json, coordinates_json, confidence, status (ok/review/approved/edited/ignored/error/proposed), read_method, validation_required, budget_chapter_suggestion, budget_item_suggestion.
+- `plant_element_reviews` — auditoria de ações (approve/edit/ignore) com old/new JSON.
+- `plant_budget_exports` — uma linha por envio para orçamento; budget_id, items_exported, status.
+- `plant_processing_logs` — passos do pipeline (preprocess/classify/extract/validate).
+- Coluna nova em `artigos_orcamento`: `plant_source_json jsonb` (file_id, sheet_id, element_id, confidence, approved_by, approved_at) — opcional, para rastreabilidade.
 
-- Perfil
-- Conta e acesso (2FA, sessões — só UI; backend só se já existir)
-- Notificações (matriz canal × categoria)
-- Aparência e idioma (tema, densidade, cor de destaque, idioma)
-- Perfil da organização
-- Equipa e permissões
-- Papéis e níveis (matriz read-only inicial sobre `accessProfiles.ts`)
-- Faturação e plano (cards de utilização ligados a `useSubscription` + `planLimits`)
-- Integrações (lista visual)
-- Auditoria e histórico
-- Legal e conformidade
+Storage: bucket privado `plant-files` (criar via tool) com policy por `organization_id`.
 
----
+## 5. Edge functions
 
-## Fase 3 — Orçamentos, Propostas Comerciais, Folha de Fecho
+- `plant-process` — recebe `plant_file_id`. Para PDF: usa `pdfjs-dist` em Deno para extrair páginas como imagens, escreve em storage, cria `plant_sheets`. Para imagem: cria 1 folha. Para DXF: cria 1 folha sem imagem (viewer client-side).
+- `plant-axia-analyze` — recebe `plant_sheet_id`. Chama Lovable AI Gateway (`google/gemini-2.5-pro` para visão) com o prompt definido na spec, valida JSON com Zod, faz upsert em `plant_elements`, escreve logs, atualiza confidence/status da folha.
+- `plant-axia-autofix` — recebe `plant_sheet_id`. Heurísticas: deduplicação por code+bbox próximo, normalização de unidades (m²/m2 → m²), categorização de itens órfãos via dicionário, merge de descrições semelhantes (Levenshtein).
+- `plant-export-budget` — recebe `plant_file_id`, `budget_id` (ou cria novo), lista de `element_ids` aprovados. Cria/atualiza `capitulos_orcamento` e `artigos_orcamento` com `plant_source_json`. Insere `plant_budget_exports` e marca elementos como `sent_to_budget`.
 
-- **`/orcamentos`**: PageHeader + 6 MetricCards + DataTable nova + FilterBar de estados. Mantém ações e rotas atuais (`Criar`, `Editar`, `Ver`, `Inteligente`).
-- **Propostas comerciais**: usar painel já criado na Fase 4 anterior (`CommercialProposalsPanel`) + nova lista global `/orcamentos/propostas` com pipeline KPIs e editor split (esquerda formulário, direita preview). Reaproveita `useCommercialProposals` + `orcamento-pdf-comercial`.
-- **Folha de fecho**: PageHeader + KPIs + tabela; reusa `useClosingSheets`.
+Todas com CORS, validação Zod, JWT check em código, e respeitando RLS via `service_role` apenas para escritas auditadas.
 
----
+## 6. Frontend (componentes novos em `src/components/planta-leitura/`)
 
-## Fase 4 — Planta/ICF: Extração Assistida
+- `PlantaLeituraPage.tsx` (página em `src/pages/obras/PlantaLeitura.tsx`).
+- `PlantUploadZone.tsx` — drag-and-drop, valida 20MB e extensão antes do upload, mensagens da spec.
+- `PlantSummaryCards.tsx` — 5 KPIs no topo.
+- `PlantViewerToolbar.tsx` — barra com info + botões.
+- `PlantViewer.tsx` — `react-konva` (já no projeto) com camada de imagem, grelha, pins coloridos por categoria, tooltip, sincronização bidirecional com painel.
+- `PlantReviewPanel.tsx` — header IA+Humano, ações principais.
+- `PlantElementsList.tsx` (aba Elementos) — itens com aprovar/editar/ignorar.
+- `PlantPackagesList.tsx` (aba Pacotes) — agrupa por `budget_chapter_suggestion`, permite reatribuir capítulo via Select.
+- `PlantHistoryList.tsx` (aba Histórico) — lê `plant_processing_logs` + `plant_element_reviews`.
+- `PlantExportToBudgetModal.tsx` — confirmação, escolha de obra (já fixada), orçamento novo/existente, resumo, aviso da spec.
+- `PlantSheetSelector.tsx` — chips/dropdown para alternar folha.
 
-Novo layout split para `/plantas` e fluxo ICF:
-- Esquerda: viewer PDF/DXF (reusa `usePdfRenderer`, `useDxfRenderer`, react-konva).
-- Direita: painel Axia com KPIs de confiança, lista de elementos extraídos (estado, código, qty, unidade, dimensão, origem), botões aprovar/editar/rever/rejeitar.
-- Marcadores coloridos por categoria sobre a planta, clique cruza item ↔ marcador.
-- **Regra crítica mantida**: nenhuma extração entra em orçamento sem aprovação humana (já é o comportamento atual — apenas reforçado visualmente).
+Hooks novos: `usePlantFiles`, `usePlantSheets`, `usePlantElements`, `usePlantProcessing` (com realtime via Supabase channel), `usePlantExport`.
 
----
+Realtime: inscrever em `plant_sheets` e `plant_elements` por `plant_file_id` para refletir progresso do pipeline ao vivo.
 
-## Fase 5 — Obras, Autos, Budget, Forecast/EAC, Outturn
+## 7. Pipeline Axia — contrato JSON
 
-- Lista de obras com KPIs (Contratado, Executado, Faturado, Por receber, TAM, Desvios, Margem, Prazo) + DataTable.
-- Detalhe da obra: header rico, KPIs, barra de consumo, tabs (Execução · Autos · Desvios · Subempreiteiros · Contrato · Documentos · Forecast · Outturn), tabela por capítulos expansível.
-- Reusa: `useObras`, `useAutosMedicao`, `useDossierObra`, `useProjectProgress`, `useClosingSheets`, `RastreabilidadePanel`.
+Edge function `plant-axia-analyze` envia para Gemini Vision a imagem da folha + o prompt da spec literal. Schema Zod no servidor valida exatamente os campos pedidos (`file_summary`, `sheet`, `elements[]`, `warnings`, `suggestions`). Itens com `confidence < 0.85` → `status='review'`; `read_method='inferred'` → `status='proposed'` + `requires_human_validation=true`. Erros de parse JSON → re-tentativa única com mensagem `"Responda apenas JSON válido conforme schema"`.
 
----
+## 8. Segurança e permissões
 
-## Fase 6 — Biblioteca de Materiais, Fornecedores, RFQ
+- RLS: SELECT/INSERT/UPDATE/DELETE só para membros da `organization_id` via função `is_org_member(_org uuid)` (já existe padrão no projeto — reaproveitar `has_role`/membership).
+- Papéis: `admin`, `gestor_obra`, `orcamentista` → tudo. `tecnico` → carregar/rever (sem export). `viewer` → SELECT. `cliente`/`fornecedor` → bloqueado (sem policy para eles).
+- Anti-IDOR: edge functions validam `organization_id` do JWT vs registo antes de qualquer escrita.
+- Validação Zod em todas as edge functions; tamanho/extensão validados client + server.
 
-- **Materiais**: KPIs + menu lateral por família + DataTable (reusa `useBasePrecos`, `useBaseArtigos`).
-- **Fornecedores**: cards/lista com rating, fill rate, resposta média (reusa `useTenantSupplierPricebooks`, etc.).
-- **RFQ**: KPIs + DataTable de estados (reusa `useFornecedorQuoteRequests`, `useSupplierDirectQuotes`).
+## 9. Fases de entrega (commits incrementais)
 
----
+1. Migração DB + bucket storage + GRANTs + RLS.
+2. Edge function `plant-process` (split PDF, criação de sheets).
+3. Edge function `plant-axia-analyze` + Zod schema.
+4. Página + upload + summary cards + sheet selector + viewer básico com imagem + grelha.
+5. Painel lateral com aba Elementos (aprovar/editar/ignorar) + sincronização viewer↔lista.
+6. Auto-fix + Reprocessar + Substituir ficheiro.
+7. Abas Pacotes e Histórico.
+8. Modal "Enviar para Orçamento" + edge function `plant-export-budget` + rastreabilidade em `artigos_orcamento`.
+9. Responsivo mobile/tablet + estados vazios/erro + mensagens da spec.
 
-## Fase 7 — Axia como Agente Visual
+## 10. Fora do escopo desta fase
 
-Layout 3 colunas em `/axia`:
-- Esquerda: conversas/histórico por obra.
-- Centro: chat (segue contrato `chat-agent-ui-contract` + AI Elements; perguntar ao utilizador shape de conversa e storage antes de implementar).
-- Direita: contexto ativo (obra, documento, orçamento, equipa, modelos, ações disponíveis).
+- Edição vetorial avançada (medições com ferramentas CAD reais) — botão "medir manualmente" fica visível mas abre tooltip "Em breve".
+- Render interativo de DXF com pins — DXF aceita upload, viewer mostra wireframe básico via `useDxfRenderer`, pins são listados no painel sem sobreposição visual.
+- Drag-and-drop entre pacotes — reatribuição via Select.
 
-Reusa edge functions e hooks Axia já existentes; ações críticas continuam a exigir confirmação humana.
+## Confirmação
 
----
-
-## Detalhes técnicos
-
-- **Stack inalterado**: React 18 + Vite + Tailwind v3 + shadcn + TanStack Query + Supabase (Lovable Cloud).
-- **Arquivos novos** (Fase 1, indicativo):
-  - `src/components/shell/AppShell.tsx`, `TopBar.tsx`, `SideNav.tsx`, `SideNavGroup.tsx`
-  - `src/components/patterns/PageHeader.tsx`, `MetricCard.tsx`, `DataTable.tsx`, `StatusBadge.tsx`, `FilterBar.tsx`, `SidePanel.tsx`, `EmptyState.tsx`, `SectionCard.tsx`
-  - `src/config/navigation.ts` reescrito com a nova taxonomia de grupos (mantendo rotas existentes).
-- **Arquivos editados**: `src/index.css`, `tailwind.config.ts`, `src/components/layout/AppLayout.tsx`, `src/components/layout/Sidebar.tsx`.
-- **Não tocar**: `src/integrations/supabase/*`, `.env`, `supabase/config.toml`, migrations, RLS, edge functions, hooks de dados.
-- **Testes**: smoke manual por rota tocada; `bunx vitest run` para tests existentes; verificação responsiva em 1920/1366/834/390.
-
----
-
-## Entrega
-
-Começar pela **Fase 1** (design system + shell + sidebar reorganizada + padrões reutilizáveis). Só depois de aprovada e validada visualmente, avançar para a Fase 2, e assim sucessivamente.
-
-Confirmas para arrancar a Fase 1?
+Confirma este plano e começo pela migração da base de dados?
