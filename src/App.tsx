@@ -103,7 +103,7 @@ const ResumoCadernoPage = lazy(() => import("./pages/cadernos/Resumo"));
 const PlantasPage = lazy(() => import("./pages/plantas/Index"));
 const PlantaDetailPage = lazy(() => import("./pages/plantas/Detail"));
 const PlantaQuantitativosPage = lazy(() => import("./pages/plantas/Quantitativos"));
-const PlantaLeituraPage = lazy(() => import("./pages/obras/PlantaLeitura"));
+const PlantaLeituraPage = lazy(() => import("./pages/planta-leitura/Index"));
 const EspecialidadesPage = lazy(() => import("./pages/especialidades/Index"));
 const EspecialidadeDetailPage = lazy(() => import("./pages/especialidades/Detail"));
 const AdminDashboard = lazy(() => import("./pages/admin/Index"));
@@ -240,7 +240,8 @@ const App = () => (
                   <Route path="/obras/:id/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
                   <Route path="/obras/:id/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />
-                  <Route path="/obras/:id/planta-leitura" element={<ManagerRoute><PlantaLeituraPage /></ManagerRoute>} />
+                  <Route path="/planta-leitura" element={<ManagerRoute><PlantaLeituraPage /></ManagerRoute>} />
+                  <Route path="/planta-leitura/:obraId" element={<ManagerRoute><PlantaLeituraPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas" element={<ManagerRoute><PlantasPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas/:planId" element={<ManagerRoute><PlantaDetailPage /></ManagerRoute>} />
                   <Route path="/orcamentos/:budgetId/plantas/:planId/quantitativos" element={<ManagerRoute><PlantaQuantitativosPage /></ManagerRoute>} />

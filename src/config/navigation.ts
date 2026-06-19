@@ -23,6 +23,7 @@ import {
   Send,
   Settings,
   Shield,
+  Sparkles,
   Store,
   TicketCheck,
   Truck,
