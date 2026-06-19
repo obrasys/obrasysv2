@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Stage, Layer, Image as KImage, Rect, Text, Group, Line } from "react-konva";
+import { Stage, Layer, Image as KImage, Rect, Text, Group, Line, Circle } from "react-konva";
 import useImage from "use-image";
 import { PLANT_CATEGORY_COLORS } from "@/types/planta-leitura";
 import type { PlantElement } from "@/types/planta-leitura";
@@ -11,9 +11,29 @@ interface Props {
   onSelect: (id: string | null) => void;
   showGrid: boolean;
   showPins: boolean;
+  showIgnored?: boolean;
 }
 
-export function PlantViewer({ imageUrl, elements, selectedId, onSelect, showGrid, showPins }: Props) {
+// Categorias estruturais (parede/contorno fino)
+const LINEAR_CATEGORIES = new Set([
+  "Paredes",
+  "Paredes ICF",
+  "Vigas",
+  "Vãos",
+  "Portas",
+  "Janelas",
+  "Muros",
+]);
+
+export function PlantViewer({
+  imageUrl,
+  elements,
+  selectedId,
+  onSelect,
+  showGrid,
+  showPins,
+  showIgnored = false,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [img] = useImage(imageUrl || "", "anonymous");
@@ -30,7 +50,6 @@ export function PlantViewer({ imageUrl, elements, selectedId, onSelect, showGrid
     return () => ro.disconnect();
   }, []);
 
-  // Fit image
   useEffect(() => {
     if (!img) return;
     const s = Math.min(size.w / img.width, size.h / img.height);
@@ -40,6 +59,17 @@ export function PlantViewer({ imageUrl, elements, selectedId, onSelect, showGrid
 
   const imgW = img?.width || 0;
   const imgH = img?.height || 0;
+
+  // Filtra elementos: nunca renderiza com fundo opaco; ignorados ocultos por default
+  const visible = elements.filter((el) => {
+    if (el.status === "ignored" && !showIgnored) return false;
+    const c = el.coordinates_json;
+    if (!c) return false;
+    const area = (c.w || 0) * (c.h || 0);
+    // descarta bboxes gigantes não confiáveis (>40% da folha) — evita "blocos pretos"
+    if (area > 0.4) return false;
+    return true;
+  });
 
   return (
     <div ref={containerRef} className="w-full h-full bg-muted/30 rounded-xl overflow-hidden relative">
@@ -75,36 +105,52 @@ export function PlantViewer({ imageUrl, elements, selectedId, onSelect, showGrid
             </>
           )}
           {img && <KImage image={img} />}
-          {showPins && elements.map((el) => {
-            const c = el.coordinates_json;
-            if (!c || imgW === 0) return null;
+          {showPins && visible.map((el) => {
+            const c = el.coordinates_json!;
+            if (imgW === 0) return null;
             const x = (c.x || 0) * imgW;
             const y = (c.y || 0) * imgH;
-            const w = Math.max((c.w || 0.02) * imgW, 16);
-            const h = Math.max((c.h || 0.02) * imgH, 16);
-            const color = PLANT_CATEGORY_COLORS[el.category || ""] || "#444";
+            const w = Math.max((c.w || 0.01) * imgW, 8);
+            const h = Math.max((c.h || 0.01) * imgH, 8);
+            const color = PLANT_CATEGORY_COLORS[el.category || ""] || "#0F4C5C";
             const selected = el.id === selectedId;
-            const ignored = el.status === "ignored";
+            const isReview = el.status === "review" || el.status === "proposed";
+            const isIgnored = el.status === "ignored";
+            const isLinear = LINEAR_CATEGORIES.has(el.category || "");
+
+            // Estilo: contorno fino, sem preenchimento opaco
+            const dash = isIgnored ? [2, 4] : isReview ? [4, 3] : undefined;
+            const strokeW = (selected ? 2 : 1) / zoom;
+
             return (
-              <Group key={el.id} x={x} y={y} onClick={() => onSelect(el.id)} onTap={() => onSelect(el.id)}>
+              <Group key={el.id} onClick={() => onSelect(el.id)} onTap={() => onSelect(el.id)}>
                 <Rect
+                  x={x}
+                  y={y}
                   width={w}
                   height={h}
                   stroke={color}
-                  strokeWidth={selected ? 3 : 1.5}
-                  dash={ignored ? [4, 4] : undefined}
-                  fill={selected ? `${color}33` : `${color}1A`}
-                  cornerRadius={2}
+                  strokeWidth={strokeW}
+                  dash={dash}
+                  fill={selected ? `${color}1A` : "transparent"}
+                  cornerRadius={1}
+                  listening
                 />
-                <Rect width={Math.max(w, 40)} height={16} fill={color} cornerRadius={2} />
-                <Text
-                  text={el.code || "—"}
-                  fontSize={11}
-                  fill="#fff"
-                  padding={2}
-                  width={Math.max(w, 40)}
-                  align="center"
-                />
+                {/* Pin discreto canto superior esquerdo */}
+                {!isLinear && el.code && (
+                  <Group x={x + 2 / zoom} y={y + 2 / zoom}>
+                    <Circle radius={5 / zoom} fill={color} opacity={0.9} />
+                    <Text
+                      text={el.code.slice(0, 3)}
+                      fontSize={6 / zoom}
+                      fill="#fff"
+                      x={-5 / zoom}
+                      y={-3 / zoom}
+                      width={10 / zoom}
+                      align="center"
+                    />
+                  </Group>
+                )}
               </Group>
             );
           })}

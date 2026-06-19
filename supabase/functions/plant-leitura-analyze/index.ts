@@ -8,12 +8,26 @@ const corsHeaders = {
 };
 
 const SYSTEM_PROMPT = `Tu és a Axia, motor de leitura assistida de plantas de construção civil em Portugal.
-Analisa esta folha de planta como técnico de orçamentação. Primeiro identifica o tipo de folha, escala, piso e disciplina. Depois extrai apenas os elementos visíveis ou textualmente identificáveis. Para cada elemento, informa quantidade, unidade, descrição, categoria, piso, folha, confiança e coordenadas aproximadas (bbox normalizado 0-1). Não inventes dados. Quando algo for inferido, marca como status="proposed" e validation_required=true. Se a confiança for inferior a 0.85, marca como status="review". Devolve APENAS JSON válido conforme o schema.
 
-Schema esperado:
+Analisa a planta como técnico de medição e orçamentação. ANTES de extrair qualquer quantitativo, identifica e IGNORA elementos gráficos que não representam construção real, tais como: sombras, hachuras, preenchimentos, áreas opacas, manchas escuras, fundos, carimbo técnico, mobiliário (mesas, sofás, camas, louças sanitárias), símbolos decorativos, textos de rua, cotas topográficas, limites do terreno/lote, massas visuais e elementos de implantação exterior ao edifício.
+
+REGRAS CRÍTICAS:
+- NUNCA convertas manchas, preenchimentos, sombras ou áreas opacas em elementos construtivos.
+- NUNCA uses bounding boxes grandes (>15% da área útil da folha) como elementos de orçamento se não tiverem texto/cota técnica associada — marca como ignored_graphic_fill.
+- NUNCA aceites retângulos grandes sobre a planta como paredes/lajes/sapatas sem validação geométrica.
+- Paredes: só se houver linhas paralelas de espessura compatível, continuidade e localização lógica.
+- Vãos: só com símbolos de portas/janelas ou interrupções claras.
+- Compartimentos: só com texto de divisão ou limites fechados claros.
+- Cotas e textos (Rua, Planta do R/C, escala, data, carimbo, cliente) = METADADOS, não viram quantitativos.
+- Se houver dúvida ou confiança < 0.85 → status="review".
+- Se for apenas preenchimento gráfico/mancha sem identificação técnica → vai para "ignored_regions" com reason="graphic_fill_or_shadow", NÃO para elements.
+- Nunca inventes quantitativos.
+
+Schema esperado (devolve APENAS JSON válido):
 {
  "sheet": {"sheet_index":N,"sheet_name":"","discipline":"Arquitetura|Estrutura|Fundações|Instalações elétricas|Instalações hidráulicas|Cortes|Alçados|Cobertura|Outro","floor_level":"","scale":"1:100","confidence":0.0-1.0,"needs_review":bool},
- "elements":[{"code":"S.01","category":"Sapatas","description":"","quantity":0,"unit":"un|m|m2|m3","dimensions":{},"coordinates":{"x":0,"y":0,"w":0,"h":0},"source_text":"","confidence":0.0-1.0,"status":"ok|review|proposed","read_method":"direct_text|visual_detection|calculated|inferred","validation_required":bool,"budget_chapter_suggestion":"","budget_item_suggestion":"","notes":""}],
+ "ignored_regions":[{"region_type":"graphic_fill|hatch|shadow|furniture|title_block|terrain|text|dimension","reason":"","description":"","coordinates":{"x":0,"y":0,"w":0,"h":0},"confidence":0.0-1.0}],
+ "elements":[{"code":"S.01","category":"Sapatas","description":"","quantity":0,"unit":"un|m|m2|m3","dimensions":{},"coordinates":{"x":0,"y":0,"w":0,"h":0},"source_text":"","confidence":0.0-1.0,"status":"ok|review|proposed","read_method":"direct_text|visual_detection|calculated|inferred","validation_required":bool,"budget_chapter_suggestion":"","budget_item_suggestion":"","notes":"","reasoning_summary":""}],
  "warnings":[],
  "suggestions":[]
 }
@@ -156,7 +170,25 @@ serve(async (req) => {
       .in("status", ["ok", "review", "proposed", "error"]);
 
     const els = Array.isArray(parsed.elements) ? parsed.elements : [];
-    const rows = els.map((e: any) => {
+    const ignoredRegions = Array.isArray(parsed.ignored_regions) ? parsed.ignored_regions : [];
+
+    // Pré-filtro anti-falso-positivo
+    let droppedBigBox = 0;
+    let droppedNoTech = 0;
+    const cleaned = els.filter((e: any) => {
+      const c = e.coordinates || {};
+      const area = (Number(c.w) || 0) * (Number(c.h) || 0);
+      const hasTech = !!(e.source_text || e.code || (typeof e.quantity === "number" && e.quantity > 0));
+      // Rejeita bbox > 15% sem texto técnico
+      if (area > 0.15 && !hasTech) { droppedBigBox++; return false; }
+      // Rejeita bbox > 40% sempre (mancha gráfica)
+      if (area > 0.4) { droppedBigBox++; return false; }
+      // Rejeita sem categoria nem descrição
+      if (!e.category && !e.description) { droppedNoTech++; return false; }
+      return true;
+    });
+
+    const rows = cleaned.map((e: any) => {
       const conf = typeof e.confidence === "number" ? e.confidence : null;
       let status = e.status || "ok";
       if (status !== "proposed" && conf !== null && conf < 0.85) status = "review";
@@ -179,20 +211,49 @@ serve(async (req) => {
         validation_required: !!e.validation_required || status === "proposed",
         budget_chapter_suggestion: e.budget_chapter_suggestion || null,
         budget_item_suggestion: e.budget_item_suggestion || null,
-        notes: e.notes || null,
+        notes: e.notes || e.reasoning_summary || null,
       };
     });
     if (rows.length) await service.from("plant_elements").insert(rows);
+
+    // Regiões ignoradas: persiste como elements status=ignored (ocultos por default no viewer)
+    const ignoredRows = ignoredRegions.slice(0, 50).map((r: any) => ({
+      plant_file_id: sheet.plant_file_id,
+      plant_sheet_id: sheet.id,
+      organization_id: sheet.organization_id,
+      obra_id: sheet.obra_id,
+      code: null,
+      category: "Outros",
+      description: r.description || r.reason || "Região ignorada",
+      quantity: null,
+      unit: null,
+      dimensions_json: null,
+      coordinates_json: r.coordinates || null,
+      source_text: r.region_type || null,
+      confidence: typeof r.confidence === "number" ? r.confidence : null,
+      status: "ignored",
+      read_method: "visual_detection",
+      validation_required: false,
+      budget_chapter_suggestion: null,
+      budget_item_suggestion: null,
+      notes: `[${r.region_type || "ignored"}] ${r.reason || ""}`,
+    }));
+    if (ignoredRows.length) await service.from("plant_elements").insert(ignoredRows);
 
     await service.from("plant_sheets").update(sheetUpdate).eq("id", plant_sheet_id);
     await service.from("plant_processing_logs").insert({
       organization_id: sheet.organization_id, obra_id: sheet.obra_id, plant_file_id: sheet.plant_file_id,
       plant_sheet_id: sheet.id, step: "axia_analyze", status: "ok",
-      message: `${rows.length} elementos extraídos`,
-      details_json: { warnings: parsed.warnings || [], suggestions: parsed.suggestions || [] },
+      message: `${rows.length} elementos extraídos, ${ignoredRows.length} regiões ignoradas`,
+      details_json: {
+        warnings: parsed.warnings || [],
+        suggestions: parsed.suggestions || [],
+        dropped_big_box: droppedBigBox,
+        dropped_no_tech: droppedNoTech,
+      },
     });
 
-    return new Response(JSON.stringify({ ok: true, elements: rows.length, sheet: sheetUpdate }), {
+    return new Response(JSON.stringify({ ok: true, elements: rows.length, ignored: ignoredRows.length, sheet: sheetUpdate }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
