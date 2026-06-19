@@ -25,7 +25,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const { plant_file_id, obra_id, target, budget_id, budget_name, cliente_id } = body || {};
-    if (!plant_file_id || !target) {
+    if (!plant_file_id || !["new", "existing"].includes(target)) {
       return new Response(JSON.stringify({ error: "Parâmetros obrigatórios em falta." }), { status: 400, headers: corsHeaders });
     }
 
@@ -53,11 +53,10 @@ serve(async (req) => {
     let targetBudgetId = budget_id;
     if (target === "new") {
       const { data: novo, error: nErr } = await service.from("orcamentos").insert({
-        organization_id: pf.organization_id,
         obra_id: effectiveObraId,
         cliente_id: cliente_id || null,
-        nome: budget_name || `Orçamento Planta — ${pf.file_name}`,
-        estado: "rascunho",
+        titulo: budget_name || `Orçamento Planta — ${pf.file_name}`,
+        status: "rascunho",
         user_id: userId,
       }).select().single();
       if (nErr) throw nErr;
@@ -65,6 +64,16 @@ serve(async (req) => {
     }
     if (!targetBudgetId) {
       return new Response(JSON.stringify({ error: "Orçamento de destino inválido." }), { status: 400, headers: corsHeaders });
+    }
+    if (target === "existing") {
+      const { data: existingBudget, error: bErr } = await supabase
+        .from("orcamentos")
+        .select("id")
+        .eq("id", targetBudgetId)
+        .maybeSingle();
+      if (bErr || !existingBudget) {
+        return new Response(JSON.stringify({ error: "Sem acesso ao orçamento de destino." }), { status: 403, headers: corsHeaders });
+      }
     }
 
     // Group by suggested chapter
@@ -77,26 +86,27 @@ serve(async (req) => {
 
     // Existing chapters
     const { data: existingChaps } = await service.from("capitulos_orcamento")
-      .select("id, nome, ordem")
+      .select("id, titulo, ordem, numero")
       .eq("orcamento_id", targetBudgetId);
     const existingByName = new Map<string, any>();
-    for (const c of (existingChaps || []) as any[]) existingByName.set((c.nome || "").trim().toLowerCase(), c);
+    for (const c of (existingChaps || []) as any[]) existingByName.set((c.titulo || "").trim().toLowerCase(), c);
     let nextOrdem = (existingChaps || []).reduce((m: number, c: any) => Math.max(m, c.ordem || 0), 0);
+    let nextNumero = (existingChaps || []).reduce((m: number, c: any) => Math.max(m, c.numero || 0), 0);
 
     let totalCreated = 0;
     for (const [capName, list] of groups) {
       let chap = existingByName.get(capName.trim().toLowerCase());
       if (!chap) {
         nextOrdem++;
+        nextNumero++;
         const { data: novoCap } = await service.from("capitulos_orcamento").insert({
-          orcamento_id: targetBudgetId, nome: capName, ordem: nextOrdem,
+          orcamento_id: targetBudgetId, titulo: capName, numero: nextNumero, ordem: nextOrdem,
         }).select().single();
         chap = novoCap as any;
         existingByName.set(capName.trim().toLowerCase(), chap);
       }
 
       const rows = list.map((el: any, i: number) => ({
-        orcamento_id: targetBudgetId,
         capitulo_id: chap.id,
         descricao: el.budget_item_suggestion || el.description || el.code || "Item de planta",
         quantidade: el.quantity || 0,
