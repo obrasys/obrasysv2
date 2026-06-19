@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Sparkles,
   RefreshCw,
   RotateCcw,
   Wand2,
   Upload as UploadIcon,
   Send,
-  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -17,15 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useObras } from "@/hooks/useObras";
 import {
   usePlantFiles,
   usePlantUploadAndProcess,
@@ -48,14 +38,11 @@ import { PlantHistoryList } from "@/components/planta-leitura/PlantHistoryList";
 import { PlantExportToBudgetModal } from "@/components/planta-leitura/PlantExportToBudgetModal";
 
 export default function PlantaLeituraIndexPage() {
-  const { obraId } = useParams<{ obraId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { obras } = useObras();
-  const obra = (obras ?? []).find((o) => o.id === obraId);
 
-  const { files, refresh: refreshFiles } = usePlantFiles(obraId);
-  const { upload, uploading, progress } = usePlantUploadAndProcess(obraId);
+  const { files, refresh: refreshFiles } = usePlantFiles();
+  const { upload, uploading, progress } = usePlantUploadAndProcess();
 
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   useEffect(() => {
@@ -85,11 +72,6 @@ export default function PlantaLeituraIndexPage() {
   const [showPins, setShowPins] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-
-  const handleSelectObra = (id: string) => {
-    if (id) navigate(`/planta-leitura/${id}`);
-    else navigate("/planta-leitura");
-  };
 
   const handleUpload = async (file: File) => {
     const pf = await upload(file);
@@ -148,76 +130,10 @@ export default function PlantaLeituraIndexPage() {
   const approvedCount = allElements.filter((e) => e.status === "approved").length;
   const canExport = approvedCount > 0;
 
-  // Selector view when no obra is chosen
-  if (!obraId) {
-    return (
-      <AppLayout title="Planta & Quantitativos" subtitle="Leitura assistida pela Axia">
-        <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Planta & Quantitativos</h1>
-              <p className="text-sm text-muted-foreground">
-                Selecione uma obra para carregar plantas, extrair quantitativos e enviar para orçamento.
-              </p>
-            </div>
-          </div>
-
-          <Card className="rounded-xl p-6 md:p-8 max-w-xl">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" /> Selecionar obra
-                </label>
-                <Select value={obraId || ""} onValueChange={handleSelectObra}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Escolha uma obra..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {obras?.length === 0 && (
-                      <SelectItem value="__empty__" disabled>
-                        Nenhuma obra disponível
-                      </SelectItem>
-                    )}
-                    {obras?.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Button variant="outline" onClick={() => navigate("/obras")}>
-                  <ArrowLeft className="h-4 w-4 mr-2" /> Ir para Obras
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout
       title="Planta & Quantitativos"
-      subtitle={`Obra: ${obra?.nome || "—"} · Leitura assistida pela Axia`}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/planta-leitura")}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Mudar obra
-          </Button>
-          {obra && (
-            <Button variant="outline" size="sm" onClick={() => navigate(`/obras/${obraId}`)}>
-              <Building2 className="h-4 w-4 mr-1" /> Ver obra
-            </Button>
-          )}
-        </div>
-      }
+      subtitle="Leitura assistida pela Axia"
     >
       <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -226,7 +142,7 @@ export default function PlantaLeituraIndexPage() {
               <Sparkles className="h-6 w-6 text-primary" /> Planta & Quantitativos
             </h1>
             <p className="text-sm text-muted-foreground">
-              Obra: <strong>{obra?.nome || "—"}</strong> · Leitura assistida pela Axia
+              Carregue uma planta, extraia quantitativos com a Axia e envie diretamente para um orçamento.
             </p>
           </div>
           {files.length > 0 && (
@@ -351,7 +267,7 @@ export default function PlantaLeituraIndexPage() {
                       />
                       <Button asChild size="sm" variant="outline" className="w-full">
                         <span>
-                          <UploadIcon className="h-3.5 w-3.5 mr-1" /> Substituir
+                          <UploadIcon className="h-3.5 w-3.5 mr-1" /> Nova planta
                         </span>
                       </Button>
                     </label>
