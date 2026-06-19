@@ -118,7 +118,7 @@ export default function ObrasPage() {
       title="Gestão de Obras"
       subtitle="Gerencie todas as suas obras e projetos"
     >
-      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+      <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
         <PageHeader
           eyebrow="Operação"
           title="Gestão de Obras"
