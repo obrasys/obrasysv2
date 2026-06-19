@@ -53,7 +53,7 @@ export default function EditarObraPage() {
         </Button>
       }
     >
-      <div className="p-4 md:p-6 max-w-2xl">
+      <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto w-full">
         <Card>
           <CardHeader>
             <CardTitle>Dados da Obra</CardTitle>
