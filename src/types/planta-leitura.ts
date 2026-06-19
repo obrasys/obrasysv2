@@ -24,7 +24,7 @@ export type PlantReviewAction = "approve" | "edit" | "ignore" | "reset";
 export interface PlantFile {
   id: string;
   organization_id: string;
-  obra_id: string;
+  obra_id: string | null;
   uploaded_by: string;
   file_name: string;
   file_type: string;
