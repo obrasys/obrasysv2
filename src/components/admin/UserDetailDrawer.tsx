@@ -30,13 +30,13 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
         supabase.from("subscribers").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_engagement_status").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("obras").select("id, nome, status, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
-        supabase.from("orcamentos").select("id, nome, status, valor_total, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+        supabase.from("orcamentos").select("id, titulo, status, valor_total, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
         supabase.from("relatorios_diarios").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("contas_financeiras").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("autos_medicao").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("support_tickets").select("id, titulo, status, prioridade, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
         supabase.from("user_mfa_settings").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("mfa_trusted_devices").select("id, device_name, last_used_at, created_at").eq("user_id", userId).order("last_used_at", { ascending: false }).limit(5),
+        supabase.from("mfa_trusted_devices").select("id, device_label, last_used_at, created_at").eq("user_id", userId).order("last_used_at", { ascending: false }).limit(5),
       ]);
 
       return {
@@ -99,7 +99,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
                   ) : (
                     <Badge variant="destructive" className="text-[10px]">Trial expirado</Badge>
                   )}
-                  {data.mfa && (
+                  {data.mfa?.enabled && (
                     <Badge variant="outline" className="text-[10px]">
                       <Shield className="h-3 w-3 mr-1" />MFA
                     </Badge>
@@ -165,7 +165,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
             {/* Recent orcamentos */}
             {data.orcamentos.length > 0 && (
               <ListSection title="Orçamentos recentes" items={data.orcamentos.map((o: any) => ({
-                primary: o.nome,
+                primary: o.titulo,
                 secondary: `${o.status || ""} · €${Number(o.valor_total || 0).toLocaleString("pt-PT")}`,
               }))} />
             )}
@@ -181,7 +181,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
             {/* Devices */}
             {data.devices.length > 0 && (
               <ListSection title="Dispositivos confiáveis" items={data.devices.map((d: any) => ({
-                primary: d.device_name || "Dispositivo",
+                primary: d.device_label || "Dispositivo",
                 secondary: d.last_used_at
                   ? `Último uso ${formatDistanceToNow(new Date(d.last_used_at), { addSuffix: true, locale: pt })}`
                   : "—",
