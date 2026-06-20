@@ -149,6 +149,7 @@ export function UserUsageMap() {
         (u) =>
           u.nome?.toLowerCase().includes(q) ||
           u.email?.toLowerCase().includes(q) ||
+          u.telefone?.toLowerCase().includes(q) ||
           u.empresa_nome?.toLowerCase().includes(q)
       );
     }
