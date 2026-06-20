@@ -254,6 +254,8 @@ export function RDOVoiceWizard({
         recognitionRef.current?.stop?.();
       } catch {}
       reset();
+    } else if (initialObraId && !selectedObraId) {
+      setSelectedObraId(initialObraId);
     }
   }, [open]);
 
