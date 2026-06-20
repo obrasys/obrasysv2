@@ -46,7 +46,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
 
         const { data: org } = await supabase
           .from("organizations")
-          .select("name")
+          .select("nome")
           .eq("id", orgIds[0])
           .maybeSingle();
         orgInfo = { name: org?.name || "—", memberCount: orgUserIds.length };
