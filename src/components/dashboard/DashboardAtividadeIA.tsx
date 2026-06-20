@@ -58,7 +58,13 @@ export function DashboardAtividadeIA() {
       <CardContent className="px-5 pb-4 space-y-0">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Últimas 4 horas</p>
         <div className="space-y-4">
-          {activities.map((activity) => {
+          {activities.length === 0 ? (
+            <div className="py-8 text-center">
+              <Sparkles className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground">Sem atividade recente da Axia</p>
+              <p className="text-[11px] text-muted-foreground/70 mt-1">As suas ações com IA aparecerão aqui</p>
+            </div>
+          ) : activities.map((activity) => {
             const Icon = ACTIVITY_ICONS[activity.type] || Sparkles;
             const label = ACTIVITY_LABELS[activity.type] || 'SISTEMA';
             const actor = ACTIVITY_ACTORS[activity.type] || 'Axia';
