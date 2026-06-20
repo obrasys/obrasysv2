@@ -16828,6 +16828,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_my_pending_invitations: { Args: never; Returns: number }
       accept_supplier_invite: { Args: { _token: string }; Returns: Json }
       admin_get_all_supplier_profiles: {
         Args: never
