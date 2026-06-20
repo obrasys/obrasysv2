@@ -20,83 +20,15 @@ interface Props {
 
 export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-user-detail-v2", userId],
+    queryKey: ["admin-user-detail-v3", userId],
     enabled: !!userId && open,
     queryFn: async () => {
       if (!userId) return null;
-
-      // Find user's active organization(s) so we can show team-level activity
-      const { data: memberships } = await supabase
-        .from("organization_members")
-        .select("organization_id")
-        .eq("user_id", userId)
-        .eq("member_status", "active");
-
-      const orgIds = Array.from(new Set((memberships || []).map((m: any) => m.organization_id).filter(Boolean)));
-
-      let orgUserIds: string[] = [userId];
-      let orgInfo: { name: string; memberCount: number } | null = null;
-      if (orgIds.length) {
-        const { data: orgMembers } = await supabase
-          .from("organization_members")
-          .select("user_id")
-          .in("organization_id", orgIds)
-          .eq("member_status", "active");
-        orgUserIds = Array.from(new Set([userId, ...(orgMembers || []).map((m: any) => m.user_id)]));
-
-        const { data: org } = await supabase
-          .from("organizations")
-          .select("nome")
-          .eq("id", orgIds[0])
-          .maybeSingle();
-        orgInfo = { name: (org as any)?.nome || "—", memberCount: orgUserIds.length };
-      }
-
-      const [profile, subscriber, engagement,
-        obrasU, orcU, rdosU, contasU, autosU,
-        obrasOrg, orcOrg, rdosOrg, contasOrg, autosOrg,
-        tickets, mfa, devices] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("subscribers").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("user_engagement_status").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("obras").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("orcamentos").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("relatorios_diarios").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("contas_financeiras").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("autos_medicao").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("obras").select("id, nome, status, created_at, user_id").in("user_id", orgUserIds).order("created_at", { ascending: false }).limit(5),
-        supabase.from("orcamentos").select("id, titulo, status, valor_total, created_at, user_id").in("user_id", orgUserIds).order("created_at", { ascending: false }).limit(5),
-        supabase.from("relatorios_diarios").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
-        supabase.from("contas_financeiras").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
-        supabase.from("autos_medicao").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
-        supabase.from("support_tickets").select("id, titulo, status, prioridade, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
-        supabase.from("user_mfa_settings").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("mfa_trusted_devices").select("id, device_label, last_used_at, created_at").eq("user_id", userId).order("last_used_at", { ascending: false }).limit(5),
-      ]);
-
-      return {
-        profile: profile.data,
-        subscriber: subscriber.data,
-        engagement: engagement.data,
-        orgInfo,
-        userCounts: {
-          obras: obrasU.count || 0,
-          orcamentos: orcU.count || 0,
-          rdos: rdosU.count || 0,
-          contas: contasU.count || 0,
-          autos: autosU.count || 0,
-        },
-        orgCounts: {
-          rdos: rdosOrg.count || 0,
-          contas: contasOrg.count || 0,
-          autos: autosOrg.count || 0,
-        },
-        obras: obrasOrg.data || [],
-        orcamentos: orcOrg.data || [],
-        tickets: tickets.data || [],
-        mfa: mfa.data,
-        devices: devices.data || [],
-      };
+      const { data, error } = await supabase.functions.invoke("admin-get-user-detail", {
+        body: { userId },
+      });
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -165,43 +97,31 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
                 <InfoRow icon={Calendar} label="Registo"
                   value={p.created_at ? format(new Date(p.created_at), "dd/MM/yyyy", { locale: pt }) : "—"} />
                 <InfoRow icon={Clock} label="Último login"
-                  value={e?.last_login_date ? formatDistanceToNow(new Date(e.last_login_date), { addSuffix: true, locale: pt }) : "—"} />
+                  value={(() => { const v = data.authMeta?.last_sign_in_at || e?.last_login_date; return v ? formatDistanceToNow(new Date(v), { addSuffix: true, locale: pt }) : "—"; })()} />
               </CardContent>
             </Card>
 
             {/* Activity counters */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Atividade do utilizador</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Atividade</p>
                 {data.orgInfo && (
                   <p className="text-[10px] text-muted-foreground">
                     {data.orgInfo.name} · {data.orgInfo.memberCount} {data.orgInfo.memberCount === 1 ? "membro" : "membros"}
+                    {data.orgInfo.role ? ` · ${data.orgInfo.role}` : ""}
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                <Stat icon={Building2} label="Obras" value={data.userCounts.obras} />
-                <Stat icon={FileText} label="Orçamentos" value={data.userCounts.orcamentos} />
-                <Stat icon={CalendarDays} label="RDOs" value={data.userCounts.rdos} />
-                <Stat icon={Wallet} label="Contas" value={data.userCounts.contas} />
-                <Stat icon={ClipboardCheck} label="Medições" value={data.userCounts.autos} />
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <Stat icon={Building2} label="Obras" value={data.counts?.obras ?? 0} />
+                <Stat icon={FileText} label="Orçamentos" value={data.counts?.orcamentos ?? 0} />
+                <Stat icon={CalendarDays} label="RDOs" value={data.counts?.rdos ?? 0} />
+                <Stat icon={Wallet} label="Contas" value={data.counts?.contas ?? 0} />
+                <Stat icon={ClipboardCheck} label="Medições" value={data.counts?.autos ?? 0} />
+                <Stat icon={Users} label="Alocações" value={data.counts?.alocacoes ?? 0} />
               </div>
-
-              {data.orgInfo && data.orgInfo.memberCount > 1 && (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
-                    Atividade da organização
-                  </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    <Stat icon={Building2} label="Obras" value={data.obras.length} />
-                    <Stat icon={FileText} label="Orçamentos" value={data.orcamentos.length} />
-                    <Stat icon={CalendarDays} label="RDOs" value={data.orgCounts.rdos} />
-                    <Stat icon={Wallet} label="Contas" value={data.orgCounts.contas} />
-                    <Stat icon={ClipboardCheck} label="Medições" value={data.orgCounts.autos} />
-                  </div>
-                </>
-              )}
             </div>
+
 
 
             {/* Subscription details */}
