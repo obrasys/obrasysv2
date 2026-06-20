@@ -125,17 +125,45 @@
     --success-foreground: 0 0% 98%;
     --warning: 38 80% 38%;
     --warning-foreground: 0 0% 98%;
-    --info: 195 40% 15%;
+    --info: 215 28% 14%;
+
+    /* Surface tokens (dark) */
+    --surface: 215 28% 7%;
+    --surface-elevated: 215 28% 11%;
+    --surface-sunken: 215 28% 5%;
+    --border-subtle: 215 20% 18%;
+    --text-strong: 0 0% 98%;
+    --text-muted: 220 9% 65%;
+
+    /* Workflow state tokens (dark) */
+    --state-draft: 220 9% 60%;
+    --state-review: 38 80% 55%;
+    --state-approved: 146 45% 50%;
+    --state-sent: 217 80% 65%;
+    --state-awarded: 192 60% 55%;
+    --state-lost: 0 65% 60%;
+    --state-blocked: 0 0% 55%;
+    --state-paid: 158 55% 50%;
+    --state-inprogress: 217 80% 65%;
+    --state-done: 146 45% 50%;
+    --state-expired: 20 80% 55%;
+    --state-pending: 38 80% 55%;
 
     --gradient-hero: linear-gradient(135deg, hsl(215 28% 5%) 0%, hsl(215 28% 10%) 50%, hsl(192 40% 18%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(192 60% 35%) 0%, hsl(195 50% 30%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(215 28% 12%) 0%, hsl(215 28% 8%) 100%);
 
-    --sidebar-background: 215 25% 10%;
-    --sidebar-foreground: 220 10% 70%;
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 10px 15px -3px hsl(0 0% 0% / 0.5), 0 4px 6px -4px hsl(0 0% 0% / 0.4);
+    --shadow-hero: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+    --shadow-elevated: 0 4px 14px -2px hsl(0 0% 0% / 0.5), 0 2px 6px -2px hsl(0 0% 0% / 0.4);
+
+    --sidebar-background: 215 28% 9%;
+    --sidebar-foreground: 220 10% 75%;
     --sidebar-primary: 192 60% 45%;
-    --sidebar-primary-foreground: 192 60% 45%;
-    --sidebar-accent: 215 25% 15%;
-    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 14%;
+    --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 215 25% 16%;
     --sidebar-ring: 192 60% 45%;
   }

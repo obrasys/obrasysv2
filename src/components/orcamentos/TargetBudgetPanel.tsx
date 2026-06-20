@@ -37,19 +37,19 @@ const formatPct = (v: number) =>
   `${(v ?? 0).toFixed(2).replace(".", ",")}%`;
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  active: { label: "Ativa", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  active: { label: "Ativa", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
   superseded: { label: "Substituída", cls: "bg-muted text-muted-foreground" },
-  draft: { label: "Rascunho", cls: "bg-slate-100 text-slate-700 border-slate-200" },
-  approved: { label: "Aprovada", cls: "bg-blue-100 text-blue-800 border-blue-200" },
-  closed: { label: "Fechada", cls: "bg-amber-100 text-amber-900 border-amber-200" },
+  draft: { label: "Rascunho", cls: "bg-muted text-muted-foreground border-border" },
+  approved: { label: "Aprovada", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30" },
+  closed: { label: "Fechada", cls: "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30" },
 };
 
 const CONTRACTING_LABEL: Record<string, { label: string; cls: string }> = {
-  pending: { label: "Pendente", cls: "bg-slate-100 text-slate-700" },
-  in_quotation: { label: "Em cotação", cls: "bg-blue-100 text-blue-800" },
-  awarded: { label: "Adjudicado", cls: "bg-emerald-100 text-emerald-800" },
-  purchased: { label: "Comprado", cls: "bg-purple-100 text-purple-800" },
-  cancelled: { label: "Cancelado", cls: "bg-rose-100 text-rose-800" },
+  pending: { label: "Pendente", cls: "bg-muted text-muted-foreground" },
+  in_quotation: { label: "Em cotação", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-300" },
+  awarded: { label: "Adjudicado", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
+  purchased: { label: "Comprado", cls: "bg-purple-500/15 text-purple-700 dark:text-purple-300" },
+  cancelled: { label: "Cancelado", cls: "bg-rose-500/15 text-rose-700 dark:text-rose-300" },
 };
 
 export function TargetBudgetPanel({ orcamentoId }: Props) {

@@ -25,10 +25,10 @@ import { PHASE_DESCRIPTIONS, PHASE_LABELS } from '@/types/orcamento-rai';
 
 const statusConfig: Record<PhaseStatus, { icon: typeof Lock; label: string; pill: string }> = {
   future: { icon: Circle, label: 'Futura', pill: 'bg-muted text-muted-foreground' },
-  pending: { icon: Clock, label: 'Pendente', pill: 'bg-amber-100 text-amber-700' },
+  pending: { icon: Clock, label: 'Pendente', pill: 'bg-amber-500/15 text-amber-700 dark:text-amber-300' },
   active: { icon: Sparkles, label: 'Ativa', pill: 'bg-primary/15 text-primary' },
-  locked: { icon: Lock, label: 'Bloqueada', pill: 'bg-slate-100 text-slate-700' },
-  done: { icon: CheckCircle2, label: 'Concluída', pill: 'bg-emerald-100 text-emerald-700' },
+  locked: { icon: Lock, label: 'Bloqueada', pill: 'bg-muted text-muted-foreground' },
+  done: { icon: CheckCircle2, label: 'Concluída', pill: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
 };
 
 const sourceStateLabel: Record<string, { label: string; tone: string }> = {

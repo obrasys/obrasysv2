@@ -24,10 +24,10 @@ interface Props {
 }
 
 const DISCIPLINE_TONE: Record<SheetDiscipline, string> = {
-  arquitetura: "bg-blue-100 text-blue-700 border-blue-200",
-  estrutura: "bg-amber-100 text-amber-800 border-amber-200",
-  mep: "bg-violet-100 text-violet-700 border-violet-200",
-  outro: "bg-slate-100 text-slate-700 border-slate-200",
+  arquitetura: "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30",
+  estrutura: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+  mep: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  outro: "bg-muted text-muted-foreground border-border",
 };
 
 export function SheetsIdentifiedPanel({ planImportId, onClassifyRequest, isClassifying }: Props) {
