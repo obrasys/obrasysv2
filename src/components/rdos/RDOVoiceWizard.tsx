@@ -223,6 +223,7 @@ export function RDOVoiceWizard({
   const [selectedObraId, setSelectedObraId] = useState<string | null>(initialObraId);
   const [weatherValue, setWeatherValue] = useState<string>("");
   const [workforceText, setWorkforceText] = useState<string>("");
+  const [worksText, setWorksText] = useState<string>("");
   const [occurrencesText, setOccurrencesText] = useState<string>("");
   const [observationsText, setObservationsText] = useState<string>("");
   const [photos, setPhotos] = useState<string[]>([]);
