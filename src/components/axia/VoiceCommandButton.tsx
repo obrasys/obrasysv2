@@ -51,6 +51,11 @@ export function VoiceCommandButton({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [selectedObraId, setSelectedObraId] = useState<string | null>(obraId ?? null);
+  const [tagRdo, setTagRdo] = useState<boolean>(sourceContext === "rdo");
+  const [tagFinanceiro, setTagFinanceiro] = useState<boolean>(sourceContext === "financial");
+
+  const { obras } = useObras();
 
   const { hasFeature, tier } = useFeatureGate();
   // Durante o trial, o comando de voz fica disponível para todos os utilizadores experimentarem.
