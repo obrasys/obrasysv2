@@ -33,11 +33,13 @@ import {
   BarChart3,
   ShieldCheck,
   FileSpreadsheet,
+  Truck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PriceConfidenceBadge } from "@/components/base-precos";
 import { AIPriceSearchPanel } from "@/components/base-precos/AIPriceSearchPanel";
 import { ArtigosPanel } from "@/components/base-precos/ArtigosPanel";
+import { SupplierPricebooksPanel } from "@/components/base-precos/SupplierPricebooksPanel";
 import {
   useMaterialPriceReferences,
   useMaterialCategories,
