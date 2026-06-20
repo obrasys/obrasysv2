@@ -478,15 +478,17 @@ export function RDOVoiceWizard({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button type="button" className={pillClasses} aria-label="Registar RDO por Voz">
-          <span className="relative inline-flex">
-            <Mic2 className="h-4 w-4" />
-            <Sparkles className="h-2.5 w-2.5 absolute -top-1 -right-1.5 text-amber-200" />
-          </span>
-          <span className="hidden sm:inline">{label}</span>
-        </button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <button type="button" className={pillClasses} aria-label="Registar RDO por Voz">
+            <span className="relative inline-flex">
+              <Mic2 className="h-4 w-4" />
+              <Sparkles className="h-2.5 w-2.5 absolute -top-1 -right-1.5 text-amber-200" />
+            </span>
+            <span className="hidden sm:inline">{label}</span>
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
