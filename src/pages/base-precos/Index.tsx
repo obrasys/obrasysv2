@@ -120,11 +120,16 @@ export default function BasePrecosIndex() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-3 max-w-2xl">
+          <TabsList className="w-full grid grid-cols-4 max-w-3xl">
             <TabsTrigger value="artigos" className="flex items-center gap-2">
               <FileSpreadsheet className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Artigos PT</span>
               <span className="sm:hidden">Artigos</span>
+            </TabsTrigger>
+            <TabsTrigger value="fornecedores" className="flex items-center gap-2">
+              <Truck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Tabelas de Fornecedores</span>
+              <span className="sm:hidden">Forn.</span>
             </TabsTrigger>
             <TabsTrigger value="pesquisa-ai" className="flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" />
@@ -141,6 +146,11 @@ export default function BasePrecosIndex() {
           {/* Artigos PT (Catálogo Obra Sys + CSV) */}
           <TabsContent value="artigos" className="mt-4">
             <ArtigosPanel />
+          </TabsContent>
+
+          {/* Tabelas de Fornecedores */}
+          <TabsContent value="fornecedores" className="mt-4">
+            <SupplierPricebooksPanel />
           </TabsContent>
 
           {/* AI Search Tab */}
