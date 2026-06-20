@@ -16,6 +16,10 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { UpgradePromptModal } from "@/components/subscription/UpgradePromptModal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useObras } from "@/hooks/useObras";
 
 type Props = {
   obraId?: string | null;
