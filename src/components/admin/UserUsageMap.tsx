@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,20 +10,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Building2, FileText, ClipboardCheck, Wallet, Users, CalendarDays,
-  Search, MapPin, CheckCircle, XCircle, Minus, ArrowUpDown,
+  Search, MapPin, CheckCircle, XCircle, Minus, ArrowUpDown, Download, Crown, Phone,
 } from "lucide-react";
 import { format, differenceInDays, formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useState, useMemo } from "react";
+import { UserDetailDrawer } from "./UserDetailDrawer";
 
 interface UserRow {
   user_id: string;
   nome: string;
   email: string;
+  telefone: string | null;
   role: string;
   created_at: string;
   empresa_nome: string | null;
   avatar_url: string | null;
+  trial_end: string | null;
+  trial_expired: boolean;
+  subscribed: boolean;
+  subscription_tier: string | null;
   has_created_project: boolean;
   has_created_budget: boolean;
   total_records_created: number;
@@ -74,6 +81,7 @@ export function UserUsageMap() {
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("last_action");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-user-usage-map"],
@@ -81,7 +89,7 @@ export function UserUsageMap() {
       // Fetch profiles
       const { data: profiles, error: e1 } = await supabase
         .from("profiles")
-        .select("user_id, nome, email, role, created_at, empresa_nome, avatar_url");
+        .select("user_id, nome, email, telefone, role, created_at, empresa_nome, avatar_url, trial_end, trial_expired");
       if (e1) throw e1;
 
       // Fetch engagement
@@ -89,6 +97,11 @@ export function UserUsageMap() {
         .from("user_engagement_status")
         .select("user_id, has_created_project, has_created_budget, total_records_created, last_login_date, last_action_date");
       if (e2) throw e2;
+
+      // Fetch subscribers
+      const { data: subscribers } = await supabase
+        .from("subscribers")
+        .select("user_id, subscribed, subscription_tier");
 
       // Fetch counts per module per user
       const [obras, orcamentos, rdos, contas, autos, membros] = await Promise.all([
@@ -105,8 +118,11 @@ export function UserUsageMap() {
 
       return (profiles || []).map((p) => {
         const eng = engagement?.find((e) => e.user_id === p.user_id);
+        const sub = subscribers?.find((s) => s.user_id === p.user_id);
         return {
           ...p,
+          subscribed: sub?.subscribed || false,
+          subscription_tier: sub?.subscription_tier || null,
           has_created_project: eng?.has_created_project || false,
           has_created_budget: eng?.has_created_budget || false,
           total_records_created: eng?.total_records_created || 0,
@@ -133,6 +149,7 @@ export function UserUsageMap() {
         (u) =>
           u.nome?.toLowerCase().includes(q) ||
           u.email?.toLowerCase().includes(q) ||
+          u.telefone?.toLowerCase().includes(q) ||
           u.empresa_nome?.toLowerCase().includes(q)
       );
     }
@@ -215,7 +232,7 @@ export function UserUsageMap() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar por nome, email ou empresa..."
+            placeholder="Pesquisar por nome, email, telefone ou empresa..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -233,6 +250,9 @@ export function UserUsageMap() {
             <SelectItem value="created">Data Registo</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="h-9" onClick={() => exportCsv(filtered)}>
+          <Download className="h-3.5 w-3.5 mr-1.5" />CSV
+        </Button>
       </div>
 
       {/* Table */}
@@ -242,7 +262,9 @@ export function UserUsageMap() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[200px]">Utilizador</TableHead>
+                  <TableHead className="min-w-[220px]">Utilizador</TableHead>
+                  <TableHead className="min-w-[120px]">Contacto</TableHead>
+                  <TableHead className="text-center">Plano</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
                   {MODULE_COLS.map((col) => (
                     <TableHead key={col.key} className="text-center px-2">
@@ -274,7 +296,11 @@ export function UserUsageMap() {
                     .toUpperCase();
 
                   return (
-                    <TableRow key={user.user_id} className="group">
+                    <TableRow
+                      key={user.user_id}
+                      className="group cursor-pointer hover:bg-muted/40"
+                      onClick={() => setSelectedUserId(user.user_id)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8 shrink-0">
@@ -290,6 +316,30 @@ export function UserUsageMap() {
                             )}
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.telefone ? (
+                          <span className="text-[11px] inline-flex items-center gap-1 text-muted-foreground">
+                            <Phone className="h-3 w-3" />{user.telefone}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {user.subscribed ? (
+                          <Badge className="text-[10px] bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+                            <Crown className="h-3 w-3 mr-1" />{user.subscription_tier || "Pago"}
+                          </Badge>
+                        ) : user.trial_end && new Date(user.trial_end) > new Date() ? (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/15 text-amber-700 border-amber-500/30">
+                            Trial
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
+                            Expirado
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className={`text-[10px] ${level.cls}`}>
@@ -345,7 +395,7 @@ export function UserUsageMap() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-12">
                       Nenhum utilizador encontrado
                     </TableCell>
                   </TableRow>
@@ -359,6 +409,40 @@ export function UserUsageMap() {
       <p className="text-[11px] text-muted-foreground text-right">
         {filtered.length} de {users?.length || 0} utilizadores
       </p>
+
+      <UserDetailDrawer
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={(o) => !o && setSelectedUserId(null)}
+      />
     </div>
   );
+}
+
+function exportCsv(rows: UserRow[]) {
+  const headers = [
+    "Nome", "Email", "Telefone", "Empresa", "Role", "Plano", "Subscrito",
+    "Trial fim", "Obras", "Orçamentos", "RDOs", "Contas", "Medições", "Equipa",
+    "Total registos", "Última ação", "Último login", "Criado em",
+  ];
+  const lines = rows.map((r) => [
+    r.nome, r.email, r.telefone || "", r.empresa_nome || "", r.role,
+    r.subscription_tier || "", r.subscribed ? "sim" : "não",
+    r.trial_end ? format(new Date(r.trial_end), "yyyy-MM-dd") : "",
+    r.obras_count, r.orcamentos_count, r.rdos_count, r.contas_count,
+    r.autos_count, r.membros_count, r.total_records_created,
+    r.last_action_date ? format(new Date(r.last_action_date), "yyyy-MM-dd HH:mm") : "",
+    r.last_login_date ? format(new Date(r.last_login_date), "yyyy-MM-dd HH:mm") : "",
+    format(new Date(r.created_at), "yyyy-MM-dd"),
+  ]);
+  const csv = "\uFEFF" + [headers, ...lines]
+    .map((row) => row.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";"))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `utilizadores-${format(new Date(), "yyyyMMdd-HHmm")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
