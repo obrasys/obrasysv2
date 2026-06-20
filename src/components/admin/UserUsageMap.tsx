@@ -231,7 +231,7 @@ export function UserUsageMap() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar por nome, email ou empresa..."
+            placeholder="Pesquisar por nome, email, telefone ou empresa..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -249,6 +249,9 @@ export function UserUsageMap() {
             <SelectItem value="created">Data Registo</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="h-9" onClick={() => exportCsv(filtered)}>
+          <Download className="h-3.5 w-3.5 mr-1.5" />CSV
+        </Button>
       </div>
 
       {/* Table */}
@@ -258,7 +261,9 @@ export function UserUsageMap() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[200px]">Utilizador</TableHead>
+                  <TableHead className="min-w-[220px]">Utilizador</TableHead>
+                  <TableHead className="min-w-[120px]">Contacto</TableHead>
+                  <TableHead className="text-center">Plano</TableHead>
                   <TableHead className="text-center">Estado</TableHead>
                   {MODULE_COLS.map((col) => (
                     <TableHead key={col.key} className="text-center px-2">
@@ -290,7 +295,11 @@ export function UserUsageMap() {
                     .toUpperCase();
 
                   return (
-                    <TableRow key={user.user_id} className="group">
+                    <TableRow
+                      key={user.user_id}
+                      className="group cursor-pointer hover:bg-muted/40"
+                      onClick={() => setSelectedUserId(user.user_id)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8 shrink-0">
@@ -306,6 +315,30 @@ export function UserUsageMap() {
                             )}
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.telefone ? (
+                          <span className="text-[11px] inline-flex items-center gap-1 text-muted-foreground">
+                            <Phone className="h-3 w-3" />{user.telefone}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {user.subscribed ? (
+                          <Badge className="text-[10px] bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+                            <Crown className="h-3 w-3 mr-1" />{user.subscription_tier || "Pago"}
+                          </Badge>
+                        ) : user.trial_end && new Date(user.trial_end) > new Date() ? (
+                          <Badge variant="outline" className="text-[10px] bg-amber-500/15 text-amber-700 border-amber-500/30">
+                            Trial
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
+                            Expirado
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className={`text-[10px] ${level.cls}`}>
