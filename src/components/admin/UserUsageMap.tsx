@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,20 +10,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Building2, FileText, ClipboardCheck, Wallet, Users, CalendarDays,
-  Search, MapPin, CheckCircle, XCircle, Minus, ArrowUpDown,
+  Search, MapPin, CheckCircle, XCircle, Minus, ArrowUpDown, Download, Crown, Phone,
 } from "lucide-react";
 import { format, differenceInDays, formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useState, useMemo } from "react";
+import { UserDetailDrawer } from "./UserDetailDrawer";
 
 interface UserRow {
   user_id: string;
   nome: string;
   email: string;
+  telefone: string | null;
   role: string;
   created_at: string;
   empresa_nome: string | null;
   avatar_url: string | null;
+  trial_end: string | null;
+  trial_expired: boolean;
+  subscribed: boolean;
+  subscription_tier: string | null;
   has_created_project: boolean;
   has_created_budget: boolean;
   total_records_created: number;
@@ -74,6 +81,7 @@ export function UserUsageMap() {
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("last_action");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-user-usage-map"],
@@ -81,7 +89,7 @@ export function UserUsageMap() {
       // Fetch profiles
       const { data: profiles, error: e1 } = await supabase
         .from("profiles")
-        .select("user_id, nome, email, role, created_at, empresa_nome, avatar_url");
+        .select("user_id, nome, email, telefone, role, created_at, empresa_nome, avatar_url, trial_end, trial_expired");
       if (e1) throw e1;
 
       // Fetch engagement
@@ -89,6 +97,11 @@ export function UserUsageMap() {
         .from("user_engagement_status")
         .select("user_id, has_created_project, has_created_budget, total_records_created, last_login_date, last_action_date");
       if (e2) throw e2;
+
+      // Fetch subscribers
+      const { data: subscribers } = await supabase
+        .from("subscribers")
+        .select("user_id, subscribed, subscription_tier");
 
       // Fetch counts per module per user
       const [obras, orcamentos, rdos, contas, autos, membros] = await Promise.all([
@@ -105,8 +118,11 @@ export function UserUsageMap() {
 
       return (profiles || []).map((p) => {
         const eng = engagement?.find((e) => e.user_id === p.user_id);
+        const sub = subscribers?.find((s) => s.user_id === p.user_id);
         return {
           ...p,
+          subscribed: sub?.subscribed || false,
+          subscription_tier: sub?.subscription_tier || null,
           has_created_project: eng?.has_created_project || false,
           has_created_budget: eng?.has_created_budget || false,
           total_records_created: eng?.total_records_created || 0,
