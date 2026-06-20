@@ -113,6 +113,13 @@ const STEP_META: Record<
     icon: Users,
     canSkip: true,
   },
+  works: {
+    title: "Trabalhos realizados",
+    question:
+      "Que trabalhos foram realizados hoje? Descreva tarefas, frentes e locais.",
+    icon: HardHat,
+    canSkip: false,
+  },
   occurrences: {
     title: "Ocorrências",
     question: "Houve alguma ocorrência hoje na obra? Diga \"não\" se não houve.",
