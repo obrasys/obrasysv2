@@ -276,6 +276,50 @@ export function VoiceCommandButton({
                 )}
               </div>
 
+              <div className="grid gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Obra associada (opcional)</Label>
+                  <Select
+                    value={selectedObraId ?? "__none__"}
+                    onValueChange={(v) => setSelectedObraId(v === "__none__" ? null : v)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sem obra específica" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sem obra específica</SelectItem>
+                      {(obras ?? []).map((o: any) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Tipo de registo</Label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={tagRdo}
+                        onCheckedChange={(v) => setTagRdo(v === true)}
+                      />
+                      RDO (Relatório Diário de Obra)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={tagFinanceiro}
+                        onCheckedChange={(v) => setTagFinanceiro(v === true)}
+                      />
+                      Financeiro
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Se nada for selecionado, a Axia infere o tipo a partir do que disser.
+                  </p>
+                </div>
+              </div>
+
               <Textarea
                 placeholder='Ex.: "10€ para almoço na obra X" ou "Hoje fizemos reboco, falta cimento e ferro".'
                 value={transcript}
