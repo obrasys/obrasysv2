@@ -97,7 +97,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
                 <InfoRow icon={Calendar} label="Registo"
                   value={p.created_at ? format(new Date(p.created_at), "dd/MM/yyyy", { locale: pt }) : "—"} />
                 <InfoRow icon={Clock} label="Último login"
-                  value={e?.last_login_date ? formatDistanceToNow(new Date(e.last_login_date), { addSuffix: true, locale: pt }) : "—"} />
+                  value={(() => { const v = data.authMeta?.last_sign_in_at || e?.last_login_date; return v ? formatDistanceToNow(new Date(v), { addSuffix: true, locale: pt }) : "—"; })()} />
               </CardContent>
             </Card>
 
