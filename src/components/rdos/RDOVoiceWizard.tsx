@@ -37,6 +37,7 @@ import {
   Camera,
   Package,
   ClipboardCheck,
+  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useObras } from "@/hooks/useObras";
@@ -53,6 +54,7 @@ type StepId =
   | "obra"
   | "weather"
   | "workforce"
+  | "works"
   | "occurrences"
   | "observations"
   | "photos"
@@ -80,6 +82,7 @@ const STEP_ORDER: StepId[] = [
   "obra",
   "weather",
   "workforce",
+  "works",
   "occurrences",
   "observations",
   "photos",
@@ -109,6 +112,13 @@ const STEP_META: Record<
       "Qual foi a mão de obra presente hoje? Pode indicar equipas, funções e quantidades.",
     icon: Users,
     canSkip: true,
+  },
+  works: {
+    title: "Trabalhos realizados",
+    question:
+      "Que trabalhos foram realizados hoje? Descreva tarefas, frentes e locais.",
+    icon: HardHat,
+    canSkip: false,
   },
   occurrences: {
     title: "Ocorrências",
@@ -213,6 +223,7 @@ export function RDOVoiceWizard({
   const [selectedObraId, setSelectedObraId] = useState<string | null>(initialObraId);
   const [weatherValue, setWeatherValue] = useState<string>("");
   const [workforceText, setWorkforceText] = useState<string>("");
+  const [worksText, setWorksText] = useState<string>("");
   const [occurrencesText, setOccurrencesText] = useState<string>("");
   const [observationsText, setObservationsText] = useState<string>("");
   const [photos, setPhotos] = useState<string[]>([]);
@@ -241,6 +252,7 @@ export function RDOVoiceWizard({
     setRecording(false);
     setWeatherValue("");
     setWorkforceText("");
+    setWorksText("");
     setOccurrencesText("");
     setObservationsText("");
     setPhotos([]);
@@ -309,6 +321,9 @@ export function RDOVoiceWizard({
       }
       case "workforce":
         setWorkforceText(text);
+        break;
+      case "works":
+        setWorksText(text);
         break;
       case "occurrences":
         setOccurrencesText(isNegative(text) ? "Sem ocorrências registadas" : text);
@@ -397,6 +412,9 @@ export function RDOVoiceWizard({
         : undefined;
 
       const trabalhosExecutadosParts: string[] = [];
+      if (worksText.trim()) {
+        trabalhosExecutadosParts.push(worksText.trim());
+      }
       if (workforceText.trim()) {
         trabalhosExecutadosParts.push(`Mão de obra presente:\n${workforceText.trim()}`);
       }
@@ -591,6 +609,21 @@ export function RDOVoiceWizard({
             </div>
           )}
 
+          {currentStep === "works" && (
+            <div className="space-y-2">
+              <Label className="text-xs">Trabalhos realizados</Label>
+              <Textarea
+                rows={4}
+                placeholder="Ex.: Cofragem do pilar P3, betonagem da laje do piso 1, alvenaria no quarto sul..."
+                value={worksText}
+                onChange={(e) => setWorksText(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Este texto é gravado no campo principal de trabalhos executados do RDO.
+              </p>
+            </div>
+          )}
+
           {currentStep === "occurrences" && (
             <Textarea
               rows={3}
@@ -643,28 +676,34 @@ export function RDOVoiceWizard({
                 onEdit={() => setStepIdx(2)}
               />
               <ReviewRow
+                icon={HardHat}
+                label="Trabalhos realizados"
+                value={worksText || "—"}
+                onEdit={() => setStepIdx(3)}
+              />
+              <ReviewRow
                 icon={AlertTriangle}
                 label="Ocorrências"
                 value={occurrencesText || "—"}
-                onEdit={() => setStepIdx(3)}
+                onEdit={() => setStepIdx(4)}
               />
               <ReviewRow
                 icon={MessageSquare}
                 label="Observações"
                 value={observationsText || "—"}
-                onEdit={() => setStepIdx(4)}
+                onEdit={() => setStepIdx(5)}
               />
               <ReviewRow
                 icon={Camera}
                 label="Fotos"
                 value={`${photos.length} foto(s)`}
-                onEdit={() => setStepIdx(5)}
+                onEdit={() => setStepIdx(6)}
               />
               <ReviewRow
                 icon={Package}
                 label="Material amanhã"
                 value={materialsText || "—"}
-                onEdit={() => setStepIdx(6)}
+                onEdit={() => setStepIdx(7)}
               />
             </div>
           )}
