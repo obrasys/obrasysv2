@@ -65,6 +65,10 @@ type Props = {
   size?: "default" | "sm" | "lg";
   label?: string;
   onCreated?: (rdoId: string) => void;
+  /** Quando definido, o componente fica controlado externamente e o trigger interno fica escondido. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 };
 
 const SpeechRecognitionImpl: any =
@@ -189,8 +193,17 @@ export function RDOVoiceWizard({
   size = "default",
   label = "Registar por Voz",
   onCreated,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const isControlled = typeof controlledOpen === "boolean";
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? (controlledOpen as boolean) : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) controlledOnOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [recording, setRecording] = useState(false);
@@ -241,6 +254,8 @@ export function RDOVoiceWizard({
         recognitionRef.current?.stop?.();
       } catch {}
       reset();
+    } else if (initialObraId && !selectedObraId) {
+      setSelectedObraId(initialObraId);
     }
   }, [open]);
 
@@ -465,15 +480,17 @@ export function RDOVoiceWizard({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button type="button" className={pillClasses} aria-label="Registar RDO por Voz">
-          <span className="relative inline-flex">
-            <Mic2 className="h-4 w-4" />
-            <Sparkles className="h-2.5 w-2.5 absolute -top-1 -right-1.5 text-amber-200" />
-          </span>
-          <span className="hidden sm:inline">{label}</span>
-        </button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <button type="button" className={pillClasses} aria-label="Registar RDO por Voz">
+            <span className="relative inline-flex">
+              <Mic2 className="h-4 w-4" />
+              <Sparkles className="h-2.5 w-2.5 absolute -top-1 -right-1.5 text-amber-200" />
+            </span>
+            <span className="hidden sm:inline">{label}</span>
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

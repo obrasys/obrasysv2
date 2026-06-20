@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useObras } from "@/hooks/useObras";
+import { RDOVoiceWizard } from "@/components/rdos/RDOVoiceWizard";
 
 type Props = {
   obraId?: string | null;
@@ -45,6 +46,7 @@ export function VoiceCommandButton({
   label = "Registar por Voz",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [transcript, setTranscript] = useState("");
@@ -297,6 +299,11 @@ export function VoiceCommandButton({
                   <p className="text-[11px] text-muted-foreground">
                     Se nada for selecionado, a Axia infere o tipo a partir do que disser.
                   </p>
+                  {tagRdo && !tagFinanceiro && (
+                    <p className="text-[11px] text-primary">
+                      Como selecionou RDO, vamos abrir o modo guiado para preencher cada campo correctamente.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -385,18 +392,38 @@ export function VoiceCommandButton({
               </Button>
             )}
             {(phase === "idle" || phase === "review" || phase === "error") && (
-              <Button
-                onClick={send}
-                disabled={(!transcript.trim() && !(audioBlob && audioBlob.size > 0)) || mutation.isPending}
-                className="gap-2"
-              >
-                {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Enviar para Axia
-              </Button>
+              tagRdo && !tagFinanceiro ? (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setWizardOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Iniciar registo guiado de RDO
+                </Button>
+              ) : (
+                <Button
+                  onClick={send}
+                  disabled={(!transcript.trim() && !(audioBlob && audioBlob.size > 0)) || mutation.isPending}
+                  className="gap-2"
+                >
+                  {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Enviar para Axia
+                </Button>
+              )
             )}
           </div>
         </div>
       </DialogContent>
+      <RDOVoiceWizard
+        hideTrigger
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        obraId={selectedObraId}
+      />
     </Dialog>
   );
 }
