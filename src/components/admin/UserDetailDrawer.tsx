@@ -104,36 +104,24 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
             {/* Activity counters */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Atividade do utilizador</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Atividade</p>
                 {data.orgInfo && (
                   <p className="text-[10px] text-muted-foreground">
                     {data.orgInfo.name} · {data.orgInfo.memberCount} {data.orgInfo.memberCount === 1 ? "membro" : "membros"}
+                    {data.orgInfo.role ? ` · ${data.orgInfo.role}` : ""}
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                <Stat icon={Building2} label="Obras" value={data.userCounts.obras} />
-                <Stat icon={FileText} label="Orçamentos" value={data.userCounts.orcamentos} />
-                <Stat icon={CalendarDays} label="RDOs" value={data.userCounts.rdos} />
-                <Stat icon={Wallet} label="Contas" value={data.userCounts.contas} />
-                <Stat icon={ClipboardCheck} label="Medições" value={data.userCounts.autos} />
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <Stat icon={Building2} label="Obras" value={data.counts?.obras ?? 0} />
+                <Stat icon={FileText} label="Orçamentos" value={data.counts?.orcamentos ?? 0} />
+                <Stat icon={CalendarDays} label="RDOs" value={data.counts?.rdos ?? 0} />
+                <Stat icon={Wallet} label="Contas" value={data.counts?.contas ?? 0} />
+                <Stat icon={ClipboardCheck} label="Medições" value={data.counts?.autos ?? 0} />
+                <Stat icon={Users} label="Alocações" value={data.counts?.alocacoes ?? 0} />
               </div>
-
-              {data.orgInfo && data.orgInfo.memberCount > 1 && (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
-                    Atividade da organização
-                  </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    <Stat icon={Building2} label="Obras" value={data.obras.length} />
-                    <Stat icon={FileText} label="Orçamentos" value={data.orcamentos.length} />
-                    <Stat icon={CalendarDays} label="RDOs" value={data.orgCounts.rdos} />
-                    <Stat icon={Wallet} label="Contas" value={data.orgCounts.contas} />
-                    <Stat icon={ClipboardCheck} label="Medições" value={data.orgCounts.autos} />
-                  </div>
-                </>
-              )}
             </div>
+
 
 
             {/* Subscription details */}
