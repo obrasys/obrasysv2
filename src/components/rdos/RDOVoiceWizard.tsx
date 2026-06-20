@@ -54,6 +54,7 @@ type StepId =
   | "obra"
   | "weather"
   | "workforce"
+  | "works"
   | "occurrences"
   | "observations"
   | "photos"
