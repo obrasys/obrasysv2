@@ -49,7 +49,7 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
           .select("nome")
           .eq("id", orgIds[0])
           .maybeSingle();
-        orgInfo = { name: org?.name || "—", memberCount: orgUserIds.length };
+        orgInfo = { name: (org as any)?.nome || "—", memberCount: orgUserIds.length };
       }
 
       const [profile, subscriber, engagement,
