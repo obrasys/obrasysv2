@@ -299,6 +299,11 @@ export function VoiceCommandButton({
                   <p className="text-[11px] text-muted-foreground">
                     Se nada for selecionado, a Axia infere o tipo a partir do que disser.
                   </p>
+                  {tagRdo && !tagFinanceiro && (
+                    <p className="text-[11px] text-primary">
+                      Como selecionou RDO, vamos abrir o modo guiado para preencher cada campo correctamente.
+                    </p>
+                  )}
                 </div>
               </div>
 
