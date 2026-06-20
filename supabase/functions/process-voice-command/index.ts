@@ -323,6 +323,12 @@ Deno.serve(async (req) => {
       if (conf < 0.5 || item.type === "unknown") intakeStatus = "needs_more_info";
       if (item.type === "rdo" && !itemObraId) intakeStatus = "needs_more_info";
 
+      // Limpar obra_id de missing_fields se já temos obra resolvida (contexto/AI/fuzzy)
+      const rawMissing = (item.missing_fields ?? []) as string[];
+      const cleanedMissing = itemObraId
+        ? rawMissing.filter((f) => f !== "obra_id" && f !== "obra")
+        : rawMissing;
+
       // Criar intake item primeiro
       const { data: intake, error: intakeErr } = await admin
         .from("axia_intake_items")
@@ -336,7 +342,7 @@ Deno.serve(async (req) => {
           extracted_data: item.data ?? {},
           confidence: conf,
           status: intakeStatus,
-          missing_fields: item.missing_fields ?? [],
+          missing_fields: cleanedMissing,
           axia_questions: item.questions ?? [],
         })
         .select("id")
