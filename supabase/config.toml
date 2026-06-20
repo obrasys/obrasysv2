@@ -74,3 +74,9 @@ verify_jwt = false
 
 [functions.generate-estimated-schedule]
 verify_jwt = false
+
+[functions.send-supplier-invite]
+verify_jwt = false
+
+[functions.admin-get-user-detail]
+verify_jwt = false
