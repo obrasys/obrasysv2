@@ -10,30 +10,33 @@ import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 
-type AuthCallback = (event: string, session: any) => void;
-
-const captured: { cb?: AuthCallback } = {};
-const rpcMock = vi.fn().mockResolvedValue({ data: 0, error: null });
-const fromMock = vi.fn(() => ({
-  select: () => ({
-    eq: () => ({
-      maybeSingle: async () => ({ data: null, error: null }),
+const hoisted = vi.hoisted(() => {
+  const captured: { cb?: (event: string, session: any) => void } = {};
+  const rpcMock = vi.fn().mockResolvedValue({ data: 0, error: null });
+  const fromMock = vi.fn(() => ({
+    select: () => ({
+      eq: () => ({
+        maybeSingle: async () => ({ data: null, error: null }),
+      }),
+      in: async () => ({ data: [], error: null }),
     }),
-    in: async () => ({ data: [], error: null }),
-  }),
-}));
+  }));
+  return { captured, rpcMock, fromMock };
+});
+
+const { captured, rpcMock, fromMock } = hoisted;
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
-      onAuthStateChange: (cb: AuthCallback) => {
-        captured.cb = cb;
+      onAuthStateChange: (cb: (event: string, session: any) => void) => {
+        hoisted.captured.cb = cb;
         return { data: { subscription: { unsubscribe: () => {} } } };
       },
       getSession: async () => ({ data: { session: null } }),
     },
-    rpc: rpcMock,
-    from: fromMock,
+    rpc: hoisted.rpcMock,
+    from: hoisted.fromMock,
   },
 }));
 
