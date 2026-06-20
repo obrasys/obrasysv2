@@ -391,17 +391,24 @@ export function RDOVoiceWizard({
       const today = format(new Date(), "yyyy-MM-dd");
       const workforceNum = extractFirstNumber(workforceText);
 
+      // Apenas envia valor de meteorologia se for um enum válido
+      const validWeather = CONDICOES_METEOROLOGICAS.find((c) => c.value === weatherValue)
+        ? weatherValue
+        : undefined;
+
       const trabalhosExecutadosParts: string[] = [];
       if (workforceText.trim()) {
         trabalhosExecutadosParts.push(`Mão de obra presente:\n${workforceText.trim()}`);
       }
+      const trabalhosExecutados =
+        trabalhosExecutadosParts.join("\n\n") || "Registo criado por voz.";
 
       const rdo = await createRDO.mutateAsync({
         obra_id: selectedObraId,
         data: today,
-        condicoes_meteorologicas: weatherValue || undefined,
+        condicoes_meteorologicas: validWeather,
         mao_de_obra_presente: workforceNum,
-        trabalhos_executados: trabalhosExecutadosParts.join("\n\n") || undefined,
+        trabalhos_executados: trabalhosExecutados,
         ocorrencias: occurrencesText || undefined,
         observacoes: observationsText || undefined,
         fotos: photos,
@@ -427,22 +434,23 @@ export function RDOVoiceWizard({
         }
       }
 
-      toast({
-        title: "RDO criado",
-        description: "Relatório diário guardado por voz com sucesso.",
-      });
       onCreated?.(rdo.id);
       setOpen(false);
     } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      const isDuplicate = msg.includes("duplicate key") || msg.includes("Já existe um RDO");
       toast({
-        title: "Erro ao gravar RDO",
-        description: e?.message ?? "Tente novamente.",
+        title: isDuplicate ? "RDO já existe para hoje" : "Erro ao gravar RDO",
+        description: isDuplicate
+          ? "Já existe um RDO desta obra com a data de hoje. Edite o existente em vez de criar um novo."
+          : msg || "Tente novamente.",
         variant: "destructive",
       });
     } finally {
       setSaving(false);
     }
   };
+
 
   const pillClasses = cn(
     "group relative inline-flex items-center gap-2 rounded-full px-4 sm:px-5 h-10",
