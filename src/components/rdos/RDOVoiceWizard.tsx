@@ -412,6 +412,9 @@ export function RDOVoiceWizard({
         : undefined;
 
       const trabalhosExecutadosParts: string[] = [];
+      if (worksText.trim()) {
+        trabalhosExecutadosParts.push(worksText.trim());
+      }
       if (workforceText.trim()) {
         trabalhosExecutadosParts.push(`Mão de obra presente:\n${workforceText.trim()}`);
       }
