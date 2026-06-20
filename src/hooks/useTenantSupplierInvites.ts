@@ -37,10 +37,33 @@ export function useTenantSupplierInvites() {
   return useQuery({
     queryKey: ['tenant-supplier-invites', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!user?.id) return [];
+      // Obter organizações do utilizador
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+      const orgIds = (memberships || [])
+        .map((m: any) => m.organization_id)
+        .filter(Boolean);
+
+      let query = supabase
         .from('supplier_invites')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Restringir SEMPRE: convites criados pelo utilizador OU da(s) sua(s) organização(ões).
+      // Evita que super_admin (via policy) veja convites de outras empresas neste diálogo.
+      if (orgIds.length > 0) {
+        const orgList = orgIds.map((id) => `"${id}"`).join(',');
+        query = query.or(
+          `invited_by_admin_user_id.eq.${user.id},organization_id.in.(${orgList})`,
+        );
+      } else {
+        query = query.eq('invited_by_admin_user_id', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as any[]) as TenantSupplierInvite[];
     },
