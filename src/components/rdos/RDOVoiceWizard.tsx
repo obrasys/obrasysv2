@@ -65,6 +65,10 @@ type Props = {
   size?: "default" | "sm" | "lg";
   label?: string;
   onCreated?: (rdoId: string) => void;
+  /** Quando definido, o componente fica controlado externamente e o trigger interno fica escondido. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 };
 
 const SpeechRecognitionImpl: any =
