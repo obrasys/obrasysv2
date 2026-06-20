@@ -193,8 +193,17 @@ export function RDOVoiceWizard({
   size = "default",
   label = "Registar por Voz",
   onCreated,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const isControlled = typeof controlledOpen === "boolean";
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? (controlledOpen as boolean) : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) controlledOnOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [recording, setRecording] = useState(false);
