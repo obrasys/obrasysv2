@@ -16687,6 +16687,51 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_reviews_public: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          quote_request_id: string | null
+          rating: number | null
+          supplier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          quote_request_id?: string | null
+          rating?: number | null
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          quote_request_id?: string | null
+          rating?: number | null
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_reviews_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscription: {
         Row: {
           created_at: string | null

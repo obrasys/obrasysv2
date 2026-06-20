@@ -661,12 +661,12 @@ export function useSupplierReviews(supplierId: string | undefined) {
     queryFn: async () => {
       if (!supplierId) return [];
       const { data, error } = await supabase
-        .from('supplier_reviews')
+        .from('supplier_reviews_public' as any)
         .select('*')
         .eq('supplier_id', supplierId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as SupplierReview[];
+      return (data as unknown) as SupplierReview[];
     },
     enabled: !!supplierId,
   });
