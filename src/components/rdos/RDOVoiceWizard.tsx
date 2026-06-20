@@ -252,6 +252,7 @@ export function RDOVoiceWizard({
     setRecording(false);
     setWeatherValue("");
     setWorkforceText("");
+    setWorksText("");
     setOccurrencesText("");
     setObservationsText("");
     setPhotos([]);
