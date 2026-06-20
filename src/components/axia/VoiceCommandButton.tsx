@@ -152,10 +152,16 @@ export function VoiceCommandButton({
     }
     setPhase("processing");
     try {
+      const effectiveContext: Props["sourceContext"] =
+        tagRdo && !tagFinanceiro
+          ? "rdo"
+          : tagFinanceiro && !tagRdo
+            ? "financial"
+            : sourceContext;
       const r = await mutation.mutateAsync({
         transcript: transcript.trim(),
-        sourceContext,
-        obraId,
+        sourceContext: effectiveContext,
+        obraId: selectedObraId ?? null,
         audioBlob,
       });
       setResult({ created_items: r.created_items ?? [], alerts_created: r.alerts_created ?? 0 });
