@@ -253,29 +253,9 @@ export function VoiceCommandButton({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col">
           {(phase === "idle" || phase === "recording" || phase === "review") && (
             <>
-              <div className="flex items-center gap-2">
-                {phase !== "recording" ? (
-                  <Button onClick={startRecording} variant="secondary" className="gap-2" type="button">
-                    <Mic className="h-4 w-4" />
-                    Iniciar gravação
-                  </Button>
-                ) : (
-                  <Button onClick={stopRecording} variant="destructive" className="gap-2" type="button">
-                    <Square className="h-4 w-4" />
-                    Parar gravação
-                  </Button>
-                )}
-                {phase === "recording" && (
-                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                    A Axia está a ouvir...
-                  </span>
-                )}
-              </div>
-
               <div className="grid gap-3 rounded-lg border bg-muted/30 p-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium">Obra associada (opcional)</Label>
@@ -337,6 +317,26 @@ export function VoiceCommandButton({
                 </p>
               )}
               {errMsg && <p className="text-xs text-destructive">{errMsg}</p>}
+
+              <div className="flex items-center gap-2">
+                {phase !== "recording" ? (
+                  <Button onClick={startRecording} variant="secondary" className="gap-2" type="button">
+                    <Mic className="h-4 w-4" />
+                    Iniciar gravação
+                  </Button>
+                ) : (
+                  <Button onClick={stopRecording} variant="destructive" className="gap-2" type="button">
+                    <Square className="h-4 w-4" />
+                    Parar gravação
+                  </Button>
+                )}
+                {phase === "recording" && (
+                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                    A Axia está a ouvir...
+                  </span>
+                )}
+              </div>
             </>
           )}
 
