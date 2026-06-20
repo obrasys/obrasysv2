@@ -322,6 +322,9 @@ export function RDOVoiceWizard({
       case "workforce":
         setWorkforceText(text);
         break;
+      case "works":
+        setWorksText(text);
+        break;
       case "occurrences":
         setOccurrencesText(isNegative(text) ? "Sem ocorrências registadas" : text);
         break;
