@@ -20,8 +20,8 @@ const ACTIVITY_COLORS: Record<string, string> = {
 };
 
 const ACTIVITY_LABELS: Record<string, string> = {
-  extraction: 'TYPEBOT',
-  comparison: 'TYPEBOT',
+  extraction: 'AXIA',
+  comparison: 'AXIA',
   proposal: 'SISTEMA',
   system: 'SISTEMA',
 };
@@ -33,57 +33,16 @@ const ACTIVITY_ACTORS: Record<string, string> = {
   system: 'Axia',
 };
 
-// Static demo activities that look like the reference
-const DEMO_ACTIVITIES = [
-  {
-    id: '1',
-    time: '09:42',
-    type: 'extraction',
-    title: 'Extração concluída em EST-001',
-    description: '(Atlântico)\n38 elementos · 93% conf.',
-  },
-  {
-    id: '2',
-    time: '09:38',
-    type: 'comparison',
-    title: 'Comparação RFQ — Secil vs Preceram',
-    description: '€ 2.840 de poupança detetada',
-  },
-  {
-    id: '3',
-    time: '09:15',
-    type: 'system',
-    title: 'RFQ-2026-0411 respondido por Hilti',
-    description: 'Aumento de 3,2% vs proposta anterior',
-  },
-  {
-    id: '4',
-    time: '09:04',
-    type: 'proposal',
-    title: 'Gerou rascunho de proposta TH-2026-097',
-    description: 'Hotel Serra · pronto a rever',
-  },
-  {
-    id: '5',
-    time: '08:52',
-    type: 'extraction',
-    title: 'Aprovou extração LQG-PL-04',
-    description: '42 elementos · 96% conf.',
-  },
-];
-
 export function DashboardAtividadeIA() {
   const { data: alerts } = useDashboardAlerts();
 
-  const activities = alerts && alerts.length > 0
-    ? alerts.slice(0, 5).map((a, i) => ({
-        id: a.id,
-        time: new Date(a.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-        type: a.severity === 'critical' ? 'system' : a.severity === 'warning' ? 'comparison' : 'extraction',
-        title: a.title,
-        description: a.message,
-      }))
-    : DEMO_ACTIVITIES;
+  const activities = (alerts || []).slice(0, 5).map((a) => ({
+    id: a.id,
+    time: new Date(a.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+    type: a.severity === 'critical' ? 'system' : a.severity === 'warning' ? 'comparison' : 'extraction',
+    title: a.title,
+    description: a.message,
+  }));
 
   return (
     <Card className="rounded-xl border-border/50 shadow-sm h-full">
