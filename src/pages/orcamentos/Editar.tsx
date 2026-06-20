@@ -372,6 +372,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
   );
 
   const content = (
+    <>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Status badge + Axia */}
         <div className="mb-3 md:mb-4 flex items-center gap-3 flex-wrap">
