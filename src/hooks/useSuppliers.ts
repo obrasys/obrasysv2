@@ -666,7 +666,7 @@ export function useSupplierReviews(supplierId: string | undefined) {
         .eq('supplier_id', supplierId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as SupplierReview[];
+      return (data as unknown) as SupplierReview[];
     },
     enabled: !!supplierId,
   });
