@@ -156,7 +156,10 @@ async function attachUserToOrganization({
 
   await syncMemberPermissions(serviceClient, member.id, modulePermissions);
   await syncMemberProjectAccess(serviceClient, member.id, obraScope, selectedObras);
-  await markInvitationAccepted(serviceClient, invitationId, userId);
+  // NOTE: invitation stays in "pending" state until the invited user actually
+  // signs in for the first time (then the client calls public.accept_my_pending_invitations).
+  // Keeps the "Convites Pendentes" tab meaningful.
+  void invitationId;
 
   return member;
 }
