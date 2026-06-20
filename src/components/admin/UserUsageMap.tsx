@@ -395,7 +395,7 @@ export function UserUsageMap() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-12">
                       Nenhum utilizador encontrado
                     </TableCell>
                   </TableRow>
@@ -409,6 +409,40 @@ export function UserUsageMap() {
       <p className="text-[11px] text-muted-foreground text-right">
         {filtered.length} de {users?.length || 0} utilizadores
       </p>
+
+      <UserDetailDrawer
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={(o) => !o && setSelectedUserId(null)}
+      />
     </div>
   );
+}
+
+function exportCsv(rows: UserRow[]) {
+  const headers = [
+    "Nome", "Email", "Telefone", "Empresa", "Role", "Plano", "Subscrito",
+    "Trial fim", "Obras", "Orçamentos", "RDOs", "Contas", "Medições", "Equipa",
+    "Total registos", "Última ação", "Último login", "Criado em",
+  ];
+  const lines = rows.map((r) => [
+    r.nome, r.email, r.telefone || "", r.empresa_nome || "", r.role,
+    r.subscription_tier || "", r.subscribed ? "sim" : "não",
+    r.trial_end ? format(new Date(r.trial_end), "yyyy-MM-dd") : "",
+    r.obras_count, r.orcamentos_count, r.rdos_count, r.contas_count,
+    r.autos_count, r.membros_count, r.total_records_created,
+    r.last_action_date ? format(new Date(r.last_action_date), "yyyy-MM-dd HH:mm") : "",
+    r.last_login_date ? format(new Date(r.last_login_date), "yyyy-MM-dd HH:mm") : "",
+    format(new Date(r.created_at), "yyyy-MM-dd"),
+  ]);
+  const csv = "\uFEFF" + [headers, ...lines]
+    .map((row) => row.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";"))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `utilizadores-${format(new Date(), "yyyyMMdd-HHmm")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
