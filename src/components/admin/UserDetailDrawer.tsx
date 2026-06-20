@@ -20,20 +20,55 @@ interface Props {
 
 export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-user-detail", userId],
+    queryKey: ["admin-user-detail-v2", userId],
     enabled: !!userId && open,
     queryFn: async () => {
       if (!userId) return null;
 
-      const [profile, subscriber, engagement, obras, orcamentos, rdos, contas, autos, tickets, mfa, devices] = await Promise.all([
+      // Find user's active organization(s) so we can show team-level activity
+      const { data: memberships } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", userId)
+        .eq("member_status", "active");
+
+      const orgIds = Array.from(new Set((memberships || []).map((m: any) => m.organization_id).filter(Boolean)));
+
+      let orgUserIds: string[] = [userId];
+      let orgInfo: { name: string; memberCount: number } | null = null;
+      if (orgIds.length) {
+        const { data: orgMembers } = await supabase
+          .from("organization_members")
+          .select("user_id")
+          .in("organization_id", orgIds)
+          .eq("member_status", "active");
+        orgUserIds = Array.from(new Set([userId, ...(orgMembers || []).map((m: any) => m.user_id)]));
+
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("name")
+          .eq("id", orgIds[0])
+          .maybeSingle();
+        orgInfo = { name: org?.name || "—", memberCount: orgUserIds.length };
+      }
+
+      const [profile, subscriber, engagement,
+        obrasU, orcU, rdosU, contasU, autosU,
+        obrasOrg, orcOrg, rdosOrg, contasOrg, autosOrg,
+        tickets, mfa, devices] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("subscribers").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("user_engagement_status").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("obras").select("id, nome, status, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
-        supabase.from("orcamentos").select("id, titulo, status, valor_total, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+        supabase.from("obras").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("orcamentos").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("relatorios_diarios").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("contas_financeiras").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("autos_medicao").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("obras").select("id, nome, status, created_at, user_id").in("user_id", orgUserIds).order("created_at", { ascending: false }).limit(5),
+        supabase.from("orcamentos").select("id, titulo, status, valor_total, created_at, user_id").in("user_id", orgUserIds).order("created_at", { ascending: false }).limit(5),
+        supabase.from("relatorios_diarios").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
+        supabase.from("contas_financeiras").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
+        supabase.from("autos_medicao").select("id", { count: "exact", head: true }).in("user_id", orgUserIds),
         supabase.from("support_tickets").select("id, titulo, status, prioridade, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
         supabase.from("user_mfa_settings").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("mfa_trusted_devices").select("id, device_label, last_used_at, created_at").eq("user_id", userId).order("last_used_at", { ascending: false }).limit(5),
@@ -43,11 +78,21 @@ export function UserDetailDrawer({ userId, open, onOpenChange }: Props) {
         profile: profile.data,
         subscriber: subscriber.data,
         engagement: engagement.data,
-        obras: obras.data || [],
-        orcamentos: orcamentos.data || [],
-        rdosCount: rdos.count || 0,
-        contasCount: contas.count || 0,
-        autosCount: autos.count || 0,
+        orgInfo,
+        userCounts: {
+          obras: obrasU.count || 0,
+          orcamentos: orcU.count || 0,
+          rdos: rdosU.count || 0,
+          contas: contasU.count || 0,
+          autos: autosU.count || 0,
+        },
+        orgCounts: {
+          rdos: rdosOrg.count || 0,
+          contas: contasOrg.count || 0,
+          autos: autosOrg.count || 0,
+        },
+        obras: obrasOrg.data || [],
+        orcamentos: orcOrg.data || [],
         tickets: tickets.data || [],
         mfa: mfa.data,
         devices: devices.data || [],
