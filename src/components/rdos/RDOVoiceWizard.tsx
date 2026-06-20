@@ -37,6 +37,7 @@ import {
   Camera,
   Package,
   ClipboardCheck,
+  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useObras } from "@/hooks/useObras";
