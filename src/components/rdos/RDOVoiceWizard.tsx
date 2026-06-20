@@ -82,6 +82,7 @@ const STEP_ORDER: StepId[] = [
   "obra",
   "weather",
   "workforce",
+  "works",
   "occurrences",
   "observations",
   "photos",
