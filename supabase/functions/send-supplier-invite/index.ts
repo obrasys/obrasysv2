@@ -92,6 +92,9 @@ serve(async (req) => {
       </div>
     `;
 
+    const fromAddress = Deno.env.get("SUPPLIER_INVITE_FROM") || "ObraSys <noreply@obrasys.pt>";
+    console.log("Sending invite", { to: invite.email, from: fromAddress, invite_id });
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -99,7 +102,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ObraSys <noreply@obrasys.pt>",
+        from: fromAddress,
         to: [invite.email],
         subject: `${safeOrg} convidou-o(a) como fornecedor no ObraSys`,
         html,
@@ -107,16 +110,27 @@ serve(async (req) => {
       }),
     });
 
+    const respText = await res.text();
     if (!res.ok) {
-      const errText = await res.text();
-      console.error("Resend error:", errText);
-      throw new Error(`Resend API error: ${res.status}`);
+      console.error("Resend error:", res.status, respText);
+      return new Response(JSON.stringify({
+        error: "resend_failed",
+        status: res.status,
+        details: respText,
+        hint: res.status === 403 || res.status === 401
+          ? "Domínio do remetente não verificado em Resend. Verifique obrasys.pt em https://resend.com/domains ou defina o secret SUPPLIER_INVITE_FROM com um remetente verificado."
+          : undefined,
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    await res.json();
+    console.log("Resend ok:", respText);
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (err) {
     console.error("send-supplier-invite error:", err);
     return new Response(JSON.stringify({ error: String(err?.message || err) }), {
