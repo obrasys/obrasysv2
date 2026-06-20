@@ -859,12 +859,30 @@ export function useCreateSupplierInvite() {
   return useMutation({
     mutationFn: async (email: string) => {
       if (!user?.id) throw new Error('Não autenticado');
+
+      // Obter organization_id (obrigatório pelas políticas RLS de supplier_invites)
+      const { data: org, error: orgErr } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .eq('member_status', 'active')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (orgErr) throw orgErr;
+      if (!org?.organization_id) throw new Error('Sem organização associada ao utilizador');
+
       const { data, error } = await supabase
         .from('supplier_invites')
-        .insert({ email, invited_by_admin_user_id: user.id })
+        .insert({
+          email: email.trim().toLowerCase(),
+          invited_by_admin_user_id: user.id,
+          organization_id: org.organization_id,
+        } as any)
         .select()
         .single();
       if (error) throw error;
+
 
       // Send invite email
       const { error: emailError } = await supabase.functions.invoke('send-supplier-invite', {
