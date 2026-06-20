@@ -687,8 +687,7 @@ export function RDOVoiceWizard({
                 </div>
               )}
               <p className="text-[11px] text-muted-foreground">
-                Comandos: "repetir", "corrigir", "voltar", "saltar", "continuar"
-                {currentStep === "review" ? ", \"gravar\"" : ""}, "cancelar".
+                Comandos: "repetir", "corrigir", "voltar", "saltar", "continuar", "cancelar".
               </p>
             </div>
           )}
