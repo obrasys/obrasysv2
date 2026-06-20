@@ -712,8 +712,8 @@ export function RDOVoiceWizard({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t mt-2">
-          <div className="flex gap-2">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t mt-2 sticky bottom-0 bg-background">
+          <div className="flex gap-2 justify-between sm:justify-start">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="gap-1">
               <X className="h-3.5 w-3.5" /> Cancelar
             </Button>
@@ -723,14 +723,14 @@ export function RDOVoiceWizard({
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:justify-end">
             {meta.canSkip && currentStep !== "review" && (
-              <Button variant="outline" size="sm" onClick={goSkip} className="gap-1">
+              <Button variant="outline" size="sm" onClick={goSkip} className="gap-1 flex-1 sm:flex-initial">
                 <SkipForward className="h-3.5 w-3.5" /> Saltar
               </Button>
             )}
             {currentStep === "review" ? (
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
+              <Button onClick={handleSave} disabled={saving} className="gap-2 flex-1 sm:flex-initial">
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -739,12 +739,13 @@ export function RDOVoiceWizard({
                 Gravar RDO
               </Button>
             ) : (
-              <Button onClick={goNext} className="gap-1">
+              <Button onClick={goNext} className="gap-1 flex-1 sm:flex-initial">
                 Continuar <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
