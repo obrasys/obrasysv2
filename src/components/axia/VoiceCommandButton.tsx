@@ -16,6 +16,10 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { UpgradePromptModal } from "@/components/subscription/UpgradePromptModal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useObras } from "@/hooks/useObras";
 
 type Props = {
   obraId?: string | null;
@@ -47,6 +51,11 @@ export function VoiceCommandButton({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<{ created_items: any[]; alerts_created: number } | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [selectedObraId, setSelectedObraId] = useState<string | null>(obraId ?? null);
+  const [tagRdo, setTagRdo] = useState<boolean>(sourceContext === "rdo");
+  const [tagFinanceiro, setTagFinanceiro] = useState<boolean>(sourceContext === "financial");
+
+  const { obras } = useObras();
 
   const { hasFeature, tier } = useFeatureGate();
   // Durante o trial, o comando de voz fica disponível para todos os utilizadores experimentarem.
@@ -143,10 +152,16 @@ export function VoiceCommandButton({
     }
     setPhase("processing");
     try {
+      const effectiveContext: Props["sourceContext"] =
+        tagRdo && !tagFinanceiro
+          ? "rdo"
+          : tagFinanceiro && !tagRdo
+            ? "financial"
+            : sourceContext;
       const r = await mutation.mutateAsync({
         transcript: transcript.trim(),
-        sourceContext,
-        obraId,
+        sourceContext: effectiveContext,
+        obraId: selectedObraId ?? null,
         audioBlob,
       });
       setResult({ created_items: r.created_items ?? [], alerts_created: r.alerts_created ?? 0 });
@@ -259,6 +274,50 @@ export function VoiceCommandButton({
                     A Axia está a ouvir...
                   </span>
                 )}
+              </div>
+
+              <div className="grid gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Obra associada (opcional)</Label>
+                  <Select
+                    value={selectedObraId ?? "__none__"}
+                    onValueChange={(v) => setSelectedObraId(v === "__none__" ? null : v)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sem obra específica" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sem obra específica</SelectItem>
+                      {(obras ?? []).map((o: any) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Tipo de registo</Label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={tagRdo}
+                        onCheckedChange={(v) => setTagRdo(v === true)}
+                      />
+                      RDO (Relatório Diário de Obra)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={tagFinanceiro}
+                        onCheckedChange={(v) => setTagFinanceiro(v === true)}
+                      />
+                      Financeiro
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Se nada for selecionado, a Axia infere o tipo a partir do que disser.
+                  </p>
+                </div>
               </div>
 
               <Textarea
