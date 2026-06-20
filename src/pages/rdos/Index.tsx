@@ -24,7 +24,7 @@ import {
 import { RDOCard } from '@/components/rdos';
 import { PageHeader, MetricCard, MetricCardGrid, EmptyState } from '@/components/patterns';
 import { useRDOs } from '@/hooks/useRDOs';
-import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
+import { RDOVoiceWizard } from '@/components/rdos/RDOVoiceWizard';
 import { useObras } from '@/hooks/useObras';
 import type { RelatorioDiario } from '@/types/rdos';
 import { 
@@ -119,7 +119,7 @@ export default function RDOsPage() {
           subtitle="Acompanhe trabalhos executados, equipas, materiais e ocorrências dia a dia."
           actions={
             <div className="flex items-center gap-2">
-              <VoiceCommandButton sourceContext="rdo" variant="outline" size="default" />
+              <RDOVoiceWizard variant="outline" size="default" />
               <Button onClick={() => navigate('/rdos/criar')} className="gap-2">
                 <Plus className="h-4 w-4" /> Novo RDO
               </Button>
