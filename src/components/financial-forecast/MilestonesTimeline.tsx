@@ -105,11 +105,11 @@ export function MilestonesTimeline({ obraId }: Props) {
   };
 
   const statusColors: Record<string, string> = {
-    planned: 'bg-blue-100 text-blue-800',
-    forecasted: 'bg-amber-100 text-amber-800',
-    triggered: 'bg-green-100 text-green-800',
-    completed: 'bg-green-200 text-green-900',
-    cancelled: 'bg-gray-100 text-gray-600',
+    planned: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+    forecasted: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+    triggered: 'bg-green-500/15 text-green-700 dark:text-green-300',
+    completed: 'bg-green-500/20 text-green-800 dark:text-green-200',
+    cancelled: 'bg-muted text-muted-foreground',
   };
 
   const statusLabels: Record<string, string> = {
