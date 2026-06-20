@@ -391,17 +391,24 @@ export function RDOVoiceWizard({
       const today = format(new Date(), "yyyy-MM-dd");
       const workforceNum = extractFirstNumber(workforceText);
 
+      // Apenas envia valor de meteorologia se for um enum válido
+      const validWeather = CONDICOES_METEOROLOGICAS.find((c) => c.value === weatherValue)
+        ? weatherValue
+        : undefined;
+
       const trabalhosExecutadosParts: string[] = [];
       if (workforceText.trim()) {
         trabalhosExecutadosParts.push(`Mão de obra presente:\n${workforceText.trim()}`);
       }
+      const trabalhosExecutados =
+        trabalhosExecutadosParts.join("\n\n") || "Registo criado por voz.";
 
       const rdo = await createRDO.mutateAsync({
         obra_id: selectedObraId,
         data: today,
-        condicoes_meteorologicas: weatherValue || undefined,
+        condicoes_meteorologicas: validWeather,
         mao_de_obra_presente: workforceNum,
-        trabalhos_executados: trabalhosExecutadosParts.join("\n\n") || undefined,
+        trabalhos_executados: trabalhosExecutados,
         ocorrencias: occurrencesText || undefined,
         observacoes: observationsText || undefined,
         fotos: photos,
@@ -427,22 +434,23 @@ export function RDOVoiceWizard({
         }
       }
 
-      toast({
-        title: "RDO criado",
-        description: "Relatório diário guardado por voz com sucesso.",
-      });
       onCreated?.(rdo.id);
       setOpen(false);
     } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      const isDuplicate = msg.includes("duplicate key") || msg.includes("Já existe um RDO");
       toast({
-        title: "Erro ao gravar RDO",
-        description: e?.message ?? "Tente novamente.",
+        title: isDuplicate ? "RDO já existe para hoje" : "Erro ao gravar RDO",
+        description: isDuplicate
+          ? "Já existe um RDO desta obra com a data de hoje. Edite o existente em vez de criar um novo."
+          : msg || "Tente novamente.",
         variant: "destructive",
       });
     } finally {
       setSaving(false);
     }
   };
+
 
   const pillClasses = cn(
     "group relative inline-flex items-center gap-2 rounded-full px-4 sm:px-5 h-10",
@@ -491,16 +499,17 @@ export function RDOVoiceWizard({
           </button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <StepIcon className="h-5 w-5 text-primary" />
-            Registar RDO por Voz
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 gap-3 sm:gap-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <StepIcon className="h-5 w-5 text-primary shrink-0" />
+            <span className="truncate">Registar RDO por Voz</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             Vou fazer perguntas em sequência e preencher cada campo automaticamente.
           </DialogDescription>
         </DialogHeader>
+
 
         {/* Stepper */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1">
@@ -711,8 +720,8 @@ export function RDOVoiceWizard({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t mt-2">
-          <div className="flex gap-2">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t mt-2 sticky bottom-0 bg-background">
+          <div className="flex gap-2 justify-between sm:justify-start">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="gap-1">
               <X className="h-3.5 w-3.5" /> Cancelar
             </Button>
@@ -722,14 +731,14 @@ export function RDOVoiceWizard({
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:justify-end">
             {meta.canSkip && currentStep !== "review" && (
-              <Button variant="outline" size="sm" onClick={goSkip} className="gap-1">
+              <Button variant="outline" size="sm" onClick={goSkip} className="gap-1 flex-1 sm:flex-initial">
                 <SkipForward className="h-3.5 w-3.5" /> Saltar
               </Button>
             )}
             {currentStep === "review" ? (
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
+              <Button onClick={handleSave} disabled={saving} className="gap-2 flex-1 sm:flex-initial">
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -738,12 +747,13 @@ export function RDOVoiceWizard({
                 Gravar RDO
               </Button>
             ) : (
-              <Button onClick={goNext} className="gap-1">
+              <Button onClick={goNext} className="gap-1 flex-1 sm:flex-initial">
                 Continuar <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
