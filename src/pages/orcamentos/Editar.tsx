@@ -1076,6 +1076,18 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
           </div>
         </DialogContent>
       </Dialog>
-    </Wrapper>
+    </>
+  );
+
+  return isEmbed ? (
+    <div className="bg-background">{content}</div>
+  ) : (
+    <AppLayout
+      title={orcamento.titulo}
+      subtitle={orcamento.obra ? `Obra: ${orcamento.obra.nome}` : undefined}
+      actions={headerActions}
+    >
+      {content}
+    </AppLayout>
   );
 }
