@@ -142,6 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = session.user.id;
           setTimeout(() => {
             fetchProfile(session.user.id);
+            // Mark any pending team invitations for this user's email as accepted
+            // (deferred so it never blocks the auth flow).
+            supabase.rpc('accept_my_pending_invitations').catch(() => {});
           }, 0);
         } else if (!session?.user) {
           profileUserId = null;
