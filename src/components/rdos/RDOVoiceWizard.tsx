@@ -491,16 +491,17 @@ export function RDOVoiceWizard({
           </button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <StepIcon className="h-5 w-5 text-primary" />
-            Registar RDO por Voz
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 gap-3 sm:gap-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <StepIcon className="h-5 w-5 text-primary shrink-0" />
+            <span className="truncate">Registar RDO por Voz</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             Vou fazer perguntas em sequência e preencher cada campo automaticamente.
           </DialogDescription>
         </DialogHeader>
+
 
         {/* Stepper */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1">
