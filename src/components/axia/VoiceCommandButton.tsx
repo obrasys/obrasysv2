@@ -46,6 +46,7 @@ export function VoiceCommandButton({
   label = "Registar por Voz",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [transcript, setTranscript] = useState("");
