@@ -5,7 +5,22 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, waitFor } from "@testing-library/react";
+import { render } from "@testing-library/react";
+
+async function waitFor(fn: () => void, timeoutMs = 1000) {
+  const start = Date.now();
+  let lastErr: unknown;
+  while (Date.now() - start < timeoutMs) {
+    try {
+      fn();
+      return;
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+  throw lastErr;
+}
 
 type AuthCallback = (event: string, session: any) => void;
 
