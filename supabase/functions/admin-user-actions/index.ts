@@ -365,11 +365,11 @@ serve(async (req: Request): Promise<Response> => {
                   obra_scope: obraScope || "all",
                 }, { onConflict: 'organization_id,user_id' });
 
-              await markInvitationAccepted(serviceClient, invitationId, targetUserId);
+              // Invitation stays "pending" until invited user signs in (see accept_my_pending_invitations).
             }
           }
         } else {
-          await markInvitationAccepted(serviceClient, invitationId, targetUserId);
+          // Invitation stays "pending" until invited user signs in (see accept_my_pending_invitations).
         }
       }
 
