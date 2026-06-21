@@ -395,6 +395,8 @@ export default function EssencialPage() {
           valorFinal,
           custosIndiretosTotal: 0,
           subtotalArtigos: subtotalBase,
+          // No Essencial mostramos sempre MO €/un e MAT €/un (a decomposição existe por item)
+          overrideVisibleColumns: ['item', 'unidade', 'qtd', 'mo_un', 'mat_un', 'subtotal'],
         });
       }
 
