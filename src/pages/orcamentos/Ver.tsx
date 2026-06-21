@@ -610,24 +610,52 @@ export default function VerOrcamentoPage() {
 
                   {/* Axia Alerts */}
                   <Card className="border-primary/10">
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Zap className="h-4 w-4 text-primary" /> Alertas Axia
                       </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[11px]"
+                        disabled={analyzeAxia.isPending || !id}
+                        onClick={() => id && analyzeAxia.mutate(id)}
+                      >
+                        {analyzeAxia.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 mr-1" />
+                        )}
+                        Analisar
+                      </Button>
                     </CardHeader>
                     <CardContent className="space-y-0">
-                      {axiaAlerts.map((alert, i) => (
-                        <div key={i} className="flex items-start gap-2.5 py-2.5 border-b last:border-0 border-border/40">
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${alert.bg}`}>
-                            <alert.icon className={`w-3.5 h-3.5 ${alert.color}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold">{alert.label}</p>
-                            <p className="text-[11px] text-muted-foreground leading-snug">{alert.desc}</p>
-                          </div>
-                          <Badge variant="outline" className="text-[9px] shrink-0">{alert.severity}</Badge>
+                      {axiaLoading ? (
+                        <div className="py-4 flex items-center justify-center text-xs text-muted-foreground">
+                          <Loader2 className="w-3 h-3 animate-spin mr-2" /> A carregar alertas…
                         </div>
-                      ))}
+                      ) : realAxiaInsights.length === 0 ? (
+                        <div className="py-4 text-center text-[11px] text-muted-foreground">
+                          Sem alertas. Clique em "Analisar" para a Axia rever este orçamento.
+                        </div>
+                      ) : (
+                        realAxiaInsights.map((alert) => {
+                          const meta = insightIconMap[alert.type] ?? insightIconMap.parametric_suggestion;
+                          const Icon = meta.icon;
+                          return (
+                            <div key={alert.id} className="flex items-start gap-2.5 py-2.5 border-b last:border-0 border-border/40">
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${meta.bg}`}>
+                                <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold">{alert.title}</p>
+                                <p className="text-[11px] text-muted-foreground leading-snug">{alert.message}</p>
+                              </div>
+                              <Badge variant="outline" className="text-[9px] shrink-0">{severityLabel[alert.severity]}</Badge>
+                            </div>
+                          );
+                        })
+                      )}
                     </CardContent>
                   </Card>
 
