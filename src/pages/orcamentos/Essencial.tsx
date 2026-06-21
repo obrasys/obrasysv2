@@ -8,11 +8,14 @@ import { SelectedItemsPreview } from '@/components/orcamentos/essencial-v2/Selec
 import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetSummaryTable';
 import { TotalsAdjustments } from '@/components/orcamentos/essencial-v2/TotalsAdjustments';
 import { ClientIdentification } from '@/components/orcamentos/essencial-v2/ClientIdentification';
+import { ZonesAreasTree } from '@/components/orcamentos/essencial-v2/ZonesAreasTree';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   type BudgetType,
   type BudgetItem,
   type AreaConfig,
   type BudgetClientInfo,
+  type ExportGrouping,
   getAreasForType,
   computeItemTotals,
   formatEUR,
@@ -101,6 +104,7 @@ export default function EssencialPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [exportGrouping, setExportGrouping] = useState<ExportGrouping>('chapter');
 
   // Prompt para retomar rascunho anterior (em vez de o restaurar silenciosamente)
   const [resumeDraft, setResumeDraft] = useState<DraftState | null>(null);
@@ -470,9 +474,61 @@ export default function EssencialPage() {
 
         if (capError) throw capError;
 
+        // 1) Criar zonas únicas para este capítulo
+        const zoneNames = Array.from(
+          new Set(areaItems.map((i) => i.zoneName?.trim()).filter((z): z is string => !!z))
+        );
+        const zoneIdByName: Record<string, string> = {};
+        if (zoneNames.length > 0) {
+          const zoneRows = zoneNames.map((nome, idx) => ({
+            orcamento_id: orc.id,
+            capitulo_id: cap.id,
+            nome,
+            ordem: idx,
+          }));
+          const { data: insertedZones, error: zErr } = await supabase
+            .from('budget_zones')
+            .insert(zoneRows)
+            .select('id, nome');
+          if (zErr) throw zErr;
+          (insertedZones || []).forEach((z: any) => { zoneIdByName[z.nome] = z.id; });
+        }
+
+        // 2) Criar áreas únicas por (zona, nome)
+        const areaPairs = Array.from(new Set(
+          areaItems
+            .filter((i) => i.zoneName?.trim() && i.areaName?.trim())
+            .map((i) => `${i.zoneName!.trim()}|||${i.areaName!.trim()}`)
+        ));
+        const areaIdByKey: Record<string, string> = {};
+        if (areaPairs.length > 0) {
+          const areaRows = areaPairs.map((key, idx) => {
+            const [zName, aName] = key.split('|||');
+            return {
+              orcamento_id: orc.id,
+              capitulo_id: cap.id,
+              zone_id: zoneIdByName[zName],
+              nome: aName,
+              ordem: idx,
+            };
+          });
+          const { data: insertedAreas, error: aErr } = await supabase
+            .from('budget_areas')
+            .insert(areaRows)
+            .select('id, nome, zone_id');
+          if (aErr) throw aErr;
+          (insertedAreas || []).forEach((a: any) => {
+            // Encontrar nome da zona
+            const zName = Object.keys(zoneIdByName).find((n) => zoneIdByName[n] === a.zone_id);
+            if (zName) areaIdByKey[`${zName}|||${a.nome}`] = a.id;
+          });
+        }
+
         const artigos = areaItems.map((item, idx) => {
           const unitCost = item.laborUnitPrice + item.materialTotalPrice;
           const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
+          const zName = item.zoneName?.trim();
+          const aName = item.areaName?.trim();
           return {
             capitulo_id: cap.id,
             descricao: item.name,
@@ -482,6 +538,8 @@ export default function EssencialPage() {
             preco_base: unitCost,
             margem_lucro_artigo: marginPercent,
             ordem: idx + 1,
+            zone_id: zName ? zoneIdByName[zName] ?? null : null,
+            area_id: zName && aName ? areaIdByKey[`${zName}|||${aName}`] ?? null : null,
           };
         });
 
@@ -553,15 +611,26 @@ export default function EssencialPage() {
             />
           )}
 
-          {/* C - Selected Items Preview */}
+          {/* C - Selected Items + Zonas/Áreas (tabs) */}
           {budgetType && items.length > 0 && (
-            <SelectedItemsPreview
-              items={items}
-              allAreas={allAreas}
-              onUpdateQuantity={handleUpdateQuantity}
-              onUpdateItem={handleUpdateItem}
-              onRemoveItem={handleRemoveItem}
-            />
+            <Tabs defaultValue="items" className="w-full">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="items">Itens</TabsTrigger>
+                <TabsTrigger value="zones">Zonas e Áreas</TabsTrigger>
+              </TabsList>
+              <TabsContent value="items" className="mt-4">
+                <SelectedItemsPreview
+                  items={items}
+                  allAreas={allAreas}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onUpdateItem={handleUpdateItem}
+                  onRemoveItem={handleRemoveItem}
+                />
+              </TabsContent>
+              <TabsContent value="zones" className="mt-4">
+                <ZonesAreasTree items={items} allAreas={allAreas} marginPercent={marginPercent} />
+              </TabsContent>
+            </Tabs>
           )}
 
           {/* D - Summary Table */}
@@ -618,6 +687,8 @@ export default function EssencialPage() {
               onPreview={handlePreview}
               isLoading={isLoading}
               isPreviewLoading={isPreviewLoading}
+              grouping={exportGrouping}
+              onGroupingChange={setExportGrouping}
             />
           )}
         </div>

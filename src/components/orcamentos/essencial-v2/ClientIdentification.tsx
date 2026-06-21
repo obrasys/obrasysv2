@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, FileStack, Loader2, Send, Eye } from 'lucide-react';
-import { type BudgetClientInfo } from '@/types/orcamento-essencial';
+import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
+import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
 
 export type BudgetFormat = 'tecnico' | 'comercial';
 
@@ -24,9 +24,11 @@ interface Props {
   onPreview: (format: BudgetFormat) => void;
   isLoading?: boolean;
   isPreviewLoading?: boolean;
+  grouping: ExportGrouping;
+  onGroupingChange: (g: ExportGrouping) => void;
 }
 
-export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading }: Props) {
+export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading, grouping, onGroupingChange }: Props) {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
 

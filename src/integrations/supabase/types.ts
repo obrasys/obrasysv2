@@ -341,6 +341,7 @@ export type Database = {
       }
       artigos_orcamento: {
         Row: {
+          area_id: string | null
           article_code: string | null
           article_template_id: string | null
           capitulo_id: string
@@ -375,8 +376,10 @@ export type Database = {
           unidade: string
           updated_at: string
           valor_total: number | null
+          zone_id: string | null
         }
         Insert: {
+          area_id?: string | null
           article_code?: string | null
           article_template_id?: string | null
           capitulo_id: string
@@ -411,8 +414,10 @@ export type Database = {
           unidade: string
           updated_at?: string
           valor_total?: number | null
+          zone_id?: string | null
         }
         Update: {
+          area_id?: string | null
           article_code?: string | null
           article_template_id?: string | null
           capitulo_id?: string
@@ -447,8 +452,16 @@ export type Database = {
           unidade?: string
           updated_at?: string
           valor_total?: number | null
+          zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "artigos_orcamento_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "budget_areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "artigos_orcamento_capitulo_id_fkey"
             columns: ["capitulo_id"]
@@ -496,6 +509,13 @@ export type Database = {
             columns: ["supplier_pricebook_item_id"]
             isOneToOne: false
             referencedRelation: "tenant_supplier_pricebook_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "budget_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -2216,6 +2236,64 @@ export type Database = {
           },
         ]
       }
+      budget_areas: {
+        Row: {
+          capitulo_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          orcamento_id: string
+          ordem: number
+          updated_at: string
+          zone_id: string
+        }
+        Insert: {
+          capitulo_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          orcamento_id: string
+          ordem?: number
+          updated_at?: string
+          zone_id: string
+        }
+        Update: {
+          capitulo_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          orcamento_id?: string
+          ordem?: number
+          updated_at?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_areas_capitulo_id_fkey"
+            columns: ["capitulo_id"]
+            isOneToOne: false
+            referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_areas_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_areas_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "budget_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_article_templates: {
         Row: {
           active: boolean
@@ -2885,6 +2963,54 @@ export type Database = {
           {
             foreignKeyName: "budget_versions_source_budget_id_fkey"
             columns: ["source_budget_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_zones: {
+        Row: {
+          capitulo_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          orcamento_id: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          capitulo_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          orcamento_id: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          capitulo_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          orcamento_id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_zones_capitulo_id_fkey"
+            columns: ["capitulo_id"]
+            isOneToOne: false
+            referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_zones_orcamento_id_fkey"
+            columns: ["orcamento_id"]
             isOneToOne: false
             referencedRelation: "orcamentos"
             referencedColumns: ["id"]
