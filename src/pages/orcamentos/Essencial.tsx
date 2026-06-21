@@ -226,14 +226,44 @@ export default function EssencialPage() {
     const vatValue = subtotalBeforeVat * (vatPercent / 100);
     const totalFinal = subtotalBeforeVat + vatValue;
 
-    // Group items by area → chapters
+    // Group items by area → chapters (and optionally by zone/area for export)
     const grouped: Record<string, BudgetItem[]> = {};
     items.forEach((item) => { (grouped[item.areaKey] ||= []).push(item); });
 
-    let capOrder = 1;
-    const capitulos: Capitulo[] = Object.entries(grouped).map(([areaKey, areaItems]) => {
+    // Build virtual chapter buckets according to exportGrouping
+    type Bucket = { title: string; items: BudgetItem[] };
+    const buckets: Bucket[] = [];
+    for (const [areaKey, areaItems] of Object.entries(grouped)) {
       const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
-      const artigos: ArtigoOrcamento[] = areaItems.map((item, idx) => {
+
+      if (exportGrouping === 'chapter') {
+        buckets.push({ title: areaLabel, items: areaItems });
+      } else if (exportGrouping === 'chapter_zone') {
+        const byZone: Record<string, BudgetItem[]> = {};
+        areaItems.forEach((i) => {
+          const z = i.zoneName?.trim() || 'Sem zona';
+          (byZone[z] ||= []).push(i);
+        });
+        Object.entries(byZone).forEach(([zone, zItems]) =>
+          buckets.push({ title: `${areaLabel} — ${zone}`, items: zItems })
+        );
+      } else {
+        const byZoneArea: Record<string, BudgetItem[]> = {};
+        areaItems.forEach((i) => {
+          const z = i.zoneName?.trim() || 'Sem zona';
+          const a = i.areaName?.trim() || 'Sem área';
+          (byZoneArea[`${z}|||${a}`] ||= []).push(i);
+        });
+        Object.entries(byZoneArea).forEach(([key, zItems]) => {
+          const [z, a] = key.split('|||');
+          buckets.push({ title: `${areaLabel} — ${z} — ${a}`, items: zItems });
+        });
+      }
+    }
+
+    let capOrder = 1;
+    const capitulos: Capitulo[] = buckets.map(({ title, items: bItems }) => {
+      const artigos: ArtigoOrcamento[] = bItems.map((item, idx) => {
         const unitCost = item.laborUnitPrice + item.materialTotalPrice;
         const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
         return {
@@ -257,7 +287,7 @@ export default function EssencialPage() {
         id: `cap-${capOrder}`,
         orcamento_id: 'preview',
         numero: capOrder,
-        titulo: areaLabel,
+        titulo: title,
         descricao: null,
         valor_total: capValor,
         ordem: capOrder,
