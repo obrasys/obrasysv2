@@ -67,8 +67,13 @@ export default function VerOrcamentoPage() {
   const isLocked = Boolean((orcamento as any)?.is_locked);
   const lockedAt = ((orcamento as any)?.locked_at as string | null) ?? null;
 
+  // ── Real Axia alerts (must be called before any early return) ──
+  const { openInsights: realAxiaInsights, isLoading: axiaLoading, analyzebudget: analyzeAxia } =
+    useAIBudgetInsights(id);
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+
 
   if (isLoading || !orcamento) {
     return (
