@@ -252,6 +252,10 @@ export interface ArtigoFormData {
   quantity_source?: 'manual' | 'parametric' | 'icf_parametric';
   linked_element_id?: string | null;
   linked_rule_id?: string | null;
+  zone_id?: string | null;
+  area_id?: string | null;
+  zone_name?: string | null;
+  area_name?: string | null;
 }
 
 

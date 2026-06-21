@@ -330,6 +330,10 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
           quantity_source: a.quantity_source ?? 'manual',
           linked_element_id: a.linked_element_id ?? null,
           linked_rule_id: a.linked_rule_id ?? null,
+          zone_id: a.zone_id ?? null,
+          area_id: a.area_id ?? null,
+          zone_name: a.zone_name ?? null,
+          area_name: a.area_name ?? null,
         };
       }
     }
