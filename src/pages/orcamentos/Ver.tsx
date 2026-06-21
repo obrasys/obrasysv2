@@ -45,6 +45,7 @@ import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
 import { BudgetInsightsPanel } from '@/components/orcamentos/BudgetInsightsPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
+import { useAIBudgetInsights, type AIBudgetInsight } from '@/hooks/useAIBudgetInsights';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
