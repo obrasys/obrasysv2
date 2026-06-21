@@ -100,6 +100,16 @@ export function ArtigoForm({
   const [calculatedQuantity, setCalculatedQuantity] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
+  // ── Zonas e Áreas (hierarquia do Essencial, editáveis no Avançado) ──
+  const [zones, setZones] = useState<ZoneRow[]>([]);
+  const [areas, setAreas] = useState<AreaRow[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(defaultValues?.zone_id ?? null);
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(defaultValues?.area_id ?? null);
+  const [newZoneName, setNewZoneName] = useState('');
+  const [newAreaName, setNewAreaName] = useState('');
+  const [showNewZone, setShowNewZone] = useState(false);
+  const [showNewArea, setShowNewArea] = useState(false);
+
   const form = useForm<ArtigoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
