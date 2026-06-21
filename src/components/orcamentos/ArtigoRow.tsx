@@ -49,7 +49,19 @@ export function ArtigoRow({ artigo, onEdit, onDelete, isReadOnly = false, visibl
                   {artigo.codigo}
                 </Badge>
               )}
-              <span className="line-clamp-2 break-words">{value}</span>
+              <div className="min-w-0">
+                <span className="line-clamp-2 break-words">{value}</span>
+                {(artigo.zone_name || artigo.area_name) && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {artigo.zone_name && (
+                      <Badge variant="secondary" className="text-[10px] font-normal">Zona: {artigo.zone_name}</Badge>
+                    )}
+                    {artigo.area_name && (
+                      <Badge variant="secondary" className="text-[10px] font-normal">Área: {artigo.area_name}</Badge>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           );
         }
