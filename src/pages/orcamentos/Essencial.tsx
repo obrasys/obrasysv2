@@ -289,6 +289,10 @@ export default function EssencialPage() {
           preco_base: unitCost,
           margem_lucro_artigo: marginPercent,
           valor_total: unitSalePrice * item.quantity,
+          // Decomposição de custos (para colunas MO €/un e MAT €/un no PDF)
+          custo_mo: item.laborUnitPrice || 0,
+          custo_mat: item.materialTotalPrice || 0,
+          custo_sub: 0,
           ordem: idx + 1,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
