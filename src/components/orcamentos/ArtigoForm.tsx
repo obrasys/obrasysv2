@@ -546,18 +546,102 @@ export function ArtigoForm({
           )}
         />
 
-        {(defaultValues?.zone_name || defaultValues?.area_name) && (
+        {capituloId && (
           <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-4">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-medium text-muted-foreground">Origem do Essencial:</span>
-                {defaultValues.zone_name && (
-                  <Badge variant="secondary" className="font-normal">Zona: {defaultValues.zone_name}</Badge>
-                )}
-                {defaultValues.area_name && (
-                  <Badge variant="secondary" className="font-normal">Área: {defaultValues.area_name}</Badge>
-                )}
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Localização (Zona / Área)</span>
+                <span className="text-xs text-muted-foreground">Opcional</span>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Zona */}
+                <div className="space-y-1.5">
+                  <FormLabel className="text-xs">Zona</FormLabel>
+                  {!showNewZone ? (
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedZoneId ?? '__none__'}
+                        onValueChange={(v) => setSelectedZoneId(v === '__none__' ? null : v)}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="— Sem zona —" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          <SelectItem value="__none__">— Sem zona —</SelectItem>
+                          {zones.map((z) => (
+                            <SelectItem key={z.id} value={z.id}>{z.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setShowNewZone(true); setSelectedZoneId(null); }}>
+                        + Nova
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nome da nova zona"
+                        value={newZoneName}
+                        onChange={(e) => setNewZoneName(e.target.value)}
+                      />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setShowNewZone(false); setNewZoneName(''); }}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Área */}
+                <div className="space-y-1.5">
+                  <FormLabel className="text-xs">Área</FormLabel>
+                  {!showNewArea ? (
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedAreaId ?? '__none__'}
+                        onValueChange={(v) => setSelectedAreaId(v === '__none__' ? null : v)}
+                        disabled={!selectedZoneId}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder={selectedZoneId ? '— Sem área —' : 'Escolha uma zona primeiro'} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          <SelectItem value="__none__">— Sem área —</SelectItem>
+                          {areas.filter((a) => a.zone_id === selectedZoneId).map((a) => (
+                            <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!selectedZoneId}
+                        onClick={() => { setShowNewArea(true); setSelectedAreaId(null); }}
+                      >
+                        + Nova
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nome da nova área"
+                        value={newAreaName}
+                        onChange={(e) => setNewAreaName(e.target.value)}
+                      />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setShowNewArea(false); setNewAreaName(''); }}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {(defaultValues?.zone_name || defaultValues?.area_name) && !selectedZoneId && !showNewZone && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>Origem do Essencial:</span>
+                  {defaultValues.zone_name && <Badge variant="secondary" className="font-normal">Zona: {defaultValues.zone_name}</Badge>}
+                  {defaultValues.area_name && <Badge variant="secondary" className="font-normal">Área: {defaultValues.area_name}</Badge>}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
