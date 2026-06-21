@@ -363,9 +363,9 @@ export default function EssencialPage() {
     try {
       const { orcamento, valorBase, valorIVA, valorFinal } = buildMockOrcamento();
 
-      // Fetch profile for PDF header
-      let profile = null;
-      if (user) {
+      // Fetch profile for PDF header (mesma origem do Orçamento Avançado: AuthContext + fallback DB)
+      let profile: any = authProfile ?? null;
+      if (!profile && user) {
         const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
         profile = data;
       }
