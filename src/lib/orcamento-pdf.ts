@@ -345,7 +345,9 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     // Articles table
     const artigos = cap.artigos || [];
     if (artigos.length > 0) {
-      const visibleKeys = loadVisibleColumns();
+      const visibleKeys = overrideVisibleColumns && overrideVisibleColumns.length > 0
+        ? overrideVisibleColumns
+        : loadVisibleColumns();
       const cols = CAPITULO_COLUMNS.filter((c) => visibleKeys.includes(c.key));
       const marginMultiplier = margemDecimal > 0 && margemDecimal < 1 ? 1 / (1 - margemDecimal) : 1;
 
