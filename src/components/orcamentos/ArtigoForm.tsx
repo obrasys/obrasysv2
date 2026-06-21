@@ -183,6 +183,30 @@ export function ArtigoForm({
     }
   }, [precoBase, margemLucro, form]);
 
+  // Carregar zonas e áreas do capítulo
+  useEffect(() => {
+    if (!capituloId) return;
+    const fetchZonesAreas = async () => {
+      const [{ data: zs }, { data: as }] = await Promise.all([
+        supabase.from('budget_zones').select('id, nome').eq('capitulo_id', capituloId).order('ordem'),
+        supabase.from('budget_areas').select('id, nome, zone_id').eq('capitulo_id', capituloId).order('ordem'),
+      ]);
+      if (zs) setZones(zs as ZoneRow[]);
+      if (as) setAreas(as as AreaRow[]);
+    };
+    fetchZonesAreas();
+  }, [capituloId]);
+
+  // Se a zona muda, limpar área caso não pertença
+  useEffect(() => {
+    if (selectedAreaId) {
+      const a = areas.find((x) => x.id === selectedAreaId);
+      if (!a || a.zone_id !== selectedZoneId) setSelectedAreaId(null);
+    }
+  }, [selectedZoneId, areas, selectedAreaId]);
+
+
+
 
   // Carregar elementos do orçamento
   useEffect(() => {
