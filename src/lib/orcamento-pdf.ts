@@ -167,6 +167,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     subtotalArtigos,
     notaLegal,
     regimeNome,
+    overrideVisibleColumns,
   } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
