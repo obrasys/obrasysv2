@@ -70,7 +70,12 @@ interface ArtigoFormProps {
   isLoading?: boolean;
   submitLabel?: string;
   orcamentoId?: string;
+  /** Capítulo a que o artigo pertence — necessário para gerir Zonas/Áreas */
+  capituloId?: string;
 }
+
+interface ZoneRow { id: string; nome: string }
+interface AreaRow { id: string; nome: string; zone_id: string }
 
 export function ArtigoForm({
   defaultValues,
@@ -79,6 +84,7 @@ export function ArtigoForm({
   isLoading,
   submitLabel = 'Adicionar',
   orcamentoId,
+  capituloId,
 }: ArtigoFormProps) {
   const [useParametric, setUseParametric] = useState(
     defaultValues?.quantity_source === 'parametric'
