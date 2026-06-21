@@ -87,7 +87,7 @@ function saveDraft(state: DraftState) {
 
 export default function EssencialPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
 
   // Sempre que se entra em "/orcamentos/essencial/novo" arrancamos LIMPO.
