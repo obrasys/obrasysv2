@@ -45,6 +45,7 @@ import { BudgetHistoryPanel } from '@/components/orcamentos/BudgetHistoryPanel';
 import { PurchasesPanel } from '@/components/orcamentos/PurchasesPanel';
 import { BudgetInsightsPanel } from '@/components/orcamentos/BudgetInsightsPanel';
 import { useOperationalLayerLabel } from '@/hooks/useOperationalLayerLabel';
+import { useAIBudgetInsights, type AIBudgetInsight } from '@/hooks/useAIBudgetInsights';
 
 export default function VerOrcamentoPage() {
   const { id } = useParams<{ id: string }>();
@@ -172,14 +173,20 @@ export default function VerOrcamentoPage() {
 
   const canAdjudicar = ADJUDICAVEL_STATUSES.includes(orcamento.status as any);
 
-  // ── Mock Axia alerts ──
-  const axiaAlerts = [
-    { icon: PackageMinus, color: 'text-primary', bg: 'bg-primary/10', label: 'Possível item em falta', desc: 'Impermeabilização não encontrada nos capítulos', severity: 'Médio' },
-    { icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-500/10', label: 'Desvio de preço detectado', desc: 'Betão C25/30 - 23% acima da mediana', severity: 'Alto' },
-    { icon: Layers, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Capítulo incompleto', desc: 'Cap. 3 - apenas 1 artigo (média: 5)', severity: 'Alto' },
-    { icon: Lightbulb, color: 'text-emerald-600', bg: 'bg-emerald-500/10', label: 'Serviço relacionado sugerido', desc: 'Considerar "Pintura exterior" no Cap. 6', severity: 'Baixo' },
-    { icon: AlertTriangle, color: 'text-rose-500', bg: 'bg-rose-500/10', label: 'Incoerência técnica', desc: 'Unidade "ml" usada onde deveria ser "m²"', severity: 'Crítico' },
-  ];
+  // ── Real Axia alerts ──
+  const { openInsights: realAxiaInsights, isLoading: axiaLoading, analyzebudget: analyzeAxia } =
+    useAIBudgetInsights(id);
+
+  const insightIconMap: Record<AIBudgetInsight['type'], { icon: typeof PackageMinus; color: string; bg: string }> = {
+    missing_items:        { icon: PackageMinus,   color: 'text-primary',       bg: 'bg-primary/10' },
+    missing_sections:     { icon: Layers,         color: 'text-red-500',       bg: 'bg-red-500/10' },
+    outlier_prices:       { icon: TrendingUp,     color: 'text-amber-600',     bg: 'bg-amber-500/10' },
+    low_margin:           { icon: AlertTriangle,  color: 'text-rose-500',      bg: 'bg-rose-500/10' },
+    parametric_suggestion:{ icon: Lightbulb,      color: 'text-emerald-600',   bg: 'bg-emerald-500/10' },
+  };
+  const severityLabel: Record<AIBudgetInsight['severity'], string> = {
+    info: 'Baixo', warn: 'Médio', critical: 'Crítico',
+  };
 
   return (
     <AppLayout
@@ -603,24 +610,52 @@ export default function VerOrcamentoPage() {
 
                   {/* Axia Alerts */}
                   <Card className="border-primary/10">
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Zap className="h-4 w-4 text-primary" /> Alertas Axia
                       </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[11px]"
+                        disabled={analyzeAxia.isPending || !id}
+                        onClick={() => id && analyzeAxia.mutate(id)}
+                      >
+                        {analyzeAxia.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 mr-1" />
+                        )}
+                        Analisar
+                      </Button>
                     </CardHeader>
                     <CardContent className="space-y-0">
-                      {axiaAlerts.map((alert, i) => (
-                        <div key={i} className="flex items-start gap-2.5 py-2.5 border-b last:border-0 border-border/40">
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${alert.bg}`}>
-                            <alert.icon className={`w-3.5 h-3.5 ${alert.color}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold">{alert.label}</p>
-                            <p className="text-[11px] text-muted-foreground leading-snug">{alert.desc}</p>
-                          </div>
-                          <Badge variant="outline" className="text-[9px] shrink-0">{alert.severity}</Badge>
+                      {axiaLoading ? (
+                        <div className="py-4 flex items-center justify-center text-xs text-muted-foreground">
+                          <Loader2 className="w-3 h-3 animate-spin mr-2" /> A carregar alertas…
                         </div>
-                      ))}
+                      ) : realAxiaInsights.length === 0 ? (
+                        <div className="py-4 text-center text-[11px] text-muted-foreground">
+                          Sem alertas. Clique em "Analisar" para a Axia rever este orçamento.
+                        </div>
+                      ) : (
+                        realAxiaInsights.map((alert) => {
+                          const meta = insightIconMap[alert.type] ?? insightIconMap.parametric_suggestion;
+                          const Icon = meta.icon;
+                          return (
+                            <div key={alert.id} className="flex items-start gap-2.5 py-2.5 border-b last:border-0 border-border/40">
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${meta.bg}`}>
+                                <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold">{alert.title}</p>
+                                <p className="text-[11px] text-muted-foreground leading-snug">{alert.message}</p>
+                              </div>
+                              <Badge variant="outline" className="text-[9px] shrink-0">{severityLabel[alert.severity]}</Badge>
+                            </div>
+                          );
+                        })
+                      )}
                     </CardContent>
                   </Card>
 
