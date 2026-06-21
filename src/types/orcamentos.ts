@@ -150,6 +150,10 @@ export interface ArtigoOrcamento {
   custo_srv?: number;
   custo_alu?: number;
   custo_div?: number;
+  zone_id?: string | null;
+  area_id?: string | null;
+  zone_name?: string | null;
+  area_name?: string | null;
   created_at: string;
   updated_at: string;
 }
