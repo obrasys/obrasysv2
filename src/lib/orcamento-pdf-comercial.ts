@@ -73,8 +73,35 @@ function addFooter(doc: jsPDF, name: string | undefined) {
   }
 }
 
-async function loadImage(url: string): Promise<{ data: string; width: number; height: number } | null> {
+async function loadImage(url: string): Promise<{ data: string; width: number; height: number; format: 'PNG' | 'JPEG' } | null> {
+  const readDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('reader'));
+      reader.readAsDataURL(blob);
+    });
+
+  const measure = (dataUrl: string): Promise<{ w: number; h: number }> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => reject(new Error('img'));
+      img.src = dataUrl;
+    });
+
+  // Prefer fetch — works reliably with Supabase Storage public URLs and avoids
+  // tainted-canvas issues when the storage CDN does not negotiate CORS for <img>.
   try {
+    const resp = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const blob = await resp.blob();
+    const dataUrl = await readDataUrl(blob);
+    const { w, h } = await measure(dataUrl);
+    const format: 'PNG' | 'JPEG' = /jpe?g/i.test(blob.type) ? 'JPEG' : 'PNG';
+    return { data: dataUrl, width: w, height: h, format };
+  } catch {
+    // Fallback: <img crossOrigin> + canvas
     return await new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -86,25 +113,13 @@ async function loadImage(url: string): Promise<{ data: string; width: number; he
           const ctx = canvas.getContext('2d');
           if (!ctx) { resolve(null); return; }
           ctx.drawImage(img, 0, 0);
-          resolve({ data: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+          resolve({ data: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight, format: 'PNG' });
         } catch { resolve(null); }
       };
-      img.onerror = () => {
-        fetch(url).then(r => r.blob()).then(blob => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const tempImg = new Image();
-            tempImg.onload = () => resolve({ data: reader.result as string, width: tempImg.naturalWidth, height: tempImg.naturalHeight });
-            tempImg.onerror = () => resolve(null);
-            tempImg.src = reader.result as string;
-          };
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(blob);
-        }).catch(() => resolve(null));
-      };
+      img.onerror = () => resolve(null);
       img.src = url;
     });
-  } catch { return null; }
+  }
 }
 
 export async function generateComercialPdf(options: ComercialPdfOptions): Promise<Blob> {
@@ -131,7 +146,7 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
         let logoW = maxH * ratio;
         let logoH = maxH;
         if (logoW > maxW) { logoW = maxW; logoH = maxW / ratio; }
-        doc.addImage(logoResult.data, 'PNG', PAGE.left, y, logoW, logoH);
+        doc.addImage(logoResult.data, logoResult.format, PAGE.left, y, logoW, logoH);
         logoRendered = true;
       } catch { /* skip */ }
     }
