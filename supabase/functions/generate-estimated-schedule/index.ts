@@ -15,18 +15,59 @@ serve(async (req) => {
   }
 
   try {
-    const { obra_id, budget_id, user_id, awarded_amount, awarded_at } = await req.json();
+    // --- AUTH: require valid JWT ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    if (!obra_id || !budget_id || !user_id) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authenticatedUserId = claimsData.claims.sub as string;
+
+    const { obra_id, budget_id, awarded_amount, awarded_at } = await req.json();
+    // SECURITY: derive user_id from JWT, never trust body
+    const user_id = authenticatedUserId;
+
+    if (!obra_id || !budget_id) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const client = createClient(supabaseUrl, supabaseKey);
+
+    // Authorization: verify caller can read this budget + obra under RLS
+    const [{ data: budgetRow, error: budgetAccessError }, { data: obraRow, error: obraAccessError }] =
+      await Promise.all([
+        userClient.from("orcamentos").select("id").eq("id", budget_id).maybeSingle(),
+        userClient.from("obras").select("id").eq("id", obra_id).maybeSingle(),
+      ]);
+
+    if (budgetAccessError || obraAccessError || !budgetRow || !obraRow) {
+      return new Response(JSON.stringify({ error: "Forbidden: no access to budget or obra" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // 1. Fetch budget chapters + articles
     const { data: capitulos, error: capError } = await client
