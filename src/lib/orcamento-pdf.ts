@@ -41,6 +41,8 @@ interface PdfOptions {
   subtotalArtigos: number;
   notaLegal?: string | null;
   regimeNome?: string;
+  /** Override the columns shown in each chapter table (otherwise uses the user's saved selection) */
+  overrideVisibleColumns?: CapituloColumnKey[];
 }
 
 const COLORS = {
