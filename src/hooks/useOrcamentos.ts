@@ -441,11 +441,11 @@ export function useOrcamento(id: string | undefined) {
 
       // Buscar zonas e áreas (Essencial v2) para resolver nomes
       const [{ data: zonesData }, { data: areasData }] = await Promise.all([
-        supabase.from('budget_zones').select('id, name').eq('orcamento_id', id),
-        supabase.from('budget_areas').select('id, name').eq('orcamento_id', id),
+        supabase.from('budget_zones').select('id, nome').eq('orcamento_id', id),
+        supabase.from('budget_areas').select('id, nome').eq('orcamento_id', id),
       ]);
-      const zoneMap = new Map<string, string>((zonesData || []).map((z: any) => [z.id, z.name]));
-      const areaMap = new Map<string, string>((areasData || []).map((a: any) => [a.id, a.name]));
+      const zoneMap = new Map<string, string>((zonesData || []).map((z: any) => [z.id, z.nome]));
+      const areaMap = new Map<string, string>((areasData || []).map((a: any) => [a.id, a.nome]));
 
       // Ordenar capítulos e artigos
       const capitulos = (data.capitulos || [])
