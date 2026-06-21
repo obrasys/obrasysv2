@@ -178,9 +178,8 @@ export default function VerOrcamentoPage() {
 
   const canAdjudicar = ADJUDICAVEL_STATUSES.includes(orcamento.status as any);
 
-  // ── Real Axia alerts ──
-  const { openInsights: realAxiaInsights, isLoading: axiaLoading, analyzebudget: analyzeAxia } =
-    useAIBudgetInsights(id);
+  // ── Real Axia alerts (hook moved above early return) ──
+
 
   const insightIconMap: Record<AIBudgetInsight['type'], { icon: typeof PackageMinus; color: string; bg: string }> = {
     missing_items:        { icon: PackageMinus,   color: 'text-primary',       bg: 'bg-primary/10' },
