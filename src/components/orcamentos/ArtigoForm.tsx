@@ -299,15 +299,47 @@ export function ArtigoForm({
     }
   }, [selectedElementId, selectedRuleId, useParametric, rules, form]);
 
-  const handleSubmit = (data: ArtigoFormData) => {
+  const handleSubmit = async (data: ArtigoFormData) => {
     const { zone_name: _zoneName, area_name: _areaName, ...submitData } = data;
+
+    // Garantir que a Zona/Área existem (autocriar a partir do texto digitado)
+    let finalZoneId: string | null = selectedZoneId;
+    let finalAreaId: string | null = selectedAreaId;
+
+    try {
+      if (capituloId && orcamentoId && !finalZoneId && newZoneName.trim()) {
+        const { data: z, error } = await supabase
+          .from('budget_zones')
+          .insert({ orcamento_id: orcamentoId, capitulo_id: capituloId, nome: newZoneName.trim() })
+          .select('id, nome')
+          .single();
+        if (error) throw error;
+        finalZoneId = z.id;
+        setZones((prev) => [...prev, z as ZoneRow]);
+      }
+      if (capituloId && orcamentoId && finalZoneId && !finalAreaId && newAreaName.trim()) {
+        const { data: a, error } = await supabase
+          .from('budget_areas')
+          .insert({ orcamento_id: orcamentoId, capitulo_id: capituloId, zone_id: finalZoneId, nome: newAreaName.trim() })
+          .select('id, nome, zone_id')
+          .single();
+        if (error) throw error;
+        finalAreaId = a.id;
+        setAreas((prev) => [...prev, a as AreaRow]);
+      }
+    } catch (err: any) {
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ title: 'Erro a criar Zona/Área', description: err?.message || 'Erro desconhecido', variant: 'destructive' });
+      return;
+    }
+
     onSubmit({
       ...submitData,
       quantity_source: useParametric ? 'parametric' : 'manual',
       linked_element_id: useParametric ? selectedElementId : null,
       linked_rule_id: useParametric ? selectedRuleId : null,
-      zone_id: defaultValues?.zone_id ?? null,
-      area_id: defaultValues?.area_id ?? null,
+      zone_id: finalZoneId,
+      area_id: finalAreaId,
     });
   };
 
