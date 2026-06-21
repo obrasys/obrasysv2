@@ -566,6 +566,8 @@ export function useOrcamento(id: string | undefined) {
           custo_srv: formData.custo_srv ?? 0,
           custo_alu: formData.custo_alu ?? 0,
           custo_div: formData.custo_div ?? 0,
+          zone_id: (formData as any).zone_id ?? null,
+          area_id: (formData as any).area_id ?? null,
         })
         .select()
         .single();
@@ -590,6 +592,9 @@ export function useOrcamento(id: string | undefined) {
   const updateArtigo = useMutation({
     mutationFn: async ({ artigoId, ...formData }: Partial<ArtigoFormData> & { artigoId: string }) => {
       const updateData: Record<string, unknown> = { ...formData };
+      // Campos auxiliares só usados no formulário (não existem na BD)
+      delete (updateData as any).zone_name;
+      delete (updateData as any).area_name;
       
       // Se tem preco_base, calcular o preco_unitario com margem
       if (formData.preco_base !== undefined) {

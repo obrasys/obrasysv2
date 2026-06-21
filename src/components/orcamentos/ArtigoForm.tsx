@@ -70,7 +70,12 @@ interface ArtigoFormProps {
   isLoading?: boolean;
   submitLabel?: string;
   orcamentoId?: string;
+  /** Capítulo a que o artigo pertence — necessário para gerir Zonas/Áreas */
+  capituloId?: string;
 }
+
+interface ZoneRow { id: string; nome: string }
+interface AreaRow { id: string; nome: string; zone_id: string }
 
 export function ArtigoForm({
   defaultValues,
@@ -79,6 +84,7 @@ export function ArtigoForm({
   isLoading,
   submitLabel = 'Adicionar',
   orcamentoId,
+  capituloId,
 }: ArtigoFormProps) {
   const [useParametric, setUseParametric] = useState(
     defaultValues?.quantity_source === 'parametric'
@@ -93,6 +99,16 @@ export function ArtigoForm({
   );
   const [calculatedQuantity, setCalculatedQuantity] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+
+  // ── Zonas e Áreas (hierarquia do Essencial, editáveis no Avançado) ──
+  const [zones, setZones] = useState<ZoneRow[]>([]);
+  const [areas, setAreas] = useState<AreaRow[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(defaultValues?.zone_id ?? null);
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(defaultValues?.area_id ?? null);
+  const [newZoneName, setNewZoneName] = useState('');
+  const [newAreaName, setNewAreaName] = useState('');
+  const [showNewZone, setShowNewZone] = useState(false);
+  const [showNewArea, setShowNewArea] = useState(false);
 
   const form = useForm<ArtigoFormData>({
     resolver: zodResolver(formSchema),
@@ -166,6 +182,30 @@ export function ArtigoForm({
       form.setValue('preco_unitario', Number(precoComMargem.toFixed(2)));
     }
   }, [precoBase, margemLucro, form]);
+
+  // Carregar zonas e áreas do capítulo
+  useEffect(() => {
+    if (!capituloId) return;
+    const fetchZonesAreas = async () => {
+      const [{ data: zs }, { data: as }] = await Promise.all([
+        supabase.from('budget_zones').select('id, nome').eq('capitulo_id', capituloId).order('ordem'),
+        supabase.from('budget_areas').select('id, nome, zone_id').eq('capitulo_id', capituloId).order('ordem'),
+      ]);
+      if (zs) setZones(zs as ZoneRow[]);
+      if (as) setAreas(as as AreaRow[]);
+    };
+    fetchZonesAreas();
+  }, [capituloId]);
+
+  // Se a zona muda, limpar área caso não pertença
+  useEffect(() => {
+    if (selectedAreaId) {
+      const a = areas.find((x) => x.id === selectedAreaId);
+      if (!a || a.zone_id !== selectedZoneId) setSelectedAreaId(null);
+    }
+  }, [selectedZoneId, areas, selectedAreaId]);
+
+
 
 
   // Carregar elementos do orçamento
@@ -259,15 +299,47 @@ export function ArtigoForm({
     }
   }, [selectedElementId, selectedRuleId, useParametric, rules, form]);
 
-  const handleSubmit = (data: ArtigoFormData) => {
+  const handleSubmit = async (data: ArtigoFormData) => {
     const { zone_name: _zoneName, area_name: _areaName, ...submitData } = data;
+
+    // Garantir que a Zona/Área existem (autocriar a partir do texto digitado)
+    let finalZoneId: string | null = selectedZoneId;
+    let finalAreaId: string | null = selectedAreaId;
+
+    try {
+      if (capituloId && orcamentoId && !finalZoneId && newZoneName.trim()) {
+        const { data: z, error } = await supabase
+          .from('budget_zones')
+          .insert({ orcamento_id: orcamentoId, capitulo_id: capituloId, nome: newZoneName.trim() })
+          .select('id, nome')
+          .single();
+        if (error) throw error;
+        finalZoneId = z.id;
+        setZones((prev) => [...prev, z as ZoneRow]);
+      }
+      if (capituloId && orcamentoId && finalZoneId && !finalAreaId && newAreaName.trim()) {
+        const { data: a, error } = await supabase
+          .from('budget_areas')
+          .insert({ orcamento_id: orcamentoId, capitulo_id: capituloId, zone_id: finalZoneId, nome: newAreaName.trim() })
+          .select('id, nome, zone_id')
+          .single();
+        if (error) throw error;
+        finalAreaId = a.id;
+        setAreas((prev) => [...prev, a as AreaRow]);
+      }
+    } catch (err: any) {
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ title: 'Erro a criar Zona/Área', description: err?.message || 'Erro desconhecido', variant: 'destructive' });
+      return;
+    }
+
     onSubmit({
       ...submitData,
       quantity_source: useParametric ? 'parametric' : 'manual',
       linked_element_id: useParametric ? selectedElementId : null,
       linked_rule_id: useParametric ? selectedRuleId : null,
-      zone_id: defaultValues?.zone_id ?? null,
-      area_id: defaultValues?.area_id ?? null,
+      zone_id: finalZoneId,
+      area_id: finalAreaId,
     });
   };
 
@@ -474,18 +546,102 @@ export function ArtigoForm({
           )}
         />
 
-        {(defaultValues?.zone_name || defaultValues?.area_name) && (
+        {capituloId && (
           <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-4">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-medium text-muted-foreground">Origem do Essencial:</span>
-                {defaultValues.zone_name && (
-                  <Badge variant="secondary" className="font-normal">Zona: {defaultValues.zone_name}</Badge>
-                )}
-                {defaultValues.area_name && (
-                  <Badge variant="secondary" className="font-normal">Área: {defaultValues.area_name}</Badge>
-                )}
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Localização (Zona / Área)</span>
+                <span className="text-xs text-muted-foreground">Opcional</span>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Zona */}
+                <div className="space-y-1.5">
+                  <FormLabel className="text-xs">Zona</FormLabel>
+                  {!showNewZone ? (
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedZoneId ?? '__none__'}
+                        onValueChange={(v) => setSelectedZoneId(v === '__none__' ? null : v)}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="— Sem zona —" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          <SelectItem value="__none__">— Sem zona —</SelectItem>
+                          {zones.map((z) => (
+                            <SelectItem key={z.id} value={z.id}>{z.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setShowNewZone(true); setSelectedZoneId(null); }}>
+                        + Nova
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nome da nova zona"
+                        value={newZoneName}
+                        onChange={(e) => setNewZoneName(e.target.value)}
+                      />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setShowNewZone(false); setNewZoneName(''); }}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Área */}
+                <div className="space-y-1.5">
+                  <FormLabel className="text-xs">Área</FormLabel>
+                  {!showNewArea ? (
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedAreaId ?? '__none__'}
+                        onValueChange={(v) => setSelectedAreaId(v === '__none__' ? null : v)}
+                        disabled={!selectedZoneId}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder={selectedZoneId ? '— Sem área —' : 'Escolha uma zona primeiro'} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          <SelectItem value="__none__">— Sem área —</SelectItem>
+                          {areas.filter((a) => a.zone_id === selectedZoneId).map((a) => (
+                            <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!selectedZoneId}
+                        onClick={() => { setShowNewArea(true); setSelectedAreaId(null); }}
+                      >
+                        + Nova
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nome da nova área"
+                        value={newAreaName}
+                        onChange={(e) => setNewAreaName(e.target.value)}
+                      />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setShowNewArea(false); setNewAreaName(''); }}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {(defaultValues?.zone_name || defaultValues?.area_name) && !selectedZoneId && !showNewZone && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>Origem do Essencial:</span>
+                  {defaultValues.zone_name && <Badge variant="secondary" className="font-normal">Zona: {defaultValues.zone_name}</Badge>}
+                  {defaultValues.area_name && <Badge variant="secondary" className="font-normal">Área: {defaultValues.area_name}</Badge>}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
