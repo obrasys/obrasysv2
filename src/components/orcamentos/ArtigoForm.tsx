@@ -260,15 +260,14 @@ export function ArtigoForm({
   }, [selectedElementId, selectedRuleId, useParametric, rules, form]);
 
   const handleSubmit = (data: ArtigoFormData) => {
+    const { zone_name: _zoneName, area_name: _areaName, ...submitData } = data;
     onSubmit({
-      ...data,
+      ...submitData,
       quantity_source: useParametric ? 'parametric' : 'manual',
       linked_element_id: useParametric ? selectedElementId : null,
       linked_rule_id: useParametric ? selectedRuleId : null,
       zone_id: defaultValues?.zone_id ?? null,
       area_id: defaultValues?.area_id ?? null,
-      zone_name: defaultValues?.zone_name ?? null,
-      area_name: defaultValues?.area_name ?? null,
     });
   };
 
