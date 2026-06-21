@@ -1,112 +1,91 @@
-# Planta / Leitura Assistida — Plano de Implementação
+# Hierarquia Zona/Área + Cabeçalho Profissional — Orçamento Essencial
 
-Módulo novo, aditivo, dentro do fluxo existente de Obras. Reaproveita componentes já existentes (`PlanUploadForm`, `usePlanAnalysisAudit`, `usePdfRenderer`, `useDxfRenderer`, `useIcfPlantAnalysis`) e introduz uma nova camada de "Leitura Assistida" estruturada por folha, com pipeline Axia em JSON estruturado e exportação rastreável para orçamento.
+## Auditoria do schema atual (confirmado)
 
-## 1. Escopo desta fase
+- Capítulos vivem em **`capitulos_orcamento`** (FK `orcamento_id` → `orcamentos`). Não tem `organization_id` nem `obra_id` próprios.
+- Serviços/artigos vivem em **`artigos_orcamento`** (FK `capitulo_id` → `capitulos_orcamento`).
+- `orcamentos` tem `obra_id`; multi-tenant é resolvido via `obras → organization_id`.
+- Não existe coluna `website` na empresa. Dados da empresa vivem em **`profiles`** (`empresa_nome`, `empresa_nif`, `empresa_morada`, `empresa_cidade`, `empresa_codigo_postal`, `empresa_pais`, `empresa_telefone`, `empresa_email`, `empresa_logo_url`). Vou usar estes campos.
+- O fluxo do Essencial está em `src/pages/orcamentos/Essencial.tsx` + `src/components/orcamentos/essencial-v2/*` (BudgetSummaryTable, ItemSelectorModal, etc.).
+- Exportação atual: `src/lib/orcamento-pdf-comercial.ts` (já lê dados da empresa do profile).
 
-Implementar a página, schema, edge function de análise e ligação ao orçamento. Excluímos desta fase: edição vetorial avançada (medições manuais com ferramentas tipo CAD), DXF interativo (será apenas viewer básico reutilizando `useDxfRenderer`), pacotes drag-and-drop entre capítulos (aba Pacotes será editável mas simples).
+A implementação é **aditiva**: capítulos, artigos, totais e exportações existentes mantêm-se. Zona/Área são opcionais.
 
-Critérios de aceitação cobertos integralmente: validação 20MB / formatos, split de PDF por folha, classificação Axia, estados por item, aprovação/edição/ignorar, reprocessar folha, envio só de aprovados, rastreabilidade no orçamento, RLS multi-tenant.
+---
 
-## 2. Rota e navegação
+## Fase 1 — Base de dados (migração)
 
-- Nova rota: `/obras/:obraId/planta-leitura` (dentro da obra, consistente com `/obras/:id/plantas` existente).
-- Entrada secundária no Dashboard "Analisar planta" continua a apontar para `/obras` (já corrigido); dentro da obra, novo card no menu lateral da obra: **Planta / Leitura Assistida**.
-- Não substitui o módulo `/plantas` atual nem o ICF — coexiste.
+Novas tabelas, ligadas ao orçamento via `orcamento_id` (alinhado com `capitulos_orcamento`) para evitar duplicar caminhos:
 
-## 3. Layout (desktop ≥1024px)
+**`budget_zones`**
+- `id`, `orcamento_id` (FK), `capitulo_id` (FK obrigatória), `nome`, `descricao`, `ordem`, `created_at`, `updated_at`.
 
-```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ Resumo: Confiança média │ Extraídos │ Rever │ Aprovados │ Folhas 2/4      │
-├──────────────────────────────────────────────┬────────────────────────────┤
-│ Toolbar: módulo · ficheiro · PÁG 2/4 · ESC   │ Extração assistida         │
-│         1:100 · sync · zoom- + fit · pan ·   │ [IA + Humano]              │
-│         select · medir · grelha · pins       │ ficheiro · data · user     │
-├──────────────────────────────────────────────┤ folha · tipo · confiança   │
-│                                              │ [Aprovar todos][Auto-fix]  │
-│              VIEWER (canvas)                 │ [Substituir][Reprocessar]  │
-│         grelha + planta + pins               │ Tabs: Elementos · Pacotes  │
-│         (~70% largura)                       │       · Histórico          │
-│                                              │ lista de itens (scroll)    │
-│                                              │ ────────────────────────── │
-│                                              │ [Enviar para Orçamento]    │
-└──────────────────────────────────────────────┴────────────────────────────┘
-```
+**`budget_areas`**
+- `id`, `orcamento_id` (FK), `capitulo_id` (FK obrigatória), `zone_id` (FK obrigatória), `nome`, `descricao`, `ordem`, `created_at`, `updated_at`.
 
-- Tablet: painel lateral recolhível (Sheet).
-- Mobile: tabs no topo (Folhas · Elementos · Viewer); viewer simplificado.
+**`artigos_orcamento`** — adicionar (nullable):
+- `zone_id uuid` (FK `budget_zones`)
+- `area_id uuid` (FK `budget_areas`)
+- `chapter_id` já existe como `capitulo_id` (obrigatório, mantido).
 
-## 4. Banco de dados (migração única)
+**Integridade** (via CHECK + trigger):
+- `budget_areas.capitulo_id` = `budget_zones.capitulo_id` da zona referenciada.
+- Em `artigos_orcamento`: se `area_id IS NOT NULL` então `zone_id IS NOT NULL`; e `area.zone_id = artigo.zone_id`, `zone.capitulo_id = artigo.capitulo_id`.
 
-7 tabelas novas, todas com `organization_id`, RLS estrita via `has_role` / membership existente, GRANTs explícitos para `authenticated` e `service_role`.
+**RLS multi-tenant** (mesmo padrão usado em `capitulos_orcamento`): via JOIN `orcamentos → obras.organization_id` com `has_organization_access(...)`. GRANT `SELECT/INSERT/UPDATE/DELETE` a `authenticated`, `ALL` a `service_role`.
 
-- `plant_files` — ficheiro carregado, status (uploaded/processing/ready/error), total_sheets.
-- `plant_sheets` — uma linha por folha; sheet_index, discipline, floor_level, scale, image_path, status, confidence.
-- `plant_elements` — elementos extraídos; code, category, description, quantity, unit, dimensions_json, coordinates_json, confidence, status (ok/review/approved/edited/ignored/error/proposed), read_method, validation_required, budget_chapter_suggestion, budget_item_suggestion.
-- `plant_element_reviews` — auditoria de ações (approve/edit/ignore) com old/new JSON.
-- `plant_budget_exports` — uma linha por envio para orçamento; budget_id, items_exported, status.
-- `plant_processing_logs` — passos do pipeline (preprocess/classify/extract/validate).
-- Coluna nova em `artigos_orcamento`: `plant_source_json jsonb` (file_id, sheet_id, element_id, confidence, approved_by, approved_at) — opcional, para rastreabilidade.
+**Índices**: `(orcamento_id)`, `(capitulo_id)`, `(zone_id)` em areas; `(zone_id)`, `(area_id)` em `artigos_orcamento`.
 
-Storage: bucket privado `plant-files` (criar via tool) com policy por `organization_id`.
+Compatibilidade: orçamentos antigos continuam válidos (zone_id/area_id ficam NULL).
 
-## 5. Edge functions
+## Fase 2 — Formulário de serviço com cascata
 
-- `plant-process` — recebe `plant_file_id`. Para PDF: usa `pdfjs-dist` em Deno para extrair páginas como imagens, escreve em storage, cria `plant_sheets`. Para imagem: cria 1 folha. Para DXF: cria 1 folha sem imagem (viewer client-side).
-- `plant-axia-analyze` — recebe `plant_sheet_id`. Chama Lovable AI Gateway (`google/gemini-2.5-pro` para visão) com o prompt definido na spec, valida JSON com Zod, faz upsert em `plant_elements`, escreve logs, atualiza confidence/status da folha.
-- `plant-axia-autofix` — recebe `plant_sheet_id`. Heurísticas: deduplicação por code+bbox próximo, normalização de unidades (m²/m2 → m²), categorização de itens órfãos via dicionário, merge de descrições semelhantes (Levenshtein).
-- `plant-export-budget` — recebe `plant_file_id`, `budget_id` (ou cria novo), lista de `element_ids` aprovados. Cria/atualiza `capitulos_orcamento` e `artigos_orcamento` com `plant_source_json`. Insere `plant_budget_exports` e marca elementos como `sent_to_budget`.
+Atualizar `ItemSelectorModal` / formulário de item do Essencial:
+1. Selecionar Capítulo (já existe).
+2. Selecionar Zona — Select filtrado pelas zonas do capítulo, com botão "+ Nova zona" inline (cria em `budget_zones`).
+3. Selecionar Área — Select filtrado pelas áreas da zona, com botão "+ Nova área" inline.
+4. Restantes campos do serviço.
 
-Todas com CORS, validação Zod, JWT check em código, e respeitando RLS via `service_role` apenas para escritas auditadas.
+Regras de UI: ao mudar Capítulo limpa Zona/Área se não pertencerem; ao mudar Zona limpa Área. Zona e Área permanecem opcionais.
 
-## 6. Frontend (componentes novos em `src/components/planta-leitura/`)
+Novo hook `useBudgetZonesAreas(orcamentoId)` com queries + mutations (criar/editar/apagar zona e área) e invalidações.
 
-- `PlantaLeituraPage.tsx` (página em `src/pages/obras/PlantaLeitura.tsx`).
-- `PlantUploadZone.tsx` — drag-and-drop, valida 20MB e extensão antes do upload, mensagens da spec.
-- `PlantSummaryCards.tsx` — 5 KPIs no topo.
-- `PlantViewerToolbar.tsx` — barra com info + botões.
-- `PlantViewer.tsx` — `react-konva` (já no projeto) com camada de imagem, grelha, pins coloridos por categoria, tooltip, sincronização bidirecional com painel.
-- `PlantReviewPanel.tsx` — header IA+Humano, ações principais.
-- `PlantElementsList.tsx` (aba Elementos) — itens com aprovar/editar/ignorar.
-- `PlantPackagesList.tsx` (aba Pacotes) — agrupa por `budget_chapter_suggestion`, permite reatribuir capítulo via Select.
-- `PlantHistoryList.tsx` (aba Histórico) — lê `plant_processing_logs` + `plant_element_reviews`.
-- `PlantExportToBudgetModal.tsx` — confirmação, escolha de obra (já fixada), orçamento novo/existente, resumo, aviso da spec.
-- `PlantSheetSelector.tsx` — chips/dropdown para alternar folha.
+## Fase 3 — Aba "Zonas e Áreas"
 
-Hooks novos: `usePlantFiles`, `usePlantSheets`, `usePlantElements`, `usePlantProcessing` (com realtime via Supabase channel), `usePlantExport`.
+Nova aba na página do Essencial (`Essencial.tsx`) com árvore `Capítulo → Zona → Área → Serviços`:
+- Linhas "Sem zona" / "Sem área" agrupam órfãos.
+- Cada nó mostra: custo total, venda total, margem (€), margem (%). Divisão por zero → 0%.
+- Expand/collapse por nível; contagem de serviços por área e zona.
+- Vista clássica por capítulos continua disponível na aba existente.
 
-Realtime: inscrever em `plant_sheets` e `plant_elements` por `plant_file_id` para refletir progresso do pipeline ao vivo.
+Cálculos feitos em cliente a partir de `artigos_orcamento` (determinísticos, sem IA): total serviço = `quantidade * preco_unitario`; agregações por área, zona e capítulo.
 
-## 7. Pipeline Axia — contrato JSON
+## Fase 4 — Exportações PDF/Excel com cabeçalho profissional
 
-Edge function `plant-axia-analyze` envia para Gemini Vision a imagem da folha + o prompt da spec literal. Schema Zod no servidor valida exatamente os campos pedidos (`file_summary`, `sheet`, `elements[]`, `warnings`, `suggestions`). Itens com `confidence < 0.85` → `status='review'`; `read_method='inferred'` → `status='proposed'` + `requires_human_validation=true`. Erros de parse JSON → re-tentativa única com mensagem `"Responda apenas JSON válido conforme schema"`.
+Em `src/lib/orcamento-pdf-comercial.ts` (PDF) e novo `orcamento-excel.ts` (xlsx):
 
-## 8. Segurança e permissões
+- Cabeçalho 1ª página: logo + nome + NIF + morada/CP/cidade/país + email + telefone (campos vazios ocultos, sem quebrar). Não incluo `website` (campo não existe no schema; posso adicionar depois se quiseres).
+- Cabeçalho reduzido nas páginas seguintes: logo + nome + referência orçamento + nº página.
+- Bloco obra/cliente: nome da obra, morada da obra, cliente, data, código, versão.
+- 3 modos de agrupamento selecionáveis no diálogo de exportação:
+  1. Por capítulos (atual)
+  2. Por capítulos + zonas
+  3. Por capítulos + zonas + áreas
+- Totais a cada nível. Compatível com orçamentos sem zonas (cai automaticamente em "Sem zona"/"Sem área").
 
-- RLS: SELECT/INSERT/UPDATE/DELETE só para membros da `organization_id` via função `is_org_member(_org uuid)` (já existe padrão no projeto — reaproveitar `has_role`/membership).
-- Papéis: `admin`, `gestor_obra`, `orcamentista` → tudo. `tecnico` → carregar/rever (sem export). `viewer` → SELECT. `cliente`/`fornecedor` → bloqueado (sem policy para eles).
-- Anti-IDOR: edge functions validam `organization_id` do JWT vs registo antes de qualquer escrita.
-- Validação Zod em todas as edge functions; tamanho/extensão validados client + server.
+## Fase 5 — Validação
 
-## 9. Fases de entrega (commits incrementais)
+- Orçamento antigo (sem zonas) abre, edita e exporta sem alterações visíveis.
+- Novo orçamento com `Cap 05 > Apto A > Quarto 1 > Pintura paredes` mostra totais corretos a cada nível.
+- Exportação não quebra com empresa sem logo/morada.
 
-1. Migração DB + bucket storage + GRANTs + RLS.
-2. Edge function `plant-process` (split PDF, criação de sheets).
-3. Edge function `plant-axia-analyze` + Zod schema.
-4. Página + upload + summary cards + sheet selector + viewer básico com imagem + grelha.
-5. Painel lateral com aba Elementos (aprovar/editar/ignorar) + sincronização viewer↔lista.
-6. Auto-fix + Reprocessar + Substituir ficheiro.
-7. Abas Pacotes e Histórico.
-8. Modal "Enviar para Orçamento" + edge function `plant-export-budget` + rastreabilidade em `artigos_orcamento`.
-9. Responsivo mobile/tablet + estados vazios/erro + mensagens da spec.
+---
 
-## 10. Fora do escopo desta fase
+## Notas técnicas
 
-- Edição vetorial avançada (medições com ferramentas CAD reais) — botão "medir manualmente" fica visível mas abre tooltip "Em breve".
-- Render interativo de DXF com pins — DXF aceita upload, viewer mostra wireframe básico via `useDxfRenderer`, pins são listados no painel sem sobreposição visual.
-- Drag-and-drop entre pacotes — reatribuição via Select.
+- Sigo o padrão de RLS de `capitulos_orcamento`/`artigos_orcamento` (acesso via `orcamento_id`→`obras.organization_id`).
+- Triggers de validação em vez de CHECKs cross-table.
+- Sem alterar tabelas ou colunas existentes; apenas adição de colunas nullable em `artigos_orcamento`.
+- Sem campos `website` na empresa (não existe no schema). Posso adicionar `empresa_website` ao `profiles` numa Fase 4b se confirmares.
 
-## Confirmação
-
-Confirma este plano e começo pela migração da base de dados?
+**Próximo passo**: começo pela migração (Fase 1) e depois aguardo aprovação antes de continuar a UI.

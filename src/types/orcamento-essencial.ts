@@ -682,7 +682,13 @@ export interface BudgetItem {
   laborUnitPrice: number;
   materialTotalPrice: number;
   isCustom?: boolean;
+  /** Nome da Zona (opcional). Ex.: "Apartamento A". Vazio = "Sem zona". */
+  zoneName?: string;
+  /** Nome da Área (opcional, exige zoneName). Ex.: "Quarto 1". Vazio = "Sem área". */
+  areaName?: string;
 }
+
+export type ExportGrouping = 'chapter' | 'chapter_zone' | 'chapter_zone_area';
 
 export interface BudgetClientInfo {
   budgetNumber: string;

@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, FileStack, Loader2, Send, Eye } from 'lucide-react';
-import { type BudgetClientInfo } from '@/types/orcamento-essencial';
+import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
+import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
 
 export type BudgetFormat = 'tecnico' | 'comercial';
 
@@ -24,9 +24,11 @@ interface Props {
   onPreview: (format: BudgetFormat) => void;
   isLoading?: boolean;
   isPreviewLoading?: boolean;
+  grouping: ExportGrouping;
+  onGroupingChange: (g: ExportGrouping) => void;
 }
 
-export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading }: Props) {
+export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading, grouping, onGroupingChange }: Props) {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
 
@@ -192,6 +194,27 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
               </div>
             </label>
           </RadioGroup>
+
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Layers className="h-4 w-4 text-primary" />
+              Agrupamento no PDF / Excel
+            </div>
+            <RadioGroup value={grouping} onValueChange={(v) => onGroupingChange(v as ExportGrouping)} className="grid grid-cols-1 gap-1.5">
+              <label className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer text-xs ${grouping === 'chapter' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                <RadioGroupItem value="chapter" />
+                <span><strong>Por capítulos</strong> — formato clássico</span>
+              </label>
+              <label className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer text-xs ${grouping === 'chapter_zone' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                <RadioGroupItem value="chapter_zone" />
+                <span><strong>Por capítulos e zonas</strong> — agrupa serviços por zona</span>
+              </label>
+              <label className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer text-xs ${grouping === 'chapter_zone_area' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                <RadioGroupItem value="chapter_zone_area" />
+                <span><strong>Por capítulos, zonas e áreas</strong> — máximo detalhe</span>
+              </label>
+            </RadioGroup>
+          </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowFormatDialog(false)}>Cancelar</Button>

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { type BudgetItem, type AreaConfig, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, Check, X } from 'lucide-react';
+import { Trash2, Pencil, Check, X, MapPin, Square } from 'lucide-react';
 
 interface Props {
   items: BudgetItem[];
@@ -23,6 +23,25 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
   }, {});
 
   const getAreaLabel = (key: string) => allAreas.find((a) => a.key === key)?.label || key;
+
+  // Datalists for autocomplete reuse of zones/areas
+  const knownZonesPerChapter = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    items.forEach((it) => {
+      if (it.zoneName?.trim()) ((m[it.areaKey] ||= new Set<string>()).add(it.zoneName.trim()));
+    });
+    return m;
+  }, [items]);
+
+  const knownAreasPerZone = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    items.forEach((it) => {
+      const zone = it.zoneName?.trim();
+      const area = it.areaName?.trim();
+      if (zone && area) ((m[`${it.areaKey}::${zone}`] ||= new Set<string>()).add(area));
+    });
+    return m;
+  }, [items]);
 
   const startEdit = (item: BudgetItem) => {
     setEditingId(item.id);
@@ -45,8 +64,9 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
         <span className="text-xs text-muted-foreground tabular-nums">{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
       </div>
       <p className="text-sm text-muted-foreground mb-5">
-        Edite quantidades, valores de M.O. e materiais diretamente.
+        Edite quantidades, valores e atribua Zona/Área (opcional) a cada serviço.
       </p>
+
 
       <div className="space-y-6">
         {Object.entries(grouped).map(([areaKey, areaItems]) => (
@@ -72,101 +92,128 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                 return (
                   <div
                     key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center px-3 py-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                    className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group px-3 py-2.5 space-y-1.5"
                   >
-                    <span className="text-sm text-foreground truncate">{item.name}</span>
-                    <span className="text-xs text-muted-foreground text-center">{item.unit}</span>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(e) => onUpdateQuantity(item.id, Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full h-8 text-sm text-center"
-                    />
-                    {isEditing ? (
-                      <>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={0.01}
-                          value={editValues.labor}
-                          onChange={(e) => setEditValues(v => ({ ...v, labor: parseFloat(e.target.value) || 0 }))}
-                          className="h-8 text-sm text-right"
-                          autoFocus
-                        />
-                        <Input
-                          type="number"
-                          min={0}
-                          step={0.01}
-                          value={editValues.material}
-                          onChange={(e) => setEditValues(v => ({ ...v, material: parseFloat(e.target.value) || 0 }))}
-                          className="h-8 text-sm text-right"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => startEdit(item)}
-                          className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
-                          title="Clique para editar"
-                        >
-                          {formatEUR(item.laborUnitPrice)}
-                        </button>
-                        <button
-                          onClick={() => startEdit(item)}
-                          className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
-                          title="Clique para editar"
-                        >
-                          {formatEUR(item.materialTotalPrice)}
-                        </button>
-                      </>
-                    )}
-                    <span className="text-sm font-semibold tabular-nums text-right">{formatEUR(subtotal)}</span>
-
-                    <div className="flex items-center gap-0.5 justify-end">
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center">
+                      <span className="text-sm text-foreground truncate">{item.name}</span>
+                      <span className="text-xs text-muted-foreground text-center">{item.unit}</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => onUpdateQuantity(item.id, Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full h-8 text-sm text-center"
+                      />
                       {isEditing ? (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-primary hover:text-primary"
-                            onClick={() => confirmEdit(item.id)}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground"
-                            onClick={cancelEdit}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={editValues.labor}
+                            onChange={(e) => setEditValues(v => ({ ...v, labor: parseFloat(e.target.value) || 0 }))}
+                            className="h-8 text-sm text-right"
+                            autoFocus
+                          />
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={editValues.material}
+                            onChange={(e) => setEditValues(v => ({ ...v, material: parseFloat(e.target.value) || 0 }))}
+                            className="h-8 text-sm text-right"
+                          />
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity shrink-0"
+                          <button
                             onClick={() => startEdit(item)}
+                            className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
+                            title="Clique para editar"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0"
-                            onClick={() => onRemoveItem(item.id)}
+                            {formatEUR(item.laborUnitPrice)}
+                          </button>
+                          <button
+                            onClick={() => startEdit(item)}
+                            className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
+                            title="Clique para editar"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                            {formatEUR(item.materialTotalPrice)}
+                          </button>
                         </>
                       )}
+                      <span className="text-sm font-semibold tabular-nums text-right">{formatEUR(subtotal)}</span>
+
+                      <div className="flex items-center gap-0.5 justify-end">
+                        {isEditing ? (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => confirmEdit(item.id)}>
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={cancelEdit}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity shrink-0" onClick={() => startEdit(item)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0" onClick={() => onRemoveItem(item.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Zona / Área opcional — datalist com nomes já usados */}
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-2 pl-1">
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <Input
+                          list={`zones-${areaKey}`}
+                          placeholder="Zona (opcional)"
+                          value={item.zoneName ?? ''}
+                          onChange={(e) => {
+                            const z = e.target.value;
+                            // Mudou zona → limpar área se não pertencer
+                            onUpdateItem(item.id, {
+                              zoneName: z || undefined,
+                              ...(z ? {} : { areaName: undefined }),
+                            });
+                          }}
+                          className="h-7 text-xs"
+                        />
+                      </label>
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <Square className="h-3 w-3 shrink-0" />
+                        <Input
+                          list={item.zoneName ? `areas-${areaKey}-${item.zoneName}` : undefined}
+                          placeholder={item.zoneName ? 'Área (opcional)' : 'Defina uma zona primeiro'}
+                          value={item.areaName ?? ''}
+                          disabled={!item.zoneName?.trim()}
+                          onChange={(e) => onUpdateItem(item.id, { areaName: e.target.value || undefined })}
+                          className="h-7 text-xs"
+                        />
+                      </label>
                     </div>
                   </div>
                 );
               })}
+              {/* Datalists para autocomplete por capítulo / zona */}
+              <datalist id={`zones-${areaKey}`}>
+                {Array.from(knownZonesPerChapter[areaKey] || []).map((z) => (
+                  <option key={z} value={z} />
+                ))}
+              </datalist>
+              {Array.from(knownZonesPerChapter[areaKey] || []).map((z) => (
+                <datalist key={z} id={`areas-${areaKey}-${z}`}>
+                  {Array.from(knownAreasPerZone[`${areaKey}::${z}`] || []).map((a) => (
+                    <option key={a} value={a} />
+                  ))}
+                </datalist>
+              ))}
             </div>
           </div>
         ))}
