@@ -566,6 +566,8 @@ export function useOrcamento(id: string | undefined) {
           custo_srv: formData.custo_srv ?? 0,
           custo_alu: formData.custo_alu ?? 0,
           custo_div: formData.custo_div ?? 0,
+          zone_id: (formData as any).zone_id ?? null,
+          area_id: (formData as any).area_id ?? null,
         })
         .select()
         .single();
