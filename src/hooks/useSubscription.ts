@@ -24,12 +24,17 @@ export function useSubscription() {
     }
 
     try {
-      // Always get a fresh session to avoid expired JWT
-      const { data: { session: freshSession } } = await supabase.auth.getSession();
-      if (!freshSession?.access_token) {
-        setSubscription(null);
-        setLoading(false);
-        return;
+      // Get current session and refresh if token is expired/near expiry
+      let { data: { session: freshSession } } = await supabase.auth.getSession();
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (!freshSession?.access_token || (freshSession.expires_at && freshSession.expires_at - nowSec < 60)) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session?.access_token) {
+          setSubscription(null);
+          setLoading(false);
+          return;
+        }
+        freshSession = refreshed.session;
       }
 
       const { data, error } = await supabase.functions.invoke("check-subscription", {
@@ -39,6 +44,26 @@ export function useSubscription() {
       });
 
       if (error) {
+        // If JWT expired between refresh and call, try one more refresh + retry
+        const msg = (error as any)?.message ?? "";
+        if (msg.includes("JWT") || msg.includes("401")) {
+          const { data: retryRefresh } = await supabase.auth.refreshSession();
+          if (retryRefresh.session?.access_token) {
+            const retry = await supabase.functions.invoke("check-subscription", {
+              headers: { Authorization: `Bearer ${retryRefresh.session.access_token}` },
+            });
+            if (!retry.error && retry.data) {
+              setSubscription({
+                subscribed: retry.data.subscribed || false,
+                subscription_tier: retry.data.subscription_tier || "trial",
+                subscription_status: retry.data.subscription_status || "trialing",
+                subscription_end: retry.data.subscription_end || null,
+                is_founder: retry.data.is_founder || false,
+              });
+              return;
+            }
+          }
+        }
         console.error("Error checking subscription:", error);
         return;
       }
