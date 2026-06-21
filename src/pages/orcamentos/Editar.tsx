@@ -926,6 +926,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
             isLoading={createArtigo.isPending || updateArtigo.isPending}
             submitLabel={editingArtigo ? 'Guardar' : 'Adicionar'}
             orcamentoId={orcamento.id}
+            capituloId={editingArtigo?.capituloId ?? selectedCapituloId ?? undefined}
           />
         </DialogContent>
       </Dialog>
