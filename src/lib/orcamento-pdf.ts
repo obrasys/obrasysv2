@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import type { Orcamento } from '@/types/orcamentos';
-import { CAPITULO_COLUMNS, loadVisibleColumns, getCellValue } from '@/lib/capitulo-columns';
+import { CAPITULO_COLUMNS, loadVisibleColumns, getCellValue, type CapituloColumnKey } from '@/lib/capitulo-columns';
 
 interface PdfProfile {
   empresa_nome?: string | null;
@@ -41,6 +41,8 @@ interface PdfOptions {
   subtotalArtigos: number;
   notaLegal?: string | null;
   regimeNome?: string;
+  /** Override the columns shown in each chapter table (otherwise uses the user's saved selection) */
+  overrideVisibleColumns?: CapituloColumnKey[];
 }
 
 const COLORS = {
@@ -165,6 +167,7 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     subtotalArtigos,
     notaLegal,
     regimeNome,
+    overrideVisibleColumns,
   } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -342,7 +345,9 @@ export async function generateOrcamentoPdf(options: PdfOptions): Promise<Blob> {
     // Articles table
     const artigos = cap.artigos || [];
     if (artigos.length > 0) {
-      const visibleKeys = loadVisibleColumns();
+      const visibleKeys = overrideVisibleColumns && overrideVisibleColumns.length > 0
+        ? overrideVisibleColumns
+        : loadVisibleColumns();
       const cols = CAPITULO_COLUMNS.filter((c) => visibleKeys.includes(c.key));
       const marginMultiplier = margemDecimal > 0 && margemDecimal < 1 ? 1 / (1 - margemDecimal) : 1;
 

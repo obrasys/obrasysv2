@@ -289,6 +289,10 @@ export default function EssencialPage() {
           preco_base: unitCost,
           margem_lucro_artigo: marginPercent,
           valor_total: unitSalePrice * item.quantity,
+          // Decomposição de custos (para colunas MO €/un e MAT €/un no PDF)
+          custo_mo: item.laborUnitPrice || 0,
+          custo_mat: item.materialTotalPrice || 0,
+          custo_sub: 0,
           ordem: idx + 1,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -391,6 +395,8 @@ export default function EssencialPage() {
           valorFinal,
           custosIndiretosTotal: 0,
           subtotalArtigos: subtotalBase,
+          // No Essencial mostramos sempre MO €/un e MAT €/un (a decomposição existe por item)
+          overrideVisibleColumns: ['item', 'unidade', 'qtd', 'mo_un', 'mat_un', 'subtotal'],
         });
       }
 
@@ -579,6 +585,10 @@ export default function EssencialPage() {
             preco_unitario: unitSalePrice,
             preco_base: unitCost,
             margem_lucro_artigo: marginPercent,
+            // Persistir decomposição de custos (MO + MAT) p/ aparecerem nas colunas do PDF
+            custo_mo: item.laborUnitPrice || 0,
+            custo_mat: item.materialTotalPrice || 0,
+            custo_sub: 0,
             ordem: idx + 1,
             zone_id: zName ? zoneIdByName[zName] ?? null : null,
             area_id: zName && aName ? areaIdByKey[`${zName}|||${aName}`] ?? null : null,
