@@ -266,11 +266,23 @@ export default function EssencialPage() {
       const artigos: ArtigoOrcamento[] = bItems.map((item, idx) => {
         const unitCost = item.laborUnitPrice + item.materialTotalPrice;
         const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
+        // Anexar Zona/Área à descrição quando o agrupamento não as exibe no título do capítulo
+        const zName = item.zoneName?.trim();
+        const aName = item.areaName?.trim();
+        let descricao = item.name;
+        if (exportGrouping === 'chapter' && (zName || aName)) {
+          const parts: string[] = [];
+          if (zName) parts.push(`Zona: ${zName}`);
+          if (aName) parts.push(`Área: ${aName}`);
+          descricao = `${item.name}  (${parts.join(' — ')})`;
+        } else if (exportGrouping === 'chapter_zone' && aName) {
+          descricao = `${item.name}  (Área: ${aName})`;
+        }
         return {
           id: item.id,
           capitulo_id: `cap-${capOrder}`,
           codigo: null,
-          descricao: item.name,
+          descricao,
           unidade: item.unit,
           quantidade: item.quantity,
           preco_unitario: unitSalePrice,
