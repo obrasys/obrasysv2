@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import type { Orcamento } from '@/types/orcamentos';
-import { CAPITULO_COLUMNS, loadVisibleColumns, getCellValue } from '@/lib/capitulo-columns';
+import { CAPITULO_COLUMNS, loadVisibleColumns, getCellValue, type CapituloColumnKey } from '@/lib/capitulo-columns';
 
 interface PdfProfile {
   empresa_nome?: string | null;
