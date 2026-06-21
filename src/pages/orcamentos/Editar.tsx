@@ -919,6 +919,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
             </DialogDescription>
           </DialogHeader>
           <ArtigoForm
+            key={editingArtigo?.id ?? 'novo-artigo'}
             defaultValues={getArtigoDefaults()}
             onSubmit={handleSaveArtigo}
             onCancel={() => setShowArtigoModal(false)}
