@@ -47,6 +47,10 @@ const formSchema = z.object({
   quantity_source: z.enum(['manual', 'parametric', 'icf_parametric']).optional(),
   linked_element_id: z.string().nullable().optional(),
   linked_rule_id: z.string().nullable().optional(),
+  zone_id: z.string().nullable().optional(),
+  area_id: z.string().nullable().optional(),
+  zone_name: z.string().nullable().optional(),
+  area_name: z.string().nullable().optional(),
 });
 
 const DECOMP_FIELDS = [
@@ -109,6 +113,10 @@ export function ArtigoForm({
       quantity_source: 'manual',
       linked_element_id: null,
       linked_rule_id: null,
+      zone_id: null,
+      area_id: null,
+      zone_name: null,
+      area_name: null,
       ...defaultValues,
       // Garantir unidade válida — evita falha silenciosa de validação no Guardar
       unidade: defaultValues?.unidade && String(defaultValues.unidade).trim() !== ''
@@ -257,6 +265,10 @@ export function ArtigoForm({
       quantity_source: useParametric ? 'parametric' : 'manual',
       linked_element_id: useParametric ? selectedElementId : null,
       linked_rule_id: useParametric ? selectedRuleId : null,
+      zone_id: defaultValues?.zone_id ?? null,
+      area_id: defaultValues?.area_id ?? null,
+      zone_name: defaultValues?.zone_name ?? null,
+      area_name: defaultValues?.area_name ?? null,
     });
   };
 
@@ -462,6 +474,22 @@ export function ArtigoForm({
             </FormItem>
           )}
         />
+
+        {(defaultValues?.zone_name || defaultValues?.area_name) && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">Origem do Essencial:</span>
+                {defaultValues.zone_name && (
+                  <Badge variant="secondary" className="font-normal">Zona: {defaultValues.zone_name}</Badge>
+                )}
+                {defaultValues.area_name && (
+                  <Badge variant="secondary" className="font-normal">Área: {defaultValues.area_name}</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Decomposição de custo por artigo (MO/MAT/SUB/SRV/ALU/DIV) */}
         <Card className="border-dashed">
