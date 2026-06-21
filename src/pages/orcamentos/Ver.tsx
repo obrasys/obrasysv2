@@ -485,12 +485,24 @@ export default function VerOrcamentoPage() {
                                       const totalComMargem = artigo.quantidade * precoComMargem;
                                       return (
                                         <TableRow key={artigo.id}>
-                                          <TableCell className="font-mono text-xs text-muted-foreground">{artigo.codigo || '-'}</TableCell>
-                                          <TableCell className="text-sm">{artigo.descricao}</TableCell>
-                                          <TableCell className="text-center text-xs">{artigo.unidade}</TableCell>
-                                          <TableCell className="text-right text-sm">{artigo.quantidade.toFixed(2)}</TableCell>
-                                          <TableCell className="text-right text-sm">{formatCurrency(precoComMargem)}</TableCell>
-                                          <TableCell className="text-right font-medium text-sm">{formatCurrency(totalComMargem)}</TableCell>
+                                          <TableCell className="font-mono text-xs text-muted-foreground align-top">{artigo.codigo || '-'}</TableCell>
+                                          <TableCell className="text-sm">
+                                            <div>{artigo.descricao}</div>
+                                            {(artigo.zone_name || artigo.area_name) && (
+                                              <div className="flex flex-wrap gap-1 mt-1">
+                                                {artigo.zone_name && (
+                                                  <Badge variant="outline" className="text-[10px] font-normal">Zona: {artigo.zone_name}</Badge>
+                                                )}
+                                                {artigo.area_name && (
+                                                  <Badge variant="outline" className="text-[10px] font-normal">Área: {artigo.area_name}</Badge>
+                                                )}
+                                              </div>
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="text-center text-xs align-top">{artigo.unidade}</TableCell>
+                                          <TableCell className="text-right text-sm align-top">{artigo.quantidade.toFixed(2)}</TableCell>
+                                          <TableCell className="text-right text-sm align-top">{formatCurrency(precoComMargem)}</TableCell>
+                                          <TableCell className="text-right font-medium text-sm align-top">{formatCurrency(totalComMargem)}</TableCell>
                                         </TableRow>
                                       );
                                     })}
