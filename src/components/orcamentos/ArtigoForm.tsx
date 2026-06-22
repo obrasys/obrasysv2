@@ -51,6 +51,8 @@ const formSchema = z.object({
   area_id: z.string().nullable().optional(),
   zone_name: z.string().nullable().optional(),
   area_name: z.string().nullable().optional(),
+  service_type_id: z.string().nullable().optional(),
+  service_type_name: z.string().nullable().optional(),
 });
 
 const DECOMP_FIELDS = [
@@ -105,6 +107,10 @@ export function ArtigoForm({
   const [areas, setAreas] = useState<AreaRow[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(defaultValues?.zone_id ?? null);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(defaultValues?.area_id ?? null);
+  const [selectedServiceTypeId, setSelectedServiceTypeId] = useState<string | null>(defaultValues?.service_type_id ?? null);
+  const [serviceTypeName, setServiceTypeName] = useState<string>(defaultValues?.service_type_name ?? '');
+  const [serviceTypes, setServiceTypes] = useState<{ id: string; nome: string }[]>([]);
+  const [serviceSuggestions, setServiceSuggestions] = useState<{ descricao: string; unidade: string | null }[]>([]);
   const [newZoneName, setNewZoneName] = useState('');
   const [newAreaName, setNewAreaName] = useState('');
   const [showNewZone, setShowNewZone] = useState(false);
@@ -204,6 +210,74 @@ export function ArtigoForm({
       if (!a || a.zone_id !== selectedZoneId) setSelectedAreaId(null);
     }
   }, [selectedZoneId, areas, selectedAreaId]);
+
+  // Carregar sugestões de Tipos de Serviço para a Área selecionada (biblioteca org)
+  useEffect(() => {
+    const loadTypes = async () => {
+      if (!selectedAreaId) {
+        // Sem área específica: carregar todos os tipos ativos da org
+        const { data } = await supabase
+          .from('org_service_type_library')
+          .select('id, nome')
+          .eq('ativo', true)
+          .order('ordem');
+        setServiceTypes((data || []) as any);
+        return;
+      }
+      // Tentar correspondência por NOME da área local vs biblioteca
+      const areaName = areas.find((a) => a.id === selectedAreaId)?.nome;
+      if (!areaName) { setServiceTypes([]); return; }
+      const { data: lib } = await supabase
+        .from('org_area_library')
+        .select('id')
+        .eq('nome', areaName)
+        .limit(1)
+        .maybeSingle();
+      if (!lib?.id) {
+        const { data: all } = await supabase
+          .from('org_service_type_library')
+          .select('id, nome')
+          .eq('ativo', true)
+          .order('ordem');
+        setServiceTypes((all || []) as any);
+        return;
+      }
+      const { data: sug } = await supabase
+        .from('org_service_type_suggestions')
+        .select('service_type_id, org_service_type_library(id, nome, ativo)')
+        .eq('area_id', lib.id);
+      const list = (sug || [])
+        .map((s: any) => s.org_service_type_library)
+        .filter((t: any) => t && t.ativo)
+        .map((t: any) => ({ id: t.id, nome: t.nome }));
+      if (list.length) setServiceTypes(list);
+      else {
+        const { data: all } = await supabase
+          .from('org_service_type_library')
+          .select('id, nome')
+          .eq('ativo', true)
+          .order('ordem');
+        setServiceTypes((all || []) as any);
+      }
+    };
+    loadTypes();
+  }, [selectedAreaId, areas]);
+
+  // Carregar sugestões de serviços para o Tipo selecionado
+  useEffect(() => {
+    const loadServices = async () => {
+      if (!selectedServiceTypeId) { setServiceSuggestions([]); return; }
+      const { data } = await supabase
+        .from('org_service_suggestions')
+        .select('descricao, unidade')
+        .eq('service_type_id', selectedServiceTypeId)
+        .order('ordem');
+      setServiceSuggestions((data || []) as any);
+      const t = serviceTypes.find((x) => x.id === selectedServiceTypeId);
+      if (t) setServiceTypeName(t.nome);
+    };
+    loadServices();
+  }, [selectedServiceTypeId, serviceTypes]);
 
 
 
@@ -340,6 +414,8 @@ export function ArtigoForm({
       linked_rule_id: useParametric ? selectedRuleId : null,
       zone_id: finalZoneId,
       area_id: finalAreaId,
+      service_type_id: selectedServiceTypeId,
+      service_type_name: selectedServiceTypeId ? (serviceTypeName || null) : null,
     });
   };
 
