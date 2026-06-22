@@ -425,7 +425,7 @@ export default function EssencialPage() {
   };
 
   // Save & generate PDF
-  const handleSave = async (format: 'tecnico' | 'comercial' = 'tecnico') => {
+  const handleSave = async (_format: 'tecnico' | 'comercial' | 'zonas' = 'tecnico') => {
     if (!user) {
       toast({ title: 'Erro', description: 'Precisa estar autenticado.', variant: 'destructive' });
       return;
