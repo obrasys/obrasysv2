@@ -23,6 +23,7 @@ import {
 import { calcPrecoVenda } from '@/lib/margin';
 import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
 import { generateComercialPdf } from '@/lib/orcamento-pdf-comercial';
+import { generateOrcamentoPdfZonas } from '@/lib/orcamento-pdf-zonas';
 import type { Orcamento, Capitulo, ArtigoOrcamento } from '@/types/orcamentos';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -357,7 +358,7 @@ export default function EssencialPage() {
   };
 
   // Preview PDF
-  const handlePreview = async (format: 'tecnico' | 'comercial') => {
+  const handlePreview = async (format: 'tecnico' | 'comercial' | 'zonas') => {
     if (items.length === 0) {
       toast({ title: 'Atenção', description: 'Adicione pelo menos um item.', variant: 'destructive' });
       return;
@@ -384,6 +385,15 @@ export default function EssencialPage() {
           valorBase,
           valorIVA,
         });
+      } else if (format === 'zonas') {
+        blob = await generateOrcamentoPdfZonas({
+          orcamento,
+          profile,
+          taxaIVA: vatPercent,
+          valorBase,
+          valorIVA,
+          valorFinal,
+        });
       } else {
         blob = await generateOrcamentoPdf({
           orcamento,
@@ -403,7 +413,7 @@ export default function EssencialPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `preview-${format === 'comercial' ? 'comercial' : 'tecnico'}.pdf`;
+      a.download = `preview-${format}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -415,7 +425,7 @@ export default function EssencialPage() {
   };
 
   // Save & generate PDF
-  const handleSave = async (format: 'tecnico' | 'comercial' = 'tecnico') => {
+  const handleSave = async (_format: 'tecnico' | 'comercial' | 'zonas' = 'tecnico') => {
     if (!user) {
       toast({ title: 'Erro', description: 'Precisa estar autenticado.', variant: 'destructive' });
       return;

@@ -15,7 +15,7 @@ import {
 import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
 import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
 
-export type BudgetFormat = 'tecnico' | 'comercial';
+export type BudgetFormat = 'tecnico' | 'comercial' | 'zonas';
 
 interface Props {
   data: BudgetClientInfo;
@@ -144,6 +144,16 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
             <FileText className="h-3.5 w-3.5" />
             Ver Comercial
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => onPreview('zonas')}
+            disabled={busy}
+          >
+            {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            <Layers className="h-3.5 w-3.5" />
+            Ver Por Zonas
           </Button>
         </div>
       </div>
