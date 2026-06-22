@@ -711,6 +711,50 @@ export function ArtigoForm({
                   )}
                 </div>
               </div>
+
+              {/* Tipo de Serviço (opcional) */}
+              <div className="space-y-1.5">
+                <FormLabel className="text-xs">Tipo de Serviço</FormLabel>
+                <Select
+                  value={selectedServiceTypeId ?? '__none__'}
+                  onValueChange={(v) => {
+                    if (v === '__none__') { setSelectedServiceTypeId(null); setServiceTypeName(''); }
+                    else setSelectedServiceTypeId(v);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="— Sem tipo —" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value="__none__">— Sem tipo —</SelectItem>
+                    {serviceTypes.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sugestões de serviços (a partir do Tipo) */}
+              {serviceSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <FormLabel className="text-xs text-muted-foreground">Sugestões — clique para preencher descrição</FormLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {serviceSuggestions.map((s, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => {
+                          form.setValue('descricao', s.descricao);
+                          if (s.unidade) form.setValue('unidade', s.unidade);
+                        }}
+                      >
+                        {s.descricao}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               {(defaultValues?.zone_name || defaultValues?.area_name) && !selectedZoneId && !showNewZone && (
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>Origem do Essencial:</span>
