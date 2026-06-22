@@ -32,6 +32,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { generateOrcamentoPdf } from '@/lib/orcamento-pdf';
 import { generateComercialPdf } from '@/lib/orcamento-pdf-comercial';
+import { generateOrcamentoPdfZonas } from '@/lib/orcamento-pdf-zonas';
 import { useBudgetDocuments } from '@/hooks/useBudgetDocuments';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,7 +59,7 @@ export default function VerOrcamentoPage() {
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [adjudicarOpen, setAdjudicarOpen] = useState(false);
   const [pdfFormatOpen, setPdfFormatOpen] = useState(false);
-  const [pdfFormato, setPdfFormato] = useState<'tecnico' | 'comercial'>('tecnico');
+  const [pdfFormato, setPdfFormato] = useState<'tecnico' | 'comercial' | 'zonas'>('tecnico');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const { useOrcamentoContextoFiscal, getNotaLegalPorRegime, regimes } = useFiscalEngine();
   const { data: contextoFiscal } = useOrcamentoContextoFiscal(id);
@@ -149,6 +150,11 @@ export default function VerOrcamentoPage() {
           orcamento, profile: profile as any,
           valorFinal, taxaIVA, valorBase, valorIVA,
         });
+      } else if (pdfFormato === 'zonas') {
+        blob = await generateOrcamentoPdfZonas({
+          orcamento, profile: profile as any,
+          taxaIVA: taxaIVA / 100, valorBase, valorIVA, valorFinal,
+        });
       } else {
         blob = await generateOrcamentoPdf({
           orcamento, profile: profile as any,
@@ -168,7 +174,7 @@ export default function VerOrcamentoPage() {
       a.download = `orcamento-${pdfFormato}-${orcamento.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: 'PDF gerado', description: `Formato ${pdfFormato === 'tecnico' ? 'técnico' : 'comercial'} descarregado` });
+      toast({ title: 'PDF gerado', description: `Formato ${pdfFormato === 'tecnico' ? 'técnico' : pdfFormato === 'zonas' ? 'por Zonas' : 'comercial'} descarregado` });
       setPdfFormatOpen(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -263,7 +269,7 @@ export default function VerOrcamentoPage() {
             </DialogTitle>
             <DialogDescription>Escolha o formato do documento.</DialogDescription>
           </DialogHeader>
-          <RadioGroup value={pdfFormato} onValueChange={(v) => setPdfFormato(v as 'tecnico' | 'comercial')} className="grid grid-cols-1 gap-3 py-2">
+          <RadioGroup value={pdfFormato} onValueChange={(v) => setPdfFormato(v as 'tecnico' | 'comercial' | 'zonas')} className="grid grid-cols-1 gap-3 py-2">
             <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'tecnico' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
               <RadioGroupItem value="tecnico" />
               <div>
@@ -282,6 +288,16 @@ export default function VerOrcamentoPage() {
                   <span className="text-sm font-semibold">Comercial Resumido</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">Proposta narrativa com resumo por capítulo, sem detalhe técnico</p>
+              </div>
+            </label>
+            <label className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${pdfFormato === 'zonas' ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border hover:border-primary/40'}`}>
+              <RadioGroupItem value="zonas" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">Por Zonas e Áreas</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Estrutura hierárquica agrupando serviços por Zona, Área e Tipo de Serviço</p>
               </div>
             </label>
           </RadioGroup>
