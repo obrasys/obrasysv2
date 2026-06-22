@@ -72,6 +72,7 @@ const DefinicoesFaturacaoPage = lazy(() => import("./pages/definicoes/Faturacao"
 const DefinicoesIntegracoesPage = lazy(() => import("./pages/definicoes/Integracoes"));
 const DefinicoesAuditoriaPage = lazy(() => import("./pages/definicoes/Auditoria"));
 const DefinicoesLegalPage = lazy(() => import("./pages/definicoes/Legal"));
+const DefinicoesBibliotecaOrcamentosPage = lazy(() => import("./pages/definicoes/BibliotecaOrcamentos"));
 const LegalDocumentPage = lazy(() => import("./pages/legal/LegalDocument"));
 
 const PlanosPage = lazy(() => import("./pages/Planos"));
@@ -284,6 +285,7 @@ const App = () => (
                   </Route>
                   <Route path="/definicoes/preferencias" element={<ManagerRoute><DefinicoesPage /></ManagerRoute>} />
                   <Route path="/definicoes/folha-fecho-qualidades" element={<ManagerRoute><DefinicoesFolhaFechoQualidadesPage /></ManagerRoute>} />
+                  <Route path="/definicoes/biblioteca-orcamentos" element={<ManagerRoute><DefinicoesBibliotecaOrcamentosPage /></ManagerRoute>} />
 
                   <Route path="/planos" element={<ManagerRoute><PlanosPage /></ManagerRoute>} />
                   <Route path="/subscricao" element={<ManagerRoute><SubscricaoPage /></ManagerRoute>} />

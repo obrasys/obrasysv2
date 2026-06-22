@@ -154,6 +154,8 @@ export interface ArtigoOrcamento {
   area_id?: string | null;
   zone_name?: string | null;
   area_name?: string | null;
+  service_type_id?: string | null;
+  service_type_name?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -256,6 +258,8 @@ export interface ArtigoFormData {
   area_id?: string | null;
   zone_name?: string | null;
   area_name?: string | null;
+  service_type_id?: string | null;
+  service_type_name?: string | null;
 }
 
 

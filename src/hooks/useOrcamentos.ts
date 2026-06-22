@@ -456,8 +456,9 @@ export function useOrcamento(id: string | undefined) {
             .sort((a: ArtigoOrcamento, b: ArtigoOrcamento) => a.ordem - b.ordem)
             .map((a: any) => ({
               ...a,
-              zone_name: a.zone_id ? zoneMap.get(a.zone_id) ?? null : null,
-              area_name: a.area_id ? areaMap.get(a.area_id) ?? null : null,
+              zone_name: a.zone_id ? zoneMap.get(a.zone_id) ?? null : (a.zone_name ?? null),
+              area_name: a.area_id ? areaMap.get(a.area_id) ?? null : (a.area_name ?? null),
+              service_type_name: a.service_type_name ?? null,
             })),
         }));
 
@@ -568,6 +569,8 @@ export function useOrcamento(id: string | undefined) {
           custo_div: formData.custo_div ?? 0,
           zone_id: (formData as any).zone_id ?? null,
           area_id: (formData as any).area_id ?? null,
+          service_type_id: (formData as any).service_type_id ?? null,
+          service_type_name: (formData as any).service_type_name ?? null,
         })
         .select()
         .single();
@@ -595,6 +598,7 @@ export function useOrcamento(id: string | undefined) {
       // Campos auxiliares só usados no formulário (não existem na BD)
       delete (updateData as any).zone_name;
       delete (updateData as any).area_name;
+      // service_type_name persiste em BD (desnormalizado p/ impressão estável)
       
       // Se tem preco_base, calcular o preco_unitario com margem
       if (formData.preco_base !== undefined) {
