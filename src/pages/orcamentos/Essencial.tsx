@@ -385,6 +385,15 @@ export default function EssencialPage() {
           valorBase,
           valorIVA,
         });
+      } else if (format === 'zonas') {
+        blob = await generateOrcamentoPdfZonas({
+          orcamento,
+          profile,
+          taxaIVA: vatPercent,
+          valorBase,
+          valorIVA,
+          valorFinal,
+        });
       } else {
         blob = await generateOrcamentoPdf({
           orcamento,
@@ -404,7 +413,7 @@ export default function EssencialPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `preview-${format === 'comercial' ? 'comercial' : 'tecnico'}.pdf`;
+      a.download = `preview-${format}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
