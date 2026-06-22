@@ -358,7 +358,7 @@ export default function EssencialPage() {
   };
 
   // Preview PDF
-  const handlePreview = async (format: 'tecnico' | 'comercial') => {
+  const handlePreview = async (format: 'tecnico' | 'comercial' | 'zonas') => {
     if (items.length === 0) {
       toast({ title: 'Atenção', description: 'Adicione pelo menos um item.', variant: 'destructive' });
       return;
