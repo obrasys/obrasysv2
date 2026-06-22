@@ -6,6 +6,7 @@ import {
   FolderCheck,
   History,
   KeyRound,
+  Library,
   Palette,
   Plug,
   Settings as SettingsIcon,
@@ -42,6 +43,7 @@ const GROUPS: { group: string; items: SectionLink[] }[] = [
       { href: "/definicoes/papeis", label: "Papéis e níveis", description: "Matriz de permissões por papel", icon: ShieldCheck },
       { href: "/definicoes/faturacao", label: "Faturação e plano", description: "Subscrição, faturas e limites", icon: CreditCard },
       { href: "/definicoes/folha-fecho-qualidades", label: "Folha de fecho — qualidades", description: "Catálogo técnico de qualidades", icon: FolderCheck },
+      { href: "/definicoes/biblioteca-orcamentos", label: "Biblioteca de orçamentos", description: "Zonas, Áreas e Tipos de Serviço reutilizáveis", icon: Library },
     ],
   },
   {

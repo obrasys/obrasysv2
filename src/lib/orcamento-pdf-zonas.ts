@@ -71,15 +71,12 @@ function pageInfo(doc: jsPDF) {
   };
 }
 
-function ensureSpace(doc: jsPDF, needed: number, y: number, drawSubHeader?: () => void): number {
+function ensureSpace(doc: jsPDF, needed: number, y: number, drawSubHeader?: () => number): number {
   const { pageH } = pageInfo(doc);
   if (y + needed > pageH - PAGE.mb) {
     doc.addPage();
-    let ny = PAGE.mt;
-    if (drawSubHeader) {
-      ny = drawSubHeader() || ny;
-    }
-    return ny;
+    if (drawSubHeader) return drawSubHeader();
+    return PAGE.mt;
   }
   return y;
 }
