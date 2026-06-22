@@ -368,6 +368,8 @@ export type Database = {
           preco_unitario: number
           quantidade: number
           quantity_source: string
+          service_type_id: string | null
+          service_type_name: string | null
           source: string | null
           supplier_fornecedor_id: string | null
           supplier_pricebook_id: string | null
@@ -406,6 +408,8 @@ export type Database = {
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string
+          service_type_id?: string | null
+          service_type_name?: string | null
           source?: string | null
           supplier_fornecedor_id?: string | null
           supplier_pricebook_id?: string | null
@@ -444,6 +448,8 @@ export type Database = {
           preco_unitario?: number
           quantidade?: number
           quantity_source?: string
+          service_type_id?: string | null
+          service_type_name?: string | null
           source?: string | null
           supplier_fornecedor_id?: string | null
           supplier_pricebook_id?: string | null
@@ -2242,6 +2248,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          library_area_id: string | null
           nome: string
           orcamento_id: string
           ordem: number
@@ -2253,6 +2260,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          library_area_id?: string | null
           nome: string
           orcamento_id: string
           ordem?: number
@@ -2264,6 +2272,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          library_area_id?: string | null
           nome?: string
           orcamento_id?: string
           ordem?: number
@@ -2975,6 +2984,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          library_zone_id: string | null
           nome: string
           orcamento_id: string
           ordem: number
@@ -2985,6 +2995,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          library_zone_id?: string | null
           nome: string
           orcamento_id: string
           ordem?: number
@@ -2995,6 +3006,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          library_zone_id?: string | null
           nome?: string
           orcamento_id?: string
           ordem?: number
@@ -9957,6 +9969,36 @@ export type Database = {
           },
         ]
       }
+      org_area_library: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       org_quality_specs_catalog: {
         Row: {
           ativo: boolean
@@ -9997,6 +10039,191 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      org_service_suggestions: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          ordem: number
+          organization_id: string
+          service_type_id: string
+          unidade: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          ordem?: number
+          organization_id: string
+          service_type_id: string
+          unidade?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          ordem?: number
+          organization_id?: string
+          service_type_id?: string
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_service_suggestions_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "org_service_type_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_service_type_library: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      org_service_type_suggestions: {
+        Row: {
+          area_id: string
+          created_at: string
+          id: string
+          ordem: number
+          organization_id: string
+          service_type_id: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          organization_id: string
+          service_type_id: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          organization_id?: string
+          service_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_service_type_suggestions_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "org_area_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_service_type_suggestions_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "org_service_type_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_zone_area_defaults: {
+        Row: {
+          area_id: string
+          created_at: string
+          id: string
+          ordem: number
+          organization_id: string
+          zone_id: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          organization_id: string
+          zone_id: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          organization_id?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_zone_area_defaults_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "org_area_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_zone_area_defaults_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "org_zone_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_zone_library: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       organization_members: {
         Row: {
