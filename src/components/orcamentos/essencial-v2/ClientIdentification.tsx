@@ -145,6 +145,16 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
             <FileText className="h-3.5 w-3.5" />
             Ver Comercial
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => onPreview('zonas')}
+            disabled={busy}
+          >
+            {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            <Layers className="h-3.5 w-3.5" />
+            Ver Por Zonas
+          </Button>
         </div>
       </div>
 
