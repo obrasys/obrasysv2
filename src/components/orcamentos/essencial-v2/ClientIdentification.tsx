@@ -15,7 +15,7 @@ import {
 import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
 import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
 
-export type BudgetFormat = 'tecnico' | 'comercial';
+export type BudgetFormat = 'tecnico' | 'comercial' | 'zonas';
 
 interface Props {
   data: BudgetClientInfo;
