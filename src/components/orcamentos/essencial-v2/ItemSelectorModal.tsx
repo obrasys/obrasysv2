@@ -123,6 +123,9 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
           materialTotalPrice: it.materialPrice,
           zoneName: zoneName || undefined,
           serviceTypeName: serviceTypeName || undefined,
+          baseCode: it.codigo,
+          baseTipo: tipoBase,
+          baseCapitulo: it.capitulo || areaLabel,
         });
       }
     });
@@ -132,8 +135,20 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
     onClose();
   };
 
-  const handleAddCustom = () => {
+  const handleAddCustom = async () => {
     if (!custom.name.trim()) return;
+    // Gravar imediatamente na Base do utilizador para reutilização futura.
+    const saved = await saveToBase({
+      capitulo: areaLabel,
+      artigo: custom.name.trim(),
+      unidade: custom.unit,
+      mao_obra_estimada_eur: custom.laborPrice,
+      material_estimado_eur: custom.materialPrice,
+      tipo_base: tipoBase,
+      origem: 'manual',
+      fonte_base: 'Item Essencial',
+    });
+
     const items: BudgetItem[] = [{
       id: crypto.randomUUID(),
       areaKey,
@@ -145,6 +160,9 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       isCustom: true,
       zoneName: zoneName || undefined,
       serviceTypeName: serviceTypeName || undefined,
+      baseCode: saved.codigo,
+      baseTipo: tipoBase,
+      baseCapitulo: areaLabel,
     }];
     onAddItems(items);
     setCustom({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
