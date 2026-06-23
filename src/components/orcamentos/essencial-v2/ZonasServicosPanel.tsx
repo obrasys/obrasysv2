@@ -82,7 +82,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: 
 
       <div className="flex flex-wrap gap-2.5">
         {allZones.map((zone) => {
-          const count = countForZone(zone.key);
+          const count = countForZone(zone.label);
           const isCustom = zone.key.startsWith('custom_zone_');
           return (
             <div key={zone.key} className="group relative">
