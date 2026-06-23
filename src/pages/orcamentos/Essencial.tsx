@@ -130,8 +130,10 @@ export default function EssencialPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Modal state
+  // Modal state — guarda área (tipo de serviço) + zona escolhidas
   const [modalArea, setModalArea] = useState<AreaConfig | null>(null);
+  const [modalZoneName, setModalZoneName] = useState<string | undefined>(undefined);
+  const [modalServiceName, setModalServiceName] = useState<string | undefined>(undefined);
 
   // Auto-generate budget number
   useEffect(() => {
