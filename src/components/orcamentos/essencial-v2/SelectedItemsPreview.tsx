@@ -199,6 +199,30 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                       </div>
                     </div>
 
+                    {/* Composição de preços (M.O. + Material = Custo direto) */}
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pl-1">
+                      <span>
+                        Composição: <span className="tabular-nums">{formatEUR(item.laborUnitPrice)}</span> M.O.
+                        {' + '}
+                        <span className="tabular-nums">{formatEUR(item.materialTotalPrice)}</span> Mat.
+                        {' = '}
+                        <span className="tabular-nums font-medium text-foreground">
+                          {formatEUR(item.laborUnitPrice + item.materialTotalPrice)} / {item.unit}
+                        </span>
+                      </span>
+                      {isEditing && (
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={editValues.persist}
+                            onChange={(e) => setEditValues((v) => ({ ...v, persist: e.target.checked }))}
+                            className="h-3 w-3 accent-primary"
+                          />
+                          <Save className="h-3 w-3" /> Gravar na minha Base
+                        </label>
+                      )}
+                    </div>
+
                     {/* Zona / Área opcional — datalist com nomes já usados */}
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-2 pl-1">
                       <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
