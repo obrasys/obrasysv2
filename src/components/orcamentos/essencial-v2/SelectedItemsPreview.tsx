@@ -48,11 +48,29 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
 
   const startEdit = (item: BudgetItem) => {
     setEditingId(item.id);
-    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice });
+    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice, persist: true });
   };
 
-  const confirmEdit = (id: string) => {
+  const confirmEdit = async (id: string) => {
+    const item = items.find((i) => i.id === id);
     onUpdateItem(id, { laborUnitPrice: editValues.labor, materialTotalPrice: editValues.material });
+    if (editValues.persist && item) {
+      const r = await saveToBase({
+        codigo: item.baseCode,
+        capitulo: item.baseCapitulo || allAreas.find((a) => a.key === item.areaKey)?.label || 'Sem capítulo',
+        artigo: item.name,
+        unidade: item.unit,
+        mao_obra_estimada_eur: editValues.labor,
+        material_estimado_eur: editValues.material,
+        tipo_base: item.baseTipo || 'remodelacao',
+        origem: item.baseCode ? 'global' : 'manual',
+        fonte_base: 'Edição em Orçamento Essencial',
+      });
+      if (r.ok) {
+        toast.success('Preço gravado na tua Base.');
+        if (!item.baseCode && r.codigo) onUpdateItem(id, { baseCode: r.codigo });
+      }
+    }
     setEditingId(null);
   };
 
