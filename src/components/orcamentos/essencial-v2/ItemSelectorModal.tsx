@@ -78,6 +78,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       laborPrice: Number(r.mao_obra_estimada_eur || 0),
       materialPrice: Number(r.material_estimado_eur || 0),
       codigo: r.codigo,
+      capitulo: r.capitulo,
     }));
   }, [baseRows]);
 
