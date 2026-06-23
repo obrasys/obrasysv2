@@ -159,7 +159,18 @@ export default function EssencialPage() {
   const allAreas = [...systemAreas, ...customAreas];
 
   const itemCounts: Record<string, number> = {};
-  items.forEach((i) => { itemCounts[i.areaKey] = (itemCounts[i.areaKey] || 0) + 1; });
+  items.forEach((i) => {
+    itemCounts[i.areaKey] = (itemCounts[i.areaKey] || 0) + 1;
+    // Chave composta para o novo painel Zona::Serviço
+    // Procura a zoneKey pela label memorizada (ZONAS_PREDEFINIDAS) ou custom
+    const zoneKeyGuess = i.zoneName
+      ? (i.zoneName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))
+      : null;
+    if (zoneKeyGuess) {
+      const composite = `${zoneKeyGuess}::${i.areaKey}`;
+      itemCounts[composite] = (itemCounts[composite] || 0) + 1;
+    }
+  });
 
   const subtotalBase = items.reduce((sum, item) => sum + computeItemTotals(item).subtotal, 0);
 
