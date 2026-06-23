@@ -56,14 +56,14 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: 
     return filtered.length > 0 ? filtered : systemAreas;
   };
 
-  const countForZone = (zoneKey: string) =>
+  const countForZone = (zoneLabel: string) =>
     Object.entries(itemCounts).reduce((sum, [k, v]) => {
-      if (k.startsWith(`${zoneKey}::`)) return sum + v;
+      if (k.startsWith(`${zoneLabel}::`)) return sum + v;
       return sum;
     }, 0);
 
-  const countForZoneService = (zoneKey: string, areaKey: string) =>
-    itemCounts[`${zoneKey}::${areaKey}`] || 0;
+  const countForZoneService = (zoneLabel: string, areaKey: string) =>
+    itemCounts[`${zoneLabel}::${areaKey}`] || 0;
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
