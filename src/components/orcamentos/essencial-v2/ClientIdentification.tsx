@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,8 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { FileText, FileStack, Loader2, Send, Eye, Layers, Users, Check } from 'lucide-react';
 import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
+import { supabase } from '@/integrations/supabase/client';
 
 export type BudgetFormat = 'tecnico' | 'comercial' | 'zonas';
 
@@ -31,9 +34,46 @@ interface Props {
 export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading, grouping, onGroupingChange }: Props) {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
+  const [clientesOpen, setClientesOpen] = useState(false);
+  const [clientes, setClientes] = useState<Array<{ id: string; nome: string; email: string | null; telefone: string | null; endereco: string | null; cidade: string | null; empresa: string | null }>>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [clienteSearch, setClienteSearch] = useState('');
+
+  useEffect(() => {
+    if (!clientesOpen || clientes.length > 0) return;
+    setLoadingClientes(true);
+    supabase
+      .from('clientes')
+      .select('id,nome,email,telefone,endereco,cidade,empresa')
+      .eq('ativo', true)
+      .order('nome', { ascending: true })
+      .limit(500)
+      .then(({ data }) => {
+        setClientes(data ?? []);
+        setLoadingClientes(false);
+      });
+  }, [clientesOpen, clientes.length]);
+
+  const filteredClientes = useMemo(() => {
+    const q = clienteSearch.trim().toLowerCase();
+    if (!q) return clientes;
+    return clientes.filter((c) =>
+      [c.nome, c.empresa, c.email, c.telefone].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [clientes, clienteSearch]);
 
   const update = (field: keyof BudgetClientInfo, value: string) => {
     onChange({ ...data, [field]: value });
+  };
+
+  const handleSelectCliente = (c: typeof clientes[number]) => {
+    const local = [c.endereco, c.cidade].filter(Boolean).join(', ');
+    onChange({
+      ...data,
+      clientName: c.empresa ? `${c.nome} (${c.empresa})` : c.nome,
+      workLocation: data.workLocation || local,
+    });
+    setClientesOpen(false);
   };
 
   const handleConfirmSend = () => {
@@ -92,12 +132,53 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
         {/* Right column */}
         <div className="space-y-4">
           <div>
-            <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
+              <Popover open={clientesOpen} onOpenChange={setClientesOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1.5 text-primary hover:text-primary">
+                    <Users className="h-3.5 w-3.5" />
+                    Buscar da base
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[360px] p-0" align="end">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Pesquisar cliente..." value={clienteSearch} onValueChange={setClienteSearch} />
+                    <CommandList>
+                      {loadingClientes && (
+                        <div className="flex items-center justify-center py-6 text-sm text-muted-foreground gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
+                        </div>
+                      )}
+                      {!loadingClientes && filteredClientes.length === 0 && (
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {filteredClientes.map((c) => (
+                          <CommandItem key={c.id} value={c.id} onSelect={() => handleSelectCliente(c)} className="flex flex-col items-start gap-0.5">
+                            <div className="flex items-center gap-2 w-full">
+                              <Check className={`h-3.5 w-3.5 ${data.clientName.includes(c.nome) ? 'opacity-100 text-primary' : 'opacity-0'}`} />
+                              <span className="font-medium">{c.nome}</span>
+                              {c.empresa && <span className="text-xs text-muted-foreground">· {c.empresa}</span>}
+                            </div>
+                            {(c.email || c.telefone) && (
+                              <span className="text-[11px] text-muted-foreground pl-5">
+                                {[c.email, c.telefone].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             <Input
               placeholder="Ex.: João Silva"
               value={data.clientName}
               onChange={(e) => update('clientName', e.target.value)}
-              className="h-11 mt-1"
+              className="h-11"
             />
           </div>
           <div>
