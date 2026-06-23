@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+} from '@/components/ui/select';
+import { useCustomZones, useCustomTipologias } from '@/hooks/useEssencialPreferences';
 
 export const TIPOLOGIAS_IMOVEL: { value: string; label: string }[] = [
   { value: 'apartamento', label: 'Apartamento' },
@@ -26,8 +35,9 @@ export const TIPOLOGIAS_IMOVEL: { value: string; label: string }[] = [
   { value: 'escritorio', label: 'Escritório' },
   { value: 'armazem', label: 'Armazém' },
   { value: 'edificio', label: 'Edifício' },
-  { value: 'outro', label: 'Outro' },
 ];
+
+const ADD_NEW_TIPOLOGIA = '__add_new_tipologia__';
 
 interface Props {
   /** Áreas do tipo de obra (catálogo de itens). */
@@ -42,24 +52,34 @@ interface Props {
 }
 
 export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, propertyType, onPropertyTypeChange }: Props) {
-  const [customZones, setCustomZones] = useState<ZoneOption[]>([]);
+  const { zones: customZones, addZone, removeZone } = useCustomZones();
+  const { tipologias: customTipologias, addTipologia, removeTipologia } = useCustomTipologias();
+
   const [showNewZone, setShowNewZone] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
+  const [showNewTipologia, setShowNewTipologia] = useState(false);
+  const [newTipologiaName, setNewTipologiaName] = useState('');
   const [activeZone, setActiveZone] = useState<ZoneOption | null>(null);
 
   const allZones = [...ZONAS_PREDEFINIDAS, ...customZones];
+  const allTipologias = [...TIPOLOGIAS_IMOVEL, ...customTipologias];
 
   const handleAddZone = () => {
-    const name = newZoneName.trim();
-    if (!name) return;
-    const key = `custom_zone_${Date.now()}`;
-    setCustomZones((prev) => [...prev, { key, label: name }]);
-    setNewZoneName('');
-    setShowNewZone(false);
+    const z = addZone(newZoneName);
+    if (z) {
+      setNewZoneName('');
+      setShowNewZone(false);
+    }
   };
 
-  const removeCustomZone = (key: string) =>
-    setCustomZones((prev) => prev.filter((z) => z.key !== key));
+  const handleAddTipologia = () => {
+    const t = addTipologia(newTipologiaName);
+    if (t && onPropertyTypeChange) {
+      onPropertyTypeChange(t.value);
+      setNewTipologiaName('');
+      setShowNewTipologia(false);
+    }
+  };
 
   const servicesForZone = (zone: ZoneOption): AreaConfig[] => {
     const mapping = SERVICOS_POR_ZONA[zone.key];
@@ -82,33 +102,72 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
       {/* Tipologia do imóvel */}
       {onPropertyTypeChange && (
         <div className="mb-6 pb-5 border-b border-border/60">
-          <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex items-center justify-between gap-4 mb-3">
             <div>
               <h2 className="text-lg md:text-xl font-bold text-foreground">Tipologia do imóvel</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Define o tipo de imóvel a orçamentar.
+                Escolhe da lista ou adiciona uma tipologia tua — fica guardada para os próximos orçamentos.
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {TIPOLOGIAS_IMOVEL.map((t) => {
-              const active = propertyType === t.value;
-              return (
-                <button
-                  key={t.value}
-                  onClick={() => onPropertyTypeChange(t.value)}
-                  className={cn(
-                    'h-9 px-3.5 rounded-lg text-sm font-medium border transition-all cursor-pointer',
-                    active
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5'
-                  )}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
+
+          <div className="flex items-center gap-2 max-w-md">
+            <Select
+              value={propertyType || ''}
+              onValueChange={(v) => {
+                if (v === ADD_NEW_TIPOLOGIA) {
+                  setShowNewTipologia(true);
+                  return;
+                }
+                onPropertyTypeChange(v);
+              }}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Seleciona a tipologia" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOLOGIAS_IMOVEL.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+                {customTipologias.length > 0 && <SelectSeparator />}
+                {customTipologias.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    <span className="flex items-center justify-between gap-2 w-full">
+                      <span>{t.label}</span>
+                      <span className="text-[10px] text-muted-foreground">tua</span>
+                    </span>
+                  </SelectItem>
+                ))}
+                <SelectSeparator />
+                <SelectItem value={ADD_NEW_TIPOLOGIA}>
+                  <span className="flex items-center gap-1.5 text-primary">
+                    <Plus className="h-3.5 w-3.5" /> Adicionar nova tipologia…
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {propertyType && customTipologias.some((t) => t.value === propertyType) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                title="Eliminar tipologia personalizada"
+                onClick={() => {
+                  removeTipologia(propertyType);
+                  onPropertyTypeChange('');
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
+
+          {propertyType && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Tipologia selecionada: <span className="text-foreground font-medium">{allTipologias.find((t) => t.value === propertyType)?.label || propertyType}</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -116,7 +175,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
         <div>
           <h2 className="text-lg md:text-xl font-bold text-foreground">Zonas</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Escolhe uma zona para abrir os tipos de serviço sugeridos.
+            Escolhe uma zona ou adiciona uma tua — as personalizadas ficam guardadas para reutilização.
           </p>
         </div>
         <Button size="sm" onClick={() => setShowNewZone(true)} className="gap-1.5">
@@ -151,8 +210,9 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
               </button>
               {isCustom && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeCustomZone(zone.key); }}
+                  onClick={(e) => { e.stopPropagation(); removeZone(zone.key); }}
                   className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive/10 hidden group-hover:flex items-center justify-center hover:bg-destructive/20 text-destructive"
+                  title="Eliminar zona personalizada"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -167,6 +227,9 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Nova Zona</DialogTitle>
+            <DialogDescription>
+              Esta zona fica guardada na tua conta e disponível em todos os próximos orçamentos.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -179,6 +242,31 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowNewZone(false)}>Cancelar</Button>
               <Button onClick={handleAddZone} disabled={!newZoneName.trim()}>Adicionar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: nova tipologia */}
+      <Dialog open={showNewTipologia} onOpenChange={setShowNewTipologia}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nova Tipologia</DialogTitle>
+            <DialogDescription>
+              A tipologia fica guardada na tua conta para reutilizares.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Ex.: Anexo, Quintinha, Espaço Comercial…"
+              value={newTipologiaName}
+              onChange={(e) => setNewTipologiaName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTipologia()}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowNewTipologia(false)}>Cancelar</Button>
+              <Button onClick={handleAddTipologia} disabled={!newTipologiaName.trim()}>Adicionar</Button>
             </div>
           </div>
         </DialogContent>
