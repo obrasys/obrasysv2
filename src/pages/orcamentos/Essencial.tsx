@@ -669,16 +669,16 @@ export default function EssencialPage() {
           {/* A - Budget Type */}
           <BudgetTypeSelector value={budgetType} onChange={handleTypeChange} />
 
-          {/* B - Areas */}
+          {/* B - Zonas → Tipos de Serviço */}
           {budgetType && (
-            <AreasGrid
-              areas={systemAreas}
-              customAreas={customAreas}
-              onAddCustomArea={handleAddCustomArea}
-              onRemoveCustomArea={handleRemoveCustomArea}
-              onEditCustomArea={handleEditCustomArea}
-              onAreaClick={(area) => setModalArea(area)}
+            <ZonasServicosPanel
+              systemAreas={systemAreas}
               itemCounts={itemCounts}
+              onServiceClick={(zone, service) => {
+                setModalZoneName(zone.label);
+                setModalServiceName(service.label);
+                setModalArea(service);
+              }}
             />
           )}
 
