@@ -47,6 +47,7 @@ interface UnifiedItem {
   laborPrice: number;
   materialPrice: number;
   codigo?: string;     // only when source = 'base'
+  capitulo?: string;   // only when source = 'base'
 }
 
 export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems, zoneName, serviceTypeName }: Props) {
