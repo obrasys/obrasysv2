@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,8 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, FileStack, Loader2, Send, Eye, Layers } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { FileText, FileStack, Loader2, Send, Eye, Layers, Users, Check } from 'lucide-react';
 import { type BudgetClientInfo, type ExportGrouping } from '@/types/orcamento-essencial';
+import { supabase } from '@/integrations/supabase/client';
 
 export type BudgetFormat = 'tecnico' | 'comercial' | 'zonas';
 
