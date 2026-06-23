@@ -56,6 +56,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
   const [showCustom, setShowCustom] = useState(false);
   const [showAllBase, setShowAllBase] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
+  const saveToBase = useSaveArtigoToUserBase();
 
   const tipoBase = tipoBaseForBudget(budgetType);
   const capituloKeywords = keywordsForArea(areaKey);
