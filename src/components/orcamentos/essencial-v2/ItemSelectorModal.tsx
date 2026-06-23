@@ -138,6 +138,8 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       laborUnitPrice: custom.laborPrice,
       materialTotalPrice: custom.materialPrice,
       isCustom: true,
+      zoneName: zoneName || undefined,
+      serviceTypeName: serviceTypeName || undefined,
     }];
     onAddItems(items);
     setCustom({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
