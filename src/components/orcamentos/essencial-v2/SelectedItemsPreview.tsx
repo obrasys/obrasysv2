@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { type BudgetItem, type AreaConfig, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, Check, X, MapPin, Square } from 'lucide-react';
+import { Trash2, Pencil, Check, X, MapPin, Square, Save } from 'lucide-react';
+import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
+import { toast } from 'sonner';
 
 interface Props {
   items: BudgetItem[];
@@ -14,7 +16,8 @@ interface Props {
 
 export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ labor: number; material: number }>({ labor: 0, material: 0 });
+  const [editValues, setEditValues] = useState<{ labor: number; material: number; persist: boolean }>({ labor: 0, material: 0, persist: true });
+  const saveToBase = useSaveArtigoToUserBase();
 
   // Group items by area
   const grouped = items.reduce<Record<string, BudgetItem[]>>((acc, item) => {
@@ -45,11 +48,29 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
 
   const startEdit = (item: BudgetItem) => {
     setEditingId(item.id);
-    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice });
+    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice, persist: true });
   };
 
-  const confirmEdit = (id: string) => {
+  const confirmEdit = async (id: string) => {
+    const item = items.find((i) => i.id === id);
     onUpdateItem(id, { laborUnitPrice: editValues.labor, materialTotalPrice: editValues.material });
+    if (editValues.persist && item) {
+      const r = await saveToBase({
+        codigo: item.baseCode,
+        capitulo: item.baseCapitulo || allAreas.find((a) => a.key === item.areaKey)?.label || 'Sem capítulo',
+        artigo: item.name,
+        unidade: item.unit,
+        mao_obra_estimada_eur: editValues.labor,
+        material_estimado_eur: editValues.material,
+        tipo_base: item.baseTipo || 'remodelacao',
+        origem: item.baseCode ? 'global' : 'manual',
+        fonte_base: 'Edição em Orçamento Essencial',
+      });
+      if (r.ok) {
+        toast.success('Preço gravado na tua Base.');
+        if (!item.baseCode && r.codigo) onUpdateItem(id, { baseCode: r.codigo });
+      }
+    }
     setEditingId(null);
   };
 
@@ -176,6 +197,30 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                           </>
                         )}
                       </div>
+                    </div>
+
+                    {/* Composição de preços (M.O. + Material = Custo direto) */}
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pl-1">
+                      <span>
+                        Composição: <span className="tabular-nums">{formatEUR(item.laborUnitPrice)}</span> M.O.
+                        {' + '}
+                        <span className="tabular-nums">{formatEUR(item.materialTotalPrice)}</span> Mat.
+                        {' = '}
+                        <span className="tabular-nums font-medium text-foreground">
+                          {formatEUR(item.laborUnitPrice + item.materialTotalPrice)} / {item.unit}
+                        </span>
+                      </span>
+                      {isEditing && (
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={editValues.persist}
+                            onChange={(e) => setEditValues((v) => ({ ...v, persist: e.target.checked }))}
+                            className="h-3 w-3 accent-primary"
+                          />
+                          <Save className="h-3 w-3" /> Gravar na minha Base
+                        </label>
+                      )}
                     </div>
 
                     {/* Zona / Área opcional — datalist com nomes já usados */}

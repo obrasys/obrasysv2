@@ -21,6 +21,7 @@ import {
   formatEUR,
 } from '@/types/orcamento-essencial';
 import { useBaseArtigosForArea } from '@/hooks/useBaseArtigos';
+import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
 import { keywordsForArea, tipoBaseForBudget } from '@/lib/essencial-base-mapping';
 
 interface Props {
@@ -46,6 +47,7 @@ interface UnifiedItem {
   laborPrice: number;
   materialPrice: number;
   codigo?: string;     // only when source = 'base'
+  capitulo?: string;   // only when source = 'base'
 }
 
 export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems, zoneName, serviceTypeName }: Props) {
@@ -54,6 +56,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
   const [showCustom, setShowCustom] = useState(false);
   const [showAllBase, setShowAllBase] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
+  const saveToBase = useSaveArtigoToUserBase();
 
   const tipoBase = tipoBaseForBudget(budgetType);
   const capituloKeywords = keywordsForArea(areaKey);
@@ -75,6 +78,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       laborPrice: Number(r.mao_obra_estimada_eur || 0),
       materialPrice: Number(r.material_estimado_eur || 0),
       codigo: r.codigo,
+      capitulo: r.capitulo,
     }));
   }, [baseRows]);
 
@@ -119,6 +123,9 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
           materialTotalPrice: it.materialPrice,
           zoneName: zoneName || undefined,
           serviceTypeName: serviceTypeName || undefined,
+          baseCode: it.codigo,
+          baseTipo: tipoBase,
+          baseCapitulo: it.capitulo || areaLabel,
         });
       }
     });
@@ -128,8 +135,20 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
     onClose();
   };
 
-  const handleAddCustom = () => {
+  const handleAddCustom = async () => {
     if (!custom.name.trim()) return;
+    // Gravar imediatamente na Base do utilizador para reutilização futura.
+    const saved = await saveToBase({
+      capitulo: areaLabel,
+      artigo: custom.name.trim(),
+      unidade: custom.unit,
+      mao_obra_estimada_eur: custom.laborPrice,
+      material_estimado_eur: custom.materialPrice,
+      tipo_base: tipoBase,
+      origem: 'manual',
+      fonte_base: 'Item Essencial',
+    });
+
     const items: BudgetItem[] = [{
       id: crypto.randomUUID(),
       areaKey,
@@ -141,6 +160,9 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       isCustom: true,
       zoneName: zoneName || undefined,
       serviceTypeName: serviceTypeName || undefined,
+      baseCode: saved.codigo,
+      baseTipo: tipoBase,
+      baseCapitulo: areaLabel,
     }];
     onAddItems(items);
     setCustom({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
