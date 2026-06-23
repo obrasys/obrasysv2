@@ -21,6 +21,7 @@ import {
   formatEUR,
 } from '@/types/orcamento-essencial';
 import { useBaseArtigosForArea } from '@/hooks/useBaseArtigos';
+import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
 import { keywordsForArea, tipoBaseForBudget } from '@/lib/essencial-base-mapping';
 
 interface Props {
