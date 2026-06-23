@@ -18,6 +18,17 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+export const TIPOLOGIAS_IMOVEL: { value: string; label: string }[] = [
+  { value: 'apartamento', label: 'Apartamento' },
+  { value: 'moradia', label: 'Moradia' },
+  { value: 'fracao', label: 'Fração' },
+  { value: 'loja', label: 'Loja' },
+  { value: 'escritorio', label: 'Escritório' },
+  { value: 'armazem', label: 'Armazém' },
+  { value: 'edificio', label: 'Edifício' },
+  { value: 'outro', label: 'Outro' },
+];
+
 interface Props {
   /** Áreas do tipo de obra (catálogo de itens). */
   systemAreas: AreaConfig[];
@@ -25,9 +36,12 @@ interface Props {
   itemCounts: Record<string, number>;
   /** Chamado quando o utilizador escolhe Zona + Tipo de Serviço. */
   onServiceClick: (zone: ZoneOption, service: AreaConfig) => void;
+  /** Tipologia do imóvel (apartamento, moradia, etc.). */
+  propertyType?: string;
+  onPropertyTypeChange?: (value: string) => void;
 }
 
-export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: Props) {
+export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, propertyType, onPropertyTypeChange }: Props) {
   const [customZones, setCustomZones] = useState<ZoneOption[]>([]);
   const [showNewZone, setShowNewZone] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
@@ -47,8 +61,6 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: 
   const removeCustomZone = (key: string) =>
     setCustomZones((prev) => prev.filter((z) => z.key !== key));
 
-  // Serviços filtrados para a zona ativa: se houver mapping, filtra; caso
-  // contrário (zonas custom, ou tipos non-remodelacao), mostra tudo.
   const servicesForZone = (zone: ZoneOption): AreaConfig[] => {
     const mapping = SERVICOS_POR_ZONA[zone.key];
     if (!mapping || mapping.length === 0) return systemAreas;
@@ -67,6 +79,39 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: 
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
+      {/* Tipologia do imóvel */}
+      {onPropertyTypeChange && (
+        <div className="mb-6 pb-5 border-b border-border/60">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <div>
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Tipologia do imóvel</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Define o tipo de imóvel a orçamentar.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TIPOLOGIAS_IMOVEL.map((t) => {
+              const active = propertyType === t.value;
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => onPropertyTypeChange(t.value)}
+                  className={cn(
+                    'h-9 px-3.5 rounded-lg text-sm font-medium border transition-all cursor-pointer',
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5'
+                  )}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-lg md:text-xl font-bold text-foreground">Zonas</h2>
