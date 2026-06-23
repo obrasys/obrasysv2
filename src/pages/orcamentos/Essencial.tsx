@@ -53,6 +53,7 @@ interface DraftState {
   discountPercent: number;
   vatPercent: number;
   marginPercent: number;
+  propertyType?: string;
 }
 
 function getDefaultClientInfo(): BudgetClientInfo {
@@ -102,6 +103,7 @@ export default function EssencialPage() {
   const [vatPercent, setVatPercent] = useState(23);
   const [marginPercent, setMarginPercent] = useState(0);
   const [observationsText, setObservationsText] = useState<string>('');
+  const [propertyType, setPropertyType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -148,9 +150,9 @@ export default function EssencialPage() {
   // Autosave — só depois do utilizador escolher (continuar/novo), para não sobrescrever rascunho com vazio
   useEffect(() => {
     if (!hydrated) return;
-    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent };
+    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType };
     saveDraft(state);
-  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent]);
+  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType]);
 
 
   // Computed
@@ -673,6 +675,8 @@ export default function EssencialPage() {
             <ZonasServicosPanel
               systemAreas={systemAreas}
               itemCounts={itemCounts}
+              propertyType={propertyType}
+              onPropertyTypeChange={setPropertyType}
               onServiceClick={(zone, service) => {
                 setModalZoneName(zone.label);
                 setModalServiceName(service.label);
@@ -828,6 +832,7 @@ export default function EssencialPage() {
                   setVatPercent(resumeDraft.vatPercent ?? 23);
                   setMarginPercent(resumeDraft.marginPercent ?? 0);
                   setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
+                  setPropertyType((resumeDraft as any)?.propertyType ?? '');
                 }
                 setResumeDraft(null);
                 setHydrated(true);

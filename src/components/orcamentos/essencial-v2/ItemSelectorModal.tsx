@@ -52,6 +52,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
+  const [showAllBase, setShowAllBase] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
 
   const tipoBase = tipoBaseForBudget(budgetType);
@@ -61,6 +62,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
     tipoBase,
     capituloKeywords,
     enabled: open,
+    showAll: showAllBase,
   });
 
   const baseItems: UnifiedItem[] = useMemo(() => {
@@ -70,7 +72,6 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       name: r.artigo,
       unit: r.unidade || 'un',
       // Para o Essencial usamos custos diretos: M.O. + Material.
-      // Se não houver split, deriva do preço indicativo.
       laborPrice: Number(r.mao_obra_estimada_eur || 0),
       materialPrice: Number(r.material_estimado_eur || 0),
       codigo: r.codigo,
@@ -172,18 +173,24 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
               <DialogTitle className="text-xl mt-1">{zoneName ? `${zoneName} › ${serviceTypeName || areaLabel}` : areaLabel}</DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {baseItems.length > 0
-                  ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
+                  ? `${baseItems.length} artigo(s) ${showAllBase ? 'da Base completa' : 'sugeridos'} (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
                   : `Sem artigos na Base para esta área - a usar catálogo embutido.`}
               </p>
             </div>
-            <div className="relative w-56 shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Procurar item nesta área"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 text-sm"
-              />
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showAllBase} onCheckedChange={(v) => setShowAllBase(!!v)} />
+                Ver toda a Base
+              </label>
+              <div className="relative w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Procurar item"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm"
+                />
+              </div>
             </div>
           </div>
         </DialogHeader>

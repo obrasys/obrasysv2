@@ -66,29 +66,46 @@ export function useBaseArtigosForArea(opts: {
   capituloKeywords?: string[];
   search?: string;
   enabled?: boolean;
+  /** Quando true, ignora `capituloKeywords` e devolve toda a Base do tipo_base. */
+  showAll?: boolean;
 }) {
-  const { tipoBase, capituloKeywords = [], search, enabled = true } = opts;
+  const { tipoBase, capituloKeywords = [], search, enabled = true, showAll = false } = opts;
   return useQuery({
-    queryKey: ["base_artigos_user_area", tipoBase, capituloKeywords.join("|"), search],
+    queryKey: ["base_artigos_area_v2", tipoBase, capituloKeywords.join("|"), search, showAll],
     queryFn: async () => {
-      let q = supabase
-        .from("base_artigos_user" as any)
-        .select("*")
-        .eq("tipo_base", tipoBase)
-        .order("capitulo")
-        .order("codigo");
-      if (capituloKeywords.length > 0) {
-        const ors = capituloKeywords.map((k) => `capitulo.ilike.%${k}%`).join(",");
-        q = q.or(ors);
-      }
-      if (search?.trim()) {
-        q = q.or(
-          `codigo.ilike.%${search}%,artigo.ilike.%${search}%,capitulo.ilike.%${search}%`
-        );
-      }
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data || []) as unknown as BaseArtigoUser[];
+      const applyFilters = (q: any) => {
+        let qq = q.eq("tipo_base", tipoBase).order("capitulo").order("codigo");
+        if (!showAll && capituloKeywords.length > 0) {
+          const ors = capituloKeywords.map((k) => `capitulo.ilike.%${k}%`).join(",");
+          qq = qq.or(ors);
+        }
+        if (search?.trim()) {
+          qq = qq.or(
+            `codigo.ilike.%${search}%,artigo.ilike.%${search}%,capitulo.ilike.%${search}%`
+          );
+        }
+        return qq;
+      };
+
+      // 1) Tentar Base do utilizador
+      const { data: userRows, error: userErr } = await applyFilters(
+        supabase.from("base_artigos_user" as any).select("*")
+      );
+      if (userErr) throw userErr;
+      if (userRows && userRows.length > 0) return userRows as unknown as BaseArtigoUser[];
+
+      // 2) Fallback: Base global (catálogo completo Obra Sys)
+      const { data: globalRows, error: globalErr } = await applyFilters(
+        supabase.from("base_artigos_global" as any).select("*").eq("ativo", true)
+      );
+      if (globalErr) throw globalErr;
+      return ((globalRows || []) as any[]).map((g) => ({
+        ...g,
+        organization_id: "",
+        user_id: "",
+        global_artigo_id: g.id,
+        origem: "global" as const,
+      })) as unknown as BaseArtigoUser[];
     },
     enabled,
   });
