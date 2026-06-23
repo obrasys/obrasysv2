@@ -769,7 +769,7 @@ export type SummaryColumn =
   | 'subtotal';
 
 export const SUMMARY_COLUMNS: { key: SummaryColumn; label: string }[] = [
-  { key: 'area', label: 'Área' },
+  { key: 'area', label: 'Tipo de Serviço' },
   { key: 'item', label: 'Item' },
   { key: 'unit', label: 'Unidade' },
   { key: 'qty', label: 'Qtd' },
