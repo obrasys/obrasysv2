@@ -52,6 +52,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
+  const [showAllBase, setShowAllBase] = useState(false);
   const [custom, setCustom] = useState({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
 
   const tipoBase = tipoBaseForBudget(budgetType);
@@ -61,6 +62,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
     tipoBase,
     capituloKeywords,
     enabled: open,
+    showAll: showAllBase,
   });
 
   const baseItems: UnifiedItem[] = useMemo(() => {
@@ -70,7 +72,6 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       name: r.artigo,
       unit: r.unidade || 'un',
       // Para o Essencial usamos custos diretos: M.O. + Material.
-      // Se não houver split, deriva do preço indicativo.
       laborPrice: Number(r.mao_obra_estimada_eur || 0),
       materialPrice: Number(r.material_estimado_eur || 0),
       codigo: r.codigo,
