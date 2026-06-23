@@ -30,6 +30,10 @@ interface Props {
   areaLabel: string;
   budgetType: BudgetType;
   onAddItems: (items: BudgetItem[]) => void;
+  /** Zona pré-selecionada (etiqueta nos itens adicionados). */
+  zoneName?: string;
+  /** Tipo de Serviço pré-selecionado (etiqueta nos itens adicionados). */
+  serviceTypeName?: string;
 }
 
 type Source = 'base' | 'default';
@@ -44,7 +48,7 @@ interface UnifiedItem {
   codigo?: string;     // only when source = 'base'
 }
 
-export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems }: Props) {
+export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems, zoneName, serviceTypeName }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
