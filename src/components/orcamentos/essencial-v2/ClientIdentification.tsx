@@ -34,9 +34,46 @@ interface Props {
 export function ClientIdentification({ data, onChange, onSave, onPreview, isLoading, isPreviewLoading, grouping, onGroupingChange }: Props) {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<BudgetFormat>('tecnico');
+  const [clientesOpen, setClientesOpen] = useState(false);
+  const [clientes, setClientes] = useState<Array<{ id: string; nome: string; email: string | null; telefone: string | null; endereco: string | null; cidade: string | null; empresa: string | null }>>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [clienteSearch, setClienteSearch] = useState('');
+
+  useEffect(() => {
+    if (!clientesOpen || clientes.length > 0) return;
+    setLoadingClientes(true);
+    supabase
+      .from('clientes')
+      .select('id,nome,email,telefone,endereco,cidade,empresa')
+      .eq('ativo', true)
+      .order('nome', { ascending: true })
+      .limit(500)
+      .then(({ data }) => {
+        setClientes(data ?? []);
+        setLoadingClientes(false);
+      });
+  }, [clientesOpen, clientes.length]);
+
+  const filteredClientes = useMemo(() => {
+    const q = clienteSearch.trim().toLowerCase();
+    if (!q) return clientes;
+    return clientes.filter((c) =>
+      [c.nome, c.empresa, c.email, c.telefone].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [clientes, clienteSearch]);
 
   const update = (field: keyof BudgetClientInfo, value: string) => {
     onChange({ ...data, [field]: value });
+  };
+
+  const handleSelectCliente = (c: typeof clientes[number]) => {
+    const local = [c.endereco, c.cidade].filter(Boolean).join(', ');
+    onChange({
+      ...data,
+      clientName: c.empresa ? `${c.nome} (${c.empresa})` : c.nome,
+      workLocation: data.workLocation || local,
+    });
+    setClientesOpen(false);
   };
 
   const handleConfirmSend = () => {
