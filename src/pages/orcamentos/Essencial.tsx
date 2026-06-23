@@ -769,11 +769,13 @@ export default function EssencialPage() {
       {modalArea && budgetType && (
         <ItemSelectorModal
           open={!!modalArea}
-          onClose={() => setModalArea(null)}
+          onClose={() => { setModalArea(null); setModalZoneName(undefined); setModalServiceName(undefined); }}
           areaKey={modalArea.key}
           areaLabel={modalArea.label}
           budgetType={budgetType}
           onAddItems={handleAddItems}
+          zoneName={modalZoneName}
+          serviceTypeName={modalServiceName}
         />
       )}
 
