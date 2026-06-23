@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { type BudgetItem, type AreaConfig, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, Check, X, MapPin, Square } from 'lucide-react';
+import { Trash2, Pencil, Check, X, MapPin, Square, Save } from 'lucide-react';
+import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
+import { toast } from 'sonner';
 
 interface Props {
   items: BudgetItem[];
