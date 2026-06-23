@@ -169,7 +169,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
                 </Badge>
                 {loadingBase && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
               </div>
-              <DialogTitle className="text-xl mt-1">{areaLabel}</DialogTitle>
+              <DialogTitle className="text-xl mt-1">{zoneName ? `${zoneName} › ${serviceTypeName || areaLabel}` : areaLabel}</DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {baseItems.length > 0
                   ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
