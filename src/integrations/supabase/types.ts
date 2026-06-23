@@ -6508,6 +6508,13 @@ export type Database = {
             referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fornecedores_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
+            referencedColumns: ["id"]
+          },
         ]
       }
       guarantee_retentions: {
@@ -13537,6 +13544,13 @@ export type Database = {
             referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quote_request_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
+            referencedColumns: ["id"]
+          },
         ]
       }
       quote_requests: {
@@ -13764,6 +13778,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_responses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
             referencedColumns: ["id"]
           },
         ]
@@ -14925,6 +14946,13 @@ export type Database = {
             referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "supplier_category_link_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
+            referencedColumns: ["id"]
+          },
         ]
       }
       supplier_invites: {
@@ -15102,6 +15130,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_pricebooks_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
             referencedColumns: ["id"]
           },
         ]
@@ -15316,6 +15351,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
             referencedColumns: ["id"]
           },
         ]
@@ -15989,6 +16031,13 @@ export type Database = {
             columns: ["supplier_profile_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_supplier_links_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
             referencedColumns: ["id"]
           },
         ]
@@ -17040,6 +17089,102 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_profiles_marketplace: {
+        Row: {
+          aceita_pedidos_plataforma: boolean | null
+          ano_fundacao: number | null
+          categoria_principal: string | null
+          certificacoes: string[] | null
+          created_at: string | null
+          delivery_capability: string | null
+          desconto_volume: boolean | null
+          distritos_atuacao: string[] | null
+          id: string | null
+          is_certified: boolean | null
+          location_district: string | null
+          location_municipality: string | null
+          logo_url: string | null
+          min_order_value: number | null
+          num_colaboradores: string | null
+          prazo_medio_entrega: string | null
+          prazo_pagamento_padrao: string | null
+          raio_atuacao_km: number | null
+          rating_avg: number | null
+          rating_count: number | null
+          service_areas: string | null
+          sla_response_hours: number | null
+          status: Database["public"]["Enums"]["supplier_status_enum"] | null
+          subcategorias: string[] | null
+          tipo_fornecimento: string[] | null
+          trabalha_credito: boolean | null
+          trade_name: string | null
+          website: string | null
+          zona_atuacao: string | null
+        }
+        Insert: {
+          aceita_pedidos_plataforma?: boolean | null
+          ano_fundacao?: number | null
+          categoria_principal?: string | null
+          certificacoes?: string[] | null
+          created_at?: string | null
+          delivery_capability?: string | null
+          desconto_volume?: boolean | null
+          distritos_atuacao?: string[] | null
+          id?: string | null
+          is_certified?: boolean | null
+          location_district?: string | null
+          location_municipality?: string | null
+          logo_url?: string | null
+          min_order_value?: number | null
+          num_colaboradores?: string | null
+          prazo_medio_entrega?: string | null
+          prazo_pagamento_padrao?: string | null
+          raio_atuacao_km?: number | null
+          rating_avg?: number | null
+          rating_count?: number | null
+          service_areas?: string | null
+          sla_response_hours?: number | null
+          status?: Database["public"]["Enums"]["supplier_status_enum"] | null
+          subcategorias?: string[] | null
+          tipo_fornecimento?: string[] | null
+          trabalha_credito?: boolean | null
+          trade_name?: string | null
+          website?: string | null
+          zona_atuacao?: string | null
+        }
+        Update: {
+          aceita_pedidos_plataforma?: boolean | null
+          ano_fundacao?: number | null
+          categoria_principal?: string | null
+          certificacoes?: string[] | null
+          created_at?: string | null
+          delivery_capability?: string | null
+          desconto_volume?: boolean | null
+          distritos_atuacao?: string[] | null
+          id?: string | null
+          is_certified?: boolean | null
+          location_district?: string | null
+          location_municipality?: string | null
+          logo_url?: string | null
+          min_order_value?: number | null
+          num_colaboradores?: string | null
+          prazo_medio_entrega?: string | null
+          prazo_pagamento_padrao?: string | null
+          raio_atuacao_km?: number | null
+          rating_avg?: number | null
+          rating_count?: number | null
+          service_areas?: string | null
+          sla_response_hours?: number | null
+          status?: Database["public"]["Enums"]["supplier_status_enum"] | null
+          subcategorias?: string[] | null
+          tipo_fornecimento?: string[] | null
+          trabalha_credito?: boolean | null
+          trade_name?: string | null
+          website?: string | null
+          zona_atuacao?: string | null
+        }
+        Relationships: []
+      }
       supplier_reviews_public: {
         Row: {
           comment: string | null
@@ -17081,6 +17226,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles_marketplace"
             referencedColumns: ["id"]
           },
         ]
