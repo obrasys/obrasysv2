@@ -151,7 +151,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick }: 
           </DialogHeader>
           <div className="flex flex-wrap gap-2 pt-2">
             {activeZone && servicesForZone(activeZone).map((svc) => {
-              const c = countForZoneService(activeZone.key, svc.key);
+              const c = countForZoneService(activeZone.label, svc.key);
               return (
                 <button
                   key={svc.key}
