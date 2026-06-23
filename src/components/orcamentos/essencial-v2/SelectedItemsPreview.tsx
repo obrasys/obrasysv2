@@ -98,10 +98,21 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                       <span className="text-sm text-foreground truncate">{item.name}</span>
                       <span className="text-xs text-muted-foreground text-center">{item.unit}</span>
                       <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) => onUpdateQuantity(item.id, Math.max(1, parseInt(e.target.value) || 1))}
+                        type="text"
+                        inputMode="decimal"
+                        defaultValue={String(item.quantity)}
+                        key={`qty-${item.id}-${item.quantity}`}
+                        onBlur={(e) => {
+                          const raw = e.target.value.replace(',', '.').trim();
+                          if (raw === '') { e.target.value = String(item.quantity); return; }
+                          const n = parseFloat(raw);
+                          if (!isFinite(n) || n < 0) { e.target.value = String(item.quantity); return; }
+                          const rounded = Math.round(n * 1000) / 1000;
+                          if (rounded !== item.quantity) onUpdateQuantity(item.id, rounded);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        }}
                         className="w-full h-8 text-sm text-center"
                       />
                       {isEditing ? (

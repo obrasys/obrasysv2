@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { BudgetTypeSelector } from '@/components/orcamentos/essencial-v2/BudgetTypeSelector';
-import { AreasGrid } from '@/components/orcamentos/essencial-v2/AreasGrid';
+import { ZonasServicosPanel } from '@/components/orcamentos/essencial-v2/ZonasServicosPanel';
 import { ItemSelectorModal } from '@/components/orcamentos/essencial-v2/ItemSelectorModal';
 import { SelectedItemsPreview } from '@/components/orcamentos/essencial-v2/SelectedItemsPreview';
 import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetSummaryTable';
@@ -129,8 +129,10 @@ export default function EssencialPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Modal state
+  // Modal state — guarda área (tipo de serviço) + zona escolhidas
   const [modalArea, setModalArea] = useState<AreaConfig | null>(null);
+  const [modalZoneName, setModalZoneName] = useState<string | undefined>(undefined);
+  const [modalServiceName, setModalServiceName] = useState<string | undefined>(undefined);
 
   // Auto-generate budget number
   useEffect(() => {
@@ -156,7 +158,13 @@ export default function EssencialPage() {
   const allAreas = [...systemAreas, ...customAreas];
 
   const itemCounts: Record<string, number> = {};
-  items.forEach((i) => { itemCounts[i.areaKey] = (itemCounts[i.areaKey] || 0) + 1; });
+  items.forEach((i) => {
+    itemCounts[i.areaKey] = (itemCounts[i.areaKey] || 0) + 1;
+    if (i.zoneName) {
+      const composite = `${i.zoneName}::${i.areaKey}`;
+      itemCounts[composite] = (itemCounts[composite] || 0) + 1;
+    }
+  });
 
   const subtotalBase = items.reduce((sum, item) => sum + computeItemTotals(item).subtotal, 0);
 
@@ -660,16 +668,16 @@ export default function EssencialPage() {
           {/* A - Budget Type */}
           <BudgetTypeSelector value={budgetType} onChange={handleTypeChange} />
 
-          {/* B - Areas */}
+          {/* B - Zonas → Tipos de Serviço */}
           {budgetType && (
-            <AreasGrid
-              areas={systemAreas}
-              customAreas={customAreas}
-              onAddCustomArea={handleAddCustomArea}
-              onRemoveCustomArea={handleRemoveCustomArea}
-              onEditCustomArea={handleEditCustomArea}
-              onAreaClick={(area) => setModalArea(area)}
+            <ZonasServicosPanel
+              systemAreas={systemAreas}
               itemCounts={itemCounts}
+              onServiceClick={(zone, service) => {
+                setModalZoneName(zone.label);
+                setModalServiceName(service.label);
+                setModalArea(service);
+              }}
             />
           )}
 
@@ -760,11 +768,13 @@ export default function EssencialPage() {
       {modalArea && budgetType && (
         <ItemSelectorModal
           open={!!modalArea}
-          onClose={() => setModalArea(null)}
+          onClose={() => { setModalArea(null); setModalZoneName(undefined); setModalServiceName(undefined); }}
           areaKey={modalArea.key}
           areaLabel={modalArea.label}
           budgetType={budgetType}
           onAddItems={handleAddItems}
+          zoneName={modalZoneName}
+          serviceTypeName={modalServiceName}
         />
       )}
 

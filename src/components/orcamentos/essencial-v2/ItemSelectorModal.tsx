@@ -30,6 +30,10 @@ interface Props {
   areaLabel: string;
   budgetType: BudgetType;
   onAddItems: (items: BudgetItem[]) => void;
+  /** Zona pré-selecionada (etiqueta nos itens adicionados). */
+  zoneName?: string;
+  /** Tipo de Serviço pré-selecionado (etiqueta nos itens adicionados). */
+  serviceTypeName?: string;
 }
 
 type Source = 'base' | 'default';
@@ -44,7 +48,7 @@ interface UnifiedItem {
   codigo?: string;     // only when source = 'base'
 }
 
-export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems }: Props) {
+export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetType, onAddItems, zoneName, serviceTypeName }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, { qty: number }>>(new Map());
   const [showCustom, setShowCustom] = useState(false);
@@ -112,6 +116,8 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
           quantity: val.qty,
           laborUnitPrice: it.laborPrice,
           materialTotalPrice: it.materialPrice,
+          zoneName: zoneName || undefined,
+          serviceTypeName: serviceTypeName || undefined,
         });
       }
     });
@@ -132,6 +138,8 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
       laborUnitPrice: custom.laborPrice,
       materialTotalPrice: custom.materialPrice,
       isCustom: true,
+      zoneName: zoneName || undefined,
+      serviceTypeName: serviceTypeName || undefined,
     }];
     onAddItems(items);
     setCustom({ name: '', unit: 'un', laborPrice: 0, materialPrice: 0 });
@@ -161,7 +169,7 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
                 </Badge>
                 {loadingBase && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
               </div>
-              <DialogTitle className="text-xl mt-1">{areaLabel}</DialogTitle>
+              <DialogTitle className="text-xl mt-1">{zoneName ? `${zoneName} › ${serviceTypeName || areaLabel}` : areaLabel}</DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {baseItems.length > 0
                   ? `${baseItems.length} artigo(s) da tua Base (${tipoBase === 'remodelacao' ? 'Remodelação' : 'Geral'})`
