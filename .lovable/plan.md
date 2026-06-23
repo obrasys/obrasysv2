@@ -1,135 +1,115 @@
+## Objetivo
 
-# Evolução do Orçamento Essencial — Zonas, Áreas, Tipos de Serviço e Impressão Inteligente
+Reestruturar o passo "Tipo / Itens" do **Orçamento Essencial** para seguir uma sequência lógica **Tipo → Zona → Tipo de Serviço → Itens**, com zonas residenciais pré-definidas e tipos de serviço sugeridos por zona. Corrigir também o campo de quantidade (aceitar decimais e remover o "0" fantasma).
 
-## 1. Relatório de Impacto (auditoria do existente)
+Toda a alteração é **aditiva** — orçamentos antigos continuam a abrir e a imprimir normalmente.
 
-### O que já existe no sistema
-- **Tabelas `budget_zones` e `budget_areas`**: já existem mas estão **por orçamento** (vinculadas a `orcamento_id` + `capitulo_id`). Cada orçamento tem as suas zonas/áreas locais — não há biblioteca reutilizável.
-- **`artigos_orcamento.zone_id` e `area_id`**: colunas já existem (opcionais, nullable). Usadas em `ArtigoForm.tsx` e lidas em `useOrcamentos.ts` (joins via `zoneMap`/`areaMap`).
-- **`ArtigoForm.tsx`**: já permite criar zona e área inline (modal de edição). Não tem Tipo de Serviço nem sugestões.
-- **`ZonesAreasTree.tsx`** (essencial-v2): vista hierárquica Capítulo → Zona → Área → Item já implementada (sem Tipo Serviço).
-- **PDF**: `src/lib/orcamento-pdf.ts` gera o PDF standard (com colunas MO/MAT/SUB já adicionadas anteriormente). Não tem layout "por Zonas".
-- **Páginas Essencial**: `pages/orcamentos/Essencial.tsx` (wizard 4 passos) e componentes em `components/orcamentos/essencial` e `essencial-v2`.
+---
 
-### Funcionalidades existentes a preservar (nada quebra)
-- Wizard Essencial v2 (4 passos), Essencial v1, Avançado, ICF, Plantas, Caderno de Encargos, Inteligente.
-- Todos os orçamentos antigos sem zone/area continuam a funcionar (colunas continuam nullable).
-- Exportação PDF standard, Excel, propostas comerciais, envios por email.
-- Hooks: `useOrcamentos`, `useBudgetChapterTotals`, etc.
+## 1. Nova hierarquia visual no wizard
 
-## 2. Estratégia: 100% Aditiva
+Hoje (passo "Tipo"): `Tipo de obra` → painel **"Áreas"** (chips de Pinturas, Elétrica, Cozinha, Casa de Banho…).
 
-Princípios:
-- **Zero remoção** de colunas, tabelas, componentes ou rotas.
-- Novas tabelas **adicionais** (biblioteca organizacional) coexistem com `budget_zones`/`budget_areas` por-orçamento.
-- Nova coluna `service_type_id` em `artigos_orcamento` (nullable).
-- Novos componentes/PDFs novos em vez de substituir os existentes.
-- Feature flag não necessária — opcionalidade torna seguro.
+Passa a:
 
-## 3. Plano de Implementação (faseado, sem risco)
+```text
+┌──────────────────────────────────────┐
+│ O que queres orçamentar?  (Tipo)     │  ← inalterado
+└──────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│ Zonas                       [+ Nova] │  ← NOVO (substitui "Áreas")
+│ [Cozinha] [Sala] [Quarto] [WC] …     │
+└──────────────────────────────────────┘
+       ↓ (ao clicar numa zona)
+┌──────────────────────────────────────┐
+│ Cozinha · Tipos de Serviço           │  ← NOVO (modal/painel)
+│ [Demolições] [Águas] [Elétrica]      │
+│ [Pavimentos] [Pinturas] [Tetos] …    │
+└──────────────────────────────────────┘
+       ↓ (ao clicar num tipo de serviço)
+┌──────────────────────────────────────┐
+│ Cozinha › Pavimentos › Itens         │  ← reaproveita ItemSelectorModal
+│ ☐ Pavimento flutuante  ☐ Cerâmico …  │
+└──────────────────────────────────────┘
+```
 
-### Fase 1 — Base de Dados (migração aditiva)
+Cada item adicionado fica etiquetado com **Zona + Tipo de Serviço**, e essa combinação é o que aparece como agrupador no resumo e nos PDFs.
 
-Novas tabelas (todas com `organization_id`, RLS multi-tenant, `created_at`, `updated_at`):
+---
 
-1. `org_zone_library` — biblioteca de Zonas (Apartamento, Moradia, Condomínio, Garagem…) com `nome`, `icone`, `ativo`.
-2. `org_area_library` — biblioteca de Áreas (Sala, Quarto, WC…) com `nome`, `ativo`.
-3. `org_zone_area_defaults` — N:N entre zonas e áreas (áreas sugeridas por zona).
-4. `org_service_type_library` — Tipos de Serviço (Pintura, Pavimentos, Carpintaria…) com `nome`, `ativo`.
-5. `org_service_type_suggestions` — sugestões de Tipos de Serviço por Área (N:N).
-6. `org_service_suggestions` — sugestões de Serviços por Tipo de Serviço (texto livre, opcionalmente com `base_artigo_id`).
+## 2. Catálogo de Zonas pré-definidas
 
-Alterações em tabelas existentes (todas nullable, aditivas):
-- `artigos_orcamento.service_type_id UUID NULL` + `artigos_orcamento.service_type_name TEXT NULL` (desnormalizado para impressão estável).
-- `budget_zones.library_zone_id UUID NULL` (referência à biblioteca, opcional).
-- `budget_areas.library_area_id UUID NULL` (referência à biblioteca, opcional).
+Novo array `ZONAS_PREDEFINIDAS` (residencial PT). Mesma lista aplica-se a Remodelação, Construção Nova, LSF e ICF:
 
-Cada tabela nova: GRANT a `authenticated`/`service_role`, RLS via `organization_id = current_user_org()`.
+- Cozinha, Sala, Sala de Jantar, Quarto, Suite, Casa de Banho, WC Serviço, Hall, Corredor, Escritório, Lavandaria, Despensa, Garagem, Cave, Sótão, Varanda/Terraço, Jardim, Exterior, Comum/Geral.
 
-Seed inicial (`supabase--insert` depois): zonas padrão (Apartamento, Moradia, Condomínio, Garagem, Escritório, Loja, Armazém, Hotel) com áreas padrão de exemplo e tipos de serviço comuns.
+Botão **"+ Nova zona"** mantido (custom por orçamento).
 
-### Fase 2 — UI de Biblioteca (Configurações)
+## 3. Catálogo de Tipos de Serviço por Zona
 
-Novas páginas (3):
-- `src/pages/definicoes/BibliotecaZonas.tsx`
-- `src/pages/definicoes/BibliotecaAreas.tsx`
-- `src/pages/definicoes/BibliotecaTiposServico.tsx`
+Mapa `SERVICOS_POR_ZONA` com sugestões iniciais (utilizador pode adicionar mais via "+ Outro"):
 
-CRUD simples + ativar/desativar + ligação zona↔áreas e área↔tipos.
-Adicionar ao menu Definições; sidebar — entrada "Bibliotecas".
-
-### Fase 3 — Formulário de Artigo (ArtigoForm + Essencial)
-
-Aprimorar `ArtigoForm.tsx`:
-- Após Zona, mostrar Área (já existe) e novo campo **Tipo de Serviço** (Combobox com sugestões da área via `org_service_type_suggestions`, criável inline).
-- Após Tipo de Serviço, mostrar **Sugestões de Serviço** (clicar preenche `descricao`).
-- Memorização da última seleção: guardar `lastZoneId`/`lastAreaId`/`lastServiceTypeId` em `useState` no nível do Form parent (ou `sessionStorage` por orçamento) e pré-preencher próximo artigo.
-- Auto-criar `budget_zones`/`budget_areas` no orçamento a partir da biblioteca (já é a mecânica existente; adicionar `library_zone_id` quando vem da biblioteca).
-
-No wizard Essencial v2 (`ItemSelectorModal` / `SelectedItemsPreview`): expor opcionalmente os 3 campos sem obrigar.
-
-### Fase 4 — Vista por Zonas e Reordenação
-
-- Atualizar `ZonesAreasTree.tsx` para suportar nível Tipo de Serviço (4º nível).
-- Agrupamento e ordenação automáticos por (Zona → Área → Tipo Serviço → ordem).
-- Já lida com itens sem zona/área (fallback "Sem zona"/"Sem área").
-
-### Fase 5 — Exportação PDF "Orçamento por Zonas"
-
-Novo gerador: `src/lib/orcamento-pdf-zonas.ts` (não toca em `orcamento-pdf.ts`).
-
-Layout:
-- Cabeçalho 1ª página: logotipo, empresa, NIF, morada, CP, cidade, país, telefone, email, website, cliente, obra, ref, versão, data — campos vazios são ocultados (sem placeholder).
-- Páginas seguintes: logo reduzido + nome empresa + ref + nº página.
-- Corpo:
-  ```
-  APARTAMENTO A
-      Quarto
-          Pintura de paredes ............ qty € total
-          Pintura de tetos .............. qty € total
-      Cozinha
-          Revestimento cerâmico ......... qty € total
-  ```
-- **Não imprime labels** "Zona:", "Área:", "Tipo Serviço:" — apenas a estrutura.
-- Subtotais por Zona/Área/Tipo. Margens MO/MAT/SUB respeitam preferência (já implementada).
-- Botão "PDF por Zonas" adicionado ao menu de impressão no Editar/Ver.
-
-### Fase 6 — Plano de Migração de Dados (zero-risco)
-
-- Nenhum UPDATE destrutivo. Todas as colunas novas são nullable.
-- Backfill **opcional** (não automático): script admin para sugerir `library_zone_id` por nome de zona existente — corre só se solicitado.
-- Orçamentos antigos: `service_type_id IS NULL` → ramo "sem tipo" no tree e PDF.
-- Rollback: bastam DROP COLUMN/TABLE das entidades novas; código antigo nunca foi removido.
-
-## 4. Critérios de Aceitação (validados)
-
-- [x] Orçamentos antigos abrem, editam, imprimem sem qualquer alteração visual.
-- [x] Zona, Área, Tipo Serviço opcionais em todos os fluxos.
-- [x] Sugestões automáticas via bibliotecas organizacionais.
-- [x] Última seleção memorizada por sessão de edição.
-- [x] Agrupamento automático na vista e no PDF.
-- [x] Biblioteca CRUD em Configurações.
-- [x] PDF "por Zonas" + PDF standard ambos disponíveis.
-- [x] Compatível com Starter/Professional/Promotor (sem limites novos).
-- [x] RLS multi-tenant em todas as tabelas novas.
-
-## 5. Ordem de Execução Proposta
-
-1. **Migração SQL** (Fase 1) — espera aprovação.
-2. **Seed** das bibliotecas com valores comuns PT.
-3. **UI Bibliotecas** (Fase 2) — 3 páginas CRUD.
-4. **ArtigoForm + sugestões + memória** (Fase 3).
-5. **Vista por Zonas atualizada** (Fase 4).
-6. **PDF por Zonas** (Fase 5).
-7. QA visual nos 4 fluxos (Essencial v1, v2, Avançado, ICF).
-
-## 6. Riscos e Mitigação
-
-| Risco | Mitigação |
+| Zona | Tipos de Serviço sugeridos |
 |---|---|
-| Quebrar PDF standard | Novo ficheiro `orcamento-pdf-zonas.ts`, não tocar no atual |
-| RLS recursion | Função `current_user_org()` SECURITY DEFINER já existe no projecto |
-| Crescimento de capítulos no PDF (orfãos) | Reusar lógica de paginação inteligente do `orcamento-pdf.ts` |
-| Conflito com Essencial v2 atual | Campos novos opcionais; v2 mantém UI atual até utilizador adoptar |
+| Cozinha | Demolições, Águas e Esgotos, Elétrica, Pavimentos, Revestimentos parede, Tetos/Sancas, Carpintaria (móveis/bancada), Pinturas, Eletrodomésticos, Ventilação |
+| Casa de Banho / WC | Demolições, Águas e Esgotos, Impermeabilização, Elétrica, Pavimentos, Revestimentos parede, Tetos, Louças e torneiras, Pinturas |
+| Quarto / Suite | Pavimentos, Pinturas (teto/paredes), Tetos/Sancas, Elétrica, Carpintaria (roupeiros) |
+| Sala / Sala de Jantar | Pavimentos, Pinturas, Tetos/Sancas, Elétrica, AVAC |
+| Hall / Corredor | Pavimentos, Pinturas, Tetos, Elétrica |
+| Escritório | Pavimentos, Pinturas, Tetos, Elétrica/Redes |
+| Lavandaria / Despensa | Águas e Esgotos, Elétrica, Pavimentos, Pinturas |
+| Garagem / Cave / Sótão | Pavimentos, Pinturas, Elétrica, Impermeabilização |
+| Varanda / Terraço / Exterior | Impermeabilização, Pavimentos, Serralharia/Caixilharia, Pinturas |
+| Jardim | Piscinas, Águas, Jardinagem, Iluminação |
+| Comum/Geral | Deslocação/Estaleiro, Demolições gerais, Imprevistos/TPU |
 
-Confirme o plano e avanço com a migração da Fase 1.
+Cada "Tipo de Serviço" mapeia para uma `areaKey` existente do catálogo de itens (`AREAS_REMODELACAO` etc.), pelo que **toda a base de itens atual continua a alimentar o seletor** — não se perde nada.
+
+## 4. Renomear coluna "Área" → "Tipo de Serviço"
+
+- `BudgetSummaryTable.tsx`: label da coluna `area` passa a "Tipo de Serviço" e o valor mostrado fica `{Zona} · {Tipo de Serviço}` (em vez de só a área).
+- `SelectedItemsPreview.tsx`: cabeçalho do agrupamento passa a "Zona › Tipo de Serviço".
+- PDFs (`orcamento-pdf.ts`, `orcamento-pdf-comercial.ts`, `orcamento-pdf-zonas.ts`): título do capítulo continua a usar `zoneName / areaName / serviceTypeName`, basta passar Zona + Tipo de Serviço quando existirem.
+
+## 5. Fix do campo Quantidade (bug "01" / não aceita decimais)
+
+`SelectedItemsPreview.tsx` linhas 100-106:
+
+- Substituir `parseInt` por `parseFloat`.
+- Remover `min={1}` e `Math.max(1, …)`; passar a `min={0}` e `step="any"`.
+- Manter estado local em string para o input (`qtyDraft`) para permitir limpar o campo, escrever `0.5`, `1,25`, etc., e só fazer commit no `onBlur` / `Enter`. Resolve o "01" (concatenação) e o "0" preso.
+
+Validação no commit: se vazio ou `< 0`, repõe valor anterior; aceita até 3 casas decimais.
+
+## 6. Compatibilidade e migração
+
+- O tipo `BudgetItem` já tem `zoneName?` e `areaName?` opcionais. Adiciona-se `serviceTypeName?: string` (opcional).
+- `areaKey` continua a existir e a mapear para o catálogo de itens — orçamentos antigos (sem `zoneName`/`serviceTypeName`) renderizam exatamente como hoje.
+- Sem migração de DB nesta fase: usa-se o `artigos_orcamento.service_type_name` já existente (criado em fase anterior).
+- Drafts em `localStorage` antigos: o `loadDraft` ignora campos extra, mantendo retrocompatibilidade.
+
+---
+
+## Ficheiros tocados
+
+| Ficheiro | Alteração |
+|---|---|
+| `src/types/orcamento-essencial.ts` | + `ZONAS_PREDEFINIDAS`, `SERVICOS_POR_ZONA`, `serviceTypeName?` em `BudgetItem` |
+| `src/components/orcamentos/essencial-v2/AreasGrid.tsx` | Renomeado para `ZonasGrid` (mantido como wrapper export para retrocompat); título "Zonas", chips das zonas pré-definidas, "+ Nova zona" |
+| **NOVO** `src/components/orcamentos/essencial-v2/ServicosPorZonaModal.tsx` | Modal que abre ao clicar numa zona, mostra os tipos de serviço sugeridos + "Outro…", e despoleta o `ItemSelectorModal` para o tipo escolhido |
+| `src/components/orcamentos/essencial-v2/ItemSelectorModal.tsx` | Aceita `zoneName` + `serviceTypeName` e injecta nos `BudgetItem` criados |
+| `src/components/orcamentos/essencial-v2/SelectedItemsPreview.tsx` | Cabeçalho "Zona › Tipo de Serviço"; fix do input de quantidade (decimais + sem "01") |
+| `src/components/orcamentos/essencial-v2/BudgetSummaryTable.tsx` | Coluna `area` passa a "Tipo de Serviço" e mostra `Zona · Serviço` |
+| `src/pages/orcamentos/Essencial.tsx` | Orquestra novo fluxo (estado da zona seleccionada, abertura do modal de serviços, propagação de `zoneName`/`serviceTypeName`) |
+
+Nenhum ficheiro removido, nenhuma rota alterada, nenhum endpoint mexido.
+
+## Critérios de aceitação
+
+1. Ao escolher "Remodelação", aparece o painel **Zonas** com as zonas residenciais pré-definidas (Cozinha, Sala, Quarto, WC…).
+2. Clicar em "Cozinha" abre um painel com tipos de serviço sugeridos para essa zona (Pavimentos, Pinturas, Elétrica…).
+3. Clicar num tipo de serviço abre o seletor de itens existente, e os itens adicionados ficam etiquetados com **Cozinha · Pavimentos**.
+4. No resumo e nos 3 PDFs (técnico/comercial/zonas) os itens aparecem agrupados por **Zona › Tipo de Serviço**.
+5. Coluna "Área" passa a chamar-se "Tipo de Serviço" em toda a UI do Essencial.
+6. No campo Quantidade consigo escrever `0.5`, `1,25`, `3` sem ficar preso em `0` nem aparecer `01`.
+7. Abrir um orçamento Essencial antigo continua a funcionar e a imprimir sem erros.
