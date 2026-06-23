@@ -51,7 +51,10 @@ export function BudgetSummaryTable({ items, allAreas, marginPercent, onClear }: 
   const renderCell = (item: BudgetItem, col: SummaryColumn) => {
     const t = computeItemTotals(item);
     switch (col) {
-      case 'area': return getAreaLabel(item.areaKey);
+      case 'area': {
+        const svc = item.serviceTypeName || getAreaLabel(item.areaKey);
+        return item.zoneName ? `${item.zoneName} · ${svc}` : svc;
+      }
       case 'item': return item.name;
       case 'unit': return item.unit;
       case 'qty': return item.quantity;
