@@ -682,11 +682,68 @@ export interface BudgetItem {
   laborUnitPrice: number;
   materialTotalPrice: number;
   isCustom?: boolean;
-  /** Nome da Zona (opcional). Ex.: "Apartamento A". Vazio = "Sem zona". */
+  /** Nome da Zona (opcional). Ex.: "Cozinha". */
   zoneName?: string;
-  /** Nome da Área (opcional, exige zoneName). Ex.: "Quarto 1". Vazio = "Sem área". */
+  /** Nome da Área (opcional, exige zoneName). */
   areaName?: string;
+  /** Nome do Tipo de Serviço (opcional). Ex.: "Pavimentos". */
+  serviceTypeName?: string;
 }
+
+// --- Zonas pré-definidas (residencial PT) ---
+export interface ZoneOption {
+  key: string;
+  label: string;
+}
+
+export const ZONAS_PREDEFINIDAS: ZoneOption[] = [
+  { key: 'cozinha', label: 'Cozinha' },
+  { key: 'sala', label: 'Sala' },
+  { key: 'sala_jantar', label: 'Sala de Jantar' },
+  { key: 'quarto', label: 'Quarto' },
+  { key: 'suite', label: 'Suite' },
+  { key: 'casa_banho', label: 'Casa de Banho' },
+  { key: 'wc_servico', label: 'WC Serviço' },
+  { key: 'hall', label: 'Hall' },
+  { key: 'corredor', label: 'Corredor' },
+  { key: 'escritorio', label: 'Escritório' },
+  { key: 'lavandaria', label: 'Lavandaria' },
+  { key: 'despensa', label: 'Despensa' },
+  { key: 'garagem', label: 'Garagem' },
+  { key: 'cave', label: 'Cave' },
+  { key: 'sotao', label: 'Sótão' },
+  { key: 'varanda_terraco', label: 'Varanda/Terraço' },
+  { key: 'exterior', label: 'Exterior' },
+  { key: 'jardim', label: 'Jardim' },
+  { key: 'comum', label: 'Comum/Geral' },
+];
+
+/**
+ * Tipos de Serviço sugeridos por zona — mapeiam para areaKeys do catálogo
+ * (AREAS_REMODELACAO) que alimenta os itens. Se a zona não estiver mapeada
+ * ou o tipo de obra não for Remodelação, mostra-se a lista completa.
+ */
+export const SERVICOS_POR_ZONA: Record<string, string[]> = {
+  cozinha: ['demolicoes', 'aguas_esgotos', 'eletrica', 'pavimentos_rodapes', 'tectos_sancas', 'carpintaria', 'pinturas', 'cozinha'],
+  sala: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica', 'ar_condicionados'],
+  sala_jantar: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica', 'ar_condicionados'],
+  quarto: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica', 'carpintaria'],
+  suite: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica', 'carpintaria', 'casa_banho', 'aguas_esgotos'],
+  casa_banho: ['demolicoes', 'aguas_esgotos', 'impermeabilizacao', 'eletrica', 'pavimentos_rodapes', 'tectos_sancas', 'pinturas', 'casa_banho'],
+  wc_servico: ['demolicoes', 'aguas_esgotos', 'impermeabilizacao', 'eletrica', 'pavimentos_rodapes', 'pinturas', 'casa_banho'],
+  hall: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica'],
+  corredor: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica'],
+  escritorio: ['pavimentos_rodapes', 'pinturas', 'tectos_sancas', 'eletrica', 'carpintaria'],
+  lavandaria: ['aguas_esgotos', 'eletrica', 'pavimentos_rodapes', 'pinturas'],
+  despensa: ['pavimentos_rodapes', 'pinturas', 'eletrica', 'carpintaria'],
+  garagem: ['pavimentos_rodapes', 'pinturas', 'eletrica', 'impermeabilizacao', 'serralharia_caixilharia'],
+  cave: ['pavimentos_rodapes', 'pinturas', 'eletrica', 'impermeabilizacao'],
+  sotao: ['pavimentos_rodapes', 'pinturas', 'eletrica', 'impermeabilizacao', 'telhados'],
+  varanda_terraco: ['impermeabilizacao', 'pavimentos_rodapes', 'serralharia_caixilharia', 'pinturas'],
+  exterior: ['capoto', 'pinturas', 'serralharia_caixilharia', 'impermeabilizacao'],
+  jardim: ['jardim', 'piscinas', 'aguas_esgotos', 'eletrica'],
+  comum: ['deslocacao_estaleiro', 'demolicoes_recolha', 'imprevistos_tpu'],
+};
 
 export type ExportGrouping = 'chapter' | 'chapter_zone' | 'chapter_zone_area';
 
