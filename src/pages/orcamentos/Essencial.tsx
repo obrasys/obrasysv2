@@ -832,6 +832,7 @@ export default function EssencialPage() {
                   setVatPercent(resumeDraft.vatPercent ?? 23);
                   setMarginPercent(resumeDraft.marginPercent ?? 0);
                   setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
+                  setPropertyType((resumeDraft as any)?.propertyType ?? '');
                 }
                 setResumeDraft(null);
                 setHydrated(true);
