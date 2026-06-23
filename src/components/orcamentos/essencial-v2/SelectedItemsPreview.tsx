@@ -16,7 +16,8 @@ interface Props {
 
 export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ labor: number; material: number }>({ labor: 0, material: 0 });
+  const [editValues, setEditValues] = useState<{ labor: number; material: number; persist: boolean }>({ labor: 0, material: 0, persist: true });
+  const saveToBase = useSaveArtigoToUserBase();
 
   // Group items by area
   const grouped = items.reduce<Record<string, BudgetItem[]>>((acc, item) => {
