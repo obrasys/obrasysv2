@@ -116,6 +116,8 @@ export function ItemSelectorModal({ open, onClose, areaKey, areaLabel, budgetTyp
           quantity: val.qty,
           laborUnitPrice: it.laborPrice,
           materialTotalPrice: it.materialPrice,
+          zoneName: zoneName || undefined,
+          serviceTypeName: serviceTypeName || undefined,
         });
       }
     });
