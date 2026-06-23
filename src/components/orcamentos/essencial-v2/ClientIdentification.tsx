@@ -132,12 +132,53 @@ export function ClientIdentification({ data, onChange, onSave, onPreview, isLoad
         {/* Right column */}
         <div className="space-y-4">
           <div>
-            <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-sm text-muted-foreground">Nome do Cliente <span className="text-destructive">*</span></Label>
+              <Popover open={clientesOpen} onOpenChange={setClientesOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1.5 text-primary hover:text-primary">
+                    <Users className="h-3.5 w-3.5" />
+                    Buscar da base
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[360px] p-0" align="end">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Pesquisar cliente..." value={clienteSearch} onValueChange={setClienteSearch} />
+                    <CommandList>
+                      {loadingClientes && (
+                        <div className="flex items-center justify-center py-6 text-sm text-muted-foreground gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> A carregar...
+                        </div>
+                      )}
+                      {!loadingClientes && filteredClientes.length === 0 && (
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {filteredClientes.map((c) => (
+                          <CommandItem key={c.id} value={c.id} onSelect={() => handleSelectCliente(c)} className="flex flex-col items-start gap-0.5">
+                            <div className="flex items-center gap-2 w-full">
+                              <Check className={`h-3.5 w-3.5 ${data.clientName.includes(c.nome) ? 'opacity-100 text-primary' : 'opacity-0'}`} />
+                              <span className="font-medium">{c.nome}</span>
+                              {c.empresa && <span className="text-xs text-muted-foreground">· {c.empresa}</span>}
+                            </div>
+                            {(c.email || c.telefone) && (
+                              <span className="text-[11px] text-muted-foreground pl-5">
+                                {[c.email, c.telefone].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             <Input
               placeholder="Ex.: João Silva"
               value={data.clientName}
               onChange={(e) => update('clientName', e.target.value)}
-              className="h-11 mt-1"
+              className="h-11"
             />
           </div>
           <div>
