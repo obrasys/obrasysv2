@@ -48,6 +48,13 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import type { CapituloFormData, ArtigoFormData } from '@/types/orcamentos';
+import {
+  REGIAO_FISCAL_CONFIG,
+  getIvaRegimesByRegion,
+  getNormalRate,
+  inferRegionFromRate,
+  type RegiaoFiscal,
+} from '@/lib/iva-regions';
  import type { TipoObraFiscal, TipoClienteFiscal, TipoOperacaoFiscal } from '@/types/fiscal';
  import {
    TIPO_OBRA_FISCAL_CONFIG,
