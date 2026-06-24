@@ -43,10 +43,13 @@ serve(async (req) => {
     const { data: approved } = await service.from("plant_elements")
       .select("*")
       .eq("plant_file_id", plant_file_id)
-      .eq("status", "approved");
+      .in("status", ["approved", "edited", "ok", "review", "proposed"])
+      .not("quantity", "is", null)
+      .gt("quantity", 0)
+      .in("unit", ["un", "m", "m2", "m3", "ml"]);
     const items = (approved as any[]) || [];
     if (items.length === 0) {
-      return new Response(JSON.stringify({ error: "Não há itens aprovados para enviar." }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "Não há quantitativos orçamentáveis para enviar." }), { status: 400, headers: corsHeaders });
     }
 
     // Resolve target budget
