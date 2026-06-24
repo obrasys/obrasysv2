@@ -26,9 +26,9 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
   const [budgetId, setBudgetId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
-  const approved = elements.filter(e => e.status === "approved");
-  const review = elements.filter(e => e.status === "review" || e.status === "proposed");
-  const ignored = elements.filter(e => e.status === "ignored");
+  const approved = elements.filter(e => e.status === "approved" || e.status === "edited");
+  const review = elements.filter(e => e.status === "review" || e.status === "proposed" || e.status === "ok");
+  const total = elements.length;
 
   useEffect(() => {
     if (!open) return;
@@ -38,8 +38,8 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
   }, [open, file.obra_id]);
 
   const submit = async () => {
-    if (approved.length === 0) {
-      toast({ title: "Sem itens aprovados", description: "Aprove pelo menos um item antes de enviar.", variant: "destructive" });
+    if (total === 0) {
+      toast({ title: "Sem elementos", description: "Não há quantitativos para enviar.", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -69,12 +69,12 @@ export function PlantExportToBudgetModal({ open, onOpenChange, file, elements, o
         </DialogHeader>
         <div className="space-y-4 text-sm">
           <div className="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 p-3 text-xs">
-            Serão enviados apenas os quantitativos aprovados. Itens em revisão, ignorados ou propostos não serão enviados para o orçamento.
+            Vão ser enviados todos os quantitativos orçamentáveis desta planta. Regiões ignoradas (carimbo, terreno, mobiliário) nunca são enviadas.
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-lg border p-2"><div className="text-xs text-muted-foreground">Total</div><div className="text-lg font-semibold text-primary">{total}</div></div>
             <div className="rounded-lg border p-2"><div className="text-xs text-muted-foreground">Aprovados</div><div className="text-lg font-semibold text-emerald-700">{approved.length}</div></div>
-            <div className="rounded-lg border p-2"><div className="text-xs text-muted-foreground">Em revisão</div><div className="text-lg font-semibold text-amber-700">{review.length}</div></div>
-            <div className="rounded-lg border p-2"><div className="text-xs text-muted-foreground">Ignorados</div><div className="text-lg font-semibold text-muted-foreground">{ignored.length}</div></div>
+            <div className="rounded-lg border p-2"><div className="text-xs text-muted-foreground">A rever</div><div className="text-lg font-semibold text-amber-700">{review.length}</div></div>
           </div>
           <RadioGroup value={target} onValueChange={(v) => setTarget(v as any)} className="space-y-2">
             <div className="flex items-center gap-2"><RadioGroupItem value="new" id="r-new" /><Label htmlFor="r-new">Criar orçamento novo</Label></div>
