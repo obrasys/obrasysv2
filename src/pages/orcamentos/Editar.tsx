@@ -123,7 +123,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
    const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
    const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
   const [manualTaxa, setManualTaxa] = useState<number | null>(null);
-  const [regiaoFiscal, setRegiaoFiscal] = useState<import('@/lib/iva-regions').RegiaoFiscal>('continente');
+  const [regiaoFiscal, setRegiaoFiscal] = useState<RegiaoFiscal>('continente');
  
    // Local editable margin state
    const [localMargemLucro, setLocalMargemLucro] = useState<number | null>(null);
