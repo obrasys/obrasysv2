@@ -60,6 +60,14 @@ export function TotalsAdjustments({
   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
   const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+  const [regiao, setRegiao] = useState<RegiaoFiscal>(() => inferRegionFromRate(vatPercent));
+  const IVA_REGIMES = useMemo(() => getIvaRegimesByRegion(regiao), [regiao]);
+
+  const handleRegionChange = (next: RegiaoFiscal) => {
+    setRegiao(next);
+    // Ajustar taxa para o regime "Normal" da nova região
+    onVatChange(getNormalRate(next));
+  };
 
   // Calculate with margin (real margin on sale price)
   const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
