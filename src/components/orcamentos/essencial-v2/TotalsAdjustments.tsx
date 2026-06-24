@@ -25,14 +25,14 @@ import {
   type TipoClienteFiscal,
   type TipoOperacaoFiscal,
 } from '@/types/fiscal';
-import { useState } from 'react';
-
-const IVA_REGIMES = [
-  { value: 23, label: 'IVA Normal', description: '23% - Regime geral' },
-  { value: 6, label: 'IVA Reduzido', description: '6% - Reabilitação/habitação' },
-  { value: 0, label: 'Autoliquidação', description: '0% - Subempreitada (art. 2º)' },
-  { value: 13, label: 'IVA Intermédio', description: '13% - Taxa intermédia' },
-];
+import { useState, useMemo } from 'react';
+import {
+  REGIAO_FISCAL_CONFIG,
+  getIvaRegimesByRegion,
+  getNormalRate,
+  inferRegionFromRate,
+  type RegiaoFiscal,
+} from '@/lib/iva-regions';
 
 interface Props {
   subtotalBase: number;
@@ -60,6 +60,14 @@ export function TotalsAdjustments({
   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
   const [tipoOperacao, setTipoOperacao] = useState<TipoOperacaoFiscal | undefined>(undefined);
+  const [regiao, setRegiao] = useState<RegiaoFiscal>(() => inferRegionFromRate(vatPercent));
+  const IVA_REGIMES = useMemo(() => getIvaRegimesByRegion(regiao), [regiao]);
+
+  const handleRegionChange = (next: RegiaoFiscal) => {
+    setRegiao(next);
+    // Ajustar taxa para o regime "Normal" da nova região
+    onVatChange(getNormalRate(next));
+  };
 
   // Calculate with margin (real margin on sale price)
   const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
@@ -141,6 +149,32 @@ export function TotalsAdjustments({
         <div className="flex items-center gap-2">
           <Scale className="h-5 w-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">Regime de IVA</h3>
+        </div>
+
+        {/* Região fiscal */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Região fiscal</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(REGIAO_FISCAL_CONFIG) as RegiaoFiscal[]).map((r) => {
+              const cfg = REGIAO_FISCAL_CONFIG[r];
+              const active = regiao === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => handleRegionChange(r)}
+                  className={`rounded-lg border px-3 py-2 text-left transition-all ${
+                    active
+                      ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                      : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-foreground">{cfg.label}</span>
+                  <span className="block text-[11px] text-muted-foreground">{cfg.description}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Quick IVA regime buttons */}
