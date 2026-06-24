@@ -146,15 +146,17 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
   });
   const [editingCapitulo, setEditingCapitulo] = useState<string | null>(null);
 
-   // Fiscal context helpers
-   const handleOpenSettings = () => {
-     if (contextoFiscal) {
-       setTipoObra(contextoFiscal.tipo_obra as TipoObraFiscal | undefined);
-       setTipoCliente(contextoFiscal.tipo_cliente as TipoClienteFiscal | undefined);
-       setTipoOperacao(contextoFiscal.tipo_operacao as TipoOperacaoFiscal | undefined);
-     }
-     setShowSettingsModal(true);
-   };
+  // Fiscal context helpers
+  const handleOpenSettings = () => {
+    if (contextoFiscal) {
+      setTipoObra(contextoFiscal.tipo_obra as TipoObraFiscal | undefined);
+      setTipoCliente(contextoFiscal.tipo_cliente as TipoClienteFiscal | undefined);
+      setTipoOperacao(contextoFiscal.tipo_operacao as TipoOperacaoFiscal | undefined);
+      const { inferRegionFromRate } = require('@/lib/iva-regions');
+      setRegiaoFiscal(inferRegionFromRate(contextoFiscal.taxa_iva ?? 23));
+    }
+    setShowSettingsModal(true);
+  };
  
    const fiscalPreview = determinarRegimeFiscal({
      tipo_obra: tipoObra || null,
