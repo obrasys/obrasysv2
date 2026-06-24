@@ -36,6 +36,7 @@ import { PlantElementsList } from "@/components/planta-leitura/PlantElementsList
 import { PlantPackagesList } from "@/components/planta-leitura/PlantPackagesList";
 import { PlantHistoryList } from "@/components/planta-leitura/PlantHistoryList";
 import { PlantExportToBudgetModal } from "@/components/planta-leitura/PlantExportToBudgetModal";
+import { getBudgetableElements, getIgnoredElements } from "@/lib/plant-elements-filter";
 
 export default function PlantaLeituraIndexPage() {
   const navigate = useNavigate();
@@ -127,8 +128,11 @@ export default function PlantaLeituraIndexPage() {
     await refreshElements();
   };
 
-  const approvedCount = allElements.filter((e) => e.status === "approved").length;
-  const canExport = approvedCount > 0;
+  const budgetableSheetElements = getBudgetableElements(sheetElements);
+  const ignoredSheetElements = getIgnoredElements(sheetElements);
+  const budgetableAllElements = getBudgetableElements(allElements);
+  const exportableCount = budgetableAllElements.length;
+  const canExport = exportableCount > 0;
 
   return (
     <AppLayout
@@ -288,21 +292,62 @@ export default function PlantaLeituraIndexPage() {
 
                 <Tabs defaultValue="elements" className="flex-1 flex flex-col min-h-0">
                   <TabsList className="mx-3 mt-2">
-                    <TabsTrigger value="elements">Elementos</TabsTrigger>
+                    <TabsTrigger value="elements">
+                      Elementos ({budgetableSheetElements.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="ignored">
+                      Ignorados ({ignoredSheetElements.length})
+                    </TabsTrigger>
                     <TabsTrigger value="packages">Pacotes</TabsTrigger>
                     <TabsTrigger value="history">Histórico</TabsTrigger>
                   </TabsList>
                   <div className="flex-1 overflow-y-auto p-3">
                     <TabsContent value="elements" className="m-0">
-                      <PlantElementsList
-                        elements={sheetElements}
-                        selectedId={selectedId}
-                        onSelect={setSelectedId}
-                        onChanged={refreshElements}
-                      />
+                      {budgetableSheetElements.length === 0 ? (
+                        <div className="p-6 text-sm text-muted-foreground text-center">
+                          Nenhum quantitativo orçamentável encontrado nesta folha.
+                          Verifique a escala, OCR ou reprocessamento.
+                        </div>
+                      ) : (
+                        <PlantElementsList
+                          elements={budgetableSheetElements}
+                          selectedId={selectedId}
+                          onSelect={setSelectedId}
+                          onChanged={refreshElements}
+                        />
+                      )}
+                    </TabsContent>
+                    <TabsContent value="ignored" className="m-0">
+                      {ignoredSheetElements.length === 0 ? (
+                        <div className="p-6 text-sm text-muted-foreground text-center">
+                          Nenhuma região ignorada nesta folha.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {ignoredSheetElements.map((el) => (
+                            <div
+                              key={el.id}
+                              className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-mono uppercase text-[10px] px-1.5 py-0.5 rounded bg-background border">
+                                  {el.source_text || "ignored"}
+                                </span>
+                                <span className="text-[10px]">somente leitura</span>
+                              </div>
+                              <div className="text-sm text-foreground/80">
+                                {el.description || "Região ignorada"}
+                              </div>
+                              {el.notes && (
+                                <div className="mt-1 text-[11px] opacity-70">{el.notes}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </TabsContent>
                     <TabsContent value="packages" className="m-0">
-                      <PlantPackagesList elements={allElements} onChanged={refreshElements} />
+                      <PlantPackagesList elements={budgetableAllElements} onChanged={refreshElements} />
                     </TabsContent>
                     <TabsContent value="history" className="m-0">
                       <PlantHistoryList logs={logs} reviews={reviews} />
@@ -312,7 +357,7 @@ export default function PlantaLeituraIndexPage() {
 
                 <div className="p-3 border-t">
                   <Button className="w-full" disabled={!canExport} onClick={() => setExportOpen(true)}>
-                    <Send className="h-4 w-4 mr-2" /> Enviar para Orçamento ({approvedCount})
+                    <Send className="h-4 w-4 mr-2" /> Enviar para Orçamento ({exportableCount})
                   </Button>
                 </div>
               </Card>
@@ -323,7 +368,7 @@ export default function PlantaLeituraIndexPage() {
                 open={exportOpen}
                 onOpenChange={setExportOpen}
                 file={activeFile}
-                elements={allElements}
+                elements={budgetableAllElements}
                 onExported={(bid) => navigate(`/orcamentos/${bid}`)}
               />
             )}
