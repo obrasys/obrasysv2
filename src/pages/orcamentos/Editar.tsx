@@ -608,58 +608,86 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
                      <h3 className="text-lg font-semibold text-foreground">Contexto Fiscal & IVA</h3>
                    </div>
                    
-                   {/* Quick IVA regime buttons */}
-                   <div>
-                     <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida de regime</Label>
-                     <div className="grid grid-cols-2 gap-2">
-                       {[
-                         { value: 23, label: 'IVA Normal', desc: '23% - Regime geral' },
-                         { value: 6, label: 'IVA Reduzido', desc: '6% - Reabilitação/habitação' },
-                         { value: 0, label: 'Autoliquidação', desc: '0% - Subempreitada (art. 2º)' },
-                         { value: 13, label: 'IVA Intermédio', desc: '13% - Taxa intermédia' },
-                       ].map((regime) => {
-                          const currentTaxa = manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
-                          const isActive = currentTaxa === regime.value;
+                    {/* Região fiscal */}
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Região fiscal</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(Object.keys(REGIAO_FISCAL_CONFIG) as RegiaoFiscal[]).map((r) => {
+                          const cfg = REGIAO_FISCAL_CONFIG[r];
+                          const active = regiaoFiscal === r;
                           return (
                             <button
-                              key={regime.value}
+                              key={r}
                               type="button"
                               disabled={isReadOnly}
                               onClick={() => {
-                                // Set manual tax and clear fiscal selectors
-                                setManualTaxa(regime.value);
+                                setRegiaoFiscal(r);
+                                setManualTaxa(getNormalRate(r));
                                 setTipoObra(undefined);
                                 setTipoCliente(undefined);
                                 setTipoOperacao(undefined);
                               }}
-                             className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
-                               isActive
-                                 ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                                 : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
-                             } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-                           >
-                             <span className="block text-sm font-semibold text-foreground">{regime.label}</span>
-                             <span className="block text-xs text-muted-foreground">{regime.desc}</span>
-                           </button>
-                         );
-                       })}
-                     </div>
-                   </div>
-
-                   {/* Current IVA highlight */}
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
-                        <p className="text-sm font-medium text-foreground">
-                          {manualTaxa !== null
-                            ? [{ v: 23, n: 'IVA Normal' }, { v: 6, n: 'IVA Reduzido' }, { v: 0, n: 'Autoliquidação' }, { v: 13, n: 'IVA Intermédio' }].find(r => r.v === manualTaxa)?.n || 'Manual'
-                            : fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
-                        </p>
+                              className={`rounded-lg border px-3 py-2 text-left transition-all ${
+                                active
+                                  ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                                  : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                              } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <span className="block text-sm font-semibold text-foreground">{cfg.label}</span>
+                              <span className="block text-[11px] text-muted-foreground">{cfg.description}</span>
+                            </button>
+                          );
+                        })}
                       </div>
-                      <span className="text-3xl font-black text-primary tabular-nums">
-                        {manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
-                      </span>
                     </div>
+
+                    {/* Quick IVA regime buttons */}
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida de regime</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {getIvaRegimesByRegion(regiaoFiscal).map((regime) => {
+                           const currentTaxa = manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23;
+                           const isActive = currentTaxa === regime.value;
+                           return (
+                             <button
+                               key={regime.value}
+                               type="button"
+                               disabled={isReadOnly}
+                               onClick={() => {
+                                 setManualTaxa(regime.value);
+                                 setTipoObra(undefined);
+                                 setTipoCliente(undefined);
+                                 setTipoOperacao(undefined);
+                               }}
+                              className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                                isActive
+                                  ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                                  : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                              } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <span className="block text-sm font-semibold text-foreground">{regime.label}</span>
+                              <span className="block text-xs text-muted-foreground">{regime.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Current IVA highlight */}
+                     <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex items-center justify-between">
+                       <div>
+                         <p className="text-sm text-muted-foreground">Taxa de IVA aplicada</p>
+                         <p className="text-sm font-medium text-foreground">
+                           {manualTaxa !== null
+                             ? `${getIvaRegimesByRegion(regiaoFiscal).find(r => r.value === manualTaxa)?.label || 'Manual'} · ${REGIAO_FISCAL_CONFIG[regiaoFiscal].label}`
+                             : fiscalPreview ? fiscalPreview.regime_nome : contextoFiscal?.regime?.nome || 'IVA Normal'}
+                         </p>
+                       </div>
+                       <span className="text-3xl font-black text-primary tabular-nums">
+                         {manualTaxa ?? fiscalPreview?.taxa_iva ?? contextoFiscal?.taxa_iva ?? 23}%
+                       </span>
+                     </div>
+
 
                    {fiscalPreview?.nota_legal && (
                      <div className="flex items-start gap-2 rounded-md border border-border bg-muted/50 p-3">
