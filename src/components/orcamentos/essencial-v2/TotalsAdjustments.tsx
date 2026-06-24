@@ -151,6 +151,32 @@ export function TotalsAdjustments({
           <h3 className="text-base font-semibold text-foreground">Regime de IVA</h3>
         </div>
 
+        {/* Região fiscal */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Região fiscal</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(REGIAO_FISCAL_CONFIG) as RegiaoFiscal[]).map((r) => {
+              const cfg = REGIAO_FISCAL_CONFIG[r];
+              const active = regiao === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => handleRegionChange(r)}
+                  className={`rounded-lg border px-3 py-2 text-left transition-all ${
+                    active
+                      ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                      : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-foreground">{cfg.label}</span>
+                  <span className="block text-[11px] text-muted-foreground">{cfg.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Quick IVA regime buttons */}
         <div>
           <Label className="text-xs text-muted-foreground mb-2 block">Seleção rápida</Label>
