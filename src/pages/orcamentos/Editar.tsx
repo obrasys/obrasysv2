@@ -159,7 +159,6 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
       setTipoObra(contextoFiscal.tipo_obra as TipoObraFiscal | undefined);
       setTipoCliente(contextoFiscal.tipo_cliente as TipoClienteFiscal | undefined);
       setTipoOperacao(contextoFiscal.tipo_operacao as TipoOperacaoFiscal | undefined);
-      const { inferRegionFromRate } = require('@/lib/iva-regions');
       setRegiaoFiscal(inferRegionFromRate(contextoFiscal.taxa_iva ?? 23));
     }
     setShowSettingsModal(true);
