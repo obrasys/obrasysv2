@@ -25,14 +25,14 @@ import {
   type TipoClienteFiscal,
   type TipoOperacaoFiscal,
 } from '@/types/fiscal';
-import { useState } from 'react';
-
-const IVA_REGIMES = [
-  { value: 23, label: 'IVA Normal', description: '23% - Regime geral' },
-  { value: 6, label: 'IVA Reduzido', description: '6% - Reabilitação/habitação' },
-  { value: 0, label: 'Autoliquidação', description: '0% - Subempreitada (art. 2º)' },
-  { value: 13, label: 'IVA Intermédio', description: '13% - Taxa intermédia' },
-];
+import { useState, useMemo } from 'react';
+import {
+  REGIAO_FISCAL_CONFIG,
+  getIvaRegimesByRegion,
+  getNormalRate,
+  inferRegionFromRate,
+  type RegiaoFiscal,
+} from '@/lib/iva-regions';
 
 interface Props {
   subtotalBase: number;
