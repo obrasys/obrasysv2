@@ -178,6 +178,22 @@ export default function EssencialPage() {
   });
 
   const subtotalBase = items.reduce((sum, item) => sum + computeItemTotals(item).subtotal, 0);
+  const laborBase = items.reduce((sum, item) => sum + computeItemTotals(item).totalLabor, 0);
+  const materialBase = items.reduce((sum, item) => sum + computeItemTotals(item).totalMaterial, 0);
+
+  // Helper to compute final VAT (single or split)
+  const computeVat = (subtotalBeforeVat: number) => {
+    if (!splitVat || subtotalBase <= 0) {
+      const vatValue = subtotalBeforeVat * (vatPercent / 100);
+      return { vatValue, vatLabor: 0, vatMaterial: 0, laborPortion: 0, materialPortion: 0 };
+    }
+    const laborPortion = subtotalBeforeVat * (laborBase / subtotalBase);
+    const materialPortion = subtotalBeforeVat * (materialBase / subtotalBase);
+    const vatLabor = laborPortion * (laborVatPercent / 100);
+    const vatMaterial = materialPortion * (materialVatPercent / 100);
+    return { vatValue: vatLabor + vatMaterial, vatLabor, vatMaterial, laborPortion, materialPortion };
+  };
+
 
   // Handlers
   const handleTypeChange = (type: BudgetType) => {
