@@ -212,9 +212,22 @@ export default function EssencialPage() {
     setBudgetType(type);
   };
 
+  const { tipologias: customTipologiasList } = useCustomTipologias();
+  const activePropertyTypeLabel = (() => {
+    if (!propertyType) return '';
+    const fromPredef = TIPOLOGIAS_IMOVEL.find((t) => t.value === propertyType)?.label;
+    if (fromPredef) return fromPredef;
+    const fromCustom = customTipologiasList.find((t) => t.value === propertyType)?.label;
+    return fromCustom || propertyType;
+  })();
+
   const handleAddItems = useCallback((newItems: BudgetItem[]) => {
-    setItems((prev) => [...prev, ...newItems]);
-  }, []);
+    const label = activePropertyTypeLabel;
+    setItems((prev) => [
+      ...prev,
+      ...newItems.map((it) => (label && !it.propertyTypeName ? { ...it, propertyTypeName: label } : it)),
+    ]);
+  }, [activePropertyTypeLabel]);
 
   const handleUpdateQuantity = useCallback((id: string, qty: number) => {
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i));
