@@ -55,7 +55,7 @@
     "framer-motion": "^12.34.3",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
-    "jspdf": "^4.0.0",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "konva": "9.3.18",
     "lucide-react": "^0.462.0",
@@ -103,5 +103,15 @@
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "dompurify": "^3.2.7",
+    "lodash": "^4.17.21",
+    "ws": "^8.18.0"
+  },
+  "resolutions": {
+    "dompurify": "^3.2.7",
+    "lodash": "^4.17.21",
+    "ws": "^8.18.0"
   }
 }
