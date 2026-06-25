@@ -66,12 +66,8 @@ export function BudgetTermsCard({ value, onChange }: Props) {
       toast({ title: 'Indique um título e conteúdo.', variant: 'destructive' });
       return;
     }
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (!prof?.organization_id) {
+    const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: user.id });
+    if (!orgId) {
       toast({ title: 'Sem organização', variant: 'destructive' });
       return;
     }
@@ -79,12 +75,12 @@ export function BudgetTermsCard({ value, onChange }: Props) {
       await supabase
         .from('organization_budget_terms')
         .update({ is_default: false })
-        .eq('organization_id', prof.organization_id);
+        .eq('organization_id', orgId);
     }
     const { data, error } = await supabase
       .from('organization_budget_terms')
       .insert({
-        organization_id: prof.organization_id,
+        organization_id: orgId,
         title: saveTitle.trim(),
         content: value,
         is_default: saveAsDefault,
@@ -93,6 +89,7 @@ export function BudgetTermsCard({ value, onChange }: Props) {
       })
       .select('id,title,content,is_default')
       .single();
+
     if (error) {
       toast({ title: 'Erro ao guardar', description: error.message, variant: 'destructive' });
       return;
