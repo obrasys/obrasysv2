@@ -9,7 +9,12 @@ import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetS
 import { TotalsAdjustments } from '@/components/orcamentos/essencial-v2/TotalsAdjustments';
 import { ClientIdentification } from '@/components/orcamentos/essencial-v2/ClientIdentification';
 import { ZonesAreasTree } from '@/components/orcamentos/essencial-v2/ZonesAreasTree';
+import { BudgetTermsCard } from '@/components/orcamentos/essencial-v2/BudgetTermsCard';
+import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Eye, Sparkles, Send } from 'lucide-react';
+
 import {
   type BudgetType,
   type BudgetItem,
