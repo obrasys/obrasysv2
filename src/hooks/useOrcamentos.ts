@@ -332,6 +332,7 @@ export function useOrcamentos() {
             margem_lucro_artigo: art.margem_lucro_artigo || 0,
             preco_unitario: art.preco_unitario,
             ordem: art.ordem,
+            property_type_name: art.property_type_name ?? null,
           }));
 
           const { error: artError } = await supabase
