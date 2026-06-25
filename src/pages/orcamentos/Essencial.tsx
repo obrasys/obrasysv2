@@ -115,6 +115,12 @@ export default function EssencialPage() {
   const [materialVatPercent, setMaterialVatPercent] = useState(23);
   const [marginPercent, setMarginPercent] = useState(0);
   const [observationsText, setObservationsText] = useState<string>('');
+  const [commercialTerms, setCommercialTerms] = useState<string>('');
+  const [postSaveOpen, setPostSaveOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [savedOrcamento, setSavedOrcamento] = useState<{ id: string; titulo: string; clienteEmail: string | null; clienteNome: string | null } | null>(null);
+  const [auditRunning, setAuditRunning] = useState(false);
+
   const [propertyType, setPropertyType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
