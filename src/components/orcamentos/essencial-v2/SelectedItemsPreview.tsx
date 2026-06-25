@@ -49,6 +49,12 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
     return m;
   }, [items]);
 
+  const knownPropertyTypes = useMemo(() => {
+    const s = new Set<string>();
+    items.forEach((it) => { if (it.propertyTypeName?.trim()) s.add(it.propertyTypeName.trim()); });
+    return Array.from(s);
+  }, [items]);
+
   const editingItem = items.find((i) => i.id === editingId) ?? null;
 
   const handleModalSave = async (updates: Partial<BudgetItem>, opts: { persistToCatalog: boolean }) => {
@@ -129,8 +135,13 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                     className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group px-3 py-2.5 space-y-1.5"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="text-sm text-foreground truncate">{item.name}</span>
+                        {item.propertyTypeName && (
+                          <Badge variant="secondary" className="text-[10px] py-0 px-1.5 shrink-0 bg-primary/10 text-primary border-primary/20">
+                            {item.propertyTypeName}
+                          </Badge>
+                        )}
                         {item.interventionContext && (
                           <Badge variant="outline" className="text-[10px] py-0 px-1.5 capitalize shrink-0">{item.interventionContext}</Badge>
                         )}
@@ -204,8 +215,18 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                     </div>
 
 
-                    {/* Zona / Área opcional — datalist com nomes já usados */}
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-2 pl-1">
+                    {/* Zona Int. / Zona / Área opcional — datalist com nomes já usados */}
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr] gap-2 pl-1">
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider shrink-0">Zona Int.</span>
+                        <Input
+                          list="property-types-all"
+                          placeholder="Apartamento 01…"
+                          value={item.propertyTypeName ?? ''}
+                          onChange={(e) => onUpdateItem(item.id, { propertyTypeName: e.target.value || undefined })}
+                          className="h-7 text-xs"
+                        />
+                      </label>
                       <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <MapPin className="h-3 w-3 shrink-0" />
                         <Input
@@ -214,7 +235,6 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                           value={item.zoneName ?? ''}
                           onChange={(e) => {
                             const z = e.target.value;
-                            // Mudou zona → limpar área se não pertencer
                             onUpdateItem(item.id, {
                               zoneName: z || undefined,
                               ...(z ? {} : { areaName: undefined }),
@@ -255,6 +275,14 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
           </div>
         ))}
       </div>
+
+      {/* Datalist global de Zonas de Intervenção já usadas no orçamento */}
+      <datalist id="property-types-all">
+        {knownPropertyTypes.map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
+
 
       <EditBudgetItemModal
         open={!!editingItem}

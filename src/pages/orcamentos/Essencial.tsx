@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { BudgetTypeSelector } from '@/components/orcamentos/essencial-v2/BudgetTypeSelector';
-import { ZonasServicosPanel } from '@/components/orcamentos/essencial-v2/ZonasServicosPanel';
+import { ZonasServicosPanel, TIPOLOGIAS_IMOVEL } from '@/components/orcamentos/essencial-v2/ZonasServicosPanel';
+import { useCustomTipologias } from '@/hooks/useEssencialPreferences';
 import { ItemSelectorModal } from '@/components/orcamentos/essencial-v2/ItemSelectorModal';
 import { SelectedItemsPreview } from '@/components/orcamentos/essencial-v2/SelectedItemsPreview';
 import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetSummaryTable';
@@ -211,9 +212,22 @@ export default function EssencialPage() {
     setBudgetType(type);
   };
 
+  const { tipologias: customTipologiasList } = useCustomTipologias();
+  const activePropertyTypeLabel = (() => {
+    if (!propertyType) return '';
+    const fromPredef = TIPOLOGIAS_IMOVEL.find((t) => t.value === propertyType)?.label;
+    if (fromPredef) return fromPredef;
+    const fromCustom = customTipologiasList.find((t) => t.value === propertyType)?.label;
+    return fromCustom || propertyType;
+  })();
+
   const handleAddItems = useCallback((newItems: BudgetItem[]) => {
-    setItems((prev) => [...prev, ...newItems]);
-  }, []);
+    const label = activePropertyTypeLabel;
+    setItems((prev) => [
+      ...prev,
+      ...newItems.map((it) => (label && !it.propertyTypeName ? { ...it, propertyTypeName: label } : it)),
+    ]);
+  }, [activePropertyTypeLabel]);
 
   const handleUpdateQuantity = useCallback((id: string, qty: number) => {
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i));
@@ -285,31 +299,54 @@ export default function EssencialPage() {
     // Build virtual chapter buckets according to exportGrouping
     type Bucket = { title: string; items: BudgetItem[] };
     const buckets: Bucket[] = [];
-    for (const [areaKey, areaItems] of Object.entries(grouped)) {
-      const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
 
-      if (exportGrouping === 'chapter') {
-        buckets.push({ title: areaLabel, items: areaItems });
-      } else if (exportGrouping === 'chapter_zone') {
-        const byZone: Record<string, BudgetItem[]> = {};
-        areaItems.forEach((i) => {
-          const z = i.zoneName?.trim() || 'Sem zona';
-          (byZone[z] ||= []).push(i);
-        });
-        Object.entries(byZone).forEach(([zone, zItems]) =>
-          buckets.push({ title: `${areaLabel} — ${zone}`, items: zItems })
-        );
-      } else {
-        const byZoneArea: Record<string, BudgetItem[]> = {};
-        areaItems.forEach((i) => {
-          const z = i.zoneName?.trim() || 'Sem zona';
-          const a = i.areaName?.trim() || 'Sem área';
-          (byZoneArea[`${z}|||${a}`] ||= []).push(i);
-        });
-        Object.entries(byZoneArea).forEach(([key, zItems]) => {
-          const [z, a] = key.split('|||');
-          buckets.push({ title: `${areaLabel} — ${z} — ${a}`, items: zItems });
-        });
+
+
+    // Split each areaItems list further by propertyTypeName (Zona de Intervenção),
+    // so chapters/buckets are: [Propriedade] — [Capítulo] (— Zona — Área).
+    const splitByProperty = (list: BudgetItem[]): Record<string, BudgetItem[]> => {
+      const m: Record<string, BudgetItem[]> = {};
+      list.forEach((i) => {
+        const k = i.propertyTypeName?.trim() || '__SEM_PROP__';
+        (m[k] ||= []).push(i);
+      });
+      return m;
+    };
+
+    for (const [areaKey, areaItemsAll] of Object.entries(grouped)) {
+      const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
+      const byProperty = splitByProperty(areaItemsAll);
+      const propKeys = Object.keys(byProperty);
+      const hasMultipleProps = propKeys.some((k) => k !== '__SEM_PROP__');
+
+      for (const propKey of propKeys) {
+        const areaItems = byProperty[propKey];
+        const propLabel = propKey === '__SEM_PROP__' ? '' : propKey;
+        const titlePrefix = hasMultipleProps && propLabel ? `${propLabel} — ` : '';
+
+        if (exportGrouping === 'chapter') {
+          buckets.push({ title: `${titlePrefix}${areaLabel}`, items: areaItems });
+        } else if (exportGrouping === 'chapter_zone') {
+          const byZone: Record<string, BudgetItem[]> = {};
+          areaItems.forEach((i) => {
+            const z = i.zoneName?.trim() || 'Sem zona';
+            (byZone[z] ||= []).push(i);
+          });
+          Object.entries(byZone).forEach(([zone, zItems]) =>
+            buckets.push({ title: `${titlePrefix}${areaLabel} — ${zone}`, items: zItems })
+          );
+        } else {
+          const byZoneArea: Record<string, BudgetItem[]> = {};
+          areaItems.forEach((i) => {
+            const z = i.zoneName?.trim() || 'Sem zona';
+            const a = i.areaName?.trim() || 'Sem área';
+            (byZoneArea[`${z}|||${a}`] ||= []).push(i);
+          });
+          Object.entries(byZoneArea).forEach(([key, zItems]) => {
+            const [z, a] = key.split('|||');
+            buckets.push({ title: `${titlePrefix}${areaLabel} — ${z} — ${a}`, items: zItems });
+          });
+        }
       }
     }
 
@@ -318,18 +355,20 @@ export default function EssencialPage() {
       const artigos: ArtigoOrcamento[] = bItems.map((item, idx) => {
         const unitCost = item.laborUnitPrice + item.materialTotalPrice;
         const unitSalePrice = marginPercent > 0 ? calcPrecoVenda(unitCost, marginPercent) : unitCost;
-        // Anexar Zona/Área à descrição quando o agrupamento não as exibe no título do capítulo
+        // Anexar Zona de Intervenção / Zona / Área à descrição quando o agrupamento não as exibe no título do capítulo
+        const pName = item.propertyTypeName?.trim();
         const zName = item.zoneName?.trim();
         const aName = item.areaName?.trim();
         let descricao = item.name;
+        const extras: string[] = [];
+        if (pName) extras.push(`Zona Int.: ${pName}`);
         if (exportGrouping === 'chapter' && (zName || aName)) {
-          const parts: string[] = [];
-          if (zName) parts.push(`Zona: ${zName}`);
-          if (aName) parts.push(`Área: ${aName}`);
-          descricao = `${item.name}  (${parts.join(' — ')})`;
+          if (zName) extras.push(`Zona: ${zName}`);
+          if (aName) extras.push(`Área: ${aName}`);
         } else if (exportGrouping === 'chapter_zone' && aName) {
-          descricao = `${item.name}  (Área: ${aName})`;
+          extras.push(`Área: ${aName}`);
         }
+        if (extras.length) descricao = `${item.name}  (${extras.join(' — ')})`;
         return {
           id: item.id,
           capitulo_id: `cap-${capOrder}`,
