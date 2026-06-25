@@ -362,28 +362,44 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
   }
 
   // ─── TOTAL (boxed) ────────────────────────────────────────
-  y = ensureSpace(doc, 18, y);
+  const boxH = ivaBreakdown ? 30 : 16;
+  y = ensureSpace(doc, boxH + 4, y);
   y += 3;
-
-  const totalLabel = `Orçamento total: ${fmt(valorBase)} (+ IVA ${taxaIVA}%)`;
-  const grandLabel = `Total com IVA: ${fmt(valorFinal)}`;
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.dark);
 
-  // Draw bordered box
-  const boxH = 16;
   const boxW = uw;
   doc.setDrawColor(...COLORS.primary);
   doc.setLineWidth(0.6);
   doc.rect(PAGE.left, y - 1, boxW, boxH);
 
-  doc.text(totalLabel, PAGE.left + 4, y + 4);
-  doc.setFontSize(12);
-  doc.text(grandLabel, PAGE.left + 4, y + 11);
+  if (ivaBreakdown) {
+    doc.setFontSize(10);
+    doc.text(`Orçamento (s/ IVA): ${fmt(valorBase)}`, PAGE.left + 4, y + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(
+      `IVA Mão-de-Obra (${ivaBreakdown.laborRate}% s/ ${fmt(ivaBreakdown.laborBase)}): ${fmt(ivaBreakdown.laborValue)}`,
+      PAGE.left + 4, y + 11,
+    );
+    doc.text(
+      `IVA Material (${ivaBreakdown.materialRate}% s/ ${fmt(ivaBreakdown.materialBase)}): ${fmt(ivaBreakdown.materialValue)}`,
+      PAGE.left + 4, y + 17,
+    );
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...COLORS.primary);
+    doc.text(`Total com IVA: ${fmt(valorFinal)}`, PAGE.left + 4, y + 25);
+  } else {
+    doc.text(`Orçamento total: ${fmt(valorBase)} (+ IVA ${taxaIVA}%)`, PAGE.left + 4, y + 4);
+    doc.setFontSize(12);
+    doc.text(`Total com IVA: ${fmt(valorFinal)}`, PAGE.left + 4, y + 11);
+  }
 
   y += boxH + 6;
+
 
   // ─── CONDITIONS FOOTER ────────────────────────────────────
   // Payment terms
