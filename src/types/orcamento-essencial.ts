@@ -688,6 +688,8 @@ export interface BudgetItem {
   areaName?: string;
   /** Nome do Tipo de Serviço (opcional). Ex.: "Pavimentos". */
   serviceTypeName?: string;
+  /** Zona de Intervenção / Tipologia (ex.: "Apartamento 01", "Moradia"). */
+  propertyTypeName?: string;
   /** Código do artigo na Base (quando proveniente da Base de Preços). */
   baseCode?: string;
   /** Tipo da base de origem ("geral" | "remodelacao"). */
