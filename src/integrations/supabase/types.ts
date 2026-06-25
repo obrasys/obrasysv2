@@ -345,6 +345,7 @@ export type Database = {
           article_code: string | null
           article_template_id: string | null
           capitulo_id: string
+          catalog_article_id: string | null
           chapter_code: string | null
           chapter_template_id: string | null
           codigo: string | null
@@ -359,9 +360,12 @@ export type Database = {
           custo_sub: number
           descricao: string
           id: string
+          intervention_context: string | null
+          labor_vat_rate: number | null
           linked_element_id: string | null
           linked_rule_id: string | null
           margem_lucro_artigo: number | null
+          material_vat_rate: number | null
           ordem: number
           plant_source: Json | null
           preco_base: number | null
@@ -385,6 +389,7 @@ export type Database = {
           article_code?: string | null
           article_template_id?: string | null
           capitulo_id: string
+          catalog_article_id?: string | null
           chapter_code?: string | null
           chapter_template_id?: string | null
           codigo?: string | null
@@ -399,9 +404,12 @@ export type Database = {
           custo_sub?: number
           descricao: string
           id?: string
+          intervention_context?: string | null
+          labor_vat_rate?: number | null
           linked_element_id?: string | null
           linked_rule_id?: string | null
           margem_lucro_artigo?: number | null
+          material_vat_rate?: number | null
           ordem?: number
           plant_source?: Json | null
           preco_base?: number | null
@@ -425,6 +433,7 @@ export type Database = {
           article_code?: string | null
           article_template_id?: string | null
           capitulo_id?: string
+          catalog_article_id?: string | null
           chapter_code?: string | null
           chapter_template_id?: string | null
           codigo?: string | null
@@ -439,9 +448,12 @@ export type Database = {
           custo_sub?: number
           descricao?: string
           id?: string
+          intervention_context?: string | null
+          labor_vat_rate?: number | null
           linked_element_id?: string | null
           linked_rule_id?: string | null
           margem_lucro_artigo?: number | null
+          material_vat_rate?: number | null
           ordem?: number
           plant_source?: Json | null
           preco_base?: number | null
@@ -473,6 +485,13 @@ export type Database = {
             columns: ["capitulo_id"]
             isOneToOne: false
             referencedRelation: "capitulos_orcamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artigos_orcamento_catalog_article_id_fkey"
+            columns: ["catalog_article_id"]
+            isOneToOne: false
+            referencedRelation: "base_artigos_user"
             referencedColumns: ["id"]
           },
           {
@@ -1645,6 +1664,7 @@ export type Database = {
       }
       base_artigos_user: {
         Row: {
+          area_id: string | null
           artigo: string
           ativo: boolean
           capitulo: string
@@ -1656,21 +1676,32 @@ export type Database = {
           fonte_base: string | null
           global_artigo_id: string | null
           id: string
+          intervention_context: string | null
+          last_used_at: string | null
           mao_obra_estimada_eur: number
           margem_configuravel_pct: number
           material_estimado_eur: number
+          miscellaneous_cost: number
           observacoes: string | null
           organization_id: string
           origem: string
           preco_indicativo_eur: number
+          rental_cost: number
+          service_cost: number
+          service_type_id: string | null
+          source: string | null
           subcapitulo: string | null
+          subcontract_cost: number
+          tags: string[] | null
           tipo_base: string
           tipo_linha: string | null
           unidade: string
           updated_at: string
+          usage_count: number
           user_id: string
         }
         Insert: {
+          area_id?: string | null
           artigo: string
           ativo?: boolean
           capitulo: string
@@ -1682,21 +1713,32 @@ export type Database = {
           fonte_base?: string | null
           global_artigo_id?: string | null
           id?: string
+          intervention_context?: string | null
+          last_used_at?: string | null
           mao_obra_estimada_eur?: number
           margem_configuravel_pct?: number
           material_estimado_eur?: number
+          miscellaneous_cost?: number
           observacoes?: string | null
           organization_id: string
           origem?: string
           preco_indicativo_eur?: number
+          rental_cost?: number
+          service_cost?: number
+          service_type_id?: string | null
+          source?: string | null
           subcapitulo?: string | null
+          subcontract_cost?: number
+          tags?: string[] | null
           tipo_base?: string
           tipo_linha?: string | null
           unidade?: string
           updated_at?: string
+          usage_count?: number
           user_id: string
         }
         Update: {
+          area_id?: string | null
           artigo?: string
           ativo?: boolean
           capitulo?: string
@@ -1708,26 +1750,50 @@ export type Database = {
           fonte_base?: string | null
           global_artigo_id?: string | null
           id?: string
+          intervention_context?: string | null
+          last_used_at?: string | null
           mao_obra_estimada_eur?: number
           margem_configuravel_pct?: number
           material_estimado_eur?: number
+          miscellaneous_cost?: number
           observacoes?: string | null
           organization_id?: string
           origem?: string
           preco_indicativo_eur?: number
+          rental_cost?: number
+          service_cost?: number
+          service_type_id?: string | null
+          source?: string | null
           subcapitulo?: string | null
+          subcontract_cost?: number
+          tags?: string[] | null
           tipo_base?: string
           tipo_linha?: string | null
           unidade?: string
           updated_at?: string
+          usage_count?: number
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "base_artigos_user_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "org_area_library"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "base_artigos_user_global_artigo_id_fkey"
             columns: ["global_artigo_id"]
             isOneToOne: false
             referencedRelation: "base_artigos_global"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "base_artigos_user_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "org_service_type_library"
             referencedColumns: ["id"]
           },
         ]
@@ -2245,6 +2311,7 @@ export type Database = {
       budget_areas: {
         Row: {
           capitulo_id: string
+          context: string | null
           created_at: string
           descricao: string | null
           id: string
@@ -2257,6 +2324,7 @@ export type Database = {
         }
         Insert: {
           capitulo_id: string
+          context?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -2269,6 +2337,7 @@ export type Database = {
         }
         Update: {
           capitulo_id?: string
+          context?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -2981,6 +3050,7 @@ export type Database = {
       budget_zones: {
         Row: {
           capitulo_id: string
+          context: string | null
           created_at: string
           descricao: string | null
           id: string
@@ -2992,6 +3062,7 @@ export type Database = {
         }
         Insert: {
           capitulo_id: string
+          context?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -3003,6 +3074,7 @@ export type Database = {
         }
         Update: {
           capitulo_id?: string
+          context?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -9979,6 +10051,7 @@ export type Database = {
       org_area_library: {
         Row: {
           ativo: boolean
+          context: string | null
           created_at: string
           id: string
           nome: string
@@ -9988,6 +10061,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          context?: string | null
           created_at?: string
           id?: string
           nome: string
@@ -9997,6 +10071,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          context?: string | null
           created_at?: string
           id?: string
           nome?: string
@@ -10202,6 +10277,7 @@ export type Database = {
       org_zone_library: {
         Row: {
           ativo: boolean
+          context: string | null
           created_at: string
           icone: string | null
           id: string
@@ -10212,6 +10288,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          context?: string | null
           created_at?: string
           icone?: string | null
           id?: string
@@ -10222,12 +10299,49 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          context?: string | null
           created_at?: string
           icone?: string | null
           id?: string
           nome?: string
           ordem?: number
           organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organization_budget_terms: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean
+          last_used_at: string | null
+          organization_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          last_used_at?: string | null
+          organization_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          last_used_at?: string | null
+          organization_id?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -10278,6 +10392,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organization_tax_settings: {
+        Row: {
+          country: string
+          created_at: string
+          default_vat_rate: number
+          id: string
+          labor_vat_rate: number
+          material_vat_rate: number
+          organization_id: string
+          region: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          default_vat_rate?: number
+          id?: string
+          labor_vat_rate?: number
+          material_vat_rate?: number
+          organization_id: string
+          region?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          default_vat_rate?: number
+          id?: string
+          labor_vat_rate?: number
+          material_vat_rate?: number
+          organization_id?: string
+          region?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       organizations: {
         Row: {
