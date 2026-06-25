@@ -260,84 +260,111 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
     doc.text(capLabel, PAGE.ml + 3, y + 5.5);
     y += 11;
 
-    // Group: zone → area → service_type
+    // Group: property_type_name → zone → area → service_type
     type GKey = string;
-    const grouped = new Map<GKey, Map<GKey, Map<GKey, any[]>>>();
+    const byProp = new Map<GKey, any[]>();
     for (const a of artigos) {
-      const z = (a.zone_name || '').trim() || '__SEM_ZONA__';
-      const ar = (a.area_name || '').trim() || '__SEM_AREA__';
-      const st = (a.service_type_name || '').trim() || '__SEM_TIPO__';
-      if (!grouped.has(z)) grouped.set(z, new Map());
-      const zMap = grouped.get(z)!;
-      if (!zMap.has(ar)) zMap.set(ar, new Map());
-      const aMap = zMap.get(ar)!;
-      if (!aMap.has(st)) aMap.set(st, []);
-      aMap.get(st)!.push(a);
+      const p = (a.property_type_name || '').trim() || '__SEM_PROP__';
+      if (!byProp.has(p)) byProp.set(p, []);
+      byProp.get(p)!.push(a);
     }
+    const propKeys = [...byProp.keys()].sort();
+    const hasMultipleProps = propKeys.filter((k) => k !== '__SEM_PROP__').length > 1
+      || (propKeys.length > 1 && propKeys.includes('__SEM_PROP__'));
 
     let capTotal = 0;
 
-    const sortedZones = [...grouped.keys()].sort();
-    for (const z of sortedZones) {
-      const zMap = grouped.get(z)!;
-      const zoneLabel = z === '__SEM_ZONA__' ? '' : z.toUpperCase();
-      if (zoneLabel) {
+    for (const propKey of propKeys) {
+      const propArtigos = byProp.get(propKey)!;
+      const propLabel = propKey === '__SEM_PROP__' ? '' : propKey;
+
+      if (propLabel && hasMultipleProps) {
         y = ensureSpace(doc, 10, y, drawSubHeader);
+        doc.setFillColor(...COLORS.primaryLight);
+        doc.roundedRect(PAGE.ml, y, usableW, 7, 1, 1, 'F');
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...COLORS.primary);
-        doc.text(zoneLabel, PAGE.ml + 2, y + 4);
-        y += 6;
+        doc.text(`Zona de Intervenção: ${propLabel}`, PAGE.ml + 3, y + 5);
+        y += 9;
       }
 
-      const sortedAreas = [...zMap.keys()].sort();
-      for (const ar of sortedAreas) {
+      const grouped = new Map<GKey, Map<GKey, Map<GKey, any[]>>>();
+      for (const a of propArtigos) {
+        const z = (a.zone_name || '').trim() || '__SEM_ZONA__';
+        const ar = (a.area_name || '').trim() || '__SEM_AREA__';
+        const st = (a.service_type_name || '').trim() || '__SEM_TIPO__';
+        if (!grouped.has(z)) grouped.set(z, new Map());
+        const zMap = grouped.get(z)!;
+        if (!zMap.has(ar)) zMap.set(ar, new Map());
         const aMap = zMap.get(ar)!;
-        const areaLabel = ar === '__SEM_AREA__' ? '' : ar;
-        if (areaLabel) {
-          y = ensureSpace(doc, 8, y, drawSubHeader);
-          doc.setFontSize(9);
+        if (!aMap.has(st)) aMap.set(st, []);
+        aMap.get(st)!.push(a);
+      }
+
+      const sortedZones = [...grouped.keys()].sort();
+      for (const z of sortedZones) {
+        const zMap = grouped.get(z)!;
+        const zoneLabel = z === '__SEM_ZONA__' ? '' : z.toUpperCase();
+        if (zoneLabel) {
+          y = ensureSpace(doc, 10, y, drawSubHeader);
+          doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...COLORS.dark);
-          doc.text(areaLabel, PAGE.ml + 6, y + 4);
-          y += 5;
+          doc.setTextColor(...COLORS.primary);
+          doc.text(zoneLabel, PAGE.ml + 2, y + 4);
+          y += 6;
         }
 
-        const sortedTypes = [...aMap.keys()].sort();
-        for (const st of sortedTypes) {
-          const items = aMap.get(st)!;
-          const typeLabel = st === '__SEM_TIPO__' ? '' : st;
-          if (typeLabel) {
-            y = ensureSpace(doc, 6, y, drawSubHeader);
-            doc.setFontSize(8.5);
-            doc.setFont('helvetica', 'italic');
-            doc.setTextColor(...COLORS.muted);
-            doc.text(typeLabel, PAGE.ml + 10, y + 3.5);
+        const sortedAreas = [...zMap.keys()].sort();
+        for (const ar of sortedAreas) {
+          const aMap = zMap.get(ar)!;
+          const areaLabel = ar === '__SEM_AREA__' ? '' : ar;
+          if (areaLabel) {
+            y = ensureSpace(doc, 8, y, drawSubHeader);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...COLORS.dark);
+            doc.text(areaLabel, PAGE.ml + 6, y + 4);
             y += 5;
           }
 
-          // Items
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(...COLORS.text);
-          for (const it of items) {
-            y = ensureSpace(doc, 6, y, drawSubHeader);
-            const total = Number(it.quantidade || 0) * Number(it.preco_unitario || 0);
-            capTotal += total;
-            const desc = it.descricao || '';
-            const qty = `${Number(it.quantidade || 0).toLocaleString('pt-PT', { maximumFractionDigits: 3 })} ${it.unidade || ''}`;
-            const totalStr = fmt(total);
-            const indent = typeLabel ? 14 : (areaLabel ? 10 : (zoneLabel ? 6 : 2));
-            const descMaxW = usableW - indent - 60;
-            const lines = doc.splitTextToSize(desc, descMaxW);
-            doc.text(lines, PAGE.ml + indent, y + 3.5);
-            doc.text(qty, pageW - PAGE.mr - 35, y + 3.5, { align: 'right' });
-            doc.text(totalStr, pageW - PAGE.mr, y + 3.5, { align: 'right' });
-            y += lines.length * 4 + 1;
+          const sortedTypes = [...aMap.keys()].sort();
+          for (const st of sortedTypes) {
+            const items = aMap.get(st)!;
+            const typeLabel = st === '__SEM_TIPO__' ? '' : st;
+            if (typeLabel) {
+              y = ensureSpace(doc, 6, y, drawSubHeader);
+              doc.setFontSize(8.5);
+              doc.setFont('helvetica', 'italic');
+              doc.setTextColor(...COLORS.muted);
+              doc.text(typeLabel, PAGE.ml + 10, y + 3.5);
+              y += 5;
+            }
+
+            // Items
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...COLORS.text);
+            for (const it of items) {
+              y = ensureSpace(doc, 6, y, drawSubHeader);
+              const total = Number(it.quantidade || 0) * Number(it.preco_unitario || 0);
+              capTotal += total;
+              const desc = it.descricao || '';
+              const qty = `${Number(it.quantidade || 0).toLocaleString('pt-PT', { maximumFractionDigits: 3 })} ${it.unidade || ''}`;
+              const totalStr = fmt(total);
+              const indent = typeLabel ? 14 : (areaLabel ? 10 : (zoneLabel ? 6 : 2));
+              const descMaxW = usableW - indent - 60;
+              const lines = doc.splitTextToSize(desc, descMaxW);
+              doc.text(lines, PAGE.ml + indent, y + 3.5);
+              doc.text(qty, pageW - PAGE.mr - 35, y + 3.5, { align: 'right' });
+              doc.text(totalStr, pageW - PAGE.mr, y + 3.5, { align: 'right' });
+              y += lines.length * 4 + 1;
+            }
           }
         }
       }
     }
+
 
     // Chapter subtotal
     grandTotal += capTotal;
