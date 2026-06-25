@@ -887,6 +887,10 @@ export default function EssencialPage() {
                   setContingencyPercent(resumeDraft.contingencyPercent ?? 0);
                   setDiscountPercent(resumeDraft.discountPercent ?? 0);
                   setVatPercent(resumeDraft.vatPercent ?? 23);
+                  setSplitVat(resumeDraft.splitVat ?? false);
+                  setLaborVatPercent(resumeDraft.laborVatPercent ?? 6);
+                  setMaterialVatPercent(resumeDraft.materialVatPercent ?? 23);
+
                   setMarginPercent(resumeDraft.marginPercent ?? 0);
                   setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
                   setPropertyType((resumeDraft as any)?.propertyType ?? '');
