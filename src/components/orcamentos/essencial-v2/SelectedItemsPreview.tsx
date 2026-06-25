@@ -255,6 +255,15 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
           </div>
         ))}
       </div>
+
+      <EditBudgetItemModal
+        open={!!editingItem}
+        onOpenChange={(v) => { if (!v) setEditingId(null); }}
+        item={editingItem}
+        capituloLabel={editingItem ? getAreaLabel(editingItem.areaKey) : undefined}
+        defaultMarginPct={defaultMarginPct}
+        onSave={handleModalSave}
+      />
     </div>
   );
 }
