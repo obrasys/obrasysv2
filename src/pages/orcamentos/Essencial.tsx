@@ -690,7 +690,7 @@ export default function EssencialPage() {
             <Tabs defaultValue="items" className="w-full">
               <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="items">Itens</TabsTrigger>
-                <TabsTrigger value="zones">Zonas e Áreas</TabsTrigger>
+                <TabsTrigger value="zones">Áreas e Serviços</TabsTrigger>
               </TabsList>
               <TabsContent value="items" className="mt-4">
                 <SelectedItemsPreview
