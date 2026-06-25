@@ -826,3 +826,13 @@ export function computeItemTotals(item: BudgetItem) {
   const subtotal = totalLabor + totalMaterial;
   return { totalLabor, totalMaterial, subtotal };
 }
+
+export interface IvaBreakdown {
+  laborBase: number;
+  laborRate: number;
+  laborValue: number;
+  materialBase: number;
+  materialRate: number;
+  materialValue: number;
+}
+
