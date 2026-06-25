@@ -259,7 +259,8 @@ export default function EssencialPage() {
     const afterContingency = subtotalWithMargin + contingencyValue;
     const discountValue = afterContingency * (discountPercent / 100);
     const subtotalBeforeVat = afterContingency - discountValue;
-    const vatValue = subtotalBeforeVat * (vatPercent / 100);
+    const { vatValue } = computeVat(subtotalBeforeVat);
+
     const totalFinal = subtotalBeforeVat + vatValue;
 
     // Group items by area → chapters (and optionally by zone/area for export)
