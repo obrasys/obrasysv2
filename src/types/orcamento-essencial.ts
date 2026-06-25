@@ -696,32 +696,42 @@ export interface BudgetItem {
   baseCapitulo?: string;
 }
 
-// --- Zonas pré-definidas (residencial PT) ---
+// --- Áreas de Intervenção pré-definidas (residencial PT) ---
+export type InterventionContext = 'interior' | 'exterior' | 'geral';
+
 export interface ZoneOption {
   key: string;
   label: string;
+  /** Contexto da área: interior, exterior ou geral (aplicável a ambos). */
+  context?: InterventionContext;
 }
 
+export const CONTEXT_OPTIONS: { value: InterventionContext; label: string }[] = [
+  { value: 'interior', label: 'Interior' },
+  { value: 'exterior', label: 'Exterior' },
+  { value: 'geral', label: 'Geral' },
+];
+
 export const ZONAS_PREDEFINIDAS: ZoneOption[] = [
-  { key: 'cozinha', label: 'Cozinha' },
-  { key: 'sala', label: 'Sala' },
-  { key: 'sala_jantar', label: 'Sala de Jantar' },
-  { key: 'quarto', label: 'Quarto' },
-  { key: 'suite', label: 'Suite' },
-  { key: 'casa_banho', label: 'Casa de Banho' },
-  { key: 'wc_servico', label: 'WC Serviço' },
-  { key: 'hall', label: 'Hall' },
-  { key: 'corredor', label: 'Corredor' },
-  { key: 'escritorio', label: 'Escritório' },
-  { key: 'lavandaria', label: 'Lavandaria' },
-  { key: 'despensa', label: 'Despensa' },
-  { key: 'garagem', label: 'Garagem' },
-  { key: 'cave', label: 'Cave' },
-  { key: 'sotao', label: 'Sótão' },
-  { key: 'varanda_terraco', label: 'Varanda/Terraço' },
-  { key: 'exterior', label: 'Exterior' },
-  { key: 'jardim', label: 'Jardim' },
-  { key: 'comum', label: 'Comum/Geral' },
+  { key: 'cozinha', label: 'Cozinha', context: 'interior' },
+  { key: 'sala', label: 'Sala', context: 'interior' },
+  { key: 'sala_jantar', label: 'Sala de Jantar', context: 'interior' },
+  { key: 'quarto', label: 'Quarto', context: 'interior' },
+  { key: 'suite', label: 'Suite', context: 'interior' },
+  { key: 'casa_banho', label: 'Casa de Banho', context: 'interior' },
+  { key: 'wc_servico', label: 'WC Serviço', context: 'interior' },
+  { key: 'hall', label: 'Hall', context: 'interior' },
+  { key: 'corredor', label: 'Corredor', context: 'interior' },
+  { key: 'escritorio', label: 'Escritório', context: 'interior' },
+  { key: 'lavandaria', label: 'Lavandaria', context: 'interior' },
+  { key: 'despensa', label: 'Despensa', context: 'interior' },
+  { key: 'garagem', label: 'Garagem', context: 'interior' },
+  { key: 'cave', label: 'Cave', context: 'interior' },
+  { key: 'sotao', label: 'Sótão', context: 'interior' },
+  { key: 'varanda_terraco', label: 'Varanda/Terraço', context: 'exterior' },
+  { key: 'exterior', label: 'Exterior', context: 'exterior' },
+  { key: 'jardim', label: 'Jardim', context: 'exterior' },
+  { key: 'comum', label: 'Comum/Geral', context: 'geral' },
 ];
 
 /**
