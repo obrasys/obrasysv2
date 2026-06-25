@@ -129,8 +129,13 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                     className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group px-3 py-2.5 space-y-1.5"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         <span className="text-sm text-foreground truncate">{item.name}</span>
+                        {item.propertyTypeName && (
+                          <Badge variant="secondary" className="text-[10px] py-0 px-1.5 shrink-0 bg-primary/10 text-primary border-primary/20">
+                            {item.propertyTypeName}
+                          </Badge>
+                        )}
                         {item.interventionContext && (
                           <Badge variant="outline" className="text-[10px] py-0 px-1.5 capitalize shrink-0">{item.interventionContext}</Badge>
                         )}
