@@ -268,9 +268,10 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
       if (!byProp.has(p)) byProp.set(p, []);
       byProp.get(p)!.push(a);
     }
-    const propKeys = [...byProp.keys()].sort();
-    const hasMultipleProps = propKeys.filter((k) => k !== '__SEM_PROP__').length > 1
-      || (propKeys.length > 1 && propKeys.includes('__SEM_PROP__'));
+    const sortPt = (a: string, b: string) =>
+      a.localeCompare(b, 'pt', { numeric: true, sensitivity: 'base' });
+    const propKeys = [...byProp.keys()].sort(sortPt);
+    const hasAnyProp = propKeys.some((k) => k !== '__SEM_PROP__');
 
     let capTotal = 0;
 
@@ -278,14 +279,14 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
       const propArtigos = byProp.get(propKey)!;
       const propLabel = propKey === '__SEM_PROP__' ? '' : propKey;
 
-      if (propLabel && hasMultipleProps) {
+      if (propLabel && hasAnyProp) {
         y = ensureSpace(doc, 10, y, drawSubHeader);
         doc.setFillColor(...COLORS.primaryLight);
         doc.roundedRect(PAGE.ml, y, usableW, 7, 1, 1, 'F');
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...COLORS.primary);
-        doc.text(`Zona de Intervenção: ${propLabel}`, PAGE.ml + 3, y + 5);
+        doc.text(`Zona Int.: ${propLabel}`, PAGE.ml + 3, y + 5);
         y += 9;
       }
 
@@ -302,33 +303,34 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
         aMap.get(st)!.push(a);
       }
 
-      const sortedZones = [...grouped.keys()].sort();
+      const sortedZones = [...grouped.keys()].sort(sortPt);
       for (const z of sortedZones) {
         const zMap = grouped.get(z)!;
-        const zoneLabel = z === '__SEM_ZONA__' ? '' : z.toUpperCase();
-        if (zoneLabel) {
-          y = ensureSpace(doc, 10, y, drawSubHeader);
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...COLORS.primary);
-          doc.text(zoneLabel, PAGE.ml + 2, y + 4);
-          y += 6;
-        }
+        const zoneLabel = z === '__SEM_ZONA__' ? '' : z;
 
-        const sortedAreas = [...zMap.keys()].sort();
+        const sortedAreas = [...zMap.keys()].sort(sortPt);
         for (const ar of sortedAreas) {
           const aMap = zMap.get(ar)!;
           const areaLabel = ar === '__SEM_AREA__' ? '' : ar;
-          if (areaLabel) {
+
+          // Cabeçalho combinado "Zona (Área)" — sempre que houver ao menos um
+          const headerBits: string[] = [];
+          if (zoneLabel) headerBits.push(`Zona: ${zoneLabel}`);
+          if (areaLabel) headerBits.push(`Área: ${areaLabel}`);
+          const zaHeader = headerBits.join('   •   ');
+          if (zaHeader) {
             y = ensureSpace(doc, 8, y, drawSubHeader);
+            doc.setDrawColor(...COLORS.primaryLight);
+            doc.setLineWidth(0.4);
+            doc.line(PAGE.ml + 2, y + 4.5, pageW - PAGE.mr, y + 4.5);
             doc.setFontSize(9);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...COLORS.dark);
-            doc.text(areaLabel, PAGE.ml + 6, y + 4);
-            y += 5;
+            doc.setTextColor(...COLORS.primary);
+            doc.text(zaHeader, PAGE.ml + 2, y + 3.5);
+            y += 6;
           }
 
-          const sortedTypes = [...aMap.keys()].sort();
+          const sortedTypes = [...aMap.keys()].sort(sortPt);
           for (const st of sortedTypes) {
             const items = aMap.get(st)!;
             const typeLabel = st === '__SEM_TIPO__' ? '' : st;
@@ -337,9 +339,10 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
               doc.setFontSize(8.5);
               doc.setFont('helvetica', 'italic');
               doc.setTextColor(...COLORS.muted);
-              doc.text(typeLabel, PAGE.ml + 10, y + 3.5);
+              doc.text(`Tipo de Serviço: ${typeLabel}`, PAGE.ml + 10, y + 3.5);
               y += 5;
             }
+
 
             // Items
             doc.setFontSize(9);
