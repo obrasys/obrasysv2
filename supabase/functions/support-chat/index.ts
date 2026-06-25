@@ -66,8 +66,25 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { messages } = await req.json();
-    
+    const { messages: rawMessages } = await req.json();
+
+    // Sanitize client-supplied history to prevent prompt injection:
+    // - drop any role other than user/assistant (no client-supplied system/tool messages)
+    // - enforce per-message length cap
+    // - cap total history depth
+    const safeMessages = Array.isArray(rawMessages)
+      ? rawMessages
+          .filter(
+            (m: any) =>
+              m &&
+              (m.role === "user" || m.role === "assistant") &&
+              typeof m.content === "string" &&
+              m.content.length <= 4000,
+          )
+          .slice(-20)
+          .map((m: any) => ({ role: m.role, content: m.content }))
+      : [];
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY is not configured");
@@ -75,7 +92,7 @@ serve(async (req) => {
     }
 
     console.log("Sending request to AI Gateway...");
-    console.log("Messages count:", messages.length);
+    console.log("Messages count:", safeMessages.length);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -87,11 +104,12 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          ...messages,
+          ...safeMessages,
         ],
         stream: true,
       }),
     });
+
 
     if (!response.ok) {
       const errorText = await response.text();
