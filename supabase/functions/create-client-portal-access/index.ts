@@ -152,15 +152,13 @@ Deno.serve(async (req) => {
 
     // Check if user already exists with this email
     let clientUserId: string | null = null;
-    let tempPassword: string | null = null;
     let isNewUser = false;
 
-    // Try to create user first; if email exists, look them up
-    tempPassword = generatePassword();
+    // Try to create user first (without a password — they'll set one via recovery link);
+    // if email exists, look them up
     const { data: newUser, error: createError } =
       await supabaseAdmin.auth.admin.createUser({
         email: clienteEmail!,
-        password: tempPassword,
         email_confirm: true,
         user_metadata: { nome: clienteNome, role: "cliente" },
       });
@@ -168,12 +166,6 @@ Deno.serve(async (req) => {
     if (createError) {
       if (createError.message?.includes("already been registered")) {
         // User exists - find them by email
-        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
-          page: 1,
-          perPage: 1,
-          // @ts-ignore - filter by email supported in admin API
-        });
-        // listUsers doesn't filter by email reliably; use a profiles lookup instead
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("user_id")
@@ -204,7 +196,6 @@ Deno.serve(async (req) => {
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        tempPassword = null; // existing user, no temp password
       } else {
         return new Response(
           JSON.stringify({ error: `Erro ao criar utilizador: ${createError.message}` }),
@@ -215,6 +206,7 @@ Deno.serve(async (req) => {
       clientUserId = newUser.user.id;
       isNewUser = true;
     }
+
 
     // Check if access already exists
     const { data: existingAccess } = await supabaseAdmin
