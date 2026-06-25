@@ -334,21 +334,7 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
       }
     }
 
-    } else if (cap.client_summary_text) {
-      // Fallback: use narrative summary
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...COLORS.text);
-      const lines = cap.client_summary_text.split('\n').map(l => l.trim()).filter(Boolean);
-      for (const line of lines) {
-        const wrapped = doc.splitTextToSize(`- ${line}`, uw - 4);
-        for (let j = 0; j < wrapped.length; j++) {
-          y = ensureSpace(doc, 4.5, y);
-          doc.text(wrapped[j], PAGE.left + 2, y);
-          y += 4.2;
-        }
-      }
-    }
+
 
     // Exclusions
     if (cap.client_exclusions_text) {
