@@ -134,7 +134,7 @@ async function loadImage(url: string): Promise<{ data: string; width: number; he
 }
 
 export async function generateComercialPdf(options: ComercialPdfOptions): Promise<Blob> {
-  const { orcamento, profile, valorFinal, taxaIVA, valorBase, valorIVA } = options;
+  const { orcamento, profile, valorFinal, taxaIVA, valorBase, valorIVA, ivaBreakdown } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const { uw, pw } = usable(doc);
