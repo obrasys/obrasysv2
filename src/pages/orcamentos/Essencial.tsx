@@ -711,6 +711,7 @@ export default function EssencialPage() {
             ordem: idx + 1,
             zone_id: zName ? zoneIdByName[zName] ?? null : null,
             area_id: zName && aName ? areaIdByKey[`${zName}|||${aName}`] ?? null : null,
+            property_type_name: item.propertyTypeName?.trim() || null,
           };
         });
 
