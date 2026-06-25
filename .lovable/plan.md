@@ -1,58 +1,137 @@
-# Motor de Leitura Assistida de Plantas — Separação rigorosa Elements vs Ignored
 
-## Problema
-A edge function `plant-leitura-analyze` persiste tudo na tabela `plant_elements` (incluindo `ignored_regions` com `status="ignored"`). A aba "Elementos" mostra todos os registos, então itens como *title block* e *topographic contour lines* aparecem como aprováveis e o botão "Enviar para Orçamento" considera-os no fluxo.
+# Evolução do Orçamento Essencial — Plano Faseado
 
-## Mudanças
+Implementação **aditiva** e **não-destrutiva**. Orçamentos existentes continuam a funcionar. Reutiliza tabelas atuais (`budget_zones`, `budget_areas`, `artigos_orcamento`, `org_zone_library`, `org_area_library`, `org_service_type_library`, `base_artigos_user`) e adiciona apenas o que falta.
 
-### 1. Edge Function `supabase/functions/plant-leitura-analyze/index.ts`
-- Substituir o system prompt pelo novo prompt Axia (separação rigorosa, regras de ignorados < 15% da folha, schema completo, categorias PT-PT, status `ok|review|proposed`).
-- Validação JSON robusta:
-  - Garantir `elements` e `ignored_regions` como arrays.
-  - Normalizar `unit` (aceitar `un, m, m2, m3, ml`), converter vírgula decimal para ponto em `quantity`.
-  - Aceitar categorias da lista PT-PT; **não** descartar elementos por categoria.
-  - Manter `status="review"` e `status="proposed"` (não rebaixar nem descartar).
-- Defesa contra `ignored_region` cobrindo o edifício:
-  - Calcular área da `coordinates` vs área útil da folha; se > 15% e `region_type != "title_block"|"text"`, dividir em quadrantes externos ou descartar a região e emitir warning.
-- Persistência:
-  - Continuar a guardar `ignored_regions` em `plant_elements` com `status="ignored"` (mantém compatibilidade) **ou** mover para coluna/JSON separado em `plant_sheets` (proposto: gravar JSON `ignored_regions` no `plant_sheets` e parar de inserir como elements). Recomendação: gravar `ignored_regions` em `plant_sheets.ignored_regions_json` (jsonb) e deixar `plant_elements` apenas com itens orçamentáveis.
+## Fase 1 — Base de dados (migrações aditivas, com RLS)
 
-### 2. Migration
-- Adicionar coluna `ignored_regions_json jsonb` em `plant_sheets` (se optarmos pela separação física).
-- Limpeza opcional: marcar registos antigos com `status="ignored"` para não aparecer em listagens (já filtrados na UI).
+Novas tabelas (todas multi-tenant por `organization_id`, com GRANTs e RLS):
 
-### 3. Frontend — Aba Elementos
-`src/components/planta-leitura/PlantElementsList.tsx` e `src/pages/planta-leitura/Index.tsx`:
-- Filtrar para mostrar **apenas** elementos com:
-  ```ts
-  el.status !== "ignored" &&
-  Number(el.quantity) > 0 &&
-  ["un","m","m2","m3","ml"].includes(el.unit) &&
-  ["ok","review","proposed","approved","edited"].includes(el.status)
-  ```
-- Badges: `Rever` (review), `Proposto` (proposed), `OK`, `Aprovado`, `Editado`.
-- Empty state: *"Nenhum quantitativo orçamentável encontrado nesta folha. Verifique a escala, OCR ou reprocessamento."*
-- Botão "Aprovar todos" só itera sobre `budgetElements`.
+- `org_intervention_area_service_types` — relação Área ↔ Tipo de Serviço para sugestões dinâmicas. Permite seed por defeito + customizações por org.
+- `organization_budget_terms` — condições comerciais reutilizáveis (`title`, `content`, `is_default`, `last_used_at`).
+- `organization_tax_settings` — `country`, `region`, `labor_vat_rate`, `material_vat_rate`, `default_vat_rate`. Substitui hardcode no frontend e mantém retro-compat com `iva-regions.ts`.
 
-### 4. Frontend — Aba/Secção Ignorados
-- Nova `TabsTrigger value="ignored"` (ou subsecção) que lê `ignored_regions` da sheet (JSON) ou `plant_elements` com `status="ignored"`.
-- Render somente leitura, sem ações de aprovação.
+Alterações aditivas (colunas nullable):
 
-### 5. Botão "Enviar para Orçamento (N)"
-`PlantExportToBudgetModal.tsx` e callsite:
-- Contador = `budgetElements.length` (lista já filtrada acima, excluindo `ignored`).
-- Garantir que o payload enviado nunca contém `ignored_regions`.
+- `budget_zones`: `+ context text` (`interior`|`exterior`|`geral`|null).
+- `budget_areas`: `+ context text`.
+- `org_area_library` / `org_zone_library`: `+ context text`.
+- `artigos_orcamento`: `+ intervention_context text`, `+ labor_vat_rate numeric`, `+ material_vat_rate numeric`, `+ catalog_article_id uuid` (FK → `base_artigos_user`).
+- `base_artigos_user` (Meu Catálogo): adicionar campos em falta — `final_price`, `subcontract_cost`, `service_cost`, `rental_cost`, `miscellaneous_cost`, `intervention_context`, `area_id`, `service_type_id`, `tags text[]`, `source text`, `usage_count int`, `last_used_at`.
 
-### 6. Visualização (PlantViewer)
-- Continuar a desenhar `ignored_regions` com estilo distinto (cinza translúcido) só para referência, sem permitir clique de aprovação.
+Seeds: Tipos de serviço sugeridos por Área (conforme listas do briefing — Quarto→Pintura/Pavimentos/…, Cozinha→Demolições/Canalização/…, Piscina→Escavação/…, etc.) em `org_service_type_suggestions` (tabela já existente, apenas insere defaults com `organization_id = null`).
 
-## Detalhes técnicos
-- Os filtros JSON corrigidos vivem em um helper partilhado `src/lib/plant-elements-filter.ts` para evitar duplicação entre lista, contador e modal de export.
-- Logs do edge function devem registar `elements_count`, `ignored_count`, `dropped_oversize_regions`.
-- Nenhuma alteração nas tabelas `plant_files`, `plant_processing_logs`.
+Sem renomear nem dropar nada existente. Cada migração tem comentário de rollback.
 
-## Validação
-1. Reprocessar uma folha que antes mostrava *title block* como elemento → aparece só em "Ignorados".
-2. Folha com elementos `status="review"` → aparecem na aba Elementos com badge "Rever" e contam no botão.
-3. JSON com `ignored_region` 960×960 cobrindo o edifício → edge function divide/descarta e gera warning.
-4. Contador do botão coincide com `budgetElements.length` em todos os cenários.
+## Fase 2 — Renomeação (i18n / labels)
+
+Apenas textos da UI — sem renomear colunas/tipos internos:
+
+- "Tipologia do imóvel" → **"Zona de Intervenção"**
+- "Zona" → **"Área de Intervenção"**
+- Botões/chips de áreas → **dropdown** (Select com agrupamento por contexto Interior/Exterior/Geral)
+
+Ficheiros tocados: `ZonasServicosPanel.tsx`, `AreasGrid.tsx` (substituído por Select), `ItemSelectorModal.tsx`, `BudgetSummaryTable.tsx`, `SelectedItemsPreview.tsx`, `TotalsAdjustments.tsx`, `ClientIdentification.tsx`.
+
+## Fase 3 — Fluxo hierárquico Zona → Contexto → Área → Tipo de Serviço → Artigo
+
+Novo wizard dentro de `ZonasServicosPanel.tsx`:
+
+1. Criar/Selecionar **Zona de Intervenção** (ex. Apartamento 01, Moradia, Garagem). Persistido em `budget_zones` (e biblioteca `org_zone_library` para reutilização).
+2. Escolher **contexto** (Interior/Exterior/Geral) via tabs.
+3. Selecionar **Área de Intervenção** (dropdown filtrado pelo contexto, com "+ Nova área").
+4. Selecionar **Tipo de Serviço** (sugestões dinâmicas via `org_service_type_suggestions` filtradas pela área, com "+ Novo tipo").
+5. Selecionar **artigo** sugerido (a partir de `base_artigos_user` + `base_artigos_global` filtrados por tipo de serviço) ou criar novo.
+
+Compatibilidade: todos os passos são opcionais. Itens sem zona/área aparecem como "Sem zona de intervenção".
+
+## Fase 4 — Editor de item: reutilizar modal do Avançado
+
+No `SelectedItemsPreview.tsx`, substituir editor inline por `BudgetItemFormDialog` (já existente em `src/components/orcamentos/budget/BudgetItemFormDialog.tsx`), estendendo-o com:
+
+- Campos: Zona, Contexto, Área, Tipo de Serviço.
+- Decomposição: `custo_mo`, `custo_mat`, `custo_sub`, `custo_srv`, `custo_alu`, `custo_div`.
+- IVA por categoria: `labor_vat_rate`, `material_vat_rate`.
+- Toggle "Gravar também no Meu Catálogo".
+
+Mesma instância usada no Avançado para evitar duplicação.
+
+## Fase 5 — Meu Catálogo
+
+Estender `useSaveArtigoToUserBase` para:
+
+- Upsert por (organization_id, descrição normalizada, unidade, service_type_id).
+- Atualizar `usage_count` e `last_used_at` quando reutilizado.
+- Persistir source: `criado_manual` | `editado_orcamento` | `importado` | `sugerido_axia`.
+- Auto-save em criação; pergunta ("Atualizar só este orçamento" / "Guardar no Meu Catálogo") em edição.
+
+Página existente "Base de Preços" passa a mostrar o Meu Catálogo com filtros por contexto/área/tipo.
+
+## Fase 6 — Auditoria Axia por item
+
+Atualizar edge function `budget-ai-engine` (e `useAIBudgetInsights`) para retornar análise **item-a-item** com: código, descrição, capítulo, zona, área, tipo, preço base, preço final, margem €, margem %, qty, totais, observação.
+
+Categorias de alerta: margem negativa, baixa (<10%), alta (>50%), sem preço base, preço final = 0, qty = 0, decomposição incoerente.
+
+UI nova em `Ver.tsx` / `Essencial.tsx`: tabela "Auditoria de Margem" com resumo geral + lista de alertas. Sem auto-alteração de valores.
+
+## Fase 7 — Contexto fiscal e IVA separado
+
+- Ler `organization_tax_settings` (fallback para `iva-regions.ts`).
+- Em cada item, calcular IVA por componente: `custo_mo × labor_vat_rate`, `custo_mat × material_vat_rate`, restantes com `default_vat_rate`.
+- Itens sem decomposição: usar IVA padrão (retro-compat).
+- Resumo fiscal por categoria no `TotalsAdjustments.tsx` e PDF.
+
+## Fase 8 — Envio de proposta
+
+Em `ClientIdentification.tsx`, ao selecionar cliente: pré-preencher `email` da ficha. Se ausente, mostrar campo + opção "Guardar na ficha do cliente". Validar formato.
+
+## Fase 9 — Condições comerciais persistentes
+
+- `organization_budget_terms`: CRUD simples.
+- Ao abrir novo orçamento: carregar último `is_default` ou último `last_used_at`.
+- Botão "Guardar como padrão" no `TotalsAdjustments.tsx`.
+
+## Fase 10 — PDF agrupado por Zona
+
+Refatorar `src/lib/orcamento-pdf-zonas.ts` para hierarquia:
+
+```text
+ZONA DE INTERVENÇÃO
+  Capítulo
+    Área de Intervenção
+      Tipo de Serviço
+        Artigo (qty, pu, total)
+      Subtotal Tipo
+    Subtotal Área
+  Subtotal Capítulo
+Subtotal Zona
+…
+Resumo Fiscal:
+  Subtotal M.O. + IVA reduzido
+  Subtotal Materiais + IVA normal
+  Subtotal Outros + IVA aplicável
+  Total s/IVA, Total IVA, Total c/IVA
+```
+
+- Agrupa automaticamente mesmo se inserido fora de ordem.
+- Oculta níveis vazios sem partir layout.
+- Itens sem zona → secção "Sem zona de intervenção" no fim.
+- Cabeçalho profissional já existente (logo, dados empresa/cliente/obra) reutilizado; campos vazios ocultos.
+
+## Critérios de aceitação (todos do briefing)
+
+Cobertos pelas Fases 2 (1–4), 3 (5–8), 10 (9–10), 4 (11–12), 5 (13–14), 6 (15–16), 7 (17), 8 (18–19), 9 (20), 1 (21–23).
+
+## Notas técnicas
+
+- Tudo opcional para preservar orçamentos antigos.
+- Sem renomear colunas existentes; só adicionar.
+- RLS por `organization_id` via `get_user_org_id()`/`get_org_member_ids()` em todas as novas tabelas, com GRANTs explícitos para `authenticated` e `service_role`.
+- Arredondamento financeiro centralizado em `src/lib/finance.ts`.
+- Migração executada em blocos pequenos com possibilidade de rollback manual (drop column / drop table).
+- Cada fase entregue em PR lógico independente; nada bloqueia uso atual entre fases.
+
+## Ordem de execução sugerida
+
+1. Fase 1 (DB) → 2. Fase 2 (labels) → 3. Fase 3 (fluxo) → 4. Fase 4 (modal) → 5. Fase 5 (catálogo) → 6. Fase 7 (IVA) → 7. Fase 10 (PDF) → 8. Fase 6 (Axia) → 9. Fase 8 (email) → 10. Fase 9 (condições).
