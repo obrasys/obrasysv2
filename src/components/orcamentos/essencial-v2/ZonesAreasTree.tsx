@@ -75,7 +75,7 @@ export function ZonesAreasTree({ items, allAreas, marginPercent }: Props) {
   if (chapterKeys.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Ainda não há itens. Adiciona serviços para os organizar por Zona e Área.
+        Ainda não há itens. Adiciona serviços para os organizar por Área e Tipo de Serviço.
       </div>
     );
   }
@@ -84,9 +84,9 @@ export function ZonesAreasTree({ items, allAreas, marginPercent }: Props) {
     <div className="rounded-2xl bg-card border border-border/50 p-4 md:p-6 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg md:text-xl font-bold text-foreground">Zonas e Áreas</h2>
+          <h2 className="text-lg md:text-xl font-bold text-foreground">Áreas e Tipos de Serviço</h2>
           <p className="text-xs text-muted-foreground">
-            Hierarquia Capítulo → Zona → Área → Serviço. Totais por nível.
+            Hierarquia Capítulo → Área de Intervenção → Tipo de Serviço → Item. Totais por nível.
           </p>
         </div>
       </div>
