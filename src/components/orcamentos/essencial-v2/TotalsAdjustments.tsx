@@ -224,6 +224,55 @@ export function TotalsAdjustments({
           </div>
         </div>
 
+        {/* Split VAT: separate rate for Labor vs Material */}
+        <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={splitVat}
+              onChange={(e) => onSplitVatChange?.(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm">
+              <span className="font-semibold text-foreground">Separar IVA Mão-de-Obra / Material</span>
+              <span className="block text-[11px] text-muted-foreground">
+                Útil quando a M.O. tem IVA reduzido (ex.: empreitada) e o material tem taxa normal.
+              </span>
+            </span>
+          </label>
+          {splitVat && (
+            <div className="grid grid-cols-2 gap-3 pl-6">
+              <div>
+                <Label className="text-xs text-muted-foreground">IVA M.O. %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={laborVatPercent}
+                  onChange={(e) => onLaborVatChange?.(parseFloat(e.target.value) || 0)}
+                  className="h-9 mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Base: {formatEUR(laborPortion)} · IVA: {formatEUR(vatLabor)}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">IVA Material %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={materialVatPercent}
+                  onChange={(e) => onMaterialVatChange?.(parseFloat(e.target.value) || 0)}
+                  className="h-9 mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Base: {formatEUR(materialPortion)} · IVA: {formatEUR(vatMaterial)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+
         <p className="text-xs text-muted-foreground">
           Contexto fiscal (opcional, apenas informativo - não altera IVA automaticamente):
         </p>
