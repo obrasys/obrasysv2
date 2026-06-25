@@ -158,9 +158,10 @@ export default function EssencialPage() {
   // Autosave — só depois do utilizador escolher (continuar/novo), para não sobrescrever rascunho com vazio
   useEffect(() => {
     if (!hydrated) return;
-    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType };
+    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType, splitVat, laborVatPercent, materialVatPercent };
     saveDraft(state);
-  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType]);
+  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType, splitVat, laborVatPercent, materialVatPercent]);
+
 
 
   // Computed
