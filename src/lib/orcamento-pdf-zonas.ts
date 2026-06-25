@@ -21,6 +21,15 @@ interface PdfProfile {
   empresa_logo_url?: string | null;
 }
 
+interface IvaBreakdown {
+  laborBase: number;
+  laborRate: number;
+  laborValue: number;
+  materialBase: number;
+  materialRate: number;
+  materialValue: number;
+}
+
 interface Options {
   orcamento: Orcamento;
   profile: PdfProfile | null;
@@ -28,7 +37,9 @@ interface Options {
   valorBase: number;
   valorIVA: number;
   valorFinal: number;
+  ivaBreakdown?: IvaBreakdown;
 }
+
 
 const PAGE = { ml: 15, mr: 15, mt: 18, mb: 22 };
 const COLORS = {
@@ -100,7 +111,8 @@ function drawFooter(doc: jsPDF, companyName: string, codigo: string) {
 }
 
 export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
-  const { orcamento, profile, taxaIVA, valorBase, valorIVA, valorFinal } = opts;
+  const { orcamento, profile, taxaIVA, valorBase, valorIVA, valorFinal, ivaBreakdown } = opts;
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const { pageW } = pageInfo(doc);
   const usableW = pageW - PAGE.ml - PAGE.mr;
@@ -343,22 +355,36 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
   }
 
   // ── TOTAIS ──
-  y = ensureSpace(doc, 30, y, drawSubHeader);
+  const totalsHeight = ivaBreakdown ? 34 : 22;
+  y = ensureSpace(doc, totalsHeight + 8, y, drawSubHeader);
   y += 4;
   doc.setFillColor(...COLORS.primaryLight);
-  doc.roundedRect(pageW - PAGE.mr - 80, y, 80, 22, 1.5, 1.5, 'F');
+  doc.roundedRect(pageW - PAGE.mr - 90, y, 90, totalsHeight, 1.5, 1.5, 'F');
   const tx = pageW - PAGE.mr - 4;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.dark);
-  doc.text('Subtotal:', pageW - PAGE.mr - 78, y + 5);
+  doc.text('Subtotal:', pageW - PAGE.mr - 88, y + 5);
   doc.text(fmt(valorBase), tx, y + 5, { align: 'right' });
-  doc.text(`IVA (${(taxaIVA * 100).toFixed(0)}%):`, pageW - PAGE.mr - 78, y + 11);
-  doc.text(fmt(valorIVA), tx, y + 11, { align: 'right' });
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.primary);
-  doc.text('TOTAL:', pageW - PAGE.mr - 78, y + 18);
-  doc.text(fmt(valorFinal), tx, y + 18, { align: 'right' });
+
+  if (ivaBreakdown) {
+    doc.text(`IVA M.O. (${ivaBreakdown.laborRate}%):`, pageW - PAGE.mr - 88, y + 11);
+    doc.text(fmt(ivaBreakdown.laborValue), tx, y + 11, { align: 'right' });
+    doc.text(`IVA Material (${ivaBreakdown.materialRate}%):`, pageW - PAGE.mr - 88, y + 17);
+    doc.text(fmt(ivaBreakdown.materialValue), tx, y + 17, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...COLORS.primary);
+    doc.text('TOTAL:', pageW - PAGE.mr - 88, y + 28);
+    doc.text(fmt(valorFinal), tx, y + 28, { align: 'right' });
+  } else {
+    doc.text(`IVA (${taxaIVA}%):`, pageW - PAGE.mr - 88, y + 11);
+    doc.text(fmt(valorIVA), tx, y + 11, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...COLORS.primary);
+    doc.text('TOTAL:', pageW - PAGE.mr - 88, y + 18);
+    doc.text(fmt(valorFinal), tx, y + 18, { align: 'right' });
+  }
+
 
   drawFooter(doc, companyName, orcamento.codigo || '');
   return doc.output('blob');

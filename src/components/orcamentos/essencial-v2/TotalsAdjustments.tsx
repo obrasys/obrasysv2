@@ -36,26 +36,42 @@ import {
 
 interface Props {
   subtotalBase: number;
+  laborBase?: number;
+  materialBase?: number;
   marginPercent: number;
   contingencyPercent: number;
   discountPercent: number;
   vatPercent: number;
+  splitVat?: boolean;
+  laborVatPercent?: number;
+  materialVatPercent?: number;
   onMarginChange: (v: number) => void;
   onContingencyChange: (v: number) => void;
   onDiscountChange: (v: number) => void;
   onVatChange: (v: number) => void;
+  onSplitVatChange?: (v: boolean) => void;
+  onLaborVatChange?: (v: number) => void;
+  onMaterialVatChange?: (v: number) => void;
 }
 
 export function TotalsAdjustments({
   subtotalBase,
+  laborBase = 0,
+  materialBase = 0,
   marginPercent,
   contingencyPercent,
   discountPercent,
   vatPercent,
+  splitVat = false,
+  laborVatPercent = 23,
+  materialVatPercent = 23,
   onMarginChange,
   onContingencyChange,
   onDiscountChange,
   onVatChange,
+  onSplitVatChange,
+  onLaborVatChange,
+  onMaterialVatChange,
 }: Props) {
   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
@@ -77,8 +93,17 @@ export function TotalsAdjustments({
   const afterContingency = subtotalWithMargin + contingencyValue;
   const discountValue = afterContingency * (discountPercent / 100);
   const subtotalBeforeVat = afterContingency - discountValue;
-  const vatValue = subtotalBeforeVat * (vatPercent / 100);
+
+  // Split VAT calculation (proportional to labor/material base)
+  const laborShare = subtotalBase > 0 ? laborBase / subtotalBase : 0;
+  const materialShare = subtotalBase > 0 ? materialBase / subtotalBase : 0;
+  const laborPortion = subtotalBeforeVat * laborShare;
+  const materialPortion = subtotalBeforeVat * materialShare;
+  const vatLabor = splitVat ? laborPortion * (laborVatPercent / 100) : 0;
+  const vatMaterial = splitVat ? materialPortion * (materialVatPercent / 100) : 0;
+  const vatValue = splitVat ? vatLabor + vatMaterial : subtotalBeforeVat * (vatPercent / 100);
   const totalFinal = subtotalBeforeVat + vatValue;
+
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm space-y-8">
@@ -199,6 +224,55 @@ export function TotalsAdjustments({
           </div>
         </div>
 
+        {/* Split VAT: separate rate for Labor vs Material */}
+        <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={splitVat}
+              onChange={(e) => onSplitVatChange?.(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm">
+              <span className="font-semibold text-foreground">Separar IVA Mão-de-Obra / Material</span>
+              <span className="block text-[11px] text-muted-foreground">
+                Útil quando a M.O. tem IVA reduzido (ex.: empreitada) e o material tem taxa normal.
+              </span>
+            </span>
+          </label>
+          {splitVat && (
+            <div className="grid grid-cols-2 gap-3 pl-6">
+              <div>
+                <Label className="text-xs text-muted-foreground">IVA M.O. %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={laborVatPercent}
+                  onChange={(e) => onLaborVatChange?.(parseFloat(e.target.value) || 0)}
+                  className="h-9 mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Base: {formatEUR(laborPortion)} · IVA: {formatEUR(vatLabor)}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">IVA Material %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={materialVatPercent}
+                  onChange={(e) => onMaterialVatChange?.(parseFloat(e.target.value) || 0)}
+                  className="h-9 mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Base: {formatEUR(materialPortion)} · IVA: {formatEUR(vatMaterial)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+
         <p className="text-xs text-muted-foreground">
           Contexto fiscal (opcional, apenas informativo - não altera IVA automaticamente):
         </p>
@@ -289,17 +363,19 @@ export function TotalsAdjustments({
           </div>
 
           <div>
-            <Label className="text-sm text-muted-foreground">IVA %</Label>
+            <Label className="text-sm text-muted-foreground">IVA % {splitVat && <span className="text-[10px]">(unificado — desligado)</span>}</Label>
             <Input
               type="number"
               min={0}
               max={100}
               value={vatPercent}
               onChange={(e) => onVatChange(parseFloat(e.target.value) || 0)}
-              className="h-11 text-base mt-1"
+              disabled={splitVat}
+              className="h-11 text-base mt-1 disabled:opacity-60"
             />
             <p className="text-xs text-muted-foreground mt-1">IVA € = {formatEUR(vatValue)}</p>
           </div>
+
         </div>
 
         {/* Right - Summary lines */}
@@ -334,10 +410,24 @@ export function TotalsAdjustments({
             <span className="text-muted-foreground">Subtotal antes de IVA</span>
             <span className="font-semibold tabular-nums">{formatEUR(subtotalBeforeVat)}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">IVA ({vatPercent}%)</span>
-            <span className="font-medium tabular-nums">{formatEUR(vatValue)}</span>
-          </div>
+          {splitVat ? (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA M.O. ({laborVatPercent}%)</span>
+                <span className="font-medium tabular-nums">{formatEUR(vatLabor)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA Material ({materialVatPercent}%)</span>
+                <span className="font-medium tabular-nums">{formatEUR(vatMaterial)}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">IVA ({vatPercent}%)</span>
+              <span className="font-medium tabular-nums">{formatEUR(vatValue)}</span>
+            </div>
+          )}
+
           <div className="border-t-2 border-foreground/20 pt-3 flex justify-between">
             <span className="text-base font-bold text-foreground">Total Final c/ IVA</span>
             <span className="text-xl font-black tabular-nums text-foreground">{formatEUR(totalFinal)}</span>

@@ -54,7 +54,11 @@ interface DraftState {
   vatPercent: number;
   marginPercent: number;
   propertyType?: string;
+  splitVat?: boolean;
+  laborVatPercent?: number;
+  materialVatPercent?: number;
 }
+
 
 function getDefaultClientInfo(): BudgetClientInfo {
   const today = new Date();
@@ -101,6 +105,9 @@ export default function EssencialPage() {
   const [contingencyPercent, setContingencyPercent] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [vatPercent, setVatPercent] = useState(23);
+  const [splitVat, setSplitVat] = useState(false);
+  const [laborVatPercent, setLaborVatPercent] = useState(6);
+  const [materialVatPercent, setMaterialVatPercent] = useState(23);
   const [marginPercent, setMarginPercent] = useState(0);
   const [observationsText, setObservationsText] = useState<string>('');
   const [propertyType, setPropertyType] = useState<string>('');
@@ -108,6 +115,7 @@ export default function EssencialPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [exportGrouping, setExportGrouping] = useState<ExportGrouping>('chapter');
+
 
   // Prompt para retomar rascunho anterior (em vez de o restaurar silenciosamente)
   const [resumeDraft, setResumeDraft] = useState<DraftState | null>(null);
@@ -150,9 +158,10 @@ export default function EssencialPage() {
   // Autosave — só depois do utilizador escolher (continuar/novo), para não sobrescrever rascunho com vazio
   useEffect(() => {
     if (!hydrated) return;
-    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType };
+    const state: DraftState = { budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType, splitVat, laborVatPercent, materialVatPercent };
     saveDraft(state);
-  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType]);
+  }, [hydrated, budgetType, items, customAreas, clientInfo, contingencyPercent, discountPercent, vatPercent, marginPercent, propertyType, splitVat, laborVatPercent, materialVatPercent]);
+
 
 
   // Computed
@@ -169,6 +178,22 @@ export default function EssencialPage() {
   });
 
   const subtotalBase = items.reduce((sum, item) => sum + computeItemTotals(item).subtotal, 0);
+  const laborBase = items.reduce((sum, item) => sum + computeItemTotals(item).totalLabor, 0);
+  const materialBase = items.reduce((sum, item) => sum + computeItemTotals(item).totalMaterial, 0);
+
+  // Helper to compute final VAT (single or split)
+  const computeVat = (subtotalBeforeVat: number) => {
+    if (!splitVat || subtotalBase <= 0) {
+      const vatValue = subtotalBeforeVat * (vatPercent / 100);
+      return { vatValue, vatLabor: 0, vatMaterial: 0, laborPortion: 0, materialPortion: 0 };
+    }
+    const laborPortion = subtotalBeforeVat * (laborBase / subtotalBase);
+    const materialPortion = subtotalBeforeVat * (materialBase / subtotalBase);
+    const vatLabor = laborPortion * (laborVatPercent / 100);
+    const vatMaterial = materialPortion * (materialVatPercent / 100);
+    return { vatValue: vatLabor + vatMaterial, vatLabor, vatMaterial, laborPortion, materialPortion };
+  };
+
 
   // Handlers
   const handleTypeChange = (type: BudgetType) => {
@@ -202,6 +227,10 @@ export default function EssencialPage() {
     setContingencyPercent(0);
     setDiscountPercent(0);
     setVatPercent(23);
+    setSplitVat(false);
+    setLaborVatPercent(6);
+    setMaterialVatPercent(23);
+
     setMarginPercent(0);
     setObservationsText('');
     setClientInfo(getDefaultClientInfo());
@@ -234,7 +263,8 @@ export default function EssencialPage() {
     const afterContingency = subtotalWithMargin + contingencyValue;
     const discountValue = afterContingency * (discountPercent / 100);
     const subtotalBeforeVat = afterContingency - discountValue;
-    const vatValue = subtotalBeforeVat * (vatPercent / 100);
+    const { vatValue } = computeVat(subtotalBeforeVat);
+
     const totalFinal = subtotalBeforeVat + vatValue;
 
     // Group items by area → chapters (and optionally by zone/area for export)
@@ -396,6 +426,21 @@ export default function EssencialPage() {
           valorIVA,
         });
       } else if (format === 'zonas') {
+        // Build IVA breakdown when split VAT is active
+        const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
+        const afterContingency = subtotalWithMargin * (1 + contingencyPercent / 100);
+        const subtotalBeforeVat = afterContingency * (1 - discountPercent / 100);
+        const { vatLabor, vatMaterial, laborPortion, materialPortion } = computeVat(subtotalBeforeVat);
+        const ivaBreakdown = splitVat
+          ? {
+              laborBase: laborPortion,
+              laborRate: laborVatPercent,
+              laborValue: vatLabor,
+              materialBase: materialPortion,
+              materialRate: materialVatPercent,
+              materialValue: vatMaterial,
+            }
+          : undefined;
         blob = await generateOrcamentoPdfZonas({
           orcamento,
           profile,
@@ -403,7 +448,9 @@ export default function EssencialPage() {
           valorBase,
           valorIVA,
           valorFinal,
+          ivaBreakdown,
         });
+
       } else {
         blob = await generateOrcamentoPdf({
           orcamento,
@@ -485,7 +532,8 @@ export default function EssencialPage() {
       const afterContingency = subtotalWithMargin + contingencyValue;
       const discountValue = afterContingency * (discountPercent / 100);
       const subtotalBeforeVat = afterContingency - discountValue;
-      const vatValue = subtotalBeforeVat * (vatPercent / 100);
+      const { vatValue } = computeVat(subtotalBeforeVat);
+
       const totalFinal = subtotalBeforeVat + vatValue;
 
       // Create orcamento
@@ -721,15 +769,24 @@ export default function EssencialPage() {
           {budgetType && items.length > 0 && (
             <TotalsAdjustments
               subtotalBase={subtotalBase}
+              laborBase={laborBase}
+              materialBase={materialBase}
               marginPercent={marginPercent}
               contingencyPercent={contingencyPercent}
               discountPercent={discountPercent}
               vatPercent={vatPercent}
+              splitVat={splitVat}
+              laborVatPercent={laborVatPercent}
+              materialVatPercent={materialVatPercent}
               onMarginChange={setMarginPercent}
               onContingencyChange={setContingencyPercent}
               onDiscountChange={setDiscountPercent}
               onVatChange={setVatPercent}
+              onSplitVatChange={setSplitVat}
+              onLaborVatChange={setLaborVatPercent}
+              onMaterialVatChange={setMaterialVatPercent}
             />
+
           )}
 
           {/* E.1 - Observações do rodapé */}
@@ -830,6 +887,10 @@ export default function EssencialPage() {
                   setContingencyPercent(resumeDraft.contingencyPercent ?? 0);
                   setDiscountPercent(resumeDraft.discountPercent ?? 0);
                   setVatPercent(resumeDraft.vatPercent ?? 23);
+                  setSplitVat(resumeDraft.splitVat ?? false);
+                  setLaborVatPercent(resumeDraft.laborVatPercent ?? 6);
+                  setMaterialVatPercent(resumeDraft.materialVatPercent ?? 23);
+
                   setMarginPercent(resumeDraft.marginPercent ?? 0);
                   setObservationsText(((resumeDraft as any)?.observationsText) ?? '');
                   setPropertyType((resumeDraft as any)?.propertyType ?? '');
