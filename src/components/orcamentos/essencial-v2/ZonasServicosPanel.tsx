@@ -3,8 +3,10 @@ import { cn } from '@/lib/utils';
 import {
   type AreaConfig,
   type ZoneOption,
+  type InterventionContext,
   ZONAS_PREDEFINIDAS,
   SERVICOS_POR_ZONA,
+  CONTEXT_OPTIONS,
 } from '@/types/orcamento-essencial';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,14 +41,16 @@ export const TIPOLOGIAS_IMOVEL: { value: string; label: string }[] = [
 
 const ADD_NEW_TIPOLOGIA = '__add_new_tipologia__';
 
+type ContextFilter = InterventionContext | 'todas';
+
 interface Props {
   /** Áreas do tipo de obra (catálogo de itens). */
   systemAreas: AreaConfig[];
   /** Counts agrupados por chave composta `${zoneKey}::${areaKey}` ou só `areaKey`. */
   itemCounts: Record<string, number>;
-  /** Chamado quando o utilizador escolhe Zona + Tipo de Serviço. */
+  /** Chamado quando o utilizador escolhe Área + Tipo de Serviço. */
   onServiceClick: (zone: ZoneOption, service: AreaConfig) => void;
-  /** Tipologia do imóvel (apartamento, moradia, etc.). */
+  /** Zona de Intervenção (apartamento, moradia, etc. — antiga "tipologia"). */
   propertyType?: string;
   onPropertyTypeChange?: (value: string) => void;
 }
@@ -57,17 +61,30 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
 
   const [showNewZone, setShowNewZone] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
+  const [newZoneContext, setNewZoneContext] = useState<InterventionContext>('interior');
   const [showNewTipologia, setShowNewTipologia] = useState(false);
   const [newTipologiaName, setNewTipologiaName] = useState('');
   const [activeZone, setActiveZone] = useState<ZoneOption | null>(null);
+  const [contextFilter, setContextFilter] = useState<ContextFilter>('todas');
 
-  const allZones = [...ZONAS_PREDEFINIDAS, ...customZones];
+  // Custom zones default to 'geral' so aparecem em todos os filtros
+  const allZones: ZoneOption[] = [
+    ...ZONAS_PREDEFINIDAS,
+    ...customZones.map((z) => ({ ...z, context: 'geral' as InterventionContext })),
+  ];
   const allTipologias = [...TIPOLOGIAS_IMOVEL, ...customTipologias];
+
+  const visibleZones = allZones.filter((z) => {
+    if (contextFilter === 'todas') return true;
+    if (!z.context || z.context === 'geral') return true;
+    return z.context === contextFilter;
+  });
 
   const handleAddZone = () => {
     const z = addZone(newZoneName);
     if (z) {
       setNewZoneName('');
+      setNewZoneContext('interior');
       setShowNewZone(false);
     }
   };
@@ -97,16 +114,21 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
   const countForZoneService = (zoneLabel: string, areaKey: string) =>
     itemCounts[`${zoneLabel}::${areaKey}`] || 0;
 
+  const contextTabs: { value: ContextFilter; label: string }[] = [
+    { value: 'todas', label: 'Todas' },
+    ...CONTEXT_OPTIONS.map((c) => ({ value: c.value as ContextFilter, label: c.label })),
+  ];
+
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
-      {/* Tipologia do imóvel */}
+      {/* Zona de Intervenção (antiga Tipologia) */}
       {onPropertyTypeChange && (
         <div className="mb-6 pb-5 border-b border-border/60">
           <div className="flex items-center justify-between gap-4 mb-3">
             <div>
-              <h2 className="text-lg md:text-xl font-bold text-foreground">Tipologia do imóvel</h2>
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Zona de Intervenção</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Escolhe da lista ou adiciona uma tipologia tua — fica guardada para os próximos orçamentos.
+                Tipo de imóvel onde vai decorrer a obra (apartamento, moradia, fração…). Podes adicionar uma própria — fica guardada para os próximos orçamentos.
               </p>
             </div>
           </div>
@@ -123,7 +145,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
               }}
             >
               <SelectTrigger className="h-10">
-                <SelectValue placeholder="Seleciona a tipologia" />
+                <SelectValue placeholder="Seleciona a zona de intervenção" />
               </SelectTrigger>
               <SelectContent>
                 {TIPOLOGIAS_IMOVEL.map((t) => (
@@ -141,7 +163,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
                 <SelectSeparator />
                 <SelectItem value={ADD_NEW_TIPOLOGIA}>
                   <span className="flex items-center gap-1.5 text-primary">
-                    <Plus className="h-3.5 w-3.5" /> Adicionar nova tipologia…
+                    <Plus className="h-3.5 w-3.5" /> Adicionar nova…
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -152,7 +174,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                title="Eliminar tipologia personalizada"
+                title="Eliminar zona de intervenção personalizada"
                 onClick={() => {
                   removeTipologia(propertyType);
                   onPropertyTypeChange('');
@@ -165,27 +187,46 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
 
           {propertyType && (
             <p className="text-xs text-muted-foreground mt-2">
-              Tipologia selecionada: <span className="text-foreground font-medium">{allTipologias.find((t) => t.value === propertyType)?.label || propertyType}</span>
+              Selecionada: <span className="text-foreground font-medium">{allTipologias.find((t) => t.value === propertyType)?.label || propertyType}</span>
             </p>
           )}
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-5">
+      {/* Área de Intervenção */}
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-lg md:text-xl font-bold text-foreground">Zonas</h2>
+          <h2 className="text-lg md:text-xl font-bold text-foreground">Área de Intervenção</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Escolhe uma zona ou adiciona uma tua — as personalizadas ficam guardadas para reutilização.
+            Escolhe primeiro o contexto (interior ou exterior) e depois a área a intervir.
           </p>
         </div>
         <Button size="sm" onClick={() => setShowNewZone(true)} className="gap-1.5">
           <Plus className="h-4 w-4" />
-          Nova zona
+          Nova área
         </Button>
       </div>
 
+      {/* Contexto: tabs Interior / Exterior / Geral / Todas */}
+      <div className="flex flex-wrap gap-1.5 mb-4 border-b border-border/60 pb-3">
+        {contextTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setContextFilter(tab.value)}
+            className={cn(
+              'h-8 px-3 rounded-lg text-xs font-medium border transition-all',
+              contextFilter === tab.value
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/40'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap gap-2.5">
-        {allZones.map((zone) => {
+        {visibleZones.map((zone) => {
           const count = countForZone(zone.label);
           const isCustom = zone.key.startsWith('custom_zone_');
           return (
@@ -212,7 +253,7 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
                 <button
                   onClick={(e) => { e.stopPropagation(); removeZone(zone.key); }}
                   className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive/10 hidden group-hover:flex items-center justify-center hover:bg-destructive/20 text-destructive"
-                  title="Eliminar zona personalizada"
+                  title="Eliminar área personalizada"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -220,25 +261,43 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
             </div>
           );
         })}
+        {visibleZones.length === 0 && (
+          <p className="text-xs text-muted-foreground py-3">
+            Nenhuma área para este contexto. Muda o filtro ou adiciona uma nova área.
+          </p>
+        )}
       </div>
 
-      {/* Dialog: nova zona */}
+      {/* Dialog: nova área de intervenção */}
       <Dialog open={showNewZone} onOpenChange={setShowNewZone}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Zona</DialogTitle>
+            <DialogTitle>Nova Área de Intervenção</DialogTitle>
             <DialogDescription>
-              Esta zona fica guardada na tua conta e disponível em todos os próximos orçamentos.
+              Esta área fica guardada na tua conta e disponível em todos os próximos orçamentos.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Ex.: Apartamento 2º Esq."
+              placeholder="Ex.: Sala de Cinema, Wine Cellar…"
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddZone()}
               autoFocus
             />
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Contexto</label>
+              <Select value={newZoneContext} onValueChange={(v) => setNewZoneContext(v as InterventionContext)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONTEXT_OPTIONS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowNewZone(false)}>Cancelar</Button>
               <Button onClick={handleAddZone} disabled={!newZoneName.trim()}>Adicionar</Button>
@@ -247,13 +306,13 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: nova tipologia */}
+      {/* Dialog: nova zona de intervenção (tipologia) */}
       <Dialog open={showNewTipologia} onOpenChange={setShowNewTipologia}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Tipologia</DialogTitle>
+            <DialogTitle>Nova Zona de Intervenção</DialogTitle>
             <DialogDescription>
-              A tipologia fica guardada na tua conta para reutilizares.
+              Fica guardada na tua conta para reutilizares.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -272,14 +331,14 @@ export function ZonasServicosPanel({ systemAreas, itemCounts, onServiceClick, pr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: tipos de serviço para a zona ativa */}
+      {/* Dialog: tipos de serviço para a área ativa */}
       <Dialog open={!!activeZone} onOpenChange={(open) => { if (!open) setActiveZone(null); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{activeZone?.label} · Tipos de Serviço</DialogTitle>
             <DialogDescription>
-              Escolhe o tipo de serviço a orçamentar nesta zona. Os itens vão ficar
-              agrupados por <strong>Zona › Tipo de Serviço</strong> no resumo e nos PDFs.
+              Escolhe o tipo de serviço a orçamentar nesta área. Os itens vão ficar
+              agrupados por <strong>Área › Tipo de Serviço</strong> no resumo e nos PDFs.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-wrap gap-2 pt-2">
