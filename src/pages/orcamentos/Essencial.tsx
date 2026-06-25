@@ -837,6 +837,13 @@ export default function EssencialPage() {
             </Card>
           )}
 
+          {/* E.2 - Condições Comerciais */}
+          {budgetType && items.length > 0 && (
+            <BudgetTermsCard value={commercialTerms} onChange={setCommercialTerms} />
+          )}
+
+
+
 
           {/* F - Client Identification */}
           {budgetType && items.length > 0 && (
