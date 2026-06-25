@@ -21,6 +21,15 @@ interface PdfProfile {
   empresa_logo_url?: string | null;
 }
 
+interface IvaBreakdown {
+  laborBase: number;
+  laborRate: number;
+  laborValue: number;
+  materialBase: number;
+  materialRate: number;
+  materialValue: number;
+}
+
 interface Options {
   orcamento: Orcamento;
   profile: PdfProfile | null;
@@ -28,7 +37,9 @@ interface Options {
   valorBase: number;
   valorIVA: number;
   valorFinal: number;
+  ivaBreakdown?: IvaBreakdown;
 }
+
 
 const PAGE = { ml: 15, mr: 15, mt: 18, mb: 22 };
 const COLORS = {
