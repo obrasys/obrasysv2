@@ -332,6 +332,7 @@ export function useOrcamentos() {
             margem_lucro_artigo: art.margem_lucro_artigo || 0,
             preco_unitario: art.preco_unitario,
             ordem: art.ordem,
+            property_type_name: art.property_type_name ?? null,
           }));
 
           const { error: artError } = await supabase
@@ -459,6 +460,7 @@ export function useOrcamento(id: string | undefined) {
               zone_name: a.zone_id ? zoneMap.get(a.zone_id) ?? null : (a.zone_name ?? null),
               area_name: a.area_id ? areaMap.get(a.area_id) ?? null : (a.area_name ?? null),
               service_type_name: a.service_type_name ?? null,
+              property_type_name: a.property_type_name ?? null,
             })),
         }));
 
@@ -571,6 +573,7 @@ export function useOrcamento(id: string | undefined) {
           area_id: (formData as any).area_id ?? null,
           service_type_id: (formData as any).service_type_id ?? null,
           service_type_name: (formData as any).service_type_name ?? null,
+          property_type_name: (formData as any).property_type_name ?? null,
         })
         .select()
         .single();

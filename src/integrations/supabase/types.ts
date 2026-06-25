@@ -370,6 +370,7 @@ export type Database = {
           plant_source: Json | null
           preco_base: number | null
           preco_unitario: number
+          property_type_name: string | null
           quantidade: number
           quantity_source: string
           service_type_id: string | null
@@ -414,6 +415,7 @@ export type Database = {
           plant_source?: Json | null
           preco_base?: number | null
           preco_unitario?: number
+          property_type_name?: string | null
           quantidade?: number
           quantity_source?: string
           service_type_id?: string | null
@@ -458,6 +460,7 @@ export type Database = {
           plant_source?: Json | null
           preco_base?: number | null
           preco_unitario?: number
+          property_type_name?: string | null
           quantidade?: number
           quantity_source?: string
           service_type_id?: string | null

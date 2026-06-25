@@ -51,8 +51,11 @@ export function ArtigoRow({ artigo, onEdit, onDelete, isReadOnly = false, visibl
               )}
               <div className="min-w-0">
                 <span className="line-clamp-2 break-words">{value}</span>
-                {(artigo.zone_name || artigo.area_name) && (
+                {(artigo.zone_name || artigo.area_name || artigo.property_type_name) && (
                   <div className="flex flex-wrap gap-1 mt-1">
+                    {artigo.property_type_name && (
+                      <Badge variant="default" className="text-[10px] font-normal">Zona Int.: {artigo.property_type_name}</Badge>
+                    )}
                     {artigo.zone_name && (
                       <Badge variant="secondary" className="text-[10px] font-normal">Zona: {artigo.zone_name}</Badge>
                     )}
