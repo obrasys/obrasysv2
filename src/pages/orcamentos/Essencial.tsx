@@ -227,6 +227,10 @@ export default function EssencialPage() {
     setContingencyPercent(0);
     setDiscountPercent(0);
     setVatPercent(23);
+    setSplitVat(false);
+    setLaborVatPercent(6);
+    setMaterialVatPercent(23);
+
     setMarginPercent(0);
     setObservationsText('');
     setClientInfo(getDefaultClientInfo());
