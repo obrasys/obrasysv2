@@ -422,6 +422,21 @@ export default function EssencialPage() {
           valorIVA,
         });
       } else if (format === 'zonas') {
+        // Build IVA breakdown when split VAT is active
+        const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
+        const afterContingency = subtotalWithMargin * (1 + contingencyPercent / 100);
+        const subtotalBeforeVat = afterContingency * (1 - discountPercent / 100);
+        const { vatLabor, vatMaterial, laborPortion, materialPortion } = computeVat(subtotalBeforeVat);
+        const ivaBreakdown = splitVat
+          ? {
+              laborBase: laborPortion,
+              laborRate: laborVatPercent,
+              laborValue: vatLabor,
+              materialBase: materialPortion,
+              materialRate: materialVatPercent,
+              materialValue: vatMaterial,
+            }
+          : undefined;
         blob = await generateOrcamentoPdfZonas({
           orcamento,
           profile,
@@ -429,7 +444,9 @@ export default function EssencialPage() {
           valorBase,
           valorIVA,
           valorFinal,
+          ivaBreakdown,
         });
+
       } else {
         blob = await generateOrcamentoPdf({
           orcamento,
