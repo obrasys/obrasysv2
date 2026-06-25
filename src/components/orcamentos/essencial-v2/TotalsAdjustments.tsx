@@ -410,10 +410,24 @@ export function TotalsAdjustments({
             <span className="text-muted-foreground">Subtotal antes de IVA</span>
             <span className="font-semibold tabular-nums">{formatEUR(subtotalBeforeVat)}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">IVA ({vatPercent}%)</span>
-            <span className="font-medium tabular-nums">{formatEUR(vatValue)}</span>
-          </div>
+          {splitVat ? (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA M.O. ({laborVatPercent}%)</span>
+                <span className="font-medium tabular-nums">{formatEUR(vatLabor)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA Material ({materialVatPercent}%)</span>
+                <span className="font-medium tabular-nums">{formatEUR(vatMaterial)}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">IVA ({vatPercent}%)</span>
+              <span className="font-medium tabular-nums">{formatEUR(vatValue)}</span>
+            </div>
+          )}
+
           <div className="border-t-2 border-foreground/20 pt-3 flex justify-between">
             <span className="text-base font-bold text-foreground">Total Final c/ IVA</span>
             <span className="text-xl font-black tabular-nums text-foreground">{formatEUR(totalFinal)}</span>
