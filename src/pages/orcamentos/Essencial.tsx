@@ -466,6 +466,22 @@ export default function EssencialPage() {
         profile = data;
       }
 
+      // Build IVA breakdown once (shared by comercial + zonas) when split VAT is active
+      const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
+      const afterContingency = subtotalWithMargin * (1 + contingencyPercent / 100);
+      const subtotalBeforeVat = afterContingency * (1 - discountPercent / 100);
+      const { vatLabor, vatMaterial, laborPortion, materialPortion } = computeVat(subtotalBeforeVat);
+      const ivaBreakdown = splitVat
+        ? {
+            laborBase: laborPortion,
+            laborRate: laborVatPercent,
+            laborValue: vatLabor,
+            materialBase: materialPortion,
+            materialRate: materialVatPercent,
+            materialValue: vatMaterial,
+          }
+        : undefined;
+
       let blob: Blob;
       if (format === 'comercial') {
         blob = await generateComercialPdf({
@@ -475,23 +491,9 @@ export default function EssencialPage() {
           taxaIVA: vatPercent,
           valorBase,
           valorIVA,
+          ivaBreakdown,
         });
       } else if (format === 'zonas') {
-        // Build IVA breakdown when split VAT is active
-        const subtotalWithMargin = marginPercent > 0 ? calcPrecoVenda(subtotalBase, marginPercent) : subtotalBase;
-        const afterContingency = subtotalWithMargin * (1 + contingencyPercent / 100);
-        const subtotalBeforeVat = afterContingency * (1 - discountPercent / 100);
-        const { vatLabor, vatMaterial, laborPortion, materialPortion } = computeVat(subtotalBeforeVat);
-        const ivaBreakdown = splitVat
-          ? {
-              laborBase: laborPortion,
-              laborRate: laborVatPercent,
-              laborValue: vatLabor,
-              materialBase: materialPortion,
-              materialRate: materialVatPercent,
-              materialValue: vatMaterial,
-            }
-          : undefined;
         blob = await generateOrcamentoPdfZonas({
           orcamento,
           profile,
@@ -503,6 +505,7 @@ export default function EssencialPage() {
         });
 
       } else {
+
         blob = await generateOrcamentoPdf({
           orcamento,
           profile,
