@@ -54,7 +54,11 @@ interface DraftState {
   vatPercent: number;
   marginPercent: number;
   propertyType?: string;
+  splitVat?: boolean;
+  laborVatPercent?: number;
+  materialVatPercent?: number;
 }
+
 
 function getDefaultClientInfo(): BudgetClientInfo {
   const today = new Date();
