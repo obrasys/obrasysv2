@@ -209,8 +209,18 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                     </div>
 
 
-                    {/* Zona / Área opcional — datalist com nomes já usados */}
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-2 pl-1">
+                    {/* Zona Int. / Zona / Área opcional — datalist com nomes já usados */}
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr] gap-2 pl-1">
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider shrink-0">Zona Int.</span>
+                        <Input
+                          list="property-types-all"
+                          placeholder="Apartamento 01…"
+                          value={item.propertyTypeName ?? ''}
+                          onChange={(e) => onUpdateItem(item.id, { propertyTypeName: e.target.value || undefined })}
+                          className="h-7 text-xs"
+                        />
+                      </label>
                       <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <MapPin className="h-3 w-3 shrink-0" />
                         <Input
@@ -219,7 +229,6 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                           value={item.zoneName ?? ''}
                           onChange={(e) => {
                             const z = e.target.value;
-                            // Mudou zona → limpar área se não pertencer
                             onUpdateItem(item.id, {
                               zoneName: z || undefined,
                               ...(z ? {} : { areaName: undefined }),
