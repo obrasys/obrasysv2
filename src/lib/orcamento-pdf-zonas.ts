@@ -279,7 +279,7 @@ export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
       const propArtigos = byProp.get(propKey)!;
       const propLabel = propKey === '__SEM_PROP__' ? '' : propKey;
 
-      if (propLabel && hasAnyProp) {
+      if (propLabel) {
         y = ensureSpace(doc, 10, y, drawSubHeader);
         doc.setFillColor(...COLORS.primaryLight);
         doc.roundedRect(PAGE.ml, y, usableW, 7, 1, 1, 'F');

@@ -19,6 +19,15 @@ interface PdfProfile {
   empresa_logo_url?: string | null;
 }
 
+interface IvaBreakdown {
+  laborBase: number;
+  laborRate: number;
+  laborValue: number;
+  materialBase: number;
+  materialRate: number;
+  materialValue: number;
+}
+
 interface ComercialPdfOptions {
   orcamento: Orcamento;
   profile: PdfProfile | null;
@@ -26,7 +35,9 @@ interface ComercialPdfOptions {
   taxaIVA: number;
   valorBase: number;
   valorIVA: number;
+  ivaBreakdown?: IvaBreakdown;
 }
+
 
 const COLORS = {
   primary: [37, 99, 235] as [number, number, number],
@@ -123,7 +134,7 @@ async function loadImage(url: string): Promise<{ data: string; width: number; he
 }
 
 export async function generateComercialPdf(options: ComercialPdfOptions): Promise<Blob> {
-  const { orcamento, profile, valorFinal, taxaIVA, valorBase, valorIVA } = options;
+  const { orcamento, profile, valorFinal, taxaIVA, valorBase, valorIVA, ivaBreakdown } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const { uw, pw } = usable(doc);
@@ -260,19 +271,51 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
     doc.text(chTitle, PAGE.left, y);
     y += 5;
 
-    // List article descriptions (no price, no qty, no unit)
-    const artigos = (cap.artigos || []).sort((a, b) => a.ordem - b.ordem);
+    // List article descriptions (no price, no qty, no unit) — grouped by Zona de Intervenção
+    const artigos = (cap.artigos || []).slice().sort((a, b) => a.ordem - b.ordem);
     if (artigos.length > 0) {
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...COLORS.text);
+      // Group by property_type_name (Zona de Intervenção)
+      const sortPt = (a: string, b: string) =>
+        a.localeCompare(b, 'pt', { numeric: true, sensitivity: 'base' });
+      const groups = new Map<string, typeof artigos>();
       for (const art of artigos) {
-        const desc = art.descricao;
-        const wrapped = doc.splitTextToSize(`- ${desc}`, uw - 4);
-        for (let j = 0; j < wrapped.length; j++) {
-          y = ensureSpace(doc, 4.5, y);
-          doc.text(wrapped[j], PAGE.left + 2, y);
-          y += 4.2;
+        const key = ((art as any).property_type_name || '').trim() || '__SEM_PROP__';
+        if (!groups.has(key)) groups.set(key, [] as typeof artigos);
+        groups.get(key)!.push(art);
+      }
+      const groupKeys = [...groups.keys()].sort(sortPt);
+      const hasAnyProp = groupKeys.some((k) => k !== '__SEM_PROP__');
+
+      for (const gk of groupKeys) {
+        const groupArtigos = groups.get(gk)!;
+        const propLabel = gk === '__SEM_PROP__' ? '' : gk;
+
+        if (propLabel && hasAnyProp) {
+          y = ensureSpace(doc, 7, y);
+          doc.setFontSize(9.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...COLORS.primary);
+          doc.text(`Zona de Intervenção: ${propLabel}`, PAGE.left, y);
+          y += 5;
+        }
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...COLORS.text);
+        for (const art of groupArtigos) {
+          const zona = ((art as any).zone_name || '').trim();
+          const area = ((art as any).area_name || '').trim();
+          const ctxBits: string[] = [];
+          if (zona) ctxBits.push(`Zona: ${zona}`);
+          if (area) ctxBits.push(`Área: ${area}`);
+          const ctx = ctxBits.length ? ` (${ctxBits.join(' • ')})` : '';
+          const desc = art.descricao + ctx;
+          const wrapped = doc.splitTextToSize(`- ${desc}`, uw - 4);
+          for (let j = 0; j < wrapped.length; j++) {
+            y = ensureSpace(doc, 4.5, y);
+            doc.text(wrapped[j], PAGE.left + 2, y);
+            y += 4.2;
+          }
         }
       }
     } else if (cap.client_summary_text) {
@@ -290,6 +333,8 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
         }
       }
     }
+
+
 
     // Exclusions
     if (cap.client_exclusions_text) {
@@ -317,28 +362,44 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
   }
 
   // ─── TOTAL (boxed) ────────────────────────────────────────
-  y = ensureSpace(doc, 18, y);
+  const boxH = ivaBreakdown ? 30 : 16;
+  y = ensureSpace(doc, boxH + 4, y);
   y += 3;
-
-  const totalLabel = `Orçamento total: ${fmt(valorBase)} (+ IVA ${taxaIVA}%)`;
-  const grandLabel = `Total com IVA: ${fmt(valorFinal)}`;
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.dark);
 
-  // Draw bordered box
-  const boxH = 16;
   const boxW = uw;
   doc.setDrawColor(...COLORS.primary);
   doc.setLineWidth(0.6);
   doc.rect(PAGE.left, y - 1, boxW, boxH);
 
-  doc.text(totalLabel, PAGE.left + 4, y + 4);
-  doc.setFontSize(12);
-  doc.text(grandLabel, PAGE.left + 4, y + 11);
+  if (ivaBreakdown) {
+    doc.setFontSize(10);
+    doc.text(`Orçamento (s/ IVA): ${fmt(valorBase)}`, PAGE.left + 4, y + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(
+      `IVA Mão-de-Obra (${ivaBreakdown.laborRate}% s/ ${fmt(ivaBreakdown.laborBase)}): ${fmt(ivaBreakdown.laborValue)}`,
+      PAGE.left + 4, y + 11,
+    );
+    doc.text(
+      `IVA Material (${ivaBreakdown.materialRate}% s/ ${fmt(ivaBreakdown.materialBase)}): ${fmt(ivaBreakdown.materialValue)}`,
+      PAGE.left + 4, y + 17,
+    );
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...COLORS.primary);
+    doc.text(`Total com IVA: ${fmt(valorFinal)}`, PAGE.left + 4, y + 25);
+  } else {
+    doc.text(`Orçamento total: ${fmt(valorBase)} (+ IVA ${taxaIVA}%)`, PAGE.left + 4, y + 4);
+    doc.setFontSize(12);
+    doc.text(`Total com IVA: ${fmt(valorFinal)}`, PAGE.left + 4, y + 11);
+  }
 
   y += boxH + 6;
+
 
   // ─── CONDITIONS FOOTER ────────────────────────────────────
   // Payment terms
