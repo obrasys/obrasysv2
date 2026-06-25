@@ -573,6 +573,7 @@ export function useOrcamento(id: string | undefined) {
           area_id: (formData as any).area_id ?? null,
           service_type_id: (formData as any).service_type_id ?? null,
           service_type_name: (formData as any).service_type_name ?? null,
+          property_type_name: (formData as any).property_type_name ?? null,
         })
         .select()
         .single();
