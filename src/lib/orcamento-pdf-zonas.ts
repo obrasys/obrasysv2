@@ -111,7 +111,8 @@ function drawFooter(doc: jsPDF, companyName: string, codigo: string) {
 }
 
 export async function generateOrcamentoPdfZonas(opts: Options): Promise<Blob> {
-  const { orcamento, profile, taxaIVA, valorBase, valorIVA, valorFinal } = opts;
+  const { orcamento, profile, taxaIVA, valorBase, valorIVA, valorFinal, ivaBreakdown } = opts;
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const { pageW } = pageInfo(doc);
   const usableW = pageW - PAGE.ml - PAGE.mr;
