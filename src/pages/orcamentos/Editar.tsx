@@ -343,6 +343,7 @@ export default function EditarOrcamentoPage({ embeddedId }: EditarOrcamentoPageP
           area_id: a.area_id ?? null,
           zone_name: a.zone_name ?? null,
           area_name: a.area_name ?? null,
+          property_type_name: a.property_type_name ?? null,
         };
       }
     }
