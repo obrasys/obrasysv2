@@ -19,6 +19,15 @@ interface PdfProfile {
   empresa_logo_url?: string | null;
 }
 
+interface IvaBreakdown {
+  laborBase: number;
+  laborRate: number;
+  laborValue: number;
+  materialBase: number;
+  materialRate: number;
+  materialValue: number;
+}
+
 interface ComercialPdfOptions {
   orcamento: Orcamento;
   profile: PdfProfile | null;
@@ -26,7 +35,9 @@ interface ComercialPdfOptions {
   taxaIVA: number;
   valorBase: number;
   valorIVA: number;
+  ivaBreakdown?: IvaBreakdown;
 }
+
 
 const COLORS = {
   primary: [37, 99, 235] as [number, number, number],
