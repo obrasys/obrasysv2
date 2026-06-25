@@ -363,17 +363,19 @@ export function TotalsAdjustments({
           </div>
 
           <div>
-            <Label className="text-sm text-muted-foreground">IVA %</Label>
+            <Label className="text-sm text-muted-foreground">IVA % {splitVat && <span className="text-[10px]">(unificado — desligado)</span>}</Label>
             <Input
               type="number"
               min={0}
               max={100}
               value={vatPercent}
               onChange={(e) => onVatChange(parseFloat(e.target.value) || 0)}
-              className="h-11 text-base mt-1"
+              disabled={splitVat}
+              className="h-11 text-base mt-1 disabled:opacity-60"
             />
             <p className="text-xs text-muted-foreground mt-1">IVA € = {formatEUR(vatValue)}</p>
           </div>
+
         </div>
 
         {/* Right - Summary lines */}
