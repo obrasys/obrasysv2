@@ -385,7 +385,8 @@ export default function EssencialPage() {
       updated_at: new Date().toISOString(),
       capitulos,
       cliente: clientInfo.clientName ? { id: 'preview', nome: clientInfo.clientName } : undefined,
-      observations_text: observationsText || null,
+      observations_text: [commercialTerms, observationsText].filter(Boolean).join('\n\n') || null,
+
     };
 
     return { orcamento, valorBase: subtotalBeforeVat, valorIVA: vatValue, valorFinal: totalFinal };
