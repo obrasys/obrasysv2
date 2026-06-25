@@ -694,6 +694,19 @@ export interface BudgetItem {
   baseTipo?: 'geral' | 'remodelacao';
   /** Capítulo na Base (para upsert correto quando guardado). */
   baseCapitulo?: string;
+  /** Componentes adicionais de custo €/un (opcional, paridade c/ Avançado). */
+  subUnitPrice?: number;
+  srvUnitPrice?: number;
+  aluUnitPrice?: number;
+  divUnitPrice?: number;
+  /** Margem do artigo (%). Se ausente, usa a do orçamento. */
+  marginPct?: number;
+  /** Contexto de intervenção (interior / exterior / geral). */
+  interventionContext?: 'interior' | 'exterior' | 'geral';
+  /** Código manual editável (espelha o do Avançado). */
+  code?: string;
+  /** Notas livres. */
+  notes?: string;
 }
 
 // --- Áreas de Intervenção pré-definidas (residencial PT) ---
