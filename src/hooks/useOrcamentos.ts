@@ -459,6 +459,7 @@ export function useOrcamento(id: string | undefined) {
               zone_name: a.zone_id ? zoneMap.get(a.zone_id) ?? null : (a.zone_name ?? null),
               area_name: a.area_id ? areaMap.get(a.area_id) ?? null : (a.area_name ?? null),
               service_type_name: a.service_type_name ?? null,
+              property_type_name: a.property_type_name ?? null,
             })),
         }));
 
