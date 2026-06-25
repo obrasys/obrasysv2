@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { type BudgetItem, type AreaConfig, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, Check, X, MapPin, Square, Save } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Pencil, MapPin, Square } from 'lucide-react';
 import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
+import { EditBudgetItemModal } from './EditBudgetItemModal';
 import { toast } from 'sonner';
 
 interface Props {
@@ -12,11 +14,12 @@ interface Props {
   onUpdateQuantity: (id: string, qty: number) => void;
   onUpdateItem: (id: string, updates: Partial<BudgetItem>) => void;
   onRemoveItem: (id: string) => void;
+  /** Margem global do orçamento (%). Usada como default no modal. */
+  defaultMarginPct?: number;
 }
 
-export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem }: Props) {
+export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem, defaultMarginPct }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ labor: number; material: number; persist: boolean }>({ labor: 0, material: 0, persist: true });
   const saveToBase = useSaveArtigoToUserBase();
 
   // Group items by area
@@ -46,37 +49,41 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
     return m;
   }, [items]);
 
-  const startEdit = (item: BudgetItem) => {
-    setEditingId(item.id);
-    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice, persist: true });
-  };
+  const editingItem = items.find((i) => i.id === editingId) ?? null;
 
-  const confirmEdit = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    onUpdateItem(id, { laborUnitPrice: editValues.labor, materialTotalPrice: editValues.material });
-    if (editValues.persist && item) {
+  const handleModalSave = async (updates: Partial<BudgetItem>, opts: { persistToCatalog: boolean }) => {
+    if (!editingItem) return;
+    onUpdateItem(editingItem.id, updates);
+    if (opts.persistToCatalog) {
+      const merged = { ...editingItem, ...updates };
       const r = await saveToBase({
-        codigo: item.baseCode,
-        capitulo: item.baseCapitulo || allAreas.find((a) => a.key === item.areaKey)?.label || 'Sem capítulo',
-        artigo: item.name,
-        unidade: item.unit,
-        mao_obra_estimada_eur: editValues.labor,
-        material_estimado_eur: editValues.material,
-        tipo_base: item.baseTipo || 'remodelacao',
-        origem: item.baseCode ? 'global' : 'manual',
-        fonte_base: 'Edição em Orçamento Essencial',
+        codigo: merged.code || merged.baseCode,
+        capitulo: merged.baseCapitulo || getAreaLabel(merged.areaKey) || 'Sem capítulo',
+        artigo: merged.name,
+        unidade: merged.unit,
+        mao_obra_estimada_eur: merged.laborUnitPrice,
+        material_estimado_eur: merged.materialTotalPrice,
+        subcontract_cost: merged.subUnitPrice || 0,
+        service_cost: merged.srvUnitPrice || 0,
+        rental_cost: merged.aluUnitPrice || 0,
+        miscellaneous_cost: merged.divUnitPrice || 0,
+        margem_configuravel_pct: merged.marginPct,
+        tipo_base: merged.baseTipo || 'remodelacao',
+        origem: merged.baseCode ? 'global' : 'manual',
+        fonte_base: 'Orçamento Essencial · Edição',
+        intervention_context: merged.interventionContext ?? null,
+        observacoes: merged.notes ?? null,
+        bumpUsage: true,
       });
       if (r.ok) {
-        toast.success('Preço gravado na tua Base.');
-        if (!item.baseCode && r.codigo) onUpdateItem(id, { baseCode: r.codigo });
+        toast.success('Artigo atualizado no Meu Catálogo.');
+        if (!editingItem.baseCode && r.codigo) onUpdateItem(editingItem.id, { baseCode: r.codigo });
       }
+    } else {
+      toast.success('Artigo atualizado.');
     }
-    setEditingId(null);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-  };
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
