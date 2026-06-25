@@ -152,15 +152,13 @@ Deno.serve(async (req) => {
 
     // Check if user already exists with this email
     let clientUserId: string | null = null;
-    let tempPassword: string | null = null;
     let isNewUser = false;
 
-    // Try to create user first; if email exists, look them up
-    tempPassword = generatePassword();
+    // Try to create user first (without a password — they'll set one via recovery link);
+    // if email exists, look them up
     const { data: newUser, error: createError } =
       await supabaseAdmin.auth.admin.createUser({
         email: clienteEmail!,
-        password: tempPassword,
         email_confirm: true,
         user_metadata: { nome: clienteNome, role: "cliente" },
       });
@@ -168,12 +166,6 @@ Deno.serve(async (req) => {
     if (createError) {
       if (createError.message?.includes("already been registered")) {
         // User exists - find them by email
-        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
-          page: 1,
-          perPage: 1,
-          // @ts-ignore - filter by email supported in admin API
-        });
-        // listUsers doesn't filter by email reliably; use a profiles lookup instead
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("user_id")
@@ -204,7 +196,6 @@ Deno.serve(async (req) => {
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        tempPassword = null; // existing user, no temp password
       } else {
         return new Response(
           JSON.stringify({ error: `Erro ao criar utilizador: ${createError.message}` }),
@@ -215,6 +206,7 @@ Deno.serve(async (req) => {
       clientUserId = newUser.user.id;
       isNewUser = true;
     }
+
 
     // Check if access already exists
     const { data: existingAccess } = await supabaseAdmin
@@ -244,8 +236,30 @@ Deno.serve(async (req) => {
     // Send invitation email via Resend (for both new and existing users)
     if (resendApiKey) {
       try {
-        const loginUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/auth`;
-        const logoUrl = `${req.headers.get("origin") || "https://obrasysv2.lovable.app"}/logo.png`;
+        const origin = req.headers.get("origin") || "https://obrasysv2.lovable.app";
+        const loginUrl = `${origin}/auth`;
+        const logoUrl = `${origin}/logo.png`;
+
+        // For new users, mint a one-time recovery link so they set their own password
+        // instead of receiving a plaintext temporary password by email.
+        let setupUrl = loginUrl;
+        if (isNewUser) {
+          try {
+            const { data: linkData, error: linkError } =
+              await supabaseAdmin.auth.admin.generateLink({
+                type: "recovery",
+                email: clienteEmail!,
+                options: { redirectTo: `${origin}/auth/reset-password` },
+              });
+            if (!linkError && linkData?.properties?.action_link) {
+              setupUrl = linkData.properties.action_link;
+            } else if (linkError) {
+              console.error("generateLink error:", linkError.message);
+            }
+          } catch (linkErr) {
+            console.error("generateLink threw:", linkErr);
+          }
+        }
 
         const templateSlug = isNewUser ? "convite-portal-cliente" : "convite-portal-cliente-existente";
 
@@ -257,12 +271,13 @@ Deno.serve(async (req) => {
           .eq("ativo", true)
           .single();
 
-        // Fallback templates
+        // Fallback templates (no plaintext password — magic recovery link only)
         const fallbackNew = `
           <p>Olá ${clienteNome},</p>
           <p>A sua obra <strong>${obraNome}</strong> já está no ObraSys.</p>
-          <p>Email: ${clienteEmail}<br>Senha: ${tempPassword}</p>
-          <p><a href="${loginUrl}">Aceder ao Portal</a></p>
+          <p>Para concluir o acesso, defina a sua palavra-passe através do link abaixo:</p>
+          <p><a href="${setupUrl}">Definir palavra-passe e aceder ao Portal</a></p>
+          <p>Este link é pessoal e expira após a primeira utilização.</p>
         `;
         const fallbackExisting = `
           <p>Olá ${clienteNome},</p>
@@ -272,18 +287,21 @@ Deno.serve(async (req) => {
 
         let htmlContent = template?.html_content || (isNewUser ? fallbackNew : fallbackExisting);
 
-        // Replace variables
+        // Replace variables. {{senha}} is intentionally removed — any stored template
+        // referencing it is replaced with an empty string so credentials are never sent.
         htmlContent = htmlContent
           .replace(/\{\{nome\}\}/g, clienteNome || "")
           .replace(/\{\{obraName\}\}/g, obraNome || "")
-          .replace(/\{\{loginUrl\}\}/g, loginUrl)
+          .replace(/\{\{loginUrl\}\}/g, isNewUser ? setupUrl : loginUrl)
+          .replace(/\{\{setupUrl\}\}/g, setupUrl)
           .replace(/\{\{email\}\}/g, clienteEmail || "")
-          .replace(/\{\{senha\}\}/g, tempPassword || "")
+          .replace(/\{\{senha\}\}/g, "")
           .replace(/\{\{logoUrl\}\}/g, logoUrl)
           .replace(/\{\{ano\}\}/g, new Date().getFullYear().toString());
 
         const assunto = (template?.assunto || (isNewUser ? "A sua obra já está no ObraSys" : `Novo acesso: ${obraNome}`))
           .replace(/\{\{obraName\}\}/g, obraNome || "");
+
 
         const fromEmail = Deno.env.get("RESEND_FROM") || "ObraSys <noreply@obrasys.pt>";
 
