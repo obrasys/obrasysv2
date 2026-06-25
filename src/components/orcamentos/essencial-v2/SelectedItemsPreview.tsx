@@ -276,6 +276,14 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
         ))}
       </div>
 
+      {/* Datalist global de Zonas de Intervenção já usadas no orçamento */}
+      <datalist id="property-types-all">
+        {knownPropertyTypes.map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
+
+
       <EditBudgetItemModal
         open={!!editingItem}
         onOpenChange={(v) => { if (!v) setEditingId(null); }}
