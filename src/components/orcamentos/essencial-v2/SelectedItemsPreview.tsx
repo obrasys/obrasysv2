@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { type BudgetItem, type AreaConfig, formatEUR, computeItemTotals } from '@/types/orcamento-essencial';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Pencil, Check, X, MapPin, Square, Save } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Pencil, MapPin, Square } from 'lucide-react';
 import { useSaveArtigoToUserBase } from '@/hooks/useSaveArtigoToUserBase';
+import { EditBudgetItemModal } from './EditBudgetItemModal';
 import { toast } from 'sonner';
 
 interface Props {
@@ -12,11 +14,12 @@ interface Props {
   onUpdateQuantity: (id: string, qty: number) => void;
   onUpdateItem: (id: string, updates: Partial<BudgetItem>) => void;
   onRemoveItem: (id: string) => void;
+  /** Margem global do orçamento (%). Usada como default no modal. */
+  defaultMarginPct?: number;
 }
 
-export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem }: Props) {
+export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpdateItem, onRemoveItem, defaultMarginPct }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ labor: number; material: number; persist: boolean }>({ labor: 0, material: 0, persist: true });
   const saveToBase = useSaveArtigoToUserBase();
 
   // Group items by area
@@ -46,37 +49,41 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
     return m;
   }, [items]);
 
-  const startEdit = (item: BudgetItem) => {
-    setEditingId(item.id);
-    setEditValues({ labor: item.laborUnitPrice, material: item.materialTotalPrice, persist: true });
-  };
+  const editingItem = items.find((i) => i.id === editingId) ?? null;
 
-  const confirmEdit = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    onUpdateItem(id, { laborUnitPrice: editValues.labor, materialTotalPrice: editValues.material });
-    if (editValues.persist && item) {
+  const handleModalSave = async (updates: Partial<BudgetItem>, opts: { persistToCatalog: boolean }) => {
+    if (!editingItem) return;
+    onUpdateItem(editingItem.id, updates);
+    if (opts.persistToCatalog) {
+      const merged = { ...editingItem, ...updates };
       const r = await saveToBase({
-        codigo: item.baseCode,
-        capitulo: item.baseCapitulo || allAreas.find((a) => a.key === item.areaKey)?.label || 'Sem capítulo',
-        artigo: item.name,
-        unidade: item.unit,
-        mao_obra_estimada_eur: editValues.labor,
-        material_estimado_eur: editValues.material,
-        tipo_base: item.baseTipo || 'remodelacao',
-        origem: item.baseCode ? 'global' : 'manual',
-        fonte_base: 'Edição em Orçamento Essencial',
+        codigo: merged.code || merged.baseCode,
+        capitulo: merged.baseCapitulo || getAreaLabel(merged.areaKey) || 'Sem capítulo',
+        artigo: merged.name,
+        unidade: merged.unit,
+        mao_obra_estimada_eur: merged.laborUnitPrice,
+        material_estimado_eur: merged.materialTotalPrice,
+        subcontract_cost: merged.subUnitPrice || 0,
+        service_cost: merged.srvUnitPrice || 0,
+        rental_cost: merged.aluUnitPrice || 0,
+        miscellaneous_cost: merged.divUnitPrice || 0,
+        margem_configuravel_pct: merged.marginPct,
+        tipo_base: merged.baseTipo || 'remodelacao',
+        origem: merged.baseCode ? 'global' : 'manual',
+        fonte_base: 'Orçamento Essencial · Edição',
+        intervention_context: merged.interventionContext ?? null,
+        observacoes: merged.notes ?? null,
+        bumpUsage: true,
       });
       if (r.ok) {
-        toast.success('Preço gravado na tua Base.');
-        if (!item.baseCode && r.codigo) onUpdateItem(id, { baseCode: r.codigo });
+        toast.success('Artigo atualizado no Meu Catálogo.');
+        if (!editingItem.baseCode && r.codigo) onUpdateItem(editingItem.id, { baseCode: r.codigo });
       }
+    } else {
+      toast.success('Artigo atualizado.');
     }
-    setEditingId(null);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-  };
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm">
@@ -108,7 +115,13 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
             <div className="space-y-1">
               {areaItems.map((item) => {
                 const { subtotal } = computeItemTotals(item);
-                const isEditing = editingId === item.id;
+                const custoUnit =
+                  (item.laborUnitPrice || 0) +
+                  (item.materialTotalPrice || 0) +
+                  (item.subUnitPrice || 0) +
+                  (item.srvUnitPrice || 0) +
+                  (item.aluUnitPrice || 0) +
+                  (item.divUnitPrice || 0);
 
                 return (
                   <div
@@ -116,7 +129,12 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                     className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group px-3 py-2.5 space-y-1.5"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_60px_72px_90px_90px_100px_72px] gap-2 items-center">
-                      <span className="text-sm text-foreground truncate">{item.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm text-foreground truncate">{item.name}</span>
+                        {item.interventionContext && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 capitalize shrink-0">{item.interventionContext}</Badge>
+                        )}
+                      </div>
                       <span className="text-xs text-muted-foreground text-center">{item.unit}</span>
                       <Input
                         type="text"
@@ -136,92 +154,55 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
                         }}
                         className="w-full h-8 text-sm text-center"
                       />
-                      {isEditing ? (
-                        <>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            value={editValues.labor}
-                            onChange={(e) => setEditValues(v => ({ ...v, labor: parseFloat(e.target.value) || 0 }))}
-                            className="h-8 text-sm text-right"
-                            autoFocus
-                          />
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            value={editValues.material}
-                            onChange={(e) => setEditValues(v => ({ ...v, material: parseFloat(e.target.value) || 0 }))}
-                            className="h-8 text-sm text-right"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => startEdit(item)}
-                            className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
-                            title="Clique para editar"
-                          >
-                            {formatEUR(item.laborUnitPrice)}
-                          </button>
-                          <button
-                            onClick={() => startEdit(item)}
-                            className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
-                            title="Clique para editar"
-                          >
-                            {formatEUR(item.materialTotalPrice)}
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => setEditingId(item.id)}
+                        className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
+                        title="Editar artigo"
+                      >
+                        {formatEUR(item.laborUnitPrice)}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(item.id)}
+                        className="text-sm font-medium tabular-nums text-right hover:text-primary transition-colors cursor-pointer"
+                        title="Editar artigo"
+                      >
+                        {formatEUR(item.materialTotalPrice)}
+                      </button>
                       <span className="text-sm font-semibold tabular-nums text-right">{formatEUR(subtotal)}</span>
 
                       <div className="flex items-center gap-0.5 justify-end">
-                        {isEditing ? (
-                          <>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => confirmEdit(item.id)}>
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={cancelEdit}>
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity shrink-0" onClick={() => startEdit(item)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0" onClick={() => onRemoveItem(item.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
-                        )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity shrink-0" onClick={() => setEditingId(item.id)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0" onClick={() => onRemoveItem(item.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
 
-                    {/* Composição de preços (M.O. + Material = Custo direto) */}
+                    {/* Composição de preços */}
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground pl-1">
-                      <span>
+                      <span className="truncate">
                         Composição: <span className="tabular-nums">{formatEUR(item.laborUnitPrice)}</span> M.O.
                         {' + '}
                         <span className="tabular-nums">{formatEUR(item.materialTotalPrice)}</span> Mat.
+                        {(item.subUnitPrice || item.srvUnitPrice || item.aluUnitPrice || item.divUnitPrice) ? (
+                          <> + <span className="tabular-nums">{formatEUR((item.subUnitPrice||0)+(item.srvUnitPrice||0)+(item.aluUnitPrice||0)+(item.divUnitPrice||0))}</span> SUB/SRV/ALU/DIV</>
+                        ) : null}
                         {' = '}
                         <span className="tabular-nums font-medium text-foreground">
-                          {formatEUR(item.laborUnitPrice + item.materialTotalPrice)} / {item.unit}
+                          {formatEUR(custoUnit)} / {item.unit}
                         </span>
                       </span>
-                      {isEditing && (
-                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={editValues.persist}
-                            onChange={(e) => setEditValues((v) => ({ ...v, persist: e.target.checked }))}
-                            className="h-3 w-3 accent-primary"
-                          />
-                          <Save className="h-3 w-3" /> Gravar na minha Base
-                        </label>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(item.id)}
+                        className="text-[11px] text-primary hover:underline shrink-0 ml-2"
+                      >
+                        Editar completo
+                      </button>
                     </div>
+
 
                     {/* Zona / Área opcional — datalist com nomes já usados */}
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-2 pl-1">
@@ -274,6 +255,15 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
           </div>
         ))}
       </div>
+
+      <EditBudgetItemModal
+        open={!!editingItem}
+        onOpenChange={(v) => { if (!v) setEditingId(null); }}
+        item={editingItem}
+        capituloLabel={editingItem ? getAreaLabel(editingItem.areaKey) : undefined}
+        defaultMarginPct={defaultMarginPct}
+        onSave={handleModalSave}
+      />
     </div>
   );
 }

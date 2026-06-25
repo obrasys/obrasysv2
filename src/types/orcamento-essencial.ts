@@ -694,6 +694,19 @@ export interface BudgetItem {
   baseTipo?: 'geral' | 'remodelacao';
   /** Capítulo na Base (para upsert correto quando guardado). */
   baseCapitulo?: string;
+  /** Componentes adicionais de custo €/un (opcional, paridade c/ Avançado). */
+  subUnitPrice?: number;
+  srvUnitPrice?: number;
+  aluUnitPrice?: number;
+  divUnitPrice?: number;
+  /** Margem do artigo (%). Se ausente, usa a do orçamento. */
+  marginPct?: number;
+  /** Contexto de intervenção (interior / exterior / geral). */
+  interventionContext?: 'interior' | 'exterior' | 'geral';
+  /** Código manual editável (espelha o do Avançado). */
+  code?: string;
+  /** Notas livres. */
+  notes?: string;
 }
 
 // --- Áreas de Intervenção pré-definidas (residencial PT) ---
@@ -803,8 +816,13 @@ export function formatEUR(value: number): string {
 }
 
 export function computeItemTotals(item: BudgetItem) {
+  const extraUnit =
+    (item.subUnitPrice || 0) +
+    (item.srvUnitPrice || 0) +
+    (item.aluUnitPrice || 0) +
+    (item.divUnitPrice || 0);
   const totalLabor = item.laborUnitPrice * item.quantity;
-  const totalMaterial = item.materialTotalPrice * item.quantity;
+  const totalMaterial = (item.materialTotalPrice + extraUnit) * item.quantity;
   const subtotal = totalLabor + totalMaterial;
   return { totalLabor, totalMaterial, subtotal };
 }
