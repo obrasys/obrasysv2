@@ -299,8 +299,8 @@ export default function EssencialPage() {
     // Build virtual chapter buckets according to exportGrouping
     type Bucket = { title: string; items: BudgetItem[] };
     const buckets: Bucket[] = [];
-    for (const [areaKey, areaItems] of Object.entries(grouped)) {
-      const areaLabel = allAreas.find((a) => a.key === areaKey)?.label || areaKey;
+
+
 
     // Split each areaItems list further by propertyTypeName (Zona de Intervenção),
     // so chapters/buckets are: [Propriedade] — [Capítulo] (— Zona — Área).
