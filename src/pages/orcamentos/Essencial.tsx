@@ -105,6 +105,9 @@ export default function EssencialPage() {
   const [contingencyPercent, setContingencyPercent] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [vatPercent, setVatPercent] = useState(23);
+  const [splitVat, setSplitVat] = useState(false);
+  const [laborVatPercent, setLaborVatPercent] = useState(6);
+  const [materialVatPercent, setMaterialVatPercent] = useState(23);
   const [marginPercent, setMarginPercent] = useState(0);
   const [observationsText, setObservationsText] = useState<string>('');
   const [propertyType, setPropertyType] = useState<string>('');
@@ -112,6 +115,7 @@ export default function EssencialPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [exportGrouping, setExportGrouping] = useState<ExportGrouping>('chapter');
+
 
   // Prompt para retomar rascunho anterior (em vez de o restaurar silenciosamente)
   const [resumeDraft, setResumeDraft] = useState<DraftState | null>(null);
