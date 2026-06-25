@@ -765,15 +765,24 @@ export default function EssencialPage() {
           {budgetType && items.length > 0 && (
             <TotalsAdjustments
               subtotalBase={subtotalBase}
+              laborBase={laborBase}
+              materialBase={materialBase}
               marginPercent={marginPercent}
               contingencyPercent={contingencyPercent}
               discountPercent={discountPercent}
               vatPercent={vatPercent}
+              splitVat={splitVat}
+              laborVatPercent={laborVatPercent}
+              materialVatPercent={materialVatPercent}
               onMarginChange={setMarginPercent}
               onContingencyChange={setContingencyPercent}
               onDiscountChange={setDiscountPercent}
               onVatChange={setVatPercent}
+              onSplitVatChange={setSplitVat}
+              onLaborVatChange={setLaborVatPercent}
+              onMaterialVatChange={setMaterialVatPercent}
             />
+
           )}
 
           {/* E.1 - Observações do rodapé */}
