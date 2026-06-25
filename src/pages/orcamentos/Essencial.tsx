@@ -9,7 +9,12 @@ import { BudgetSummaryTable } from '@/components/orcamentos/essencial-v2/BudgetS
 import { TotalsAdjustments } from '@/components/orcamentos/essencial-v2/TotalsAdjustments';
 import { ClientIdentification } from '@/components/orcamentos/essencial-v2/ClientIdentification';
 import { ZonesAreasTree } from '@/components/orcamentos/essencial-v2/ZonesAreasTree';
+import { BudgetTermsCard } from '@/components/orcamentos/essencial-v2/BudgetTermsCard';
+import { EnviarOrcamentoDialog } from '@/components/orcamentos/EnviarOrcamentoDialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Eye, Sparkles, Send } from 'lucide-react';
+
 import {
   type BudgetType,
   type BudgetItem,
@@ -110,6 +115,12 @@ export default function EssencialPage() {
   const [materialVatPercent, setMaterialVatPercent] = useState(23);
   const [marginPercent, setMarginPercent] = useState(0);
   const [observationsText, setObservationsText] = useState<string>('');
+  const [commercialTerms, setCommercialTerms] = useState<string>('');
+  const [postSaveOpen, setPostSaveOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [savedOrcamento, setSavedOrcamento] = useState<{ id: string; titulo: string; clienteEmail: string | null; clienteNome: string | null } | null>(null);
+  const [auditRunning, setAuditRunning] = useState(false);
+
   const [propertyType, setPropertyType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -374,7 +385,8 @@ export default function EssencialPage() {
       updated_at: new Date().toISOString(),
       capitulos,
       cliente: clientInfo.clientName ? { id: 'preview', nome: clientInfo.clientName } : undefined,
-      observations_text: observationsText || null,
+      observations_text: [commercialTerms, observationsText].filter(Boolean).join('\n\n') || null,
+
     };
 
     return { orcamento, valorBase: subtotalBeforeVat, valorIVA: vatValue, valorFinal: totalFinal };
@@ -549,7 +561,7 @@ export default function EssencialPage() {
           valor_total: totalFinal,
           custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
           data_envio: new Date().toISOString(),
-          observations_text: observationsText || null,
+          observations_text: [commercialTerms, observationsText].filter(Boolean).join('\n\n') || null,
         })
         .select('id')
         .single();
@@ -689,8 +701,25 @@ export default function EssencialPage() {
 
       localStorage.removeItem(DRAFT_KEY);
       toast({ title: 'Orçamento criado com sucesso!' });
-      // Navigate to the budget view page - format can be used later for PDF generation
-      navigate(`/orcamentos/${orc.id}`);
+      // Try to fetch client email for email pre-fill
+      let cEmail: string | null = null;
+      if (clienteId) {
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('email')
+          .eq('id', clienteId)
+          .maybeSingle();
+        cEmail = (cli?.email as string | undefined) || null;
+      }
+      setSavedOrcamento({
+        id: orc.id,
+        titulo,
+        clienteEmail: cEmail,
+        clienteNome: clientInfo.clientName || null,
+      });
+      setPostSaveOpen(true);
+
+
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
@@ -808,6 +837,13 @@ export default function EssencialPage() {
             </Card>
           )}
 
+          {/* E.2 - Condições Comerciais */}
+          {budgetType && items.length > 0 && (
+            <BudgetTermsCard value={commercialTerms} onChange={setCommercialTerms} />
+          )}
+
+
+
 
           {/* F - Client Identification */}
           {budgetType && items.length > 0 && (
@@ -904,7 +940,87 @@ export default function EssencialPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Post-save: Próxima ação */}
+      <AlertDialog open={postSaveOpen} onOpenChange={setPostSaveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Orçamento criado. O que pretendes fazer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Podes abrir o orçamento, pedir uma auditoria à Axia ou enviá-lo já por email ao cliente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid gap-2 sm:grid-cols-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (savedOrcamento) navigate(`/orcamentos/${savedOrcamento.id}`);
+              }}
+            >
+              <Eye className="w-4 h-4 mr-2" /> Ver orçamento
+            </Button>
+            <Button
+              variant="outline"
+              disabled={auditRunning || !savedOrcamento}
+              onClick={async () => {
+                if (!savedOrcamento) return;
+                setAuditRunning(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('axia-budget-audit', {
+                    body: { orcamento_id: savedOrcamento.id },
+                  });
+                  if (error) throw error;
+                  const total = data?.summary?.total_findings ?? 0;
+                  toast({
+                    title: total === 0 ? 'Auditoria concluída sem alertas' : `Auditoria concluída — ${total} item(s) para rever`,
+                  });
+                  setPostSaveOpen(false);
+                  navigate(`/orcamentos/${savedOrcamento.id}`);
+                } catch (e: any) {
+                  toast({ title: 'Erro na auditoria', description: e?.message, variant: 'destructive' });
+                } finally {
+                  setAuditRunning(false);
+                }
+              }}
+            >
+              <Sparkles className="w-4 h-4 mr-2" /> {auditRunning ? 'A auditar…' : 'Auditar (Axia)'}
+            </Button>
+            <Button
+              onClick={() => {
+                setPostSaveOpen(false);
+                setEmailDialogOpen(true);
+              }}
+            >
+              <Send className="w-4 h-4 mr-2" /> Enviar por email
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (savedOrcamento) navigate(`/orcamentos/${savedOrcamento.id}`);
+              }}
+            >
+              Fechar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {savedOrcamento && (
+        <EnviarOrcamentoDialog
+          open={emailDialogOpen}
+          onOpenChange={(open) => {
+            setEmailDialogOpen(open);
+            if (!open && savedOrcamento) navigate(`/orcamentos/${savedOrcamento.id}`);
+          }}
+          orcamentoId={savedOrcamento.id}
+          orcamentoTitulo={savedOrcamento.titulo}
+          clienteEmail={savedOrcamento.clienteEmail}
+          clienteNome={savedOrcamento.clienteNome}
+        />
+      )}
     </AppLayout>
+
 
   );
 }
