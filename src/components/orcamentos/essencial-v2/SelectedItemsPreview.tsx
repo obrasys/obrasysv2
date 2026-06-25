@@ -49,6 +49,12 @@ export function SelectedItemsPreview({ items, allAreas, onUpdateQuantity, onUpda
     return m;
   }, [items]);
 
+  const knownPropertyTypes = useMemo(() => {
+    const s = new Set<string>();
+    items.forEach((it) => { if (it.propertyTypeName?.trim()) s.add(it.propertyTypeName.trim()); });
+    return Array.from(s);
+  }, [items]);
+
   const editingItem = items.find((i) => i.id === editingId) ?? null;
 
   const handleModalSave = async (updates: Partial<BudgetItem>, opts: { persistToCatalog: boolean }) => {
