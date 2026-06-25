@@ -561,7 +561,7 @@ export default function EssencialPage() {
           valor_total: totalFinal,
           custos_indiretos: { estaleiro: 0, seguros: 0, licenciamento: 0 },
           data_envio: new Date().toISOString(),
-          observations_text: observationsText || null,
+          observations_text: [commercialTerms, observationsText].filter(Boolean).join('\n\n') || null,
         })
         .select('id')
         .single();
