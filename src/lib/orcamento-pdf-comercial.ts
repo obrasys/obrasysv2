@@ -271,21 +271,69 @@ export async function generateComercialPdf(options: ComercialPdfOptions): Promis
     doc.text(chTitle, PAGE.left, y);
     y += 5;
 
-    // List article descriptions (no price, no qty, no unit)
-    const artigos = (cap.artigos || []).sort((a, b) => a.ordem - b.ordem);
+    // List article descriptions (no price, no qty, no unit) — grouped by Zona de Intervenção
+    const artigos = (cap.artigos || []).slice().sort((a, b) => a.ordem - b.ordem);
     if (artigos.length > 0) {
+      // Group by property_type_name (Zona de Intervenção)
+      const sortPt = (a: string, b: string) =>
+        a.localeCompare(b, 'pt', { numeric: true, sensitivity: 'base' });
+      const groups = new Map<string, typeof artigos>();
+      for (const art of artigos) {
+        const key = ((art as any).property_type_name || '').trim() || '__SEM_PROP__';
+        if (!groups.has(key)) groups.set(key, [] as typeof artigos);
+        groups.get(key)!.push(art);
+      }
+      const groupKeys = [...groups.keys()].sort(sortPt);
+      const hasAnyProp = groupKeys.some((k) => k !== '__SEM_PROP__');
+
+      for (const gk of groupKeys) {
+        const groupArtigos = groups.get(gk)!;
+        const propLabel = gk === '__SEM_PROP__' ? '' : gk;
+
+        if (propLabel && hasAnyProp) {
+          y = ensureSpace(doc, 7, y);
+          doc.setFontSize(9.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...COLORS.primary);
+          doc.text(`Zona de Intervenção: ${propLabel}`, PAGE.left, y);
+          y += 5;
+        }
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...COLORS.text);
+        for (const art of groupArtigos) {
+          const zona = ((art as any).zone_name || '').trim();
+          const area = ((art as any).area_name || '').trim();
+          const ctxBits: string[] = [];
+          if (zona) ctxBits.push(`Zona: ${zona}`);
+          if (area) ctxBits.push(`Área: ${area}`);
+          const ctx = ctxBits.length ? ` (${ctxBits.join(' • ')})` : '';
+          const desc = art.descricao + ctx;
+          const wrapped = doc.splitTextToSize(`- ${desc}`, uw - 4);
+          for (let j = 0; j < wrapped.length; j++) {
+            y = ensureSpace(doc, 4.5, y);
+            doc.text(wrapped[j], PAGE.left + 2, y);
+            y += 4.2;
+          }
+        }
+      }
+    } else if (cap.client_summary_text) {
+      // Fallback: use narrative summary
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...COLORS.text);
-      for (const art of artigos) {
-        const desc = art.descricao;
-        const wrapped = doc.splitTextToSize(`- ${desc}`, uw - 4);
+      const lines = cap.client_summary_text.split('\n').map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        const wrapped = doc.splitTextToSize(`- ${line}`, uw - 4);
         for (let j = 0; j < wrapped.length; j++) {
           y = ensureSpace(doc, 4.5, y);
           doc.text(wrapped[j], PAGE.left + 2, y);
           y += 4.2;
         }
       }
+    }
+
     } else if (cap.client_summary_text) {
       // Fallback: use narrative summary
       doc.setFontSize(9);
