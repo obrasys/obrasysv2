@@ -36,26 +36,42 @@ import {
 
 interface Props {
   subtotalBase: number;
+  laborBase?: number;
+  materialBase?: number;
   marginPercent: number;
   contingencyPercent: number;
   discountPercent: number;
   vatPercent: number;
+  splitVat?: boolean;
+  laborVatPercent?: number;
+  materialVatPercent?: number;
   onMarginChange: (v: number) => void;
   onContingencyChange: (v: number) => void;
   onDiscountChange: (v: number) => void;
   onVatChange: (v: number) => void;
+  onSplitVatChange?: (v: boolean) => void;
+  onLaborVatChange?: (v: number) => void;
+  onMaterialVatChange?: (v: number) => void;
 }
 
 export function TotalsAdjustments({
   subtotalBase,
+  laborBase = 0,
+  materialBase = 0,
   marginPercent,
   contingencyPercent,
   discountPercent,
   vatPercent,
+  splitVat = false,
+  laborVatPercent = 23,
+  materialVatPercent = 23,
   onMarginChange,
   onContingencyChange,
   onDiscountChange,
   onVatChange,
+  onSplitVatChange,
+  onLaborVatChange,
+  onMaterialVatChange,
 }: Props) {
   const [tipoObra, setTipoObra] = useState<TipoObraFiscal | undefined>(undefined);
   const [tipoCliente, setTipoCliente] = useState<TipoClienteFiscal | undefined>(undefined);
@@ -77,8 +93,17 @@ export function TotalsAdjustments({
   const afterContingency = subtotalWithMargin + contingencyValue;
   const discountValue = afterContingency * (discountPercent / 100);
   const subtotalBeforeVat = afterContingency - discountValue;
-  const vatValue = subtotalBeforeVat * (vatPercent / 100);
+
+  // Split VAT calculation (proportional to labor/material base)
+  const laborShare = subtotalBase > 0 ? laborBase / subtotalBase : 0;
+  const materialShare = subtotalBase > 0 ? materialBase / subtotalBase : 0;
+  const laborPortion = subtotalBeforeVat * laborShare;
+  const materialPortion = subtotalBeforeVat * materialShare;
+  const vatLabor = splitVat ? laborPortion * (laborVatPercent / 100) : 0;
+  const vatMaterial = splitVat ? materialPortion * (materialVatPercent / 100) : 0;
+  const vatValue = splitVat ? vatLabor + vatMaterial : subtotalBeforeVat * (vatPercent / 100);
   const totalFinal = subtotalBeforeVat + vatValue;
+
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-6 md:p-8 shadow-sm space-y-8">
