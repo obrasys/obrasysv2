@@ -700,13 +700,24 @@ export default function EssencialPage() {
 
       localStorage.removeItem(DRAFT_KEY);
       toast({ title: 'Orçamento criado com sucesso!' });
+      // Try to fetch client email for email pre-fill
+      let cEmail: string | null = null;
+      if (clienteId) {
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('email')
+          .eq('id', clienteId)
+          .maybeSingle();
+        cEmail = (cli?.email as string | undefined) || null;
+      }
       setSavedOrcamento({
         id: orc.id,
         titulo,
-        clienteEmail: clientInfo.clientEmail || null,
+        clienteEmail: cEmail,
         clienteNome: clientInfo.clientName || null,
       });
       setPostSaveOpen(true);
+
 
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
