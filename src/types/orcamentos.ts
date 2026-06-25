@@ -261,6 +261,7 @@ export interface ArtigoFormData {
   area_name?: string | null;
   service_type_id?: string | null;
   service_type_name?: string | null;
+  property_type_name?: string | null;
 }
 
 
