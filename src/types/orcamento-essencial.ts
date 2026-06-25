@@ -816,8 +816,13 @@ export function formatEUR(value: number): string {
 }
 
 export function computeItemTotals(item: BudgetItem) {
+  const extraUnit =
+    (item.subUnitPrice || 0) +
+    (item.srvUnitPrice || 0) +
+    (item.aluUnitPrice || 0) +
+    (item.divUnitPrice || 0);
   const totalLabor = item.laborUnitPrice * item.quantity;
-  const totalMaterial = item.materialTotalPrice * item.quantity;
+  const totalMaterial = (item.materialTotalPrice + extraUnit) * item.quantity;
   const subtotal = totalLabor + totalMaterial;
   return { totalLabor, totalMaterial, subtotal };
 }
