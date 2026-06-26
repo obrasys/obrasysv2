@@ -356,7 +356,7 @@ ${contextBlock}`;
       },
       body: JSON.stringify({
         model: resolveChain("simple_chat").primary,
-        messages,
+        messages: scrubbedMessages,
         stream: true,
       }),
     });
