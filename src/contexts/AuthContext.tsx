@@ -176,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           profileUserId = session.user.id;
           await fetchProfile(session.user.id);
+          await refreshMfaStatus(session.user.id);
         }
       } finally {
         setLoading(false);
