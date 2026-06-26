@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import { AXIA_ANALYSIS_PROMPT_VERSION } from "../_shared/axia/prompts.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
