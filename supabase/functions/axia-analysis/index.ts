@@ -325,6 +325,12 @@ ${contextBlock}`;
     });
 
     if (!aiResponse.ok) {
+      const errText = await aiResponse.text().catch(() => "");
+      const status = aiResponse.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(supabase as any, {
+        ...logBase, status, latency_ms: Date.now() - t0,
+        error_message: `gateway ${aiResponse.status} v${AXIA_ANALYSIS_PROMPT_VERSION}: ${errText.slice(0, 200)}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breve." }), {
           status: 429,
@@ -337,7 +343,6 @@ ${contextBlock}`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, errText);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
         status: 500,
@@ -350,6 +355,10 @@ ${contextBlock}`;
 
     if (!toolCall?.function?.arguments) {
       console.error("No tool call in AI response:", JSON.stringify(aiResult));
+      await logAxiaCall(supabase as any, {
+        ...logBase, status: "error", latency_ms: Date.now() - t0,
+        error_message: "no tool_call in response",
+      });
       return new Response(JSON.stringify({ error: "Resposta da IA inválida" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -363,11 +372,19 @@ ${contextBlock}`;
         : toolCall.function.arguments;
     } catch (e) {
       console.error("Failed to parse AI arguments:", toolCall.function.arguments);
+      await logAxiaCall(supabase as any, {
+        ...logBase, status: "error", latency_ms: Date.now() - t0,
+        error_message: `parse failed: ${(e as Error).message}`,
+      });
       return new Response(JSON.stringify({ error: "Erro ao processar análise" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    await logAxiaCall(supabase as any, {
+      ...logBase, status: "ok", latency_ms: Date.now() - t0,
+    });
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -379,4 +396,5 @@ ${contextBlock}`;
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
 });
