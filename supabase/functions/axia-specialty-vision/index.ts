@@ -445,6 +445,12 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
     const newStatus = analysis.review_required ? "review_required" : "analyzed";
     await supabase.from("specialty_plans").update({ status: newStatus }).eq("id", specialty_plan_id);
 
+    await logAxiaCall(supabase as any, {
+      module: "axia_specialty_vision", task_type: "analyze",
+      provider_used: "lovable", model_used: "google/gemini-2.5-flash",
+      status: "ok", latency_ms: Date.now() - startedAt, user_id: userId,
+    });
+
     return new Response(JSON.stringify({
       success: true,
       analysis,
@@ -461,3 +467,4 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
   }
 });
+
