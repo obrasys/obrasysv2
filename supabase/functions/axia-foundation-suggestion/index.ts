@@ -184,8 +184,6 @@ Gera a sugestão preliminar de fundação ICF.
       user_id: userId,
     });
     const raw = aiJson?.choices?.[0]?.message?.content ?? "{}";
-
-    const raw = aiJson?.choices?.[0]?.message?.content ?? "{}";
     let result: any = {};
     try {
       result = JSON.parse(raw);
@@ -196,8 +194,8 @@ Gera a sugestão preliminar de fundação ICF.
       });
     }
 
-    const admin = createClient(supaUrl, service);
     const now = new Date().toISOString();
+
 
     // Persistir sessão
     const { data: session, error: sessErr } = await admin
