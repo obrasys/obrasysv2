@@ -3,10 +3,8 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
 import { logAxiaCall } from "../_shared/axia/logCall.ts";
-import {
-  AXIA_SUGGESTIONS_PROMPT_ID,
-  AXIA_SUGGESTIONS_PROMPT_VERSION,
-} from "../_shared/axia/prompts.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (AXIA_SUGGESTIONS_*)
+
 
 
 
