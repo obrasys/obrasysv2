@@ -118,7 +118,7 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: aiModel,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: contentParts },
