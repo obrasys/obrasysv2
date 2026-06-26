@@ -105,7 +105,7 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("suggestions").primary,
+        model: modelUsed,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
