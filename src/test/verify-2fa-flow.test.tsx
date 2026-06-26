@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act, fireEvent, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const TRUSTED_DEVICE_KEY = "obrasys_trusted_device";
@@ -39,9 +38,7 @@ vi.mock("@/hooks/use-toast", () => ({
 vi.mock("@/assets/logo.png", () => ({ default: "logo.png" }));
 vi.mock("@/components/SEO", () => ({ SEO: () => null }));
 
-// userEvent is unreliable against the InputOTP hidden-input + slot rendering
-// in jsdom. Replace it with a controlled <input> in tests so we can simulate
-// typing the 6 digits deterministically.
+// Replace InputOTP with a simple controlled input so jsdom can drive it.
 vi.mock("@/components/ui/input-otp", () => {
   const React = require("react") as typeof import("react");
   return {
@@ -69,25 +66,23 @@ const renderPage = () =>
     </MemoryRouter>,
   );
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  invokeMock.mockReset();
-  navigateMock.mockReset();
-  setMfaVerifiedMock.mockReset();
-  toastMock.mockReset();
-  localStorage.clear();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 const flush = async () => {
   await act(async () => {
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
   });
 };
+
+beforeEach(() => {
+  cleanup();
+  invokeMock.mockReset();
+  navigateMock.mockReset();
+  setMfaVerifiedMock.mockReset();
+  toastMock.mockReset();
+  signOutMock.mockClear();
+  localStorage.clear();
+});
 
 describe("Verify2FA E2E flow", () => {
   it("uses trusted-device fast-path when stored token is still valid", async () => {
@@ -106,12 +101,10 @@ describe("Verify2FA E2E flow", () => {
 
   it("falls back to sending OTP when trusted-device token is expired/invalid", async () => {
     localStorage.setItem(TRUSTED_DEVICE_KEY, "expired-token");
-    // First call: trusted-device check returns verified:false (no 401)
     invokeMock.mockResolvedValueOnce({
       data: { verified: false, trustedDevice: false },
       error: null,
     });
-    // Second call: send-2fa-code success
     invokeMock.mockResolvedValueOnce({
       data: { success: true, expires_in: 300 },
       error: null,
@@ -144,30 +137,26 @@ describe("Verify2FA E2E flow", () => {
   });
 
   it("rejects invalid OTP code and keeps user on the page", async () => {
-    invokeMock.mockResolvedValueOnce({ data: { success: true }, error: null }); // send
+    invokeMock.mockResolvedValueOnce({ data: { success: true }, error: null });
     invokeMock.mockResolvedValueOnce({
       data: { error: "Código incorreto", attempts_left: 4 },
       error: null,
-    }); // verify
+    });
 
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderPage();
     await flush();
 
     const otp = screen.getByTestId("otp-input") as HTMLInputElement;
-    await act(async () => {
-      await user.type(otp, "000000");
-    });
+    fireEvent.change(otp, { target: { value: "000000" } });
 
-    const btn = screen.getByRole("button", { name: /verificar e entrar/i });
-    await act(async () => {
-      await user.click(btn);
-    });
+    fireEvent.click(screen.getByRole("button", { name: /verificar e entrar/i }));
     await flush();
 
     expect(invokeMock).toHaveBeenLastCalledWith(
       "verify-2fa-code",
-      expect.objectContaining({ body: expect.objectContaining({ code: "000000" }) }),
+      expect.objectContaining({
+        body: expect.objectContaining({ code: "000000" }),
+      }),
     );
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -178,29 +167,24 @@ describe("Verify2FA E2E flow", () => {
     );
     expect(setMfaVerifiedMock).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
-    expect(otp.value).toBe(""); // reset after failure
+    expect((screen.getByTestId("otp-input") as HTMLInputElement).value).toBe("");
   });
 
   it("verifies valid OTP, stores trusted-device token, and navigates to dashboard", async () => {
-    invokeMock.mockResolvedValueOnce({ data: { success: true }, error: null }); // send
+    invokeMock.mockResolvedValueOnce({ data: { success: true }, error: null });
     invokeMock.mockResolvedValueOnce({
       data: { verified: true, deviceToken: "new-device-token" },
       error: null,
-    }); // verify
+    });
 
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderPage();
     await flush();
 
-    const otp = screen.getByTestId("otp-input") as HTMLInputElement;
-    await act(async () => {
-      await user.type(otp, "123456");
-      await user.click(screen.getByLabelText(/confiar neste dispositivo/i));
+    fireEvent.change(screen.getByTestId("otp-input"), {
+      target: { value: "123456" },
     });
-
-    await act(async () => {
-      await user.click(screen.getByRole("button", { name: /verificar e entrar/i }));
-    });
+    fireEvent.click(screen.getByLabelText(/confiar neste dispositivo/i));
+    fireEvent.click(screen.getByRole("button", { name: /verificar e entrar/i }));
     await flush();
 
     expect(invokeMock).toHaveBeenLastCalledWith(
@@ -217,13 +201,10 @@ describe("Verify2FA E2E flow", () => {
   it("signs the user out and redirects to /auth", async () => {
     invokeMock.mockResolvedValueOnce({ data: { success: true }, error: null });
 
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderPage();
     await flush();
 
-    await act(async () => {
-      await user.click(screen.getByRole("button", { name: /sair/i }));
-    });
+    fireEvent.click(screen.getByRole("button", { name: /sair/i }));
     await flush();
 
     expect(signOutMock).toHaveBeenCalled();
