@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveChain } from "../_shared/axia/model-router.ts";
-import { scrubMessages, scrubPII } from "../_shared/scrubPII.ts";
+import { scrubMessages } from "../_shared/scrubPII.ts";
 import { checkAxiaRateLimit } from "../_shared/axiaRateLimit.ts";
 
 
