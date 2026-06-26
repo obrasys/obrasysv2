@@ -230,10 +230,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    try { await supabase.rpc("mfa_revoke_my_sessions"); } catch { /* noop */ }
     setUser(null);
     setSession(null);
     setProfile(null);
     setOrganization(null);
+    setMfaVerifiedState(false);
     await supabase.auth.signOut();
   };
 
