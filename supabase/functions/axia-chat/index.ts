@@ -54,6 +54,32 @@ serve(async (req) => {
       });
     }
 
+    // ── Rate-limit por organização (Fase 2 hardening) ──────
+    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: orgRow } = await adminClient
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .eq("member_status", "active")
+      .maybeSingle();
+    const orgId = orgRow?.organization_id as string | undefined;
+    if (orgId) {
+      const rl = await checkAxiaRateLimit(adminClient, {
+        organizationId: orgId,
+        userId: user.id,
+        module: "axia_chat",
+        windowSeconds: 60,
+        maxCalls: 20,
+      });
+      if (!rl.allowed) {
+        return new Response(JSON.stringify({ error: rl.message }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+
     // ── Gather operational context ──────────────────────────
     const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes, contasRes, equipaRes] =
       await Promise.all([
