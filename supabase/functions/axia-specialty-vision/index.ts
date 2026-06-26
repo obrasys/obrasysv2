@@ -6,6 +6,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import { AXIA_SPECIALTY_VISION_PROMPT_VERSION } from "../_shared/axia/prompts.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
