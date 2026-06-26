@@ -117,9 +117,13 @@ Deno.serve(async (req) => {
     let summary = `MCE "${map.title}" com ${suppliers.length} fornecedor(es) e ${items.length} linha(s). Orçamento seco €${drySeco.toFixed(2)}, menor proposta €${lowest.toFixed(2)}, verba ${(drySeco - lowest).toFixed(2)} €.`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const adminClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     if (LOVABLE_API_KEY) {
+      const t0 = Date.now();
+      const aiModel = 'google/gemini-2.5-pro';
       try {
         const ctx = {
+
           title: map.title,
           dry_budget_total: drySeco,
           lowest_total: lowest,
