@@ -94,7 +94,11 @@ ${JSON.stringify(mappingsSummary, null, 2)}
 
 Analisa e retorna sugestões usando a ferramenta fornecida.`;
 
+    const t0 = Date.now();
+    const modelUsed = resolveChain("suggestions").primary;
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
