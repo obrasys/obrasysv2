@@ -167,6 +167,12 @@ Deno.serve(async (req) => {
         }),
       });
 
+      const aiStatus: "ok" | "rate_limited" | "error" =
+        aiResp.status === 429
+          ? "rate_limited"
+          : aiResp.ok
+            ? "ok"
+            : "error";
       if (aiResp.status === 429) {
         summary = "Limite temporário de IA atingido. Tente novamente em instantes.";
       } else if (aiResp.status === 402) {
@@ -175,8 +181,26 @@ Deno.serve(async (req) => {
         const data = await aiResp.json();
         summary = data.choices?.[0]?.message?.content?.trim() ?? "";
       }
+      await logAxiaCall(admin, {
+        module: "axia_budget_insights",
+        task_type: "summary",
+        provider_used: "lovable",
+        model_used: resolveChain("suggestions").primary,
+        status: aiStatus,
+        latency_ms: Date.now() - t0,
+        organization_id: organizationId,
+        user_id: userId,
+        error_message: aiStatus === "error" ? `gateway ${aiResp.status}` : null,
+      });
     } catch (e) {
       console.error("AI summary failed:", e);
+      await logAxiaCall(admin, {
+        module: "axia_budget_insights", task_type: "summary",
+        provider_used: "lovable", model_used: resolveChain("suggestions").primary,
+        status: "error", latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: (e as Error).message,
+      });
     }
 
     return new Response(
@@ -202,4 +226,5 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
 });
