@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +56,10 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+    const limited = await rateLimitOrg(userId as string, {
+      module: "validate_budget_ai", windowSeconds: 60, maxCalls: 10, corsHeaders,
+    });
+    if (limited) return limited;
     console.log("Authenticated user:", userId);
 
     // Fetch orcamento with RLS - only returns if user owns it

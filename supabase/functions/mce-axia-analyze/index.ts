@@ -3,6 +3,8 @@
 // using Lovable AI Gateway (Gemini 2.5 Pro) with strict JSON tool calling.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { rateLimitOrg } from '../_shared/rateLimitOrg.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,6 +40,10 @@ Deno.serve(async (req) => {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Não autenticado' }, 401);
+    const limited = await rateLimitOrg(user.id, {
+      module: 'mce_axia', windowSeconds: 60, maxCalls: 10, corsHeaders,
+    });
+    if (limited) return limited;
 
     const [mapR, supR, itemsR, pricesR] = await Promise.all([
       supabase.from('mce_maps').select('*').eq('id', mce_id).maybeSingle(),
