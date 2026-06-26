@@ -78,6 +78,13 @@ o uso por `getPrompt(...)`.
 - `optimize-with-ai` ✅ (Lote 2)
 - `validate-budget-ai` ✅ (Lote 2)
 - `organize-budget-import` ✅ (Lote 2, inclui caminho determinístico)
+- `axia-electrical-analysis` ✅ (Lote 3)
+- `axia-foundation-suggestion` ✅ (Lote 3)
+- `axia-infra-scenarios` ✅ (Lote 3)
+- `mce-axia-analyze` ✅ (Lote 3)
+- `orcamento-rai-axia` ✅ (Lote 3)
+
+
 
 
 Cada migração deve incluir:
