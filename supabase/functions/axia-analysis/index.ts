@@ -193,6 +193,14 @@ REGRAS ABSOLUTAS:
 
 ${contextBlock}`;
 
+    const t0 = Date.now();
+    const modelUsed = resolveChain("summary").primary;
+    const logBase = {
+      module: "axia_analysis", task_type: "operational_summary",
+      provider_used: "lovable" as const, model_used: modelUsed,
+      user_id: user.id,
+    };
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -200,7 +208,8 @@ ${contextBlock}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("summary").primary,
+        model: modelUsed,
+
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: "Analisa todos os dados operacionais e gera a análise completa para o painel da Central de Inteligência. Preenche TODAS as secções com dados reais. Se alguma secção não tem dados relevantes, retorna array vazio." },
