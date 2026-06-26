@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,7 +155,14 @@ async function authenticateRequest(req: Request) {
   const { data, error } = await client.auth.getClaims(token);
   if (error || !data?.claims) throw new Error("Invalid token");
 
-  return { client, userId: data.claims.sub as string };
+  const userId = data.claims.sub as string;
+  const limited = await rateLimitOrg(userId, {
+    module: "budget_ai", windowSeconds: 60, maxCalls: 5,
+    corsHeaders: { "Access-Control-Allow-Origin": "*" },
+  });
+  if (limited) throw new Response(limited.body, { status: 429, headers: limited.headers });
+
+  return { client, userId };
 }
 
 // ── Get or create AI settings ────────────────────────────────────────
