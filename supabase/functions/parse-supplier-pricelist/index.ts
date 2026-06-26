@@ -102,6 +102,15 @@ Cada item devolvido deve incluir confidence (0-1), review_required, source_page 
 
 Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-2.5-flash";
+    const logBase = {
+      module: PARSE_SUPPLIER_PRICELIST_PROMPT_ID,
+      task_type: `${PARSE_SUPPLIER_PRICELIST_PROMPT_ID}@${PARSE_SUPPLIER_PRICELIST_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      user_id: user.id,
+    };
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
