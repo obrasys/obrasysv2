@@ -225,6 +225,16 @@ Devolve via tool calling.`,
       });
     }
 
+    await logAxiaCall(admin, {
+      module: "axia_suggestions",
+      task_type: `step_${step ?? "unknown"}`,
+      provider_used: "lovable",
+      model_used: resolveChain("classification").primary,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+      organization_id: organizationId,
+      user_id: userId,
+    });
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -236,4 +246,5 @@ Devolve via tool calling.`,
       status: error instanceof Error && error.message === "Not authenticated" ? 401 : 500,
     });
   }
+
 });
