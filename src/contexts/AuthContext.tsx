@@ -66,16 +66,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<OrganizationInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("obrasys_mfa_verified") === "1";
-  });
+  const [mfaVerified, setMfaVerifiedState] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (mfaVerified) sessionStorage.setItem("obrasys_mfa_verified", "1");
-    else sessionStorage.removeItem("obrasys_mfa_verified");
-  }, [mfaVerified]);
+  const setMfaVerified = (v: boolean) => setMfaVerifiedState(v);
+
+  const refreshMfaStatus = async (uid?: string | null) => {
+    if (!uid) {
+      setMfaVerifiedState(false);
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc("mfa_is_verified");
+      if (error) {
+        setMfaVerifiedState(false);
+        return;
+      }
+      setMfaVerifiedState(!!data);
+    } catch {
+      setMfaVerifiedState(false);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
