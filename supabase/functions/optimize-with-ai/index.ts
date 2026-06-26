@@ -17,6 +17,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   try {
     const { text, type = "description" } = await req.json();
 
@@ -32,8 +33,9 @@ serve(async (req) => {
       module: "optimize_ai", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userId, scrub } = guard;
+    const { userId, organizationId, admin, scrub } = guard;
     const safeText = scrub(String(text));
+
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
