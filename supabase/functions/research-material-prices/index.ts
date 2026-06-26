@@ -144,6 +144,13 @@ REGRAS DE OUTPUT:
     );
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: response.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${response.status}: ${errorText.slice(0, 200)}`,
+      });
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breve." }), {
           status: 429,
@@ -156,19 +163,30 @@ REGRAS DE OUTPUT:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
     const aiData = await response.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    
+
     if (!toolCall) {
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: "error",
+        latency_ms: Date.now() - t0,
+        error_message: "Resposta AI sem tool_calls",
+      });
       throw new Error("No tool call returned from AI");
     }
 
     const result = JSON.parse(toolCall.function.arguments);
+
+    await logAxiaCall(admin, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
 
     return new Response(JSON.stringify({ success: true, data: result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
