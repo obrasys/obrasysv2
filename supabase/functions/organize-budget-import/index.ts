@@ -516,6 +516,7 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    logUserId = user.id;
 
     const body = await req.json();
     const { rows, headers, rawText, pdfBase64, fileName } = body;
