@@ -5,9 +5,11 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod";
-import { AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { getPrompt } from "../_shared/axia/prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
 import { resolveModel } from "../_shared/axia/model-router.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 
 const BodySchema = z.object({
