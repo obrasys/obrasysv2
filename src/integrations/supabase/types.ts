@@ -1560,6 +1560,47 @@ export type Database = {
         }
         Relationships: []
       }
+      axia_rate_limits: {
+        Row: {
+          calls: number
+          created_at: string
+          id: string
+          module: string
+          organization_id: string
+          updated_at: string
+          user_id: string | null
+          window_start: string
+        }
+        Insert: {
+          calls?: number
+          created_at?: string
+          id?: string
+          module: string
+          organization_id: string
+          updated_at?: string
+          user_id?: string | null
+          window_start: string
+        }
+        Update: {
+          calls?: number
+          created_at?: string
+          id?: string
+          module?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string | null
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "axia_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       axia_suggestions_log: {
         Row: {
           accepted: boolean | null
@@ -17628,6 +17669,19 @@ export type Database = {
           _signed_at?: string
         }
         Returns: Json
+      }
+      axia_rate_limit_increment: {
+        Args: {
+          _max_calls: number
+          _module: string
+          _organization_id: string
+          _user_id: string
+          _window_start: string
+        }
+        Returns: {
+          allowed: boolean
+          calls: number
+        }[]
       }
       billing_vault_get: { Args: { p_integration_id: string }; Returns: Json }
       billing_vault_put: {

@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { scrubMessages } from "../_shared/scrubPII.ts";
+import { checkAxiaRateLimit } from "../_shared/axiaRateLimit.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +53,32 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ── Rate-limit por organização (Fase 2 hardening) ──────
+    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: orgRow } = await adminClient
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .eq("member_status", "active")
+      .maybeSingle();
+    const orgId = orgRow?.organization_id as string | undefined;
+    if (orgId) {
+      const rl = await checkAxiaRateLimit(adminClient, {
+        organizationId: orgId,
+        userId: user.id,
+        module: "axia_chat",
+        windowSeconds: 60,
+        maxCalls: 20,
+      });
+      if (!rl.allowed) {
+        return new Response(JSON.stringify({ error: rl.message }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
 
     // ── Gather operational context ──────────────────────────
     const [obrasRes, orcamentosRes, rdosRes, tarefasRes, insightsRes, autosMedicaoRes, scheduleTasksRes, contasRes, equipaRes] =
@@ -226,6 +255,15 @@ ${contextBlock}`;
 
     messages.push({ role: "user", content: question });
 
+    // ── Fase 2 hardening: filtrar PII (NIF, IBAN, email, telefone, salário)
+    // do histórico e da pergunta antes de qualquer provedor externo.
+    // O contexto operacional (system prompt) é interno à plataforma e fica intacto.
+    const scrubbedMessages = [
+      messages[0],
+      ...scrubMessages(messages.slice(1)),
+    ];
+
+
     // ── NVIDIA via gateway (feature-flagged, reversible) ────
     const useGateway = (Deno.env.get("AXIA_USE_GATEWAY") ?? "").toLowerCase() === "true";
     const nvidiaEnabled = (Deno.env.get("AXIA_NVIDIA_ENABLED") ?? "").toLowerCase() === "true";
@@ -247,7 +285,8 @@ ${contextBlock}`;
             model: nvidiaModel,
             temperature: 0.2,
             max_tokens: 1200,
-            messages,
+            messages: scrubbedMessages,
+
           }),
         });
         if (!nvRes.ok) {
@@ -317,7 +356,7 @@ ${contextBlock}`;
       },
       body: JSON.stringify({
         model: resolveChain("simple_chat").primary,
-        messages,
+        messages: scrubbedMessages,
         stream: true,
       }),
     });
