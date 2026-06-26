@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -681,6 +683,14 @@ serve(async (req) => {
     const { client, userId } = await authenticateRequest(req);
     const body = await req.json();
     const { action, budgetId, insightId } = body;
+
+    // Per-organization rate-limit (Fase 2 hardening). Lighter limit for the
+    // heavy `runBudgetRules` LLM action; read-only actions go through too but
+    // share the same bucket — keeps logic simple and predictable.
+    const limited = await rateLimitOrg(userId, {
+      module: "budget_ai", windowSeconds: 60, maxCalls: 15, corsHeaders,
+    });
+    if (limited) return limited;
 
     let result: any;
 

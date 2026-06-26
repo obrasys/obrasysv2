@@ -7,6 +7,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://esm.sh/zod@3.23.8';
+import { rateLimitOrg } from '../_shared/rateLimitOrg.ts';
+
 
 const BodySchema = z.object({
   orcamento_id: z.string().uuid(),
@@ -62,6 +64,11 @@ Deno.serve(async (req) => {
   const { data: userData, error: userErr } = await userClient.auth.getUser();
   if (userErr || !userData.user) return jsonResponse(401, { error: 'Invalid session' });
   const userId = userData.user.id;
+  const limited = await rateLimitOrg(userId, {
+    module: 'axia_budget_audit', windowSeconds: 60, maxCalls: 10, corsHeaders,
+  });
+  if (limited) return limited;
+
 
   // Validate input
   let payload: z.infer<typeof BodySchema>;

@@ -1,7 +1,8 @@
 // Axia Budget Insights - analisa orçamento (Base vs Target vs Adjudicado vs Comprado)
 // e gera insights proativos via Lovable AI.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { axiaGuard } from "../_shared/axiaGuard.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,22 +23,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
+    // Auth + per-organization rate-limit (Fase 2 hardening)
+    const guard = await axiaGuard(req, {
+      module: "axia_budget_insights", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
+    if (guard.response) return guard.response;
+    const { userClient: supabase, scrub } = guard;
 
     const { orcamentoId } = await req.json();
     if (!orcamentoId) {
@@ -147,7 +141,7 @@ Deno.serve(async (req) => {
 - Total Target: ${totals.target.toFixed(2)} € (desvio ${variancePct.toFixed(1)}%)
 - Total Adjudicado: ${totals.awarded.toFixed(2)} €
 - Total Comprado: ${totals.purchased.toFixed(2)} €
-- Itens com maior desvio: ${ranked.map((r: any) => `${r.description} (Δ ${r.delta.toFixed(0)} €)`).join("; ") || "nenhum"}`;
+- Itens com maior desvio: ${scrub(ranked.map((r: any) => `${r.description} (Δ ${r.delta.toFixed(0)} €)`).join("; ")) || "nenhum"}`;
 
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",

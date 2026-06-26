@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { axiaGuard } from "../_shared/axiaGuard.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,17 +15,19 @@ serve(async (req) => {
   }
 
   try {
+    // Auth + per-organization rate-limit (Fase 2 hardening)
+    const guard = await axiaGuard(req, {
+      module: "axia_suggestions", windowSeconds: 60, maxCalls: 20, corsHeaders,
+    });
+    if (guard.response) return guard.response;
+    const { userId, scrub } = guard;
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Not authenticated");
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) throw new Error("Not authenticated");
+    const user = { id: userId };
 
     const { tipo_obra, items, step } = await req.json();
     const suggestions: Array<{ type: string; message: string; payload: any }> = [];
@@ -70,7 +74,7 @@ Devolve via tool calling.`,
                   },
                   {
                     role: "user",
-                    content: JSON.stringify(items.map((i: any) => i.descricao)),
+                    content: scrub(JSON.stringify(items.map((i: any) => i.descricao))),
                   },
                 ],
                 tools: [{

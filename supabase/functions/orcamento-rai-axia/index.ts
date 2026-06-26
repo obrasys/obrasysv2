@@ -4,6 +4,8 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 interface ConsolidationInput {
   obraId: string;
@@ -63,6 +65,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const limited = await rateLimitOrg(userData.user.id, {
+      module: "orcamento_rai", windowSeconds: 60, maxCalls: 5, corsHeaders,
+    });
+    if (limited) return limited;
+
 
     const body = (await req.json().catch(() => null)) as
       | { consolidation?: ConsolidationInput }

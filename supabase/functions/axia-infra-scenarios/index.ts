@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 
 const corsHeaders = {
@@ -38,6 +40,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const limited = await rateLimitOrg(claimsData.claims.sub as string, {
+      module: "axia_infra", windowSeconds: 60, maxCalls: 10, corsHeaders,
+    });
+    if (limited) return limited;
 
     const { site_conditions } = await req.json();
     if (!site_conditions) {

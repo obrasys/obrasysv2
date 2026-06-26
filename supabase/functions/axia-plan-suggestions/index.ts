@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +38,10 @@ serve(async (req) => {
       });
     }
     const userId = claimsData.claims.sub as string;
+    const limited = await rateLimitOrg(userId, {
+      module: "axia_plan_suggestions", windowSeconds: 60, maxCalls: 10, corsHeaders,
+    });
+    if (limited) return limited;
 
     const { obra_id, tipo_obra, measurements, existing_mappings } = await req.json();
 

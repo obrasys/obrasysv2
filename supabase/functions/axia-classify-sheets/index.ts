@@ -7,6 +7,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod";
 import { AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 import { resolveModel } from "../_shared/axia/model-router.ts";
+import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 const BodySchema = z.object({
   plan_import_id: z.string().uuid(),
@@ -118,6 +120,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const limited = await rateLimitOrg(userRes.user.id, {
+      module: "axia_classify", windowSeconds: 60, maxCalls: 15, corsHeaders,
+    });
+    if (limited) return limited;
+
 
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
