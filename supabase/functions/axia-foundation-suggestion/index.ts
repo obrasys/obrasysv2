@@ -8,6 +8,12 @@ import { z } from "npm:zod";
 import { AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 import { resolveModel } from "../_shared/axia/model-router.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  AXIA_FOUNDATION_SUGGESTION_PROMPT_ID,
+  AXIA_FOUNDATION_SUGGESTION_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
+
 
 
 const InputsSchema = z.object({
