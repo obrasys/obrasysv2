@@ -217,9 +217,16 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
       });
     }
 
+    await logAxiaCall(supabase as any, {
+      module: "axia_plan_suggestions", task_type: "suggest",
+      provider_used: "lovable", model_used: modelUsed,
+      status: "ok", latency_ms: Date.now() - t0, user_id: userId,
+    });
+
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-plan-suggestions error:", msg);
