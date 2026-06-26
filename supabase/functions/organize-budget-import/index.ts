@@ -759,14 +759,26 @@ serve(async (req) => {
       }
     }
 
+    await logAxiaCall(adminClient, {
+      module: "organize_budget_import", task_type: "ai",
+      provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+      status: "ok", latency_ms: Date.now() - t0, user_id: logUserId,
+    });
     return new Response(JSON.stringify(normalized), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("organize-budget-import error:", e);
+    await logAxiaCall(adminClient, {
+      module: "organize_budget_import", task_type: "ai",
+      provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+      status: "error", latency_ms: Date.now() - t0, user_id: logUserId,
+      error_message: (e as Error).message,
+    });
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
 });
