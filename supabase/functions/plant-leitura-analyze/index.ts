@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  PLANT_LEITURA_ANALYZE_PROMPT_ID,
+  PLANT_LEITURA_ANALYZE_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
