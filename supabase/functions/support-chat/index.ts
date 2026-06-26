@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  SUPPORT_CHAT_PROMPT_ID,
+  SUPPORT_CHAT_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +58,10 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
+    const admin = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
@@ -94,6 +103,15 @@ serve(async (req) => {
     console.log("Sending request to AI Gateway...");
     console.log("Messages count:", safeMessages.length);
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-3-flash-preview";
+    const logBase = {
+      module: SUPPORT_CHAT_PROMPT_ID,
+      task_type: `${SUPPORT_CHAT_PROMPT_ID}@${SUPPORT_CHAT_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      user_id: user.id,
+    };
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -101,7 +119,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: aiModel,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           ...safeMessages,
@@ -114,21 +132,27 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: response.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${response.status}: ${errorText.slice(0, 200)}`,
+      });
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de pedidos excedido. Por favor, tente novamente mais tarde." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: "Créditos de IA esgotados. Por favor, contacte o suporte." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       return new Response(
         JSON.stringify({ error: "Erro no serviço de IA. Por favor, tente novamente." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -136,7 +160,14 @@ serve(async (req) => {
     }
 
     console.log("Streaming response from AI...");
-    
+
+    // Stream begins OK — log once latency-to-first-byte is measured.
+    await logAxiaCall(admin, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
+
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });

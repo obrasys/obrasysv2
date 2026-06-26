@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  RESEARCH_MATERIAL_PRICES_PROMPT_ID,
+  RESEARCH_MATERIAL_PRICES_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,9 +31,11 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -66,6 +73,15 @@ REGRAS DE OUTPUT:
       ? `Pesquisa preços de mercado em Portugal para materiais de construção na categoria "${category}": ${query}. Marca claramente o que é estimativa vs valor verificável.`
       : `Pesquisa preços de mercado em Portugal para materiais de construção: ${query}. Marca claramente o que é estimativa vs valor verificável.`;
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-3-flash-preview";
+    const logBase = {
+      module: RESEARCH_MATERIAL_PRICES_PROMPT_ID,
+      task_type: `${RESEARCH_MATERIAL_PRICES_PROMPT_ID}@${RESEARCH_MATERIAL_PRICES_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      user_id: user.id,
+    };
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -75,7 +91,7 @@ REGRAS DE OUTPUT:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -128,6 +144,13 @@ REGRAS DE OUTPUT:
     );
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: response.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${response.status}: ${errorText.slice(0, 200)}`,
+      });
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breve." }), {
           status: 429,
@@ -140,19 +163,30 @@ REGRAS DE OUTPUT:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
     const aiData = await response.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    
+
     if (!toolCall) {
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: "error",
+        latency_ms: Date.now() - t0,
+        error_message: "Resposta AI sem tool_calls",
+      });
       throw new Error("No tool call returned from AI");
     }
 
     const result = JSON.parse(toolCall.function.arguments);
+
+    await logAxiaCall(admin, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
 
     return new Response(JSON.stringify({ success: true, data: result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

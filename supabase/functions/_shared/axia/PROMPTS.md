@@ -47,21 +47,7 @@ As funções abaixo ainda têm o system prompt inline. Migração mecânica:
 mover texto para `prompts.ts` (novo `AxiaPrompt` ou builder) + substituir
 o uso por `getPrompt(...)`.
 
-- `axia-budget-insights`
-- `axia-electrical-analysis`
-- `axia-foundation-suggestion`
-- `axia-infra-scenarios`
-- `axia-suggestions`
-- `mce-axia-analyze`
-- `orcamento-rai-axia`
-- `optimize-with-ai`
-- `organize-budget-import`
-- `parse-supplier-pricelist`
-- `plant-leitura-analyze`
-- `process-voice-command`
-- `research-material-prices`
-- `support-chat`
-- `validate-budget-ai`
+_(Lote 4 concluído — todas as funções AI ativas já registam via `logAxiaCall`.)_
 
 ## Funções já com `logAxiaCall` (Fase 3)
 
@@ -83,6 +69,11 @@ o uso por `getPrompt(...)`.
 - `axia-infra-scenarios` ✅ (Lote 3)
 - `mce-axia-analyze` ✅ (Lote 3)
 - `orcamento-rai-axia` ✅ (Lote 3)
+- `parse-supplier-pricelist` ✅ (Lote 4)
+- `plant-leitura-analyze` ✅ (Lote 4)
+- `process-voice-command` ✅ (Lote 4, paralelo a `axia_processing_logs`)
+- `research-material-prices` ✅ (Lote 4)
+- `support-chat` ✅ (Lote 4, log no início do stream)
 
 
 

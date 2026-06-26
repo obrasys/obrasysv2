@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  PLANT_LEITURA_ANALYZE_PROMPT_ID,
+  PLANT_LEITURA_ANALYZE_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -170,6 +175,15 @@ serve(async (req) => {
       });
     }
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-2.5-pro";
+    const logBase = {
+      module: PLANT_LEITURA_ANALYZE_PROMPT_ID,
+      task_type: `${PLANT_LEITURA_ANALYZE_PROMPT_ID}@${PLANT_LEITURA_ANALYZE_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      organization_id: sheet.organization_id ?? null,
+    };
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -177,7 +191,7 @@ serve(async (req) => {
         "Lovable-API-Key": LOVABLE_API_KEY,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: aiModel,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {
@@ -195,6 +209,12 @@ serve(async (req) => {
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
+      await logAxiaCall(service, {
+        ...logBase,
+        status: aiRes.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${aiRes.status}: ${txt.slice(0, 200)}`,
+      });
       await service.from("plant_sheets").update({ status: "error", error_message: `AI ${aiRes.status}` }).eq("id", plant_sheet_id);
       await service.from("plant_processing_logs").insert({
         organization_id: sheet.organization_id, obra_id: sheet.obra_id, plant_file_id: sheet.plant_file_id,
@@ -336,6 +356,12 @@ serve(async (req) => {
         dropped_bad_unit: droppedBadUnit,
         dropped_oversize_regions: droppedOversizeRegions,
       },
+    });
+
+    await logAxiaCall(service, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
     });
 
     return new Response(JSON.stringify({ ok: true, elements: rows.length, ignored: ignoredRows.length, sheet: sheetUpdate }), {

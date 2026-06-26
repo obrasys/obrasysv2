@@ -1,6 +1,11 @@
 // Axia Voice Intake - process-voice-command
 // Classifica um comando de voz/texto e cria intake items + rascunhos.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  PROCESS_VOICE_COMMAND_PROMPT_ID,
+  PROCESS_VOICE_COMMAND_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -550,6 +555,16 @@ Deno.serve(async (req) => {
       latency_ms: Date.now() - startedAt,
     });
 
+    await logAxiaCall(admin, {
+      module: PROCESS_VOICE_COMMAND_PROMPT_ID,
+      task_type: `${PROCESS_VOICE_COMMAND_PROMPT_ID}@${PROCESS_VOICE_COMMAND_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: MODEL,
+      user_id: userId,
+      status: "ok",
+      latency_ms: Date.now() - startedAt,
+    });
+
     return new Response(
       JSON.stringify({ status: "processed", created_items, alerts_created }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -576,6 +591,16 @@ Deno.serve(async (req) => {
           model_used: MODEL,
           prompt_version: PROMPT_VERSION,
           latency_ms: Date.now() - startedAt,
+        });
+        await logAxiaCall(admin, {
+          module: PROCESS_VOICE_COMMAND_PROMPT_ID,
+          task_type: `${PROCESS_VOICE_COMMAND_PROMPT_ID}@${PROCESS_VOICE_COMMAND_PROMPT_VERSION}`,
+          provider_used: "lovable",
+          model_used: MODEL,
+          user_id: userId,
+          status: message === "RATE_LIMIT" ? "rate_limited" : "error",
+          latency_ms: Date.now() - startedAt,
+          error_message: message,
         });
       }
     } catch (logErr) {

@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  PARSE_SUPPLIER_PRICELIST_PROMPT_ID,
+  PARSE_SUPPLIER_PRICELIST_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,9 +21,11 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const client = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: { user }, error: authErr } = await client.auth.getUser();
     if (authErr || !user) throw new Error("Não autenticado");
@@ -95,6 +102,15 @@ Cada item devolvido deve incluir confidence (0-1), review_required, source_page 
 
 Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-2.5-flash";
+    const logBase = {
+      module: PARSE_SUPPLIER_PRICELIST_PROMPT_ID,
+      task_type: `${PARSE_SUPPLIER_PRICELIST_PROMPT_ID}@${PARSE_SUPPLIER_PRICELIST_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      user_id: user.id,
+    };
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,7 +118,7 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: aiModel,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: contentParts },
@@ -166,6 +182,13 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
+      const errText = await aiResponse.text().catch(() => "");
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${status}: ${errText.slice(0, 200)}`,
+      });
       if (status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em alguns minutos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -176,20 +199,33 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await aiResponse.text();
       console.error("AI error:", status, errText);
       throw new Error(`Erro AI: ${status}`);
     }
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("Resposta AI sem dados estruturados");
+    if (!toolCall) {
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: "error",
+        latency_ms: Date.now() - t0,
+        error_message: "Resposta AI sem tool_calls",
+      });
+      throw new Error("Resposta AI sem dados estruturados");
+    }
 
     const extracted = JSON.parse(toolCall.function.arguments);
     const items = extracted.items || [];
     const unresolved_rows = extracted.unresolved_rows || [];
     const summary = extracted.summary || `${items.length} itens extraídos, ${unresolved_rows.length} linhas por resolver`;
     const review_required = extracted.review_required ?? (unresolved_rows.length > 0 || items.some((i: any) => i?.review_required));
+
+    await logAxiaCall(admin, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
 
     return new Response(
       JSON.stringify({ items, unresolved_rows, summary, total: items.length, review_required }),
