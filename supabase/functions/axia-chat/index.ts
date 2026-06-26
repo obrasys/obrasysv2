@@ -255,6 +255,15 @@ ${contextBlock}`;
 
     messages.push({ role: "user", content: question });
 
+    // ── Fase 2 hardening: filtrar PII (NIF, IBAN, email, telefone, salário)
+    // do histórico e da pergunta antes de qualquer provedor externo.
+    // O contexto operacional (system prompt) é interno à plataforma e fica intacto.
+    const scrubbedMessages = [
+      messages[0],
+      ...scrubMessages(messages.slice(1)),
+    ];
+
+
     // ── NVIDIA via gateway (feature-flagged, reversible) ────
     const useGateway = (Deno.env.get("AXIA_USE_GATEWAY") ?? "").toLowerCase() === "true";
     const nvidiaEnabled = (Deno.env.get("AXIA_NVIDIA_ENABLED") ?? "").toLowerCase() === "true";
