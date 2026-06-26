@@ -159,6 +159,14 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
     });
 
     if (!resp.ok) {
+      const errText = await resp.text();
+      const status: "rate_limited" | "error" = resp.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(supabase as any, {
+        module: "axia_plan_suggestions", task_type: "suggest",
+        provider_used: "lovable", model_used: modelUsed,
+        status, latency_ms: Date.now() - t0, user_id: userId,
+        error_message: `gateway ${resp.status}: ${errText.slice(0, 200)}`,
+      });
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded", suggestions: [] }), {
           status: 429,
@@ -171,13 +179,13 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(JSON.stringify({ error: "AI error", suggestions: [] }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const aiData = await resp.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
