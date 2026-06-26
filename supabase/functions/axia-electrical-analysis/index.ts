@@ -512,14 +512,27 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     };
 
     const elecChain = resolveChain("critical_vision_analysis");
+    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const elecTaskType = `${AXIA_ELECTRICAL_ANALYSIS_PROMPT_ID}@${AXIA_ELECTRICAL_ANALYSIS_PROMPT_VERSION}`;
+    const elecT0 = Date.now();
     let resp = await callAI(elecChain.primary, "tool");
     if (!resp.ok && resp.status !== 400) {
       if (resp.status === 429) {
+        await logAxiaCall(adminClient, {
+          module: "axia_electrical", task_type: elecTaskType, status: "rate_limited",
+          provider_used: "lovable", model_used: elecChain.primary,
+          latency_ms: Date.now() - elecT0, user_id: userId, error_message: "gateway 429",
+        });
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (resp.status === 402) {
+        await logAxiaCall(adminClient, {
+          module: "axia_electrical", task_type: elecTaskType, status: "error",
+          provider_used: "lovable", model_used: elecChain.primary,
+          latency_ms: Date.now() - elecT0, user_id: userId, error_message: "gateway 402",
+        });
         return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -531,6 +544,8 @@ REFORÇOS GPT-5.5 (CRÍTICO):
     let toolCall = choice?.message?.tool_calls?.[0];
     let messageText = extractTextContent(choice?.message?.content);
     let analysis: any = null;
+    let usedModel = elecChain.primary;
+    let usedStatus: "ok" | "fallback" | "error" = "ok";
 
     if (toolCall) {
       try { analysis = parseJsonWithRepair(toolCall.function?.arguments ?? ""); }
@@ -542,6 +557,8 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       if (toolErrText) console.error("AI gateway tool error:", resp.status, toolErrText);
 
       const fallbackResp = await callAI(elecChain.fallback, "json");
+      usedModel = elecChain.fallback;
+      usedStatus = "fallback";
       if (fallbackResp.ok) {
         aiData = await fallbackResp.json();
         choice = aiData.choices?.[0];
@@ -553,8 +570,21 @@ REFORÇOS GPT-5.5 (CRÍTICO):
       } else {
         const fallbackErrText = await fallbackResp.text();
         console.error("AI gateway JSON fallback error:", fallbackResp.status, fallbackErrText);
+        usedStatus = "error";
       }
     }
+
+    await logAxiaCall(adminClient, {
+      module: "axia_electrical",
+      task_type: elecTaskType,
+      status: analysis ? usedStatus : "error",
+      provider_used: "lovable",
+      model_used: usedModel,
+      latency_ms: Date.now() - elecT0,
+      user_id: userId,
+      error_message: analysis ? null : "no structured analysis returned",
+    });
+
 
     if (!analysis) analysis = emptyAnalysis("A IA não devolveu análise estruturada.");
     analysis = normalizeAnalysis(analysis);
