@@ -175,6 +175,15 @@ serve(async (req) => {
       });
     }
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-2.5-pro";
+    const logBase = {
+      module: PLANT_LEITURA_ANALYZE_PROMPT_ID,
+      task_type: `${PLANT_LEITURA_ANALYZE_PROMPT_ID}@${PLANT_LEITURA_ANALYZE_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      organization_id: sheet.organization_id ?? null,
+    };
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -182,7 +191,7 @@ serve(async (req) => {
         "Lovable-API-Key": LOVABLE_API_KEY,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: aiModel,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {
@@ -200,6 +209,12 @@ serve(async (req) => {
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
+      await logAxiaCall(service, {
+        ...logBase,
+        status: aiRes.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${aiRes.status}: ${txt.slice(0, 200)}`,
+      });
       await service.from("plant_sheets").update({ status: "error", error_message: `AI ${aiRes.status}` }).eq("id", plant_sheet_id);
       await service.from("plant_processing_logs").insert({
         organization_id: sheet.organization_id, obra_id: sheet.obra_id, plant_file_id: sheet.plant_file_id,
