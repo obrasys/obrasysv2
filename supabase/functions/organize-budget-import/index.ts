@@ -646,6 +646,14 @@ serve(async (req) => {
     clearTimeout(aiTimer);
 
     if (!aiResponse.ok) {
+      await logAxiaCall(adminClient, {
+        module: "organize_budget_import",
+        task_type: hasPdf ? "pdf" : hasRawText ? "text" : "tabular",
+        provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+        status: aiResponse.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0, user_id: logUserId,
+        error_message: `gateway ${aiResponse.status}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breves momentos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -662,6 +670,7 @@ serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
