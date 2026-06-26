@@ -73,6 +73,15 @@ REGRAS DE OUTPUT:
       ? `Pesquisa preços de mercado em Portugal para materiais de construção na categoria "${category}": ${query}. Marca claramente o que é estimativa vs valor verificável.`
       : `Pesquisa preços de mercado em Portugal para materiais de construção: ${query}. Marca claramente o que é estimativa vs valor verificável.`;
 
+    const t0 = Date.now();
+    const aiModel = "google/gemini-3-flash-preview";
+    const logBase = {
+      module: RESEARCH_MATERIAL_PRICES_PROMPT_ID,
+      task_type: `${RESEARCH_MATERIAL_PRICES_PROMPT_ID}@${RESEARCH_MATERIAL_PRICES_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: aiModel,
+      user_id: user.id,
+    };
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -82,7 +91,7 @@ REGRAS DE OUTPUT:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
