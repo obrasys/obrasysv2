@@ -90,6 +90,14 @@ REGRAS:
     });
 
     if (!aiResponse.ok) {
+      const logStatus = aiResponse.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(admin, {
+        module: "optimize_ai", task_type: type,
+        provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+        status: logStatus, latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: `gateway ${aiResponse.status}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente mais tarde." }),
@@ -114,15 +122,29 @@ REGRAS:
     const optimizedText = aiData.choices?.[0]?.message?.content?.trim();
 
     if (!optimizedText) {
+      await logAxiaCall(admin, {
+        module: "optimize_ai", task_type: type,
+        provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+        status: "error", latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: "empty response",
+      });
       return new Response(
         JSON.stringify({ error: "Resposta inválida da IA" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    await logAxiaCall(admin, {
+      module: "optimize_ai", task_type: type,
+      provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+      status: "ok", latency_ms: Date.now() - t0,
+      organization_id: organizationId, user_id: userId,
+    });
     return new Response(JSON.stringify({ text: optimizedText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     console.error("Error in optimize-with-ai:", error);
     return new Response(
