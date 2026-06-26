@@ -65,6 +65,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const limited = await rateLimitOrg(userData.user.id, {
+      module: "orcamento_rai", windowSeconds: 60, maxCalls: 5, corsHeaders,
+    });
+    if (limited) return limited;
+
 
     const body = (await req.json().catch(() => null)) as
       | { consolidation?: ConsolidationInput }
