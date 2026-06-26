@@ -172,6 +172,22 @@ export const MCE_AXIA_ANALYZE_PROMPT_VERSION = "1.0.0";
 export const ORCAMENTO_RAI_AXIA_PROMPT_ID = "orcamento-rai-axia";
 export const ORCAMENTO_RAI_AXIA_PROMPT_VERSION = "1.0.0";
 
+// Lote 4 — IDs registados; prompts permanecem inline nas edge functions.
+export const PARSE_SUPPLIER_PRICELIST_PROMPT_ID = "parse-supplier-pricelist";
+export const PARSE_SUPPLIER_PRICELIST_PROMPT_VERSION = "1.0.0";
+
+export const PLANT_LEITURA_ANALYZE_PROMPT_ID = "plant-leitura-analyze";
+export const PLANT_LEITURA_ANALYZE_PROMPT_VERSION = "1.0.0";
+
+export const PROCESS_VOICE_COMMAND_PROMPT_ID = "process-voice-command";
+export const PROCESS_VOICE_COMMAND_PROMPT_VERSION = "1.0.0";
+
+export const RESEARCH_MATERIAL_PRICES_PROMPT_ID = "research-material-prices";
+export const RESEARCH_MATERIAL_PRICES_PROMPT_VERSION = "1.0.0";
+
+export const SUPPORT_CHAT_PROMPT_ID = "support-chat";
+export const SUPPORT_CHAT_PROMPT_VERSION = "1.0.0";
+
 
 /**
  * Builder used by axia-plan-suggestions. O bloco anti-alucinação é injectado
