@@ -9,6 +9,9 @@ export function useObras() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Fase 1 do plano de correção: dedupe agressivo das listagens de obras
+  // (top-1 e top-2 das slow_queries). React Query passa a partilhar o
+  // mesmo cache durante 60s entre Dashboard, Sidebar e listagens.
   const { data: obras, isLoading } = useQuery({
     queryKey: ['obras', user?.id],
     queryFn: async () => {
@@ -27,6 +30,9 @@ export function useObras() {
       return data as Obra[];
     },
     enabled: !!user?.id,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: obrasArquivadas, isLoading: isLoadingArquivadas } = useQuery({
@@ -44,6 +50,9 @@ export function useObras() {
       return data as Obra[];
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const createObra = useMutation({
