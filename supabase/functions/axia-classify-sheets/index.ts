@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
     }
 
     const model = resolveModel("critical_vision_analysis", "primary");
+    const t0 = Date.now();
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -118,11 +119,19 @@ Deno.serve(async (req) => {
 
     if (!aiResp.ok) {
       const txt = await aiResp.text();
+      await logAxiaCall(admin, {
+        module: "axia_classify_sheets", task_type: "classify",
+        provider_used: "lovable", model_used: model,
+        status: aiResp.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0, user_id: userRes.user.id,
+        error_message: `gateway ${aiResp.status}: ${txt.slice(0, 200)}`,
+      });
       return new Response(
         JSON.stringify({ error: "Falha gateway IA", status: aiResp.status, detail: txt.slice(0, 500) }),
         { status: aiResp.status === 429 || aiResp.status === 402 ? aiResp.status : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     const aiJson = await aiResp.json();
     const raw = aiJson?.choices?.[0]?.message?.content ?? "{}";
