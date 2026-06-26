@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { getPrompt } from '../_shared/axia/prompts.ts';
+import { logAxiaCall } from '../_shared/axia/logCall.ts';
 
 const SYSTEM_PROMPT = getPrompt('axia-nvidia-test').system;
 
