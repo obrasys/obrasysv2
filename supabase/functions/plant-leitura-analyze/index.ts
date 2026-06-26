@@ -358,6 +358,12 @@ serve(async (req) => {
       },
     });
 
+    await logAxiaCall(service, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
+
     return new Response(JSON.stringify({ ok: true, elements: rows.length, ignored: ignoredRows.length, sheet: sheetUpdate }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
