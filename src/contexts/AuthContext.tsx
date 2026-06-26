@@ -144,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = null;
           setProfile(null);
           setOrganization(null);
+          setMfaVerifiedState(false);
           return;
         }
 
@@ -152,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = session.user.id;
           setTimeout(() => {
             fetchProfile(session.user.id);
+            void refreshMfaStatus(session.user.id);
             // Mark any pending team invitations for this user's email as accepted
             // (deferred so it never blocks the auth flow).
             void (supabase.rpc as any)('accept_my_pending_invitations').then(() => {}, () => {});
@@ -160,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = null;
           setProfile(null);
           setOrganization(null);
+          setMfaVerifiedState(false);
         }
       }
     );
