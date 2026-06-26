@@ -179,6 +179,16 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
     if (!resp.ok) {
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
+      await logAxiaCall(adminClient, {
+        module: "axia_infra",
+        task_type: `${AXIA_INFRA_SCENARIOS_PROMPT_ID}@${AXIA_INFRA_SCENARIOS_PROMPT_VERSION}`,
+        status: resp.status === 429 ? "rate_limited" : "error",
+        provider_used: "lovable",
+        model_used: modelName,
+        latency_ms: Date.now() - t0,
+        user_id: userId,
+        error_message: `gateway ${resp.status}`,
+      });
       return new Response(
         JSON.stringify({
           scenarios: [],
@@ -202,9 +212,20 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
       }
     }
 
+    await logAxiaCall(adminClient, {
+      module: "axia_infra",
+      task_type: `${AXIA_INFRA_SCENARIOS_PROMPT_ID}@${AXIA_INFRA_SCENARIOS_PROMPT_VERSION}`,
+      status: "ok",
+      provider_used: "lovable",
+      model_used: modelName,
+      latency_ms: Date.now() - t0,
+      user_id: userId,
+    });
+
     return new Response(JSON.stringify({ scenarios }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-infra-scenarios error:", msg);
