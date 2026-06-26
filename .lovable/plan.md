@@ -1,137 +1,191 @@
+# Plano de Correção — Obra Sys
 
-# Evolução do Orçamento Essencial — Plano Faseado
+Plano sequencial baseado na auditoria de 26-06-2026. Cada fase é independente, com gate de validação antes da seguinte. Nenhuma fase entra em produção sem checklist concluído.
 
-Implementação **aditiva** e **não-destrutiva**. Orçamentos existentes continuam a funcionar. Reutiliza tabelas atuais (`budget_zones`, `budget_areas`, `artigos_orcamento`, `org_zone_library`, `org_area_library`, `org_service_type_library`, `base_artigos_user`) e adiciona apenas o que falta.
+---
 
-## Fase 1 — Base de dados (migrações aditivas, com RLS)
+## Princípios de execução (aplicam-se a todas as fases)
 
-Novas tabelas (todas multi-tenant por `organization_id`, com GRANTs e RLS):
+- **Branch/preview primeiro**: cada fase é validada em preview antes de publicar.
+- **Migrações reversíveis**: toda migração tem rollback documentado.
+- **Snapshot antes de mexer**: tabelas críticas (`obras`, `orcamentos`, `artigos_orcamento`, `closing_sheets`, `financial_*`) recebem `pg_dump` lógico parcial antes de qualquer ALTER.
+- **Sem refactor + feature na mesma PR**.
+- **Lista do anexo M da auditoria é intocável** sem aprovação explícita por item.
 
-- `org_intervention_area_service_types` — relação Área ↔ Tipo de Serviço para sugestões dinâmicas. Permite seed por defeito + customizações por org.
-- `organization_budget_terms` — condições comerciais reutilizáveis (`title`, `content`, `is_default`, `last_used_at`).
-- `organization_tax_settings` — `country`, `region`, `labor_vat_rate`, `material_vat_rate`, `default_vat_rate`. Substitui hardcode no frontend e mantém retro-compat com `iva-regions.ts`.
+---
 
-Alterações aditivas (colunas nullable):
+## FASE 0 — Preparação (0,5 sprint, risco zero)
 
-- `budget_zones`: `+ context text` (`interior`|`exterior`|`geral`|null).
-- `budget_areas`: `+ context text`.
-- `org_area_library` / `org_zone_library`: `+ context text`.
-- `artigos_orcamento`: `+ intervention_context text`, `+ labor_vat_rate numeric`, `+ material_vat_rate numeric`, `+ catalog_article_id uuid` (FK → `base_artigos_user`).
-- `base_artigos_user` (Meu Catálogo): adicionar campos em falta — `final_price`, `subcontract_cost`, `service_cost`, `rental_cost`, `miscellaneous_cost`, `intervention_context`, `area_id`, `service_type_id`, `tags text[]`, `source text`, `usage_count int`, `last_used_at`.
+Objetivo: criar a rede de segurança antes de qualquer correção.
 
-Seeds: Tipos de serviço sugeridos por Área (conforme listas do briefing — Quarto→Pintura/Pavimentos/…, Cozinha→Demolições/Canalização/…, Piscina→Escavação/…, etc.) em `org_service_type_suggestions` (tabela já existente, apenas insere defaults com `organization_id = null`).
+1. Ativar `pg_stat_statements` dashboard semanal.
+2. Criar helper `supabase/functions/_shared/requireUser.ts` (sem aplicar ainda).
+3. Adicionar `eslint-plugin-no-console` em modo `warn` (sem falhar build).
+4. Configurar exports CSV dos 5 top-queries para baseline de performance.
+5. Snapshot lógico de `obras`, `orcamentos`, `artigos_orcamento`, `closing_sheets`.
 
-Sem renomear nem dropar nada existente. Cada migração tem comentário de rollback.
+**Gate:** baseline de performance e backups confirmados.
 
-## Fase 2 — Renomeação (i18n / labels)
+---
 
-Apenas textos da UI — sem renomear colunas/tipos internos:
+## FASE 1 — CRÍTICO/ALTO: Performance de leitura (1 sprint)
 
-- "Tipologia do imóvel" → **"Zona de Intervenção"**
-- "Zona" → **"Área de Intervenção"**
-- Botões/chips de áreas → **dropdown** (Select com agrupamento por contexto Interior/Exterior/Geral)
+Maior ganho com menor risco. Apenas índices e dedupe de cache, sem mudar contratos.
 
-Ficheiros tocados: `ZonasServicosPanel.tsx`, `AreasGrid.tsx` (substituído por Select), `ItemSelectorModal.tsx`, `BudgetSummaryTable.tsx`, `SelectedItemsPreview.tsx`, `TotalsAdjustments.tsx`, `ClientIdentification.tsx`.
+1. **Migração SQL** (única, com rollback):
+   - `CREATE INDEX CONCURRENTLY ix_obras_arquivada_status_created ON obras (arquivada, status, created_at DESC);`
+   - `CREATE INDEX CONCURRENTLY ix_obras_org_arquivada ON obras (organization_id, arquivada);`
+   - `CREATE INDEX CONCURRENTLY ix_orcamentos_obra_id ON orcamentos (obra_id);`
+   - `CREATE INDEX CONCURRENTLY ix_artigos_orc_capitulo ON artigos_orcamento (capitulo_id);`
+   - `ANALYZE` nas 4 tabelas.
+2. Centralizar `useObras` numa única fonte React Query (`staleTime: 30s`, `gcTime: 5min`). Remover fetches duplicados em Dashboard/Sidebar.
+3. Adicionar `select` específicos no PostgREST (cortar `obras.*` por colunas necessárias).
+4. Re-executar slow_queries após 48h; comparar com baseline.
 
-## Fase 3 — Fluxo hierárquico Zona → Contexto → Área → Tipo de Serviço → Artigo
+**Esperado:** -60% a -80% tempo total em `obras`. **Risco de quebra:** nulo.
 
-Novo wizard dentro de `ZonasServicosPanel.tsx`:
+---
 
-1. Criar/Selecionar **Zona de Intervenção** (ex. Apartamento 01, Moradia, Garagem). Persistido em `budget_zones` (e biblioteca `org_zone_library` para reutilização).
-2. Escolher **contexto** (Interior/Exterior/Geral) via tabs.
-3. Selecionar **Área de Intervenção** (dropdown filtrado pelo contexto, com "+ Nova área").
-4. Selecionar **Tipo de Serviço** (sugestões dinâmicas via `org_service_type_suggestions` filtradas pela área, com "+ Novo tipo").
-5. Selecionar **artigo** sugerido (a partir de `base_artigos_user` + `base_artigos_global` filtrados por tipo de serviço) ou criar novo.
+## FASE 2 — ALTO: Hardening de segurança (1 sprint)
 
-Compatibilidade: todos os passos são opcionais. Itens sem zona/área aparecem como "Sem zona de intervenção".
+Sem mudar comportamento funcional, apenas adicionar verificações.
 
-## Fase 4 — Editor de item: reutilizar modal do Avançado
+1. Aplicar `requireUser()` nas 12 edge functions identificadas (`billing-*`, `check-receivable-alerts`, `recalculate-prices`). Stripe-webhooks mantém JWT off mas reforçar verificação de assinatura.
+2. **MFA server-side**:
+   - Criar coluna `mfa_verified_at` em `user_mfa_settings`.
+   - RPC `verify_mfa_session()` que valida cookie httpOnly assinado.
+   - Frontend mantém `sessionStorage` como cache mas **revalida** a cada navegação para rota sensível.
+3. **PII filter Axia**: helper `_shared/scrubPII.ts` (regex NIF, IBAN, cartão, salário) aplicado antes de cada `axia-*`.
+4. **Rate-limit Axia**: tabela `axia_rate_limits (org_id, window_start, calls)` + check antes da chamada.
+5. Buckets públicos: trocar política de listagem por leitura por path (`logos/*`, `branding/*` continuam públicos por path; bloquear `LIST`).
+6. Remover `console.log` em produção via lint `error` (manter `warn/error`).
 
-No `SelectedItemsPreview.tsx`, substituir editor inline por `BudgetItemFormDialog` (já existente em `src/components/orcamentos/budget/BudgetItemFormDialog.tsx`), estendendo-o com:
+**Esperado:** 0 findings repetidos no próximo scan. **Risco:** baixo; ativar feature flag por função.
 
-- Campos: Zona, Contexto, Área, Tipo de Serviço.
-- Decomposição: `custo_mo`, `custo_mat`, `custo_sub`, `custo_srv`, `custo_alu`, `custo_div`.
-- IVA por categoria: `labor_vat_rate`, `material_vat_rate`.
-- Toggle "Gravar também no Meu Catálogo".
+---
 
-Mesma instância usada no Avançado para evitar duplicação.
+## FASE 3 — MÉDIO: Estabilização de módulos críticos (1 sprint)
 
-## Fase 5 — Meu Catálogo
+Sem alterar UX visível, apenas reduzir superfície de risco.
 
-Estender `useSaveArtigoToUserBase` para:
+1. **Consolidar geradores PDF** (`orcamento-pdf`, `*-comercial`, `*-zonas`) num motor único parametrizado. Testes de snapshot por modo antes de remover os antigos.
+2. **Testes mínimos** para cálculos sensíveis:
+   - `iva-regions.ts` (Continente/Madeira/Açores).
+   - Folha de fecho (EAC, desvios).
+   - Trigger de sync `receivables ↔ receivable_payments`.
+3. Centralizar prompts Axia em `supabase/functions/_shared/prompts/*.md` + log obrigatório em `axia_ai_logs` com `organization_id`, custo estimado e hash do prompt.
 
-- Upsert por (organization_id, descrição normalizada, unidade, service_type_id).
-- Atualizar `usage_count` e `last_used_at` quando reutilizado.
-- Persistir source: `criado_manual` | `editado_orcamento` | `importado` | `sugerido_axia`.
-- Auto-save em criação; pergunta ("Atualizar só este orçamento" / "Guardar no Meu Catálogo") em edição.
+**Risco:** Médio — só publicar PDF unificado após paridade visual confirmada.
 
-Página existente "Base de Preços" passa a mostrar o Meu Catálogo com filtros por contexto/área/tipo.
+---
 
-## Fase 6 — Auditoria Axia por item
+## FASE 4 — MÉDIO: Quebra de monólitos (2 sprints)
 
-Atualizar edge function `budget-ai-engine` (e `useAIBudgetInsights`) para retornar análise **item-a-item** com: código, descrição, capítulo, zona, área, tipo, preço base, preço final, margem €, margem %, qty, totais, observação.
+Refactor puro, sem nova funcionalidade. Um ficheiro por PR.
 
-Categorias de alerta: margem negativa, baixa (<10%), alta (>50%), sem preço base, preço final = 0, qty = 0, decomposição incoerente.
+Ordem (do mais isolado para o mais acoplado):
+1. `useSuppliers.ts` (955 L) → dividir por domínio (CRUD, invites, reviews).
+2. `ArtigoForm.tsx` (969 L) → extrair `ZoneAreaSelector`, `IvaSelector`, `CostBreakdown`.
+3. `IcfAssistenteArquitetura.tsx` (997 L) → separar steps do wizard.
+4. `orcamentos/Essencial.tsx` (1.069 L) → separar wizard, preview e save.
+5. `PlanViewer.tsx` (1.080 L) → extrair camadas Konva.
+6. `orcamentos/Editar.tsx` (1.138 L) → idem Essencial.
+7. `plantas/Detail.tsx` (1.843 L) → painéis em rotas filhas.
+8. `ClosingSheetFullView.tsx` (2.192 L) — **último**, mais acoplado a finanças.
 
-UI nova em `Ver.tsx` / `Essencial.tsx`: tabela "Auditoria de Margem" com resumo geral + lista de alertas. Sem auto-alteração de valores.
+Cada PR: tamanho-diff <800 linhas, sem alteração de tipos públicos, com snapshot de UI.
 
-## Fase 7 — Contexto fiscal e IVA separado
+**Risco:** Médio. Mitigação: feature flag por componente reformado.
 
-- Ler `organization_tax_settings` (fallback para `iva-regions.ts`).
-- Em cada item, calcular IVA por componente: `custo_mo × labor_vat_rate`, `custo_mat × material_vat_rate`, restantes com `default_vat_rate`.
-- Itens sem decomposição: usar IVA padrão (retro-compat).
-- Resumo fiscal por categoria no `TotalsAdjustments.tsx` e PDF.
+---
 
-## Fase 8 — Envio de proposta
+## FASE 5 — MÉDIO: Consolidação de modelo de dados (2 sprints)
 
-Em `ClientIdentification.tsx`, ao selecionar cliente: pré-preencher `email` da ficha. Se ausente, mostrar campo + opção "Guardar na ficha do cliente". Validar formato.
+Só após Fase 1 estabilizar.
 
-## Fase 9 — Condições comerciais persistentes
+1. Documentar ER de financeiro e orçamentos (`docs/er-*.md`).
+2. Auditar uso real (queries 30 dias) das tabelas paralelas:
+   - `daily_reports` ↔ `relatorios_diarios`
+   - `org_service_suggestions` ↔ `org_service_type_suggestions`
+   - `org_zone_library` ↔ `org_zone_area_defaults`
+   - `supplier_profiles` ↔ `fornecedores`
+3. Marcar a tabela perdedora como `DEPRECATED` (view de compatibilidade), nunca DROP imediato. DROP só após 1 sprint sem leituras.
+4. Converter enums TEXT em tipos `enum` Postgres onde estável.
+5. TTL automático em `survey_tokens` (cron edge function ou trigger).
 
-- `organization_budget_terms`: CRUD simples.
-- Ao abrir novo orçamento: carregar último `is_default` ou último `last_used_at`.
-- Botão "Guardar como padrão" no `TotalsAdjustments.tsx`.
+**Risco:** Alto se DROP precipitado. Mitigação: fase de view + monitorização.
 
-## Fase 10 — PDF agrupado por Zona
+---
 
-Refatorar `src/lib/orcamento-pdf-zonas.ts` para hierarquia:
+## FASE 6 — BAIXO: UX e qualidade contínua (contínuo)
+
+1. Padronizar estados vazios (componente `<EmptyState>`).
+2. Mensagens de erro humanas (mapper de erros Supabase).
+3. Breadcrumbs em ICF/Plantas.
+4. Dark mode QA em módulos novos.
+5. Onboarding gamificado cobrindo ICF e Plantas.
+6. Subir cobertura de testes para 25% nos hooks de cálculo.
+7. Dashboard de custo Axia por organização.
+
+**Risco:** Nulo.
+
+---
+
+## Ordem global e dependências
 
 ```text
-ZONA DE INTERVENÇÃO
-  Capítulo
-    Área de Intervenção
-      Tipo de Serviço
-        Artigo (qty, pu, total)
-      Subtotal Tipo
-    Subtotal Área
-  Subtotal Capítulo
-Subtotal Zona
-…
-Resumo Fiscal:
-  Subtotal M.O. + IVA reduzido
-  Subtotal Materiais + IVA normal
-  Subtotal Outros + IVA aplicável
-  Total s/IVA, Total IVA, Total c/IVA
+Fase 0 (prep)
+   ↓
+Fase 1 (perf) ────────────┐
+   ↓                      │
+Fase 2 (security)         │ podem correr em paralelo
+   ↓                      │ se equipas separadas
+Fase 3 (estabilizacao) ───┘
+   ↓
+Fase 4 (monolitos)  ←  bloqueada ate Fase 3 concluir testes
+   ↓
+Fase 5 (modelo de dados)  ←  bloqueada ate Fase 1 estabilizar
+   ↓
+Fase 6 (UX continua)
 ```
 
-- Agrupa automaticamente mesmo se inserido fora de ordem.
-- Oculta níveis vazios sem partir layout.
-- Itens sem zona → secção "Sem zona de intervenção" no fim.
-- Cabeçalho profissional já existente (logo, dados empresa/cliente/obra) reutilizado; campos vazios ocultos.
+---
 
-## Critérios de aceitação (todos do briefing)
+## Detalhes técnicos por fase
 
-Cobertos pelas Fases 2 (1–4), 3 (5–8), 10 (9–10), 4 (11–12), 5 (13–14), 6 (15–16), 7 (17), 8 (18–19), 9 (20), 1 (21–23).
+**Fase 1 (índices):** usar `CREATE INDEX CONCURRENTLY` fora de transação — exige migração separada e janela de baixa carga.
 
-## Notas técnicas
+**Fase 2 (MFA server-side):** cookie httpOnly assinado com HMAC + `mfa_verified_at` validado por RPC `SECURITY DEFINER`. Manter `sessionStorage` apenas como cache UX, fonte da verdade no servidor.
 
-- Tudo opcional para preservar orçamentos antigos.
-- Sem renomear colunas existentes; só adicionar.
-- RLS por `organization_id` via `get_user_org_id()`/`get_org_member_ids()` em todas as novas tabelas, com GRANTs explícitos para `authenticated` e `service_role`.
-- Arredondamento financeiro centralizado em `src/lib/finance.ts`.
-- Migração executada em blocos pequenos com possibilidade de rollback manual (drop column / drop table).
-- Cada fase entregue em PR lógico independente; nada bloqueia uso atual entre fases.
+**Fase 2 (PII filter):** regex PT: NIF `\b\d{9}\b` com check digit, IBAN `PT50\d{21}`, salário por contexto (campos `salario_*`). Substituir por `[REDACTED]` antes do prompt; nunca logar original.
 
-## Ordem de execução sugerida
+**Fase 3 (PDF):** motor único recebe `mode: 'tecnico' | 'comercial' | 'zonas'` + `options`. Snapshot por jsPDF→PNG via puppeteer em CI.
 
-1. Fase 1 (DB) → 2. Fase 2 (labels) → 3. Fase 3 (fluxo) → 4. Fase 4 (modal) → 5. Fase 5 (catálogo) → 6. Fase 7 (IVA) → 7. Fase 10 (PDF) → 8. Fase 6 (Axia) → 9. Fase 8 (email) → 10. Fase 9 (condições).
+**Fase 4:** cada ficheiro extraído mantém o mesmo *default export* e mesma API de props. Diff de comportamento validado por testes de render existentes + manual smoke.
+
+**Fase 5:** views de compatibilidade `CREATE VIEW old_table AS SELECT ... FROM new_table` com `security_invoker = on`.
+
+---
+
+## Critérios de "pronto" por fase
+
+| Fase | Done quando |
+|---|---|
+| 0 | Baselines exportados, helper criado, lint configurado |
+| 1 | Top-5 queries -60% em 48h, dedupe React Query em produção |
+| 2 | 0 findings críticos/altos no scan; testes de bypass MFA falham |
+| 3 | PDF unificado com paridade 1:1; testes de cálculo verdes |
+| 4 | 0 ficheiros >900 linhas; suite verde |
+| 5 | Tabelas paralelas com 0 leituras durante 1 sprint |
+| 6 | Cobertura ≥25%, lighthouse UX ≥90 |
+
+---
+
+## Itens explicitamente FORA deste plano
+
+Conforme anexo M da auditoria, **não** serão modificados sem aprovação caso-a-caso:
+RLS de `obras/orcamentos/organizations/user_roles/super_admins`, trigger `handle_new_user`, `is_super_admin()`, `stripe-webhooks`, fluxo MFA recentemente corrigido (`mfa_otp_codes`, `mfa_trusted_devices`), `accept_my_pending_invitations`, view `supplier_profiles_marketplace`, e flags `verify_jwt` do `config.toml` (revisão item-a-item na Fase 2).
+
+---
+
+Aguardo aprovação para iniciar pela **Fase 0 + Fase 1** (preparação + performance) — o par com maior ganho e menor risco.
