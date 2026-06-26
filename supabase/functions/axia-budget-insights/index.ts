@@ -2,6 +2,9 @@
 // e gera insights proativos via Lovable AI.
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (AXIA_BUDGET_INSIGHTS_*)
+
 
 
 const corsHeaders = {
