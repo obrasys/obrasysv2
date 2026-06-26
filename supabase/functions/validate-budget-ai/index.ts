@@ -65,6 +65,7 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+    logUserId = userId as string;
     const limited = await rateLimitOrg(userId as string, {
       module: "validate_budget_ai", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
