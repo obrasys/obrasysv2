@@ -8,6 +8,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { rateLimitOrg } from '../_shared/rateLimitOrg.ts';
+import { logAxiaCall } from '../_shared/axia/logCall.ts';
 
 
 const BodySchema = z.object({
@@ -215,15 +216,16 @@ Deno.serve(async (req) => {
     inserted = count ?? findings.length;
   }
 
-  // Log
-  await admin.from('axia_ai_logs').insert({
+  // Log central (helper partilhado — Fase 3)
+  await logAxiaCall(admin, {
     organization_id: orgId,
     user_id: userId,
     module: 'orcamentos',
     task_type: 'budget_audit',
     status: 'success',
     latency_ms: 0,
-  } as any).then(() => {}, () => {});
+  });
+
 
   return jsonResponse(200, {
     ok: true,
