@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import { AXIA_ANALYSIS_PROMPT_VERSION } from "../_shared/axia/prompts.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -190,6 +193,14 @@ REGRAS ABSOLUTAS:
 
 ${contextBlock}`;
 
+    const t0 = Date.now();
+    const modelUsed = resolveChain("summary").primary;
+    const logBase = {
+      module: "axia_analysis", task_type: "operational_summary",
+      provider_used: "lovable" as const, model_used: modelUsed,
+      user_id: user.id,
+    };
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -197,7 +208,8 @@ ${contextBlock}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("summary").primary,
+        model: modelUsed,
+
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: "Analisa todos os dados operacionais e gera a análise completa para o painel da Central de Inteligência. Preenche TODAS as secções com dados reais. Se alguma secção não tem dados relevantes, retorna array vazio." },
@@ -313,6 +325,12 @@ ${contextBlock}`;
     });
 
     if (!aiResponse.ok) {
+      const errText = await aiResponse.text().catch(() => "");
+      const status = aiResponse.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(supabase as any, {
+        ...logBase, status, latency_ms: Date.now() - t0,
+        error_message: `gateway ${aiResponse.status} v${AXIA_ANALYSIS_PROMPT_VERSION}: ${errText.slice(0, 200)}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breve." }), {
           status: 429,
@@ -325,7 +343,6 @@ ${contextBlock}`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, errText);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
         status: 500,
@@ -338,6 +355,10 @@ ${contextBlock}`;
 
     if (!toolCall?.function?.arguments) {
       console.error("No tool call in AI response:", JSON.stringify(aiResult));
+      await logAxiaCall(supabase as any, {
+        ...logBase, status: "error", latency_ms: Date.now() - t0,
+        error_message: "no tool_call in response",
+      });
       return new Response(JSON.stringify({ error: "Resposta da IA inválida" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -351,11 +372,19 @@ ${contextBlock}`;
         : toolCall.function.arguments;
     } catch (e) {
       console.error("Failed to parse AI arguments:", toolCall.function.arguments);
+      await logAxiaCall(supabase as any, {
+        ...logBase, status: "error", latency_ms: Date.now() - t0,
+        error_message: `parse failed: ${(e as Error).message}`,
+      });
       return new Response(JSON.stringify({ error: "Erro ao processar análise" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    await logAxiaCall(supabase as any, {
+      ...logBase, status: "ok", latency_ms: Date.now() - t0,
+    });
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -367,4 +396,5 @@ ${contextBlock}`;
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
 });

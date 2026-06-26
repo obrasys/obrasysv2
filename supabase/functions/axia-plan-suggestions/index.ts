@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { resolveChain } from "../_shared/axia/model-router.ts";
+import { buildAxiaPlanSuggestionsSystemPrompt } from "../_shared/axia/prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+
+
 
 
 const corsHeaders = {
@@ -76,35 +81,8 @@ serve(async (req) => {
       estado: mp.estado,
     }));
 
-    const systemPrompt = `Tu és a Axia, a camada de inteligência operacional do Obra Sys para construção civil em Portugal.
-Trabalhas em português de Portugal.
-Apoias leitura de planta, medições, validação e orçamento, mas NÃO substituis revisão humana, projeto técnico, engenheiro responsável ou fornecedor.
-Nunca inventas valores. Quando não houver evidência suficiente, devolves resposta vazia (suggestions: []) em vez de inventar.
+    const systemPrompt = buildAxiaPlanSuggestionsSystemPrompt();
 
-REGRAS GLOBAIS DA AXIA NO MÓDULO PLANTA
-1. Nunca devolver medições como definitivas sem evidência.
-2. Diferenciar sempre dado lido / calculado / inferido / estimado / indisponivel.
-3. Sem escala/calibração confiável → não tratar quantidades como definitivas.
-4. Em caso de dúvida → review_required=true.
-5. Não contar elementos em cortes, alçados, detalhes, legendas, carimbos ou tabelas.
-6. Não duplicar elementos entre planta geral, detalhe, corte e legenda.
-7. Coordenadas e bbox sempre normalizadas entre 0 e 1.
-8. Nada vai para orçamento sem origem, confidence e estado de validação.
-
-Analisa as medições feitas sobre planta e os mapeamentos existentes para sugerir melhorias.
-
-Regras estritas:
-- Nunca sugiras valores absolutos de preço.
-- Nunca alteres dados automaticamente - toda sugestão tem auto_apply_allowed=false implícito.
-- Foca-te em artigos complementares que tipicamente acompanham os medidos.
-- Não sugiras complementares como definitivos se a medição base estiver com estado=pendente ou confidence baixa - nesses casos marca severity="info" e indica no message que depende de validação prévia.
-- Deteta duplicações na mesma zona/camada.
-- Deteta incompatibilidades de unidades entre medição e artigo.
-- Valida coerência de valores (ex: WC com mais de 50m² é provável erro).
-- Em cada sugestão indica no message a razão (reason) e a ação sugerida (suggested_action) de forma operacional.
-- Sê conciso e operacional nas mensagens.
-
-${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
     const userPrompt = `Tipo de obra: ${tipo_obra || "não especificado"}
     
@@ -116,14 +94,18 @@ ${JSON.stringify(mappingsSummary, null, 2)}
 
 Analisa e retorna sugestões usando a ferramenta fornecida.`;
 
+    const t0 = Date.now();
+    const modelUsed = resolveChain("suggestions").primary;
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("suggestions").primary,
+        model: modelUsed,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -177,6 +159,14 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
     });
 
     if (!resp.ok) {
+      const errText = await resp.text();
+      const status: "rate_limited" | "error" = resp.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(supabase as any, {
+        module: "axia_plan_suggestions", task_type: "suggest",
+        provider_used: "lovable", model_used: modelUsed,
+        status, latency_ms: Date.now() - t0, user_id: userId,
+        error_message: `gateway ${resp.status}: ${errText.slice(0, 200)}`,
+      });
       if (resp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded", suggestions: [] }), {
           status: 429,
@@ -189,13 +179,13 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
       return new Response(JSON.stringify({ error: "AI error", suggestions: [] }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const aiData = await resp.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
@@ -227,9 +217,16 @@ Analisa e retorna sugestões usando a ferramenta fornecida.`;
       });
     }
 
+    await logAxiaCall(supabase as any, {
+      module: "axia_plan_suggestions", task_type: "suggest",
+      provider_used: "lovable", model_used: modelUsed,
+      status: "ok", latency_ms: Date.now() - t0, user_id: userId,
+    });
+
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-plan-suggestions error:", msg);

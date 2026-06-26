@@ -25,15 +25,21 @@ revisão editorial e auditoria, não é importado pelo Deno.
 
 ## Prompts registados (`prompts.ts`)
 
-| ID                  | Versão | Descrição                                                          |
-| ------------------- | ------ | ------------------------------------------------------------------ |
-| `axia-nvidia-test`  | 1.0.0  | Prompt do path NVIDIA do `axia-chat` (smoke-test e fallback rápido). |
+| ID                       | Versão | Descrição                                                                  |
+| ------------------------ | ------ | -------------------------------------------------------------------------- |
+| `axia-nvidia-test`       | 1.0.0  | Prompt do path NVIDIA do `axia-chat` (smoke-test e fallback rápido).       |
+| `axia-classify-sheets`   | 1.0.0  | Classificação de folhas (disciplina/tipo/piso) PT-PT determinística.       |
+| `axia-analysis`          | 1.0.0  | Análise operacional da Central de Inteligência (sumário + sugestões).      |
+| `axia-plan-vision`       | 1.0.0  | Leitura de planta arquitetura por imagem (símbolos + divisões).            |
+| `axia-specialty-vision`  | 1.0.0  | Leitura de planta de especialidades (elétrica, AVAC, águas, etc.).         |
+| `axia-plan-suggestions`  | 1.0.0  | Sugestões cruzadas de orçamento ↔ planta (com builder dedicado).           |
 
 ## Builders dinâmicos
 
-| Builder                       | ID base      | Versão | Quando usar                                              |
-| ----------------------------- | ------------ | ------ | -------------------------------------------------------- |
-| `buildAxiaChatSystemPrompt`   | `axia-chat`  | 1.0.0  | `axia-chat`: copiloto operacional com `contextBlock`.    |
+| Builder                                | ID base                  | Versão | Quando usar                                                |
+| -------------------------------------- | ------------------------ | ------ | ---------------------------------------------------------- |
+| `buildAxiaChatSystemPrompt`            | `axia-chat`              | 1.0.0  | `axia-chat`: copiloto operacional com `contextBlock`.      |
+| `buildAxiaPlanSuggestionsSystemPrompt` | `axia-plan-suggestions`  | 1.0.0  | `axia-plan-suggestions`: sugestões cruzadas com anti-halu. |
 
 ## Funções por migrar
 
@@ -41,15 +47,10 @@ As funções abaixo ainda têm o system prompt inline. Migração mecânica:
 mover texto para `prompts.ts` (novo `AxiaPrompt` ou builder) + substituir
 o uso por `getPrompt(...)`.
 
-- `axia-analysis`
 - `axia-budget-insights`
-- `axia-classify-sheets`
 - `axia-electrical-analysis`
 - `axia-foundation-suggestion`
 - `axia-infra-scenarios`
-- `axia-plan-suggestions`
-- `axia-plan-vision`
-- `axia-specialty-vision`
 - `axia-suggestions`
 - `mce-axia-analyze`
 - `orcamento-rai-axia`
@@ -61,6 +62,18 @@ o uso por `getPrompt(...)`.
 - `research-material-prices`
 - `support-chat`
 - `validate-budget-ai`
+
+## Funções já com `logAxiaCall` (Fase 3)
+
+- `axia-nvidia-test` ✅
+- `axia-chat` ✅
+- `axia-budget-audit` ✅
+- `axia-classify-sheets` ✅ (Lote 1)
+- `axia-plan-suggestions` ✅ (Lote 1)
+- `axia-analysis` ✅ (Lote 1)
+- `axia-plan-vision` ✅ (Lote 1, paralelo a `axia_call_logs`)
+- `axia-specialty-vision` ✅ (Lote 1)
+
 
 Cada migração deve incluir:
 1. `getPrompt(...)` ou builder em `prompts.ts` (+ entrada nesta tabela).

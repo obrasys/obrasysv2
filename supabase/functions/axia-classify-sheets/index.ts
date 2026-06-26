@@ -5,9 +5,11 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod";
-import { AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { getPrompt } from "../_shared/axia/prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
 import { resolveModel } from "../_shared/axia/model-router.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+
 
 
 const BodySchema = z.object({
@@ -24,77 +26,8 @@ const BodySchema = z.object({
     .max(20),
 });
 
-const SYSTEM_PROMPT = `
-És a Axia, motor técnico do Obra Sys. Tarefa: CLASSIFICAR cada folha de um projeto
-de construção PT-PT, identificando disciplina, tipo de folha e piso correspondente.
+const SYSTEM_PROMPT = getPrompt("axia-classify-sheets").system;
 
-DISCIPLINAS: arquitetura | estrutura | mep | outro
-
-TIPOS DE FOLHA (usa exactamente estes valores):
-- Arquitetura: floor_plan, roof_plan, elevation, section, planta_arquitetura
-- Estrutura: foundation_plan, structural_floor_plan, reinforcement_detail,
-  wall_reinforcement, beam_reinforcement, slab_reinforcement, quadro_pilares,
-  metallic_structure_detail, icf_detail
-- Outro: unknown
-
-PISOS (usa exactamente estes valores):
-fundacao | piso_-1 | piso_0 | piso_1 | piso_2 | cobertura | exterior | multi_floor | generico
-
-PALAVRAS-CHAVE — ARQUITETURA:
-"Planta do R/Chão", "Rés-do-chão", "R/C", "Planta do Piso 0", "Planta do 1º Andar",
-"Planta do Piso 1", "Planta da Cobertura", "Compartimentos", "Áreas m2", "Cozinha",
-"Sala", "Quarto", "I.S.", "Garagem", "Lavandaria", "Despensa", "Varanda", "Terraço".
-
-PALAVRAS-CHAVE — ESTRUTURA/ESTABILIDADE:
-"Estrutura", "Estabilidade", "Planta de Fundações", "Fundação", "Fundações", "Sapatas",
-"Armaduras de Sapatas", "Quadro de Pilares", "Pilares", "Vigas", "Lajes", "Armaduras",
-"Betão armado", "Planta estrutural", "Plantas estruturais", "Paredes estruturais",
-"Armaduras de Paredes", "Armaduras de Vigas", "Reforços em Aberturas", "Pórticos",
-"Perfis metálicos", "HEB", "IPE", "Ligações metálicas", "Pormenores ICF".
-
-PALAVRAS-CHAVE — ALÇADOS:
-"Alçado Sul/Norte/Poente/Nascente", "Fachada".
-
-PALAVRAS-CHAVE — CORTES:
-"Corte A-B", "Corte C-D", "Corte longitudinal", "Corte transversal", "Secção".
-
-REGRAS DETERMINÍSTICAS (segue sempre):
-- "Planta do R/Chão" / "Rés-do-chão" / "R/C" / "Piso 0" → arquitetura + floor_plan + piso_0 + extrair quantitativos.
-- "Planta do 1º Andar" / "Piso 1" → arquitetura + floor_plan + piso_1 + extrair quantitativos.
-- "Planta da Cobertura" → arquitetura + roof_plan + cobertura + extrair quantitativos.
-- "Planta de Fundações" → estrutura + foundation_plan + fundacao + extrair quantitativos.
-- "Plantas Estruturais do Piso 0/1" → estrutura + structural_floor_plan + piso correspondente + extrair quantitativos.
-- "Armaduras de Sapatas" → estrutura + reinforcement_detail + fundacao + extrair.
-- "Armaduras de Paredes" → estrutura + wall_reinforcement + piso correspondente quando possível + extrair.
-- "Armaduras de Vigas" / "Reforços em Aberturas" → estrutura + beam_reinforcement + extrair.
-- "Pormenores ICF" → estrutura + icf_detail + use_for_validation_only=true (não extrair).
-- "Pormenores Ligações Metálicas" → estrutura + metallic_structure_detail + use_for_validation_only=true.
-- "Alçado ..." → arquitetura + elevation + exterior + use_for_validation_only=true.
-- "Corte ..." → arquitetura + section + multi_floor + use_for_validation_only=true.
-
-Para cada folha devolve:
-{
-  "page_number": int,
-  "sheet_title": "string",
-  "drawing_code": "string|null",
-  "discipline": "arquitetura|estrutura|mep|outro",
-  "sheet_type": "...",
-  "detected_floor": "...",
-  "should_extract_quantities": boolean,
-  "use_for_validation_only": boolean,
-  "confidence": 0..1,
-  "warnings": ["..."]
-}
-
-Se NÃO conseguires identificar com segurança: discipline="outro", sheet_type="unknown",
-should_extract_quantities=false, e adiciona um aviso em warnings.
-
-Devolve em PORTUGUÊS DE PORTUGAL.
-
-${AXIA_GLOBAL_SAFETY_BLOCK}
-
-RESPOSTA: JSON estrito { "sheets": [ ... ] } — sem markdown, sem texto extra.
-`.trim();
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -165,6 +98,7 @@ Deno.serve(async (req) => {
     }
 
     const model = resolveModel("critical_vision_analysis", "primary");
+    const t0 = Date.now();
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -185,11 +119,19 @@ Deno.serve(async (req) => {
 
     if (!aiResp.ok) {
       const txt = await aiResp.text();
+      await logAxiaCall(admin, {
+        module: "axia_classify_sheets", task_type: "classify",
+        provider_used: "lovable", model_used: model,
+        status: aiResp.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0, user_id: userRes.user.id,
+        error_message: `gateway ${aiResp.status}: ${txt.slice(0, 200)}`,
+      });
       return new Response(
         JSON.stringify({ error: "Falha gateway IA", status: aiResp.status, detail: txt.slice(0, 500) }),
         { status: aiResp.status === 429 || aiResp.status === 402 ? aiResp.status : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     const aiJson = await aiResp.json();
     const raw = aiJson?.choices?.[0]?.message?.content ?? "{}";
@@ -230,10 +172,18 @@ Deno.serve(async (req) => {
       if (!upErr) updates.push(page_number);
     }
 
+    await logAxiaCall(admin, {
+      module: "axia_classify_sheets", task_type: "classify",
+      provider_used: "lovable", model_used: model,
+      status: "ok", latency_ms: Date.now() - t0,
+      user_id: userRes.user.id,
+    });
+
     return new Response(
       JSON.stringify({ success: true, classified_pages: updates, sheets }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e: any) {
     console.error("[axia-classify-sheets]", e);
     return new Response(JSON.stringify({ error: e?.message ?? "Erro inesperado" }), {

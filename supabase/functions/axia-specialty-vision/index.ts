@@ -6,6 +6,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK, AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import { AXIA_SPECIALTY_VISION_PROMPT_VERSION } from "../_shared/axia/prompts.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -357,6 +360,13 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
 
       await supabase.from("specialty_plans").update({ status: "review_required" }).eq("id", specialty_plan_id);
 
+      await logAxiaCall(supabase as any, {
+        module: "axia_specialty_vision", task_type: "analyze",
+        provider_used: "lovable", model_used: "google/gemini-2.5-flash",
+        status: "error", latency_ms: Date.now() - startedAt, user_id: userId,
+        error_message: `v${AXIA_SPECIALTY_VISION_PROMPT_VERSION} structured output missing`,
+      });
+
       return new Response(JSON.stringify({
         success: false,
         error: {
@@ -367,6 +377,7 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
         fallback: { review_required: true, suggested_action: "Tente novamente ou use uma imagem com melhor qualidade." },
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
 
     // Normalizar
     analysis.detected_symbols = analysis.detected_symbols.filter((s: any) => s && typeof s.symbol_key === "string");
@@ -434,6 +445,12 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
     const newStatus = analysis.review_required ? "review_required" : "analyzed";
     await supabase.from("specialty_plans").update({ status: newStatus }).eq("id", specialty_plan_id);
 
+    await logAxiaCall(supabase as any, {
+      module: "axia_specialty_vision", task_type: "analyze",
+      provider_used: "lovable", model_used: "google/gemini-2.5-flash",
+      status: "ok", latency_ms: Date.now() - startedAt, user_id: userId,
+    });
+
     return new Response(JSON.stringify({
       success: true,
       analysis,
@@ -450,3 +467,4 @@ REFORÇOS GPT-5.5 PARA ESPECIALIDADES TÉCNICAS (electricidade, AVAC, águas, es
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
   }
 });
+
