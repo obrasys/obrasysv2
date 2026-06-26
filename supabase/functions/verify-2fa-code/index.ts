@@ -77,6 +77,12 @@ serve(async (req) => {
         });
       }
       await supabase.from("mfa_trusted_devices").update({ last_used_at: new Date().toISOString() }).eq("id", device.id);
+      await supabase.rpc("mfa_mark_verified", {
+        p_user_id: userId,
+        p_ttl_seconds: 12 * 60 * 60,
+        p_user_agent: req.headers.get("user-agent"),
+        p_ip: req.headers.get("x-forwarded-for"),
+      });
       return new Response(JSON.stringify({ verified: true, trustedDevice: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
