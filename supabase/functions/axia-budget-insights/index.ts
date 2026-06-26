@@ -25,6 +25,7 @@ interface Insight {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const t0 = Date.now();
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -34,7 +35,8 @@ Deno.serve(async (req) => {
       module: "axia_budget_insights", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userClient: supabase, scrub } = guard;
+    const { userClient: supabase, admin, userId, organizationId, scrub } = guard;
+
 
     const { orcamentoId } = await req.json();
     if (!orcamentoId) {
