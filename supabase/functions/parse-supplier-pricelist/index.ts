@@ -182,6 +182,13 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
+      const errText = await aiResponse.text().catch(() => "");
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0,
+        error_message: `AI ${status}: ${errText.slice(0, 200)}`,
+      });
       if (status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em alguns minutos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -192,20 +199,33 @@ Toda a extracção é draft_ai e requer revisão humana antes de ser final.`;
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await aiResponse.text();
       console.error("AI error:", status, errText);
       throw new Error(`Erro AI: ${status}`);
     }
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("Resposta AI sem dados estruturados");
+    if (!toolCall) {
+      await logAxiaCall(admin, {
+        ...logBase,
+        status: "error",
+        latency_ms: Date.now() - t0,
+        error_message: "Resposta AI sem tool_calls",
+      });
+      throw new Error("Resposta AI sem dados estruturados");
+    }
 
     const extracted = JSON.parse(toolCall.function.arguments);
     const items = extracted.items || [];
     const unresolved_rows = extracted.unresolved_rows || [];
     const summary = extracted.summary || `${items.length} itens extraídos, ${unresolved_rows.length} linhas por resolver`;
     const review_required = extracted.review_required ?? (unresolved_rows.length > 0 || items.some((i: any) => i?.review_required));
+
+    await logAxiaCall(admin, {
+      ...logBase,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+    });
 
     return new Response(
       JSON.stringify({ items, unresolved_rows, summary, total: items.length, review_required }),
