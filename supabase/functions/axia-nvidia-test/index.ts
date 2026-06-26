@@ -97,6 +97,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(
+      supabaseUrl,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    const t0 = Date.now();
     const upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -120,6 +125,16 @@ Deno.serve(async (req) => {
       // sanitize: never echo headers; trim and avoid leaking
       const safe = text.slice(0, 500);
       console.error('NVIDIA upstream error', upstream.status);
+      await logAxiaCall(adminClient, {
+        module: 'axia_nvidia_test',
+        task_type: 'smoke_test',
+        provider_used: 'nvidia',
+        model_used: model,
+        status: 'error',
+        latency_ms: Date.now() - t0,
+        user_id: user.id,
+        error_message: `HTTP ${upstream.status}: ${safe}`,
+      });
       return new Response(JSON.stringify({
         error: 'Falha na chamada à NVIDIA',
         status: upstream.status,
@@ -155,6 +170,16 @@ Deno.serve(async (req) => {
     if (requiresHumanReview && !/validação humana/i.test(answer)) {
       answer = `${answer}\n\nEsta análise requer validação humana.`;
     }
+
+    await logAxiaCall(adminClient, {
+      module: 'axia_nvidia_test',
+      task_type: 'smoke_test',
+      provider_used: 'nvidia',
+      model_used: modelUsed,
+      status: 'ok',
+      latency_ms: Date.now() - t0,
+      user_id: user.id,
+    });
 
     return new Response(JSON.stringify({
       provider_used: 'nvidia',
