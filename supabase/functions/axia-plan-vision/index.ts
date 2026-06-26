@@ -395,7 +395,20 @@ COMPACTAÇÃO OBRIGATÓRIA DA RESPOSTA (evita truncamento):
         status,
         error_message: errorMessage,
       } as any).then(() => {}, (e) => console.warn("axia_call_logs insert failed:", e?.message));
+
+      // Central Axia log (Fase 3) — paralelo ao log específico de planta acima.
+      await logAxiaCall(supabase as any, {
+        module: "axia_plan_vision",
+        task_type: callType,
+        provider_used: "lovable",
+        model_used: callModel,
+        status: status === "ok" ? "ok" : status === "timeout" ? "error" : status === "truncated" ? "error" : "error",
+        latency_ms: Date.now() - startedAt,
+        user_id: userId,
+        error_message: errorMessage ? `v${AXIA_PLAN_VISION_PROMPT_VERSION} ${status}: ${errorMessage}` : null,
+      });
     };
+
 
     const controlledFailure = async (
       code: string,
