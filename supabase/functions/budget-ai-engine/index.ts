@@ -684,6 +684,14 @@ serve(async (req) => {
     const body = await req.json();
     const { action, budgetId, insightId } = body;
 
+    // Per-organization rate-limit (Fase 2 hardening). Lighter limit for the
+    // heavy `runBudgetRules` LLM action; read-only actions go through too but
+    // share the same bucket — keeps logic simple and predictable.
+    const limited = await rateLimitOrg(userId, {
+      module: "budget_ai", windowSeconds: 60, maxCalls: 15, corsHeaders,
+    });
+    if (limited) return limited;
+
     let result: any;
 
     switch (action) {
