@@ -285,7 +285,8 @@ ${contextBlock}`;
             model: nvidiaModel,
             temperature: 0.2,
             max_tokens: 1200,
-            messages,
+            messages: scrubbedMessages,
+
           }),
         });
         if (!nvRes.ok) {
