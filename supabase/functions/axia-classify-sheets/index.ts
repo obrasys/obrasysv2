@@ -26,77 +26,8 @@ const BodySchema = z.object({
     .max(20),
 });
 
-const SYSTEM_PROMPT = `
-És a Axia, motor técnico do Obra Sys. Tarefa: CLASSIFICAR cada folha de um projeto
-de construção PT-PT, identificando disciplina, tipo de folha e piso correspondente.
+const SYSTEM_PROMPT = getPrompt("axia-classify-sheets").system;
 
-DISCIPLINAS: arquitetura | estrutura | mep | outro
-
-TIPOS DE FOLHA (usa exactamente estes valores):
-- Arquitetura: floor_plan, roof_plan, elevation, section, planta_arquitetura
-- Estrutura: foundation_plan, structural_floor_plan, reinforcement_detail,
-  wall_reinforcement, beam_reinforcement, slab_reinforcement, quadro_pilares,
-  metallic_structure_detail, icf_detail
-- Outro: unknown
-
-PISOS (usa exactamente estes valores):
-fundacao | piso_-1 | piso_0 | piso_1 | piso_2 | cobertura | exterior | multi_floor | generico
-
-PALAVRAS-CHAVE — ARQUITETURA:
-"Planta do R/Chão", "Rés-do-chão", "R/C", "Planta do Piso 0", "Planta do 1º Andar",
-"Planta do Piso 1", "Planta da Cobertura", "Compartimentos", "Áreas m2", "Cozinha",
-"Sala", "Quarto", "I.S.", "Garagem", "Lavandaria", "Despensa", "Varanda", "Terraço".
-
-PALAVRAS-CHAVE — ESTRUTURA/ESTABILIDADE:
-"Estrutura", "Estabilidade", "Planta de Fundações", "Fundação", "Fundações", "Sapatas",
-"Armaduras de Sapatas", "Quadro de Pilares", "Pilares", "Vigas", "Lajes", "Armaduras",
-"Betão armado", "Planta estrutural", "Plantas estruturais", "Paredes estruturais",
-"Armaduras de Paredes", "Armaduras de Vigas", "Reforços em Aberturas", "Pórticos",
-"Perfis metálicos", "HEB", "IPE", "Ligações metálicas", "Pormenores ICF".
-
-PALAVRAS-CHAVE — ALÇADOS:
-"Alçado Sul/Norte/Poente/Nascente", "Fachada".
-
-PALAVRAS-CHAVE — CORTES:
-"Corte A-B", "Corte C-D", "Corte longitudinal", "Corte transversal", "Secção".
-
-REGRAS DETERMINÍSTICAS (segue sempre):
-- "Planta do R/Chão" / "Rés-do-chão" / "R/C" / "Piso 0" → arquitetura + floor_plan + piso_0 + extrair quantitativos.
-- "Planta do 1º Andar" / "Piso 1" → arquitetura + floor_plan + piso_1 + extrair quantitativos.
-- "Planta da Cobertura" → arquitetura + roof_plan + cobertura + extrair quantitativos.
-- "Planta de Fundações" → estrutura + foundation_plan + fundacao + extrair quantitativos.
-- "Plantas Estruturais do Piso 0/1" → estrutura + structural_floor_plan + piso correspondente + extrair quantitativos.
-- "Armaduras de Sapatas" → estrutura + reinforcement_detail + fundacao + extrair.
-- "Armaduras de Paredes" → estrutura + wall_reinforcement + piso correspondente quando possível + extrair.
-- "Armaduras de Vigas" / "Reforços em Aberturas" → estrutura + beam_reinforcement + extrair.
-- "Pormenores ICF" → estrutura + icf_detail + use_for_validation_only=true (não extrair).
-- "Pormenores Ligações Metálicas" → estrutura + metallic_structure_detail + use_for_validation_only=true.
-- "Alçado ..." → arquitetura + elevation + exterior + use_for_validation_only=true.
-- "Corte ..." → arquitetura + section + multi_floor + use_for_validation_only=true.
-
-Para cada folha devolve:
-{
-  "page_number": int,
-  "sheet_title": "string",
-  "drawing_code": "string|null",
-  "discipline": "arquitetura|estrutura|mep|outro",
-  "sheet_type": "...",
-  "detected_floor": "...",
-  "should_extract_quantities": boolean,
-  "use_for_validation_only": boolean,
-  "confidence": 0..1,
-  "warnings": ["..."]
-}
-
-Se NÃO conseguires identificar com segurança: discipline="outro", sheet_type="unknown",
-should_extract_quantities=false, e adiciona um aviso em warnings.
-
-Devolve em PORTUGUÊS DE PORTUGAL.
-
-${AXIA_GLOBAL_SAFETY_BLOCK}
-
-RESPOSTA: JSON estrito { "sheets": [ ... ] } — sem markdown, sem texto extra.
-`.trim();
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
