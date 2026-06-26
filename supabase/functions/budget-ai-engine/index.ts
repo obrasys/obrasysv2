@@ -155,14 +155,7 @@ async function authenticateRequest(req: Request) {
   const { data, error } = await client.auth.getClaims(token);
   if (error || !data?.claims) throw new Error("Invalid token");
 
-  const userId = data.claims.sub as string;
-  const limited = await rateLimitOrg(userId, {
-    module: "budget_ai", windowSeconds: 60, maxCalls: 5,
-    corsHeaders: { "Access-Control-Allow-Origin": "*" },
-  });
-  if (limited) throw new Response(limited.body, { status: 429, headers: limited.headers });
-
-  return { client, userId };
+  return { client, userId: data.claims.sub as string };
 }
 
 // ── Get or create AI settings ────────────────────────────────────────
