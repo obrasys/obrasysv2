@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     try {
-      const { data, error } = await supabase.rpc("mfa_is_verified");
+      const { data, error } = await (supabase.rpc as any)("mfa_is_verified");
       if (error) {
         setMfaVerifiedState(false);
         return;
@@ -230,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    try { await supabase.rpc("mfa_revoke_my_sessions"); } catch { /* noop */ }
+    try { await (supabase.rpc as any)("mfa_revoke_my_sessions"); } catch { /* noop */ }
     setUser(null);
     setSession(null);
     setProfile(null);
