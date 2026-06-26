@@ -555,6 +555,16 @@ Deno.serve(async (req) => {
       latency_ms: Date.now() - startedAt,
     });
 
+    await logAxiaCall(admin, {
+      module: PROCESS_VOICE_COMMAND_PROMPT_ID,
+      task_type: `${PROCESS_VOICE_COMMAND_PROMPT_ID}@${PROCESS_VOICE_COMMAND_PROMPT_VERSION}`,
+      provider_used: "lovable",
+      model_used: MODEL,
+      user_id: userId,
+      status: "ok",
+      latency_ms: Date.now() - startedAt,
+    });
+
     return new Response(
       JSON.stringify({ status: "processed", created_items, alerts_created }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
