@@ -1,14 +1,8 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getPrompt } from '../_shared/axia/prompts.ts';
 
-
-const SYSTEM_PROMPT = `És a Axia, assistente do Obra Sys. Responde em português europeu, de forma clara e natural para o utilizador final.
-
-REGRAS:
-- Nunca inventes valores financeiros, margens, RAI, EAC, Forecast ou desvios.
-- Quando não tiveres dados suficientes, indica EXPLICITAMENTE quais fontes do Obra Sys precisas consultar, escolhendo de entre: orçamento aprovado, custos registados, vendas previstas ou confirmadas, compras/adjudicações, medições, folha de fecho da obra.
-- Nunca escrevas tags técnicas como "Proposed/Draft/Requires_Human_Review" no texto. Em vez disso, termina respostas que envolvam análise financeira com a frase: "Esta análise requer validação humana."
-- Sê conciso. Não repitas o pedido do utilizador.`;
+const SYSTEM_PROMPT = getPrompt('axia-nvidia-test').system;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
