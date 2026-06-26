@@ -197,16 +197,57 @@ Deno.serve(async (req) => {
               }
             }
           }
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: 'ok',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+          });
         } else if (aiResp.status === 429 || aiResp.status === 402) {
           alerts.push({
             level: 'info',
             message: aiResp.status === 429 ? 'Axia atingiu o limite. Resumo determinístico devolvido.' : 'Sem créditos Axia. Resumo determinístico devolvido.',
           });
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: aiResp.status === 429 ? 'rate_limited' : 'fallback',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+            error_message: `gateway ${aiResp.status}`,
+          });
+        } else {
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: 'error',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+            error_message: `gateway ${aiResp.status}`,
+          });
         }
       } catch (e) {
         console.error('Axia AI fallback:', e);
+        await logAxiaCall(adminClient, {
+          module: 'mce_axia',
+          task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+          status: 'error',
+          provider_used: 'lovable',
+          model_used: aiModel,
+          latency_ms: Date.now() - t0,
+          user_id: user.id,
+          error_message: (e as Error).message,
+        });
       }
     }
+
 
     // Persist
     await supabase.from('mce_maps').update({
