@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import { AXIA_PLAN_VISION_PROMPT_VERSION } from "../_shared/axia/prompts.ts";
+
+
 
 
 const corsHeaders = {
