@@ -105,6 +105,11 @@ ${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
 Gera cenários de fundação adequados com itens paramétricos e custos estimados.`;
 
+    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const userId = claimsData.claims.sub as string;
+    const modelName = resolveChain("suggestions").primary;
+    const t0 = Date.now();
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -112,7 +117,8 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("suggestions").primary,
+        model: modelName,
+
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
