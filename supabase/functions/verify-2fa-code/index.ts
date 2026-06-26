@@ -70,8 +70,9 @@ serve(async (req) => {
         .gt("expires_at", new Date().toISOString())
         .maybeSingle();
       if (!device) {
-        return new Response(JSON.stringify({ error: "Dispositivo não confiável" }), {
-          status: 401,
+        // Not an error — caller will fall back to sending an OTP code.
+        return new Response(JSON.stringify({ verified: false, trustedDevice: false }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
