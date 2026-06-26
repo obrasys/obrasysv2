@@ -5,6 +5,12 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  ORCAMENTO_RAI_AXIA_PROMPT_ID,
+  ORCAMENTO_RAI_AXIA_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
+
 
 
 interface ConsolidationInput {
