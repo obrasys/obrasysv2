@@ -1,6 +1,11 @@
 // Axia Voice Intake - process-voice-command
 // Classifica um comando de voz/texto e cria intake items + rascunhos.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  PROCESS_VOICE_COMMAND_PROMPT_ID,
+  PROCESS_VOICE_COMMAND_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
