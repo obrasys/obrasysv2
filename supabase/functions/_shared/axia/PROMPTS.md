@@ -73,6 +73,11 @@ o uso por `getPrompt(...)`.
 - `axia-analysis` ✅ (Lote 1)
 - `axia-plan-vision` ✅ (Lote 1, paralelo a `axia_call_logs`)
 - `axia-specialty-vision` ✅ (Lote 1)
+- `axia-suggestions` ✅ (Lote 2)
+- `axia-budget-insights` ✅ (Lote 2)
+- `optimize-with-ai` ✅ (Lote 2)
+- `validate-budget-ai` ✅ (Lote 2)
+- `organize-budget-import` ✅ (Lote 2, inclui caminho determinístico)
 
 
 Cada migração deve incluir:
