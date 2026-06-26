@@ -577,10 +577,16 @@ serve(async (req) => {
       : null;
 
     if (deterministicBudget) {
+      await logAxiaCall(adminClient, {
+        module: "organize_budget_import", task_type: "deterministic",
+        provider_used: "none", model_used: "deterministic",
+        status: "ok", latency_ms: Date.now() - t0, user_id: logUserId,
+      });
       return new Response(JSON.stringify(deterministicBudget), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     let userMessages: Array<{ type: string; [key: string]: unknown }>;
 
