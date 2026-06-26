@@ -2,6 +2,9 @@
 // e gera insights proativos via Lovable AI.
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (AXIA_BUDGET_INSIGHTS_*)
+
 
 
 const corsHeaders = {
@@ -22,6 +25,7 @@ interface Insight {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const t0 = Date.now();
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -31,7 +35,8 @@ Deno.serve(async (req) => {
       module: "axia_budget_insights", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userClient: supabase, scrub } = guard;
+    const { userClient: supabase, admin, userId, organizationId, scrub } = guard;
+
 
     const { orcamentoId } = await req.json();
     if (!orcamentoId) {
@@ -162,6 +167,12 @@ Deno.serve(async (req) => {
         }),
       });
 
+      const aiStatus: "ok" | "rate_limited" | "error" =
+        aiResp.status === 429
+          ? "rate_limited"
+          : aiResp.ok
+            ? "ok"
+            : "error";
       if (aiResp.status === 429) {
         summary = "Limite temporário de IA atingido. Tente novamente em instantes.";
       } else if (aiResp.status === 402) {
@@ -170,8 +181,26 @@ Deno.serve(async (req) => {
         const data = await aiResp.json();
         summary = data.choices?.[0]?.message?.content?.trim() ?? "";
       }
+      await logAxiaCall(admin, {
+        module: "axia_budget_insights",
+        task_type: "summary",
+        provider_used: "lovable",
+        model_used: resolveChain("suggestions").primary,
+        status: aiStatus,
+        latency_ms: Date.now() - t0,
+        organization_id: organizationId,
+        user_id: userId,
+        error_message: aiStatus === "error" ? `gateway ${aiResp.status}` : null,
+      });
     } catch (e) {
       console.error("AI summary failed:", e);
+      await logAxiaCall(admin, {
+        module: "axia_budget_insights", task_type: "summary",
+        provider_used: "lovable", model_used: resolveChain("suggestions").primary,
+        status: "error", latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: (e as Error).message,
+      });
     }
 
     return new Response(
@@ -197,4 +226,5 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
 });

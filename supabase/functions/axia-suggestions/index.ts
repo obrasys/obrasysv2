@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (AXIA_SUGGESTIONS_*)
+
+
 
 
 const corsHeaders = {
@@ -14,13 +18,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   try {
     // Auth + per-organization rate-limit (Fase 2 hardening)
     const guard = await axiaGuard(req, {
       module: "axia_suggestions", windowSeconds: 60, maxCalls: 20, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userId, scrub } = guard;
+    const { userId, organizationId, admin, scrub } = guard;
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -217,6 +223,16 @@ Devolve via tool calling.`,
       });
     }
 
+    await logAxiaCall(admin, {
+      module: "axia_suggestions",
+      task_type: `step_${step ?? "unknown"}`,
+      provider_used: "lovable",
+      model_used: resolveChain("classification").primary,
+      status: "ok",
+      latency_ms: Date.now() - t0,
+      organization_id: organizationId,
+      user_id: userId,
+    });
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -228,4 +244,5 @@ Devolve via tool calling.`,
       status: error instanceof Error && error.message === "Not authenticated" ? 401 : 500,
     });
   }
+
 });

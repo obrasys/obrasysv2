@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (ORGANIZE_BUDGET_IMPORT_*)
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -487,6 +490,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
+  const adminClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+  let logUserId: string | null = null;
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -507,6 +516,7 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    logUserId = user.id;
 
     const body = await req.json();
     const { rows, headers, rawText, pdfBase64, fileName } = body;
@@ -567,10 +577,16 @@ serve(async (req) => {
       : null;
 
     if (deterministicBudget) {
+      await logAxiaCall(adminClient, {
+        module: "organize_budget_import", task_type: "deterministic",
+        provider_used: "none", model_used: "deterministic",
+        status: "ok", latency_ms: Date.now() - t0, user_id: logUserId,
+      });
       return new Response(JSON.stringify(deterministicBudget), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     let userMessages: Array<{ type: string; [key: string]: unknown }>;
 
@@ -630,6 +646,14 @@ serve(async (req) => {
     clearTimeout(aiTimer);
 
     if (!aiResponse.ok) {
+      await logAxiaCall(adminClient, {
+        module: "organize_budget_import",
+        task_type: hasPdf ? "pdf" : hasRawText ? "text" : "tabular",
+        provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+        status: aiResponse.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0, user_id: logUserId,
+        error_message: `gateway ${aiResponse.status}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de pedidos excedido. Tente novamente em breves momentos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -646,6 +670,7 @@ serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
@@ -734,14 +759,26 @@ serve(async (req) => {
       }
     }
 
+    await logAxiaCall(adminClient, {
+      module: "organize_budget_import", task_type: "ai",
+      provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+      status: "ok", latency_ms: Date.now() - t0, user_id: logUserId,
+    });
     return new Response(JSON.stringify(normalized), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("organize-budget-import error:", e);
+    await logAxiaCall(adminClient, {
+      module: "organize_budget_import", task_type: "ai",
+      provider_used: "lovable", model_used: resolveChain("budget_import").primary,
+      status: "error", latency_ms: Date.now() - t0, user_id: logUserId,
+      error_message: (e as Error).message,
+    });
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
 });

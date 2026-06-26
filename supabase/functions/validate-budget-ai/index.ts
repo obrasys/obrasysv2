@@ -3,6 +3,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (VALIDATE_BUDGET_AI_*)
+
 
 
 const corsHeaders = {
@@ -16,6 +19,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
+  let logUserId: string | null = null;
+  const adminClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
   try {
     const { orcamentoId } = await req.json();
 
@@ -56,6 +65,7 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+    logUserId = userId as string;
     const limited = await rateLimitOrg(userId as string, {
       module: "validate_budget_ai", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
@@ -215,6 +225,13 @@ REGRAS OBRIGATÓRIAS:
     });
 
     if (!aiResponse.ok) {
+      await logAxiaCall(adminClient, {
+        module: "validate_budget_ai", task_type: "validate",
+        provider_used: "lovable", model_used: resolveChain("budget_validation").primary,
+        status: aiResponse.status === 429 ? "rate_limited" : "error",
+        latency_ms: Date.now() - t0, user_id: logUserId,
+        error_message: `gateway ${aiResponse.status}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente mais tarde." }),
@@ -241,6 +258,12 @@ REGRAS OBRIGATÓRIAS:
     // Extract tool call result
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
+      await logAxiaCall(adminClient, {
+        module: "validate_budget_ai", task_type: "validate",
+        provider_used: "lovable", model_used: resolveChain("budget_validation").primary,
+        status: "error", latency_ms: Date.now() - t0, user_id: logUserId,
+        error_message: "invalid tool_call payload",
+      });
       return new Response(
         JSON.stringify({ error: "Resposta inválida da IA" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -249,14 +272,26 @@ REGRAS OBRIGATÓRIAS:
 
     const validationResult = JSON.parse(toolCall.function.arguments);
 
+    await logAxiaCall(adminClient, {
+      module: "validate_budget_ai", task_type: "validate",
+      provider_used: "lovable", model_used: resolveChain("budget_validation").primary,
+      status: "ok", latency_ms: Date.now() - t0, user_id: logUserId,
+    });
     return new Response(JSON.stringify(validationResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error in validate-budget-ai:", error);
+    await logAxiaCall(adminClient, {
+      module: "validate_budget_ai", task_type: "validate",
+      provider_used: "lovable", model_used: resolveChain("budget_validation").primary,
+      status: "error", latency_ms: Date.now() - t0, user_id: logUserId,
+      error_message: (error as Error).message,
+    });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
 });

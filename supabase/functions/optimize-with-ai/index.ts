@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (OPTIMIZE_WITH_AI_*)
+
 
 
 const corsHeaders = {
@@ -14,6 +17,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   try {
     const { text, type = "description" } = await req.json();
 
@@ -29,8 +33,9 @@ serve(async (req) => {
       module: "optimize_ai", windowSeconds: 60, maxCalls: 10, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userId, scrub } = guard;
+    const { userId, organizationId, admin, scrub } = guard;
     const safeText = scrub(String(text));
+
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -85,6 +90,14 @@ REGRAS:
     });
 
     if (!aiResponse.ok) {
+      const logStatus = aiResponse.status === 429 ? "rate_limited" : "error";
+      await logAxiaCall(admin, {
+        module: "optimize_ai", task_type: type,
+        provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+        status: logStatus, latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: `gateway ${aiResponse.status}`,
+      });
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente mais tarde." }),
@@ -109,15 +122,29 @@ REGRAS:
     const optimizedText = aiData.choices?.[0]?.message?.content?.trim();
 
     if (!optimizedText) {
+      await logAxiaCall(admin, {
+        module: "optimize_ai", task_type: type,
+        provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+        status: "error", latency_ms: Date.now() - t0,
+        organization_id: organizationId, user_id: userId,
+        error_message: "empty response",
+      });
       return new Response(
         JSON.stringify({ error: "Resposta inválida da IA" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    await logAxiaCall(admin, {
+      module: "optimize_ai", task_type: type,
+      provider_used: "lovable", model_used: resolveChain("rephrase").primary,
+      status: "ok", latency_ms: Date.now() - t0,
+      organization_id: organizationId, user_id: userId,
+    });
     return new Response(JSON.stringify({ text: optimizedText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     console.error("Error in optimize-with-ai:", error);
     return new Response(
