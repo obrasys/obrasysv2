@@ -19,6 +19,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
+  let logUserId: string | null = null;
+  const adminClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
   try {
     const { orcamentoId } = await req.json();
 
