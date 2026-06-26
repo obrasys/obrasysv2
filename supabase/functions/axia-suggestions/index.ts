@@ -20,13 +20,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   try {
     // Auth + per-organization rate-limit (Fase 2 hardening)
     const guard = await axiaGuard(req, {
       module: "axia_suggestions", windowSeconds: 60, maxCalls: 20, corsHeaders,
     });
     if (guard.response) return guard.response;
-    const { userId, scrub } = guard;
+    const { userId, organizationId, admin, scrub } = guard;
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
