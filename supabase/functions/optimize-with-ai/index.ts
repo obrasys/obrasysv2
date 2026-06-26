@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { axiaGuard } from "../_shared/axiaGuard.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+// Prompt ID/version tracked in _shared/axia/prompts.ts (OPTIMIZE_WITH_AI_*)
+
 
 
 const corsHeaders = {
