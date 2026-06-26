@@ -4,6 +4,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { rateLimitOrg } from '../_shared/rateLimitOrg.ts';
+import { logAxiaCall } from '../_shared/axia/logCall.ts';
+import {
+  MCE_AXIA_ANALYZE_PROMPT_ID,
+  MCE_AXIA_ANALYZE_PROMPT_VERSION,
+} from '../_shared/axia/prompts.ts';
+
 
 
 const corsHeaders = {
