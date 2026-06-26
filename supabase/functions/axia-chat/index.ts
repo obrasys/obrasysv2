@@ -264,17 +264,15 @@ ${scheduleTasks.slice(0, 15).map((t: any) => {
         const content: string = nvJson?.choices?.[0]?.message?.content ?? "";
 
         // internal log only — no provider/model leaks to the client
-        try {
-          const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-          await admin.from("axia_ai_logs").insert({
-            user_id: user.id,
-            module: "axia_chat",
-            task_type: "simple_chat",
-            provider_used: "nvidia",
-            model_used: nvJson?.model ?? nvidiaModel,
-            status: "ok",
-          });
-        } catch (_) { /* ignore */ }
+        const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        await logAxiaCall(admin, {
+          module: "axia_chat",
+          task_type: "simple_chat",
+          provider_used: "nvidia",
+          model_used: nvJson?.model ?? nvidiaModel,
+          status: "ok",
+          user_id: user.id,
+        });
 
         // Emit SSE in the same shape the frontend already consumes
         const stream = new ReadableStream({
@@ -299,17 +297,15 @@ ${scheduleTasks.slice(0, 15).map((t: any) => {
         });
       } catch (e) {
         console.warn("axia-chat: NVIDIA path failed, falling back to Lovable AI:", (e as Error).message);
-        try {
-          const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-          await admin.from("axia_ai_logs").insert({
-            user_id: user.id,
-            module: "axia_chat",
-            task_type: "simple_chat",
-            provider_used: "nvidia",
-            status: "error",
-            error_message: (e as Error).message.slice(0, 500),
-          });
-        } catch (_) { /* ignore */ }
+        const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        await logAxiaCall(admin, {
+          module: "axia_chat",
+          task_type: "simple_chat",
+          provider_used: "nvidia",
+          status: "fallback",
+          user_id: user.id,
+          error_message: (e as Error).message,
+        });
         // fall through to existing Lovable streaming path
       }
     }
