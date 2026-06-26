@@ -9411,6 +9411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip: string | null
+          jti: string | null
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip?: string | null
+          jti?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip?: string | null
+          jti?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mfa_trusted_devices: {
         Row: {
           created_at: string
@@ -18039,6 +18072,17 @@ export type Database = {
           status: string
         }[]
       }
+      mfa_is_verified: { Args: never; Returns: boolean }
+      mfa_mark_verified: {
+        Args: {
+          p_ip?: string
+          p_ttl_seconds?: number
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      mfa_revoke_my_sessions: { Args: never; Returns: number }
       next_obra_cost_center_code: { Args: { _org_id: string }; Returns: string }
       normalizar_descricao: { Args: { texto: string }; Returns: string }
       propagate_dependency_impact: {

@@ -66,16 +66,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<OrganizationInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("obrasys_mfa_verified") === "1";
-  });
+  const [mfaVerified, setMfaVerifiedState] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (mfaVerified) sessionStorage.setItem("obrasys_mfa_verified", "1");
-    else sessionStorage.removeItem("obrasys_mfa_verified");
-  }, [mfaVerified]);
+  const setMfaVerified = (v: boolean) => setMfaVerifiedState(v);
+
+  const refreshMfaStatus = async (uid?: string | null) => {
+    if (!uid) {
+      setMfaVerifiedState(false);
+      return;
+    }
+    try {
+      const { data, error } = await (supabase.rpc as any)("mfa_is_verified");
+      if (error) {
+        setMfaVerifiedState(false);
+        return;
+      }
+      setMfaVerifiedState(!!data);
+    } catch {
+      setMfaVerifiedState(false);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -134,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = null;
           setProfile(null);
           setOrganization(null);
+          setMfaVerifiedState(false);
           return;
         }
 
@@ -142,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = session.user.id;
           setTimeout(() => {
             fetchProfile(session.user.id);
+            void refreshMfaStatus(session.user.id);
             // Mark any pending team invitations for this user's email as accepted
             // (deferred so it never blocks the auth flow).
             void (supabase.rpc as any)('accept_my_pending_invitations').then(() => {}, () => {});
@@ -150,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileUserId = null;
           setProfile(null);
           setOrganization(null);
+          setMfaVerifiedState(false);
         }
       }
     );
@@ -163,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           profileUserId = session.user.id;
           await fetchProfile(session.user.id);
+          await refreshMfaStatus(session.user.id);
         }
       } finally {
         setLoading(false);
@@ -216,10 +230,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    try { await (supabase.rpc as any)("mfa_revoke_my_sessions"); } catch { /* noop */ }
     setUser(null);
     setSession(null);
     setProfile(null);
     setOrganization(null);
+    setMfaVerifiedState(false);
     await supabase.auth.signOut();
   };
 
