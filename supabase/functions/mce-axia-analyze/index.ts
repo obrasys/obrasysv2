@@ -4,6 +4,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { rateLimitOrg } from '../_shared/rateLimitOrg.ts';
+import { logAxiaCall } from '../_shared/axia/logCall.ts';
+import {
+  MCE_AXIA_ANALYZE_PROMPT_ID,
+  MCE_AXIA_ANALYZE_PROMPT_VERSION,
+} from '../_shared/axia/prompts.ts';
+
 
 
 const corsHeaders = {
@@ -111,9 +117,13 @@ Deno.serve(async (req) => {
     let summary = `MCE "${map.title}" com ${suppliers.length} fornecedor(es) e ${items.length} linha(s). Orçamento seco €${drySeco.toFixed(2)}, menor proposta €${lowest.toFixed(2)}, verba ${(drySeco - lowest).toFixed(2)} €.`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const adminClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     if (LOVABLE_API_KEY) {
+      const t0 = Date.now();
+      const aiModel = 'google/gemini-2.5-pro';
       try {
         const ctx = {
+
           title: map.title,
           dry_budget_total: drySeco,
           lowest_total: lowest,
@@ -135,7 +145,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-pro',
+            model: aiModel,
             messages: [
               {
                 role: 'system',
@@ -187,16 +197,57 @@ Deno.serve(async (req) => {
               }
             }
           }
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: 'ok',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+          });
         } else if (aiResp.status === 429 || aiResp.status === 402) {
           alerts.push({
             level: 'info',
             message: aiResp.status === 429 ? 'Axia atingiu o limite. Resumo determinístico devolvido.' : 'Sem créditos Axia. Resumo determinístico devolvido.',
           });
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: aiResp.status === 429 ? 'rate_limited' : 'fallback',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+            error_message: `gateway ${aiResp.status}`,
+          });
+        } else {
+          await logAxiaCall(adminClient, {
+            module: 'mce_axia',
+            task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+            status: 'error',
+            provider_used: 'lovable',
+            model_used: aiModel,
+            latency_ms: Date.now() - t0,
+            user_id: user.id,
+            error_message: `gateway ${aiResp.status}`,
+          });
         }
       } catch (e) {
         console.error('Axia AI fallback:', e);
+        await logAxiaCall(adminClient, {
+          module: 'mce_axia',
+          task_type: `${MCE_AXIA_ANALYZE_PROMPT_ID}@${MCE_AXIA_ANALYZE_PROMPT_VERSION}`,
+          status: 'error',
+          provider_used: 'lovable',
+          model_used: aiModel,
+          latency_ms: Date.now() - t0,
+          user_id: user.id,
+          error_message: (e as Error).message,
+        });
       }
     }
+
 
     // Persist
     await supabase.from('mce_maps').update({

@@ -5,6 +5,12 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  ORCAMENTO_RAI_AXIA_PROMPT_ID,
+  ORCAMENTO_RAI_AXIA_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
+
 
 
 interface ConsolidationInput {
@@ -95,6 +101,13 @@ Deno.serve(async (req) => {
 
     const userPrompt = `Fase atual: ${c.currentPhase}\nKPIs: ${JSON.stringify(c.kpis)}\nFases: ${JSON.stringify(c.phases)}\nAlertas existentes: ${JSON.stringify(c.attention ?? [])}`;
 
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+    const modelName = "google/gemini-2.5-flash";
+    const t0 = Date.now();
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,7 +115,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: modelName,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -114,6 +127,16 @@ Deno.serve(async (req) => {
     if (!resp.ok) {
       const txt = await resp.text();
       console.error("Lovable AI error", resp.status, txt);
+      await logAxiaCall(adminClient, {
+        module: "orcamento_rai",
+        task_type: `${ORCAMENTO_RAI_AXIA_PROMPT_ID}@${ORCAMENTO_RAI_AXIA_PROMPT_VERSION}`,
+        status: resp.status === 429 ? "rate_limited" : "fallback",
+        provider_used: "lovable",
+        model_used: modelName,
+        latency_ms: Date.now() - t0,
+        user_id: userData.user.id,
+        error_message: `gateway ${resp.status}`,
+      });
       const insights = heuristicInsights(c);
       return new Response(JSON.stringify({ insights, source: "heuristic_fallback" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -121,7 +144,17 @@ Deno.serve(async (req) => {
     }
 
     const data = await resp.json();
+    await logAxiaCall(adminClient, {
+      module: "orcamento_rai",
+      task_type: `${ORCAMENTO_RAI_AXIA_PROMPT_ID}@${ORCAMENTO_RAI_AXIA_PROMPT_VERSION}`,
+      status: "ok",
+      provider_used: "lovable",
+      model_used: modelName,
+      latency_ms: Date.now() - t0,
+      user_id: userData.user.id,
+    });
     const content = data?.choices?.[0]?.message?.content ?? "{}";
+
     let parsed: { insights?: AxiaInsight[] } = {};
     try {
       parsed = JSON.parse(content);

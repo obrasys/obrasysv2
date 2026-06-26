@@ -8,6 +8,12 @@ import { z } from "npm:zod";
 import { AXIA_GLOBAL_SAFETY_BLOCK } from "../_shared/axia/system-prompts.ts";
 import { resolveModel } from "../_shared/axia/model-router.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  AXIA_FOUNDATION_SUGGESTION_PROMPT_ID,
+  AXIA_FOUNDATION_SUGGESTION_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
+
 
 
 const InputsSchema = z.object({
@@ -132,6 +138,8 @@ Gera a sugestão preliminar de fundação ICF.
 `.trim();
 
     const model = resolveModel("icf_analysis", "primary");
+    const admin = createClient(supaUrl, service);
+    const t0 = Date.now();
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -149,6 +157,16 @@ Gera a sugestão preliminar de fundação ICF.
 
     if (!aiResp.ok) {
       const txt = await aiResp.text();
+      await logAxiaCall(admin, {
+        module: "axia_foundation",
+        task_type: `${AXIA_FOUNDATION_SUGGESTION_PROMPT_ID}@${AXIA_FOUNDATION_SUGGESTION_PROMPT_VERSION}`,
+        status: aiResp.status === 429 ? "rate_limited" : "error",
+        provider_used: "lovable",
+        model_used: model,
+        latency_ms: Date.now() - t0,
+        user_id: userId,
+        error_message: `gateway ${aiResp.status}: ${txt.slice(0, 200)}`,
+      });
       return new Response(
         JSON.stringify({ error: "Falha gateway IA", status: aiResp.status, detail: txt.slice(0, 500) }),
         { status: aiResp.status === 429 || aiResp.status === 402 ? aiResp.status : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -156,6 +174,15 @@ Gera a sugestão preliminar de fundação ICF.
     }
 
     const aiJson = await aiResp.json();
+    await logAxiaCall(admin, {
+      module: "axia_foundation",
+      task_type: `${AXIA_FOUNDATION_SUGGESTION_PROMPT_ID}@${AXIA_FOUNDATION_SUGGESTION_PROMPT_VERSION}`,
+      status: "ok",
+      provider_used: "lovable",
+      model_used: model,
+      latency_ms: Date.now() - t0,
+      user_id: userId,
+    });
     const raw = aiJson?.choices?.[0]?.message?.content ?? "{}";
     let result: any = {};
     try {
@@ -167,8 +194,8 @@ Gera a sugestão preliminar de fundação ICF.
       });
     }
 
-    const admin = createClient(supaUrl, service);
     const now = new Date().toISOString();
+
 
     // Persistir sessão
     const { data: session, error: sessErr } = await admin

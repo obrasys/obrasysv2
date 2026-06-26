@@ -3,6 +3,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { resolveChain } from "../_shared/axia/model-router.ts";
 import { AXIA_ANTI_HALLUCINATION_BLOCK } from "../_shared/axia/system-prompts.ts";
 import { rateLimitOrg } from "../_shared/rateLimitOrg.ts";
+import { logAxiaCall } from "../_shared/axia/logCall.ts";
+import {
+  AXIA_INFRA_SCENARIOS_PROMPT_ID,
+  AXIA_INFRA_SCENARIOS_PROMPT_VERSION,
+} from "../_shared/axia/prompts.ts";
+
 
 
 
@@ -99,6 +105,11 @@ ${AXIA_ANTI_HALLUCINATION_BLOCK}`;
 
 Gera cenários de fundação adequados com itens paramétricos e custos estimados.`;
 
+    const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const userId = claimsData.claims.sub as string;
+    const modelName = resolveChain("suggestions").primary;
+    const t0 = Date.now();
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -106,7 +117,8 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: resolveChain("suggestions").primary,
+        model: modelName,
+
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -167,6 +179,16 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
     if (!resp.ok) {
       const errText = await resp.text();
       console.error("AI gateway error:", resp.status, errText);
+      await logAxiaCall(adminClient, {
+        module: "axia_infra",
+        task_type: `${AXIA_INFRA_SCENARIOS_PROMPT_ID}@${AXIA_INFRA_SCENARIOS_PROMPT_VERSION}`,
+        status: resp.status === 429 ? "rate_limited" : "error",
+        provider_used: "lovable",
+        model_used: modelName,
+        latency_ms: Date.now() - t0,
+        user_id: userId,
+        error_message: `gateway ${resp.status}`,
+      });
       return new Response(
         JSON.stringify({
           scenarios: [],
@@ -190,9 +212,20 @@ Gera cenários de fundação adequados com itens paramétricos e custos estimado
       }
     }
 
+    await logAxiaCall(adminClient, {
+      module: "axia_infra",
+      task_type: `${AXIA_INFRA_SCENARIOS_PROMPT_ID}@${AXIA_INFRA_SCENARIOS_PROMPT_VERSION}`,
+      status: "ok",
+      provider_used: "lovable",
+      model_used: modelName,
+      latency_ms: Date.now() - t0,
+      user_id: userId,
+    });
+
     return new Response(JSON.stringify({ scenarios }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("axia-infra-scenarios error:", msg);

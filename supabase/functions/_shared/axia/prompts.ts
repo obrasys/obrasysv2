@@ -156,6 +156,23 @@ export const ORGANIZE_BUDGET_IMPORT_PROMPT_VERSION = "1.0.0";
 export const VALIDATE_BUDGET_AI_PROMPT_ID = "validate-budget-ai";
 export const VALIDATE_BUDGET_AI_PROMPT_VERSION = "1.0.0";
 
+// Lote 3 — IDs registados; prompts permanecem inline nas edge functions.
+export const AXIA_ELECTRICAL_ANALYSIS_PROMPT_ID = "axia-electrical-analysis";
+export const AXIA_ELECTRICAL_ANALYSIS_PROMPT_VERSION = "1.0.0";
+
+export const AXIA_FOUNDATION_SUGGESTION_PROMPT_ID = "axia-foundation-suggestion";
+export const AXIA_FOUNDATION_SUGGESTION_PROMPT_VERSION = "1.0.0";
+
+export const AXIA_INFRA_SCENARIOS_PROMPT_ID = "axia-infra-scenarios";
+export const AXIA_INFRA_SCENARIOS_PROMPT_VERSION = "1.0.0";
+
+export const MCE_AXIA_ANALYZE_PROMPT_ID = "mce-axia-analyze";
+export const MCE_AXIA_ANALYZE_PROMPT_VERSION = "1.0.0";
+
+export const ORCAMENTO_RAI_AXIA_PROMPT_ID = "orcamento-rai-axia";
+export const ORCAMENTO_RAI_AXIA_PROMPT_VERSION = "1.0.0";
+
+
 /**
  * Builder used by axia-plan-suggestions. O bloco anti-alucinação é injectado
  * a partir de `system-prompts.ts` para manter a guarda em sincronia com o
