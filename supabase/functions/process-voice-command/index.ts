@@ -592,6 +592,16 @@ Deno.serve(async (req) => {
           prompt_version: PROMPT_VERSION,
           latency_ms: Date.now() - startedAt,
         });
+        await logAxiaCall(admin, {
+          module: PROCESS_VOICE_COMMAND_PROMPT_ID,
+          task_type: `${PROCESS_VOICE_COMMAND_PROMPT_ID}@${PROCESS_VOICE_COMMAND_PROMPT_VERSION}`,
+          provider_used: "lovable",
+          model_used: MODEL,
+          user_id: userId,
+          status: message === "RATE_LIMIT" ? "rate_limited" : "error",
+          latency_ms: Date.now() - startedAt,
+          error_message: message,
+        });
       }
     } catch (logErr) {
       console.error("log error", logErr);
