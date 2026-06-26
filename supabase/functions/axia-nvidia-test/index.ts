@@ -1,14 +1,9 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getPrompt } from '../_shared/axia/prompts.ts';
+import { logAxiaCall } from '../_shared/axia/logCall.ts';
 
-
-const SYSTEM_PROMPT = `És a Axia, assistente do Obra Sys. Responde em português europeu, de forma clara e natural para o utilizador final.
-
-REGRAS:
-- Nunca inventes valores financeiros, margens, RAI, EAC, Forecast ou desvios.
-- Quando não tiveres dados suficientes, indica EXPLICITAMENTE quais fontes do Obra Sys precisas consultar, escolhendo de entre: orçamento aprovado, custos registados, vendas previstas ou confirmadas, compras/adjudicações, medições, folha de fecho da obra.
-- Nunca escrevas tags técnicas como "Proposed/Draft/Requires_Human_Review" no texto. Em vez disso, termina respostas que envolvam análise financeira com a frase: "Esta análise requer validação humana."
-- Sê conciso. Não repitas o pedido do utilizador.`;
+const SYSTEM_PROMPT = getPrompt('axia-nvidia-test').system;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -102,6 +97,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(
+      supabaseUrl,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    const t0 = Date.now();
     const upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -125,6 +125,16 @@ Deno.serve(async (req) => {
       // sanitize: never echo headers; trim and avoid leaking
       const safe = text.slice(0, 500);
       console.error('NVIDIA upstream error', upstream.status);
+      await logAxiaCall(adminClient, {
+        module: 'axia_nvidia_test',
+        task_type: 'smoke_test',
+        provider_used: 'nvidia',
+        model_used: model,
+        status: 'error',
+        latency_ms: Date.now() - t0,
+        user_id: user.id,
+        error_message: `HTTP ${upstream.status}: ${safe}`,
+      });
       return new Response(JSON.stringify({
         error: 'Falha na chamada à NVIDIA',
         status: upstream.status,
@@ -160,6 +170,16 @@ Deno.serve(async (req) => {
     if (requiresHumanReview && !/validação humana/i.test(answer)) {
       answer = `${answer}\n\nEsta análise requer validação humana.`;
     }
+
+    await logAxiaCall(adminClient, {
+      module: 'axia_nvidia_test',
+      task_type: 'smoke_test',
+      provider_used: 'nvidia',
+      model_used: modelUsed,
+      status: 'ok',
+      latency_ms: Date.now() - t0,
+      user_id: user.id,
+    });
 
     return new Response(JSON.stringify({
       provider_used: 'nvidia',
