@@ -172,10 +172,18 @@ Deno.serve(async (req) => {
       if (!upErr) updates.push(page_number);
     }
 
+    await logAxiaCall(admin, {
+      module: "axia_classify_sheets", task_type: "classify",
+      provider_used: "lovable", model_used: model,
+      status: "ok", latency_ms: Date.now() - t0,
+      user_id: userRes.user.id,
+    });
+
     return new Response(
       JSON.stringify({ success: true, classified_pages: updates, sheets }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e: any) {
     console.error("[axia-classify-sheets]", e);
     return new Response(JSON.stringify({ error: e?.message ?? "Erro inesperado" }), {
