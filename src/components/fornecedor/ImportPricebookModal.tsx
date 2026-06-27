@@ -108,7 +108,7 @@ export function ImportPricebookModal({ open, onOpenChange, fornecedor }: Props) 
         if (fornErr) throw fornErr;
         const orgId = forn?.organization_id;
         if (!orgId) throw new Error('Fornecedor sem organização');
-        const path = `${orgId}/${fornecedor.id}/${Date.now()}-${f.name}`;
+        const path = `orgs/${orgId}/${fornecedor.id}/${Date.now()}-${f.name}`;
         const { error } = await supabase.storage
           .from('supplier-pricelists')
           .upload(path, f, { upsert: false });
