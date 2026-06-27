@@ -60,6 +60,9 @@ export default function Verify2FA() {
     const { data, error } = await supabase.functions.invoke("send-2fa-code");
     setIsSending(false);
     if (error || (data && data.error)) {
+      if (data?.rateLimited) {
+        setResendCooldown(120);
+      }
       toast({
         variant: "destructive",
         title: "Erro ao enviar código",
