@@ -72,9 +72,14 @@ serve(async (req) => {
       .gte("created_at", tenMinAgo);
 
     if ((count ?? 0) >= 3) {
+      // Return 200 so the supabase-js client doesn't throw; signal rate limit via payload.
       return new Response(
-        JSON.stringify({ error: "Demasiados pedidos. Tente novamente em alguns minutos." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          success: false,
+          rateLimited: true,
+          error: "Demasiados pedidos. Tente novamente em alguns minutos.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
