@@ -364,10 +364,11 @@ serve(async (req) => {
     // Convert to base64 (chunk-safe for large files)
     const arrayBuf = await fileData.arrayBuffer();
 
-    const MAX_FILE_SIZE = 12 * 1024 * 1024;
+    // Alinhado com o limite do uploader no cliente (20MB).
+    const MAX_FILE_SIZE = 20 * 1024 * 1024;
     if (arrayBuf.byteLength > MAX_FILE_SIZE) {
       return jsonResponse(
-        { error: "Ficheiro demasiado grande para análise automática. Envie uma planta por piso." },
+        { error: "Ficheiro demasiado grande para análise automática (máx. 20MB). Envie uma planta por piso." },
         413,
       );
     }
