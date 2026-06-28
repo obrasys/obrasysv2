@@ -125,7 +125,22 @@ export function useIcfPlantAnalysis() {
         },
       });
 
-      if (error) throw new Error(error.message || 'Erro na análise');
+      if (error) {
+        // supabase.functions.invoke devolve uma mensagem genérica ("non-2xx status code")
+        // em qualquer status != 2xx. Tentamos ler o body real para mostrar o motivo
+        // específico devolvido pela edge function (ficheiro demasiado grande, sem acesso, etc.).
+        let detail = error.message || 'Erro na análise';
+        try {
+          const resp = (error as any)?.context?.response;
+          if (resp && typeof resp.json === 'function') {
+            const body = await resp.clone().json();
+            if (body?.error) detail = body.error;
+          }
+        } catch {
+          /* mantém mensagem genérica */
+        }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       const audit = data.audit ?? {};
       return {
