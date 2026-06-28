@@ -86,13 +86,15 @@ export function PlanAnalysisAuditTrail({ planImportId, className }: Props) {
           <ul className="divide-y border rounded-md">
             {rows.map((r) => {
               const isOpen = expanded === r.id;
-              const hasMeta = r.metadata && Object.keys(r.metadata).length > 0;
+              const meta = (r.metadata ?? {}) as Record<string, unknown>;
+              const summary = buildMetaSummary(meta);
+              const hasSummary = summary.length > 0;
               return (
                 <li key={r.id} className="text-xs">
                   <button
                     type="button"
                     className="w-full text-left px-3 py-2 hover:bg-muted/40 flex items-start gap-2"
-                    onClick={() => setExpanded(isOpen ? null : r.id)}
+                    onClick={() => hasSummary && setExpanded(isOpen ? null : r.id)}
                   >
                     <Badge variant={statusVariant(r.status)} className="text-[10px] mt-0.5">
                       {r.status}
@@ -109,10 +111,15 @@ export function PlanAnalysisAuditTrail({ planImportId, className }: Props) {
                       {new Date(r.created_at).toLocaleString("pt-PT")}
                     </div>
                   </button>
-                  {isOpen && hasMeta && (
-                    <pre className="px-3 pb-3 text-[10px] text-muted-foreground bg-muted/30 overflow-x-auto">
-                      {JSON.stringify(r.metadata, null, 2)}
-                    </pre>
+                  {isOpen && hasSummary && (
+                    <dl className="px-3 pb-3 grid grid-cols-[max-content,1fr] gap-x-3 gap-y-1 text-[11px]">
+                      {summary.map(([label, value]) => (
+                        <div key={label} className="contents">
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className="font-medium break-words">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   )}
                 </li>
               );
