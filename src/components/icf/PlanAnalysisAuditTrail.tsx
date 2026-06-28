@@ -41,6 +41,35 @@ function statusVariant(s: PlanAnalysisLogRow["status"]) {
   }
 }
 
+const META_LABELS: Record<string, string> = {
+  modelo: "Modelo",
+  paredes: "Paredes detetadas",
+  baixa_confianca: "Baixa confiança",
+  possivel_contagem_dupla: "Possível contagem dupla",
+  pisos: "Pisos",
+  area_total: "Área total (m²)",
+  perimetro_total: "Perímetro total (m)",
+  duracao_ms: "Duração (ms)",
+  tokens: "Tokens",
+  orcamento_id: "Orçamento",
+  utilizador: "Utilizador",
+};
+
+function formatMetaValue(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "boolean") return v ? "Sim" : "Não";
+  if (typeof v === "number") return v.toLocaleString("pt-PT");
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return `${v.length} item(s)`;
+  return "—";
+}
+
+function buildMetaSummary(meta: Record<string, unknown>): Array<[string, string]> {
+  return Object.entries(meta)
+    .filter(([k, v]) => META_LABELS[k] && v !== null && v !== undefined && typeof v !== "object")
+    .map(([k, v]) => [META_LABELS[k], formatMetaValue(v)] as [string, string]);
+}
+
 export function PlanAnalysisAuditTrail({ planImportId, className }: Props) {
   const { data, isLoading, isError, error } = usePlanAnalysisAudit(planImportId);
   const [open, setOpen] = useState(true);
