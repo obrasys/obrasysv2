@@ -49,6 +49,29 @@ export function useFornecedorQuoteRequests(fornecedorId?: string) {
   });
 }
 
+export function useDirectQuoteRequestsByBudget(budgetId?: string) {
+  return useQuery({
+    queryKey: ['fornecedor_quote_requests_by_budget', budgetId],
+    enabled: !!budgetId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quote_requests')
+        .select(`
+          id, status, requested_deadline, message_to_suppliers, terms,
+          delivery_location, fornecedor_id, budget_id, obra_id, created_at,
+          fornecedores:fornecedor_id(nome, email),
+          quote_request_items(id, descricao, unidade, quantidade, codigo, capitulo),
+          quote_responses(id, status, total_amount, estimated_delivery_days, notes, valid_until, created_at)
+        `)
+        .eq('budget_id', budgetId!)
+        .not('fornecedor_id', 'is', null)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
 export function useCreateDirectQuoteRequest() {
   const { user } = useAuth();
   const { toast } = useToast();

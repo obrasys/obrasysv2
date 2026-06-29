@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useQuoteRequests, useCreateQuoteRequest, useAvailableSuppliers, useSupplierCategories } from '@/hooks/useSuppliers';
+import { useDirectQuoteRequestsByBudget, useSendDirectQuoteRequest, useAwardDirectQuoteResponse } from '@/hooks/useFornecedorQuoteRequests';
+import { DirectQuoteRequestModal } from '@/components/fornecedor/DirectQuoteRequestModal';
 import { SupplierReviewDialog } from '@/components/fornecedor/SupplierReviewDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck, Star } from 'lucide-react';
+import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck, Star, Truck, Award } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -39,8 +41,12 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   const { data: requests = [], isLoading } = useQuoteRequests(orcamentoId);
   const { data: categories = [] } = useSupplierCategories();
   const createRequest = useCreateQuoteRequest();
+  const { data: directRequests = [], isLoading: loadingDirect } = useDirectQuoteRequestsByBudget(orcamentoId);
+  const sendDirect = useSendDirectQuoteRequest();
+  const awardDirect = useAwardDirectQuoteResponse();
 
   const [showDialog, setShowDialog] = useState(false);
+  const [showDirectModal, setShowDirectModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
@@ -78,11 +84,113 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* ===== Meus Fornecedores ===== */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Truck className="h-4 w-4 text-primary" />
+              Cotações a Meus Fornecedores
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Envie pedidos de cotação diretos aos fornecedores da sua empresa, importando artigos deste orçamento.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setShowDirectModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Pedir a Meus Fornecedores
+          </Button>
+        </div>
+
+        {loadingDirect ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : directRequests.length === 0 ? (
+          <div className="text-center py-10 border-2 border-dashed rounded-lg text-muted-foreground">
+            <Truck className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">Sem pedidos diretos a meus fornecedores neste orçamento.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {directRequests.map((qr: any) => {
+              const responses = qr.quote_responses || [];
+              return (
+                <Card key={qr.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">{qr.fornecedores?.nome || 'Fornecedor'}</Badge>
+                          <Badge variant="outline" className="text-xs capitalize">{qr.status}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {qr.quote_request_items?.length || 0} item(ns)
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{format(new Date(qr.created_at), "d MMM yyyy", { locale: pt })}</span>
+                          {qr.requested_deadline && <span>Prazo: {format(new Date(qr.requested_deadline), "d MMM yyyy", { locale: pt })}</span>}
+                          {qr.delivery_location && <span><MapPin className="h-3 w-3 inline mr-0.5" />{qr.delivery_location}</span>}
+                        </div>
+                      </div>
+                      {qr.status === 'open' && (
+                        <Button size="sm" variant="outline" onClick={() => sendDirect.mutate(qr.id)} disabled={sendDirect.isPending}>
+                          <Send className="h-3.5 w-3.5 mr-1.5" /> Enviar agora
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  {responses.length > 0 && (
+                    <CardContent className="pt-0">
+                      <Separator className="mb-3" />
+                      <p className="text-xs font-medium mb-2">Propostas recebidas</p>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Estado</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                              <TableHead className="text-right">Prazo</TableHead>
+                              <TableHead>Notas</TableHead>
+                              <TableHead></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {responses.map((resp: any) => (
+                              <TableRow key={resp.id}>
+                                <TableCell className="capitalize text-xs">{resp.status}</TableCell>
+                                <TableCell className="text-right font-semibold">€{Number(resp.total_amount).toFixed(2)}</TableCell>
+                                <TableCell className="text-right">{resp.estimated_delivery_days ? `${resp.estimated_delivery_days}d` : '-'}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{resp.notes || '-'}</TableCell>
+                                <TableCell>
+                                  {resp.status !== 'accepted' && (
+                                    <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs"
+                                      onClick={() => awardDirect.mutate({ responseId: resp.id, requestId: qr.id })}
+                                      disabled={awardDirect.isPending}>
+                                      <Award className="h-3 w-3" /> Adjudicar
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <Separator />
+
+      {/* ===== Rede Certificada ===== */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-foreground">Cotações a Fornecedores</h3>
-          <p className="text-sm text-muted-foreground">Solicite propostas da rede de fornecedores certificados</p>
+          <h3 className="font-semibold text-foreground">Cotações à Rede Certificada</h3>
+          <p className="text-sm text-muted-foreground">Solicite propostas da rede de fornecedores certificados Obra Sys</p>
         </div>
         <Button onClick={() => setShowDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -273,6 +381,12 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DirectQuoteRequestModal
+        open={showDirectModal}
+        onOpenChange={setShowDirectModal}
+        orcamentoId={orcamentoId}
+      />
 
       {reviewTarget && (
         <SupplierReviewDialog
