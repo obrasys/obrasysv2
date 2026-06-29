@@ -169,7 +169,7 @@ serve(async (req) => {
       limit: 1,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    let hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = "trial";
     let subscriptionEnd = null;
     let subscriptionStatus = "trialing";
