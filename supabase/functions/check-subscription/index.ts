@@ -272,6 +272,14 @@ serve(async (req) => {
         subscriptionTier = subscriber.subscription_tier || "trial";
         subscriptionEnd = subscriber.subscription_end;
         subscriptionStatus = subscriber.subscription_status || "trialing";
+        if (
+          subscriber.subscribed === true &&
+          subscriptionStatus === "active" &&
+          subscriptionTier !== "trial" &&
+          (!subscriptionEnd || new Date(subscriptionEnd) > new Date())
+        ) {
+          hasActiveSub = true;
+        }
       } else {
         const { data: profile } = await supabaseClient
           .from("profiles")
