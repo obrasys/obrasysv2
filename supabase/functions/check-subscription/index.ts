@@ -114,8 +114,16 @@ serve(async (req) => {
       logStep("No Stripe customer found, checking local subscriber record");
 
       if (subscriber) {
+        // Honor manually-granted subscriptions (admin/coupon) that have no Stripe customer.
+        const manuallyActive =
+          subscriber.subscribed === true &&
+          subscriber.subscription_status === "active" &&
+          subscriber.subscription_tier &&
+          subscriber.subscription_tier !== "trial" &&
+          (!subscriber.subscription_end || new Date(subscriber.subscription_end) > new Date());
+
         return new Response(JSON.stringify({
-          subscribed: false,
+          subscribed: manuallyActive,
           subscription_tier: subscriber.subscription_tier,
           subscription_status: subscriber.subscription_status,
           subscription_end: subscriber.subscription_end,
