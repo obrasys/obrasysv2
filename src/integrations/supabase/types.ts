@@ -85,6 +85,42 @@ export type Database = {
           },
         ]
       }
+      agenda_notes: {
+        Row: {
+          concluida: boolean
+          created_at: string
+          data: string
+          descricao: string | null
+          hora: string | null
+          id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          concluida?: boolean
+          created_at?: string
+          data: string
+          descricao?: string | null
+          hora?: string | null
+          id?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          concluida?: boolean
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          hora?: string | null
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_budget_actions_log: {
         Row: {
           action: string
