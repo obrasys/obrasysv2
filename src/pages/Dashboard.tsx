@@ -22,6 +22,7 @@ import {
 } from '@/components/dashboard';
 import { DashboardProjetosAtivos } from '@/components/dashboard/DashboardProjetosAtivos';
 import { DashboardAtividadeIA } from '@/components/dashboard/DashboardAtividadeIA';
+import { DashboardAgenda } from '@/components/dashboard/DashboardAgenda';
 import { EmpresaModal } from '@/components/perfil/EmpresaModal';
 import { VoiceCommandButton } from '@/components/axia/VoiceCommandButton';
 
@@ -171,6 +172,9 @@ const Dashboard = () => {
                 <DashboardAtividadeIA />
               </div>
             </div>
+
+            {/* 5. Agenda + Financeiro */}
+            <DashboardAgenda />
           </>
         )}
       </div>
