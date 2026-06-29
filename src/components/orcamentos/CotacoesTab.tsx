@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useQuoteRequests, useCreateQuoteRequest, useAvailableSuppliers, useSupplierCategories } from '@/hooks/useSuppliers';
+import { useDirectQuoteRequestsByBudget, useSendDirectQuoteRequest, useAwardDirectQuoteResponse } from '@/hooks/useFornecedorQuoteRequests';
+import { DirectQuoteRequestModal } from '@/components/fornecedor/DirectQuoteRequestModal';
 import { SupplierReviewDialog } from '@/components/fornecedor/SupplierReviewDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck, Star } from 'lucide-react';
+import { Store, Plus, Send, Clock, Eye, CheckCircle2, XCircle, Loader2, MapPin, ShieldCheck, Star, Truck, Award } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
