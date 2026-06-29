@@ -382,6 +382,12 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
         </DialogContent>
       </Dialog>
 
+      <DirectQuoteRequestModal
+        open={showDirectModal}
+        onOpenChange={setShowDirectModal}
+        orcamentoId={orcamentoId}
+      />
+
       {reviewTarget && (
         <SupplierReviewDialog
           open={!!reviewTarget}
