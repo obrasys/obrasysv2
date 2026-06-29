@@ -41,8 +41,12 @@ export function CotacoesTab({ orcamentoId, obraId, locationDistrict, locationMun
   const { data: requests = [], isLoading } = useQuoteRequests(orcamentoId);
   const { data: categories = [] } = useSupplierCategories();
   const createRequest = useCreateQuoteRequest();
+  const { data: directRequests = [], isLoading: loadingDirect } = useDirectQuoteRequestsByBudget(orcamentoId);
+  const sendDirect = useSendDirectQuoteRequest();
+  const awardDirect = useAwardDirectQuoteResponse();
 
   const [showDialog, setShowDialog] = useState(false);
+  const [showDirectModal, setShowDirectModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
