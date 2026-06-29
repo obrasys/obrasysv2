@@ -114,8 +114,16 @@ serve(async (req) => {
       logStep("No Stripe customer found, checking local subscriber record");
 
       if (subscriber) {
+        // Honor manually-granted subscriptions (admin/coupon) that have no Stripe customer.
+        const manuallyActive =
+          subscriber.subscribed === true &&
+          subscriber.subscription_status === "active" &&
+          subscriber.subscription_tier &&
+          subscriber.subscription_tier !== "trial" &&
+          (!subscriber.subscription_end || new Date(subscriber.subscription_end) > new Date());
+
         return new Response(JSON.stringify({
-          subscribed: false,
+          subscribed: manuallyActive,
           subscription_tier: subscriber.subscription_tier,
           subscription_status: subscriber.subscription_status,
           subscription_end: subscriber.subscription_end,
@@ -161,7 +169,7 @@ serve(async (req) => {
       limit: 1,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    let hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = "trial";
     let subscriptionEnd = null;
     let subscriptionStatus = "trialing";
@@ -264,6 +272,14 @@ serve(async (req) => {
         subscriptionTier = subscriber.subscription_tier || "trial";
         subscriptionEnd = subscriber.subscription_end;
         subscriptionStatus = subscriber.subscription_status || "trialing";
+        if (
+          subscriber.subscribed === true &&
+          subscriptionStatus === "active" &&
+          subscriptionTier !== "trial" &&
+          (!subscriptionEnd || new Date(subscriptionEnd) > new Date())
+        ) {
+          hasActiveSub = true;
+        }
       } else {
         const { data: profile } = await supabaseClient
           .from("profiles")
