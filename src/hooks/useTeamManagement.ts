@@ -12,10 +12,14 @@ export function useTeamManagement() {
   const orgQuery = useQuery({
     queryKey: ['user-org', user?.id],
     queryFn: async () => {
+      // Must match public.get_user_org_id() used by RLS policies:
+      // active membership, ordered by created_at ASC, first row.
       const { data, error } = await supabase
         .from('organization_members')
         .select('organization_id')
         .eq('user_id', user!.id)
+        .eq('member_status', 'active')
+        .order('created_at', { ascending: true })
         .limit(1)
         .single();
       if (error) throw error;
