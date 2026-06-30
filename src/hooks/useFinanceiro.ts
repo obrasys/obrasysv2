@@ -183,7 +183,7 @@ export function useFinanceiro(obraId?: string) {
       }
       const { data: result, error } = await supabase
         .from('contas_financeiras')
-        .insert([payload])
+        .insert([payload as never])
         .select()
         .single();
       if (error) throw error;
