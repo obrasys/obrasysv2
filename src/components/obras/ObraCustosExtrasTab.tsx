@@ -114,15 +114,16 @@ export function ObraCustosExtrasTab({ obraId }: Props) {
     if (!activeType || !valor || Number(valor) <= 0) return;
     const tagLabel = EXTRA_COST_TYPES.find((t) => t.key === activeType)?.label || activeType;
     const fullDesc = `[${activeType}] ${descricao || tagLabel}`;
+    const safeDate = data && data.trim() !== '' ? data : new Date().toISOString().split('T')[0];
     const formData: ContaFinanceiraFormData = {
       obra_id: obraId,
       tipo: 'pagar',
       origem: 'outros',
       valor: Number(valor),
       descricao: fullDesc,
-      data_vencimento: data,
+      data_vencimento: safeDate,
       pago: true,
-      data_pagamento: data,
+      data_pagamento: safeDate,
     };
     createConta.mutate(formData);
     setActiveType(null);
