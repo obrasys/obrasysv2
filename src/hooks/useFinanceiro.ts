@@ -172,9 +172,18 @@ export function useFinanceiro(obraId?: string) {
   // Criar conta financeira
   const createConta = useMutation({
     mutationFn: async (data: ContaFinanceiraFormData) => {
+      const payload: Record<string, unknown> = { ...data, user_id: user?.id };
+      // Normalizar campos de data: strings vazias -> null/today para evitar
+      // erro "invalid input syntax for type date".
+      if (typeof payload.data_vencimento !== 'string' || !(payload.data_vencimento as string).trim()) {
+        payload.data_vencimento = new Date().toISOString().split('T')[0];
+      }
+      if (typeof payload.data_pagamento === 'string' && !(payload.data_pagamento as string).trim()) {
+        payload.data_pagamento = null;
+      }
       const { data: result, error } = await supabase
         .from('contas_financeiras')
-        .insert([{ ...data, user_id: user?.id }])
+        .insert([payload as never])
         .select()
         .single();
       if (error) throw error;
